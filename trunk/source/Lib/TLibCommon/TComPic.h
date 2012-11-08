@@ -61,9 +61,6 @@ private:
 #if SVC_EXTENSION
   UInt                  m_layerId;              //  Layer ID
 #endif
-#if REF_IDX_ME_AROUND_ZEROMV
-  Bool                  m_bIsILR;                 //  Is ILR picture
-#endif
   Bool                  m_bUsedByCurr;            //  Used by current picture
   Bool                  m_bIsLongTerm;            //  IS long term picture
   Bool                  m_bIsUsedAsLongTerm;      //  long term picture is used as reference before
@@ -90,6 +87,9 @@ private:
 #if SVC_EXTENSION
   Bool                  m_bSpatialEnhLayer;       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec;    // upsampled base layer recontruction for difference domain inter prediction
+#if REF_IDX_ME_AROUND_ZEROMV
+  Bool                  m_bIsILR;                 //  Is ILR picture
+#endif
 #endif
 
 public:

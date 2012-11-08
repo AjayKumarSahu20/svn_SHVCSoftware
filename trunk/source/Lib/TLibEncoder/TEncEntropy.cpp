@@ -236,6 +236,13 @@ Void TEncEntropy::encodePredMode( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD 
     return;
   }
 
+#if INTRA_BL
+  if( pcCU->isIntraBL( uiAbsPartIdx ) )
+  {
+    return;
+  }
+#endif
+
   m_pcEntropyCoderIf->codePredMode( pcCU, uiAbsPartIdx );
 }
 

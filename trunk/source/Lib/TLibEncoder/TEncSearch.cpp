@@ -893,13 +893,6 @@ TEncSearch::xEncIntraHeader( TComDataCU*  pcCU,
                             Bool         bLuma,
                             Bool         bChroma )
 {
-#if INTRA_BL
-  if ( pcCU->isIntraBL( 0 ))
-  {
-    return;
-  }
-#endif
-
   if( bLuma )
   {
     // CU header
@@ -916,8 +909,11 @@ TEncSearch::xEncIntraHeader( TComDataCU*  pcCU,
       }
 #if INTRA_BL
       m_pcEntropyCoder->encodeIntraBLFlag ( pcCU, 0, true );
-#endif
-      
+      if( pcCU->isIntraBL( 0 ) )
+      {
+        return;
+      }
+#endif      
       m_pcEntropyCoder  ->encodePartSize( pcCU, 0, pcCU->getDepth(0), true );
 
       if (pcCU->isIntra(0) && pcCU->getPartitionSize(0) == SIZE_2Nx2N )
@@ -955,6 +951,12 @@ TEncSearch::xEncIntraHeader( TComDataCU*  pcCU,
       }
     }
   }
+#if INTRA_BL
+  if( pcCU->isIntraBL( 0 ) )
+  {
+    return;
+  }
+#endif
   if( bChroma )
   {
     // chroma prediction mode
@@ -6152,6 +6154,13 @@ Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt uiQp, UInt uiTrMod
       m_pcEntropyCoder->encodeCUTransquantBypassFlag(pcCU, 0, true);
     }
     m_pcEntropyCoder->encodeSkipFlag ( pcCU, 0, true );
+#if INTRA_BL
+    if(m_pcEncCfg->getLayerId())
+    {
+      m_pcEntropyCoder->encodeIntraBLFlag(pcCU, 0, true);
+      assert( pcCU->isIntraBL( 0 ) == false );
+    }
+#endif
     m_pcEntropyCoder->encodePredMode( pcCU, 0, true );
     m_pcEntropyCoder->encodePartSize( pcCU, 0, pcCU->getDepth(0), true );
     m_pcEntropyCoder->encodePredInfo( pcCU, 0, true );

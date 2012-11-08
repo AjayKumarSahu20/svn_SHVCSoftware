@@ -2,7 +2,7 @@
 #include "TComUpsampleFilter.h"
 #include "TypeDef.h"
 
-#if SVC_EXTENSION
+#if SVC_UPSAMPLING
 // ====================================================================================================================
 // Tables:
 // 1. PHASE_DERIVATION_IN_INTEGER = 0 is the implementation using 2 multi-phase (12 phase and 8 phase) filter sets 
