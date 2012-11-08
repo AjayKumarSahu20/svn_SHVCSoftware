@@ -388,7 +388,11 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new  TComPic;
         //m_cIlpPic[j]->createWithOutYuv(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
+#if SVC_UPSAMPLING
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
+#else
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+#endif
 #if REF_IDX_ME_AROUND_ZEROMV
         m_cIlpPic[j]->setIsILR(true);
 #endif

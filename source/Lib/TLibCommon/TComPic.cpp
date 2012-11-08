@@ -67,6 +67,9 @@ TComPic::TComPic()
 #if SVC_EXTENSION
 , m_bSpatialEnhLayer( false )
 , m_pcFullPelBaseRec( NULL )
+#if REF_IDX_ME_AROUND_ZEROMV
+, m_bIsILR                                (false)
+#endif
 #endif
 {
   m_apcPicYuv[0]      = NULL;
