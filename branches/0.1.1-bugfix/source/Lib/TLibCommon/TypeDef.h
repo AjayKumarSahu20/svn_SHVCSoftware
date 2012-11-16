@@ -54,6 +54,9 @@
 #define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
+#if INTRA_BL
+#define INTRA_BL_DCT_FIX                 1      ///< fix : use DCT reconstruction instead of DST
+#endif
 // Hooks
 #if !AVC_BASE
 #define SVC_MVP                          0      ///< motion hook for merge mode as an example
