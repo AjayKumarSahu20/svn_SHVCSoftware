@@ -58,7 +58,7 @@
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 // Hooks
 #if !AVC_BASE
-#define SVC_MVP                          0      ///< motion hook for merge mode as an example
+#define SVC_MVP                          1      ///< motion hook for merge mode as an example
 #define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
 #endif
 #endif
