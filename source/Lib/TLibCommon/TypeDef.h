@@ -40,7 +40,7 @@
 
 #define SVC_EXTENSION                    1
 #if SVC_EXTENSION
-#define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
+#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
