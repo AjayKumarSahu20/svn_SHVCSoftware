@@ -190,7 +190,11 @@ Void TComPicSym::allocateNewSlice()
   if (m_uiNumAllocatedSlice>=2)
   {
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->copySliceInfo( m_apcTComSlice[m_uiNumAllocatedSlice-2] );
+#if SET_SLICE_LAYER_ID
+    m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice( m_apcTComSlice[m_uiNumAllocatedSlice-1]->getLayerId() );
+#else
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice();
+#endif
   }
 }
 

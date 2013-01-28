@@ -343,12 +343,20 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
   TComSlice cFillSlice;
   cFillSlice.setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillSlice.setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
+#if SET_SLICE_LAYER_ID
+  cFillSlice.initSlice( m_parameterSetManagerDecoder.getFirstSPS()->getLayerId() );
+#else
   cFillSlice.initSlice();
+#endif
   TComPic *cFillPic;
   xGetNewPicBuffer(&cFillSlice,cFillPic);
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
+#if SET_SLICE_LAYER_ID
+  cFillPic->getSlice(0)->initSlice( cFillPic->getLayerId() );
+#else
   cFillPic->getSlice(0)->initSlice();
+#endif
   
   TComList<TComPic*>::iterator iterPic = m_cListPic.begin();
   Int closestPoc = 1000000;
@@ -439,7 +447,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 {
   TComPic*&   pcPic         = m_pcPic;
+#if SET_SLICE_LAYER_ID
+  m_apcSlicePilot->initSlice( nalu.m_layerId );
+#else
   m_apcSlicePilot->initSlice();
+#endif
 
   if (m_bFirstSliceInPicture)
   {

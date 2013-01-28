@@ -1288,7 +1288,11 @@ private:
 public:
   TComSlice();
   virtual ~TComSlice(); 
+#if SET_SLICE_LAYER_ID
+  Void      initSlice       ( UInt layerId );
+#else
   Void      initSlice       ();
+#endif
 
   Void      setVPS          ( TComVPS* pcVPS ) { m_pcVPS = pcVPS; }
   TComVPS*  getVPS          () { return m_pcVPS; }

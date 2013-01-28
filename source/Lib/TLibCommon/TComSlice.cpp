@@ -152,8 +152,15 @@ TComSlice::~TComSlice()
 }
 
 
+#if SET_SLICE_LAYER_ID
+Void TComSlice::initSlice( UInt layerId )
+#else
 Void TComSlice::initSlice()
+#endif
 {
+#if SET_SLICE_LAYER_ID
+  m_layerId = layerId;
+#endif
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
   
