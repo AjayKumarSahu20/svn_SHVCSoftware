@@ -46,6 +46,7 @@
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
 #define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic
 #define SET_SLICE_LAYER_ID               1      ///< set layerId to the slice
+#define BUGFIX_925                       1      ///< bug fix ticket #925
 
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 
