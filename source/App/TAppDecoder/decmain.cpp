@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
   // print information
   fprintf( stdout, "\n" );
-  fprintf( stdout, "SMuC software: Decoder Version [%s]", NV_VERSION );
+  fprintf( stdout, "SHM software: Decoder Version [%s]", NV_VERSION );
   fprintf( stdout, NVM_ONOS );
   fprintf( stdout, NVM_COMPILEDBY );
   fprintf( stdout, NVM_BITS );
