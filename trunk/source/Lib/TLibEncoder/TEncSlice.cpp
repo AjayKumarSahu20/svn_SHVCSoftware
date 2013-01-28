@@ -191,11 +191,15 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int iPOCLast, UInt uiPOCCurr, Int 
   rpcSlice->setPPS( pPPS );
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
+#if SET_SLICE_LAYER_ID
+  rpcSlice->initSlice( pcPic->getLayerId() );
+#else
   rpcSlice->initSlice();
+#endif
   rpcSlice->setPicOutputFlag( true );
   rpcSlice->setPOC( uiPOCCurr );
   
-#if SVC_EXTENSION
+#if SVC_EXTENSION && !SET_SLICE_LAYER_ID
   rpcSlice->setLayerId( pcPic->getLayerId());
 #endif
 
