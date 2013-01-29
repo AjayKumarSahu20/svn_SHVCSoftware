@@ -149,6 +149,9 @@ protected:
 #if INTRA_BL
   Void  xCheckRDCostIntraBL ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU  );
 #endif
+#if ENCODER_FAST_MODE
+  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU );
+#endif
 
   Void  xCheckBestMode      ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU                      );
   Void  xCheckDQP           ( TComDataCU*  pcCU );

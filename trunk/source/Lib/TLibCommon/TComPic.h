@@ -87,7 +87,7 @@ private:
 #if SVC_EXTENSION
   Bool                  m_bSpatialEnhLayer;       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec;    // upsampled base layer recontruction for difference domain inter prediction
-#if REF_IDX_ME_AROUND_ZEROMV
+#if REF_IDX_ME_AROUND_ZEROMV || ENCODER_FAST_MODE
   Bool                  m_bIsILR;                 //  Is ILR picture
 #endif
 #endif
@@ -117,7 +117,7 @@ public:
   Void          setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
   TComPicYuv*   getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
 #endif
-#if REF_IDX_ME_AROUND_ZEROMV
+#if REF_IDX_ME_AROUND_ZEROMV || ENCODER_FAST_MODE
   Void          setIsILR( Bool bIsILR)      {m_bIsILR = bIsILR;}
   Bool          getIsILR()                  {return m_bIsILR;}
 #endif
