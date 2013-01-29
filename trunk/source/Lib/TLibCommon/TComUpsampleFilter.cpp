@@ -37,6 +37,24 @@ const Int TComUpsampleFilter::m_lumaFixedFilter[16][NTAPS_US_LUMA] =
 
 const Int TComUpsampleFilter::m_chromaFixedFilter[16][NTAPS_US_CHROMA] =
 {
+#if CHROMA_UPSAMPLING
+  {  0, 64,  0,  0},//
+  {CNU,CNU,CNU,CNU},//
+  {CNU,CNU,CNU,CNU},//
+  {CNU,CNU,CNU,CNU},// 
+  { -4, 54, 16, -2},// <-> actual phase shift 1/4,equal to HEVC MC, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+  { -6, 52, 20, -2},// <-> actual phase shift 1/3, used for spatial scalability x1.5   
+  { -6, 46, 28, -4},// <-> actual phase shift 3/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)      
+  {CNU,CNU,CNU,CNU},// 
+  { -4, 36, 36, -4},// <-> actual phase shift 1/2,equal to HEVC MC, used for spatial scalability x2
+  { -4, 30, 42, -4},// <-> actual phase shift 7/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+  {CNU,CNU,CNU,CNU},// 
+  { -2, 20, 52, -6},// <-> actual phase shift 2/3, used for spatial scalability x1.5
+  {CNU,CNU,CNU,CNU},// 
+  {CNU,CNU,CNU,CNU},// 
+  { -2, 10, 58, -2},// <-> actual phase shift 7/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)  
+  {  0,  4, 62, -2} // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+#else
   {  0, 64,  0,  0},//
   {CNU,CNU,CNU,CNU},//
   {CNU,CNU,CNU,CNU},//
@@ -53,6 +71,7 @@ const Int TComUpsampleFilter::m_chromaFixedFilter[16][NTAPS_US_CHROMA] =
   {CNU,CNU,CNU,CNU},// 
   { -2, 10, 58, -2},// <-> actual phase shift 7/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)  
   { -1,  5, 62, -2} // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+#endif
 };
 #else
 const Int TComUpsampleFilter::m_lumaFixedFilter[12][NTAPS_US_LUMA] =
