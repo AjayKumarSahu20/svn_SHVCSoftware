@@ -48,6 +48,8 @@
 #define SET_SLICE_LAYER_ID               1      ///< set layerId to the slice
 #define BUGFIX_925                       1      ///< bug fix ticket #925
 
+#define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
+
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 
 #define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
@@ -58,8 +60,8 @@
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
 #if INTRA_BL
-#define INTRA_BL_DST4x4                  1      ///< L0067/L0204 DST4x4 for Intra BL
-#define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437 Root cbf for Intra_BL
+#define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
+#define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
 
 // Hooks
 #if !AVC_BASE
