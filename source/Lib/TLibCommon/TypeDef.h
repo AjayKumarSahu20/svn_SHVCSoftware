@@ -47,6 +47,7 @@
 #define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic
 #define SET_SLICE_LAYER_ID               1      ///< set layerId to the slice
 #define BUGFIX_925                       1      ///< bug fix ticket #925
+#define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
