@@ -214,6 +214,16 @@ public:
 #endif
                                 );
   
+#if (ENCODER_FAST_MODE)
+  Bool predInterSearchILRUni    ( TComDataCU* pcCU,
+                                  TComYuv*    pcOrgYuv,
+                                  TComYuv*&   rpcPredYuv,
+                                  TComYuv*&   rpcResiYuv,
+                                  TComYuv*&   rpcRecoYuv
+                                );
+
+#endif
+  
   /// encode residual and compute rd-cost for inter mode
   Void encodeResAndCalcRdInterCU( TComDataCU* pcCU,
                                   TComYuv*    pcYuvOrg,

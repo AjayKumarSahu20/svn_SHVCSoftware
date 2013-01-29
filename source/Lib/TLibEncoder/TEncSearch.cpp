@@ -3210,7 +3210,6 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   ruiCost = MAX_UINT;
   for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
   {
-    {
       UInt uiCostCand = MAX_UINT;
       UInt uiBitsCand = 0;
       
@@ -3235,7 +3234,6 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
         uiMergeIndex = uiMergeCand;
       }
     }
-  }
 }
 
 /** convert bi-pred merge candidates to uni-pred
@@ -3359,6 +3357,10 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
     for (Int iNumRef=0; iNumRef < MAX_NUM_REF; iNumRef++) uiCostTempL0[iNumRef] = MAX_UINT;
     UInt          uiBitsTempL0[MAX_NUM_REF];
 
+#if (ENCODER_FAST_MODE)
+    Bool          testILR;
+#endif
+
     xGetBlkBits( ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
     
     pcCU->getPartIndexAndSize( iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight );
@@ -3380,8 +3382,27 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
     {
       RefPicList  eRefPicList = ( iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
       
+#if (ENCODER_FAST_MODE)
+      if (pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1)
+      {
+        testILR = false;
+      }
+      else
+      {
+        testILR = true;
+      }
+#endif
+
       for ( Int iRefIdxTemp = 0; iRefIdxTemp < pcCU->getSlice()->getNumRefIdx(eRefPicList); iRefIdxTemp++ )
       {
+#if (ENCODER_FAST_MODE)
+        TComPic* pcPic    = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp );
+        if( !testILR && pcPic->getIsILR() && (ePartSize == SIZE_2Nx2N) ) 
+        {
+          continue;
+        }
+#endif
+
         uiBitsTemp = uiMbBits[iRefList];
         if ( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 )
         {
@@ -3612,11 +3633,27 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 
         Bool bChanged = false;
         
+#if (ENCODER_FAST_MODE)
+        Bool     testIter = true;
+        TComPic* pcPic    = pcCU->getSlice()->getRefPic( RefPicList(1 - iRefList), iRefIdxBi[1 - iRefList] );
+        if(pcPic->getIsILR() && (ePartSize == SIZE_2Nx2N))
+          testIter = false;  //the fixed part is ILR, skip this iteration       
+        if(testIter)
+        {
+#endif
         iRefStart = 0;
         iRefEnd   = pcCU->getSlice()->getNumRefIdx(eRefPicList)-1;
         
         for ( Int iRefIdxTemp = iRefStart; iRefIdxTemp <= iRefEnd; iRefIdxTemp++ )
         {
+#if (ENCODER_FAST_MODE)
+            Bool testRefIdx = true;
+            pcPic           = pcCU->getSlice()->getRefPic( RefPicList(iRefList) , iRefIdxTemp );
+            if(pcPic->getIsILR() && (ePartSize == SIZE_2Nx2N))
+              testRefIdx = false;  //the refined part is ILR, skip this reference pic           
+            if(testRefIdx)
+            {
+#endif
           uiBitsTemp = uiMbBits[2] + uiMotBits[1-iRefList];
           if ( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 )
           {
@@ -3657,7 +3694,13 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
               motionCompensation( pcCU, pcYuvPred, eRefPicList, iPartIdx );
             }
           }
+#if (ENCODER_FAST_MODE)
+            }
+#endif
+          }
+#if (ENCODER_FAST_MODE)
         } // for loop-iRefIdxTemp
+#endif
         
         if ( !bChanged )
         {
@@ -3941,6 +3984,139 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 
   return;
 }
+#if ENCODER_FAST_MODE
+Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv )
+{
+  rpcPredYuv->clear();
+  rpcRecoYuv->clear();
+
+  Int           iNumPredDir = pcCU->getSlice()->isInterP() ? 1 : 2;
+
+  TComMv        cMv[2];
+  TComMv        cMvPred[2][33];
+  TComMv        cMvTemp[2][33];
+  TComMv        TempMv;
+
+  Int           iRefIdx[2]={0,0};
+
+  Int           aaiMvpIdx[2][33];
+  Int           aaiMvpNum[2][33];
+
+  UInt          uiMbBits[3] = {1, 1, 0};
+  UInt          uiLastMode = 0;
+
+  UInt          uiCost[2]   = { MAX_UINT, MAX_UINT };     //uni, rdCost
+  UInt          uiCostTemp;
+  UInt          biPDistTemp = MAX_INT;
+  UInt          uiBitsTemp;
+
+  PartSize      ePartSize = pcCU->getPartitionSize( 0 );  //2Nx2N
+  Int           iPartIdx  = 0;                            //one PU in CU
+  UInt          uiPartAddr;
+  Int           iRoiWidth, iRoiHeight;
+
+  xGetBlkBits( ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
+  pcCU->getPartIndexAndSize( iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight );
+
+  for( Int iRefList = 0; iRefList < iNumPredDir; iRefList++)  //list
+  {
+    RefPicList  eRefPicList = ( iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
+
+    Int  iRefIdxTemp = -1;
+    Bool foundILR    = false;
+    for( Int refIdx = 0; refIdx < pcCU->getSlice()->getNumRefIdx(eRefPicList); refIdx++ )
+      if( pcCU->getSlice()->getRefPic(eRefPicList, refIdx)->getIsILR() )
+      {
+        iRefIdxTemp = refIdx;
+        foundILR    = true;
+        break;
+      }
+
+    if(!foundILR)  //no ILR in eRefPiclist
+      continue;  
+
+    uiBitsTemp = uiMbBits[iRefList];
+    if ( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 ) 
+    { 
+      uiBitsTemp += iRefIdxTemp+1; 
+      if ( iRefIdxTemp == pcCU->getSlice()->getNumRefIdx(eRefPicList)-1 ) uiBitsTemp--; 
+    }
+
+    xEstimateMvPredAMVP( pcCU, pcOrgYuv, iPartIdx, eRefPicList, iRefIdxTemp, cMvPred[iRefList][iRefIdxTemp], false, &biPDistTemp);
+    aaiMvpIdx[iRefList][iRefIdxTemp] = pcCU->getMVPIdx(eRefPicList, uiPartAddr);
+    aaiMvpNum[iRefList][iRefIdxTemp] = pcCU->getMVPNum(eRefPicList, uiPartAddr);
+
+    uiBitsTemp += m_auiMVPIdxCost[aaiMvpIdx[iRefList][iRefIdxTemp]][AMVP_MAX_NUM_CANDS];
+
+    xMotionEstimation ( pcCU, pcOrgYuv, iPartIdx, eRefPicList, &cMvPred[iRefList][iRefIdxTemp], iRefIdxTemp, cMvTemp[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp );
+    xCheckBestMVP(pcCU, eRefPicList, cMvTemp[iRefList][iRefIdxTemp], cMvPred[iRefList][iRefIdxTemp], aaiMvpIdx[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
+
+    if( uiCostTemp < uiCost[iRefList] )
+    {
+      uiCost[iRefList] = uiCostTemp;
+
+      cMv[iRefList]     = cMvTemp[iRefList][iRefIdxTemp];
+      iRefIdx[iRefList] = iRefIdxTemp;
+
+      pcCU->getCUMvField(eRefPicList)->setAllMv( cMv[iRefList], ePartSize, uiPartAddr, 0, iPartIdx );
+      pcCU->getCUMvField(eRefPicList)->setAllRefIdx( iRefIdx[iRefList], ePartSize, uiPartAddr, 0, iPartIdx );
+    }
+  }
+
+  if( uiCost[0] == MAX_UINT && uiCost[1] == MAX_UINT )  //no ILR in both list0 and list1
+    return false;
+
+  //  Clear Motion Field 
+  pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField( TComMvField(), ePartSize, uiPartAddr, 0, iPartIdx ); 
+  pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvField( TComMvField(), ePartSize, uiPartAddr, 0, iPartIdx ); 
+  pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvd    ( TComMv(),      ePartSize, uiPartAddr, 0, iPartIdx ); 
+  pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvd    ( TComMv(),      ePartSize, uiPartAddr, 0, iPartIdx );
+
+  pcCU->setMVPIdxSubParts( -1, REF_PIC_LIST_0, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr)); 
+  pcCU->setMVPNumSubParts( -1, REF_PIC_LIST_0, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr)); 
+  pcCU->setMVPIdxSubParts( -1, REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr)); 
+  pcCU->setMVPNumSubParts( -1, REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
+
+  if( uiCost[0] <= uiCost[1] )  //list0 ILR
+  {
+    pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMv    ( cMv[0], ePartSize, uiPartAddr, 0, iPartIdx );
+    pcCU->getCUMvField(REF_PIC_LIST_0)->setAllRefIdx( iRefIdx[0], ePartSize, uiPartAddr, 0, iPartIdx );
+
+    TempMv = cMv[0] - cMvPred[0][iRefIdx[0]]; 
+    pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvd( TempMv, ePartSize, uiPartAddr, 0, iPartIdx );
+
+    pcCU->setInterDirSubParts( 1, uiPartAddr, iPartIdx, pcCU->getDepth(0) );
+
+    pcCU->setMVPIdxSubParts( aaiMvpIdx[0][iRefIdx[0]], REF_PIC_LIST_0, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr)); 
+    pcCU->setMVPNumSubParts( aaiMvpNum[0][iRefIdx[0]], REF_PIC_LIST_0, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
+  }
+  else if( uiCost[1] < uiCost[0] )  //list1 ILR
+  {
+    pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMv    ( cMv[1], ePartSize, uiPartAddr, 0, iPartIdx );
+    pcCU->getCUMvField(REF_PIC_LIST_1)->setAllRefIdx( iRefIdx[1], ePartSize, uiPartAddr, 0, iPartIdx );
+
+    TempMv = cMv[1] - cMvPred[1][iRefIdx[1]]; 
+    pcCU->getCUMvField(REF_PIC_LIST_1)->setAllMvd( TempMv, ePartSize, uiPartAddr, 0, iPartIdx );
+
+    pcCU->setInterDirSubParts( 2, uiPartAddr, iPartIdx, pcCU->getDepth(0) );
+
+    pcCU->setMVPIdxSubParts( aaiMvpIdx[1][iRefIdx[1]], REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr)); 
+    pcCU->setMVPNumSubParts( aaiMvpNum[1][iRefIdx[1]], REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
+  }
+  else
+    assert(0);
+
+  pcCU->setMergeFlagSubParts( false, uiPartAddr, iPartIdx, pcCU->getDepth( uiPartAddr ) );
+
+  motionCompensation ( pcCU, rpcPredYuv, REF_PIC_LIST_X, iPartIdx );
+
+  setWpScalingDistParam( pcCU, -1, REF_PIC_LIST_X );
+
+  return true;
+}
+
+
+#endif
 
 // AMVP
 #if ZERO_MVD_EST
