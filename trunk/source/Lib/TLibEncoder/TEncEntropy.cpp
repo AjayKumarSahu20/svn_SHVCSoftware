@@ -475,7 +475,11 @@ Void TEncEntropy::xEncodeTransform( TComDataCU* pcCU,UInt offsetLuma, UInt offse
     }
 #endif
 #if INTRA_BL
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+    if( ( !pcCU->isIntra( uiAbsPartIdx ) || pcCU->isIntraBL(uiAbsPartIdx)) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
+#else
     if( ( !pcCU->isIntra( uiAbsPartIdx ) ) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
+#endif
 #else   
     if( pcCU->getPredictionMode(uiAbsPartIdx) != MODE_INTRA && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
 #endif
@@ -753,7 +757,11 @@ Void TEncEntropy::encodeCoeff( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
   UInt uiLumaTrMode, uiChromaTrMode;
   pcCU->convertTransIdx( uiAbsPartIdx, pcCU->getTransformIdx(uiAbsPartIdx), uiLumaTrMode, uiChromaTrMode );
   
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+  if( pcCU->isIntra(uiAbsPartIdx) && !pcCU->isIntraBL(uiAbsPartIdx) )
+#else
   if( pcCU->isIntra(uiAbsPartIdx) )
+#endif
   {
     DTRACE_CABAC_VL( g_nSymbolCounter++ )
     DTRACE_CABAC_T( "\tdecodeTransformIdx()\tCUDepth=" )

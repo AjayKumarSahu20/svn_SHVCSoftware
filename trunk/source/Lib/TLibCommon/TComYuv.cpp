@@ -183,6 +183,59 @@ Void TComYuv::copyFromPicChroma( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiA
   }
 }
 
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+Void TComYuv::copyFromPicLuma  ( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiZorderIdxInCU, UInt uiAbsZorderIdx, UInt uiWidth, UInt uiHeight )
+{
+  Int  y;
+
+  Pel* pDst     = getLumaAddr(uiAbsZorderIdx);
+  Pel* pSrc     = pcPicYuvSrc->getLumaAddr ( iCuAddr, uiZorderIdxInCU + uiAbsZorderIdx );
+
+  UInt  iDstStride  = getStride();
+  UInt  iSrcStride  = pcPicYuvSrc->getStride();
+  for ( y = uiHeight; y != 0; y-- )
+  {
+    ::memcpy( pDst, pSrc, sizeof(Pel)*uiWidth);
+    pDst += iDstStride;
+    pSrc += iSrcStride;
+  }
+}
+
+Void TComYuv::copyFromPicChroma( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiZorderIdxInCU, UInt uiAbsZorderIdx, UInt uiCWidth, UInt uiCHeight, UInt uiChromaId  )
+{
+  Int  y;
+
+  if (!uiChromaId)
+  {
+    Pel* pDstU      = getCbAddr(uiAbsZorderIdx); 
+    Pel* pSrcU      = pcPicYuvSrc->getCbAddr( iCuAddr, uiZorderIdxInCU + uiAbsZorderIdx );
+
+    UInt  iDstStride = getCStride();
+    UInt  iSrcStride = pcPicYuvSrc->getCStride();
+    for ( y = uiCHeight; y != 0; y-- )
+    {
+      ::memcpy( pDstU, pSrcU, sizeof(Pel)*(uiCWidth) );
+      pSrcU += iSrcStride;
+      pDstU += iDstStride;
+    }
+  }
+  else
+  {
+    Pel* pDstV      = getCrAddr(uiAbsZorderIdx);
+    Pel* pSrcV      = pcPicYuvSrc->getCrAddr( iCuAddr, uiZorderIdxInCU + uiAbsZorderIdx );
+
+    UInt  iDstStride = getCStride();
+    UInt  iSrcStride = pcPicYuvSrc->getCStride();
+    for ( y = uiCHeight; y != 0; y-- )
+    {
+      ::memcpy( pDstV, pSrcV, sizeof(Pel)*(uiCWidth) );
+      pSrcV += iSrcStride;
+      pDstV += iDstStride;
+    }
+  }
+}
+#endif
+
 Void TComYuv::copyToPartYuv( TComYuv* pcYuvDst, UInt uiDstPartIdx )
 {
   copyToPartLuma  ( pcYuvDst, uiDstPartIdx );

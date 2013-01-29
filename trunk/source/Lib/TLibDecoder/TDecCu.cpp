@@ -471,7 +471,11 @@ Void TDecCu::xDecompressCU( TComDataCU* pcCU, TComDataCU* pcCUCur, UInt uiAbsPar
       break;
 #if INTRA_BL
     case MODE_INTRA_BL:
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+      xReconIntraBL( m_ppcCU[uiDepth], uiAbsPartIdx, uiDepth );
+#else
       xReconIntraQT( m_ppcCU[uiDepth], uiAbsPartIdx, uiDepth );
+#endif
       break;
 #endif
     default:
@@ -740,6 +744,28 @@ TDecCu::xReconIntraQT( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 
 }
 
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+Void
+TDecCu::xReconIntraBL( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
+{
+  m_ppcYuvReco[uiDepth]->copyFromPicLuma  ( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, pcCU->getWidth(0), pcCU->getHeight(0));
+  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 0);
+  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 1);
+
+  // inter recon
+  xDecodeInterTexture( pcCU, 0, uiDepth );
+
+  // clip for only non-zero cbp case
+  if  ( ( pcCU->getCbf( 0, TEXT_LUMA ) ) || ( pcCU->getCbf( 0, TEXT_CHROMA_U ) ) || ( pcCU->getCbf(0, TEXT_CHROMA_V ) ) )
+  {
+    m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ) );
+  }
+  else
+  {
+    m_ppcYuvReco[uiDepth]->copyPartToPartYuv( m_ppcYuvReco[uiDepth],0, pcCU->getWidth( 0 ),pcCU->getHeight( 0 ));
+  }
+}
+#endif
 
 /** Function for deriving recontructed PU/CU Luma sample with QTree structure
  * \param pcCU pointer of current CU
