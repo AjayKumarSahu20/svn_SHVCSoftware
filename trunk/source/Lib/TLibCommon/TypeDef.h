@@ -56,6 +56,10 @@
 #define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
+
+#if INTRA_BL
+#define INTRA_BL_DST4x4                  1      ///< L0067/L0204 DST4x4 for Intra BL
+
 // Hooks
 #if !AVC_BASE
 #define SVC_MVP                          1      ///< motion hook for merge mode as an example
@@ -63,6 +67,7 @@
 #endif
 #endif
 
+#endif
 #endif
 
 //! \ingroup TLibCommon
