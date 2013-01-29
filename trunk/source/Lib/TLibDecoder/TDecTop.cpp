@@ -163,6 +163,9 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 #else
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
 #endif
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
+        m_cIlpPic[j]->setIsILR(true);
+#endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
             m_cIlpPic[j]->getPicSym()->getCU(i)->initCU(m_cIlpPic[j], i);
