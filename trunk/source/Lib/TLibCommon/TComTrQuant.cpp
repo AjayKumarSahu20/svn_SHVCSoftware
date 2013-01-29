@@ -1404,7 +1404,7 @@ Void TComTrQuant::transformNxN( TComDataCU* pcCU,
     uiMode = pcCU->getLumaIntraDir( uiAbsPartIdx );
   }
 #if INTRA_BL_DST4x4
-  if(eTType == TEXT_LUMA && pcCU->isIntraBL(uiAbsPartIdx) )
+  else if(eTType == TEXT_LUMA && pcCU->isIntraBL(uiAbsPartIdx) )
   {
     uiMode = DC_IDX; //Using DST
   }
