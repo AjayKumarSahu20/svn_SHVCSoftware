@@ -67,7 +67,7 @@ TComPic::TComPic()
 #if SVC_EXTENSION
 , m_bSpatialEnhLayer( false )
 , m_pcFullPelBaseRec( NULL )
-#if REF_IDX_ME_AROUND_ZEROMV || ENCODER_FAST_MODE
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE
 , m_bIsILR                                (false)
 #endif
 #endif

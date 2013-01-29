@@ -786,6 +786,9 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_cropBottom % TComSPS::getCropUnitY(CHROMA_420) != 0, "Bottom cropping must be an integer multiple of the specified chroma subsampling");
 #endif
 
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
+  xConfirmPara( REF_IDX_ME_AROUND_ZEROMV && REF_IDX_ME_ZEROMV, "REF_IDX_ME_AROUND_ZEROMV and REF_IDX_ME_ZEROMV cannot be enabled simultaneously");
+#endif
   // max CU width and height should be power of 2
   UInt ui = m_uiMaxCUWidth;
   while(ui)
@@ -1308,6 +1311,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_AROUND_ZEROMV:%d ", REF_IDX_ME_AROUND_ZEROMV);
+  printf("REF_IDX_ME_ZEROMV: %d", REF_IDX_ME_ZEROMV);
 #else
   printf("INTRA_BL:%d ", INTRA_BL);
   printf("AVC_BASE:%d ", AVC_BASE);

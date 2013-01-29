@@ -4469,6 +4469,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
 
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
   //  Do integer search
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
 #if REF_IDX_ME_AROUND_ZEROMV
   if( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred )->getIsILR())  //ILR reference pic
   {
@@ -4486,6 +4487,23 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
     xPatternSearchFast  ( pcCU, pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost );
     }
   }
+#endif
+#if REF_IDX_ME_ZEROMV
+  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->getIsILR())  //ILR reference pic 
+    rcMv.setZero();  //use Mv(0, 0) for integer ME 
+  else  //non ILR reference pic
+  {
+    if ( !m_iFastSearch || bBi ) 
+    { 
+      xPatternSearch      ( pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost ); 
+    } 
+    else 
+    { 
+      rcMv = *pcMvPred; 
+      xPatternSearchFast  ( pcCU, pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost ); 
+    }
+  }
+#endif
 #else
   if ( !m_iFastSearch || bBi )
   {
@@ -4502,9 +4520,16 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   m_pcRdCost->setCostScale ( 1 );
   
   {
+#if REF_IDX_ME_ZEROMV
+    if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->getIsILR())  //ILR reference pic
+      xPatternSearchFracDIFMv0( pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi );
+    else    //non ILR reference pic
+      xPatternSearchFracDIF( pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi );
+#else
     xPatternSearchFracDIF( pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost
                           ,bBi
                           );
+#endif
   }
   
   
@@ -4886,6 +4911,29 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
   ruiCost = xPatternRefinement( pcPatternKey, baseRefMv, 1, rcMvQter );
 }
 
+#if REF_IDX_ME_ZEROMV
+Void TEncSearch::xPatternSearchFracDIFMv0(TComDataCU* pcCU,
+                                          TComPattern* pcPatternKey,
+                                          Pel* piRefY,
+                                          Int iRefStride,
+                                          TComMv* pcMvInt,
+                                          TComMv& rcMvHalf,
+                                          TComMv& rcMvQter,
+                                          UInt& ruiCost,
+                                          Bool biPred
+                                          )
+{
+  assert(pcMvInt->getHor() == 0 && pcMvInt->getVer() == 0);
+  Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
+  m_pcRdCost->setDistParam( pcPatternKey, piRefY + iOffset, iRefStride, 1, m_cDistParam, m_pcEncCfg->getUseHADME() );
+  m_pcRdCost->setCostScale ( 2 );
+  setDistParamComp(0);
+  ruiCost = m_cDistParam.DistFunc( &m_cDistParam );  //SATD
+  ruiCost += m_pcRdCost->getCost( pcMvInt->getHor(), pcMvInt->getVer() );  //SATD rdCost
+  rcMvHalf.setZero();
+  rcMvQter.setZero();
+}
+#endif
 /** encode residual and calculate rate-distortion for a CU block
  * \param pcCU
  * \param pcYuvOrg

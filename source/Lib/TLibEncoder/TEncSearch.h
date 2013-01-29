@@ -470,6 +470,17 @@ protected:
                                    UInt&          ruiSAD );
 #endif
   
+#if REF_IDX_ME_ZEROMV
+  Void xPatternSearchFracDIFMv0  ( TComDataCU*   pcCU,
+                                   TComPattern*  pcPatternKey,
+                                   Pel*          piRefY,
+                                   Int           iRefStride,
+                                   TComMv*       pcMvInt,
+                                   TComMv&       rcMvHalf,
+                                   TComMv&       rcMvQter,
+                                   UInt&         ruiCost,
+                                   Bool          biPred );
+#endif
   Void xExtDIFUpSamplingH( TComPattern* pcPattern, Bool biPred  );
   Void xExtDIFUpSamplingQ( TComPattern* pcPatternKey, TComMv halfPelRef, Bool biPred );
   
