@@ -561,7 +561,12 @@ public:
 #if INTRA_BL
   UInt          getCtxIntraBLFlag               ( UInt   uiAbsPartIdx                                 );
 #endif  
-  
+
+#if REF_IDX_ME_ZEROMV
+  Bool xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
+  Bool xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx);
+#endif
+
   UInt          getSliceStartCU         ( UInt pos )                  { return m_uiSliceStartCU[pos-m_uiAbsIdxInLCU];                                                                                          }
   UInt          getDependentSliceStartCU  ( UInt pos )                  { return m_uiDependentSliceStartCU[pos-m_uiAbsIdxInLCU];                                                                                   }
   UInt&         getTotalBins            ()                            { return m_uiTotalBins;                                                                                                  }
