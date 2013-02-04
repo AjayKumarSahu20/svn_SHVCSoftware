@@ -599,6 +599,13 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 #endif
   WRITE_FLAG( pcSPS->getTMVPFlagsPresent()  ? 1 : 0,           "sps_temporal_mvp_enable_flag" );
+#if REF_IDX_MFM
+  if( pcSPS->getLayerId() > 0 )
+  {
+	  assert(pcSPS->getMFMEnabledFlag());
+	  WRITE_FLAG( pcSPS->getMFMEnabledFlag() ? 1 : 0,          "sps_enh_mfm_enable_flag" );
+  }
+#endif
 #if SUPPORT_FOR_VUI
   WRITE_FLAG( pcSPS->getVuiParametersPresentFlag(),             "vui_parameters_present_flag" );
   if (pcSPS->getVuiParametersPresentFlag())

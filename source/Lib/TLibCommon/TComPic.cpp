@@ -67,8 +67,14 @@ TComPic::TComPic()
 #if SVC_EXTENSION
 , m_bSpatialEnhLayer( false )
 , m_pcFullPelBaseRec( NULL )
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
 , m_bIsILR                                (false)
+#endif
+#if REF_IDX_MFM
+, m_bIsUpsampledMvField                   (false) 
+, m_apcTComUpsampledMvFieldCU             (NULL)
+, m_peUpsampledPredMode                   (NULL)
+, m_iNumCUInUpsampledPic                  (-1)
 #endif
 #endif
 {
@@ -553,6 +559,162 @@ Void TComPic:: copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   p
     pcPicYuvOut->getHeight()>>1,
     upsampledRowWidthCroma);
 }
+
+#if REF_IDX_MFM
+Void TComPic::createUpSampledMvField(Int upSampledHeight, Int upSampledWidth, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth )
+{
+	UInt uiNumPartitions   = 1<<(uiMaxDepth<<1);
+	UInt uiWidthInCU       = ( upSampledWidth % uiMaxWidth  ) ? upSampledWidth /uiMaxWidth  + 1 : upSampledWidth /uiMaxWidth;
+  UInt uiHeightInCU      = ( upSampledHeight% uiMaxHeight ) ? upSampledHeight/uiMaxHeight + 1 : upSampledHeight/uiMaxHeight;
+	UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
+	m_iNumCUInUpsampledPic = uiNumCUsInFrame;
+
+	m_apcTComUpsampledMvFieldCU     = new TComUpsampledMvFieldCU*[uiNumCUsInFrame];
+	m_peUpsampledPredMode           = new char*[uiNumCUsInFrame];
+
+	for (Int i = 0; i < uiNumCUsInFrame; i++ )
+	{
+		m_apcTComUpsampledMvFieldCU[i] = new TComUpsampledMvFieldCU;
+		m_apcTComUpsampledMvFieldCU[i]->createMvField(i, uiWidthInCU, uiNumPartitions);  //create Mv field
+		m_apcTComUpsampledMvFieldCU[i]->initMvField();                                   //initialize Mv field
+
+	  m_peUpsampledPredMode[i]     = new char[uiNumPartitions];
+	}
+
+	return;
+}
+
+Void TComPic::deriveUnitIdxBase(UInt uiUpsamplePelX, UInt uiUpsamplePelY, float ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx)
+{
+  //pixel in the base layer
+  UInt uiPelX       = (UInt)((float)uiUpsamplePelX/ratio);
+  UInt uiPelY       = (UInt)((float)uiUpsamplePelY/ratio);
+  UInt uiBaseWidth  = getPicYuvRec()->getWidth();
+  UInt uiBaseHeight = getPicYuvRec()->getHeight();
+
+  UInt uiWidthInCU       = ( uiBaseWidth % g_uiMaxCUWidth  ) ? uiBaseWidth /g_uiMaxCUWidth  + 1 : uiBaseWidth /g_uiMaxCUWidth;
+  UInt uiHeightInCU      = ( uiBaseHeight% g_uiMaxCUHeight ) ? uiBaseHeight/ g_uiMaxCUHeight + 1 : uiBaseHeight/ g_uiMaxCUHeight;
+
+  uiPelX     = (UInt)Clip3<UInt>(0, uiWidthInCU * g_uiMaxCUWidth - 1, uiPelX);
+  uiPelY     = (UInt)Clip3<UInt>(0, uiHeightInCU * g_uiMaxCUHeight - 1, uiPelY);
+  
+  uiBaseCUAddr = uiPelY / g_uiMaxCUHeight * uiWidthInCU + uiPelX / g_uiMaxCUWidth;
+
+  UInt uiWidthMinPU = g_uiMaxCUWidth / (1<<g_uiMaxCUDepth);
+  UInt uiHeightMinPU = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
+  
+  UInt uiAbsPelX = uiPelX - (uiPelX / g_uiMaxCUWidth) * g_uiMaxCUWidth;
+  UInt uiAbsPelY = uiPelY - (uiPelY / g_uiMaxCUHeight) * g_uiMaxCUHeight;
+
+  UInt RasterIdx = uiAbsPelY / uiHeightMinPU * (g_uiMaxCUWidth/uiWidthMinPU) + uiAbsPelX / uiWidthMinPU;
+  uiBaseAbsPartIdx = g_auiRasterToZscan[RasterIdx];
+
+  return;
+}
+
+
+//MV field up-sampling
+Void TComPic::doTheUpSampleMvField(UInt upSampleRatio)
+{
+  UInt uiWidthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
+  UInt uiHeightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
+  UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
+  UInt uiPelX, uiPelY;
+  UInt uiBaseCUAddr, uiBaseAbsPartIdx;
+  float ratio = 0;
+
+  //????????????????????????????
+  if(upSampleRatio == 0)       //ONE_TO_ONE
+    ratio = 1.0;
+  else if(upSampleRatio == 1)  //ONE_TO_TWO
+    ratio = 2.0;
+  else if(upSampleRatio == 2)  //TWO_TO_THREE
+    ratio = 1.5;
+
+  for(UInt uiCUAddr = 0; uiCUAddr < m_iNumCUInUpsampledPic; uiCUAddr++)  //each LCU
+  {
+    TComUpsampledMvFieldCU*& pcMvFieldCU = getUpsampledMvFieldCU(uiCUAddr);
+    pcMvFieldCU->initMvField();                                          //MV field initialization
+
+    Int unitNum = max (1, (Int)((16/uiWidthMinPU)*(16/uiHeightMinPU)) ); 
+    for(UInt uiAbsPartIdx = 0; uiAbsPartIdx < uiNumPartitions; uiAbsPartIdx+=unitNum )  //each 16x16 unit
+    {
+      //pixel position of each unit in up-sampled layer
+      uiPelX = pcMvFieldCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
+      uiPelY = pcMvFieldCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
+
+      //????????????????????????????
+      deriveUnitIdxBase(uiPelX + 8, uiPelY + 8, ratio, uiBaseCUAddr, uiBaseAbsPartIdx);
+      if( (getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_NONE) && (getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
+      {
+        for(UInt list = 0; list < 2; list++)  //each list
+        { 
+          TComMv cMv = getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getMv(uiBaseAbsPartIdx);
+          Int refIdx = getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getRefIdx(uiBaseAbsPartIdx);
+        //????????????????????????????
+        Int Hor = (Short) (ratio * cMv.getHor());
+        Int Ver = (Short) (ratio * cMv.getVer());
+
+        TComMv cScaledMv(Hor, Ver);
+        TComMvField sMvField;
+        sMvField.setMvField(cScaledMv, refIdx);
+
+        pcMvFieldCU->getCUMvField((RefPicList)list)->setMvField(sMvField, uiAbsPartIdx);
+        m_peUpsampledPredMode[uiCUAddr][uiAbsPartIdx] = MODE_INTER;
+        }
+      }
+      else
+      {
+        TComMvField zeroMvField;  //zero MV and invalid reference index
+        pcMvFieldCU->getCUMvField(REF_PIC_LIST_0)->setMvField(zeroMvField, uiAbsPartIdx);
+        pcMvFieldCU->getCUMvField(REF_PIC_LIST_1)->setMvField(zeroMvField, uiAbsPartIdx);
+
+    	  m_peUpsampledPredMode[uiCUAddr][uiAbsPartIdx]     = MODE_INTRA;
+      }
+
+      //MV compression
+      for(UInt i = 1; i < unitNum; i++ )  
+      {
+        pcMvFieldCU->getCUMvField(REF_PIC_LIST_0)->setMvField(pcMvFieldCU->getCUMvField(REF_PIC_LIST_0)->getMv(uiAbsPartIdx), pcMvFieldCU->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiAbsPartIdx), uiAbsPartIdx + i);
+        pcMvFieldCU->getCUMvField(REF_PIC_LIST_1)->setMvField(pcMvFieldCU->getCUMvField(REF_PIC_LIST_1)->getMv(uiAbsPartIdx), pcMvFieldCU->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiAbsPartIdx), uiAbsPartIdx + i);
+    	  m_peUpsampledPredMode[uiCUAddr][uiAbsPartIdx+i]     = m_peUpsampledPredMode[uiCUAddr][uiAbsPartIdx];
+      }
+
+    }  //ending for(UInt uiAbsPartIdx = 0; uiAbsPartIdx < uiNumPartitions; uiAbsPartIdx++) 
+  }  //ending for(UInt uiCUAddr = 0; uiCUAddr < m_iNumCUInUpsampledPic; uiCUAddr++)
+  return;
+}
+
+Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
+{
+  assert( getPicSym()->getNumberOfCUsInFrame() == pcPicBase->getNumCUInUpsampledPic() );
+
+  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
+  {
+    UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
+
+    TComDataCU*             pcCUDes = getCU(cuIdx);
+    TComUpsampledMvFieldCU* pcMvFieldCU = pcPicBase->getUpsampledMvFieldCU(cuIdx);
+    for(UInt list = 0; list < 2; list++)  //each reference list
+    {
+      TComCUMvField* pcCUMvFieldDes = pcCUDes->getCUMvField((RefPicList)list);
+      TComCUMvField* pcCUMvFieldOrg = pcMvFieldCU->getCUMvField((RefPicList)list);
+
+      assert(pcCUMvFieldDes->getNumPartition() == pcCUMvFieldOrg->getNumPartition());
+      assert(pcCUMvFieldDes->getNumPartition() == uiNumPartitions);
+
+      pcCUMvFieldDes->clearMvField();
+      pcCUMvFieldDes->copyFrom(pcCUMvFieldOrg, pcCUMvFieldDes->getNumPartition(), 0);      
+    }
+
+    char* pPredModeSrc = pcPicBase->getUpsampledPreModeCU(cuIdx);
+    char* pPredModeDst = pcCUDes->getPredictionMode();
+    memcpy(pPredModeDst, pPredModeSrc, sizeof(char)*uiNumPartitions);
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(char)*uiNumPartitions);
+  }
+}
+#endif
+
 #endif
 
 //! \}

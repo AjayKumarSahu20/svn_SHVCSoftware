@@ -464,13 +464,57 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
 #endif 
 
+#if REF_IDX_FRAMEWORK
+    if (pcSlice->getSliceType() == B_SLICE) 
+      pcSlice->setColFromL0Flag(1-uiColDir);
+#endif
+
     //  Set reference list
     pcSlice->setRefPicList ( rcListPic );
 #if REF_IDX_FRAMEWORK
     if(m_layerId > 0)
     {
       m_pcEncTop->setILRPic(pcPic);
+
+#if REF_IDX_MFM
+      pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
+#endif
       pcSlice->addRefPicList ( m_pcEncTop->getIlpList(), 1);
+
+#if REF_IDX_MFM
+      Bool found         = false;
+      UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
+      UInt ColRefIdx     = pcSlice->getColRefIdx();
+      for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
+      { 
+        if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getIsILR() ) 
+        { 
+          ColRefIdx = colIdx; 
+          found = true;
+          break; 
+        }
+      }
+
+      if( found == false )
+      {
+        ColFromL0Flag = 1 - ColFromL0Flag;
+        for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
+        { 
+          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getIsILR() ) 
+          { 
+            ColRefIdx = colIdx; 
+            found = true; 
+            break; 
+          } 
+        }
+      }
+
+      if(found == true)
+      {
+        pcSlice->setColFromL0Flag(ColFromL0Flag);
+        pcSlice->setColRefIdx(ColRefIdx);
+      }
+#endif
     }
 #endif
 
@@ -494,7 +538,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     if (pcSlice->getSliceType() == B_SLICE)
     {
+#if !REF_IDX_FRAMEWORK
       pcSlice->setColFromL0Flag(1-uiColDir);
+#endif
       Bool bLowDelay = true;
       Int  iCurrPOC  = pcSlice->getPOC();
       Int iRefIdx = 0;
@@ -1514,6 +1560,36 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
 
       pcPic->compressMotion(); 
+#if REF_IDX_MFM
+      if( m_layerId == 0 && pcPic->upsampledMvFieldIsNull() )
+      {
+        Int     iEHeight     = m_ppcTEncTop[m_layerId+1]->getSourceHeight();
+        Int     iEWidth      = m_ppcTEncTop[m_layerId+1]->getSourceWidth();
+        pcPic->createUpSampledMvField(iEHeight, iEWidth, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);  //create up-sampled mv field
+      }
+
+    	if( m_layerId == 0 && pcPic->IsUpsampledMvField() == false )
+      {
+        Int iBWidth  = m_ppcTEncTop[m_layerId]->getSourceWidth() - m_ppcTEncTop[m_layerId]->getCropLeft() - m_ppcTEncTop[m_layerId]->getCropRight();
+        Int iBHeight = m_ppcTEncTop[m_layerId]->getSourceHeight() - m_ppcTEncTop[m_layerId]->getCropTop() - m_ppcTEncTop[m_layerId]->getCropBottom();
+
+        Int iEWidth  = m_ppcTEncTop[m_layerId+1]->getSourceWidth() - m_ppcTEncTop[m_layerId+1]->getCropLeft() - m_ppcTEncTop[m_layerId+1]->getCropRight();
+        Int iEHeight = m_ppcTEncTop[m_layerId+1]->getSourceHeight() - m_ppcTEncTop[m_layerId+1]->getCropTop() - m_ppcTEncTop[m_layerId+1]->getCropBottom();
+
+        UInt upSampleRatio;
+        if(iEWidth == iBWidth && iEHeight == iBHeight)
+          upSampleRatio = 0;
+        else if(iEWidth == 2*iBWidth && iEHeight == 2*iBHeight)
+          upSampleRatio = 1;
+        else if(2*iEWidth == 3*iBWidth && 2*iEHeight == 3*iBHeight)
+          upSampleRatio = 2;
+        else
+          assert(0);
+
+        pcPic->doTheUpSampleMvField(upSampleRatio);
+        pcPic->setUpsampledMvField(true);
+      }
+#endif
       
       //-- For time output for each slice
       Double dEncTime = (double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;

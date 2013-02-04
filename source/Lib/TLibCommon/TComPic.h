@@ -87,8 +87,14 @@ private:
 #if SVC_EXTENSION
   Bool                  m_bSpatialEnhLayer;       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec;    // upsampled base layer recontruction for difference domain inter prediction
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
   Bool                  m_bIsILR;                 //  Is ILR picture
+#endif
+#if REF_IDX_MFM
+  Bool                          m_bIsUpsampledMvField;
+  TComUpsampledMvFieldCU**      m_apcTComUpsampledMvFieldCU;
+  Char**                        m_peUpsampledPredMode;
+  Int                           m_iNumCUInUpsampledPic;
 #endif
 #endif
 
@@ -117,9 +123,30 @@ public:
   Void          setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
   TComPicYuv*   getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
 #endif
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
   Void          setIsILR( Bool bIsILR)      {m_bIsILR = bIsILR;}
   Bool          getIsILR()                  {return m_bIsILR;}
+#endif
+#if REF_IDX_MFM
+  Bool          IsUpsampledMvField()                         { return m_bIsUpsampledMvField; }
+  Void          setUpsampledMvField(Bool isUpsampledMvField) { m_bIsUpsampledMvField = isUpsampledMvField; }
+  Bool          upsampledMvFieldIsNull()      
+                {
+                  if (m_apcTComUpsampledMvFieldCU == NULL) 
+                    return true; 
+                  else 
+                    return false; 
+                }
+  Void          createUpSampledMvField(  Int upSampledHeight, Int upSampledWidth, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
+  Void          doTheUpSampleMvField  (  UInt upSampleRatio );
+  Void          copyUpsampledMvField  (  TComPic* pcPicBase );
+  Void deriveUnitIdxBase(UInt uiUpsamplePelX, UInt uiUpsamplePelY, float ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx);
+
+  Int           getNumCUInUpsampledPic()       { return m_iNumCUInUpsampledPic; }
+  TComUpsampledMvFieldCU*&  getUpsampledMvFieldCU( UInt uiCUAddr )  { return m_apcTComUpsampledMvFieldCU[uiCUAddr]; }
+  char*  getUpsampledPreModeCU( UInt uiCUAddr )  { return m_peUpsampledPredMode[uiCUAddr]; }
+
+
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }

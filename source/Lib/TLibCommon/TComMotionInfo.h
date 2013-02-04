@@ -157,6 +157,23 @@ public:
 #else
   Void compress(Char* pePredMode, Int scale); 
 #endif
+
+#if REF_IDX_MFM
+  UInt    getNumPartition()    { return m_uiNumPartition; }        
+  Void    setMvField( TComMvField const  & mvField, Int iIdx)
+  {
+    m_pcMv[iIdx]      = mvField.getMv();
+    m_piRefIdx[iIdx]  = mvField.getRefIdx();
+    return;
+  }
+
+  Void    setMvField( TComMv  cMv,  Int iRefIdx, Int iIdx)
+  {
+    m_pcMv[iIdx]      = cMv;
+    m_piRefIdx[iIdx]  = iRefIdx;
+    return;
+  }
+#endif
 };
 
 //! \}
