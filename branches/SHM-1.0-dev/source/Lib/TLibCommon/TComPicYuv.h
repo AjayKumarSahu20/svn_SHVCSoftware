@@ -128,6 +128,9 @@ public:
   Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
 #endif
 
+#if JCTVC_L0178
+  Void   setWidth   ( Int iPicWidth )     { m_iPicWidth = iPicWidth; }
+#endif
   Int   getStride   ()     { return (m_iPicWidth     ) + (m_iLumaMarginX  <<1); }
   Int   getCStride  ()     { return (m_iPicWidth >> 1) + (m_iChromaMarginX<<1); }
   
