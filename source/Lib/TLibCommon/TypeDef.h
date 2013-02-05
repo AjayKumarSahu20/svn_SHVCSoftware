@@ -74,6 +74,10 @@
 #endif
 #endif
 
+#if SVC_UPSAMPLING
+#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
+#endif
+
 #endif
 #endif
 
