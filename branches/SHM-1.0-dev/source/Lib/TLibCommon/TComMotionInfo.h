@@ -159,7 +159,6 @@ public:
 #endif
 
 #if REF_IDX_MFM
-  UInt    getNumPartition()    { return m_uiNumPartition; }        
   Void    setMvField( TComMvField const  & mvField, Int iIdx)
   {
     m_pcMv[iIdx]      = mvField.getMv();

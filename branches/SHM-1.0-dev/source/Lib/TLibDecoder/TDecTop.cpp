@@ -270,9 +270,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 #endif
 
-#if REF_IDX_MFM
-    rpcPic->setUpsampledMvField(false);
-#endif
+
     m_cListPic.pushBack( rpcPic );
     
     return;
@@ -320,9 +318,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 #endif
 
-#if REF_IDX_MFM
-  rpcPic->setUpsampledMvField(false);
-#endif
+
 }
 
 Void TDecTop::executeDeblockAndAlf(UInt& ruiPOC, TComList<TComPic*>*& rpcListPic, Int& iSkipFrame, Int& iPOCLastDisplay)

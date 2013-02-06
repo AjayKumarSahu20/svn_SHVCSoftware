@@ -596,44 +596,7 @@ public:
 #endif
 };
 
-#if REF_IDX_MFM
-class TComUpsampledMvFieldCU
-{
-  TComCUMvField m_acCUMvField[2];  //array of motion vector field
-  UInt          m_uiCUAddr;
-  UInt          m_uiCUPelX;
-  UInt          m_uiCUPelY;
 
-public:
-  Void          createMvField(Int CUAddr, Int uiWidthInCU, UInt uiNumPartitions) 
-  { 
-    m_uiCUAddr      = CUAddr;
-    m_uiCUPelX      = (CUAddr % uiWidthInCU) * g_uiMaxCUWidth;
-    m_uiCUPelY      = (CUAddr / uiWidthInCU) * g_uiMaxCUWidth;
-
-    m_acCUMvField[0].create( uiNumPartitions ); 
-		m_acCUMvField[1].create( uiNumPartitions );
-    return; 
-  }
-
-  Void          initMvField() 
-  { 
-    m_acCUMvField[0].clearMvField(); 
-    m_acCUMvField[1].clearMvField(); 
-    return; 
-  }
-  Void          destroy() 
-  { 
-    m_acCUMvField[0].destroy(); 
-    m_acCUMvField[1].destroy(); 
-    return; 
-  }
-  TComCUMvField* getCUMvField         ( RefPicList e )          { return  &m_acCUMvField[e]; }
-  UInt           getAddr              ()                        { return  m_uiCUAddr;}
-  UInt           getCUPelX            ()                        { return  m_uiCUPelX; }
-  UInt           getCUPelY            ()                        { return  m_uiCUPelY; }
-};
-#endif
 
 namespace RasterAddress
 {
