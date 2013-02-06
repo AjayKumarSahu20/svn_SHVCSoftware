@@ -90,12 +90,6 @@ private:
 #if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
   Bool                  m_bIsILR;                 //  Is ILR picture
 #endif
-#if REF_IDX_MFM
-  Bool                          m_bIsUpsampledMvField;
-  TComUpsampledMvFieldCU**      m_apcTComUpsampledMvFieldCU;
-  Char**                        m_peUpsampledPredMode;
-  Int                           m_iNumCUInUpsampledPic;
-#endif
 #endif
 
 public:
@@ -127,26 +121,10 @@ public:
   Void          setIsILR( Bool bIsILR)      {m_bIsILR = bIsILR;}
   Bool          getIsILR()                  {return m_bIsILR;}
 #endif
+
 #if REF_IDX_MFM
-  Bool          IsUpsampledMvField()                         { return m_bIsUpsampledMvField; }
-  Void          setUpsampledMvField(Bool isUpsampledMvField) { m_bIsUpsampledMvField = isUpsampledMvField; }
-  Bool          upsampledMvFieldIsNull()      
-                {
-                  if (m_apcTComUpsampledMvFieldCU == NULL) 
-                    return true; 
-                  else 
-                    return false; 
-                }
-  Void          createUpSampledMvField(  Int upSampledHeight, Int upSampledWidth, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
-  Void          doTheUpSampleMvField  (  UInt upSampleRatio );
   Void          copyUpsampledMvField  (  TComPic* pcPicBase );
-  Void deriveUnitIdxBase(UInt uiUpsamplePelX, UInt uiUpsamplePelY, float ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx);
-
-  Int           getNumCUInUpsampledPic()       { return m_iNumCUInUpsampledPic; }
-  TComUpsampledMvFieldCU*&  getUpsampledMvFieldCU( UInt uiCUAddr )  { return m_apcTComUpsampledMvFieldCU[uiCUAddr]; }
-  char*  getUpsampledPreModeCU( UInt uiCUAddr )  { return m_peUpsampledPredMode[uiCUAddr]; }
-
-
+  Void          deriveUnitIdxBase     (  UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx );
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }

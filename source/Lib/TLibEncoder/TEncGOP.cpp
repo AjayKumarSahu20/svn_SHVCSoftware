@@ -1560,36 +1560,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
 
       pcPic->compressMotion(); 
-#if REF_IDX_MFM
-      if( m_layerId == 0 && pcPic->upsampledMvFieldIsNull() )
-      {
-        Int     iEHeight     = m_ppcTEncTop[m_layerId+1]->getSourceHeight();
-        Int     iEWidth      = m_ppcTEncTop[m_layerId+1]->getSourceWidth();
-        pcPic->createUpSampledMvField(iEHeight, iEWidth, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);  //create up-sampled mv field
-      }
-
-    	if( m_layerId == 0 && pcPic->IsUpsampledMvField() == false )
-      {
-        Int iBWidth  = m_ppcTEncTop[m_layerId]->getSourceWidth() - m_ppcTEncTop[m_layerId]->getCropLeft() - m_ppcTEncTop[m_layerId]->getCropRight();
-        Int iBHeight = m_ppcTEncTop[m_layerId]->getSourceHeight() - m_ppcTEncTop[m_layerId]->getCropTop() - m_ppcTEncTop[m_layerId]->getCropBottom();
-
-        Int iEWidth  = m_ppcTEncTop[m_layerId+1]->getSourceWidth() - m_ppcTEncTop[m_layerId+1]->getCropLeft() - m_ppcTEncTop[m_layerId+1]->getCropRight();
-        Int iEHeight = m_ppcTEncTop[m_layerId+1]->getSourceHeight() - m_ppcTEncTop[m_layerId+1]->getCropTop() - m_ppcTEncTop[m_layerId+1]->getCropBottom();
-
-        UInt upSampleRatio;
-        if(iEWidth == iBWidth && iEHeight == iBHeight)
-          upSampleRatio = 0;
-        else if(iEWidth == 2*iBWidth && iEHeight == 2*iBHeight)
-          upSampleRatio = 1;
-        else if(2*iEWidth == 3*iBWidth && 2*iEHeight == 3*iBHeight)
-          upSampleRatio = 2;
-        else
-          assert(0);
-
-        pcPic->doTheUpSampleMvField(upSampleRatio);
-        pcPic->setUpsampledMvField(true);
-      }
-#endif
       
       //-- For time output for each slice
       Double dEncTime = (double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;

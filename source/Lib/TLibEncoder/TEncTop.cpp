@@ -601,9 +601,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   rpcPic->getSlice(0)->setPOC( m_iPOCLast );
   // mark it should be extended
   rpcPic->getPicYuvRec()->setBorderExtension(false);
-#if REF_IDX_MFM
-  rpcPic->setUpsampledMvField(false);
-#endif
+
 }
 
 Void TEncTop::xInitSPS()

@@ -287,39 +287,6 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
 
   rpcPic->compressMotion(); 
 
-#if REF_IDX_MFM
-  if( rpcPic->getLayerId() == 0 && rpcPic->upsampledMvFieldIsNull() ) 
-  { 
-    TComSPS *spsEL = m_ppcTDecTop[1]->getSPS();
-
-    rpcPic->createUpSampledMvField(spsEL->getPicHeightInLumaSamples(), spsEL->getPicWidthInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);  //create up-sampled mv field 
-  }
-
-  if( rpcPic->getLayerId() == 0 && rpcPic->IsUpsampledMvField() == false ) 
-  { 
-    TComSPS *spsBL = m_ppcTDecTop[0]->getSPS();
-    TComSPS *spsEL = m_ppcTDecTop[1]->getSPS();
-
-    Int iBWidth  = spsBL->getPicWidthInLumaSamples() - spsBL->getPicCropLeftOffset() - spsBL->getPicCropRightOffset(); 
-    Int iBHeight = spsBL->getPicHeightInLumaSamples() - spsBL->getPicCropTopOffset() - spsBL->getPicCropBottomOffset();
-
-    Int iEWidth  = spsEL->getPicWidthInLumaSamples() - spsEL->getPicCropLeftOffset() - spsEL->getPicCropRightOffset(); 
-    Int iEHeight = spsEL->getPicHeightInLumaSamples() - spsEL->getPicCropTopOffset() - spsEL->getPicCropBottomOffset();
-
-    UInt upSampleRatio; 
-    if(iEWidth == iBWidth && iEHeight == iBHeight) 
-      upSampleRatio = 0; 
-    else if(iEWidth == 2*iBWidth && iEHeight == 2*iBHeight) 
-      upSampleRatio = 1; 
-    else if(2*iEWidth == 3*iBWidth && 2*iEHeight == 3*iBHeight) 
-      upSampleRatio = 2; 
-    else 
-      assert(0);
-
-    rpcPic->doTheUpSampleMvField(upSampleRatio); 
-    rpcPic->setUpsampledMvField(true);
-  }
-#endif
 
   Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced()) c += 32;
