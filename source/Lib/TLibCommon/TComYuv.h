@@ -115,7 +115,7 @@ public:
   Void    copyFromPicLuma      ( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx );
   Void    copyFromPicChroma    ( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiAbsZorderIdx );
 #if NO_RESIDUAL_FLAG_FOR_BLPRED
-  Void		copyFromPicLuma  ( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiZorderIdxInCU, UInt uiAbsZorderIdx, UInt uiWidth, UInt uiHeight );
+  Void    copyFromPicLuma  ( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiZorderIdxInCU, UInt uiAbsZorderIdx, UInt uiWidth, UInt uiHeight );
   Void    copyFromPicChroma( TComPicYuv* pcPicYuvSrc, UInt iCuAddr, UInt uiZorderIdxInCU, UInt uiAbsZorderIdx, UInt uiCWidth, UInt uiCHeight, UInt uiChromaId  );
 #endif
   
