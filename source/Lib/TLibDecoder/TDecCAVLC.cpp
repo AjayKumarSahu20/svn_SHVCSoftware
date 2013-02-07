@@ -846,9 +846,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #if REF_IDX_MFM
   if(pcSPS->getLayerId() > 0)
   {
-	  READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
-	  pcSPS->setMFMEnabledFlag( uiCode ? true : false );
-	  assert(pcSPS->getMFMEnabledFlag()); 
+    READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
+    pcSPS->setMFMEnabledFlag( uiCode ? true : false );
+    assert(pcSPS->getMFMEnabledFlag()); 
   }
 #endif
 #if SUPPORT_FOR_VUI
