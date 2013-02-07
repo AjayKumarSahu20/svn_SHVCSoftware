@@ -3210,6 +3210,11 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   ruiCost = MAX_UINT;
   for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
   {
+#if REF_IDX_ME_ZEROMV
+	  Bool bZeroMVILR = pcCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
+	  if(bZeroMVILR)
+	  {
+#endif
       UInt uiCostCand = MAX_UINT;
       UInt uiBitsCand = 0;
       
@@ -3233,6 +3238,9 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
         uiInterDir = uhInterDirNeighbours[uiMergeCand];
         uiMergeIndex = uiMergeCand;
       }
+#if REF_IDX_ME_ZEROMV
+	  }
+#endif
     }
 }
 
@@ -3419,9 +3427,17 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
         
         if(pcCU->getSlice()->getMvdL1ZeroFlag() && iRefList==1 && biPDistTemp < bestBiPDist)
         {
+#if REF_IDX_ME_ZEROMV 
+		  Bool bZeroMVILR = pcCU->xCheckZeroMVILRMvdL1Zero(iRefList, iRefIdxTemp, aaiMvpIdx[iRefList][iRefIdxTemp]);
+		  if(bZeroMVILR)
+		  {
+#endif
           bestBiPDist = biPDistTemp;
           bestBiPMvpL1 = aaiMvpIdx[iRefList][iRefIdxTemp];
           bestBiPRefIdxL1 = iRefIdxTemp;
+#if REF_IDX_ME_ZEROMV
+		  }
+#endif
         }
 
         uiBitsTemp += m_auiMVPIdxCost[aaiMvpIdx[iRefList][iRefIdxTemp]][AMVP_MAX_NUM_CANDS];
@@ -3559,7 +3575,11 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
       }
     }
     //  Bi-directional prediction
+#if REF_IDX_ME_ZEROMV
+	if ( (pcCU->getSlice()->isInterB()) && (pcCU->isBipredRestriction(iPartIdx) == false) && !(pcCU->getSlice()->getMvdL1ZeroFlag() && bestBiPDist == MAX_INT) )
+#else
     if ( (pcCU->getSlice()->isInterB()) && (pcCU->isBipredRestriction(iPartIdx) == false) )
+#endif
     {
       
       cMvBi[0] = cMv[0];            cMvBi[1] = cMv[1];

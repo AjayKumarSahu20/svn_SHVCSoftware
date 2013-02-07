@@ -84,6 +84,9 @@ TEncTop::TEncTop()
 #if REF_IDX_FRAMEWORK
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
 #endif
+#if REF_IDX_MFM
+  m_bMFMEnabledFlag = false;
+#endif
 }
 
 TEncTop::~TEncTop()
@@ -393,7 +396,7 @@ Void TEncTop::xInitILRP()
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
 #endif
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
         m_cIlpPic[j]->setIsILR(true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
@@ -598,12 +601,16 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   rpcPic->getSlice(0)->setPOC( m_iPOCLast );
   // mark it should be extended
   rpcPic->getPicYuvRec()->setBorderExtension(false);
+
 }
 
 Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
   m_cSPS.setLayerId(m_layerId);
+#endif
+#if REF_IDX_MFM
+  m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
 #endif
 
   m_cSPS.setPicWidthInLumaSamples         ( m_iSourceWidth      );

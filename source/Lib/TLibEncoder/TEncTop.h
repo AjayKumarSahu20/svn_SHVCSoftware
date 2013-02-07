@@ -139,6 +139,9 @@ private:
 #if REF_IDX_FRAMEWORK
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #endif
+#if REF_IDX_MFM
+  Bool                    m_bMFMEnabledFlag;
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -226,6 +229,10 @@ public:
 #if REF_IDX_FRAMEWORK
   TComPic** getIlpList() { return m_cIlpPic; }
   Void setILRPic(TComPic *pcPic);
+#endif
+#if REF_IDX_MFM
+  Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
 
 };

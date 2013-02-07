@@ -843,6 +843,14 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   }
 #endif
   READ_FLAG( uiCode, "sps_temporal_mvp_enable_flag" );            pcSPS->setTMVPFlagsPresent(uiCode);
+#if REF_IDX_MFM
+  if(pcSPS->getLayerId() > 0)
+  {
+	  READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
+	  pcSPS->setMFMEnabledFlag( uiCode ? true : false );
+	  assert(pcSPS->getMFMEnabledFlag()); 
+  }
+#endif
 #if SUPPORT_FOR_VUI
   READ_FLAG( uiCode, "vui_parameters_present_flag" );             pcSPS->setVuiParametersPresentFlag(uiCode);
 

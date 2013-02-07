@@ -648,6 +648,9 @@ private:
 #if SVC_EXTENSION
   UInt m_layerId;
 #endif
+#if REF_IDX_MFM
+  Bool m_bMFMEnabledFlag;
+#endif
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -835,6 +838,10 @@ public:
 #if SVC_EXTENSION
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
+#endif
+#if REF_IDX_MFM
+  Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
+  Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
 #endif
 };
 
@@ -1447,6 +1454,11 @@ public:
   Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
   TComPicYuv* getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
 #endif
+
+#if REF_IDX_MFM
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+#endif
+
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
   Void      setRefPOCList       ();
   Void      setColFromL0Flag    ( UInt colFromL0 ) { m_colFromL0Flag = colFromL0; }

@@ -518,6 +518,13 @@ Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInser
 {
   if(getSPS()->getLayerId() && m_eSliceType != I_SLICE)
   {
+#if REF_IDX_MFM
+    assert(iRefPicNum == 1);
+    if( getPOC() != 0 )
+    { 
+      pIlpPicList[0]->copyUpsampledMvField(getBaseColPic());
+    }
+#endif
     //add to list 0;
     Int iOffset;
     m_aiNumRefIdx[REF_PIC_LIST_0] += iInsertOffset;
@@ -545,6 +552,51 @@ Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInser
     }
   }
 }
+
+#if REF_IDX_MFM
+Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
+{
+  //set reference picture POC of each ILP reference 
+  Int thePoc = ilpPic[0]->getPOC(); 
+  assert(thePoc >= 0); 
+  assert(thePoc == pcRefPicBL->getPOC());
+
+  //initialize reference POC of ILP 
+  for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
+  { 
+    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_0, refIdx); 
+    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_1, refIdx); 
+
+    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_0, refIdx); 
+    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_1, refIdx); 
+  }
+
+  //set reference POC of ILP 
+  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_0, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0));
+  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0) <= MAX_NUM_REF); 
+  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_1, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1));
+  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1) <= MAX_NUM_REF);
+
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
+  {
+	  ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
+  {
+	  ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx);
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
+  {
+	  ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
+  {
+	  ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx); 
+  }
+  return;
+}
+#endif
+
 #endif
 
 Int TComSlice::getNumRpsCurrTempList()
