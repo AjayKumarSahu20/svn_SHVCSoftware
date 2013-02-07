@@ -585,21 +585,14 @@ Void TComPic::deriveUnitIdxBase( UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt 
   return;
 }
 
-
-
-
 Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 {
-
-
-
 	Int iBWidth   = pcPicBase->getPicYuvRec()->getWidth () - pcPicBase->getPicYuvRec()->getPicCropLeftOffset() - pcPicBase->getPicYuvRec()->getPicCropRightOffset();
 	Int iBHeight  = pcPicBase->getPicYuvRec()->getHeight() - pcPicBase->getPicYuvRec()->getPicCropTopOffset() - pcPicBase->getPicYuvRec()->getPicCropBottomOffset();
 
 	Int iEWidth   = getPicYuvRec()->getWidth() -  getPicYuvRec()->getPicCropLeftOffset() - getPicYuvRec()->getPicCropRightOffset();
 	Int iEHeight  = getPicYuvRec()->getHeight() - getPicYuvRec()->getPicCropTopOffset() -  getPicYuvRec()->getPicCropBottomOffset();
-
-
+  
 	UInt upSampleRatio = 0;
 	if(iEWidth == iBWidth && iEHeight == iBHeight)
 	{
@@ -653,7 +646,6 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 					pcCUDes->setPredictionMode(uiAbsPartIdx, MODE_INTER);
 				}
 			}
-
 			else
 			{
 				TComMvField zeroMvField;  //zero MV and invalid reference index

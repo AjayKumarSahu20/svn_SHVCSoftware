@@ -1351,9 +1351,9 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
     for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
     {
 #if REF_IDX_ME_ZEROMV
-		Bool bZeroMVILR = rpcTempCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
-		if(bZeroMVILR)
-		{
+      Bool bZeroMVILR = rpcTempCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
+      if(bZeroMVILR)
+      {
 #endif
         if(!(uiNoResidual==1 && mergeCandBuffer[uiMergeCand]==1))
         {
@@ -1407,7 +1407,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
     }
     }
 #if REF_IDX_ME_ZEROMV 
-	}
+      }
 #endif
    }
 
