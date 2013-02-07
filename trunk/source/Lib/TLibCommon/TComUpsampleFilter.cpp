@@ -142,7 +142,55 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Int iEWidth   = pcUsPic->getWidth () - pcUsPic->getPicCropLeftOffset() - pcUsPic->getPicCropRightOffset();
   Int iEHeight  = pcUsPic->getHeight() - pcUsPic->getPicCropTopOffset() - pcUsPic->getPicCropBottomOffset();
   Int iEStride  = pcUsPic->getStride();
-
+  
+  Pel* piTempBufY = pcTempPic->getLumaAddr();
+  Pel* piSrcBufY  = pcBasePic->getLumaAddr();
+  Pel* piDstBufY  = pcUsPic->getLumaAddr();
+  
+  Pel* piSrcY;
+  Pel* piDstY;
+  
+  Pel* piTempBufU = pcTempPic->getCbAddr();
+  Pel* piSrcBufU  = pcBasePic->getCbAddr();
+  Pel* piDstBufU  = pcUsPic->getCbAddr();
+  
+  Pel* piTempBufV = pcTempPic->getCrAddr();
+  Pel* piSrcBufV  = pcBasePic->getCrAddr();
+  Pel* piDstBufV  = pcUsPic->getCrAddr();
+  
+  Pel* piSrcU;
+  Pel* piDstU;
+  Pel* piSrcV;
+  Pel* piDstV;
+  
+#if JCTVC_L0178
+  Pel *tempBufRight = NULL, *tempBufBottom = NULL;
+  Int tempBufSizeRight = 0, tempBufSizeBottom = 0;
+  
+  if ( pcBasePic->getPicCropRightOffset() )
+  {
+    tempBufSizeRight = pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+  }
+  
+  if( pcBasePic->getPicCropBottomOffset() )
+  {
+    tempBufSizeBottom = pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth ();
+  }
+  
+  if( tempBufSizeRight )
+  {
+    tempBufRight = (Pel *) xMalloc(Pel, tempBufSizeRight + (tempBufSizeRight>>1) );
+    assert( tempBufRight );
+  }
+  
+  if( tempBufSizeBottom )
+  {
+    tempBufBottom = (Pel *) xMalloc(Pel, tempBufSizeBottom + (tempBufSizeBottom>>1) );
+    assert( tempBufBottom );
+  }
+ 
+#endif
+  
 #if PHASE_DERIVATION_IN_INTEGER
   Int iRefPos16 = 0;
   Int phase    = 0;
@@ -178,16 +226,82 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
 #endif
 
-  Pel* piTempBufY = pcTempPic->getLumaAddr();
-  Pel* piSrcBufY  = pcBasePic->getLumaAddr();
-  Pel* piDstBufY  = pcUsPic->getLumaAddr();
 
-  Pel* piSrcY;
-  Pel* piDstY;
 
   assert ( iEWidth == 2*iBWidth || 2*iEWidth == 3*iBWidth );
   assert ( iEHeight == 2*iBHeight || 2*iEHeight == 3*iBHeight );
 
+#if JCTVC_L0178
+  // save the cropped region to copy back to the base picture since the base picture might be used as a reference picture
+  if( tempBufSizeRight )
+  {
+    piSrcY = piSrcBufY + iBWidth;
+    piDstY = tempBufRight;
+    for( i = 0; i < pcBasePic->getHeight(); i++ )
+    {
+      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getPicCropRightOffset());
+      piSrcY += iBStride;
+      piDstY += pcBasePic->getPicCropRightOffset();
+    }
+    
+    if(pcBasePic->getPicCropRightOffset()>>1)
+    {
+      Int iBStrideChroma = (iBStride>>1);
+      piSrcU = piSrcBufU + (iBWidth>>1);
+      piDstU = tempBufRight + pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+      piSrcV = piSrcBufV + (iBWidth>>1);
+      piDstV = piDstU + (pcBasePic->getPicCropRightOffset()>>1) * (pcBasePic->getHeight()>>1);
+    
+      for( i = 0; i < pcBasePic->getHeight()>>1; i++ )
+      {
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        piSrcU += iBStrideChroma;
+        piDstU += (pcBasePic->getPicCropRightOffset()>>1);
+        
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        piSrcV += iBStrideChroma;
+        piDstV += (pcBasePic->getPicCropRightOffset()>>1);
+      }
+    }
+    
+    pcBasePic->setWidth(iBWidth);
+  }
+  
+  if( tempBufSizeBottom )
+  {
+    piSrcY = piSrcBufY + iBHeight * iBStride;
+    piDstY = tempBufBottom;
+    for( i = 0; i < pcBasePic->getPicCropBottomOffset(); i++ )
+    {
+      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getWidth());
+      piSrcY += iBStride;
+      piDstY += pcBasePic->getWidth();
+    }
+    
+    if(pcBasePic->getPicCropBottomOffset()>>1)
+    {
+      Int iBStrideChroma = (iBStride>>1);
+      piSrcU = piSrcBufU + (iBHeight>>1) * iBStrideChroma;
+      piDstU = tempBufBottom + pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth();
+      piSrcV = piSrcBufV + (iBHeight>>1) * iBStrideChroma;
+      piDstV = piDstU + (pcBasePic->getPicCropBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
+      
+      for( i = 0; i < pcBasePic->getPicCropBottomOffset()>>1; i++ )
+      {
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getWidth()>>1));
+        piSrcU += iBStrideChroma;
+        piDstU += (pcBasePic->getWidth()>>1);
+        
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getWidth()>>1));
+        piSrcV += iBStrideChroma;
+        piDstV += (pcBasePic->getWidth()>>1);
+      }
+    }
+
+    pcBasePic->setHeight(iBHeight);
+  }
+#endif
+  
   pcBasePic->setBorderExtension(false);
   pcBasePic->extendPicBorder   (); // extend the border.
 
@@ -277,18 +391,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
 
   //========== UV component upsampling ===========
-  Pel* piTempBufU = pcTempPic->getCbAddr();
-  Pel* piSrcBufU  = pcBasePic->getCbAddr();
-  Pel* piDstBufU  = pcUsPic->getCbAddr();
-
-  Pel* piTempBufV = pcTempPic->getCrAddr();
-  Pel* piSrcBufV  = pcBasePic->getCrAddr();
-  Pel* piDstBufV  = pcUsPic->getCrAddr();
-
-  Pel* piSrcU;
-  Pel* piDstU;
-  Pel* piSrcV;
-  Pel* piDstV;
 
   iEWidth  >>= 1;
   iEHeight >>= 1;
@@ -404,5 +506,98 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   pcUsPic->setBorderExtension(false);
   pcTempPic->setBorderExtension(false);
   pcBasePic->setBorderExtension(false);
+  
+#if JCTVC_L0178
+  // copy back the saved cropped region
+  if( tempBufSizeRight )
+  {
+    // put the correct width back
+    pcBasePic->setWidth(pcBasePic->getWidth()+pcBasePic->getPicCropRightOffset());
+  }
+  if( tempBufSizeBottom )
+  {
+    pcBasePic->setHeight(pcBasePic->getHeight()+pcBasePic->getPicCropBottomOffset());
+  }
+  
+  iBWidth   = pcBasePic->getWidth () - pcBasePic->getPicCropLeftOffset() - pcBasePic->getPicCropRightOffset();
+  iBHeight  = pcBasePic->getHeight() - pcBasePic->getPicCropTopOffset() - pcBasePic->getPicCropBottomOffset();
+  
+  iBStride  = pcBasePic->getStride();
+  
+  if( tempBufSizeRight )
+  {
+    piSrcY = tempBufRight;
+    piDstY = piSrcBufY + iBWidth;
+    
+    for( i = 0; i < pcBasePic->getHeight(); i++ )
+    {
+      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getPicCropRightOffset());
+      piSrcY += pcBasePic->getPicCropRightOffset();
+      piDstY += iBStride;
+    }
+    
+    if(pcBasePic->getPicCropRightOffset()>>1)
+    {
+      Int iBStrideChroma = (iBStride>>1);
+      piSrcU = tempBufRight + pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+      piDstU = piSrcBufU + (iBWidth>>1);
+      piSrcV = piSrcU + (pcBasePic->getPicCropRightOffset()>>1) * (pcBasePic->getHeight()>>1);
+      piDstV = piSrcBufV + (iBWidth>>1);
+
+      for( i = 0; i < pcBasePic->getHeight()>>1; i++ )
+      {
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        piSrcU += (pcBasePic->getPicCropRightOffset()>>1);
+        piDstU += iBStrideChroma;
+        
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        piSrcV += (pcBasePic->getPicCropRightOffset()>>1);
+        piDstV += iBStrideChroma;
+      }
+    }
+  }
+  
+  if( tempBufSizeBottom )
+  {
+    piDstY = piSrcBufY + iBHeight * iBStride;
+    piSrcY = tempBufBottom;
+    for( i = 0; i < pcBasePic->getPicCropBottomOffset(); i++ )
+    {
+      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getWidth());
+      piDstY += iBStride;
+      piSrcY += pcBasePic->getWidth();
+    }
+    
+    if(pcBasePic->getPicCropBottomOffset()>>1)
+    {
+      Int iBStrideChroma = (iBStride>>1);
+      piSrcU = tempBufBottom + pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth();
+      piDstU = piSrcBufU + (iBHeight>>1) * iBStrideChroma;
+      piSrcV = piSrcU + (pcBasePic->getPicCropBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
+      piDstV = piSrcBufV + (iBHeight>>1) * iBStrideChroma;
+            
+      for( i = 0; i < pcBasePic->getPicCropBottomOffset()>>1; i++ )
+      {
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getWidth()>>1));
+        piSrcU += (pcBasePic->getWidth()>>1);
+        piDstU += iBStrideChroma;
+        
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getWidth()>>1));
+        piSrcV += (pcBasePic->getWidth()>>1);
+        piDstV += iBStrideChroma;
+      }
+    }
+  
+  }
+
+  if( tempBufSizeRight )
+  {
+    xFree( tempBufRight );
+  }
+  if( tempBufSizeBottom )
+  {
+    xFree( tempBufBottom );
+  }
+#endif
 }
 #endif //SVC_EXTENSION

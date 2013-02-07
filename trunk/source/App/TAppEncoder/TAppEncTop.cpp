@@ -97,6 +97,12 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setCropBottom                   ( m_acLayerCfg[layer].getCropBottom() );
     m_acTEncTop[layer].setFrameToBeEncoded             ( m_iFrameToBeEncoded );
 
+#if REF_IDX_MFM
+	if(layer == 0)
+		m_acTEncTop[layer].setMFMEnabledFlag(false);
+	else
+		m_acTEncTop[layer].setMFMEnabledFlag(true);
+#endif
     // set layer ID 
     m_acTEncTop[layer].setLayerId ( layer ); 
     m_acTEncTop[layer].setNumLayer ( m_numLayers );

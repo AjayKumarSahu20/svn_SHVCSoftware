@@ -79,6 +79,12 @@ private:
 #else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
 #endif
+
+#if REF_IDX_MFM
+  TComSPS*               m_pcSPS;
+  Bool                   m_bMFMEnabledFlag;
+#endif
+
   TComSlice*              m_apcSlicePilot;
   
   SEImessages *m_SEIs; ///< "all" SEI messages.  If not NULL, we own the object.
@@ -169,6 +175,12 @@ public:
   Void      xInitILRP(TComSPS *pcSPS);
   Void      setILRPic(TComPic *pcPic);
 #endif
+#if REF_IDX_MFM
+  TComSPS*  getSPS()                       {return m_pcSPS;}
+  Void      setMFMEnabledFlag(Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool      getMFMEnabledFlag()            {return m_bMFMEnabledFlag;}
+#endif
+
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xUpdateGopSize    (TComSlice* pcSlice);

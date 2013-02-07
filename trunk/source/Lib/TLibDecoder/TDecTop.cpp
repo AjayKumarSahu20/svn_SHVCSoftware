@@ -163,7 +163,7 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 #else
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
 #endif
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || REF_IDX_MFM
         m_cIlpPic[j]->setIsILR(true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
@@ -269,6 +269,8 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #if REMOVE_APS
     rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 #endif
+
+
     m_cListPic.pushBack( rpcPic );
     
     return;
@@ -315,6 +317,8 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #if REMOVE_APS
   rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 #endif
+
+
 }
 
 Void TDecTop::executeDeblockAndAlf(UInt& ruiPOC, TComList<TComPic*>*& rpcListPic, Int& iSkipFrame, Int& iPOCLastDisplay)
@@ -767,6 +771,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     if(m_layerId > 0)
     {
       setILRPic(pcPic);
+#if REF_IDX_MFM
+      pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
+#endif
+
       pcSlice->addRefPicList ( m_cIlpPic, 
                                1, 
                                ((pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) && 
@@ -879,6 +887,10 @@ Void TDecTop::xDecodeSPS()
 #endif
   m_cEntropyDecoder.decodeSPS( sps );
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
+#if REF_IDX_MFM
+  m_pcSPS = sps;
+  setMFMEnabledFlag(sps->getMFMEnabledFlag());
+#endif
 #if !REMOVE_ALF
   m_cAdaptiveLoopFilter.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
 #endif

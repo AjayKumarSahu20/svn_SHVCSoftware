@@ -59,6 +59,7 @@
 #define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
+#define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
@@ -71,6 +72,10 @@
 #define SVC_MVP                          1      ///< motion hook for merge mode as an example
 #define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
 #endif
+#endif
+
+#if SVC_UPSAMPLING
+#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
 #endif
 
 #endif
