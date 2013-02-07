@@ -1497,9 +1497,13 @@ Void TComTrQuant::invRecurTransformNxN( TComDataCU* pcCU, UInt uiAbsPartIdx, Tex
 #if INTER_TRANSFORMSKIP
 #if NO_RESIDUAL_FLAG_FOR_BLPRED
     if(pcCU->isIntraBL(uiAbsPartIdx) && eTxt == TEXT_LUMA)
+    {
       invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, DC_IDX, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
+    }
     else
+    {
       invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
+    }
 #else
     invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
 #endif
