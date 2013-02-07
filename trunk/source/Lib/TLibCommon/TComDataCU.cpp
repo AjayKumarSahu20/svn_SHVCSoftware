@@ -2145,39 +2145,39 @@ UInt TComDataCU::getCtxIntraBLFlag( UInt uiAbsPartIdx )
 #if REF_IDX_ME_ZEROMV
 Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1)
 {
-	Bool checkZeroMVILR = true;
+  Bool checkZeroMVILR = true;
 
-	if(uhInterDir&0x1)  //list0
-	{
-		Int refIdxL0 = cMvFieldL0.getRefIdx();
-		if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->getIsILR())
-			checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
-	}
-	if(uhInterDir&0x2)  //list1
-	{
-		Int refIdxL1  = cMvFieldL1.getRefIdx();
-		if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->getIsILR())
-			checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
-	}
+  if(uhInterDir&0x1)  //list0
+  {
+    Int refIdxL0 = cMvFieldL0.getRefIdx();
+    if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->getIsILR())
+      checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+  }
+  if(uhInterDir&0x2)  //list1
+  {
+    Int refIdxL1  = cMvFieldL1.getRefIdx();
+    if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->getIsILR())
+      checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+  }
 
-	return checkZeroMVILR;
+  return checkZeroMVILR;
 }
 
 Bool TComDataCU::xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx)
 {
-	RefPicList eRefPicList = iRefList > 0? REF_PIC_LIST_1: REF_PIC_LIST_0;
-	assert(eRefPicList == REF_PIC_LIST_1);
+  RefPicList eRefPicList = iRefList > 0? REF_PIC_LIST_1: REF_PIC_LIST_0;
+  assert(eRefPicList == REF_PIC_LIST_1);
 
-	Bool checkZeroMVILR = true;
+  Bool checkZeroMVILR = true;
 
-	if(getSlice()->getRefPic(eRefPicList, iRefIdx)->getIsILR())
-	{
-		AMVPInfo* pcAMVPInfo = getCUMvField(eRefPicList)->getAMVPInfo();
-		TComMv    cMv        = pcAMVPInfo->m_acMvCand[MvpIdx];
-		checkZeroMVILR &= (cMv.getHor() == 0 && cMv.getVer() == 0);
-	}
+  if(getSlice()->getRefPic(eRefPicList, iRefIdx)->getIsILR())
+  {
+    AMVPInfo* pcAMVPInfo = getCUMvField(eRefPicList)->getAMVPInfo();
+    TComMv    cMv        = pcAMVPInfo->m_acMvCand[MvpIdx];
+    checkZeroMVILR &= (cMv.getHor() == 0 && cMv.getVer() == 0);
+  }
 
-	return checkZeroMVILR;
+  return checkZeroMVILR;
 }
 #endif
 

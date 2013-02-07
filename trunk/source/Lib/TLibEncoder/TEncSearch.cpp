@@ -3186,7 +3186,7 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   {
     uhInterDirNeighbours[uiMergeCand] = 0;
     cMvFieldNeighbours[0 + 2*uiMergeCand].setMvField(TComMv(), NOT_VALID);
-	  cMvFieldNeighbours[1 + 2*uiMergeCand].setMvField(TComMv(), NOT_VALID);
+    cMvFieldNeighbours[1 + 2*uiMergeCand].setMvField(TComMv(), NOT_VALID);
   }
 #endif
   pcCU->getPartIndexAndSize( iPUIdx, uiAbsPartIdx, iWidth, iHeight );
@@ -3211,9 +3211,9 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
   {
 #if REF_IDX_ME_ZEROMV
-	  Bool bZeroMVILR = pcCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
-	  if(bZeroMVILR)
-	  {
+    Bool bZeroMVILR = pcCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
+    if(bZeroMVILR)
+    {
 #endif
       UInt uiCostCand = MAX_UINT;
       UInt uiBitsCand = 0;
@@ -3239,7 +3239,7 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
         uiMergeIndex = uiMergeCand;
       }
 #if REF_IDX_ME_ZEROMV
-	  }
+    }
 #endif
     }
 }
