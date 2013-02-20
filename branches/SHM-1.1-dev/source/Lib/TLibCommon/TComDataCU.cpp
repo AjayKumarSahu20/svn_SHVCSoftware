@@ -4932,11 +4932,19 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
    TComMvField cMvFieldBase;
    TComMv cMv;
 
+#if MV_SCALING_FIX
+   Int iBWidth   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropLeftOffset() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropRightOffset();
+   Int iBHeight  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropTopOffset() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropBottomOffset();
+
+   Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth() - m_pcPic->getPicYuvRec()->getPicCropLeftOffset() - m_pcPic->getPicYuvRec()->getPicCropRightOffset();
+   Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight() - m_pcPic->getPicYuvRec()->getPicCropTopOffset() - m_pcPic->getPicYuvRec()->getPicCropBottomOffset();
+#else
    Int iBWidth   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
    Int iBHeight  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
 
    Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth();
    Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight();
+#endif
 
    Int iMvX = (rcMvFieldBase.getHor()*iEWidth + (iBWidth/2 -1) * (rcMvFieldBase.getHor() > 0 ? 1: -1) )/iBWidth;
    Int iMvY = (rcMvFieldBase.getVer()*iEHeight + (iBHeight/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/iBHeight;

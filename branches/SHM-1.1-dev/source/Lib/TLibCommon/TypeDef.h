@@ -53,6 +53,8 @@
 #define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
+#define MV_SCALING_FIX                   1      ///< fixing the base layer MV scaling
+
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
 
