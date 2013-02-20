@@ -4841,7 +4841,7 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
   }
 }
 
-#if INTRA_BL 
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED 
 Void TComDataCU::getBaseLumaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride )
 {
   TComPicYuv* pcBaseRec = getSlice()->getFullPelBaseRec();

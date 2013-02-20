@@ -406,7 +406,7 @@ Bool TComPrediction::xCheckIdenticalMotion ( TComDataCU* pcCU, UInt PartAddr )
   return false;
 }
 
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
 Void TComPrediction::getBaseBlk( TComDataCU* pcCU, TComYuv* pcYuvPred, Int iPartAddr, Int iWidth, Int iHeight )
 {
   pcCU->getBaseLumaBlk( iWidth, iHeight, iPartAddr, pcYuvPred->getLumaAddr( iPartAddr ), pcYuvPred->getStride() );
