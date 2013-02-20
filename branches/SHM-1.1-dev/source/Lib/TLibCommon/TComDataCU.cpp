@@ -382,7 +382,6 @@ Void TComDataCU::initCU( TComPic* pcPic, UInt iCUAddr )
 #if SVC_EXTENSION
   m_layerId          = pcPic->getLayerId();
 #endif 
-
   for(int i=0; i<pcPic->getNumPartInCU(); i++) 
   {
     if(pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr)*pcPic->getNumPartInCU()+i>=getSlice()->getSliceCurStartCUAddr())

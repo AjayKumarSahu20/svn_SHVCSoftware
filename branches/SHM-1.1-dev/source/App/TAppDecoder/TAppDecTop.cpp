@@ -101,6 +101,13 @@ Void TAppDecTop::destroy()
     m_pchReconFile = NULL;
   }
 #endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  if( m_pchBLSyntaxFile )
+  {
+    free ( m_pchBLSyntaxFile );
+    m_pchBLSyntaxFile = NULL;
+  }
+#endif
 }
 
 // ====================================================================================================================
@@ -146,17 +153,36 @@ Void TAppDecTop::decode()
 
 #if AVC_BASE
   TComPic pcBLPic;
-  FILE* pFile = fopen( m_pchBLReconFile, "rb" );
-  if( !pFile )
+  if( !m_pchBLReconFile )
   {
-    printf( "BL input reading error\n" );
-    exit(0);
+    printf( "Wrong base layer YUV input file\n" );
+    exit(EXIT_FAILURE);
+  }
+  fstream streamYUV( m_pchBLReconFile, fstream::in | fstream::binary );
+  if( !streamYUV.good() )
+  {
+    printf( "Base layer YUV input reading error\n" );
+    exit(EXIT_FAILURE);
   }
   TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
   m_acTDecTop[0].setBLsize( m_iBLSourceWidth, m_iBLSourceHeight );
-  m_acTDecTop[0].setBLReconFile( pFile );
+  m_acTDecTop[0].setBLReconFile( &streamYUV );
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
+#if AVC_SYNTAX
+  if( !m_pchBLSyntaxFile )
+  {
+    printf( "Wrong base layer syntax file\n" );
+    exit(EXIT_FAILURE);
+  }
+  fstream streamSyntaxFile( m_pchBLSyntaxFile, fstream::in | fstream::binary );
+  if( !streamSyntaxFile.good() )
+  {
+    printf( "Base layer syntax input reading error\n" );
+    exit(EXIT_FAILURE);
+  }
+  m_acTDecTop[0].setBLSyntaxFile( &streamSyntaxFile );
+#endif
 #endif
 
   while (!!bitstreamFile)
@@ -253,10 +279,16 @@ Void TAppDecTop::decode()
   }
   // delete buffers
 #if AVC_BASE
-  if( pFile )
+  if( streamYUV.is_open() )
   {
-    fclose( pFile );
+    streamYUV.close();
   }
+#if AVC_SYNTAX
+  if( streamSyntaxFile.is_open() )
+  {
+    streamSyntaxFile.close();
+  }
+#endif
   pcBLPic.destroy();
 
   for(UInt layer = 1; layer <= m_tgtLayerId; layer++)
@@ -292,6 +324,27 @@ Void TAppDecTop::decode()
 
   // main decoder loop
   bool recon_opened = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
+
+#if SYNTAX_OUTPUT
+  if( !m_pchBLSyntaxFile )
+  {
+    printf( "Wrong base layer syntax file\n" );
+    exit(EXIT_FAILURE);
+  }
+  fstream streamSyntaxFile( m_pchBLSyntaxFile, fstream::out | fstream::binary );
+  if( !streamSyntaxFile.good() )
+  {
+    printf( "Base layer syntax input reading error\n" );
+    exit(EXIT_FAILURE);
+  }
+  m_cTDecTop.setBLSyntaxFile( &streamSyntaxFile );
+
+  for( Int i = m_iBLFrames * m_iBLSourceWidth * m_iBLSourceHeight * SYNTAX_BYTES / 16; i >= 0; i-- )
+  {
+    streamSyntaxFile.put( 0 );
+  }
+  streamSyntaxFile.seekp( 0 );
+#endif
 
   while (!!bitstreamFile)
   {
@@ -388,6 +441,13 @@ Void TAppDecTop::decode()
       }
     }
   }
+
+#if SYNTAX_OUTPUT
+  if( streamSyntaxFile.is_open() )
+  {
+    streamSyntaxFile.close();
+  }
+#endif
   
   xFlushOutput( pcListPic );
   // delete buffers

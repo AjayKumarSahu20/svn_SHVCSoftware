@@ -773,6 +773,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId == 0 )
     {
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
+#if AVC_SYNTAX
+      pcPic->readBLSyntax( m_ppcTEncTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
+#endif
       return;
     }
 #endif

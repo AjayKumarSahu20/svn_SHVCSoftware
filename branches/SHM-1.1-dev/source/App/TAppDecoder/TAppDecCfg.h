@@ -65,9 +65,18 @@ protected:
   char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
   Int           m_iBLSourceWidth;
   Int           m_iBLSourceHeight;
+#if AVC_SYNTAX
+  char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name  
+#endif
 #endif
 #else
   char*         m_pchReconFile;                       ///< output reconstruction file name
+#endif
+#if SYNTAX_OUTPUT
+  char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name
+  Int           m_iBLSourceWidth;
+  Int           m_iBLSourceHeight;
+  Int           m_iBLFrames;
 #endif
   Int           m_iSkipFrame;                         ///< counter for frames prior to the random access point to skip
   UInt          m_outputBitDepth;                     ///< bit depth used for writing output

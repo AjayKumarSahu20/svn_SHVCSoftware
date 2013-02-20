@@ -668,4 +668,162 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 
 #endif
 
+#if AVC_SYNTAX
+Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
+{
+  if( !filestream->good() )
+  {
+    return;
+  }
+
+  UInt   uiWidth      = this->getPicYuvRec()->getWidth() - this->getPicYuvRec()->getPicCropLeftOffset() - this->getPicYuvRec()->getPicCropRightOffset();
+  UInt   uiHeight     = this->getPicYuvRec()->getHeight() - this->getPicYuvRec()->getPicCropTopOffset() - this->getPicYuvRec()->getPicCropBottomOffset();
+  UInt64 uiPOC        = (UInt64)this->getPOC();
+  UInt   uiPartWidth  = uiWidth / 4;
+  UInt   uiPartHeight = uiHeight / 4;
+
+  UInt uiNumPartInWidth    = this->getNumPartInWidth();
+  UInt uiNumPartInHeight   = this->getNumPartInHeight();
+  UInt uiNumPartLCUInWidth = this->getFrameWidthInCU();
+
+  UInt64 uiPos = (UInt64)uiPOC * uiWidth * uiHeight * numBytes / 16;
+   
+  filestream->seekg( uiPos, ios_base::beg );
+
+  for( Int i = 0; i < this->getNumCUsInFrame(); i++ )
+  {
+    TComDataCU* pcCU = this->getCU( i );
+    pcCU->initCU( this, i );
+  }
+
+  for( Int i = 0; i < uiPartHeight; i++ )
+  {
+    for( Int j = 0; j < uiPartWidth; j++ )
+    {
+      UInt uiX = ( j / uiNumPartInWidth );
+      UInt uiY = ( i / uiNumPartInHeight );
+
+      UInt uiLCUAddr = uiY * uiNumPartLCUInWidth + uiX;
+      UInt uiPartAddr = ( i - uiY * uiNumPartInHeight ) * uiNumPartInWidth + ( j - uiX * uiNumPartInWidth );
+      uiPartAddr = g_auiRasterToZscan[uiPartAddr];
+      
+      TComDataCU* pcCU = this->getCU( uiLCUAddr );
+      
+      TComMv mv;
+      Short temp;
+
+      // RefIdxL0
+      Char refIdxL0 = -1;
+      filestream->read( &refIdxL0, 1 );
+      assert( refIdxL0 >= -1 );
+      pcCU->getCUMvField( REF_PIC_LIST_0 )->setRefIdx( (Int)refIdxL0, uiPartAddr );
+
+      // RefIdxL1
+      Char refIdxL1 = -1;
+      filestream->read( &refIdxL1, 1 );
+      assert( refIdxL1 >= -1 );
+      pcCU->getCUMvField( REF_PIC_LIST_1 )->setRefIdx( (Int)refIdxL1, uiPartAddr );
+
+      // MV L0
+      temp = 0;
+      filestream->read( reinterpret_cast<char*>(&temp), 2 );
+      mv.setHor( (Short)temp );
+      temp = 0;
+      filestream->read( reinterpret_cast<char*>(&temp), 2 );
+      mv.setVer( (Short)temp );
+      pcCU->getCUMvField( REF_PIC_LIST_0 )->setMv( mv, uiPartAddr );
+
+      // MV L1
+      temp = 0;
+      filestream->read( reinterpret_cast<char*>(&temp), 2 );
+      mv.setHor( (Short)temp );
+      temp = 0;
+      filestream->read( reinterpret_cast<char*>(&temp), 2 );
+      mv.setVer( (Short)temp );
+      pcCU->getCUMvField( REF_PIC_LIST_1 )->setMv( mv, uiPartAddr );
+
+      // set dependent information
+      pcCU->setPredictionMode( uiPartAddr, ( refIdxL0 == NOT_VALID && refIdxL1 == NOT_VALID ) ? MODE_INTRA : MODE_INTER );
+      UInt uiInterDir = ( refIdxL0 != NOT_VALID ) + ( refIdxL1 != NOT_VALID && pcCU->getSlice()->isInterB() ) * 2;
+      assert( uiInterDir >= 0 && uiInterDir <= 3 );
+      pcCU->setInterDir( uiPartAddr, uiInterDir );
+    }
+  }
+}
+#endif
+
+#if SYNTAX_OUTPUT
+Void TComPic::wrireBLSyntax( fstream* filestream, UInt numBytes )
+{
+  if( !filestream->good() )
+  {
+    return;
+  }
+
+  UInt   uiWidth      = this->getPicYuvRec()->getWidth() - getSlice(0)->getSPS()->getPicCropLeftOffset() - getSlice(0)->getSPS()->getPicCropRightOffset();
+  UInt   uiHeight     = this->getPicYuvRec()->getHeight() - getSlice(0)->getSPS()->getPicCropTopOffset() - getSlice(0)->getSPS()->getPicCropBottomOffset();
+  UInt64 uiPOC        = (UInt64)this->getPOC();
+  UInt   uiPartWidth  = uiWidth / 4;
+  UInt   uiPartHeight = uiHeight / 4;
+
+  UInt uiNumPartInWidth    = this->getNumPartInWidth();
+  UInt uiNumPartInHeight   = this->getNumPartInHeight();
+  UInt uiNumPartLCUInWidth = this->getFrameWidthInCU();
+
+  filestream->seekg( uiPOC * uiWidth * uiHeight * numBytes / 16 );
+    
+  for( Int i = 0; i < uiPartHeight; i++ )
+  {
+    for( Int j = 0; j < uiPartWidth; j++ )
+    {
+      UInt uiX = ( j / uiNumPartInWidth );
+      UInt uiY = ( i / uiNumPartInHeight );
+
+      UInt uiLCUAddr = uiY * uiNumPartLCUInWidth + uiX;
+      UInt uiPartAddr = ( i - uiY * uiNumPartInHeight ) * uiNumPartInWidth + ( j - uiX * uiNumPartInWidth );
+      uiPartAddr = g_auiRasterToZscan[uiPartAddr];
+      
+      TComDataCU* pcCU = this->getCU( uiLCUAddr );
+      
+      TComMv mv;
+      Short temp;
+      Char refIdxL0 = NOT_VALID, refIdxL1 = NOT_VALID;
+
+      // RefIdx
+      if( !pcCU->isIntra( uiPartAddr ) )
+      {
+        refIdxL0 = (Char)pcCU->getCUMvField( REF_PIC_LIST_0 )->getRefIdx( uiPartAddr );
+        refIdxL1 = (Char)pcCU->getCUMvField( REF_PIC_LIST_1 )->getRefIdx( uiPartAddr );
+      }
+      assert( refIdxL0 >= - 1 && refIdxL1 >= - 1 );
+      filestream->put( refIdxL0 );
+      filestream->put( refIdxL1 );
+
+      // MV L0
+      mv.setZero();
+      if( refIdxL0 >= 0 )
+      {
+        mv = pcCU->getCUMvField( REF_PIC_LIST_0 )->getMv( uiPartAddr );
+      }
+      temp = (Short)mv.getHor();
+      filestream->write( reinterpret_cast<char*>(&temp), 2 );
+      temp = (Short)mv.getVer();
+      filestream->write( reinterpret_cast<char*>(&temp), 2 );
+
+      // MV L1
+      mv.setZero();
+      if( refIdxL1 >= 0 )
+      {
+        mv = pcCU->getCUMvField( REF_PIC_LIST_1 )->getMv( uiPartAddr );
+      }
+      temp = (Short)mv.getHor();
+      filestream->write( reinterpret_cast<char*>(&temp), 2 );
+      temp = (Short)mv.getVer();
+      filestream->write( reinterpret_cast<char*>(&temp), 2 );
+    }
+  }
+}
+#endif
+
+
 //! \}

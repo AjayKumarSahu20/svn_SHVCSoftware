@@ -43,6 +43,10 @@
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
 #include "TComBitStream.h"
+#if AVC_BASE || SYNTAX_OUTPUT
+#include <fstream>
+#endif
+
 
 //! \ingroup TLibCommon
 //! \{
@@ -208,8 +212,16 @@ public:
 #if REF_IDX_FRAMEWORK
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
 #endif
+#if AVC_SYNTAX
+  Void readBLSyntax( fstream* filestream, UInt numBytes );
+#endif
+#if SYNTAX_OUTPUT
+  Void wrireBLSyntax( fstream* filestream, UInt numBytes );
+#endif
+
 };// END CLASS DEFINITION TComPic
 
 //! \}
 
 #endif // __TCOMPIC__
+
