@@ -560,7 +560,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   }
   if (m_bFirstSliceInPicture)
   {
-
 #if AVC_BASE
   if( m_layerId == 1 )
   {
@@ -608,18 +607,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pPel += uiStride;
       }
     }
-#if AVC_SYNTAX
-    if( m_apcSlicePilot->getPOC() == 0 )
-    {
-      // initialize partition order.
-      UInt* piTmp = &g_auiZscanToRaster[0];
-      initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
-      initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
-    }
-    pBLPic->getSlice( 0 )->setPOC( m_apcSlicePilot->getPOC() );
-    pBLPic->getSlice( 0 )->setSliceType( m_apcSlicePilot->getSliceType() );
-    pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
-#endif
   }
 #endif
 
@@ -757,7 +744,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (bNextSlice)
   {
     pcSlice->checkCRA(pcSlice->getRPS(), m_pocCRA, m_prevRAPisBLA, m_cListPic);
-#if !REF_IDX_FRAMEWORK
+#if !REF_IDX_FRAMEWORK || AVC_SYNTAX
     // Set reference list
     pcSlice->setRefPicList( m_cListPic );
 #endif
@@ -767,6 +754,19 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
 #if AVC_BASE
       pcSlice->setBaseColPic ( *m_ppcTDecTop[0]->getListPic()->begin() );
+#if AVC_SYNTAX
+      TComPic* pBLPic = pcSlice->getBaseColPic();
+      if( pcSlice->getPOC() == 0 )
+      {
+        // initialize partition order.
+        UInt* piTmp = &g_auiZscanToRaster[0];
+        initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
+        initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
+      }      
+      pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
+      pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
+#endif
+
 #else
       TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
       TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
@@ -787,8 +787,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif 
 
 #if REF_IDX_FRAMEWORK
+#if !AVC_SYNTAX
     // Set reference list
     pcSlice->setRefPicList( m_cListPic );
+#endif
     if(m_layerId > 0)
     {
       setILRPic(pcPic);

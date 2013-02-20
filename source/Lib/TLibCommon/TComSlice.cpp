@@ -2190,4 +2190,47 @@ TComPTL::TComPTL()
   ::memset(m_subLayerLevelPresentFlag,   0, sizeof(m_subLayerLevelPresentFlag  ));
 }
 #endif
+
+#if SVC_EXTENSION && AVC_SYNTAX
+Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
+{
+// Assumed that RPL of the base layer is same to the EL, otherwise this information should be also dumped and read from the metadata file
+  setPOC( pcSlice->getPOC() );
+  if( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA )
+  {
+    setSliceType( I_SLICE );
+  }
+  else
+  {
+    setSliceType( pcSlice->getSliceType() );
+  }
+
+  if( this->isIntra() )
+  {
+    return;
+  }
+
+  //initialize reference POC of BL
+  for( Int iRefPicList = 0; iRefPicList < 2; iRefPicList++ )
+  {
+    RefPicList eRefPicList = RefPicList( iRefPicList );
+
+    assert( pcSlice->getNumRefIdx( eRefPicList) > 0 );
+    setNumRefIdx( eRefPicList, pcSlice->getNumRefIdx( eRefPicList ) - 1 );
+    assert( getNumRefIdx( eRefPicList) <= MAX_NUM_REF);
+
+    for(Int refIdx = 0; refIdx < getNumRefIdx( eRefPicList ); refIdx++) 
+    {
+      setRefPOC( pcSlice->getRefPic( eRefPicList, refIdx )->getPOC(), eRefPicList, refIdx );
+      setRefPic( pcSlice->getRefPic( eRefPicList, refIdx ), eRefPicList, refIdx );
+      getRefPic( eRefPicList, refIdx )->setLayerId( 0 );
+      getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );
+      getRefPic( eRefPicList, refIdx )->setIsUsedAsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsUsedAsLongTerm() );
+
+    }
+  }  
+  return;
+}
+#endif
+
 //! \}
