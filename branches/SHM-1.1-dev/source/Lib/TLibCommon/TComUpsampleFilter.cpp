@@ -226,8 +226,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
 #endif
 
-
-
   assert ( iEWidth == 2*iBWidth || 2*iEWidth == 3*iBWidth );
   assert ( iEHeight == 2*iBHeight || 2*iEHeight == 3*iBHeight );
 
