@@ -39,6 +39,9 @@
 #define _TYPEDEF__
 
 #define SVC_EXTENSION                    1
+
+#define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
+
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
@@ -48,18 +51,22 @@
 #define SET_SLICE_LAYER_ID               1      ///< set layerId to the slice
 #define BUGFIX_925                       1      ///< bug fix ticket #925
 #define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
-
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
-#define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
-
+#define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
+
+#if AVC_BASE
+#define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
+#endif
 
 #if REF_IDX_FRAMEWORK
 #define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
+#if !AVC_BASE || AVC_SYNTAX
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
+#endif
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
@@ -68,8 +75,9 @@
 #define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
 
 // Hooks
-#if !AVC_BASE
+#if !AVC_BASE || AVC_SYNTAX
 #define SVC_MVP                          1      ///< motion hook for merge mode as an example
+#if !AVC_SYNTAX
 #define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
 #endif
 #endif
@@ -79,6 +87,9 @@
 #endif
 
 #endif
+#endif
+#else
+#define SYNTAX_OUTPUT                    1
 #endif
 
 //! \ingroup TLibCommon

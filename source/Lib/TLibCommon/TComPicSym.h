@@ -124,6 +124,12 @@ public:
   UInt        getMinCUHeight()          { return m_uiMinCUHeight;               }
   UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame;  }
   TComDataCU*&  getCU( UInt uiCUAddr )  { return m_apcTComDataCU[uiCUAddr];     }
+
+#if AVC_SYNTAX
+  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
+  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
+  UInt        getMaxDepth()             { return m_uhTotalDepth;               }
+#endif
   
   Void        setSlice(TComSlice* p, UInt i) { m_apcTComSlice[i] = p;           }
   UInt        getNumAllocatedSlice()    { return m_uiNumAllocatedSlice;         }

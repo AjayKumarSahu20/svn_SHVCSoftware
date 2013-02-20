@@ -80,6 +80,9 @@ TDecTop::TDecTop()
 #if REF_IDX_FRAMEWORK
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
 #endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  m_pBLSyntaxFile = NULL;
+#endif
 
 }
 
@@ -335,6 +338,10 @@ Void TDecTop::executeDeblockAndAlf(UInt& ruiPOC, TComList<TComPic*>*& rpcListPic
 
   m_cGopDecoder.filterPicture(pcPic);
 
+#if SYNTAX_OUTPUT
+  pcPic->wrireBLSyntax( getBLSyntaxFile(), SYNTAX_BYTES );
+#endif
+
   TComSlice::sortPicList( m_cListPic ); // sorting for application output
   ruiPOC              = pcPic->getSlice(m_uiSliceIdx-1)->getPOC();
   rpcListPic          = &m_cListPic;  
@@ -558,13 +565,15 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if( m_layerId == 1 )
   {
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
-    FILE* pFile = m_ppcTDecTop[0]->getBLReconFile();
-    UInt uiWidth = pBLPic->getPicYuvRec()->getWidth();
-    UInt uiHeight = pBLPic->getPicYuvRec()->getHeight();
+    fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
+    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - pBLPic->getPicYuvRec()->getPicCropLeftOffset() - pBLPic->getPicYuvRec()->getPicCropRightOffset();;
+    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - pBLPic->getPicYuvRec()->getPicCropTopOffset() - pBLPic->getPicYuvRec()->getPicCropBottomOffset();
         
-    if( pFile )
+    if( pFile->good() )
     {
-      fseek( pFile, m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2, SEEK_SET );
+      UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
+
+      pFile->seekg((UInt)uiPos, ios::beg );
 
       Pel* pPel = pBLPic->getPicYuvRec()->getLumaAddr();
       UInt uiStride = pBLPic->getPicYuvRec()->getStride();
@@ -572,7 +581,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         for( Int j = 0; j < uiWidth; j++ )
         {
-          pPel[j] = fgetc( pFile );
+          pPel[j] = pFile->get();
         }
         pPel += uiStride;
       }
@@ -583,7 +592,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         for( Int j = 0; j < uiWidth/2; j++ )
         {
-          pPel[j] = fgetc( pFile );
+          pPel[j] = pFile->get();
         }
         pPel += uiStride;
       }
@@ -594,11 +603,23 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         for( Int j = 0; j < uiWidth/2; j++ )
         {
-          pPel[j] = fgetc( pFile );
+          pPel[j] = pFile->get();
         }
         pPel += uiStride;
       }
     }
+#if AVC_SYNTAX
+    if( m_apcSlicePilot->getPOC() == 0 )
+    {
+      // initialize partition order.
+      UInt* piTmp = &g_auiZscanToRaster[0];
+      initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
+      initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
+    }
+    pBLPic->getSlice( 0 )->setPOC( m_apcSlicePilot->getPOC() );
+    pBLPic->getSlice( 0 )->setSliceType( m_apcSlicePilot->getSliceType() );
+    pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
+#endif
   }
 #endif
 
@@ -978,7 +999,12 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
         {
 #if SVC_UPSAMPLING
+#if AVC_SYNTAX
+          TComSPS* sps = new TComSPS();
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, sps, true);
+#else
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL, true);
+#endif
 #else
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
 #endif

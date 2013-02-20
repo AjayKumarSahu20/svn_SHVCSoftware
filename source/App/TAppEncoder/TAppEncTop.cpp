@@ -705,6 +705,21 @@ Void TAppEncTop::encode()
 #endif
   }
 
+#if AVC_SYNTAX
+  if( !m_BLSyntaxFile )
+  {
+    printf( "Wrong base layer syntax input file\n" );
+    exit(EXIT_FAILURE);
+  }
+  fstream streamSyntaxFile( m_BLSyntaxFile, fstream::in | fstream::binary );
+  if( !streamSyntaxFile.good() )
+  {
+    printf( "Base layer syntax input reading error\n" );
+    exit(EXIT_FAILURE);
+  }
+  m_acTEncTop[0].setBLSyntaxFile( &streamSyntaxFile );
+#endif
+
   Bool bFirstFrame = true;
   while ( !bEos )
   {
@@ -790,6 +805,13 @@ Void TAppEncTop::encode()
     m_acTEncTop[layer].deletePicBuffer();
   }
   
+#if AVC_SYNTAX
+  if( streamSyntaxFile.is_open() )
+  {
+    streamSyntaxFile.close();
+  }
+#endif
+
   // delete buffers & classes
   xDeleteBuffer();
   xDestroyLib();
