@@ -336,14 +336,18 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(uiPOCCurr));
 #if REF_IDX_FRAMEWORK
-    if (m_layerId > 0 && (uiPOCCurr % m_pcCfg->getIntraPeriod() == 0))
+    if( m_layerId > 0 && (uiPOCCurr % m_pcCfg->getIntraPeriod() == 0) )
+    {
       pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+    }
     if( m_layerId > 0 && !m_pcEncTop->getElRapSliceTypeB() )
     {
       if( (pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) &&
           (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) &&
-           pcSlice->getSliceType() == B_SLICE ) 
+           pcSlice->getSliceType() == B_SLICE )
+      {
         pcSlice->setSliceType(P_SLICE);
+      }
     }
 #endif
 #if TEMPORAL_LAYER_NON_REFERENCE
@@ -465,8 +469,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif 
 
 #if REF_IDX_FRAMEWORK
-    if (pcSlice->getSliceType() == B_SLICE) 
+    if( pcSlice->getSliceType() == B_SLICE )
+    {
       pcSlice->setColFromL0Flag(1-uiColDir);
+    }
 #endif
 
     //  Set reference list
