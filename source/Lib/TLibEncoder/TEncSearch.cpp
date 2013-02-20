@@ -1056,7 +1056,7 @@ TEncSearch::xIntraCodingLumaBlk( TComDataCU* pcCU,
     pcCU->getPattern()->initPattern   ( pcCU, uiTrDepth, uiAbsPartIdx );
     pcCU->getPattern()->initAdiPattern( pcCU, uiAbsPartIdx, uiTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail );
     //===== get prediction signal =====
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
     if(pcCU->isIntraBL ( uiAbsPartIdx ) )
     {
       pcCU->getBaseLumaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride );
@@ -1258,7 +1258,7 @@ TEncSearch::xIntraCodingChromaBlk( TComDataCU* pcCU,
     Int*  pPatChroma  = ( uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf( uiWidth, uiHeight, m_piYuvExt ) : pcCU->getPattern()->getAdiCbBuf( uiWidth, uiHeight, m_piYuvExt ) );
 
     //===== get prediction signal =====
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
   if(pcCU->isIntraBL ( uiAbsPartIdx ) )
   {
     pcCU->getBaseChromaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride, uiChromaId );

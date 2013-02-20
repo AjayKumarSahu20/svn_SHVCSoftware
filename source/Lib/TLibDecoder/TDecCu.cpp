@@ -545,7 +545,7 @@ TDecCu::xIntraRecLumaBlk( TComDataCU* pcCU,
                                      bAboveAvail, bLeftAvail );
   
   //===== get prediction signal =====
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
   if(pcCU->isIntraBL ( uiAbsPartIdx ) )
   {
     pcCU->getBaseLumaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride );
@@ -650,7 +650,7 @@ TDecCu::xIntraRecChromaBlk( TComDataCU* pcCU,
   Int* pPatChroma   = ( uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf( uiWidth, uiHeight, m_pcPrediction->getPredicBuf() ) : pcCU->getPattern()->getAdiCbBuf( uiWidth, uiHeight, m_pcPrediction->getPredicBuf() ) );
   
   //===== get prediction signal =====
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
   if(pcCU->isIntraBL ( uiAbsPartIdx ) )
   {
     pcCU->getBaseChromaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride, uiChromaId );
