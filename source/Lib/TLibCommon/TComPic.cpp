@@ -564,12 +564,18 @@ Void TComPic::deriveUnitIdxBase( UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt 
   UInt uiPelY       = (uiUpsamplePelY<<1)/ratio;
   UInt uiBaseWidth  = getPicYuvRec()->getWidth();
   UInt uiBaseHeight = getPicYuvRec()->getHeight();
-
+  
   UInt uiWidthInCU       = ( uiBaseWidth % g_uiMaxCUWidth  ) ? uiBaseWidth /g_uiMaxCUWidth  + 1 : uiBaseWidth /g_uiMaxCUWidth;
+
+#if MFM_CLIPPING_FIX
+  uiPelX     = (UInt)Clip3<UInt>(0, getPicYuvRec()->getWidth() - 1, uiPelX);
+  uiPelY     = (UInt)Clip3<UInt>(0, getPicYuvRec()->getHeight() - 1, uiPelY);
+#else
   UInt uiHeightInCU      = ( uiBaseHeight% g_uiMaxCUHeight ) ? uiBaseHeight/ g_uiMaxCUHeight + 1 : uiBaseHeight/ g_uiMaxCUHeight;
 
   uiPelX     = (UInt)Clip3<UInt>(0, uiWidthInCU * g_uiMaxCUWidth - 1, uiPelX);
   uiPelY     = (UInt)Clip3<UInt>(0, uiHeightInCU * g_uiMaxCUHeight - 1, uiPelY);
+#endif
   
   uiBaseCUAddr = uiPelY / g_uiMaxCUHeight * uiWidthInCU + uiPelX / g_uiMaxCUWidth;
 

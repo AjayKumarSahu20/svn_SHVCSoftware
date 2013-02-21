@@ -54,9 +54,10 @@
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define MV_SCALING_FIX                   1      ///< fixing the base layer MV scaling
+#define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
-#define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
+#define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
 #if AVC_BASE
 #define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
