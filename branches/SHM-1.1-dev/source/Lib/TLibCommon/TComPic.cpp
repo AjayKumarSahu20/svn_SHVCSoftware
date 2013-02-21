@@ -633,8 +633,16 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       UInt  uiPelX = pcCUDes->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
       UInt  uiPelY = pcCUDes->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
       UInt uiBaseCUAddr, uiBaseAbsPartIdx;
-         pcPicBase->deriveUnitIdxBase(uiPelX + 8, uiPelY + 8, upSampleRatio, uiBaseCUAddr, uiBaseAbsPartIdx);
+      pcPicBase->deriveUnitIdxBase(uiPelX + 8, uiPelY + 8, upSampleRatio, uiBaseCUAddr, uiBaseAbsPartIdx);
+
+#if AVC_SYNTAX
+      Int iBX = ( (uiPelX + 8) * iBWidth + iEWidth/2 ) / iEWidth;
+      Int iBY = ( (uiPelY + 8) * iBHeight+ iEHeight/2 ) / iEHeight;
+
+      if( ( iBX < iBWidth && iBY < iBHeight ) && (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
+#else
       if( (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
+#endif
       {
         for(UInt list = 0; list < 2; list++)  //each list
         { 
