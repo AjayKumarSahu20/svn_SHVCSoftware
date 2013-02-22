@@ -57,7 +57,7 @@
 #define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
-#define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
+#define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
 
 #if AVC_BASE
 #define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
@@ -73,6 +73,7 @@
 
 #if REF_IDX_MFM
 #define REUSE_MVSCALE                    1      ///< using the base layer MV scaling function
+#define REUSE_BLKMAPPING                 1      ///< using the base layer get co-located block function
 #endif
 
 #else

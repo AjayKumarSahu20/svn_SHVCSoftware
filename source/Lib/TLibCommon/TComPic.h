@@ -128,7 +128,9 @@ public:
 
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  (  TComPic* pcPicBase );
+#if !REUSE_BLKMAPPING
   Void          deriveUnitIdxBase     (  UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx );
+#endif
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
