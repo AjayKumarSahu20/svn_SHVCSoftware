@@ -54,6 +54,7 @@
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define MV_SCALING_FIX                   1      ///< fixing the base layer MV scaling
+#define MV_SCALING_POS_FIX               1      ///< use center pixels to get co-located base layer block
 #define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
