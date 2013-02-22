@@ -644,10 +644,15 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       if( (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
 #endif
       {
-        for(UInt list = 0; list < 2; list++)  //each list
-        { 
-          TComMv cMv = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getMv(uiBaseAbsPartIdx);
-          Int refIdx = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getRefIdx(uiBaseAbsPartIdx);
+        for(UInt refPicList = 0; refPicList < 2; refPicList++)  //for each reference list
+        {
+#if REUSE_MVSCALE
+          TComMvField sMvFieldBase, sMvField;
+          pcPicBase->getCU(uiBaseCUAddr)->getMvField( pcPicBase->getCU(uiBaseCUAddr), uiBaseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
+          pcCUDes->scaleBaseMV( sMvField, sMvFieldBase );
+#else
+          TComMv cMv = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)refPicList)->getMv(uiBaseAbsPartIdx);
+          Int refIdx = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)refPicList)->getRefIdx(uiBaseAbsPartIdx);
 
           Int Hor =  ((Int)upSampleRatio * cMv.getHor())/2 ;
           Int Ver =  ((Int)upSampleRatio * cMv.getVer())/2 ;
@@ -655,8 +660,9 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
           TComMv cScaledMv(Hor, Ver);
           TComMvField sMvField;
           sMvField.setMvField(cScaledMv, refIdx);
+#endif
 
-          pcCUDes->getCUMvField((RefPicList)list)->setMvField(sMvField, uiAbsPartIdx);
+          pcCUDes->getCUMvField((RefPicList)refPicList)->setMvField(sMvField, uiAbsPartIdx);
           pcCUDes->setPredictionMode(uiAbsPartIdx, MODE_INTER);
         }
       }

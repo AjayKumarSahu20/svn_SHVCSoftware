@@ -70,6 +70,11 @@
 #if !AVC_BASE || AVC_SYNTAX
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
 #endif
+
+#if REF_IDX_MFM
+#define REUSE_MVSCALE                    1      ///< using the base layer MV scaling function
+#endif
+
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
