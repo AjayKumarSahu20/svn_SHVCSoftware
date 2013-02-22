@@ -561,6 +561,10 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
   assert(thePoc >= 0); 
   assert(thePoc == pcRefPicBL->getPOC());
 
+#if REUSE_MVSCALE
+  ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
+#endif
+
   //initialize reference POC of ILP 
   for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
   { 
