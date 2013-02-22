@@ -592,6 +592,7 @@ public:
 
 #if SVC_COL_BLK 
   TComDataCU*   getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
+  TComDataCU*   getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
   Void          scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
 #endif
 };
