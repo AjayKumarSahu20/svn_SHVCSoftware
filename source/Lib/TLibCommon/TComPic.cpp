@@ -623,15 +623,14 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
   }
 #endif
 
+  UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
+  UInt uiWidthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
+  UInt uiHeightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
+  Int  unitNum           = max (1, (Int)((16/uiWidthMinPU)*(16/uiHeightMinPU)) ); 
+
   for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
   {
-    UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
-
     TComDataCU*             pcCUDes = getCU(cuIdx);
-
-    UInt uiWidthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
-    UInt uiHeightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
-    Int unitNum = max (1, (Int)((16/uiWidthMinPU)*(16/uiHeightMinPU)) ); 
 
     for(UInt uiAbsPartIdx = 0; uiAbsPartIdx < uiNumPartitions; uiAbsPartIdx+=unitNum )  //each 16x16 unit
     {
