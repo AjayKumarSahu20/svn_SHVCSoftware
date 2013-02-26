@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPic.h"
-#if SVC_UPSAMPLING
-#include "TLibCommon/TComSlice.h"
-#endif
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -104,11 +102,8 @@ public:
   TEncPic();
   virtual ~TEncPic();
 
-#if SVC_UPSAMPLING
-  Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, TComSPS* pcSps, Bool bIsVirtual = false );
-#else
-  Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual = false );
-#endif
+  Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,   
+                        Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
   virtual Void  destroy();
 
   TEncPicQPAdaptationLayer* getAQLayer( UInt uiDepth )  { return &m_acAQLayer[uiDepth]; }

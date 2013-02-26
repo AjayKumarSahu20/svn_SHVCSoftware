@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,7 @@
 #endif // _MSC_VER > 1000
 
 #include "TLibCommon/CommonDef.h"
-#if TARGET_DECLAYERID_SET
 #include <vector>
-#endif
 
 //! \ingroup TAppDecoder
 //! \{
@@ -58,33 +56,29 @@
 class TAppDecCfg
 {
 protected:
-  char*         m_pchBitstreamFile;                   ///< input bitstream file name
-#if SVC_EXTENSION
-  char*         m_pchReconFile [MAX_LAYERS];          ///< output reconstruction file name
-#if AVC_BASE
-  char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
-  Int           m_iBLSourceWidth;
-  Int           m_iBLSourceHeight;
-#endif
-#else
-  char*         m_pchReconFile;                       ///< output reconstruction file name
-#endif
+  Char*         m_pchBitstreamFile;                   ///< input bitstream file name
+  Char*         m_pchReconFile;                       ///< output reconstruction file name
   Int           m_iSkipFrame;                         ///< counter for frames prior to the random access point to skip
-  UInt          m_outputBitDepth;                     ///< bit depth used for writing output
+  Int           m_outputBitDepthY;                     ///< bit depth used for writing output (luma)
+  Int           m_outputBitDepthC;                     ///< bit depth used for writing output (chroma)t
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 
-#if SVC_EXTENSION
-  Int           m_tgtLayerId;                        ///< target layer ID
-#endif
-
-#if TARGET_DECLAYERID_SET
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
-#endif
-  
+  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window 
+
 public:
-  TAppDecCfg()          {}
+  TAppDecCfg()
+  : m_pchBitstreamFile(NULL)
+  , m_pchReconFile(NULL) 
+  , m_iSkipFrame(0)
+  , m_outputBitDepthY(0)
+  , m_outputBitDepthC(0)
+  , m_iMaxTemporalLayer(-1)
+  , m_decodedPictureHashSEIEnabled(0)
+  , m_respectDefDispWindow(0)
+  {}
   virtual ~TAppDecCfg() {}
   
   Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration

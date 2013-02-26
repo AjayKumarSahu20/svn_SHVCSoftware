@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,8 +57,6 @@
 // Class definition
 // ====================================================================================================================
 
-class SEImessages;
-
 /// SBAC decoder class
 class TDecSbac : public TDecEntropyIf
 {
@@ -73,39 +71,22 @@ public:
   Void loadContexts                  ( TDecSbac* pScr );
   Void xCopyFrom           ( TDecSbac* pSrc );
   Void xCopyContextsFrom       ( TDecSbac* pSrc );
-  Void decodeFlush();
 
   Void  resetEntropy (TComSlice* pSlice );
   Void  setBitstream              ( TComInputBitstream* p  ) { m_pcBitstream = p; m_pcTDecBinIf->init( p ); }
-  Void  parseVPS                  ( TComVPS* pcVPS )  {}
-  Void  parseSPS                  ( TComSPS* pcSPS         ) {}
-  Void  parsePPS                  ( TComPPS* pcPPS         ) {}
-#if !REMOVE_APS
-  Void  parseAPS                  ( TComAPS* pAPS          ) {}
-#endif
+  Void  parseVPS                  ( TComVPS* /*pcVPS*/ ) {}
+  Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
+  Void  parsePPS                  ( TComPPS* /*pcPPS*/ ) {}
 
-  Void  parseSliceHeader          ( TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager) {}
+  Void  parseSliceHeader          ( TComSlice*& /*rpcSlice*/, ParameterSetManagerDecoder* /*parameterSetManager*/) {}
   Void  parseTerminatingBit       ( UInt& ruiBit );
   Void  parseMVPIdx               ( Int& riMVPIdx          );
   Void  parseSaoMaxUvlc           ( UInt& val, UInt maxSymbol );
-#if SAO_MERGE_ONE_CTX
   Void  parseSaoMerge         ( UInt&  ruiVal   );
-#else
-  Void  parseSaoMergeLeft         ( UInt&  ruiVal, UInt uiCompIdx   );
-  Void  parseSaoMergeUp           ( UInt&  ruiVal  );
-#endif
   Void  parseSaoTypeIdx           ( UInt&  ruiVal  );
-#if SAO_TYPE_CODING
   Void  parseSaoUflc              ( UInt uiLength, UInt& ruiVal     );
-#else
-  Void  parseSaoUflc              ( UInt& ruiVal           );
-#endif
   Void  parseSaoOneLcuInterleaving(Int rx, Int ry, SAOParam* pSaoParam, TComDataCU* pcCU, Int iCUAddrInSlice, Int iCUAddrUpInSlice, Int allowMergeLeft, Int allowMergeUp);
-#if SAO_TYPE_SHARING
   Void  parseSaoOffset            (SaoLcuParam* psSaoLcuParam, UInt compIdx);
-#else
-  Void  parseSaoOffset            (SaoLcuParam* psSaoLcuParam);
-#endif
 private:
   Void  xReadUnarySymbol    ( UInt& ruiSymbol, ContextModel* pcSCModel, Int iOffset );
   Void  xReadUnaryMaxSymbol ( UInt& ruiSymbol, ContextModel* pcSCModel, Int iOffset, UInt uiMaxSymbol );
@@ -115,27 +96,13 @@ private:
   TComInputBitstream* m_pcBitstream;
   TDecBinIf*        m_pcTDecBinIf;
  
-#if !REMOVE_FGS
-  Int           m_iSliceGranularity; //!< slice granularity
-#endif
-  
 public:
-#if !REMOVE_ALF
-  Void parseAlfCtrlFlag   (Int compIdx, UInt& code);
-#endif
-#if !REMOVE_FGS
-  /// set slice granularity
-  Void setSliceGranularity(Int iSliceGranularity)  {m_iSliceGranularity = iSliceGranularity;}
-
-  /// get slice granularity
-  Int  getSliceGranularity()                       {return m_iSliceGranularity;             }
-#endif
   
   Void parseSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void parseCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void parseSplitFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void parseMergeFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt uiPUIdx );
-  Void parseMergeIndex    ( TComDataCU* pcCU, UInt& ruiMergeIndex, UInt uiAbsPartIdx, UInt uiDepth );
+  Void parseMergeIndex    ( TComDataCU* pcCU, UInt& ruiMergeIndex );
   Void parsePartSize      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void parsePredMode      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   
@@ -143,13 +110,13 @@ public:
   
   Void parseIntraDirChroma( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   
-  Void parseInterDir      ( TComDataCU* pcCU, UInt& ruiInterDir, UInt uiAbsPartIdx, UInt uiDepth );
-  Void parseRefFrmIdx     ( TComDataCU* pcCU, Int& riRefFrmIdx, UInt uiAbsPartIdx, UInt uiDepth, RefPicList eRefList );
+  Void parseInterDir      ( TComDataCU* pcCU, UInt& ruiInterDir, UInt uiAbsPartIdx );
+  Void parseRefFrmIdx     ( TComDataCU* pcCU, Int& riRefFrmIdx, RefPicList eRefList );
   Void parseMvd           ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth, RefPicList eRefList );
   
   Void parseTransformSubdivFlag( UInt& ruiSubdivFlag, UInt uiLog2TransformBlockSize );
   Void parseQtCbf         ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth, UInt uiDepth );
-  Void parseQtRootCbf     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt& uiQtRootCbf );
+  Void parseQtRootCbf     ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   
   Void parseDeltaQP       ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   
@@ -161,11 +128,8 @@ public:
 
   Void updateContextTables( SliceType eSliceType, Int iQp );
 
-  Void  parseScalingList ( TComScalingList* scalingList ) {}
+  Void  parseScalingList ( TComScalingList* /*scalingList*/ ) {}
 
-#if INTRA_BL
-  Void parseIntraBLFlag    ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth );
-#endif
 private:
   UInt m_uiLastDQpNonZero;
   UInt m_uiLastQp;
@@ -178,7 +142,6 @@ private:
   ContextModel3DBuffer m_cCUMergeIdxExtSCModel;
   ContextModel3DBuffer m_cCUPartSizeSCModel;
   ContextModel3DBuffer m_cCUPredModeSCModel;
-  ContextModel3DBuffer m_cCUAlfCtrlFlagSCModel;
   ContextModel3DBuffer m_cCUIntraPredSCModel;
   ContextModel3DBuffer m_cCUChromaPredSCModel;
   ContextModel3DBuffer m_cCUDeltaQpSCModel;
@@ -198,22 +161,8 @@ private:
   
   ContextModel3DBuffer m_cMVPIdxSCModel;
   
-  ContextModel3DBuffer m_cALFFlagSCModel;
-  ContextModel3DBuffer m_cALFUvlcSCModel;
-  ContextModel3DBuffer m_cALFSvlcSCModel;
   ContextModel3DBuffer m_cCUAMPSCModel;
-#if !SAO_ABS_BY_PASS
-  ContextModel3DBuffer m_cSaoUvlcSCModel;
-#endif
-#if SAO_MERGE_ONE_CTX
   ContextModel3DBuffer m_cSaoMergeSCModel;
-#else
-  ContextModel3DBuffer m_cSaoMergeLeftSCModel;
-  ContextModel3DBuffer m_cSaoMergeUpSCModel;
-#endif
-#if INTRA_BL
-  ContextModel3DBuffer m_cIntraBLPredFlagSCModel;
-#endif
   ContextModel3DBuffer m_cSaoTypeIdxSCModel;
   ContextModel3DBuffer m_cTransformSkipSCModel;
   ContextModel3DBuffer m_CUTransquantBypassFlagSCModel;

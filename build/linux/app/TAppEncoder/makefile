@@ -28,7 +28,6 @@ DEFS				= -DMSYS_LINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DMSYS_UNIX_
 OBJS          		= 	\
 					$(OBJ_DIR)/encmain.o \
 					$(OBJ_DIR)/TAppEncCfg.o \
-					$(OBJ_DIR)/TAppEncLayerCfg.o \
 					$(OBJ_DIR)/TAppEncTop.o \
 
 # set libs to link with

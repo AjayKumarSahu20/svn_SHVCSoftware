@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,6 @@
 #include "TLibCommon/TComPicYuv.h"
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComLoopFilter.h"
-#include "TLibCommon/TComAdaptiveLoopFilter.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 
 #include "TDecEntropy.h"
@@ -67,7 +66,6 @@
 class TDecGop
 {
 private:
-  Int                   m_iGopSize;
   TComList<TComPic*>    m_cListPic;         //  Dynamic buffer
   
   //  Access channel
@@ -80,60 +78,32 @@ private:
   TDecSlice*            m_pcSliceDecoder;
   TComLoopFilter*       m_pcLoopFilter;
   
-#if !REMOVE_ALF
-  // Adaptive Loop filter
-  TComAdaptiveLoopFilter*       m_pcAdaptiveLoopFilter;
-#endif
   TComSampleAdaptiveOffset*     m_pcSAO;
   Double                m_dDecTime;
   Int                   m_decodedPictureHashSEIEnabled;  ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 
-  //! list that contains the CU address of each slice plus the end address
+  //! list that contains the CU address of each slice plus the end address 
   std::vector<Int> m_sliceStartCUAddress;
   std::vector<Bool> m_LFCrossSliceBoundaryFlag;
-#if !REMOVE_ALF
-  std::vector<Bool> m_sliceAlfEnabled[3];
-#endif
 
-#if SVC_EXTENSION
-  UInt                  m_layerId;
-  TDecTop**             m_ppcTDecTop;
-#endif
 public:
   TDecGop();
   virtual ~TDecGop();
   
-#if SVC_EXTENSION
-Void  init      ( TDecTop**               ppcDecTop,
-                  TDecEntropy*            pcEntropyDecoder, 
-#else
   Void  init    ( TDecEntropy*            pcEntropyDecoder, 
-#endif
                  TDecSbac*               pcSbacDecoder, 
                  TDecBinCABAC*           pcBinCABAC,
                  TDecCavlc*              pcCavlcDecoder, 
                  TDecSlice*              pcSliceDecoder, 
                  TComLoopFilter*         pcLoopFilter,
-#if !REMOVE_ALF
-                 TComAdaptiveLoopFilter* pcAdaptiveLoopFilter,
-#endif
                  TComSampleAdaptiveOffset* pcSAO
                  );
-#if SVC_EXTENSION
-  Void  create  (UInt layerId);
-#else
   Void  create  ();
-#endif
   Void  destroy ();
-//  Void  decompressGop(TComInputBitstream* pcBitstream, TComPic*& rpcPic, Bool bExecuteDeblockAndAlf );
   Void  decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic );
   Void  filterPicture  (TComPic*& rpcPic );
-  Void  setGopSize( Int i) { m_iGopSize = i; }
 
   void setDecodedPictureHashSEIEnabled(Int enabled) { m_decodedPictureHashSEIEnabled = enabled; }
-#if SVC_EXTENSION
-  TDecTop*   getLayerDec(UInt LayerId)  { return m_ppcTDecTop[LayerId]; }
-#endif 
 
 };
 

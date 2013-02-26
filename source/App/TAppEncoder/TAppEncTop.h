@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,25 +58,16 @@ class TAppEncTop : public TAppEncCfg
 {
 private:
   // class interface
-#if SVC_EXTENSION
-  TEncTop                    m_acTEncTop [MAX_LAYERS];                    ///< encoder class
-  TEncTop*                   m_apcTEncTop [MAX_LAYERS];                   ///< encoder pointer class
-  TVideoIOYuv                m_acTVideoIOYuvInputFile [MAX_LAYERS];       ///< input YUV file
-  TVideoIOYuv                m_acTVideoIOYuvReconFile [MAX_LAYERS];       ///< output reconstruction file
-
-  TComList<TComPicYuv*>      m_acListPicYuvRec [MAX_LAYERS];              ///< list of reconstruction YUV files
-#else
   TEncTop                    m_cTEncTop;                    ///< encoder class
   TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
   TVideoIOYuv                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
   
   TComList<TComPicYuv*>      m_cListPicYuvRec;              ///< list of reconstruction YUV files
-#endif
-
+  
   Int                        m_iFrameRcvd;                  ///< number of received frames
   
-  unsigned m_essentialBytes;
-  unsigned m_totalBytes;
+  UInt m_essentialBytes;
+  UInt m_totalBytes;
 protected:
   // initialization
   Void  xCreateLib        ();                               ///< create files & encoder class
@@ -85,24 +76,14 @@ protected:
   Void  xDestroyLib       ();                               ///< destroy encoder class
   
   /// obtain required buffers
-#if SVC_EXTENSION
-  Void xGetBuffer(TComPicYuv*& rpcPicYuvRec, UInt layer);
-#else
   Void xGetBuffer(TComPicYuv*& rpcPicYuvRec);
-#endif
   
   /// delete allocated buffers
   Void  xDeleteBuffer     ();
   
   // file I/O
-#if SVC_EXTENSION
-  Void xWriteRecon(UInt layer, Int iNumEncoded);
-  Void xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits);
-  Void printOutSummary();
-#else
   Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
-#endif
-  void rateStatsAccum(const AccessUnit& au, const std::vector<unsigned>& stats);
+  void rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& stats);
   void printRateSummary();
   
 public:
@@ -110,14 +91,7 @@ public:
   virtual ~TAppEncTop();
   
   Void        encode      ();                               ///< main encoding function
-#if SVC_EXTENSION
-  TEncTop&    getTEncTop  (UInt layer)   { return  m_acTEncTop[layer]; }      ///< return encoder class pointer reference
-#else
   TEncTop&    getTEncTop  ()   { return  m_cTEncTop; }      ///< return encoder class pointer reference
-#endif
-
-
-
 };// END CLASS DEFINITION TAppEncTop
 
 //! \}

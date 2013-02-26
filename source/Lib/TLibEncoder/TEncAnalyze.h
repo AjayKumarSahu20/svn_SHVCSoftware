@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,21 +87,6 @@ public:
   
   Void    setFrmRate  (Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
   Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
-#if SVC_EXTENSION
-  Void    printOut ( Char cDelim, UInt layer )
-  {
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    printf( "    L%d\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
-           layer,
-           getNumPic(), cDelim,
-           getBits() * dScale,
-           getPsnrY() / (Double)getNumPic(),
-           getPsnrU() / (Double)getNumPic(),
-           getPsnrV() / (Double)getNumPic() );
-  }
-#else
   Void    printOut ( Char cDelim )
   {
     Double dFps     =   m_dFrmRate; //--CFG_KDY
@@ -116,7 +101,6 @@ public:
            getPsnrU() / (Double)getNumPic(),
            getPsnrV() / (Double)getNumPic() );
   }
-#endif
   
   Void    printSummaryOut ()
   {
@@ -165,17 +149,10 @@ public:
   }
 };
 
-#if SVC_EXTENSION
-extern TEncAnalyze             m_gcAnalyzeAll [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeI [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeP [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeB [MAX_LAYERS];
-#else
 extern TEncAnalyze             m_gcAnalyzeAll;
 extern TEncAnalyze             m_gcAnalyzeI;
 extern TEncAnalyze             m_gcAnalyzeP;
 extern TEncAnalyze             m_gcAnalyzeB;
-#endif
 
 //! \}
 

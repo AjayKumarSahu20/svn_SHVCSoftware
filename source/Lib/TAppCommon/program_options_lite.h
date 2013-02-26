@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 #include <string>
 #include <list>
 #include <map>
-#include "TLibCommon/TypeDef.h"
 
 //! \ingroup TAppCommon
 //! \{
@@ -47,6 +46,20 @@ namespace df
   {
     struct Options;
     
+    struct ParseFailure : public std::exception
+    {
+      ParseFailure(std::string arg0, std::string val0) throw()
+      : arg(arg0), val(val0)
+      {}
+
+      ~ParseFailure() throw() {};
+
+      std::string arg;
+      std::string val;
+
+      const char* what() const throw() { return "Option Parse Failure"; }
+    };
+
     void doHelp(std::ostream& out, Options& opts, unsigned columns = 80);
     unsigned parseGNU(Options& opts, unsigned argc, const char* argv[]);
     unsigned parseSHORT(Options& opts, unsigned argc, const char* argv[]);
@@ -102,7 +115,15 @@ namespace df
     Option<T>::parse(const std::string& arg)
     {
       std::istringstream arg_ss (arg,std::istringstream::in);
-      arg_ss >> opt_storage;
+      arg_ss.exceptions(std::ios::failbit);
+      try
+      {
+        arg_ss >> opt_storage;
+      }
+      catch (...)
+      {
+        throw ParseFailure(opt_string, arg);
+      }
     }
     
     /* string parsing is specialized -- copy the whole string, not just the
@@ -187,59 +208,7 @@ namespace df
         parent.addOption(new Option<T>(name, storage, default_val, desc));
         return *this;
       }
-#if 1 //SVC_EXTENSION
-      template<typename T>
-      OptionSpecific&
-        operator()(const std::string& name, T* storage, T default_val, unsigned uiMaxNum, const std::string& desc = "" )
-      {
-        std::string cNameBuffer;
-        std::string cDescriptionBuffer;
-
-        cNameBuffer       .resize( name.size() + 10 );
-        cDescriptionBuffer.resize( desc.size() + 10 );
-
-        for ( unsigned int uiK = 0; uiK < uiMaxNum; uiK++ )
-        {
-          // isn't there are sprintf function for string??
-          sprintf((char*) cNameBuffer.c_str()       ,name.c_str(),uiK,uiK);
-          sprintf((char*) cDescriptionBuffer.c_str(),desc.c_str(),uiK,uiK);
-
-          size_t pos = cNameBuffer.find_first_of('\0');
-          if(pos != std::string::npos)
-            cNameBuffer.resize(pos);
-
-          parent.addOption(new Option<T>( cNameBuffer, (storage[uiK]), default_val, cDescriptionBuffer ));
-        }
-
-        return *this;
-      }
-
-      template<typename T>
-      OptionSpecific&
-        operator()(const std::string& name, T** storage, T default_val, unsigned uiMaxNum, const std::string& desc = "" )
-      {
-        std::string cNameBuffer;
-        std::string cDescriptionBuffer;
-
-        cNameBuffer       .resize( name.size() + 10 );
-        cDescriptionBuffer.resize( desc.size() + 10 );
-
-        for ( unsigned int uiK = 0; uiK < uiMaxNum; uiK++ )
-        {
-          // isn't there are sprintf function for string??
-          sprintf((char*) cNameBuffer.c_str()       ,name.c_str(),uiK,uiK);
-          sprintf((char*) cDescriptionBuffer.c_str(),desc.c_str(),uiK,uiK);
-
-          size_t pos = cNameBuffer.find_first_of('\0');
-          if(pos != std::string::npos)
-            cNameBuffer.resize(pos);
-
-          parent.addOption(new Option<T>( cNameBuffer, *(storage[uiK]), default_val, cDescriptionBuffer ));
-        }
-
-        return *this;
-      }
-#endif
+      
       /**
        * Add option described by name to the parent Options list,
        *   with desc as an optional help description

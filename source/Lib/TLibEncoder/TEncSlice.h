@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,10 +65,6 @@ private:
   // encoder configuration
   TEncCfg*                m_pcCfg;                              ///< encoder configuration class
   
-#if SVC_EXTENSION
-  TEncTop**               m_ppcTEncTop;
-#endif  
-
   // pictures
   TComList<TComPic*>*     m_pcListPic;                          ///< list of pictures
   TComPicYuv*             m_apcPicYuvPred;                      ///< prediction picture buffer
@@ -98,16 +94,14 @@ private:
   Double                  m_dPicRdCost;                         ///< picture-level RD cost
   Double*                 m_pdRdPicLambda;                      ///< array of lambda candidates
   Double*                 m_pdRdPicQp;                          ///< array of picture QP candidates (double-type for lambda)
-  Int*                    m_piRdPicQp;                          ///< array of picture QP candidates (int-type)
+  Int*                    m_piRdPicQp;                          ///< array of picture QP candidates (Int-type)
   TEncBinCABAC*           m_pcBufferBinCoderCABACs;       ///< line of bin coder CABAC
   TEncSbac*               m_pcBufferSbacCoders;                 ///< line to store temporary contexts
   TEncBinCABAC*           m_pcBufferLowLatBinCoderCABACs;       ///< dependent tiles: line of bin coder CABAC
   TEncSbac*               m_pcBufferLowLatSbacCoders;           ///< dependent tiles: line to store temporary contexts
   TEncRateCtrl*           m_pcRateCtrl;                         ///< Rate control manager
   UInt                    m_uiSliceIdx;
-#if DEPENDENT_SLICES
   std::vector<TEncSbac*> CTXMem;
-#endif
 public:
   TEncSlice();
   virtual ~TEncSlice();
@@ -117,9 +111,13 @@ public:
   Void    init                ( TEncTop* pcEncTop );
   
   /// preparation of slice encoding (reference marking, QP and lambda)
-  Void    initEncSlice        ( TComPic*  pcPic, Int iPOCLast, UInt uiPOCCurr, Int iNumPicRcvd,
+  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS );
+#if RATE_CONTROL_LAMBDA_DOMAIN
+  Void    resetQP             ( TComPic* pic, Int sliceQP, Double lambda );
+#else
   Void    xLamdaRecalculation ( Int changeQP, Int idGOP, Int depth, SliceType eSliceType, TComSPS* pcSPS, TComSlice* pcSlice);
+#endif
   // compress and encode slice
   Void    precompressSlice    ( TComPic*& rpcPic                                );      ///< precompress slice for multi-loop opt.
   Void    compressSlice       ( TComPic*& rpcPic                                );      ///< analysis stage of slice
@@ -133,15 +131,11 @@ public:
   Void    xDetermineStartAndBoundingCUAddr  ( UInt& uiStartCUAddr, UInt& uiBoundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice );
   UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
   Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
-#if DEPENDENT_SLICES
   Void      initCtxMem( UInt i );
-  Void      setCtxMem( TEncSbac* sb, int b )   { CTXMem[b] = sb; }
-#endif
+  Void      setCtxMem( TEncSbac* sb, Int b )   { CTXMem[b] = sb; }
 
-#if RECALCULATE_QP_ACCORDING_LAMBDA
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
-#endif
 };
 
 //! \}

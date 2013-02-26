@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ \file     NALread.cpp
+ \brief    reading funtionality for NAL units
+ */
+
+
 #include <vector>
 #include <algorithm>
 #include <ostream>
@@ -43,50 +49,61 @@ using namespace std;
 
 //! \ingroup TLibDecoder
 //! \{
-static void convertPayloadToRBSP(vector<uint8_t>& nalUnitBuf, TComInputBitstream *pcBitstream)
+static void convertPayloadToRBSP(vector<uint8_t>& nalUnitBuf, Bool isVclNalUnit)
 {
-  unsigned zeroCount = 0;
+  UInt zeroCount = 0;
   vector<uint8_t>::iterator it_read, it_write;
 
   for (it_read = it_write = nalUnitBuf.begin(); it_read != nalUnitBuf.end(); it_read++, it_write++)
   {
+    assert(zeroCount < 2 || *it_read >= 0x03);
     if (zeroCount == 2 && *it_read == 0x03)
     {
       it_read++;
       zeroCount = 0;
+      if (it_read == nalUnitBuf.end())
+      {
+        break;
+      }
     }
     zeroCount = (*it_read == 0x00) ? zeroCount+1 : 0;
     *it_write = *it_read;
+  }
+  assert(zeroCount == 0);
+  
+  if (isVclNalUnit)
+  {
+    // Remove cabac_zero_word from payload if present
+    Int n = 0;
+    
+    while (it_write[-1] == 0x00)
+    {
+      it_write--;
+      n++;
+    }
+    
+    if (n > 0)
+    {
+      printf("\nDetected %d instances of cabac_zero_word", n/2);      
+    }
   }
 
   nalUnitBuf.resize(it_write - nalUnitBuf.begin());
 }
 
-#if NAL_UNIT_HEADER
 Void readNalUnitHeader(InputNALUnit& nalu)
 {
   TComInputBitstream& bs = *nalu.m_Bitstream;
 
-  bool forbidden_zero_bit = bs.read(1);           // forbidden_zero_bit
+  Bool forbidden_zero_bit = bs.read(1);           // forbidden_zero_bit
   assert(forbidden_zero_bit == 0);
   nalu.m_nalUnitType = (NalUnitType) bs.read(6);  // nal_unit_type
-#if SVC_EXTENSION
-  nalu.m_reservedZero6Bits = bs.read(6);       // nuh_reserved_zero_6bits
-  nalu.m_layerId = nalu.m_reservedZero6Bits;
-#else
-#if TARGET_DECLAYERID_SET
   nalu.m_reservedZero6Bits = bs.read(6);       // nuh_reserved_zero_6bits
   assert(nalu.m_reservedZero6Bits == 0);
-#else
-  unsigned reserved_one_6bits = bs.read(6);       // nuh_reserved_zero_6bits
-  assert(reserved_one_6bits == 0);
-#endif
-#endif
   nalu.m_temporalId = bs.read(3) - 1;             // nuh_temporal_id_plus1
 
   if ( nalu.m_temporalId )
   {
-#if NAL_UNIT_TYPES_J1003_D7
     assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLANT
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -97,29 +114,15 @@ Void readNalUnitHeader(InputNALUnit& nalu)
          && nalu.m_nalUnitType != NAL_UNIT_SPS
          && nalu.m_nalUnitType != NAL_UNIT_EOS
          && nalu.m_nalUnitType != NAL_UNIT_EOB );
-#else
-    assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_CRA
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_CRANT
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLANT
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_IDR
-         && nalu.m_nalUnitType != NAL_UNIT_VPS
-         && nalu.m_nalUnitType != NAL_UNIT_SPS );
-#endif
   }
   else
   {
-#if NAL_UNIT_TYPES_J1003_D7
     assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_TLA
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_TSA_N
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_STSA_R
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_STSA_N );
-#else
-    assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_TLA );
-#endif
   }
 }
-#endif
 /**
  * create a NALunit structure with given header values and storage for
  * a bitstream
@@ -128,59 +131,10 @@ void read(InputNALUnit& nalu, vector<uint8_t>& nalUnitBuf)
 {
   /* perform anti-emulation prevention */
   TComInputBitstream *pcBitstream = new TComInputBitstream(NULL);
-  convertPayloadToRBSP(nalUnitBuf, pcBitstream);
-
+  convertPayloadToRBSP(nalUnitBuf, (nalUnitBuf[0] & 64) == 0);
+  
   nalu.m_Bitstream = new TComInputBitstream(&nalUnitBuf);
   delete pcBitstream;
-#if NAL_UNIT_HEADER
   readNalUnitHeader(nalu);
-#else
-  TComInputBitstream& bs = *nalu.m_Bitstream;
-
-  bool forbidden_zero_bit = bs.read(1);
-  assert(forbidden_zero_bit == 0);
-#if !REMOVE_NAL_REF_FLAG
-  nalu.m_nalRefFlag  = (bs.read(1) != 0 );
-#endif
-  nalu.m_nalUnitType = (NalUnitType) bs.read(6);
-#if REMOVE_NAL_REF_FLAG
-  unsigned reserved_one_6bits = bs.read(6);
-  assert(reserved_one_6bits == 0);
-#endif
-#if TEMPORAL_ID_PLUS1
-  nalu.m_temporalId = bs.read(3) - 1;
-#if !REMOVE_NAL_REF_FLAG
-  unsigned reserved_one_5bits = bs.read(5);
-  assert(reserved_one_5bits == 0);
-#endif
-#else
-  nalu.m_temporalId = bs.read(3);
-  unsigned reserved_one_5bits = bs.read(5);
-#if SVC_EXTENSION
-  assert(reserved_one_5bits >= 1);
-  nalu.m_layerId = reserved_one_5bits - 1;
-#else
-  assert(reserved_one_5bits == 1);
-#endif
-#endif
-
-  if ( nalu.m_temporalId )
-  {
-#if NAL_UNIT_TYPES_J1003_D7
-    assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLANT
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA_N_LP
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_IDR
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_IDR_N_LP
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_CRA );
-#else
-    assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_CRA
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_CRANT
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLANT
-         && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_IDR );
-#endif
-  }
-#endif
 }
 //! \}

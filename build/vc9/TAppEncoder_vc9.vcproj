@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="TAppEncoder"
 	ProjectGUID="{D759E4E1-D33A-4483-B57B-0FD248E022FE}"
 	RootNamespace="TAppEncoder"
@@ -330,10 +330,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\App\TAppEncoder\TAppEncLayerCfg.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\App\TAppEncoder\TAppEncTop.cpp"
 				>
 			</File>
@@ -344,10 +340,6 @@
 			>
 			<File
 				RelativePath="..\..\source\App\TAppEncoder\TAppEncCfg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\App\TAppEncoder\TAppEncLayerCfg.h"
 				>
 			</File>
 			<File

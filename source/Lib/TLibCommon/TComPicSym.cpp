@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,7 @@
 */
 
 #include "TComPicSym.h"
-#if REMOVE_APS
 #include "TComSampleAdaptiveOffset.h"
-#endif
 
 //! \ingroup TLibCommon
 //! \{
@@ -124,9 +122,7 @@ Void TComPicSym::create  ( Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt 
     m_puiCUOrderMap[i] = i;
     m_puiInverseCUOrderMap[i] = i;
   }
-#if REMOVE_APS
   m_saoParam = NULL;
-#endif
 }
 
 Void TComPicSym::destroy()
@@ -150,18 +146,11 @@ Void TComPicSym::destroy()
   delete [] m_apcTComDataCU;
   m_apcTComDataCU = NULL;
 
-#if AVC_BASE || REF_IDX_FRAMEWORK
-  if( m_apcTComTile )
-  {
-#endif
   for(Int i = 0; i < (m_iNumColumnsMinus1+1)*(m_iNumRowsMinus1+1); i++ )
   {
     delete m_apcTComTile[i];
   }
   delete [] m_apcTComTile;
-#if AVC_BASE || REF_IDX_FRAMEWORK
-  }
-#endif
 
   m_apcTComTile = NULL;
 
@@ -174,14 +163,12 @@ Void TComPicSym::destroy()
   delete [] m_puiInverseCUOrderMap;
   m_puiInverseCUOrderMap = NULL;
   
-#if REMOVE_APS
   if (m_saoParam)
   {
     TComSampleAdaptiveOffset::freeSaoParam(m_saoParam);
     delete m_saoParam;
     m_saoParam = NULL;
   }
-#endif
 }
 
 Void TComPicSym::allocateNewSlice()
@@ -190,11 +177,7 @@ Void TComPicSym::allocateNewSlice()
   if (m_uiNumAllocatedSlice>=2)
   {
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->copySliceInfo( m_apcTComSlice[m_uiNumAllocatedSlice-2] );
-#if SET_SLICE_LAYER_ID
-    m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice( m_apcTComSlice[m_uiNumAllocatedSlice-1]->getLayerId() );
-#else
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice();
-#endif
   }
 }
 
@@ -325,13 +308,11 @@ UInt TComPicSym::xCalculateNxtCUAddr( UInt uiCurrCUAddr )
   return uiNxtCUAddr;
 }
 
-#if REMOVE_APS
 Void TComPicSym::allocSaoParam(TComSampleAdaptiveOffset *sao)
 {
   m_saoParam = new SAOParam;
   sao->allocSaoParam(m_saoParam);
 }
-#endif
 
 TComTile::TComTile()
 {

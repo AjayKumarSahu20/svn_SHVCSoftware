@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,6 @@
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
 #include "TEncSearch.h"
-#include "TEncAdaptiveLoopFilter.h"
 #include "TEncSampleAdaptiveOffset.h"
 #include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
@@ -73,10 +72,6 @@ private:
   Int                     m_iNumPicRcvd;                  ///< number of received pictures
   UInt                    m_uiNumAllPicCoded;             ///< number of coded pictures
   TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures
-#if SVC_EXTENSION 
-  static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
-  static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
-#endif
   
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
@@ -86,9 +81,6 @@ private:
   TComTrQuant             m_cTrQuant;                     ///< transform & quantization class
   TComLoopFilter          m_cLoopFilter;                  ///< deblocking filter class
   TEncSampleAdaptiveOffset m_cEncSAO;                     ///< sample adaptive offset class
-#if !REMOVE_ALF
-  TEncAdaptiveLoopFilter  m_cAdaptiveLoopFilter;          ///< adaptive loop filter class
-#endif
   TEncEntropy             m_cEntropyCoder;                ///< entropy encoder
   TEncCavlc               m_cCavlcCoder;                  ///< CAVLC encoder
   TEncSbac                m_cSbacCoder;                   ///< SBAC encoder
@@ -103,9 +95,6 @@ private:
   // SPS
   TComSPS                 m_cSPS;                         ///< SPS
   TComPPS                 m_cPPS;                         ///< PPS
-#if !REMOVE_APS
-  std::vector<TComAPS>    m_vAPS;  //!< APS container
-#endif
   // RD cost computation
   TComBitCounter          m_cBitCounter;                  ///< bit counter for RD optimization
   TComRdCost              m_cRdCost;                      ///< RD cost computation class
@@ -132,16 +121,6 @@ private:
   TComScalingList         m_scalingList;                 ///< quantization matrix information
   TEncRateCtrl            m_cRateCtrl;                    ///< Rate control class
   
-#if SVC_EXTENSION
-  TEncTop**               m_ppcTEncTop;
-  TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
-#endif
-#if REF_IDX_FRAMEWORK
-  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
-#endif
-#if REF_IDX_MFM
-  Bool                    m_bMFMEnabledFlag;
-#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -149,9 +128,7 @@ protected:
   
   Void  xInitPPSforTiles  ();
   Void  xInitRPS          ();                             ///< initialize PPS from encoder options
-#if REF_IDX_FRAMEWORK
-  Void xInitILRP();
-#endif
+
 public:
   TEncTop();
   virtual ~TEncTop();
@@ -172,9 +149,6 @@ public:
   
   TComTrQuant*            getTrQuant            () { return  &m_cTrQuant;             }
   TComLoopFilter*         getLoopFilter         () { return  &m_cLoopFilter;          }
-#if !REMOVE_ALF
-  TEncAdaptiveLoopFilter* getAdaptiveLoopFilter () { return  &m_cAdaptiveLoopFilter;  }
-#endif
   TEncSampleAdaptiveOffset* getSAO              () { return  &m_cEncSAO;              }
   TEncGOP*                getGOPEncoder         () { return  &m_cGOPEncoder;          }
   TEncSlice*              getSliceEncoder       () { return  &m_cSliceEncoder;        }
@@ -197,44 +171,17 @@ public:
   TEncRateCtrl*           getRateCtrl           () { return &m_cRateCtrl;             }
   TComSPS*                getSPS                () { return  &m_cSPS;                 }
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
-#if !REMOVE_APS
-  std::vector<TComAPS>&   getAPS                () { return m_vAPS; }
-#endif
-#if SVC_EXTENSION  
-  Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
-  TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
-#endif
-  Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid,TComList<TComPic*>& listPic );
+  Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
-#if SVC_EXTENSION
-  Int                     getPOCLast            () { return m_iPOCLast;               }
-  Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
-  Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
-#endif
-
   // -------------------------------------------------------------------------------------------------------------------
   // encoder function
   // -------------------------------------------------------------------------------------------------------------------
 
   /// encode several number of pictures until end-of-sequence
-#if SVC_EXTENSION
-  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
-
-  Void encodePrep( bool bEos, TComPicYuv* pcPicYuvOrg );
-#else
-  Void encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
-#endif
-#if REF_IDX_FRAMEWORK
-  TComPic** getIlpList() { return m_cIlpPic; }
-  Void setILRPic(TComPic *pcPic);
-#endif
-#if REF_IDX_MFM
-  Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
-#endif
 
+  void printSummary() { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded); }
 };
 
 //! \}

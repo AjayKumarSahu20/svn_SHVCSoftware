@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,16 +54,13 @@ TDecSlice::TDecSlice()
 
 TDecSlice::~TDecSlice()
 {
-#if DEPENDENT_SLICES
   for (std::vector<TDecSbac*>::iterator i = CTXMem.begin(); i != CTXMem.end(); i++)
   {
     delete (*i);
   }
   CTXMem.clear();
-#endif
 }
 
-#if DEPENDENT_SLICES
 Void TDecSlice::initCtxMem(  UInt i )                
 {   
   for (std::vector<TDecSbac*>::iterator j = CTXMem.begin(); j != CTXMem.end(); j++)
@@ -73,9 +70,8 @@ Void TDecSlice::initCtxMem(  UInt i )
   CTXMem.clear(); 
   CTXMem.resize(i); 
 }
-#endif
 
-Void TDecSlice::create( TComSlice* pcSlice, Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth )
+Void TDecSlice::create()
 {
 }
 
@@ -103,24 +99,17 @@ Void TDecSlice::destroy()
   }
 }
 
-#if SVC_EXTENSION
-Void TDecSlice::init(TDecTop** ppcDecTop,TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
-#else
 Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
-#endif
 {
   m_pcEntropyDecoder  = pcEntropyDecoder;
   m_pcCuDecoder       = pcCuDecoder;
-#if SVC_EXTENSION   
-  m_ppcTDecTop        = ppcDecTop; 
-#endif
 }
 
-Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstream** ppcSubstreams, TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders)
+Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders)
 {
   TComDataCU* pcCU;
   UInt        uiIsLast = 0;
-  Int   iStartCUEncOrder = max(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()/rpcPic->getNumPartInCU(), rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getDependentSliceCurStartCUAddr()/rpcPic->getNumPartInCU());
+  Int   iStartCUEncOrder = max(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr()/rpcPic->getNumPartInCU(), rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr()/rpcPic->getNumPartInCU());
   Int   iStartCUAddr = rpcPic->getPicSym()->getCUOrderMap(iStartCUEncOrder);
 
   // decoder don't need prediction & residual frame buffer
@@ -193,54 +182,40 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
   UInt uiTileCol;
   UInt uiTileStartLCU;
   UInt uiTileLCUX;
-  UInt uiTileLCUY;
-  UInt uiTileWidth;
-  UInt uiTileHeight;
   Int iNumSubstreamsPerTile = 1; // if independent.
-
-#if INTRA_BL
-  m_pcCuDecoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec() : NULL);
-#endif
-#if DEPENDENT_SLICES
-  Bool bAllowDependence = false;
-#if TILES_WPP_ENTROPYSLICES_FLAGS
-  if( rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getDependentSliceEnabledFlag()&& (!rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getEntropySliceEnabledFlag()) )
-#else
-  if( rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getDependentSliceEnabledFlag()&& (!rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getCabacIndependentFlag()) )
-#endif
+  Bool depSliceSegmentsEnabled = rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getDependentSliceSegmentsEnabledFlag();
+  uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iStartCUAddr))->getFirstCUAddr();
+  if( depSliceSegmentsEnabled )
   {
-    bAllowDependence = true;
-  }
-  if( bAllowDependence )
-  {
-    if( !rpcPic->getSlice(rpcPic->getCurrSliceIdx())->isNextSlice() )
+    if( (!rpcPic->getSlice(rpcPic->getCurrSliceIdx())->isNextSlice()) &&
+       iStartCUAddr != rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iStartCUAddr))->getFirstCUAddr())
     {
-      uiTileCol = 0;
-#if TILES_WPP_ENTROPYSLICES_FLAGS
       if(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
-#else
-      if(pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc()==2)
-#endif
       {
+        uiTileCol = rpcPic->getPicSym()->getTileIdxMap(iStartCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1);
         m_pcBufferSbacDecoders[uiTileCol].loadContexts( CTXMem[1]  );//2.LCU
+        if ( (iStartCUAddr%uiWidthInLCUs+1) >= uiWidthInLCUs  )
+        {
+          uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
+          uiCol     = iStartCUAddr % uiWidthInLCUs;
+          if(uiCol==uiTileLCUX)
+          {
+            CTXMem[0]->loadContexts(pcSbacDecoder);
+          }
+        }
       }
       pcSbacDecoder->loadContexts(CTXMem[0] ); //end of depSlice-1
       pcSbacDecoders[uiSubStrm].loadContexts(pcSbacDecoder);
     }
     else
     {
-#if TILES_WPP_ENTROPYSLICES_FLAGS
       if(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
-#else
-      if(pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc()==2)
-#endif
       {
         CTXMem[1]->loadContexts(pcSbacDecoder);
       }
       CTXMem[0]->loadContexts(pcSbacDecoder);
     }
   }
-#endif
   for( Int iCUAddr = iStartCUAddr; !uiIsLast && iCUAddr < rpcPic->getNumCUsInFrame(); iCUAddr = rpcPic->getPicSym()->xCalculateNxtCUAddr(iCUAddr) )
   {
     pcCU = rpcPic->getCU( iCUAddr );
@@ -248,22 +223,11 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
     uiTileCol = rpcPic->getPicSym()->getTileIdxMap(iCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1); // what column of tiles are we in?
     uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iCUAddr))->getFirstCUAddr();
     uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-    uiTileLCUY = uiTileStartLCU / uiWidthInLCUs;
-    uiTileWidth = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iCUAddr))->getTileWidth();
-    uiTileHeight = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iCUAddr))->getTileHeight();
     uiCol     = iCUAddr % uiWidthInLCUs;
     // The 'line' is now relative to the 1st line in the slice, not the 1st line in the picture.
     uiLin     = (iCUAddr/uiWidthInLCUs)-(iStartCUAddr/uiWidthInLCUs);
     // inherit from TR if necessary, select substream to use.
-#if DEPENDENT_SLICES
-#if TILES_WPP_ENTROPYSLICES_FLAGS
-    if( (pcSlice->getPPS()->getNumSubstreams() > 1) || ( bAllowDependence  && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()) ))
-#else
-    if( (pcSlice->getPPS()->getNumSubstreams() > 1) || ( bAllowDependence  && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc()==2) ))
-#endif
-#else
-    if( pcSlice->getPPS()->getNumSubstreams() > 1 )
-#endif
+    if( (pcSlice->getPPS()->getNumSubstreams() > 1) || ( depSliceSegmentsEnabled  && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()) ))
     {
       // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
       iNumSubstreamsPerTile = iNumSubstreams/rpcPic->getPicSym()->getNumTiles();
@@ -271,15 +235,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
                   + uiLin%iNumSubstreamsPerTile;
       m_pcEntropyDecoder->setBitstream( ppcSubstreams[uiSubStrm] );
       // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-#if DEPENDENT_SLICES
-#if TILES_WPP_ENTROPYSLICES_FLAGS
-      if (((pcSlice->getPPS()->getNumSubstreams() > 1) || bAllowDependence ) && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()))
-#else
-      if (((pcSlice->getPPS()->getNumSubstreams() > 1) || bAllowDependence ) && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc()==2))
-#endif
-#else
-      if (pcSlice->getPPS()->getNumSubstreams() > 1 && uiCol == uiTileLCUX)
-#endif
+      if (((pcSlice->getPPS()->getNumSubstreams() > 1) || depSliceSegmentsEnabled ) && (uiCol == uiTileLCUX)&&(pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()))
       {
         // We'll sync if the TR is available.
         TComDataCU *pcCUUp = pcCU->getCUAbove();
@@ -295,20 +251,9 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
              ((pcCUTR==NULL) || (pcCUTR->getSlice()==NULL) || 
              ((pcCUTR->getSCUAddr()+uiMaxParts-1) < pcSlice->getSliceCurStartCUAddr()) ||
              ((rpcPic->getPicSym()->getTileIdxMap( pcCUTR->getAddr() ) != rpcPic->getPicSym()->getTileIdxMap(iCUAddr)))
-             ))||
-             (true/*bEnforceDependentSliceRestriction*/ &&
-             ((pcCUTR==NULL) || (pcCUTR->getSlice()==NULL) || 
-             ((pcCUTR->getSCUAddr()+uiMaxParts-1) < pcSlice->getDependentSliceCurStartCUAddr()) ||
-             ((rpcPic->getPicSym()->getTileIdxMap( pcCUTR->getAddr() ) != rpcPic->getPicSym()->getTileIdxMap(iCUAddr)))
              ))
            )
         {
-#if DEPENDENT_SLICES
-          if( (iCUAddr!=0) && ((pcCUTR->getSCUAddr()+uiMaxParts-1) >= pcSlice->getSliceCurStartCUAddr()) && bAllowDependence)
-          {
-             pcSbacDecoders[uiSubStrm].loadContexts( &m_pcBufferSbacDecoders[uiTileCol] ); 
-          }
-#endif
           // TR not available.
         }
         else
@@ -327,9 +272,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
 
     if ( (iCUAddr == rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iCUAddr))->getFirstCUAddr()) && // 1st in tile.
          (iCUAddr!=0) && (iCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr())/rpcPic->getNumPartInCU())
-#if DEPENDENT_SLICES
-         && (iCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getDependentSliceCurStartCUAddr())/rpcPic->getNumPartInCU())
-#endif
+         && (iCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr())/rpcPic->getNumPartInCU())
          ) // !1st in frame && !1st in slice
     {
       if (pcSlice->getPPS()->getNumSubstreams() > 1)
@@ -365,26 +308,13 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-#if !SAO_LUM_CHROMA_ONOFF_FLAGS
-    if ( pcSlice->getSPS()->getUseSAO() && pcSlice->getSaoEnabledFlag() )
-#else
     if ( pcSlice->getSPS()->getUseSAO() && (pcSlice->getSaoEnabledFlag()||pcSlice->getSaoEnabledFlagChroma()) )
-#endif
     {
-#if REMOVE_APS
       SAOParam *saoParam = rpcPic->getPicSym()->getSaoParam();
-#else
-      SAOParam *saoParam = pcSlice->getAPS()->getSaoParam();
-#endif
       saoParam->bSaoFlag[0] = pcSlice->getSaoEnabledFlag();
       if (iCUAddr == iStartCUAddr)
       {
-#if SAO_TYPE_SHARING
         saoParam->bSaoFlag[1] = pcSlice->getSaoEnabledFlagChroma();
-#else
-        saoParam->bSaoFlag[1] = pcSlice->getSaoEnabledFlagCb();
-        saoParam->bSaoFlag[2] = pcSlice->getSaoEnabledFlagCr();
-#endif
       }
       Int numCuInWidth     = saoParam->numCuInWidth;
       Int cuAddrInSlice = iCUAddr - rpcPic->getPicSym()->getCUOrderMap(pcSlice->getSliceCurStartCUAddr()/rpcPic->getNumPartInCU());
@@ -409,77 +339,56 @@ Void TDecSlice::decompressSlice(TComInputBitstream* pcBitstream, TComInputBitstr
       }
       pcSbacDecoder->parseSaoOneLcuInterleaving(rx, ry, saoParam,pcCU, cuAddrInSlice, cuAddrUpInSlice, allowMergeLeft, allowMergeUp);
     }
-#if !REMOVE_ALF
-    if(pcSlice->getSPS()->getUseALF())
+    else if ( pcSlice->getSPS()->getUseSAO() )
     {
-      UInt alfEnabledFlag;
-      for(Int compIdx=0; compIdx< 3; compIdx++)
+      Int addr = pcCU->getAddr();
+      SAOParam *saoParam = rpcPic->getPicSym()->getSaoParam();
+      for (Int cIdx=0; cIdx<3; cIdx++)
       {
-        alfEnabledFlag = 0;
-        if(pcSlice->getAlfEnabledFlag(compIdx))
+        SaoLcuParam *saoLcuParam = &(saoParam->saoLcuParam[cIdx][addr]);
+        if ( ((cIdx == 0) && !pcSlice->getSaoEnabledFlag()) || ((cIdx == 1 || cIdx == 2) && !pcSlice->getSaoEnabledFlagChroma()))
         {
-          pcSbacDecoder->parseAlfCtrlFlag(compIdx, alfEnabledFlag);
+          saoLcuParam->mergeUpFlag   = 0;
+          saoLcuParam->mergeLeftFlag = 0;
+          saoLcuParam->subTypeIdx    = 0;
+          saoLcuParam->typeIdx       = -1;
+          saoLcuParam->offset[0]     = 0;
+          saoLcuParam->offset[1]     = 0;
+          saoLcuParam->offset[2]     = 0;
+          saoLcuParam->offset[3]     = 0;
         }
-        pcCU->setAlfLCUEnabled((alfEnabledFlag==1)?true:false, compIdx);
       }
     }
-#endif
     m_pcCuDecoder->decodeCU     ( pcCU, uiIsLast );
     m_pcCuDecoder->decompressCU ( pcCU );
     
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
-    /*If at the end of a LCU line but not at the end of a substream, perform CABAC flush*/
-    if (!uiIsLast && pcSlice->getPPS()->getNumSubstreams() > 1)
-    {
-      if ((uiCol == uiTileLCUX+uiTileWidth-1) && (uiLin+iNumSubstreamsPerTile < uiTileLCUY+uiTileHeight))
-      {
-        m_pcEntropyDecoder->decodeFlush();
-      }
-    }
     pcSbacDecoders[uiSubStrm].load(pcSbacDecoder);
 
     //Store probabilities of second LCU in line into buffer
-#if DEPENDENT_SLICES
-#if TILES_WPP_ENTROPYSLICES_FLAGS
-    if ( (uiCol == uiTileLCUX+1)&& (bAllowDependence || (pcSlice->getPPS()->getNumSubstreams() > 1)) && (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()) )
-#else
-    if ( (uiCol == uiTileLCUX+1)&& (bAllowDependence || (pcSlice->getPPS()->getNumSubstreams() > 1)) && (pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc() == 2))
-#endif
-#else
-    if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiCol == uiTileLCUX+1))
-#endif
+    if ( (uiCol == uiTileLCUX+1)&& (depSliceSegmentsEnabled || (pcSlice->getPPS()->getNumSubstreams() > 1)) && (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag()) )
     {
       m_pcBufferSbacDecoders[uiTileCol].loadContexts( &pcSbacDecoders[uiSubStrm] );
     }
-#if DEPENDENT_SLICES
-    if( uiIsLast && bAllowDependence )
+    if( uiIsLast && depSliceSegmentsEnabled )
     {
-#if TILES_WPP_ENTROPYSLICES_FLAGS
       if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
-#else
-      if (pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc()==2)
-#endif
        {
          CTXMem[1]->loadContexts( &m_pcBufferSbacDecoders[uiTileCol] );//ctx 2.LCU
        }
       CTXMem[0]->loadContexts( pcSbacDecoder );//ctx end of dep.slice
       return;
     }
-#endif
   }
 }
 
 ParameterSetManagerDecoder::ParameterSetManagerDecoder()
 : m_vpsBuffer(MAX_NUM_VPS)
-,m_spsBuffer(256)
-, m_ppsBuffer(16)
-#if !REMOVE_APS
-, m_apsBuffer(64)
-#endif
+, m_spsBuffer(MAX_NUM_SPS)
+, m_ppsBuffer(MAX_NUM_PPS)
 {
-
 }
 
 ParameterSetManagerDecoder::~ParameterSetManagerDecoder()
@@ -524,26 +433,9 @@ TComPPS* ParameterSetManagerDecoder::getPrefetchedPPS  (Int ppsId)
   }
 }
 
-#if !REMOVE_APS
-TComAPS* ParameterSetManagerDecoder::getPrefetchedAPS  (Int apsId)
-{
-  if (m_apsBuffer.getPS(apsId) != NULL )
-  {
-    return m_apsBuffer.getPS(apsId);
-  }
-  else
-  {
-    return getAPS(apsId);
-  }
-}
-#endif
-
 Void     ParameterSetManagerDecoder::applyPrefetchedPS()
 {
   m_vpsMap.mergePSList(m_vpsBuffer);
-#if !REMOVE_APS
-  m_apsMap.mergePSList(m_apsBuffer);
-#endif
   m_ppsMap.mergePSList(m_ppsBuffer);
   m_spsMap.mergePSList(m_spsBuffer);
 }

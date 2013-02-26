@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,15 +63,6 @@ TComPic::TComPic()
 , m_bIndependentTileBoundaryForNDBFilter  (false)
 , m_pNDBFilterYuvTmp                      (NULL)
 , m_bCheckLTMSB                           (false)
-, m_SEIs                                  (NULL)
-#if SVC_EXTENSION
-, m_bSpatialEnhLayer( false )
-, m_pcFullPelBaseRec( NULL )
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-, m_bIsILR                                (false)
-#endif
-
-#endif
 {
   m_apcPicYuv[0]      = NULL;
   m_apcPicYuv[1]      = NULL;
@@ -81,52 +72,9 @@ TComPic::~TComPic()
 {
 }
 
-#if SVC_UPSAMPLING
-Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, TComSPS* pcSps,  Bool bIsVirtual )
-{
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
-  if (!bIsVirtual)
-  {
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  
-  if (m_bSpatialEnhLayer)
-  {
-    m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
+Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+                      Int *numReorderPics, Bool bIsVirtual)
 
-  /* there are no SEI messages associated with this picture initially */
-  m_SEIs = NULL;
-  m_bUsedByCurr = false;
-  return;
-}
-#if REF_IDX_FRAMEWORK
-Void TComPic::createWithOutYuv( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, TComSPS* pcSps,  Bool bIsVirtual)
-{
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
-  if (!bIsVirtual)
-  {
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
-  m_apcPicYuv[1]  = NULL;
- 
-#if SVC_UPSAMPLING
-  if (m_bSpatialEnhLayer)
-  {
-    m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
-#endif
-
-  /* there are no SEI messages associated with this picture initially */
-  m_SEIs = NULL;
-  m_bUsedByCurr = false;
-  return;
-}
-#endif
-#else
-
-Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Bool bIsVirtual )
 {
   m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
@@ -135,12 +83,24 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
   }
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   
-  /* there are no SEI messages associated with this picture initially */
-  m_SEIs = NULL;
+  // there are no SEI messages associated with this picture initially
+  if (m_SEIs.size() > 0)
+  {
+    deleteSEIs (m_SEIs);
+  }
   m_bUsedByCurr = false;
+
+  /* store conformance window parameters with picture */
+  m_conformanceWindow = conformanceWindow;
+  
+  /* store display window parameters with picture */
+  m_defaultDisplayWindow = defaultDisplayWindow;
+
+  /* store number of reorder pics with picture */
+  memcpy(m_numReorderPics, numReorderPics, MAX_TLAYER*sizeof(Int));
+
   return;
 }
-#endif
 
 Void TComPic::destroy()
 {
@@ -165,15 +125,7 @@ Void TComPic::destroy()
     m_apcPicYuv[1]  = NULL;
   }
   
-#if SVC_EXTENSION && SVC_UPSAMPLING
-  if (m_bSpatialEnhLayer)
-  {
-    m_pcFullPelBaseRec->destroy();
-    delete m_pcFullPelBaseRec;    m_pcFullPelBaseRec  = NULL;
-  }
-#endif 
-
-  delete m_SEIs;
+  deleteSEIs(m_SEIs);
 }
 
 Void TComPic::compressMotion()
@@ -512,160 +464,5 @@ Void TComPic::destroyNonDBFilterInfo()
 
 }
 
-#if REF_IDX_FRAMEWORK
-Void copyOnetoOnePicture(    // SVC_NONCOLL
-                  Pel *in,        
-                  Pel *out,      
-                  Int nCols,
-                  Int nRows, 
-                  Int fullRowWidth)
-{
-  Int rX;
-
-  for (rX = 0; rX < nRows; rX++)       
-  {
-    memcpy( out, in, sizeof(Pel) * nCols );
-    in = in + fullRowWidth;
-    out = out + fullRowWidth;
-  }
-}
-
-Void TComPic:: copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut)
-{
-  Int upsampledRowWidthLuma = pcPicYuvOut->getStride(); // 2 * pcPicYuvOut->getLumaMargin() + pcPicYuvOut->getWidth(); 
-  Int upsampledRowWidthCroma = pcPicYuvOut->getCStride(); //2 * pcPicYuvOut->getChromaMargin() + (pcPicYuvOut->getWidth()>>1);
-
-  copyOnetoOnePicture(
-    pcPicYuvIn->getLumaAddr(),        
-    pcPicYuvOut->getLumaAddr(),      
-    pcPicYuvOut->getWidth(), 
-    pcPicYuvOut->getHeight(),
-    upsampledRowWidthLuma);
-  copyOnetoOnePicture(
-    pcPicYuvIn->getCrAddr(),        
-    pcPicYuvOut->getCrAddr(),      
-    pcPicYuvOut->getWidth()>>1, 
-    pcPicYuvOut->getHeight()>>1,
-    upsampledRowWidthCroma);
-  copyOnetoOnePicture(
-    pcPicYuvIn->getCbAddr(),        
-    pcPicYuvOut->getCbAddr(),      
-    pcPicYuvOut->getWidth()>>1, 
-    pcPicYuvOut->getHeight()>>1,
-    upsampledRowWidthCroma);
-}
-
-#if REF_IDX_MFM
-Void TComPic::deriveUnitIdxBase( UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx )
-{
-  //pixel in the base layer
-
-  UInt uiPelX       = (uiUpsamplePelX<<1)/ratio;
-  UInt uiPelY       = (uiUpsamplePelY<<1)/ratio;
-  UInt uiBaseWidth  = getPicYuvRec()->getWidth();
-  UInt uiBaseHeight = getPicYuvRec()->getHeight();
-
-  UInt uiWidthInCU       = ( uiBaseWidth % g_uiMaxCUWidth  ) ? uiBaseWidth /g_uiMaxCUWidth  + 1 : uiBaseWidth /g_uiMaxCUWidth;
-  UInt uiHeightInCU      = ( uiBaseHeight% g_uiMaxCUHeight ) ? uiBaseHeight/ g_uiMaxCUHeight + 1 : uiBaseHeight/ g_uiMaxCUHeight;
-
-  uiPelX     = (UInt)Clip3<UInt>(0, uiWidthInCU * g_uiMaxCUWidth - 1, uiPelX);
-  uiPelY     = (UInt)Clip3<UInt>(0, uiHeightInCU * g_uiMaxCUHeight - 1, uiPelY);
-  
-  uiBaseCUAddr = uiPelY / g_uiMaxCUHeight * uiWidthInCU + uiPelX / g_uiMaxCUWidth;
-
-  UInt uiWidthMinPU = g_uiMaxCUWidth / (1<<g_uiMaxCUDepth);
-  UInt uiHeightMinPU = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
-  
-  UInt uiAbsPelX = uiPelX - (uiPelX / g_uiMaxCUWidth) * g_uiMaxCUWidth;
-  UInt uiAbsPelY = uiPelY - (uiPelY / g_uiMaxCUHeight) * g_uiMaxCUHeight;
-
-  UInt RasterIdx = uiAbsPelY / uiHeightMinPU * (g_uiMaxCUWidth/uiWidthMinPU) + uiAbsPelX / uiWidthMinPU;
-  uiBaseAbsPartIdx = g_auiRasterToZscan[RasterIdx];
-
-  return;
-}
-
-Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
-{
-  Int iBWidth   = pcPicBase->getPicYuvRec()->getWidth () - pcPicBase->getPicYuvRec()->getPicCropLeftOffset() - pcPicBase->getPicYuvRec()->getPicCropRightOffset();
-  Int iBHeight  = pcPicBase->getPicYuvRec()->getHeight() - pcPicBase->getPicYuvRec()->getPicCropTopOffset() - pcPicBase->getPicYuvRec()->getPicCropBottomOffset();
-
-  Int iEWidth   = getPicYuvRec()->getWidth() -  getPicYuvRec()->getPicCropLeftOffset() - getPicYuvRec()->getPicCropRightOffset();
-  Int iEHeight  = getPicYuvRec()->getHeight() - getPicYuvRec()->getPicCropTopOffset() -  getPicYuvRec()->getPicCropBottomOffset();
-  
-  UInt upSampleRatio = 0;
-  if(iEWidth == iBWidth && iEHeight == iBHeight)
-  {
-    upSampleRatio = 2;
-  }
-  else if(2*iEWidth == 3*iBWidth && 2*iEHeight == 3*iBHeight)
-  {
-    upSampleRatio = 3;
-  }
-  else if(iEWidth == 2*iBWidth && iEHeight == 2*iBHeight)
-  {
-    upSampleRatio = 4;
-  }
-  else
-  {
-    assert(0);
-  }
-
-  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
-  {
-    UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
-
-    TComDataCU*             pcCUDes = getCU(cuIdx);
-
-    UInt uiWidthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
-    UInt uiHeightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
-    Int unitNum = max (1, (Int)((16/uiWidthMinPU)*(16/uiHeightMinPU)) ); 
-
-    for(UInt uiAbsPartIdx = 0; uiAbsPartIdx < uiNumPartitions; uiAbsPartIdx+=unitNum )  //each 16x16 unit
-    {
-      //pixel position of each unit in up-sampled layer
-      UInt  uiPelX = pcCUDes->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
-      UInt  uiPelY = pcCUDes->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
-      UInt uiBaseCUAddr, uiBaseAbsPartIdx;
-         pcPicBase->deriveUnitIdxBase(uiPelX + 8, uiPelY + 8, upSampleRatio, uiBaseCUAddr, uiBaseAbsPartIdx);
-      if( (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(uiBaseCUAddr)->getPredictionMode(uiBaseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-      {
-        for(UInt list = 0; list < 2; list++)  //each list
-        { 
-          TComMv cMv = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getMv(uiBaseAbsPartIdx);
-          Int refIdx = pcPicBase->getCU(uiBaseCUAddr)->getCUMvField((RefPicList)list)->getRefIdx(uiBaseAbsPartIdx);
-
-          Int Hor =  ((Int)upSampleRatio * cMv.getHor())/2 ;
-          Int Ver =  ((Int)upSampleRatio * cMv.getVer())/2 ;
-
-          TComMv cScaledMv(Hor, Ver);
-          TComMvField sMvField;
-          sMvField.setMvField(cScaledMv, refIdx);
-
-          pcCUDes->getCUMvField((RefPicList)list)->setMvField(sMvField, uiAbsPartIdx);
-          pcCUDes->setPredictionMode(uiAbsPartIdx, MODE_INTER);
-        }
-      }
-      else
-      {
-        TComMvField zeroMvField;  //zero MV and invalid reference index
-        pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(zeroMvField, uiAbsPartIdx);
-        pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(zeroMvField, uiAbsPartIdx);
-        pcCUDes->setPredictionMode(uiAbsPartIdx, MODE_INTRA);
-      }
-
-      for(UInt i = 1; i < unitNum; i++ )  
-      {
-        pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_0)->getMv(uiAbsPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_0)->getRefIdx(uiAbsPartIdx), uiAbsPartIdx + i);
-        pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_1)->getMv(uiAbsPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_1)->getRefIdx(uiAbsPartIdx), uiAbsPartIdx + i);
-        pcCUDes->setPredictionMode(uiAbsPartIdx+i, pcCUDes->getPredictionMode(uiAbsPartIdx))  ;
-      }
-    }
-      memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(char)*uiNumPartitions);
-  }
-}
-#endif
-
-#endif
 
 //! \}

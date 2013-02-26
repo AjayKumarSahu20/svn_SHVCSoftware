@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,16 +44,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-#if SVC_EXTENSION
-TEncAnalyze             m_gcAnalyzeAll [MAX_LAYERS];
-TEncAnalyze             m_gcAnalyzeI [MAX_LAYERS];
-TEncAnalyze             m_gcAnalyzeP [MAX_LAYERS];
-TEncAnalyze             m_gcAnalyzeB [MAX_LAYERS];
-#else
 TEncAnalyze             m_gcAnalyzeAll;
 TEncAnalyze             m_gcAnalyzeI;
 TEncAnalyze             m_gcAnalyzeP;
 TEncAnalyze             m_gcAnalyzeB;
-#endif
 
 //! \}

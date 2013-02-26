@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,6 @@
     \brief    GOP decoder class
 */
 
-extern bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
-
 #include "TDecGop.h"
 #include "TDecCAVLC.h"
 #include "TDecSbac.h"
@@ -44,22 +42,20 @@ extern bool g_md5_mismatch; ///< top level flag to signal when there is a decode
 #include "TDecBinCoderCABAC.h"
 #include "libmd5/MD5.h"
 #include "TLibCommon/SEI.h"
-#if SVC_EXTENSION
-#include "TDecTop.h"
-#endif
 
 #include <time.h>
 
+extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
+
 //! \ingroup TLibDecoder
 //! \{
-static void calcAndPrintHashStatus(TComPicYuv& pic, const SEImessages* seis);
+static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
 TDecGop::TDecGop()
 {
-  m_iGopSize = 0;
   m_dDecTime = 0;
   m_pcSbacDecoders = NULL;
   m_pcBinCABACs = NULL;
@@ -70,35 +66,22 @@ TDecGop::~TDecGop()
   
 }
 
-#if SVC_EXTENSION
-Void TDecGop::create(UInt layerId)
-{
-  m_layerId = layerId;
-}
-#else
 Void TDecGop::create()
 {
   
 }
-#endif
+
 
 Void TDecGop::destroy()
 {
 }
-#if SVC_EXTENSION
-Void TDecGop::init(TDecTop**               ppcDecTop,
-                   TDecEntropy*            pcEntropyDecoder,
-#else
+
 Void TDecGop::init( TDecEntropy*            pcEntropyDecoder, 
-#endif
                    TDecSbac*               pcSbacDecoder, 
                    TDecBinCABAC*           pcBinCABAC,
                    TDecCavlc*              pcCavlcDecoder, 
                    TDecSlice*              pcSliceDecoder, 
                    TComLoopFilter*         pcLoopFilter,
-#if !REMOVE_ALF
-                   TComAdaptiveLoopFilter* pcAdaptiveLoopFilter,
-#endif
                    TComSampleAdaptiveOffset* pcSAO
                    )
 {
@@ -108,13 +91,7 @@ Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
   m_pcCavlcDecoder        = pcCavlcDecoder;
   m_pcSliceDecoder        = pcSliceDecoder;
   m_pcLoopFilter          = pcLoopFilter;
-#if !REMOVE_ALF
-  m_pcAdaptiveLoopFilter  = pcAdaptiveLoopFilter;
-#endif
   m_pcSAO  = pcSAO;
-#if SVC_EXTENSION   
-  m_ppcTDecTop            = ppcDecTop;
-#endif
 }
 
 
@@ -135,7 +112,7 @@ Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
   //-- For time output for each slice
   long iBeforeTime = clock();
   
-  UInt uiStartCUAddr   = pcSlice->getDependentSliceCurStartCUAddr();
+  UInt uiStartCUAddr   = pcSlice->getSliceSegmentCurStartCUAddr();
 
   UInt uiSliceStartCuAddr = pcSlice->getSliceCurStartCUAddr();
   if(uiSliceStartCuAddr == uiStartCUAddr)
@@ -146,11 +123,7 @@ Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
   m_pcSbacDecoder->init( (TDecBinIf*)m_pcBinCABAC );
   m_pcEntropyDecoder->setEntropyDecoder (m_pcSbacDecoder);
 
-#if TILES_WPP_ENTROPYSLICES_FLAGS
   UInt uiNumSubstreams = pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag() ? pcSlice->getNumEntryPointOffsets()+1 : pcSlice->getPPS()->getNumSubstreams();
-#else
-  UInt uiNumSubstreams = pcSlice->getPPS()->getTilesOrEntropyCodingSyncIdc() == 2 ? pcSlice->getNumEntryPointOffsets()+1 : pcSlice->getPPS()->getNumSubstreams();
-#endif
 
   // init each couple {EntropyDecoder, Substream}
   UInt *puiSubstreamSizes = pcSlice->getSubstreamSizes();
@@ -177,18 +150,9 @@ Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
   if(uiSliceStartCuAddr == uiStartCUAddr)
   {
     m_LFCrossSliceBoundaryFlag.push_back( pcSlice->getLFCrossSliceBoundaryFlag());
-#if !REMOVE_ALF
-    if(pcSlice->getSPS()->getUseALF())
-    {
-      for(Int compIdx=0; compIdx < 3; compIdx++)
-      {
-        m_sliceAlfEnabled[compIdx].push_back(  pcSlice->getAlfEnabledFlag(compIdx) );
-      }
-    }
-#endif
   }
   m_pcSbacDecoders[0].load(m_pcSbacDecoder);
-  m_pcSliceDecoder->decompressSlice( pcBitstream, ppcSubstreams, rpcPic, m_pcSbacDecoder, m_pcSbacDecoders);
+  m_pcSliceDecoder->decompressSlice( ppcSubstreams, rpcPic, m_pcSbacDecoder, m_pcSbacDecoders);
   m_pcEntropyDecoder->setBitstream(  ppcSubstreams[uiNumSubstreams-1] );
   // deallocate all created substreams, including internal buffers.
   for (UInt ui = 0; ui < uiNumSubstreams; ui++)
@@ -200,7 +164,7 @@ Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
   delete[] m_pcSbacDecoders; m_pcSbacDecoders = NULL;
   delete[] m_pcBinCABACs; m_pcBinCABACs = NULL;
 
-  m_dDecTime += (double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
+  m_dDecTime += (Double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
 }
 
 Void TDecGop::filterPicture(TComPic*& rpcPic)
@@ -212,99 +176,45 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
 
   // deblocking filter
   Bool bLFCrossTileBoundary = pcSlice->getPPS()->getLoopFilterAcrossTilesEnabledFlag();
-  m_pcLoopFilter->setCfg(pcSlice->getPPS()->getDeblockingFilterControlPresentFlag(), pcSlice->getDeblockingFilterDisable(), pcSlice->getDeblockingFilterBetaOffsetDiv2(), pcSlice->getDeblockingFilterTcOffsetDiv2(), bLFCrossTileBoundary);
+  m_pcLoopFilter->setCfg(bLFCrossTileBoundary);
   m_pcLoopFilter->loopFilterPic( rpcPic );
 
-  pcSlice = rpcPic->getSlice(0);
-#if REMOVE_ALF
   if(pcSlice->getSPS()->getUseSAO())
-#else
-  if(pcSlice->getSPS()->getUseSAO() || pcSlice->getSPS()->getUseALF())
-#endif
   {
-#if !REMOVE_FGS
-    Int sliceGranularity = pcSlice->getPPS()->getSliceGranularity();
-#endif
     m_sliceStartCUAddress.push_back(rpcPic->getNumCUsInFrame()* rpcPic->getNumPartInCU());
-#if REMOVE_FGS
     rpcPic->createNonDBFilterInfo(m_sliceStartCUAddress, 0, &m_LFCrossSliceBoundaryFlag, rpcPic->getPicSym()->getNumTiles(), bLFCrossTileBoundary);
-#else
-    rpcPic->createNonDBFilterInfo(m_sliceStartCUAddress, sliceGranularity, &m_LFCrossSliceBoundaryFlag, rpcPic->getPicSym()->getNumTiles(), bLFCrossTileBoundary);
-#endif
   }
 
   if( pcSlice->getSPS()->getUseSAO() )
   {
-#if !SAO_LUM_CHROMA_ONOFF_FLAGS
-    if(pcSlice->getSaoEnabledFlag())
-#else
-    if(pcSlice->getSaoEnabledFlag()||pcSlice->getSaoEnabledFlagChroma())
-#endif
     {
-#if REMOVE_APS
       SAOParam *saoParam = rpcPic->getPicSym()->getSaoParam();
-#else
-      SAOParam *saoParam = pcSlice->getAPS()->getSaoParam();
-#endif
       saoParam->bSaoFlag[0] = pcSlice->getSaoEnabledFlag();
-#if SAO_TYPE_SHARING
       saoParam->bSaoFlag[1] = pcSlice->getSaoEnabledFlagChroma();
-#else
-      saoParam->bSaoFlag[1] = pcSlice->getSaoEnabledFlagCb();
-      saoParam->bSaoFlag[2] = pcSlice->getSaoEnabledFlagCr();
-#endif
       m_pcSAO->setSaoLcuBasedOptimization(1);
-      m_pcSAO->createPicSaoInfo(rpcPic, (Int) m_sliceStartCUAddress.size() - 1);
-      m_pcSAO->SAOProcess(rpcPic, saoParam);
-#if !REMOVE_ALF
-      m_pcAdaptiveLoopFilter->PCMLFDisableProcess(rpcPic);
-#else
+      m_pcSAO->createPicSaoInfo(rpcPic);
+      m_pcSAO->SAOProcess(saoParam);
       m_pcSAO->PCMLFDisableProcess(rpcPic);
-#endif
       m_pcSAO->destroyPicSaoInfo();
     }
   }
 
-#if !REMOVE_ALF
-  // adaptive loop filter
-  if( pcSlice->getSPS()->getUseALF() )
-  {
-    m_pcAdaptiveLoopFilter->createPicAlfInfo(rpcPic, (Int) m_sliceStartCUAddress.size()-1);
-    m_pcAdaptiveLoopFilter->ALFProcess(rpcPic, pcSlice->getAPS()->getAlfParam(), m_sliceAlfEnabled);
-    m_pcAdaptiveLoopFilter->PCMLFDisableProcess(rpcPic);
-    m_pcAdaptiveLoopFilter->destroyPicAlfInfo();
-  }
-#endif
-
-#if REMOVE_ALF
   if(pcSlice->getSPS()->getUseSAO())
-#else
-  if(pcSlice->getSPS()->getUseSAO() || pcSlice->getSPS()->getUseALF())
-#endif
   {
     rpcPic->destroyNonDBFilterInfo();
   }
 
   rpcPic->compressMotion(); 
-
-
   Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced()) c += 32;
 
   //-- For time output for each slice
-#if SVC_EXTENSION
-  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
-                                                    rpcPic->getLayerId(),
-                                                    pcSlice->getTLayer(),
-                                                    c,
-                                                    pcSlice->getSliceQp() );
-#else
   printf("\nPOC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
                                                     pcSlice->getTLayer(),
                                                     c,
                                                     pcSlice->getSliceQp() );
-#endif
-  m_dDecTime += (double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
+
+  m_dDecTime += (Double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
   printf ("[DT %6.3f] ", m_dDecTime );
   m_dDecTime  = 0;
 
@@ -319,22 +229,18 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
   }
   if (m_decodedPictureHashSEIEnabled)
   {
-    calcAndPrintHashStatus(*rpcPic->getPicYuvRec(), rpcPic->getSEIs());
+    SEIMessages pictureHashes = getSeisByType(rpcPic->getSEIs(), SEI::DECODED_PICTURE_HASH );
+    const SEIDecodedPictureHash *hash = ( pictureHashes.size() > 0 ) ? (SEIDecodedPictureHash*) *(pictureHashes.begin()) : NULL;
+    if (pictureHashes.size() > 1)
+    {
+      printf ("Warning: Got multiple decoded picture hash SEI messages. Using first.");
+    }
+    calcAndPrintHashStatus(*rpcPic->getPicYuvRec(), hash);
   }
-
-#if FIXED_ROUNDING_FRAME_MEMORY
-  rpcPic->getPicYuvRec()->xFixedRoundingPic();
-#endif
 
   rpcPic->setOutputMark(true);
   rpcPic->setReconMark(true);
   m_sliceStartCUAddress.clear();
-#if !REMOVE_ALF
-  for(Int compIdx=0; compIdx < 3; compIdx++)
-  {
-    m_sliceAlfEnabled[compIdx].clear();
-  }
-#endif
   m_LFCrossSliceBoundaryFlag.clear();
 }
 
@@ -349,16 +255,16 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
  *            ***ERROR*** - calculated hash does not match the SEI message
  *            unk         - no SEI message was available for comparison
  */
-static void calcAndPrintHashStatus(TComPicYuv& pic, const SEImessages* seis)
+static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI)
 {
   /* calculate MD5sum for entire reconstructed picture */
-  unsigned char recon_digest[3][16];
-  int numChar=0;
-  const char* hashType = "\0";
+  UChar recon_digest[3][16];
+  Int numChar=0;
+  const Char* hashType = "\0";
 
-  if (seis && seis->picture_digest)
+  if (pictureHashSEI)
   {
-    switch (seis->picture_digest->method)
+    switch (pictureHashSEI->method)
     {
     case SEIDecodedPictureHash::MD5:
       {
@@ -389,17 +295,17 @@ static void calcAndPrintHashStatus(TComPicYuv& pic, const SEImessages* seis)
   }
 
   /* compare digest against received version */
-  const char* ok = "(unk)";
-  bool mismatch = false;
+  const Char* ok = "(unk)";
+  Bool mismatch = false;
 
-  if (seis && seis->picture_digest)
+  if (pictureHashSEI)
   {
     ok = "(OK)";
-    for(int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    for(Int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
     {
-      for (unsigned i = 0; i < numChar; i++)
+      for (UInt i = 0; i < numChar; i++)
       {
-        if (recon_digest[yuvIdx][i] != seis->picture_digest->digest[yuvIdx][i])
+        if (recon_digest[yuvIdx][i] != pictureHashSEI->digest[yuvIdx][i])
         {
           ok = "(***ERROR***)";
           mismatch = true;
@@ -413,7 +319,7 @@ static void calcAndPrintHashStatus(TComPicYuv& pic, const SEImessages* seis)
   if (mismatch)
   {
     g_md5_mismatch = true;
-    printf("[rx%s:%s] ", hashType, digestToString(seis->picture_digest->digest, numChar));
+    printf("[rx%s:%s] ", hashType, digestToString(pictureHashSEI->digest, numChar));
   }
 }
 //! \}

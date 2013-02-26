@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,30 +64,17 @@ struct InputNALUnit;
 class TDecTop
 {
 private:
-  Int                     m_iGopSize;
-  Bool                    m_bGopSizeSet;
   Int                     m_iMaxRefPicNum;
   
-  Bool                    m_bRefreshPending;    ///< refresh pending flag
   Int                     m_pocCRA;            ///< POC number of the latest CRA picture
   Bool                    m_prevRAPisBLA;      ///< true if the previous RAP (CRA/CRANT/BLA/BLANT/IDR) picture is a BLA/BLANT picture
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
-#if SVC_EXTENSION
-  static ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
-#else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
-#endif
-
-#if REF_IDX_MFM
-  TComSPS*               m_pcSPS;
-  Bool                   m_bMFMEnabledFlag;
-#endif
-
   TComSlice*              m_apcSlicePilot;
   
-  SEImessages *m_SEIs; ///< "all" SEI messages.  If not NULL, we own the object.
+  SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
 
   // functional classes
   TComPrediction          m_cPrediction;
@@ -101,39 +88,15 @@ private:
   TDecBinCABAC            m_cBinCABAC;
   SEIReader               m_seiReader;
   TComLoopFilter          m_cLoopFilter;
-#if !REMOVE_ALF
-  TComAdaptiveLoopFilter  m_cAdaptiveLoopFilter;
-#endif
   TComSampleAdaptiveOffset m_cSAO;
 
   Bool isSkipPictureForBLA(Int& iPOCLastDisplay);
   Bool isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay);
   TComPic*                m_pcPic;
   UInt                    m_uiSliceIdx;
-#if !SVC_EXTENSION
   Int                     m_prevPOC;
-#endif
   Bool                    m_bFirstSliceInPicture;
-#if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
-#endif
-
-#if SVC_EXTENSION
-  static UInt             m_prevPOC;        // POC of the previous slice
-  static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
-  static Bool             m_bFirstSliceInSequence;
-  UInt                    m_layerId;      
-  UInt                    m_numLayer;
-  TDecTop**               m_ppcTDecTop;
-#if AVC_BASE
-  FILE*                   m_pBLReconFile;
-  Int                     m_iBLSourceWidth;
-  Int                     m_iBLSourceHeight;
-#endif
-#endif 
-#if REF_IDX_FRAMEWORK
-  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
-#endif
 
 public:
   TDecTop();
@@ -145,67 +108,23 @@ public:
   void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
 
   Void  init();
-#if SVC_EXTENSION
-  Bool  decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
-#else
   Bool  decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay);
-#endif
   
   Void  deletePicBuffer();
 
-  Void executeDeblockAndAlf(UInt& ruiPOC, TComList<TComPic*>*& rpcListPic, Int& iSkipFrame,  Int& iPOCLastDisplay);
-
-#if SVC_EXTENSION
-  UInt      getLayerId            () { return m_layerId;              }
-  Void      setLayerId            (UInt layer) { m_layerId = layer; }
-  UInt      getNumLayer           () { return m_numLayer;             }
-  Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
-  TComList<TComPic*>*      getListPic() { return &m_cListPic; }
-  Void                setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
-  TDecTop*            getLayerDec(UInt layer)   { return m_ppcTDecTop[layer]; }
-#if AVC_BASE
-  Void      setBLReconFile( FILE* pFile ) { m_pBLReconFile = pFile; }
-  FILE*     getBLReconFile() { return m_pBLReconFile; }
-  Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
-  Int       getBLWidth() { return  m_iBLSourceWidth; }
-  Int       getBLHeight() { return  m_iBLSourceHeight; }
-#endif
-#endif
-#if REF_IDX_FRAMEWORK
-  Void      xInitILRP(TComSPS *pcSPS);
-  Void      setILRPic(TComPic *pcPic);
-#endif
-#if REF_IDX_MFM
-  TComSPS*  getSPS()                       {return m_pcSPS;}
-  Void      setMFMEnabledFlag(Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool      getMFMEnabledFlag()            {return m_bMFMEnabledFlag;}
-#endif
+  Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
 
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
-  Void  xUpdateGopSize    (TComSlice* pcSlice);
   Void  xCreateLostPicture (Int iLostPOC);
 
-#if !REMOVE_APS
-  Void      decodeAPS( TComAPS* cAPS) { m_cEntropyDecoder.decodeAPS(cAPS); };
-#endif
   Void      xActivateParameterSets();
-#if SVC_EXTENSION
-  Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
-#else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
-#endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
   Void      xDecodePPS();
-#if !REMOVE_APS
-  Void      xDecodeAPS();
-#endif
-  Void      xDecodeSEI( TComInputBitstream* bs );
+  Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
-#if !REMOVE_APS
-  Void      allocAPS (TComAPS* pAPS); //!< memory allocation for APS
-#endif
 };// END CLASS DEFINITION TDecTop
 
 

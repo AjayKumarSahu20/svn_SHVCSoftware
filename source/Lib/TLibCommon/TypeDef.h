@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,154 +38,48 @@
 #ifndef _TYPEDEF__
 #define _TYPEDEF__
 
-#define SVC_EXTENSION                    1
-#if SVC_EXTENSION
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
-
-#define SVC_COL_BLK                      1      ///< get co-located block
-#define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic
-#define SET_SLICE_LAYER_ID               1      ///< set layerId to the slice
-#define BUGFIX_925                       1      ///< bug fix ticket #925
-#define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
-
-#define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
-
-#define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
-
-#define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
-
-#if REF_IDX_FRAMEWORK
-#define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
-#define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
-#define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
-#define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
-#else
-#define INTRA_BL                         1      ///< inter-layer texture prediction
-
-#if INTRA_BL
-#define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
-#define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
-
-// Hooks
-#if !AVC_BASE
-#define SVC_MVP                          1      ///< motion hook for merge mode as an example
-#define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
-#endif
-#endif
-
-#if SVC_UPSAMPLING
-#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
-#endif
-
-#endif
-#endif
-
 //! \ingroup TLibCommon
 //! \{
-#define RECOVERY_POINT_SEI               1  ///< I0044/J0107, Recovery point SEI
-#define SPS_AMVP_CLEANUP                 1  ///< remove old AMVP related code for alignment with draft text
-#define SUPPORT_FOR_VUI                  1  ///< new: add support for VUI and hrd_parameters
-#if SUPPORT_FOR_VUI
-#define BUFFERING_PERIOD_AND_TIMING_SEI  1  ///< Buffering period SEI and Picture timing SEI
-#if BUFFERING_PERIOD_AND_TIMING_SEI
+#define L0363_DU_BIT_RATE             1 ///< L0363: add bit_rate_du_value_minus1 to HRD parameters
+#define L0328_SPLICING                1 ///< L0328: splicing support in HRD
+#define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
+                                        ///<        picture timing SEI and DU information SEI
+#define L0045_PERSISTENCE_FLAGS  1      ///< L0045: Replace "repetition_period" syntax elements in SEI with "persistence_flag"
+#define L0045_NON_NESTED_SEI_RESTRICTIONS 1 ///< L0045; Include restriction on the order of APS and non-nested BP, PT and DU info SEI messages
+#define L0044_CPB_DPB_DELAY_OFFSET 1  ///< L0044: Include syntax elements cpb_delay_offset and dpb_delay_offset in the BP SEI message
+#define L0047_APS_FLAGS            1  ///< L0047: Include full_random_access_flag and no_param_set_update_flag in the active parameter set SEI message
+#define L0043_TIMING_INFO          1  ///< L0043: Timing information is signalled in VUI outside hrd_parameters()
+#define L0046_RENAME_PROG_SRC_IDC  1  ///< L0046: Rename progressive_source_idc to source_scan_type
+#define L0045_CONDITION_SIGNALLING 1  ///< L0045: Condition the signaling of some syntax elements in picture timing SEI message
+#define L0043_MSS_IDC 1
+#define L0116_ENTRY_POINT 1
+#define L0363_MORE_BITS 1
+#define L0363_MVP_POC 1
+#define L0363_BYTE_ALIGN 1
+#define L0363_SEI_ALLOW_SUFFIX 1
+#define L0323_LIMIT_DEFAULT_LIST_SIZE 1
+#define L0046_CONSTRAINT_FLAGS 1
+#define L0255_MOVE_PPS_FLAGS       1  ///< move some flags to earlier positions in the PPS
+#define L0444_FPA_TYPE             1  ///< allow only FPA types 3, 4 and 5
+#define L0372 1
+#define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
+#define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
+
+#define MAX_VPS_NUM_HRD_PARAMETERS                1
+#define MAX_VPS_OP_SETS_PLUS1                     1024
+#define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
+
+#define RATE_CONTROL_LAMBDA_DOMAIN                  1  ///< JCTVC-K0103, rate control by R-lambda model
+#define L0033_RC_BUGFIX                             1  ///< JCTVC-L0033, bug fix for R-lambda model based rate control
+
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
-#endif
-#endif
-#define TARGET_DECLAYERID_SET            1  ///< J0074:  targetDecLayerIdSet for sub-bitstream extraction process
-#if TARGET_DECLAYERID_SET
 #define MAX_NUM_LAYER_IDS                64
-#endif
 
-#define TILES_WPP_ENTROPYSLICES_FLAGS    1  ///< J0123: Introduce tiles_enabled_flag, entropy_coding_sync_enabled_flag, entropy_slice_enabled_flag
-                                            ///<        and remove tiles_or_entropy_coding_sync_idc
-#define SLICEHEADER_SYNTAX_FIX           1  ///< fixes for aligning slice header syntax with HM8 text
-#define NAL_UNIT_TYPES_J1003_D7          1  ///< J1003: Implements the new mapping for NAL unit types as defined in Table 7-1 of J1003-d7
-#if NAL_UNIT_TYPES_J1003_D7
-// Place macro definitions that deal with new NAL unit types introduced in J1003-d7 (as opposed to I1003-d7) here
-#define SUPPORT_FOR_RAP_N_LP             1  ///< J0344: Add support for IDR_N_LP and BLA_N_LP NAL unit types
-#define STSA                             1        ///STSA (GTLA) pictures labeling
-#define TEMPORAL_LAYER_NON_REFERENCE     1  ///< J0549: Nal unit types for indicating non-reference pictures in the same temporal sub-layer
-#endif
+#define COEF_REMAIN_BIN_REDUCTION        3 ///< indicates the level at which the VLC 
+                                           ///< transitions from Golomb-Rice to TU+EG(k)
 
-#define SPS_SYNTAX_CHANGES               1  ///< J0550: changes to SPS syntax
-#define VPS_SYNTAX_CHANGES               1  ///< J0550/J0562: changes to VPS syntax
-#define PROFILE_TIER_LEVEL_SYNTAX        1  ///< J0562: Include profile_tier_level() syntax structure; not used for now
-#define SAO_LUM_CHROMA_ONOFF_FLAGS       1  ///< J0087: slice-level independent luma/chroma SAO on/off flag 
-#define LTRP_IN_SPS                      1  ///< J0116: Include support for signalling LTRP LSBs in the SPS, and index them in the slice header.
-#define CHROMA_QP_EXTENSION              1  ///< J0342: Extend mapping table from luma QP to chroma QP, introduce slice-level chroma offsets, apply limits on offset values
-#define SIMPLE_LUMA_CBF_CTX_DERIVATION   1  ///< J0303: simplified luma_CBF context derivation
-
-#define COEF_REMAIN_BIN_REDUCTION        3 ///< J0142: Maximum codeword length of coeff_abs_level_remaining reduced to 32.
-                                           ///< COEF_REMAIN_BIN_REDUCTION is also used to indicate the level at which the VLC 
-                                
-///< transitions from Golomb-Rice to TU+EG(k)
-
-#define CU_DQP_TU_EG                     1 ///< J0089: Bin reduction for delta QP coding
-#if (CU_DQP_TU_EG)
-#define CU_DQP_TU_CMAX 5 //max number bins for truncated unary
-#define CU_DQP_EG_k 0 //expgolomb order
-#endif
-
-#define NAL_UNIT_HEADER                  1  ///< J0550: Define nal_unit_header() method
-#define TEMPORAL_ID_PLUS1                1  ///< J0550: Signal temporal_id_plus1 instead of temporal_id in NAL unit, and change reserved_one_5bits
-                                            ///<        value to zero
-#define REFERENCE_PICTURE_DEFN           1  ///< J0118: Reflect change of defn. of referece picture in semantics of delta_poc_msb_present_flag
-#if REFERENCE_PICTURE_DEFN
-#define REMOVE_NAL_REF_FLAG              1  ///< J0550: Remove nal_ref_flag, and allocate extra bit to reserved bits, and re-order syntax to put reserved bits after nal_unit_type
-#endif
-#define MOVE_LOOP_FILTER_SLICES_FLAG     1  ///< J0288: Move seq_loop_filter_across_slices_enabled_flag from SPS to PPS
-#define SPLICING_FRIENDLY_PARAMS         1  ///< J0108: Remove rap_pic_id and move no_output_prior_pic_flag
-
-#define  SKIP_FLAG                       1  ///< J0336: store skip flag
-
-#define PPS_TS_FLAG                      1  ///< J0184: move transform_skip_enabled_flag from SPS to PPS
-#if PPS_TS_FLAG
-#define TS_FLAT_QUANTIZATION_MATRIX      1  ///< I0408: set default quantization matrix to be flat if TS is enabled in PPS
-#endif
-#define INTER_TRANSFORMSKIP              1  ///< J0237: inter transform skipping (inter-TS)
-#define INTRA_TRANSFORMSKIP_FAST         1  ///< J0572: fast encoding for intra transform skipping
-
-#define REMOVAL_8x2_2x8_CG               1  ///< J0256: removal of 8x2 / 2x8 coefficient groups
-#define REF_IDX_BYPASS                   1  ///< J0098: bypass coding starting from the second bin for reference index
-
-#define RECALCULATE_QP_ACCORDING_LAMBDA  1  ///< J0242: recalculate QP value according to lambda value
-#define TU_ZERO_CBF_RDO                  1  ///< J0241: take the bits to represent zero cbf into consideration when doing TU RDO
-#define REMOVE_NUM_GREATER1              1  ///< J0408: numGreater1 removal and ctxset decision with c1 
-
-#define INTRA_TRANS_SIMP                 1  ///< J0035: Use DST for 4x4 luma intra TU's (regardless of the intra prediction direction)
-
-#define J0234_INTER_RPS_SIMPL            1  ///< J0234: Do not signal delta_idx_minus1 when building the RPS-list in SPS
-#define NUM_WP_LIMIT                     1  ///< J0571: number of total signalled weight flags <=24
-#define DISALLOW_BIPRED_IN_8x4_4x8PUS    1  ///< J0086: disallow bi-pred for 8x4 and 4x8 inter PUs
-#define SAO_SINGLE_MERGE                 1  ///< J0355: Single SAO merge flag for all color components (per Left and Up merge)
-#define SAO_TYPE_SHARING                 1  ///< J0045: SAO types, merge left/up flags are shared between Cr and Cb
-#define SAO_TYPE_CODING                  1  ///< J0268: SAO type signalling using 1 ctx on/off flag + 1 bp BO/EO flag + 2 bp bins for EO class
-#define SAO_MERGE_ONE_CTX                1  ///< J0041: SAO merge left/up flags share the same ctx
-#define SAO_ABS_BY_PASS                  1  ///< J0043: by pass coding for SAO magnitudes 
-#define SAO_LCU_BOUNDARY                 1  ///< J0139: SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
-#define MODIFIED_CROSS_SLICE             1  ///< J0266: SAO slice boundary control for GDR
-#define CU_DQP_ENABLE_FLAG               1  ///< J0220: cu_qp_delta_enabled_flag in PPS
-#define REMOVE_ZIGZAG_SCAN               1  ///< J0150: removal of zigzag scan
-
-#define TRANS_SPLIT_FLAG_CTX_REDUCTION   1  ///< J0133: Reduce the context number of transform split flag to 3
-
-#define WP_PARAM_RANGE_LIMIT             1  ///< J0221: Range limit of delta_weight and delta_offset for chroma.
-#define J0260 1 ///< Fix in rate control equations
-
-#define NO_MV_PRED_IF_DIFFERENT_TERM     1  ///< J0071/J0121: No MVP is used when cur:short-term and pred:long-term or vice-versa
-
-#define ACTIVE_PARAMETER_SETS_SEI_MESSAGE    1  ///< J0261: Signaling of VPS Activation
-#define SLICE_HEADER_EXTENSION           1  ///< II0235: Slice header extension mechanism
-
-#define REMOVE_NSQT 1 ///< Disable NSQT-related code
-#define REMOVE_LMCHROMA 1 ///< Disable LM_Chroma-related code
-#define REMOVE_FGS 1 ///< Disable fine-granularity slices code
-#define REMOVE_ALF 1 ///< Disable ALF-related code
-#define REMOVE_APS 1 ///< Disable APS-related code
-
-#define PREVREFPIC_DEFN                  0  ///< J0248: Shall be set equal to 0! (prevRefPic definition reverted to CD definition)
-#define BYTE_ALIGNMENT                   1  ///< I0330: Add byte_alignment() procedure to end of slice header
+#define CU_DQP_TU_CMAX 5                   ///< max number bins for truncated unary
+#define CU_DQP_EG_k 0                      ///< expgolomb order
 
 #define SBH_THRESHOLD                    4  ///< I0156: value of the fixed SBH controlling threshold
   
@@ -198,26 +92,25 @@
 
 #define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3 1  ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
 
-#define SAO_SKIP_RIGHT                   1  ///< H1101: disallow using unavailable pixel during RDO
+#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now) 
 
 #define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
-#define PICTURE_SAO_RDO_FIX              0  ///< J0097: picture-based SAO optimization fix
 #if SAO_ENCODING_CHOICE
 #define SAO_ENCODING_RATE                0.75
-#define SAO_ENCODING_CHOICE_CHROMA       1 ///< J0044: picture early termination Luma and Chroma are handled separatenly
+#define SAO_ENCODING_CHOICE_CHROMA       1 ///< J0044: picture early termination Luma and Chroma are handled separately
 #if SAO_ENCODING_CHOICE_CHROMA
 #define SAO_ENCODING_RATE_CHROMA         0.5
 #endif
 #endif
 
-#define MAX_NUM_SPS                32
-#define MAX_NUM_PPS                256
-#define MAX_NUM_APS                32         //< !!!KS: number not defined in WD yet
+#define MAX_NUM_VPS                16
+#define MAX_NUM_SPS                16
+#define MAX_NUM_PPS                64
+
 
 
 #define WEIGHTED_CHROMA_DISTORTION  1   ///< F386: weighting of chroma for RDO
 #define RDOQ_CHROMA_LAMBDA          1   ///< F386: weighting of chroma for RDOQ
-#define ALF_CHROMA_LAMBDA           1   ///< F386: weighting of chroma for ALF
 #define SAO_CHROMA_LAMBDA           1   ///< F386: weighting of chroma for SAO
 
 #define MIN_SCAN_POS_CROSS          4
@@ -233,14 +126,7 @@
 #define LEVEL_RANGE                         30     ///< G382: max coefficient level in statistics collection
 #endif
 
-#if REMOVE_NSQT
 #define NS_HAD                               0
-#else
-#define NS_HAD                               1
-#endif
-
-#define APS_BITS_FOR_SAO_BYTE_LENGTH 12           
-#define APS_BITS_FOR_ALF_BYTE_LENGTH 8
 
 #define HHI_RQT_INTRA_SPEEDUP             1           ///< tests one best mode with full rqt
 #define HHI_RQT_INTRA_SPEEDUP_MOD         0           ///< tests two best modes with full rqt
@@ -265,9 +151,6 @@
 #define LM_CHROMA_IDX  35
 #endif
 
-#define IBDI_DISTORTION                0           ///< enable/disable SSE modification when IBDI is used (JCTVC-D152)
-#define FIXED_ROUNDING_FRAME_MEMORY    0           ///< enable/disable fixed rounding to 8-bitdepth of frame memory when IBDI is used  
-
 #define WRITE_BACK                      1           ///< Enable/disable the encoder to replace the deltaPOC and Used by current from the config file with the values derived by the refIdc parameter.
 #define AUTO_INTER_RPS                  1           ///< Enable/disable the automatic generation of refIdc from the deltaPOC and Used by current from the config file.
 #define PRINT_RPS_INFO                  0           ///< Enable/disable the printing of bits used to send the RPS.
@@ -281,11 +164,7 @@
 #define VER_IDX                26                    // index for intra VERTICAL   mode
 #define HOR_IDX                10                    // index for intra HORIZONTAL mode
 #define DC_IDX                 1                     // index for intra DC mode
-#if REMOVE_LMCHROMA
 #define NUM_CHROMA_MODE        5                     // total number of chroma modes
-#else
-#define NUM_CHROMA_MODE        6                     // total number of chroma modes
-#endif
 #define DM_CHROMA_IDX          36                    // chroma mode index for derived from luma intra mode
 
 
@@ -293,18 +172,11 @@
 
 #define RDO_WITHOUT_DQP_BITS              0           ///< Disable counting dQP bits in RDO-based mode decision
 
-#define FULL_NBIT 0 ///< When enabled, does not use g_uiBitIncrement anymore to support > 8 bit data
-
-#define AD_HOC_SLICES_FIXED_NUMBER_OF_LCU_IN_SLICE      1          ///< OPTION IDENTIFIER. mode==1 -> Limit maximum number of largest coding tree blocks in a slice
-#define AD_HOC_SLICES_FIXED_NUMBER_OF_BYTES_IN_SLICE    2          ///< OPTION IDENTIFIER. mode==2 -> Limit maximum number of bins/bits in a slice
-#define AD_HOC_SLICES_FIXED_NUMBER_OF_TILES_IN_SLICE    3
-
-#define DEPENDENT_SLICES       1 ///< JCTVC-I0229
-// Dependent slice options
-#define SHARP_FIXED_NUMBER_OF_LCU_IN_DEPENDENT_SLICE            1          ///< OPTION IDENTIFIER. Limit maximum number of largest coding tree blocks in an dependent slice
-#define SHARP_MULTIPLE_CONSTRAINT_BASED_DEPENDENT_SLICE         2          ///< OPTION IDENTIFIER. Limit maximum number of bins/bits in an dependent slice
-#if DEPENDENT_SLICES
-#define FIXED_NUMBER_OF_TILES_IN_DEPENDENT_SLICE          3 // JCTVC-I0229
+#define FULL_NBIT 0 ///< When enabled, compute costs using full sample bitdepth.  When disabled, compute costs as if it is 8-bit source video.
+#if FULL_NBIT
+# define DISTORTION_PRECISION_ADJUSTMENT(x) 0
+#else
+# define DISTORTION_PRECISION_ADJUSTMENT(x) (x)
 #endif
 
 #define LOG2_MAX_NUM_COLUMNS_MINUS1        7
@@ -327,12 +199,6 @@
 #define CABAC_INIT_PRESENT_FLAG     1
 
 // ====================================================================================================================
-// VPS constants
-// ====================================================================================================================
-#define MAX_LAYER_NUM                     10
-#define MAX_NUM_VPS                16
-
-// ====================================================================================================================
 // Basic type redefinition
 // ====================================================================================================================
 
@@ -346,6 +212,7 @@ typedef       unsigned short      UShort;
 typedef       int                 Int;
 typedef       unsigned int        UInt;
 typedef       double              Double;
+typedef       float               Float;
 
 // ====================================================================================================================
 // 64-bit integer type
@@ -378,6 +245,15 @@ typedef       Int             TCoeff;     ///< transform coefficient
 /// parameters for adaptive loop filter
 class TComPicSym;
 
+// Slice / Slice segment encoding modes
+enum SliceConstraint
+{
+  NO_SLICES              = 0,          ///< don't use slices / slice segments
+  FIXED_NUMBER_OF_LCU    = 1,          ///< Limit maximum number of largest coding tree blocks in a slice / slice segments
+  FIXED_NUMBER_OF_BYTES  = 2,          ///< Limit maximum number of bytes in a slice / slice segment
+  FIXED_NUMBER_OF_TILES  = 3,          ///< slices / slice segments span an integer number of tiles
+};
+
 #define NUM_DOWN_PART 4
 
 enum SAOTypeLen
@@ -401,11 +277,7 @@ typedef struct _SaoQTPart
 {
   Int         iBestType;
   Int         iLength;
-#if SAO_TYPE_CODING
   Int         subTypeIdx ;                 ///< indicates EO class or BO band position
-#else
-  Int         bandPosition ;
-#endif
   Int         iOffset[4];
   Int         StartCUX;
   Int         StartCUY;
@@ -435,11 +307,7 @@ typedef struct _SaoLcuParam
   Bool       mergeUpFlag;
   Bool       mergeLeftFlag;
   Int        typeIdx;
-#if SAO_TYPE_CODING
   Int        subTypeIdx;                  ///< indicates EO class or BO band position
-#else
-  Int        bandPosition;
-#endif
   Int        offset[4];
   Int        partIdx;
   Int        partIdxTmp;
@@ -448,11 +316,7 @@ typedef struct _SaoLcuParam
 
 struct SAOParam
 {
-#if SAO_TYPE_SHARING
   Bool       bSaoFlag[2];
-#else
-  Bool       bSaoFlag[3];
-#endif
   SAOQTPart* psSaoPart[3];
   Int        iMaxSplitLevel;
   Bool         oneUnitFlag[3];
@@ -461,30 +325,6 @@ struct SAOParam
   Int          numCuInWidth;
   ~SAOParam();
 };
-
-#if !REMOVE_ALF
-struct ALFParam
-{
-  Int alf_flag;                           ///< indicates use of ALF
-  Int num_coeff;                          ///< number of filter coefficients
-  Int filter_shape;
-  Int *filterPattern;
-  Int startSecondFilter;
-  Int filters_per_group;
-  Int **coeffmulti;
-  Int componentID;
-  //constructor, operator
-  ALFParam():componentID(-1){}
-  ALFParam(Int cID){create(cID);}
-  ALFParam(const ALFParam& src) {*this = src;}
-  ~ALFParam(){destroy();}
-  const ALFParam& operator= (const ALFParam& src);
-private:
-  Void create(Int cID);
-  Void destroy();
-  Void copy(const ALFParam& src);
-};
-#endif
 
 /// parameters for deblocking filter
 typedef struct _LFCUParam
@@ -534,9 +374,6 @@ enum PredMode
 {
   MODE_INTER,           ///< inter-prediction mode
   MODE_INTRA,           ///< intra-prediction mode
-#if INTRA_BL
-  MODE_INTRA_BL,        ///< inter-layer intra-prediction mode
-#endif
   MODE_NONE = 15
 };
 
@@ -633,24 +470,51 @@ enum MVP_DIR
   MD_ABOVE_LEFT         ///< MVP of above left block
 };
 
-#if !SPS_AMVP_CLEANUP
-/// motion vector prediction mode used in AMVP
-enum AMVP_MODE
-{
-  AM_NONE = 0,          ///< no AMVP mode
-  AM_EXPL,              ///< explicit signalling of motion vector index
-};
-#endif
-
 /// coefficient scanning type used in ACS
 enum COEFF_SCAN_TYPE
 {
-  SCAN_ZIGZAG = 0,      ///< typical zigzag scan
-  SCAN_HOR,             ///< horizontal first scan
-  SCAN_VER,              ///< vertical first scan
-  SCAN_DIAG              ///< up-right diagonal scan
+  SCAN_DIAG = 0,         ///< up-right diagonal scan
+  SCAN_HOR,              ///< horizontal first scan
+  SCAN_VER               ///< vertical first scan
 };
 
+namespace Profile
+{
+  enum Name
+  {
+    NONE = 0,
+    MAIN = 1,
+    MAIN10 = 2,
+    MAINSTILLPICTURE = 3,
+  };
+}
+
+namespace Level
+{
+  enum Tier
+  {
+    MAIN = 0,
+    HIGH = 1,
+  };
+
+  enum Name
+  {
+    NONE     = 0,
+    LEVEL1   = 30,
+    LEVEL2   = 60,
+    LEVEL2_1 = 63,
+    LEVEL3   = 90,
+    LEVEL3_1 = 93,
+    LEVEL4   = 120,
+    LEVEL4_1 = 123,
+    LEVEL5   = 150,
+    LEVEL5_1 = 153,
+    LEVEL5_2 = 156,
+    LEVEL6   = 180,
+    LEVEL6_1 = 183,
+    LEVEL6_2 = 186,
+  };
+}
 //! \}
 
 #endif

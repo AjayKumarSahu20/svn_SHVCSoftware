@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,23 +67,14 @@ public:
 protected:
   TComSlice*    m_pcSlice;
   UInt          m_uiCoeffCost;
-#if !REMOVE_FGS
-  Int           m_iSliceGranularity;  //!< slice granularity
-#endif
 
   Void  xWritePCMAlignZero    ();
   Void  xWriteEpExGolomb      ( UInt uiSymbol, UInt uiCount );
   Void  xWriteExGolombLevel    ( UInt uiSymbol );
   Void  xWriteUnaryMaxSymbol  ( UInt uiSymbol, UInt uiMaxSymbol );
 
-#if J0234_INTER_RPS_SIMPL
-  Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader );
-#else
-  Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS );
-#endif
-#if LTRP_IN_SPS
+  Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
   Bool findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag );
-#endif  
   
 public:
   
@@ -97,75 +88,45 @@ public:
   UInt  getNumberOfWrittenBits()                { return  m_pcBitIf->getNumberOfWrittenBits();  }
   UInt  getCoeffCost          ()                { return  m_uiCoeffCost;  }
   Void  codeVPS                 ( TComVPS* pcVPS );
-#if SUPPORT_FOR_VUI
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
-#endif
   Void  codeSPS                 ( TComSPS* pcSPS );
   Void  codePPS                 ( TComPPS* pcPPS );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
-#if PROFILE_TIER_LEVEL_SYNTAX
   Void  codePTL                 ( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
   Void  codeProfileTier         ( ProfileTierLevel* ptl );
+#if SIGNAL_BITRATE_PICRATE_IN_VPS
+  Void codeBitratePicRateInfo(TComBitRatePicRateInfo *info, Int tempLevelLow, Int tempLevelHigh);
 #endif
+  Void  codeHrdParameters       ( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
   Void  codeTerminatingBit      ( UInt uilsLast );
   Void  codeSliceFinish         ();
-  Void  codeFlush               () {}
-  Void  encodeStart             () {}
   
   Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
-  Void xGolombEncode(Int coeff, Int k);
-#if !REMOVE_ALF
-  Void codeAlfParam(ALFParam* alfParam);
-#endif
   Void codeSAOSign       ( UInt code   ) { printf("Not supported\n"); assert (0); }
   Void codeSaoMaxUvlc    ( UInt   code, UInt maxSymbol ){printf("Not supported\n"); assert (0);}
-#if SAO_MERGE_ONE_CTX
   Void codeSaoMerge  ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-#else
-  Void codeSaoMergeLeft  ( UInt uiCode, UInt compIdx ){printf("Not supported\n"); assert (0);}
-  Void codeSaoMergeUp    ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-#endif
   Void codeSaoTypeIdx    ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-#if SAO_TYPE_CODING
   Void codeSaoUflc       ( UInt uiLength, UInt   uiCode ){ assert(uiCode < 32); printf("Not supported\n"); assert (0);}
-#else
-  Void codeSaoUflc       ( UInt uiCode ){ assert(uiCode < 32); printf("Not supported\n"); assert (0);}
-#endif
 
   Void codeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeMergeFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeMergeIndex    ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-#if INTRA_BL
-  Void codeIntraBLFlag   ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-#endif
-  Void codeApsExtensionFlag ();
-
-#if !REMOVE_FGS
-  /// set slice granularity
-  Void setSliceGranularity(Int iSliceGranularity)  {m_iSliceGranularity = iSliceGranularity;}
-
-  ///get slice granularity
-  Int  getSliceGranularity()                       {return m_iSliceGranularity;             }
-#endif
-  
-  Void codeAlfCtrlFlag   ( Int compIdx, UInt code ) {printf("Not supported\n"); assert(0);}
+ 
   Void codeInterModeFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode );
   Void codeSplitFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   
   Void codePartSize      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void codePredMode      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   
-  Void codeIPCMInfo      ( TComDataCU* pcCU, UInt uiAbsPartIdx, Int numIPCM, Bool firstIPCMFlag);
+  Void codeIPCMInfo      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
 
   Void codeTransformSubdivFlag( UInt uiSymbol, UInt uiCtx );
   Void codeQtCbf         ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth );
   Void codeQtRootCbf     ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-#if TU_ZERO_CBF_RDO
-  Void codeQtCbfZero     ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth );
-  Void codeQtRootCbfZero ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-#endif
+  Void codeQtCbfZero     ( TComDataCU* pcCU, TextType eType, UInt uiTrDepth );
+  Void codeQtRootCbfZero ( TComDataCU* pcCU );
   Void codeIntraDirLumaAng( TComDataCU* pcCU, UInt absPartIdx, Bool isMultiple);
   Void codeIntraDirChroma( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeInterDir      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
@@ -175,7 +136,7 @@ public:
   Void codeDeltaQP       ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   
   Void codeCoeffNxN      ( TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType );
-  Void codeTransformSkipFlags ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, UInt uiDepth, TextType eTType );
+  Void codeTransformSkipFlags ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType );
 
   Void estBit               (estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
   
@@ -183,10 +144,6 @@ public:
   Void updateContextTables           ( SliceType eSliceType, Int iQp, Bool bExecuteFinish=true ) { return;   }
   Void updateContextTables           ( SliceType eSliceType, Int iQp  )                          { return;   }
 
-#if !REMOVE_APS
-  Void  codeAPSInitInfo(TComAPS* pcAPS);  //!< code APS flags before encoding SAO and ALF parameters
-#endif
-  Void  codeFinish(Bool bEnd) { /*do nothing*/}
   Void codeScalingList  ( TComScalingList* scalingList );
   Void xCodeScalingList ( TComScalingList* scalingList, UInt sizeId, UInt listId);
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
