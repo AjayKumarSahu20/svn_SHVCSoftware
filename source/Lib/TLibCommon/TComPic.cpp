@@ -65,6 +65,7 @@ TComPic::TComPic()
 , m_bCheckLTMSB                           (false)
 , m_SEIs                                  (NULL)
 #if SVC_EXTENSION
+, m_layerId( 0 )
 , m_bSpatialEnhLayer( false )
 , m_pcFullPelBaseRec( NULL )
 #if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
@@ -95,6 +96,8 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
   {
     m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
   }
+
+  m_layerId = pcSps->getLayerId();
 
   /* there are no SEI messages associated with this picture initially */
   m_SEIs = NULL;
@@ -733,12 +736,6 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
    
   filestream->seekg( uiPos, ios_base::beg );
 
-  for( Int i = 0; i < this->getNumCUsInFrame(); i++ )
-  {
-    TComDataCU* pcCU = this->getCU( i );
-    pcCU->initCU( this, i );
-  }
-
   for( Int i = 0; i < uiPartHeight; i++ )
   {
     for( Int j = 0; j < uiPartWidth; j++ )
@@ -787,9 +784,9 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
 
       // set dependent information
       pcCU->setPredictionMode( uiPartAddr, ( refIdxL0 == NOT_VALID && refIdxL1 == NOT_VALID ) ? MODE_INTRA : MODE_INTER );
-      UInt uiInterDir = ( refIdxL0 != NOT_VALID ) + ( refIdxL1 != NOT_VALID && pcCU->getSlice()->isInterB() ) * 2;
+      UInt uiInterDir = ( refIdxL0 != NOT_VALID ) + ( refIdxL1 != NOT_VALID && this->getSlice(0)->isInterB() ) * 2;
       assert( uiInterDir >= 0 && uiInterDir <= 3 );
-      pcCU->setInterDir( uiPartAddr, uiInterDir );
+      pcCU->setInterDir( uiPartAddr, uiInterDir );      
     }
   }
 }
