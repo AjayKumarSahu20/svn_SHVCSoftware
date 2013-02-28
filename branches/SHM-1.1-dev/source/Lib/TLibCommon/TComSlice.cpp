@@ -2227,9 +2227,12 @@ Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
     {
       setRefPOC( pcSlice->getRefPic( eRefPicList, refIdx )->getPOC(), eRefPicList, refIdx );
       setRefPic( pcSlice->getRefPic( eRefPicList, refIdx ), eRefPicList, refIdx );
+      /*
+      // should be set if the base layer has its own instance of the reference picture lists, currently EL RPL is reused.
       getRefPic( eRefPicList, refIdx )->setLayerId( 0 );
       getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );
       getRefPic( eRefPicList, refIdx )->setIsUsedAsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsUsedAsLongTerm() );
+      */
 
     }
   }  
