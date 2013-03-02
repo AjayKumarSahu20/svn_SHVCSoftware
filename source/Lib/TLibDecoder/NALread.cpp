@@ -99,7 +99,11 @@ Void readNalUnitHeader(InputNALUnit& nalu)
   assert(forbidden_zero_bit == 0);
   nalu.m_nalUnitType = (NalUnitType) bs.read(6);  // nal_unit_type
   nalu.m_reservedZero6Bits = bs.read(6);       // nuh_reserved_zero_6bits
+#if SVC_EXTENSION
+  nalu.m_layerId = nalu.m_reservedZero6Bits;
+#else
   assert(nalu.m_reservedZero6Bits == 0);
+#endif
   nalu.m_temporalId = bs.read(3) - 1;             // nuh_temporal_id_plus1
 
   if ( nalu.m_temporalId )

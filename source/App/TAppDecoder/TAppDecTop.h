@@ -60,12 +60,22 @@ class TAppDecTop : public TAppDecCfg
 {
 private:
   // class interface
+#if SVC_EXTENSION
+  TDecTop                         m_acTDecTop [MAX_LAYERS];                    ///< decoder class 
+  TDecTop*                        m_apcTDecTop [MAX_LAYERS];                   ///< decoder point class 
+  TVideoIOYuv                     m_acTVideoIOYuvReconFile [MAX_LAYERS];        ///< reconstruction YUV class
+#else
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
+#endif
   
   // for output control
   Bool                            m_abDecFlag[ MAX_GOP ];         ///< decoded flag in one GOP
+#if SVC_EXTENSION
+  Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
+#else
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
+#endif
   
 public:
   TAppDecTop();
@@ -80,8 +90,13 @@ protected:
   Void  xDestroyDecLib    (); ///< destroy internal classes
   Void  xInitDecLib       (); ///< initialize decoder class
   
+#if SVC_EXTENSION
+  Void  xWriteOutput      ( TComList<TComPic*>* pcListPic, UInt layerId, UInt tId ); ///< write YUV to file
+  Void  xFlushOutput      ( TComList<TComPic*>* pcListPic, UInt layerId ); ///< flush all remaining decoded pictures to file
+#else
   Void  xWriteOutput      ( TComList<TComPic*>* pcListPic , UInt tId); ///< write YUV to file
   Void  xFlushOutput      ( TComList<TComPic*>* pcListPic ); ///< flush all remaining decoded pictures to file
+#endif
   Bool  isNaluWithinTargetDecLayerIdSet ( InputNALUnit* nalu ); ///< check whether given Nalu is within targetDecLayerIdSet
 };
 

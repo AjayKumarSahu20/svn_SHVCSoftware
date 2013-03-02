@@ -297,6 +297,13 @@ protected:
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
   Bool      m_useStrongIntraSmoothing;                        ///< enable the use of strong intra smoothing (bi_linear interpolation) for 32x32 blocks when reference samples are flat.
+#if SVC_EXTENSION
+  UInt      m_layerId;   
+  UInt      m_numLayer;
+#endif 
+#if REF_IDX_FRAMEWORK
+  Int      m_elRapSliceBEnabled;
+#endif
 
 public:
   TEncCfg()
@@ -690,6 +697,19 @@ public:
   
   Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
   Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
+#endif
+
+#if SVC_EXTENSION
+  UInt      getLayerId            () { return m_layerId;              }
+  Void      setLayerId            (UInt layer) { m_layerId = layer; }
+  UInt      getNumLayer           () { return m_numLayer;             }  
+  Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
+  Void      setConformanceMode    (Int mode)     { m_conformanceMode = mode; }
+  Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
+#endif
+#if REF_IDX_FRAMEWORK
+  Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
+  Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
 #endif
 };
 

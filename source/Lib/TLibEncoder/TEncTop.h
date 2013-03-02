@@ -72,6 +72,13 @@ private:
   Int                     m_iNumPicRcvd;                  ///< number of received pictures
   UInt                    m_uiNumAllPicCoded;             ///< number of coded pictures
   TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures
+#if SVC_EXTENSION 
+  static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
+  static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
+#if AVC_SYNTAX
+  fstream*                m_pBLSyntaxFile;
+#endif
+#endif
   
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
@@ -121,6 +128,16 @@ private:
   TComScalingList         m_scalingList;                 ///< quantization matrix information
   TEncRateCtrl            m_cRateCtrl;                    ///< Rate control class
   
+#if SVC_EXTENSION
+  TEncTop**               m_ppcTEncTop;
+  TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
+#endif
+#if REF_IDX_FRAMEWORK
+  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
+#endif
+#if REF_IDX_MFM
+  Bool                    m_bMFMEnabledFlag;
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -128,7 +145,9 @@ protected:
   
   Void  xInitPPSforTiles  ();
   Void  xInitRPS          ();                             ///< initialize PPS from encoder options
-
+#if REF_IDX_FRAMEWORK
+  Void xInitILRP();
+#endif
 public:
   TEncTop();
   virtual ~TEncTop();
@@ -173,13 +192,39 @@ public:
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
   Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
+#if SVC_EXTENSION
+  Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
+  TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
+  Int                     getPOCLast            () { return m_iPOCLast;               }
+  Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
+  Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
+#endif
+
   // -------------------------------------------------------------------------------------------------------------------
   // encoder function
   // -------------------------------------------------------------------------------------------------------------------
 
   /// encode several number of pictures until end-of-sequence
+#if SVC_EXTENSION
+#if REF_IDX_FRAMEWORK
+  TComPic** getIlpList() { return m_cIlpPic; }
+  Void setILRPic(TComPic *pcPic);
+#endif
+#if REF_IDX_MFM
+  Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+#endif
+#if AVC_SYNTAX
+  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
+  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
+#endif
+  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
+  Void encodePrep( TComPicYuv* pcPicYuvOrg );
+#else
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
+#endif
 
   void printSummary() { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded); }
 };

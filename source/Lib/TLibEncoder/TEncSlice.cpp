@@ -136,7 +136,9 @@ Void TEncSlice::init( TEncTop* pcEncTop )
 {
   m_pcCfg             = pcEncTop;
   m_pcListPic         = pcEncTop->getListPic();
-  
+#if SVC_EXTENSION
+  m_ppcTEncTop        = pcEncTop->getLayerEnc();
+#endif  
   m_pcGOPEncoder      = pcEncTop->getGOPEncoder();
   m_pcCuEncoder       = pcEncTop->getCuEncoder();
   m_pcPredSearch      = pcEncTop->getPredSearch();
@@ -185,9 +187,16 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setPPS( pPPS );
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
+#if SET_SLICE_LAYER_ID
+  rpcSlice->initSlice( pcPic->getLayerId() );
+#else
   rpcSlice->initSlice();
+#endif
   rpcSlice->setPicOutputFlag( true );
   rpcSlice->setPOC( pocCurr );
+#if SVC_EXTENSION && !SET_SLICE_LAYER_ID
+  rpcSlice->setLayerId( pcPic->getLayerId());
+#endif
   
   // depth computation based on GOP size
   Int depth;
@@ -368,6 +377,12 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   // restore original slice type
   eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
   
+#if REF_IDX_FRAMEWORK
+  if(m_pcCfg->getLayerId() > 0)
+  {
+    eSliceType=B_SLICE;
+  }
+#endif
   rpcSlice->setSliceType        ( eSliceType );
 #endif
   
@@ -876,6 +891,11 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
   UInt uiTileCol      = 0;
   UInt uiTileStartLCU = 0;
   UInt uiTileLCUX     = 0;
+
+#if INTRA_BL
+  m_pcCuEncoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec() : NULL);
+#endif
+
   Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
   uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
   uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
@@ -923,6 +943,9 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     // initialize CU encoder
     TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
     pcCU->initCU( rpcPic, uiCUAddr );
+#if SVC_EXTENSION
+    pcCU->setLayerId(m_pcCfg->getLayerId());
+#endif
 
 #if !RATE_CONTROL_LAMBDA_DOMAIN
     if(m_pcCfg->getUseRateCtrl())

@@ -40,6 +40,9 @@
 #include <string>
 #include "TAppDecCfg.h"
 #include "TAppCommon/program_options_lite.h"
+#if SVC_EXTENSION
+#include <cassert>
+#endif
 
 #ifdef WIN32
 #define strdup _strdup
@@ -62,18 +65,51 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 {
   Bool do_help = false;
   string cfg_BitstreamFile;
+#if SVC_EXTENSION
+  string cfg_ReconFile [MAX_LAYERS];
+  Int nLayerNum;
+#if AVC_BASE
+  string cfg_BLReconFile;
+#endif
+#else
   string cfg_ReconFile;
+#endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  string cfg_BLSyntaxFile;
+#endif
   string cfg_TargetDecLayerIdSetFile;
 
   po::Options opts;
   opts.addOptions()
   ("help", do_help, false, "this help text")
   ("BitstreamFile,b", cfg_BitstreamFile, string(""), "bitstream input file name")
+#if SVC_EXTENSION
+  ("ReconFileL%d,-o%d",   cfg_ReconFile,   string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
+                                                     "YUV writing is skipped if omitted")
+#if AVC_BASE
+  ("BLReconFile,-ibl",    cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
+  ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
+  ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
+#if AVC_SYNTAX
+  ("BLSyntaxFile,-ibs",    cfg_BLSyntaxFile,  string(""), "BL syntax input file name")  
+#endif
+#endif
+#else
   ("ReconFile,o",     cfg_ReconFile,     string(""), "reconstructed YUV output file name\n"
                                                      "YUV writing is skipped if omitted")
+#endif
+#if SYNTAX_OUTPUT
+  ("BLSyntaxFile,-ibs",    cfg_BLSyntaxFile,  string(""), "BL syntax input file name")
+  ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
+  ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
+  ("BLFrames,-fr",          m_iBLFrames,       0, "BL number of frames")
+#endif
   ("SkipFrames,s", m_iSkipFrame, 0, "number of frames to skip before random access")
   ("OutputBitDepth,d", m_outputBitDepthY, 0, "bit depth of YUV output luma component (default: use 0 for native depth)")
   ("OutputBitDepthC,d", m_outputBitDepthC, 0, "bit depth of YUV output chroma component (default: use 0 for native depth)")
+#if SVC_EXTENSION
+  ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
+#endif 
   ("MaxTemporalLayer,t", m_iMaxTemporalLayer, -1, "Maximum Temporal Layer to be decoded. -1 to decode all layers")
   ("SEIDecodedPictureHash", m_decodedPictureHashSEIEnabled, 1, "Control handling of decoded picture hash SEI messages\n"
                                               "\t1: check hash in SEI messages if available in the bitstream\n"
@@ -98,7 +134,22 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 
   /* convert std::string to c string for compatability */
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+#if SVC_EXTENSION
+  m_tgtLayerId = nLayerNum - 1;
+  assert( m_tgtLayerId >= 0 );
+  for(UInt layer=0; layer<= m_tgtLayerId; layer++)
+  {
+    m_pchReconFile[layer] = cfg_ReconFile[layer].empty() ? NULL : strdup(cfg_ReconFile[layer].c_str());
+  }
+#if AVC_BASE
+  m_pchBLReconFile = cfg_BLReconFile.empty() ? NULL : strdup(cfg_BLReconFile.c_str());
+#endif
+#else
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
+#endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  m_pchBLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
+#endif
 
   if (!m_pchBitstreamFile)
   {

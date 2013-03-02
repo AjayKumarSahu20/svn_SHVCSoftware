@@ -44,9 +44,16 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+#if SVC_EXTENSION
+TEncAnalyze             m_gcAnalyzeAll [MAX_LAYERS];
+TEncAnalyze             m_gcAnalyzeI [MAX_LAYERS];
+TEncAnalyze             m_gcAnalyzeP [MAX_LAYERS];
+TEncAnalyze             m_gcAnalyzeB [MAX_LAYERS];
+#else
 TEncAnalyze             m_gcAnalyzeAll;
 TEncAnalyze             m_gcAnalyzeI;
 TEncAnalyze             m_gcAnalyzeP;
 TEncAnalyze             m_gcAnalyzeB;
+#endif
 
 //! \}

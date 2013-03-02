@@ -42,6 +42,9 @@
 #include "TDecBinCoderCABAC.h"
 #include "libmd5/MD5.h"
 #include "TLibCommon/SEI.h"
+#if SVC_EXTENSION
+#include "TDecTop.h"
+#endif
 
 #include <time.h>
 
@@ -66,17 +69,27 @@ TDecGop::~TDecGop()
   
 }
 
+#if SVC_EXTENSION
+Void TDecGop::create(UInt layerId)
+{
+  m_layerId = layerId;
+}
+#else
 Void TDecGop::create()
 {
   
 }
-
+#endif
 
 Void TDecGop::destroy()
 {
 }
-
+#if SVC_EXTENSION
+Void TDecGop::init(TDecTop**               ppcDecTop,
+                   TDecEntropy*            pcEntropyDecoder,
+#else
 Void TDecGop::init( TDecEntropy*            pcEntropyDecoder, 
+#endif
                    TDecSbac*               pcSbacDecoder, 
                    TDecBinCABAC*           pcBinCABAC,
                    TDecCavlc*              pcCavlcDecoder, 
@@ -92,6 +105,9 @@ Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
   m_pcSliceDecoder        = pcSliceDecoder;
   m_pcLoopFilter          = pcLoopFilter;
   m_pcSAO  = pcSAO;
+#if SVC_EXTENSION   
+  m_ppcTDecTop            = ppcDecTop;
+#endif
 }
 
 
@@ -209,11 +225,18 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
   if (!pcSlice->isReferenced()) c += 32;
 
   //-- For time output for each slice
+#if SVC_EXTENSION
+  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
+                                                    rpcPic->getLayerId(),
+                                                    pcSlice->getTLayer(),
+                                                    c,
+                                                    pcSlice->getSliceQp() );
+#else
   printf("\nPOC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
                                                     pcSlice->getTLayer(),
                                                     c,
                                                     pcSlice->getSliceQp() );
-
+#endif
   m_dDecTime += (Double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
   printf ("[DT %6.3f] ", m_dDecTime );
   m_dDecTime  = 0;

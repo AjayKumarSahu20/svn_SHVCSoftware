@@ -41,6 +41,9 @@
 #include "TLibCommon/CommonDef.h"
 
 #include "TLibEncoder/TEncCfg.h"
+#if SVC_EXTENSION
+#include "TAppEncLayerCfg.h"
+#endif
 #include <sstream>
 //! \ingroup TAppEncoder
 //! \{
@@ -54,6 +57,19 @@ class TAppEncCfg
 {
 protected:
   // file I/O
+#if SVC_EXTENSION
+  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
+  Int       m_numLayers;                                     ///< number of layers
+
+  Char*     m_pBitstreamFile;                                 ///< output bitstream file
+  Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
+  // source specification
+  UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
+  Int       m_framesToBeEncoded;                              ///< number of encoded frames
+#if AVC_SYNTAX
+  char*     m_BLSyntaxFile;                                   ///< input syntax file
+#endif
+#else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
   Char*     m_pchReconFile;                                   ///< output reconstruction file
@@ -70,7 +86,8 @@ protected:
   Int       m_confBottom;
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
-  
+#endif  
+
   // profile/level
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
@@ -83,7 +100,9 @@ protected:
 #endif
   
   // coding structure
+#if !SVC_EXTENSION
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
+#endif
   Int       m_iDecodingRefreshType;                           ///< random access type
   Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
   Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
@@ -95,10 +114,12 @@ protected:
   Bool      m_useTransformSkipFast;                           ///< flag for enabling fast intra transform skipping
   Bool      m_enableAMP;
   // coding quality
+#if !SVC_EXTENSION
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   Char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
+#endif
   Int       m_iMaxDeltaQP;                                    ///< max. |delta QP|
   UInt      m_uiDeltaQpRD;                                    ///< dQP range for multi-pass slice QP optimization
   Int       m_iMaxCuDQPDepth;                                 ///< Max. depth for a minimum CuDQPSize (0:default)
@@ -191,7 +212,9 @@ protected:
   UInt*     m_pColumnWidth;
   UInt*     m_pRowHeight;
   Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+#if !SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
+#endif
 
   Bool      m_bUseConstrainedIntraPred;                       ///< flag for using constrained intra prediction
   
@@ -275,6 +298,9 @@ protected:
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
+#if REF_IDX_FRAMEWORK
+  Int       m_elRapSliceBEnabled;
+#endif
   // internal member functions
   Void  xSetGlobal      ();                                   ///< set global variables
   Void  xCheckParameter ();                                   ///< check validity of configuration values
@@ -299,6 +325,22 @@ public:
   Void  destroy   ();                                         ///< destroy option handling class
   Bool  parseCfg  ( Int argc, Char* argv[] );                 ///< parse configuration file to fill member variables
   
+#if SVC_EXTENSION
+  Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
+  Int  getNumLayer()               {return m_numLayers;        }
+  Int  getGOPSize()                {return m_iGOPSize;          }
+  UInt getInternalBitDepthY()      {return m_internalBitDepthY; }
+  UInt getInternalBitDepthC()      {return m_internalBitDepthC; }
+  UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
+  UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
+  UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
+  Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
+  Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
+  Void getDirFilename(string& filename, string& dir, const string path);
+#if AVC_SYNTAX
+  Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
+#endif
+#endif
 };// END CLASS DEFINITION TAppEncCfg
 
 //! \}

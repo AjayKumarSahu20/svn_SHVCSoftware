@@ -140,6 +140,11 @@ public:
   Void    setAllRefIdx ( Int iRefIdx,                 PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx=0 );
   Void    setAllMvField( TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx=0 );
 
+#if AVC_SYNTAX
+  Void           setMv    (TComMv cMv,  Int iIdx )         { m_pcMv    [iIdx] = cMv; }
+  Void           setRefIdx(Int iRefIdx, Int iIdx   )       { m_piRefIdx[iIdx] =  iRefIdx; }
+#endif
+
   Void setNumPartition( Int iNumPart )
   {
     m_uiNumPartition = iNumPart;
@@ -152,7 +157,27 @@ public:
     m_piRefIdx = src->m_piRefIdx + offset;
   }
   
+#if SVC_MVP
+  Void compress(Char* pePredMode, UChar* peInterDir, Int scale);
+#else
   Void compress(Char* pePredMode, Int scale); 
+#endif
+
+#if REF_IDX_MFM
+  Void setMvField( TComMvField const& mvField, Int iIdx )
+  {
+    m_pcMv[iIdx]      = mvField.getMv();
+    m_piRefIdx[iIdx]  = mvField.getRefIdx();
+    return;
+  }
+
+  Void setMvField( TComMv cMv, Int iRefIdx, Int iIdx )
+  {
+    m_pcMv[iIdx]      = cMv;
+    m_piRefIdx[iIdx]  = iRefIdx;
+    return;
+  }
+#endif
 };
 
 //! \}

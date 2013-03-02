@@ -146,11 +146,18 @@ Void TComPicSym::destroy()
   delete [] m_apcTComDataCU;
   m_apcTComDataCU = NULL;
 
+#if AVC_BASE || REF_IDX_FRAMEWORK
+  if( m_apcTComTile )
+  {
+#endif
   for(Int i = 0; i < (m_iNumColumnsMinus1+1)*(m_iNumRowsMinus1+1); i++ )
   {
     delete m_apcTComTile[i];
   }
   delete [] m_apcTComTile;
+#if AVC_BASE || REF_IDX_FRAMEWORK
+  }
+#endif
 
   m_apcTComTile = NULL;
 
@@ -177,7 +184,11 @@ Void TComPicSym::allocateNewSlice()
   if (m_uiNumAllocatedSlice>=2)
   {
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->copySliceInfo( m_apcTComSlice[m_uiNumAllocatedSlice-2] );
+#if SET_SLICE_LAYER_ID
+    m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice( m_apcTComSlice[m_uiNumAllocatedSlice-1]->getLayerId() );
+#else
     m_apcTComSlice[m_uiNumAllocatedSlice-1]->initSlice();
+#endif
   }
 }
 

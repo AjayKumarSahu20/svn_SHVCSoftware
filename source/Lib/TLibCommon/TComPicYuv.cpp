@@ -59,19 +59,28 @@ TComPicYuv::TComPicYuv()
   m_piPicOrgY       = NULL;    // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
   m_piPicOrgU       = NULL;
   m_piPicOrgV       = NULL;
-  
   m_bIsBorderExtended = false;
 }
 
 TComPicYuv::~TComPicYuv()
 {
 }
-
+#if SVC_UPSAMPLING
+Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
+#else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
+#endif
 {
   m_iPicWidth       = iPicWidth;
   m_iPicHeight      = iPicHeight;
   
+#if SVC_UPSAMPLING
+  if(pcSps != NULL)
+  {
+    m_conformanceWindow = pcSps->getConformanceWindow();
+  }
+#endif
+
   // --> After config finished!
   m_iCuWidth        = uiMaxCUWidth;
   m_iCuHeight       = uiMaxCUHeight;
