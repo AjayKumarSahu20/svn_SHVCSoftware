@@ -696,7 +696,14 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     }
   }
   READ_FLAG( uiCode, "sps_temporal_mvp_enable_flag" );            pcSPS->setTMVPFlagsPresent(uiCode);
-
+#if REF_IDX_MFM
+  if(pcSPS->getLayerId() > 0)
+  {
+    READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
+    pcSPS->setMFMEnabledFlag( uiCode ? true : false );
+    assert(pcSPS->getMFMEnabledFlag()); 
+  }
+#endif
   READ_FLAG( uiCode, "sps_strong_intra_smoothing_enable_flag" );  pcSPS->setUseStrongIntraSmoothing(uiCode);
 
   READ_FLAG( uiCode, "vui_parameters_present_flag" );             pcSPS->setVuiParametersPresentFlag(uiCode);
@@ -1925,6 +1932,13 @@ Bool TDecCavlc::xMoreRbspData()
   // we have more data, if cnt is not zero
   return (cnt>0);
 }
+
+#if INTRA_BL
+Void TDecCavlc::parseIntraBLFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth )
+{
+  assert(0);
+}
+#endif
 
 //! \}
 

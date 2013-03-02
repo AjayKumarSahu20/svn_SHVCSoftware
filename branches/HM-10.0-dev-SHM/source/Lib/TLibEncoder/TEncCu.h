@@ -83,10 +83,17 @@ private:
   
   //  Access channel
   TEncCfg*                m_pcEncCfg;
+#if INTRA_BL
+  TComPicYuv*             m_pcPicYuvRecBase;       ///< reconstructed base layer
+#endif 
   TEncSearch*             m_pcPredSearch;
   TComTrQuant*            m_pcTrQuant;
   TComBitCounter*         m_pcBitCounter;
   TComRdCost*             m_pcRdCost;
+  
+#if SVC_EXTENSION
+  TEncTop**               m_ppcTEncTop;
+#endif
   
   TEncEntropy*            m_pcEntropyCoder;
   TEncCavlc*              m_pcCavlcCoder;
@@ -123,6 +130,9 @@ public:
 #if RATE_CONTROL_LAMBDA_DOMAIN
   UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
 #endif
+#if INTRA_BL 
+  Void  setBaseRecPic       ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }   
+#endif
 protected:
   Void  finishCU            ( TComDataCU*  pcCU, UInt uiAbsPartIdx,           UInt uiDepth        );
 #if AMP_ENC_SPEEDUP
@@ -143,6 +153,12 @@ protected:
   Void  xCheckRDCostInter   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
 #endif
   Void  xCheckRDCostIntra   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
+#if INTRA_BL
+  Void  xCheckRDCostIntraBL ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU  );
+#endif
+#if ENCODER_FAST_MODE
+  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU );
+#endif
   Void  xCheckDQP           ( TComDataCU*  pcCU );
   
   Void  xCheckIntraPCM      ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU                      );
@@ -166,6 +182,10 @@ protected:
   Void deriveTestModeAMP (TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver);
 #endif
 #endif
+
+#if SVC_EXTENSION
+  TEncTop*   getLayerEnc(UInt LayerId)  {return m_ppcTEncTop[LayerId]; }
+#endif 
 
   Void  xFillPCMBuffer     ( TComDataCU*& pCU, TComYuv* pOrgYuv ); 
 };

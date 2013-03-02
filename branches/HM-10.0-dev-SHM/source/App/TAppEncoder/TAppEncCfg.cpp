@@ -62,6 +62,22 @@ namespace po = df::program_options_lite;
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
+#if SVC_EXTENSION
+TAppEncCfg::TAppEncCfg()
+: m_pBitstreamFile()
+, m_pColumnWidth()
+, m_pRowHeight()
+, m_scalingListFile()
+#if REF_IDX_FRAMEWORK
+, m_elRapSliceBEnabled(0)
+#endif
+{
+  for(UInt layer=0; layer<MAX_LAYERS; layer++)
+  {
+    m_acLayerCfg[layer].setAppEncCfg(this);
+  }
+}
+#else
 TAppEncCfg::TAppEncCfg()
 : m_pchInputFile()
 , m_pchBitstreamFile()
@@ -73,17 +89,22 @@ TAppEncCfg::TAppEncCfg()
 {
   m_aidQP = NULL;
 }
+#endif
 
 TAppEncCfg::~TAppEncCfg()
 {
+#if !SVC_EXTENSION
   if ( m_aidQP )
   {
     delete[] m_aidQP;
   }
   free(m_pchInputFile);
-  free(m_pchBitstreamFile);
+#endif
+  free(m_pBitstreamFile);
+#if !SVC_EXTENSION  
   free(m_pchReconFile);
   free(m_pchdQPFile);
+#endif
   free(m_pColumnWidth);
   free(m_pRowHeight);
   free(m_scalingListFile);
@@ -140,6 +161,32 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
 #endif
   return in;
 }
+
+#if SVC_EXTENSION
+void TAppEncCfg::getDirFilename(string& filename, string& dir, const string path)
+{
+  size_t pos = path.find_last_of("\\");
+  if(pos != std::string::npos)
+  {
+    filename.assign(path.begin() + pos + 1, path.end());
+    dir.assign(path.begin(), path.begin() + pos + 1);
+  }
+  else
+  {
+    pos = path.find_last_of("/");
+    if(pos != std::string::npos)
+    {
+      filename.assign(path.begin() + pos + 1, path.end());
+      dir.assign(path.begin(), path.begin() + pos + 1);
+    }
+    else
+    {
+      filename = path;
+      dir.assign("");
+    }
+  }
+}
+#endif
 
 static const struct MapStrToProfile {
   const Char* str;
@@ -230,10 +277,38 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 {
   Bool do_help = false;
   
+#if SVC_EXTENSION
+  string  cfg_LayerCfgFile  [MAX_LAYERS];
+  string  cfg_BitstreamFile;
+  string* cfg_InputFile     [MAX_LAYERS];
+  string* cfg_ReconFile     [MAX_LAYERS];
+  Double* cfg_fQP           [MAX_LAYERS];
+
+  Int*    cfg_SourceWidth   [MAX_LAYERS]; 
+  Int*    cfg_SourceHeight  [MAX_LAYERS];
+  Int*    cfg_FrameRate     [MAX_LAYERS];
+  Int*    cfg_IntraPeriod   [MAX_LAYERS];
+  Int*    cfg_conformanceMode  [MAX_LAYERS];
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
+    cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
+    cfg_fQP[layer]          = &m_acLayerCfg[layer].m_fQP;
+    cfg_SourceWidth[layer]  = &m_acLayerCfg[layer].m_iSourceWidth;
+    cfg_SourceHeight[layer] = &m_acLayerCfg[layer].m_iSourceHeight;
+    cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
+    cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
+    cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+  }
+#if AVC_SYNTAX
+  string  cfg_BLSyntaxFile;
+#endif
+#else
   string cfg_InputFile;
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
+#endif
   string cfg_ColumnWidth;
   string cfg_RowHeight;
   string cfg_ScalingListFile;
@@ -251,6 +326,36 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("c", po::parseConfigFile, "configuration file name")
   
   // File, I/O and source parameters
+#if SVC_EXTENSION
+  ("InputFile%d,-i%d",        cfg_InputFile,  string(""), MAX_LAYERS, "original YUV input file name for layer %d")
+  ("ReconFile%d,-o%d",        cfg_ReconFile,  string(""), MAX_LAYERS, "reconstruction YUV input file name for layer %d")
+  ("LayerConfig%d,-lc%d",     cfg_LayerCfgFile, string(""), MAX_LAYERS, "layer %d configuration file name")
+  ("SourceWidth%d,-wdt%d",    cfg_SourceWidth, 0, MAX_LAYERS, "Source picture width for layer %d")
+  ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
+  ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
+  ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+  ("NumLayers",               m_numLayers, 1, "Number of layers to code")
+  ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+
+  ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
+  ("InputBitDepth",         m_inputBitDepthY,    8, "Bit-depth of input file")
+  ("OutputBitDepth",        m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
+  ("InternalBitDepth",      m_internalBitDepthY, 0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+                                                       "If different to InputBitDepth, source data will be converted")
+  ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
+  ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
+  ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
+
+#if AVC_BASE
+  ("InputBLFile,-ibl",        *cfg_InputFile[0],     string(""), "Base layer rec YUV input file name")
+#if AVC_SYNTAX
+  ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
+#endif
+#endif
+#if REF_IDX_FRAMEWORK
+  ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture_")
+#endif  
+#else  
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -271,6 +376,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfTop",               m_confTop,             0, "Top offset for window conformance mode 3")
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
+#endif
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
   
@@ -285,7 +391,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
   ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
 #endif
-  
+
   // Unit definition parameters
   ("MaxCUWidth",              m_uiMaxCUWidth,             64u)
   ("MaxCUHeight",             m_uiMaxCUHeight,            64u)
@@ -301,7 +407,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("QuadtreeTUMaxDepthInter", m_uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
   
   // Coding structure paramters
+#if SVC_EXTENSION
+  ("IntraPeriod%d,-ip%d",  cfg_IntraPeriod, -1, MAX_LAYERS, "intra period in frames for layer %d, (-1: only first frame)")
+#else
   ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
+#endif
   ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
   ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
   ("ListCombination,-lc",     m_bUseLComb,               true, "Combined reference list for uni-prediction estimation in B-slices")
@@ -312,6 +422,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("HadamardME",              m_bUseHADME,               true, "Hadamard ME for fractional-pel")
   ("ASR",                     m_bUseASR,                false, "Adaptive motion search range")
 
+#if SVC_EXTENSION
+  ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#else
   // Mode decision parameters
   ("LambdaModifier0,-LM0", m_adLambdaModifier[ 0 ], ( Double )1.0, "Lambda modifier for temporal layer 0")
   ("LambdaModifier1,-LM1", m_adLambdaModifier[ 1 ], ( Double )1.0, "Lambda modifier for temporal layer 1")
@@ -321,9 +434,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("LambdaModifier5,-LM5", m_adLambdaModifier[ 5 ], ( Double )1.0, "Lambda modifier for temporal layer 5")
   ("LambdaModifier6,-LM6", m_adLambdaModifier[ 6 ], ( Double )1.0, "Lambda modifier for temporal layer 6")
   ("LambdaModifier7,-LM7", m_adLambdaModifier[ 7 ], ( Double )1.0, "Lambda modifier for temporal layer 7")
+#endif
 
   /* Quantization parameters */
+#if SVC_EXTENSION
+  ("QP%d,-q%d",     cfg_fQP,  30.0, MAX_LAYERS, "Qp value for layer %d, if value is float, QP is switched once during encoding")
+#else
   ("QP,q",          m_fQP,             30.0, "Qp value, if value is float, QP is switched once during encoding")
+#endif
   ("DeltaQpRD,-dqr",m_uiDeltaQpRD,       0u, "max dQp offset for slice")
   ("MaxDeltaQP,d",  m_iMaxDeltaQP,        0, "max dQp offset for block")
   ("MaxCuDQPDepth,-dqd",  m_iMaxCuDQPDepth,        0, "max depth for a minimum CuDQP")
@@ -337,7 +455,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   ("AdaptiveQP,-aq",                m_bUseAdaptiveQP,           false, "QP adaptation based on a psycho-visual model")
   ("MaxQPAdaptationRange,-aqr",     m_iQPAdaptationRange,           6, "QP adaptation range")
+#if !SVC_EXTENSION
   ("dQPFile,m",                     cfg_dQPFile,           string(""), "dQP file name")
+#endif
   ("RDOQ",                          m_useRDOQ,                  true )
   ("RDOQTS",                        m_useRDOQTS,                true )
 #if L0232_RD_PENALTY
@@ -525,11 +645,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
    * Set any derived parameters
    */
   /* convert std::string to c string for compatability */
+#if SVC_EXTENSION
+  m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+#if AVC_SYNTAX
+  m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
+#endif
+#else
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
-  m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+  m_phBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
-  
+#endif  
+
   Char* pColumnWidth = cfg_ColumnWidth.empty() ? NULL: strdup(cfg_ColumnWidth.c_str());
   Char* pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
   if( m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0 )
@@ -604,6 +731,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
   if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
 
+#if !SVC_EXTENSION
   // TODO:ChromaFmt assumes 4:2:0 below
   switch (m_conformanceMode)
   {
@@ -701,7 +829,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
   m_iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
-
+#endif
   // check validity of input parameters
   xCheckParameter();
   
@@ -799,13 +927,19 @@ Void TAppEncCfg::xCheckParameter()
   // check range of parameters
   xConfirmPara( m_inputBitDepthY < 8,                                                     "InputBitDepth must be at least 8" );
   xConfirmPara( m_inputBitDepthC < 8,                                                     "InputBitDepthC must be at least 8" );
+#if !SVC_EXTENSION  
   xConfirmPara( m_iFrameRate <= 0,                                                          "Frame rate must be more than 1" );
+#endif
   xConfirmPara( m_framesToBeEncoded <= 0,                                                   "Total Number Of Frames encoded must be more than 0" );
   xConfirmPara( m_iGOPSize < 1 ,                                                            "GOP Size must be greater or equal to 1" );
   xConfirmPara( m_iGOPSize > 1 &&  m_iGOPSize % 2,                                          "GOP Size must be a multiple of 2, if GOP Size is greater than 1" );
+#if !SVC_EXTENSION 
   xConfirmPara( (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0" );
+#endif
   xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                   "Decoding Refresh Type must be equal to 0, 1 or 2" );
+#if !SVC_EXTENSION
   xConfirmPara( m_iQP <  -6 * (m_internalBitDepthY - 8) || m_iQP > 51,                    "QP exceeds supported range (-QpBDOffsety to 51)" );
+#endif
   xConfirmPara( m_loopFilterBetaOffsetDiv2 < -13 || m_loopFilterBetaOffsetDiv2 > 13,          "Loop Filter Beta Offset div. 2 exceeds supported range (-13 to 13)");
   xConfirmPara( m_loopFilterTcOffsetDiv2 < -13 || m_loopFilterTcOffsetDiv2 > 13,              "Loop Filter Tc Offset div. 2 exceeds supported range (-13 to 13)");
   xConfirmPara( m_iFastSearch < 0 || m_iFastSearch > 2,                                     "Fast Search Mode is not supported value (0:Full search  1:Diamond  2:PMVFAST)" );
@@ -820,16 +954,20 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_crQpOffset >  12,   "Max. Chroma Cr QP Offset is  12" );
 
   xConfirmPara( m_iQPAdaptationRange <= 0,                                                  "QP Adaptation Range must be more than 0" );
+#if !SVC_EXTENSION
   if (m_iDecodingRefreshType == 2)
   {
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
+#endif
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
   xConfirmPara( m_uiMaxCUHeight < 16,                                                       "Maximum partition height size should be larger than or equal to 16");
+#if !SVC_EXTENSION
   xConfirmPara( (m_iSourceWidth  % (m_uiMaxCUWidth  >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame width must be a multiple of the minimum CU size");
   xConfirmPara( (m_iSourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame height must be a multiple of the minimum CU size");
+#endif
   
   xConfirmPara( m_uiQuadtreeTULog2MinSize < 2,                                        "QuadtreeTULog2MinSize must be 2 or greater.");
   xConfirmPara( m_uiQuadtreeTULog2MaxSize > 5,                                        "QuadtreeTULog2MaxSize must be 5 or smaller.");
@@ -848,9 +986,11 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara(  m_maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
   xConfirmPara(  m_maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
 
+#if !SVC_EXTENSION
 #if ADAPTIVE_QP_SELECTION
   xConfirmPara( m_bUseAdaptQpSelect == true && m_iQP < 0,                                              "AdaptiveQpSelection must be disabled when QP < 0.");
   xConfirmPara( m_bUseAdaptQpSelect == true && (m_cbQpOffset !=0 || m_crQpOffset != 0 ),               "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
+#endif
 #endif
 
   if( m_usePCM)
@@ -876,6 +1016,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 
   //TODO:ChromaFmt assumes 4:2:0 below
+#if !SVC_EXTENSION
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
 
@@ -886,7 +1027,11 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
+#endif
 
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
+  xConfirmPara( REF_IDX_ME_AROUND_ZEROMV && REF_IDX_ME_ZEROMV, "REF_IDX_ME_AROUND_ZEROMV and REF_IDX_ME_ZEROMV cannot be enabled simultaneously");
+#endif
   // max CU width and height should be power of 2
   UInt ui = m_uiMaxCUWidth;
   while(ui)
@@ -903,8 +1048,14 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara( ui != 1 , "Height should be 2^n");
   }
 
+
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
+#if SVC_EXTENSION
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+#endif
   if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
     m_GOPList[0] = GOPEntry();
     m_GOPList[0].m_QPFactor = 1;
@@ -913,6 +1064,9 @@ Void TAppEncCfg::xCheckParameter()
     m_GOPList[0].m_POC = 1;
     m_GOPList[0].m_numRefPicsActive = 4;
   }
+#if SVC_EXTENSION
+  }
+#endif
   
   Bool verifiedGOP=false;
   Bool errorGOP=false;
@@ -926,7 +1080,9 @@ Void TAppEncCfg::xCheckParameter()
     isOK[i]=false;
   }
   Int numOK=0;
+#if !SVC_EXTENSION
   xConfirmPara( m_iIntraPeriod >=0&&(m_iIntraPeriod%m_iGOPSize!=0), "Intra period must be a multiple of GOPSize, or -1" );
+#endif
 
   for(Int i=0; i<m_iGOPSize; i++)
   {
@@ -935,7 +1091,25 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara( m_GOPList[i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
     }
   }
-  
+
+#if SVC_EXTENSION
+  // verify layer configuration parameters
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    if(m_acLayerCfg[layer].xCheckParameter())
+    {
+      printf("\nError: invalid configuration parameter found in layer %d \n", layer);
+      check_failed = true;
+    }
+  }
+#endif  
+
+#if SVC_EXTENSION
+  // verify layer configuration parameters
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+#endif
   if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
   {
     for(Int i=0; i<m_iGOPSize; i++)
@@ -944,6 +1118,10 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara( (m_GOPList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_GOPList[i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
     }
   }
+#if SVC_EXTENSION
+  }
+#endif
+
   m_extraRPSs=0;
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -1205,6 +1383,12 @@ Void TAppEncCfg::xCheckParameter()
     m_maxDecPicBuffering[MAX_TLAYER-1] = m_numReorderPics[MAX_TLAYER-1];
   }
 
+#if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    Int m_iSourceWidth = m_acLayerCfg[layer].m_iSourceWidth;
+    Int m_iSourceHeight = m_acLayerCfg[layer].m_iSourceHeight;
+#endif
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   { 
     Int PicSizeInSamplesY =  m_iSourceWidth * m_iSourceHeight;
@@ -1278,10 +1462,16 @@ Void TAppEncCfg::xCheckParameter()
       m_minSpatialSegmentationIdc = 0;
     }
   }
+#if SVC_EXTENSION
+  }
+#endif
+
   xConfirmPara( m_bUseLComb==false && m_numReorderPics[MAX_TLAYER-1]!=0, "ListCombination can only be 0 in low delay coding (more precisely when L0 and L1 are identical)" );  // Note however this is not the full necessary condition as ref_pic_list_combination_flag can only be 0 if L0 == L1.
   xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
+#if !SVC_EXTENSION
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
   xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
+#endif
 
   xConfirmPara( m_decodedPictureHashSEIEnabled<0 || m_decodedPictureHashSEIEnabled>3, "this hash type is not correct!\n");
 
@@ -1356,11 +1546,23 @@ Void TAppEncCfg::xSetGlobal()
 Void TAppEncCfg::xPrintParameter()
 {
   printf("\n");
+#if SVC_EXTENSION  
+  printf("Total number of layers        : %d\n", m_numLayers            );
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    printf("=== Layer %d settings === \n", layer);
+    m_acLayerCfg[layer].xPrintParameter();
+    printf("\n");
+  }
+  printf("=== Common configuration settings === \n");
+  printf("Bitstream      File          : %s\n", m_pBitstreamFile      );
+#else
   printf("Input          File          : %s\n", m_pchInputFile          );
   printf("Bitstream      File          : %s\n", m_pchBitstreamFile      );
   printf("Reconstruction File          : %s\n", m_pchReconFile          );
   printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+#endif
   printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
   printf("CU size / depth              : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)  : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
@@ -1368,9 +1570,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("Max RQT depth intra          : %d\n", m_uiQuadtreeTUMaxDepthIntra);
   printf("Min PCM size                 : %d\n", 1 << m_uiPCMLog2MinSize);
   printf("Motion search range          : %d\n", m_iSearchRange );
+#if !SVC_EXTENSION
   printf("Intra period                 : %d\n", m_iIntraPeriod );
+#endif
   printf("Decoding refresh type        : %d\n", m_iDecodingRefreshType );
+#if !SVC_EXTENSION
   printf("QP                           : %5.2f\n", m_fQP );
+#endif
   printf("Max dQP signaling depth      : %d\n", m_iMaxCuDQPDepth);
 
   printf("Cb QP Offset                 : %d\n", m_cbQpOffset   );
@@ -1441,8 +1647,10 @@ Void TAppEncCfg::xPrintParameter()
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);
+#if !SVC_EXTENSION
   printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
           m_iWaveFrontSynchro, m_iWaveFrontSubstreams);
+#endif
   printf(" ScalingList:%d ", m_useScalingListId );
   printf("TMVPMode:%d ", m_TMVPModeId     );
 #if ADAPTIVE_QP_SELECTION
@@ -1450,7 +1658,24 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
+#if SVC_EXTENSION
+  printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
+  printf("AVC_BASE:%d ", AVC_BASE);
+#if REF_IDX_FRAMEWORK
+  printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
+  printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
+  printf("REF_IDX_ME_AROUND_ZEROMV:%d ", REF_IDX_ME_AROUND_ZEROMV);
+  printf("REF_IDX_ME_ZEROMV: %d", REF_IDX_ME_ZEROMV);
+#elif INTRA_BL
+  printf("INTRA_BL:%d ", INTRA_BL);
+#if !AVC_BASE
+  printf("SVC_MVP:%d ", SVC_MVP );
+  printf("SVC_BL_CAND_INTRA:%d", SVC_BL_CAND_INTRA );
+#endif
+#endif
+#else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
+#endif
   printf("\n\n");
   
   fflush(stdout);

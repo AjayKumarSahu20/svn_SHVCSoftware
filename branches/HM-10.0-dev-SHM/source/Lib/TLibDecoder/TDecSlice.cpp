@@ -99,11 +99,20 @@ Void TDecSlice::destroy()
   }
 }
 
+#if SVC_EXTENSION
+Void TDecSlice::init(TDecTop** ppcDecTop,TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
+{
+  m_pcEntropyDecoder  = pcEntropyDecoder;
+  m_pcCuDecoder       = pcCuDecoder;
+  m_ppcTDecTop        = ppcDecTop;
+}
+#else
 Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
 {
   m_pcEntropyDecoder  = pcEntropyDecoder;
   m_pcCuDecoder       = pcCuDecoder;
 }
+#endif
 
 Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders)
 {
@@ -183,6 +192,9 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
   UInt uiTileStartLCU;
   UInt uiTileLCUX;
   Int iNumSubstreamsPerTile = 1; // if independent.
+#if INTRA_BL
+  m_pcCuDecoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec() : NULL);
+#endif
   Bool depSliceSegmentsEnabled = rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getDependentSliceSegmentsEnabledFlag();
   uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iStartCUAddr))->getFirstCUAddr();
   if( depSliceSegmentsEnabled )

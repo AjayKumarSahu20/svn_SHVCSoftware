@@ -80,6 +80,10 @@ TComSlice::TComSlice()
 #endif
 , m_bNoBackPredFlag               ( false )
 , m_uiTLayer                      ( 0 )
+#if SVC_EXTENSION
+, m_layerId                     ( 0 )
+, m_pcBaseColPic                  ( NULL )
+#endif
 , m_bTLayerSwitchingFlag          ( false )
 , m_sliceMode                   ( 0 )
 , m_sliceArgument               ( 0 )
@@ -135,8 +139,15 @@ TComSlice::~TComSlice()
 }
 
 
+#if SET_SLICE_LAYER_ID
+Void TComSlice::initSlice( UInt layerId )
+#else
 Void TComSlice::initSlice()
+#endif
 {
+#if SET_SLICE_LAYER_ID
+  m_layerId = layerId;
+#endif
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
   
@@ -343,7 +354,13 @@ Void TComSlice::generateCombinedList()
 
 Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 {
+#if REF_IDX_FRAMEWORK
+  if( m_eSliceType == I_SLICE || ( getSPS()->getLayerId() && 
+      (getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) &&
+      (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) ) )
+#else
   if (m_eSliceType == I_SLICE)
+#endif
   {
     ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
     ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
@@ -1260,6 +1277,9 @@ TComSPS::TComSPS()
 , m_useStrongIntraSmoothing   (false)
 , m_vuiParametersPresentFlag  (false)
 , m_vuiParameters             ()
+#if SVC_EXTENSION
+, m_layerId(0)
+#endif
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )
   {
@@ -1925,13 +1945,21 @@ Bool ParameterSetManager::activateSPSWithSEI(Int spsId)
 
 //! activate a PPS and depending on isIDR parameter also SPS and VPS
 //! \returns true, if activation is successful
+#if SVC_EXTENSION
+Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIDR, UInt layerId)
+#else
 Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIDR)
+#endif
 {
   TComPPS *pps = m_ppsMap.getPS(ppsId);
   if (pps)
   {
     Int spsId = pps->getSPSId();
+#if SVC_EXTENSION
+    if (!isIDR && (spsId != layerId ))
+#else
     if (!isIDR && (spsId != m_activeSPSId))
+#endif
     {
       printf("Warning: tried to activate PPS referring to a inactive SPS at non-IDR.");
       return false;
@@ -1999,5 +2027,153 @@ TComBitRatePicRateInfo::TComBitRatePicRateInfo()
   ::memset(m_constantPicRateIdc,     0, sizeof(m_constantPicRateIdc));
   ::memset(m_avgPicRate,             0, sizeof(m_avgPicRate));
 }
+#endif
+
+#if SVC_EXTENSION
+#if AVC_SYNTAX
+Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
+{
+// Assumed that RPL of the base layer is same to the EL, otherwise this information should be also dumped and read from the metadata file
+  setPOC( pcSlice->getPOC() );
+  if( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA )
+  {
+    setSliceType( I_SLICE );
+  }
+  else
+  {
+    setSliceType( pcSlice->getSliceType() );
+  }
+
+  if( this->isIntra() )
+  {
+    return;
+  }
+
+  //initialize reference POC of BL
+  for( Int iRefPicList = 0; iRefPicList < 2; iRefPicList++ )
+  {
+    RefPicList eRefPicList = RefPicList( iRefPicList );
+
+    assert( pcSlice->getNumRefIdx( eRefPicList) > 0 );
+    setNumRefIdx( eRefPicList, pcSlice->getNumRefIdx( eRefPicList ) - 1 );
+    assert( getNumRefIdx( eRefPicList) <= MAX_NUM_REF);
+
+    for(Int refIdx = 0; refIdx < getNumRefIdx( eRefPicList ); refIdx++) 
+    {
+      setRefPOC( pcSlice->getRefPic( eRefPicList, refIdx )->getPOC(), eRefPicList, refIdx );
+      setRefPic( pcSlice->getRefPic( eRefPicList, refIdx ), eRefPicList, refIdx );
+      /*
+      // should be set if the base layer has its own instance of the reference picture lists, currently EL RPL is reused.
+      getRefPic( eRefPicList, refIdx )->setLayerId( 0 );
+      getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );
+      getRefPic( eRefPicList, refIdx )->setIsUsedAsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsUsedAsLongTerm() );
+      */
+
+    }
+  }  
+  return;
+}
+#endif
+
+Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt layerID )
+{  
+  if (layerID == 0)
+  {
+    m_pcBaseColPic = NULL;
+    return;
+  }        
+  setBaseColPic(xGetRefPic(rcListPic, getPOC())); 
+}
+#endif 
+
+#if REF_IDX_FRAMEWORK
+Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInsertOffset )
+{
+  if(getSPS()->getLayerId() && m_eSliceType != I_SLICE)
+  {
+#if REF_IDX_MFM
+    assert(iRefPicNum == 1);
+    if( getPOC() != 0 )
+    { 
+      pIlpPicList[0]->copyUpsampledMvField(getBaseColPic());
+    }
+#endif
+    //add to list 0;
+    Int iOffset;
+    m_aiNumRefIdx[REF_PIC_LIST_0] += iInsertOffset;
+    iOffset = m_aiNumRefIdx[REF_PIC_LIST_0];
+    for (Int i=0; i<iRefPicNum; i++)
+    {
+      pIlpPicList[i]->setIsLongTerm(1);  //mark ilp as long-term reference
+      pIlpPicList[i]->setIsUsedAsLongTerm(1);  //mark ilp as long-term reference
+      m_apcRefPicList[REF_PIC_LIST_0][iOffset + i] = pIlpPicList[i]; 
+      m_aiNumRefIdx[REF_PIC_LIST_0]++;
+      //m_aiNumRefIdx[REF_PIC_LIST_C]++;
+    }
+    if(m_eSliceType == B_SLICE)
+    {
+      m_aiNumRefIdx[REF_PIC_LIST_1] += iInsertOffset;
+      iOffset = m_aiNumRefIdx[REF_PIC_LIST_1];
+      for (Int i=0; i<iRefPicNum; i++)
+      {
+        pIlpPicList[i]->setIsLongTerm(1);  //mark ilp as long-term reference
+        pIlpPicList[i]->setIsUsedAsLongTerm(1);  //mark ilp as long-term reference
+        m_apcRefPicList[REF_PIC_LIST_1][iOffset + i] = pIlpPicList[i]; 
+        m_aiNumRefIdx[REF_PIC_LIST_1]++;
+        //m_aiNumRefIdx[REF_PIC_LIST_C]++;
+      }
+    }
+  }
+}
+
+#if REF_IDX_MFM
+Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
+{
+  //set reference picture POC of each ILP reference 
+  Int thePoc = ilpPic[0]->getPOC(); 
+  assert(thePoc >= 0); 
+  assert(thePoc == pcRefPicBL->getPOC());
+
+#if REUSE_MVSCALE || REUSE_BLKMAPPING
+  ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
+#endif
+
+  //initialize reference POC of ILP 
+  for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
+  { 
+    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_0, refIdx); 
+    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_1, refIdx); 
+
+    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_0, refIdx); 
+    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_1, refIdx); 
+  }
+
+  //set reference POC of ILP 
+  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_0, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0));
+  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0) <= MAX_NUM_REF); 
+  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_1, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1));
+  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1) <= MAX_NUM_REF);
+
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
+  {
+    ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
+  {
+    ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx);
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
+  {
+    ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
+  }
+  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
+  {
+    ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx); 
+  }
+  return;
+}
+#endif
+
+
 #endif
 //! \}

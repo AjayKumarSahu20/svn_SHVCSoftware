@@ -406,6 +406,14 @@ Bool TComPrediction::xCheckIdenticalMotion ( TComDataCU* pcCU, UInt PartAddr )
   return false;
 }
 
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
+Void TComPrediction::getBaseBlk( TComDataCU* pcCU, TComYuv* pcYuvPred, Int iPartAddr, Int iWidth, Int iHeight )
+{
+  pcCU->getBaseLumaBlk( iWidth, iHeight, iPartAddr, pcYuvPred->getLumaAddr( iPartAddr ), pcYuvPred->getStride() );
+  pcCU->getBaseChromaBlk( iWidth >> 1, iHeight >> 1, iPartAddr, pcYuvPred->getCbAddr( iPartAddr ), pcYuvPred->getCStride(), 0 );
+  pcCU->getBaseChromaBlk( iWidth >> 1, iHeight >> 1, iPartAddr, pcYuvPred->getCrAddr( iPartAddr ), pcYuvPred->getCStride(), 1 );
+}
+#endif
 
 Void TComPrediction::motionCompensation ( TComDataCU* pcCU, TComYuv* pcYuvPred, RefPicList eRefPicList, Int iPartIdx )
 {
@@ -757,4 +765,11 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
 
   return;
 }
+
+#if SVC_UPSAMPLING
+Void TComPrediction::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic)
+{
+  m_cUsf.upsampleBasePic( pcUsPic, pcBasePic, pcTempPic);
+}
+#endif
 //! \}

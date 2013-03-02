@@ -1235,6 +1235,12 @@ Void TComTrQuant::transformNxN( TComDataCU* pcCU,
   {
     uiMode = pcCU->getLumaIntraDir( uiAbsPartIdx );
   }
+#if INTRA_BL_DST4x4
+  else if(eTType == TEXT_LUMA && pcCU->isIntraBL(uiAbsPartIdx) )
+  {
+    uiMode = DC_IDX; //Using DST
+  }
+#endif
   else
   {
     uiMode = REG_DCT;
@@ -1308,7 +1314,18 @@ Void TComTrQuant::invRecurTransformNxN( TComDataCU* pcCU, UInt uiAbsPartIdx, Tex
     Pel* pResi = rpcResidual + uiAddr;
     Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
     assert(scalingListType < 6);
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+    if(pcCU->isIntraBL(uiAbsPartIdx) && eTxt == TEXT_LUMA)
+    {
+      invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, DC_IDX, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
+    }
+    else
+    {
+      invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
+    }
+#else
     invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
+#endif
   }
   else
   {
@@ -1802,7 +1819,11 @@ Void TComTrQuant::xRateDistOptQuant                 ( TComDataCU*               
   Double  d64BestCost         = 0;
   Int     ui16CtxCbf          = 0;
   Int     iBestLastIdxP1      = 0;
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+  if( (!pcCU->isIntra( uiAbsPartIdx ) || pcCU->isIntraBL( uiAbsPartIdx )) && eTType == TEXT_LUMA && pcCU->getTransformIdx( uiAbsPartIdx ) == 0 )
+#else
   if( !pcCU->isIntra( uiAbsPartIdx ) && eTType == TEXT_LUMA && pcCU->getTransformIdx( uiAbsPartIdx ) == 0 )
+#endif
   {
     ui16CtxCbf   = 0;
     d64BestCost  = d64BlockUncodedCost + xGetICost( m_pcEstBitsSbac->blockRootCbpBits[ ui16CtxCbf ][ 0 ] );

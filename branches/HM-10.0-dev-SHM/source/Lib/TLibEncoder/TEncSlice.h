@@ -65,6 +65,10 @@ private:
   // encoder configuration
   TEncCfg*                m_pcCfg;                              ///< encoder configuration class
   
+#if SVC_EXTENSION
+  TEncTop**               m_ppcTEncTop;
+#endif  
+
   // pictures
   TComList<TComPic*>*     m_pcListPic;                          ///< list of pictures
   TComPicYuv*             m_apcPicYuvPred;                      ///< prediction picture buffer

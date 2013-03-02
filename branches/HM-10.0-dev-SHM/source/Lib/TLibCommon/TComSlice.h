@@ -50,6 +50,10 @@
 
 class TComPic;
 class TComTrQuant;
+
+#if SVC_EXTENSION
+class TComPicYuv;
+#endif
 // ====================================================================================================================
 // Constants
 // ====================================================================================================================
@@ -849,6 +853,13 @@ private:
   static const Int   m_winUnitX[MAX_CHROMA_FORMAT_IDC+1];
   static const Int   m_winUnitY[MAX_CHROMA_FORMAT_IDC+1];
   TComPTL     m_pcPTL;
+
+#if SVC_EXTENSION
+  UInt m_layerId;
+#endif
+#if REF_IDX_MFM
+  Bool m_bMFMEnabledFlag;
+#endif
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -975,6 +986,15 @@ public:
   Void setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
 
   TComPTL* getPTL()     { return &m_pcPTL; }
+
+#if SVC_EXTENSION
+  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
+  UInt     getLayerId() { return m_layerId; }
+#endif
+#if REF_IDX_MFM
+  Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
+  Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
+#endif
 };
 
 /// Reference Picture Lists class
@@ -1282,6 +1302,11 @@ private:
   
   Bool        m_bNoBackPredFlag;
   UInt        m_uiTLayer;
+#if SVC_EXTENSION
+  UInt        m_layerId;
+  TComPic*    m_pcBaseColPic;
+  TComPicYuv* m_pcFullPelBaseRec;
+#endif 
   Bool        m_bTLayerSwitchingFlag;
 
   UInt        m_sliceMode;
@@ -1318,7 +1343,11 @@ private:
 public:
   TComSlice();
   virtual ~TComSlice(); 
+#if SET_SLICE_LAYER_ID
+  Void      initSlice       ( UInt layerId );
+#else
   Void      initSlice       ();
+#endif
 
   Void      setVPS          ( TComVPS* pcVPS ) { m_pcVPS = pcVPS; }
   TComVPS*  getVPS          () { return m_pcVPS; }
@@ -1416,6 +1445,26 @@ public:
   Void      setPic              ( TComPic* p )                  { m_pcPic             = p;      }
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
   
+#if SVC_EXTENSION  
+  Void      setBaseColPic       ( TComPic* p)                   { m_pcBaseColPic = p; }
+  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
+  TComPic*  getBaseColPic       ()  { return m_pcBaseColPic; }
+
+  Void      setLayerId (UInt layerId) { m_layerId = layerId; }
+  UInt      getLayerId ()               { return m_layerId; }
+
+  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
+  TComPicYuv* getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
+
+#if AVC_SYNTAX
+  Void      initBaseLayerRPL( TComSlice *pcSlice );
+#endif
+#endif
+
+#if REF_IDX_MFM
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+#endif
+
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
   Void      setRefPOCList       ();
   Void      setColFromL0Flag    ( UInt colFromL0 ) { m_colFromL0Flag = colFromL0; }
@@ -1535,7 +1584,9 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
-
+#if REF_IDX_FRAMEWORK
+  Void      addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInsertOffset=0 );
+#endif
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);
@@ -1624,7 +1675,11 @@ public:
 
   //! activate a PPS and depending on isIDR parameter also SPS and VPS
   //! \returns true, if activation is successful
+#if SVC_EXTENSION
+  Bool activatePPS(Int ppsId, Bool isIDR, UInt layerId);
+#else
   Bool activatePPS(Int ppsId, Bool isIDR);
+#endif
 
   TComVPS* getActiveVPS(){ return m_vpsMap.getPS(m_activeVPSId); };
   TComSPS* getActiveSPS(){ return m_spsMap.getPS(m_activeSPSId); };

@@ -46,15 +46,24 @@ struct NALUnit
 {
   NalUnitType m_nalUnitType; ///< nal_unit_type
   UInt        m_temporalId;  ///< temporal_id
+#if SVC_EXTENSION
+  UInt        m_layerId;   ///< layer id
+#endif
   UInt        m_reservedZero6Bits; ///< reserved_zero_6bits
 
   /** construct an NALunit structure with given header values. */
   NALUnit(
     NalUnitType nalUnitType,
     Int         temporalId = 0,
+#if SVC_EXTENSION
+    UInt        layerId = 0,
+#endif
     Int         reservedZero6Bits = 0)
     :m_nalUnitType (nalUnitType)
     ,m_temporalId  (temporalId)
+#if SVC_EXTENSION
+    ,m_layerId   (layerId)
+#endif
     ,m_reservedZero6Bits(reservedZero6Bits)
   {}
 

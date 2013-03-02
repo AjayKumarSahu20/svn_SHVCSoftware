@@ -71,18 +71,28 @@ private:
   TDecSbac*       m_pcBufferLowLatSbacDecoders;   ///< dependent tiles: line to store temporary contexts, one per column of tiles.
   TDecBinCABAC*   m_pcBufferLowLatBinCABACs;
   std::vector<TDecSbac*> CTXMem;
+#if SVC_EXTENSION
+  TDecTop**       m_ppcTDecTop;
+#endif 
   
 public:
   TDecSlice();
   virtual ~TDecSlice();
   
+#if SVC_EXTENSION  
+  Void  init              ( TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
+#else
   Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
+#endif
   Void  create            ();
   Void  destroy           ();
   
   Void  decompressSlice   ( TComInputBitstream** ppcSubstreams,   TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders );
   Void      initCtxMem(  UInt i );
   Void      setCtxMem( TDecSbac* sb, Int b )   { CTXMem[b] = sb; }
+#if SVC_EXTENSION
+  TDecTop*  getLayerDec   ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }  
+#endif
 };
 
 

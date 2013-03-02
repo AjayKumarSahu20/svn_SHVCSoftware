@@ -57,6 +57,13 @@ Void TDecEntropy::decodeCUTransquantBypassFlag(TComDataCU* pcCU, UInt uiAbsPartI
   m_pcEntropyDecoderIf->parseCUTransquantBypassFlag( pcCU, uiAbsPartIdx, uiDepth );
 }
 
+#if INTRA_BL
+Void TDecEntropy::decodeIntraBLFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth )
+{
+  m_pcEntropyDecoderIf->parseIntraBLFlag( pcCU, uiAbsPartIdx, uiPartIdx, uiDepth );
+}
+#endif
+
 /** decode merge flag
  * \param pcSubCU
  * \param uiAbsPartIdx 
@@ -103,6 +110,12 @@ Void TDecEntropy::decodePartSize( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDe
 
 Void TDecEntropy::decodePredInfo    ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, TComDataCU* pcSubCU )
 {
+#if INTRA_BL
+  if( pcCU->isIntraBL( uiAbsPartIdx ) )                                 // Do nothing for Intra BL mode.
+  {
+    return;
+  }
+#endif
   if( pcCU->isIntra( uiAbsPartIdx ) )                                 // If it is Intra mode, encode intra prediction mode.
   {
     decodeIntraDirModeLuma  ( pcCU, uiAbsPartIdx, uiDepth );
@@ -174,6 +187,16 @@ Void TDecEntropy::decodePUWise( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDept
     {
       decodeMergeIndex( pcCU, uiPartIdx, uiSubPartIdx, uiDepth );
       UInt uiMergeIndex = pcCU->getMergeIndex(uiSubPartIdx);
+#if REF_IDX_FRAMEWORK  // HM bug fix
+      if(uiPartIdx)
+      {
+        for(UInt ui=0; ui<uiMergeIndex+1; ui++)
+        {
+          cMvFieldNeighbours[(ui<<1)].setMvField(TComMv(), NOT_VALID);
+          cMvFieldNeighbours[(ui<<1)+1].setMvField(TComMv(), NOT_VALID);
+        }
+      }
+#endif
       if ( pcCU->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && ePartSize != SIZE_2Nx2N && pcSubCU->getWidth( 0 ) <= 8 ) 
       {
         pcSubCU->setPartSizeSubParts( SIZE_2Nx2N, 0, uiDepth );
@@ -436,7 +459,15 @@ Void TDecEntropy::xDecodeTransform( TComDataCU* pcCU, UInt offsetLuma, UInt offs
     }
     
     pcCU->setCbfSubParts ( 0, TEXT_LUMA, uiAbsPartIdx, uiDepth );
+#if INTRA_BL
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+    if( ( !pcCU->isIntra(uiAbsPartIdx) || pcCU->isIntraBL(uiAbsPartIdx)) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
+#else
+    if( ( !pcCU->isIntra(uiAbsPartIdx) ) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
+#endif
+#else
     if( pcCU->getPredictionMode(uiAbsPartIdx) != MODE_INTRA && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
+#endif 
     {
       pcCU->setCbfSubParts( 1 << uiTrDepth, TEXT_LUMA, uiAbsPartIdx, uiDepth );
     }
@@ -534,7 +565,11 @@ Void TDecEntropy::decodeCoeff( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
   UInt uiLumaOffset   = uiMinCoeffSize*uiAbsPartIdx;
   UInt uiChromaOffset = uiLumaOffset>>2;
   
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+  if( pcCU->isIntra(uiAbsPartIdx) && !pcCU->isIntraBL(uiAbsPartIdx) )
+#else
   if( pcCU->isIntra(uiAbsPartIdx) )
+#endif
   {
   }
   else

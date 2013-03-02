@@ -71,7 +71,17 @@ private:
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
+#if SVC_EXTENSION
+  static ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
+#else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
+#endif
+
+#if REF_IDX_MFM
+  TComSPS*               m_pcSPS;
+  Bool                   m_bMFMEnabledFlag;
+#endif
+
   TComSlice*              m_apcSlicePilot;
   
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
@@ -94,9 +104,33 @@ private:
   Bool isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay);
   TComPic*                m_pcPic;
   UInt                    m_uiSliceIdx;
+#if !SVC_EXTENSION
   Int                     m_prevPOC;
+#endif
   Bool                    m_bFirstSliceInPicture;
+#if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
+#endif
+
+#if SVC_EXTENSION
+  static UInt             m_prevPOC;        // POC of the previous slice
+  static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
+  static Bool             m_bFirstSliceInSequence;
+  UInt                    m_layerId;      
+  UInt                    m_numLayer;
+  TDecTop**               m_ppcTDecTop;
+#if AVC_BASE
+  fstream*                m_pBLReconFile;
+  Int                     m_iBLSourceWidth;
+  Int                     m_iBLSourceHeight;
+#endif
+#endif 
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  fstream*               m_pBLSyntaxFile;
+#endif
+#if REF_IDX_FRAMEWORK
+  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
+#endif
 
 public:
   TDecTop();
@@ -108,18 +142,56 @@ public:
   void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
 
   Void  init();
+#if SVC_EXTENSION
+  Bool  decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
+#else
   Bool  decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay);
+#endif
   
   Void  deletePicBuffer();
 
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+
+#if SVC_EXTENSION
+  UInt      getLayerId            () { return m_layerId;              }
+  Void      setLayerId            (UInt layer) { m_layerId = layer; }
+  UInt      getNumLayer           () { return m_numLayer;             }
+  Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
+  TComList<TComPic*>*      getListPic() { return &m_cListPic; }
+  Void                setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
+  TDecTop*            getLayerDec(UInt layer)   { return m_ppcTDecTop[layer]; }
+#if AVC_BASE
+  Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
+  fstream*  getBLReconFile() { return m_pBLReconFile; }
+  Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
+  Int       getBLWidth() { return  m_iBLSourceWidth; }
+  Int       getBLHeight() { return  m_iBLSourceHeight; }
+#endif
+#endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
+  fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
+#endif
+#if REF_IDX_FRAMEWORK
+  Void      xInitILRP(TComSPS *pcSPS);
+  Void      setILRPic(TComPic *pcPic);
+#endif
+#if REF_IDX_MFM
+  TComSPS*  getSPS()                       {return m_pcSPS;}
+  Void      setMFMEnabledFlag(Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool      getMFMEnabledFlag()            {return m_bMFMEnabledFlag;}
+#endif
 
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);
 
   Void      xActivateParameterSets();
+#if SVC_EXTENSION
+  Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
+#else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
+#endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
   Void      xDecodePPS();

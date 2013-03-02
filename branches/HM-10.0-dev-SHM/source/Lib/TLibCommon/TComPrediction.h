@@ -47,6 +47,10 @@
 #include "TComInterpolationFilter.h"
 #include "TComWeightPrediction.h"
 
+#if SVC_UPSAMPLING
+#include "TComDataCU.h"
+#include "TComUpsampleFilter.h"
+#endif
 //! \ingroup TLibCommon
 //! \{
 
@@ -69,6 +73,10 @@ protected:
   
   TComInterpolationFilter m_if;
   
+#if SVC_UPSAMPLING
+  TComUpsampleFilter      m_cUsf;
+#endif
+
   Pel*   m_pLumaRecBuffer;       ///< array for downsampled reconstructed luma sample 
   Int    m_iLumaRecStride;       ///< stride of #m_pLumaRecBuffer array
 
@@ -93,6 +101,9 @@ public:
   
   Void    initTempBuff();
   
+#if INTRA_BL
+  Void getBaseBlk ( TComDataCU* pcCU, TComYuv* pcYuvPred, Int iPartAddr, Int iWidth, Int iHeight );
+#endif
   // inter
   Void motionCompensation         ( TComDataCU*  pcCU, TComYuv* pcYuvPred, RefPicList eRefPicList = REF_PIC_LIST_X, Int iPartIdx = -1 );
   
@@ -109,6 +120,9 @@ public:
   Int  getPredicBufWidth()        { return m_iYuvExtStride; }
   Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
 
+#if SVC_UPSAMPLING
+  Void upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
+#endif
 };
 
 //! \}

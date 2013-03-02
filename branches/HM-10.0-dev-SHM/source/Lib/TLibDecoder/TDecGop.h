@@ -86,11 +86,20 @@ private:
   std::vector<Int> m_sliceStartCUAddress;
   std::vector<Bool> m_LFCrossSliceBoundaryFlag;
 
+#if SVC_EXTENSION
+  UInt                  m_layerId;
+  TDecTop**             m_ppcTDecTop;
+#endif
 public:
   TDecGop();
   virtual ~TDecGop();
   
+#if SVC_EXTENSION
+Void  init      ( TDecTop**               ppcDecTop,
+                  TDecEntropy*            pcEntropyDecoder, 
+#else
   Void  init    ( TDecEntropy*            pcEntropyDecoder, 
+#endif
                  TDecSbac*               pcSbacDecoder, 
                  TDecBinCABAC*           pcBinCABAC,
                  TDecCavlc*              pcCavlcDecoder, 
@@ -98,12 +107,19 @@ public:
                  TComLoopFilter*         pcLoopFilter,
                  TComSampleAdaptiveOffset* pcSAO
                  );
+#if SVC_EXTENSION
+  Void  create  (UInt layerId);
+#else
   Void  create  ();
+#endif
   Void  destroy ();
   Void  decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic );
   Void  filterPicture  (TComPic*& rpcPic );
 
   void setDecodedPictureHashSEIEnabled(Int enabled) { m_decodedPictureHashSEIEnabled = enabled; }
+#if SVC_EXTENSION
+  TDecTop*   getLayerDec(UInt LayerId)  { return m_ppcTDecTop[LayerId]; }
+#endif 
 
 };
 

@@ -44,6 +44,10 @@
 
 //! \ingroup TLibEncoder
 //! \{
+#if SVC_EXTENSION  
+Int TEncTop::m_iSPSIdCnt = 0;
+Int TEncTop::m_iPPSIdCnt = 0;
+#endif
 
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
@@ -77,6 +81,12 @@ TEncTop::TEncTop()
   m_pcRDGoOnBinCodersCABAC = NULL;
   m_pcBitCounters          = NULL;
   m_pcRdCosts              = NULL;
+#if REF_IDX_FRAMEWORK
+  memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
+#endif
+#if REF_IDX_MFM
+  m_bMFMEnabledFlag = false;
+#endif
 }
 
 TEncTop::~TEncTop()
@@ -88,11 +98,17 @@ TEncTop::~TEncTop()
 
 Void TEncTop::create ()
 {
+#if !SVC_EXTENSION
   // initialize global variables
   initROM();
+#endif
   
   // create processing unit classes
+#if SVC_EXTENSION
+  m_cGOPEncoder.        create( m_layerId );
+#else
   m_cGOPEncoder.        create();
+#endif
   m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
   m_cCuEncoder.         create( g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight );
   if (m_bUseSAO)
@@ -267,9 +283,22 @@ Void TEncTop::destroy ()
   delete[] m_pcBitCounters;
   delete[] m_pcRdCosts;
   
+#if !SVC_EXTENSION
   // destroy ROM
   destroyROM();
-  
+#endif
+#if REF_IDX_FRAMEWORK
+  for(Int i=0; i<MAX_NUM_REF; i++)
+  {
+    if(m_cIlpPic[i])
+    {
+      //m_cIlpPic[i]->setPicYuvRec(NULL);
+      m_cIlpPic[i]->destroy();
+      delete m_cIlpPic[i];
+      m_cIlpPic[i] = NULL;
+    }
+  }    
+#endif
   return;
 }
 
@@ -312,6 +341,13 @@ Void TEncTop::init()
   m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, 0, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
 
   m_iMaxRefPicNum = 0;
+#if SVC_EXTENSION
+  m_iSPSIdCnt ++;
+  m_iPPSIdCnt ++;
+#endif
+#if REF_IDX_FRAMEWORK
+  xInitILRP();
+#endif
 }
 
 // ====================================================================================================================
@@ -344,6 +380,46 @@ Void TEncTop::deletePicBuffer()
  \retval  rcListBitstreamOut  list of output bitstreams
  \retval  iNumEncoded         number of encoded pictures
  */
+#if SVC_EXTENSION
+Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP )
+{
+  // compress GOP
+#if RATE_CONTROL_LAMBDA_DOMAIN
+  if ( m_RCEnableRateControl )
+  {
+    m_cRateCtrl.initRCGOP( m_iNumPicRcvd );
+  }
+#endif
+
+  // compress GOP
+  m_cGOPEncoder.compressGOP(iPicIdInGOP, m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, accessUnitsOut);
+
+#if RATE_CONTROL_LAMBDA_DOMAIN
+  if ( m_RCEnableRateControl )
+  {
+    m_cRateCtrl.destroyRCGOP();
+  }
+#endif
+  
+  m_uiNumAllPicCoded ++;
+}
+
+Void TEncTop::encodePrep( TComPicYuv* pcPicYuvOrg )
+{
+  if (pcPicYuvOrg) {
+    // get original YUV
+    TComPic* pcPicCurr = NULL;
+    xGetNewPicBuffer( pcPicCurr );
+    pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
+
+    // compute image characteristics
+    if ( getUseAdaptiveQP() )
+    {
+      m_cPreanalyzer.xPreanalyze( dynamic_cast<TEncPic*>( pcPicCurr ) );
+    }
+  }
+}
+#else
 Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded )
 {
   if (pcPicYuvOrg) {
@@ -386,6 +462,7 @@ Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>&
   m_iNumPicRcvd       = 0;
   m_uiNumAllPicCoded += iNumEncoded;
 }
+#endif
 
 // ====================================================================================================================
 // Protected member functions
@@ -420,16 +497,48 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
     if ( getUseAdaptiveQP() )
     {
       TEncPic* pcEPic = new TEncPic;
+#if SVC_EXTENSION //Temporal solution, should be modified
+      if(m_layerId > 0)
+      {
+        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        {
+          pcEPic->setSpatialEnhLayerFlag( true );
+        }
+      }
+#endif
+
+#if SVC_UPSAMPLING
+      pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
       rpcPic = pcEPic;
     }
     else
     {
       rpcPic = new TComPic;
 
+#if SVC_EXTENSION //Temporal solution, should be modified
+      if(m_layerId > 0)
+      {
+        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        {
+          rpcPic->setSpatialEnhLayerFlag( true );
+        }
+      }
+#endif
+
+#if SVC_UPSAMPLING
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
     }
     if (getUseSAO())
     {
@@ -449,6 +558,12 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 
 Void TEncTop::xInitSPS()
 {
+#if SVC_EXTENSION
+  m_cSPS.setLayerId(m_layerId);
+#endif
+#if REF_IDX_MFM
+  m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
+#endif
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
   profileTierLevel.setTierFlag(m_levelTier);
@@ -483,6 +598,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setMaxCUDepth    ( g_uiMaxCUDepth      );
   m_cSPS.setMinTrDepth    ( 0                   );
   m_cSPS.setMaxTrDepth    ( 1                   );
+#if SVC_EXTENSION
+  m_cSPS.setSPSId         ( m_iSPSIdCnt       );
+#endif
   
   m_cSPS.setPCMLog2MinSize (m_uiPCMLog2MinSize);
   m_cSPS.setUsePCM        ( m_usePCM           );
@@ -689,6 +807,10 @@ Void TEncTop::xInitPPS()
       m_cSliceEncoder.setCtxMem( ctx, st );
     }
   }
+#if SVC_EXTENSION
+  m_cPPS.setPPSId         ( m_iPPSIdCnt         );
+  m_cPPS.setSPSId         ( m_iSPSIdCnt         );
+#endif
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
@@ -980,4 +1102,45 @@ Void  TEncCfg::xCheckGSParameters()
     }
   }
 }
+
+#if REF_IDX_FRAMEWORK
+Void TEncTop::xInitILRP()
+{
+  if(m_layerId>0)
+  {
+    if (m_cIlpPic[0] == NULL)
+    {
+      for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
+      {
+        m_cIlpPic[j] = new  TComPic;
+        //m_cIlpPic[j]->createWithOutYuv(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
+#if SVC_UPSAMPLING
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
+#else
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+#endif
+#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
+        m_cIlpPic[j]->setIsILR(true);
+#endif
+        for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
+        {
+          m_cIlpPic[j]->getPicSym()->getCU(i)->initCU(m_cIlpPic[j], i);
+        }
+      }
+    }
+  }
+}
+
+Void TEncTop::setILRPic(TComPic *pcPic)
+{
+  if(m_cIlpPic[0])
+  {
+    //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
+    m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
+    m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
+    m_cIlpPic[0]->getPicYuvRec()->setBorderExtension(false);
+    m_cIlpPic[0]->getPicYuvRec()->extendPicBorder();
+  }
+}
+#endif
 //! \}

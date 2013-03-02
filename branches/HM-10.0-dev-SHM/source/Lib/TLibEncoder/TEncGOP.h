@@ -82,11 +82,22 @@ private:
   Int                     m_iNumPicCoded;
   Bool                    m_bFirst;
   
+#if SVC_EXTENSION
+  UInt                    m_layerId;      
+#endif
+
   //  Access channel
   TEncTop*                m_pcEncTop;
   TEncCfg*                m_pcCfg;
   TEncSlice*              m_pcSliceEncoder;
   TComList<TComPic*>*     m_pcListPic;
+  
+#if SVC_EXTENSION
+  TEncTop**               m_ppcTEncTop;
+#if SVC_UPSAMPLING
+  TEncSearch*             m_pcPredSearch;                       ///< encoder search class
+#endif  
+#endif
   
   TEncEntropy*            m_pcEntropyCoder;
   TEncCavlc*              m_pcCavlcCoder;
@@ -124,11 +135,19 @@ public:
   TEncGOP();
   virtual ~TEncGOP();
   
+#if SVC_EXTENSION
+  Void  create      ( UInt layerId );
+#else
   Void  create      ();
+#endif
   Void  destroy     ();
   
   Void  init        ( TEncTop* pcTEncTop );
+#if SVC_EXTENSION
+  Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
+#else
   Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
+#endif
   Void xWriteTileLocationToSliceHeader (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect, TComSlice*& rpcSlice);
 
   

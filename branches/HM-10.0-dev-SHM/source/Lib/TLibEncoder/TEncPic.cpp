@@ -125,11 +125,22 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  * \return Void
  */
+#if SVC_UPSAMPLING
+Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual )
+
+#else
 Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
                       Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual )
+#endif
 {
+#if SVC_UPSAMPLING
+  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSps, bIsVirtual );
+#else
   TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
                    conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual );
+#endif
   m_uiMaxAQDepth = uiMaxAQDepth;
   if ( uiMaxAQDepth > 0 )
   {

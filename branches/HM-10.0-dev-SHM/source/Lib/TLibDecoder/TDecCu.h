@@ -48,6 +48,9 @@
 
 //! \ingroup TLibDecoder
 //! \{
+#if SVC_EXTENSION
+class TDecTop;
+#endif
 
 // ====================================================================================================================
 // Class definition
@@ -68,13 +71,25 @@ private:
   TDecEntropy*        m_pcEntropyDecoder;
 
   Bool                m_bDecodeDQP;
+#if SVC_EXTENSION
+  TDecTop**           m_ppcTDecTop;
+  UInt                m_layerId;   
+#endif
+  
+#if INTRA_BL
+  TComPicYuv*         m_pcPicYuvRecBase;       ///< reconstructed base layer
+#endif 
   
 public:
   TDecCu();
   virtual ~TDecCu();
   
   /// initialize access channels
+#if SVC_EXTENSION
+  Void  init                    ( TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TComTrQuant* pcTrQuant, TComPrediction* pcPrediction, UInt layerId );
+#else
   Void  init                    ( TDecEntropy* pcEntropyDecoder, TComTrQuant* pcTrQuant, TComPrediction* pcPrediction );
+#endif 
   
   /// create internal buffers
   Void  create                  ( UInt uiMaxDepth, UInt uiMaxWidth, UInt uiMaxHeight );
@@ -88,6 +103,12 @@ public:
   /// reconstruct CU information
   Void  decompressCU            ( TComDataCU* pcCU );
   
+#if SVC_EXTENSION
+  TDecTop*   getLayerDec        ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }
+#if INTRA_BL
+  Void  setBaseRecPic           ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }
+#endif 
+#endif
 protected:
   
   Void xDecodeCU                ( TComDataCU* pcCU,                       UInt uiAbsPartIdx, UInt uiDepth, UInt &ruiIsLast);
@@ -100,6 +121,9 @@ protected:
   Void  xReconIntraQT           ( TComDataCU* pcCU, UInt uiDepth );
   Void  xIntraRecLumaBlk        ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv );
   Void  xIntraRecChromaBlk      ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, UInt uiChromaId );
+#if NO_RESIDUAL_FLAG_FOR_BLPRED
+  Void  xReconIntraBL           ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
+#endif
   
   Void  xReconPCM               ( TComDataCU* pcCU, UInt uiDepth );
 

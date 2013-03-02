@@ -41,7 +41,9 @@
 #include <stdio.h>
 #include "CommonDef.h"
 #include "TComRom.h"
-
+#if SVC_UPSAMPLING
+#include "TComSlice.h"
+#endif
 //! \ingroup TLibCommon
 //! \{
 
@@ -85,6 +87,10 @@ private:
   Int   m_iChromaMarginX;
   Int   m_iChromaMarginY;
   
+#if SVC_UPSAMPLING
+  Window  m_conformanceWindow;
+#endif
+
   Bool  m_bIsBorderExtended;
   
 protected:
@@ -97,8 +103,12 @@ public:
   // ------------------------------------------------------------------------------------------------
   //  Memory management
   // ------------------------------------------------------------------------------------------------
-  
+#if SVC_UPSAMPLING
+  Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
+#else
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
+#endif  
+  
   Void  destroy     ();
   
   Void  createLuma  ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uhMaxCUDepth );
@@ -111,6 +121,13 @@ public:
   Int   getWidth    ()     { return  m_iPicWidth;    }
   Int   getHeight   ()     { return  m_iPicHeight;   }
   
+#if SVC_EXTENSION
+  Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
+#endif
+
+#if JCTVC_L0178
+  Void   setWidth   ( Int iPicWidth )     { m_iPicWidth = iPicWidth; }
+#endif
   Int   getStride   ()     { return (m_iPicWidth     ) + (m_iLumaMarginX  <<1); }
   Int   getCStride  ()     { return (m_iPicWidth >> 1) + (m_iChromaMarginX<<1); }
   
@@ -139,6 +156,11 @@ public:
   Pel*  getCbAddr   ( Int iCuAddr, Int uiAbsZorderIdx ) { return m_piPicOrgU + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
   Pel*  getCrAddr   ( Int iCuAddr, Int uiAbsZorderIdx ) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
   
+#if SVC_UPSAMPLING
+  Window& getConformanceWindow()                           { return  m_conformanceWindow;             }
+  Void    setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
+#endif
+
   // ------------------------------------------------------------------------------------------------
   //  Miscellaneous
   // ------------------------------------------------------------------------------------------------

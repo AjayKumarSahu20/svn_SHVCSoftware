@@ -57,7 +57,25 @@ class TAppDecCfg
 {
 protected:
   Char*         m_pchBitstreamFile;                   ///< input bitstream file name
+#if SVC_EXTENSION
+  Char*         m_pchReconFile [MAX_LAYERS];          ///< output reconstruction file name
+#if AVC_BASE
+  Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
+  Int           m_iBLSourceWidth;
+  Int           m_iBLSourceHeight;
+#if AVC_SYNTAX
+  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name  
+#endif
+#endif
+#else
   Char*         m_pchReconFile;                       ///< output reconstruction file name
+#endif
+#if SYNTAX_OUTPUT
+  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name
+  Int           m_iBLSourceWidth;
+  Int           m_iBLSourceHeight;
+  Int           m_iBLFrames;
+#endif
   Int           m_iSkipFrame;                         ///< counter for frames prior to the random access point to skip
   Int           m_outputBitDepthY;                     ///< bit depth used for writing output (luma)
   Int           m_outputBitDepthC;                     ///< bit depth used for writing output (chroma)t
@@ -65,19 +83,35 @@ protected:
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
 
+#if SVC_EXTENSION
+  Int           m_tgtLayerId;                        ///< target layer ID
+#endif
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
   Int           m_respectDefDispWindow;               ///< Only output content inside the default display window 
 
 public:
   TAppDecCfg()
   : m_pchBitstreamFile(NULL)
+#if SVC_EXTENSION
+  , m_tgtLayerId(0)
+#else
   , m_pchReconFile(NULL) 
+#endif
   , m_iSkipFrame(0)
   , m_outputBitDepthY(0)
   , m_outputBitDepthC(0)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
   , m_respectDefDispWindow(0)
+#if AVC_BASE
+  , m_iBLSourceWidth(0)
+  , m_iBLSourceHeight(0)
+#endif
+#if SYNTAX_OUTPUT
+  , m_iBLSourceWidth(0)
+  , m_iBLSourceHeight(0)
+  , m_iBLFrames(0)
+#endif
   {}
   virtual ~TAppDecCfg() {}
   
