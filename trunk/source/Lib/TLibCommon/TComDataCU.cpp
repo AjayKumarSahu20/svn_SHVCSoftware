@@ -382,7 +382,6 @@ Void TComDataCU::initCU( TComPic* pcPic, UInt iCUAddr )
 #if SVC_EXTENSION
   m_layerId          = pcPic->getLayerId();
 #endif 
-
   for(int i=0; i<pcPic->getNumPartInCU(); i++) 
   {
     if(pcPic->getPicSym()->getInverseCUOrderMap(iCUAddr)*pcPic->getNumPartInCU()+i>=getSlice()->getSliceCurStartCUAddr())
@@ -2905,10 +2904,14 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, UInt 
   TComMvField cMvFieldBaseColCU[2];
   if(m_layerId)  
   {
+#if MV_SCALING_POS_FIX
+    pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
+#else
     UInt uiPartIdxCenter;
     xDeriveCenterIdx( cCurPS, uiPUIdx, uiPartIdxCenter );
     uiPartIdxCenter -= m_uiAbsIdxInLCU;
     pcColCU = getBaseColCU( uiPartIdxCenter, uiCUAddrBase, uiAbsPartAddrBase );
+#endif
     
 #if INTRA_BL
     if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
@@ -4842,7 +4845,7 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
   }
 }
 
-#if INTRA_BL 
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED 
 Void TComDataCU::getBaseLumaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride )
 {
   TComPicYuv* pcBaseRec = getSlice()->getFullPelBaseRec();
@@ -4882,6 +4885,12 @@ Void TComDataCU::getBaseChromaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartI
 #if SVC_COL_BLK
 TComDataCU*  TComDataCU::getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
 {
+#if 1 // it should provide identical resutls
+  UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
+  UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
+
+  return getBaseColCU( uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase );
+#else
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
 
 #if SVC_UPSAMPLING
@@ -4926,25 +4935,84 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, 
   }
 
   return cBaseColPic->getCU(uiCUAddrBase);
+#endif
+}
+
+TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
+{
+  TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
+
+#if SVC_UPSAMPLING
+  Int iBWidth   = cBaseColPic->getPicYuvRec()->getWidth () - cBaseColPic->getPicYuvRec()->getPicCropLeftOffset() - cBaseColPic->getPicYuvRec()->getPicCropRightOffset();
+  Int iBHeight  = cBaseColPic->getPicYuvRec()->getHeight() - cBaseColPic->getPicYuvRec()->getPicCropTopOffset() - cBaseColPic->getPicYuvRec()->getPicCropBottomOffset();
+
+  Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth() - m_pcPic->getPicYuvRec()->getPicCropLeftOffset() - m_pcPic->getPicYuvRec()->getPicCropRightOffset();
+  Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight() - m_pcPic->getPicYuvRec()->getPicCropTopOffset() - m_pcPic->getPicYuvRec()->getPicCropBottomOffset();
+#else
+  Int iBWidth   = cBaseColPic->getPicYuvRec()->getWidth();
+  Int iBHeight  = cBaseColPic->getPicYuvRec()->getHeight();
+
+  Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth();
+  Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight();
+#endif
+
+  uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
+  uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
+
+  UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
+
+  Int iBX = (uiPelX*iBWidth + iEWidth/2)/iEWidth;
+  Int iBY = (uiPelY*iBHeight+ iEHeight/2)/iEHeight;
+
+  if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight())
+  {
+    return NULL;
+  }
+
+#if AVC_SYNTAX
+  if( iBX >= iBWidth || iBY >= iBHeight ) //outside of the reference layer cropped picture
+  {
+    return NULL;
+  }
+#endif
+
+  uiCUAddrBase = (iBY/g_uiMaxCUHeight)*cBaseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
+
+  assert(uiCUAddrBase < cBaseColPic->getNumCUsInFrame());
+
+  UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*cBaseColPic->getNumPartInWidth()
+    + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
+
+  uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
+
+  return cBaseColPic->getCU(uiCUAddrBase);
 }
 
 Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
 {
-   TComMvField cMvFieldBase;
-   TComMv cMv;
+  TComMvField cMvFieldBase;
+  TComMv cMv;
 
-   Int iBWidth   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-   Int iBHeight  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
+#if MV_SCALING_FIX
+  Int iBWidth   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropLeftOffset() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropRightOffset();
+  Int iBHeight  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropTopOffset() - m_pcSlice->getBaseColPic()->getPicYuvRec()->getPicCropBottomOffset();
 
-   Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth();
-   Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight();
+  Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth() - m_pcPic->getPicYuvRec()->getPicCropLeftOffset() - m_pcPic->getPicYuvRec()->getPicCropRightOffset();
+  Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight() - m_pcPic->getPicYuvRec()->getPicCropTopOffset() - m_pcPic->getPicYuvRec()->getPicCropBottomOffset();
+#else
+  Int iBWidth   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
+  Int iBHeight  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
 
-   Int iMvX = (rcMvFieldBase.getHor()*iEWidth + (iBWidth/2 -1) * (rcMvFieldBase.getHor() > 0 ? 1: -1) )/iBWidth;
-   Int iMvY = (rcMvFieldBase.getVer()*iEHeight + (iBHeight/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/iBHeight;
+  Int iEWidth   = m_pcPic->getPicYuvRec()->getWidth();
+  Int iEHeight  = m_pcPic->getPicYuvRec()->getHeight();
+#endif
 
-   cMv.set(iMvX, iMvY);
+  Int iMvX = (rcMvFieldBase.getHor()*iEWidth + (iBWidth/2 -1) * (rcMvFieldBase.getHor() > 0 ? 1: -1) )/iBWidth;
+  Int iMvY = (rcMvFieldBase.getVer()*iEHeight + (iBHeight/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/iBHeight;
 
-   rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
+  cMv.set(iMvX, iMvY);
+
+  rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
 }
 #endif
 

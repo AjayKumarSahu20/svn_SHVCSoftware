@@ -119,6 +119,9 @@ Void TAppEncLayerCfg::xPrintParameter()
 {
   printf("Input File                    : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
+#if AVC_SYNTAX
+  printf("Base layer input file         : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
+#endif
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_cropLeft - m_cropRight, m_iSourceHeight - m_cropTop - m_cropBottom, m_iFrameRate );
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
   printf("QP                            : %5.2f\n", m_fQP );
