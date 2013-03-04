@@ -78,7 +78,7 @@
 #endif
 
 #else
-#define INTRA_BL                         0      ///< inter-layer texture prediction
+#define INTRA_BL                         1      ///< inter-layer texture prediction
 
 #if INTRA_BL
 #define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
@@ -438,6 +438,9 @@ enum PredMode
 {
   MODE_INTER,           ///< inter-prediction mode
   MODE_INTRA,           ///< intra-prediction mode
+#if INTRA_BL
+  MODE_INTRA_BL,        ///< inter-layer intra-prediction mode
+#endif
   MODE_NONE = 15
 };
 

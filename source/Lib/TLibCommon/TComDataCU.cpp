@@ -2711,7 +2711,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   Bool isAvailableA0 = pcCULeftBottom &&
   pcCULeftBottom->isDiffMER(xP-1, yP+nPSH, xP, yP) &&
 #if SVC_MVP
-  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeftBottom->hasEqualMotion( uiLeftBottomPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0]))
+  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeftBottom->hasEqualMotion( uiLeftBottomPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0])) &&
 #endif
   !pcCULeftBottom->isIntra( uiLeftBottomPartIdx ) ;
   if ( isAvailableA0 && ( !isAvailableA1 || !pcCULeft->hasEqualMotion( uiLeftPartIdx, pcCULeftBottom, uiLeftBottomPartIdx ) ) )
@@ -2755,7 +2755,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
     Bool isAvailableB2 = pcCUAboveLeft &&
     pcCUAboveLeft->isDiffMER(xP-1, yP-1, xP, yP) &&
 #if SVC_MVP
-    ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveLeft->hasEqualMotion( uiAboveLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] ))
+    ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveLeft->hasEqualMotion( uiAboveLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
 #endif
     !pcCUAboveLeft->isIntra( uiAboveLeftPartIdx );
     if ( isAvailableB2 && ( !isAvailableA1 || !pcCULeft->hasEqualMotion( uiLeftPartIdx, pcCUAboveLeft, uiAboveLeftPartIdx ) )

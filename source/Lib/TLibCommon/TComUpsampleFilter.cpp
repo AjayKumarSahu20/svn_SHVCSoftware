@@ -170,14 +170,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Pel *tempBufRight = NULL, *tempBufBottom = NULL;
   Int tempBufSizeRight = 0, tempBufSizeBottom = 0;
   
-  if ( pcBasePic->getPicCropRightOffset() )
+  if( confBL.getWindowRightOffset())
   {
-    tempBufSizeRight = pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+    tempBufSizeRight = confBL.getWindowRightOffset() * pcBasePic->getHeight();
   }
   
-  if( pcBasePic->getPicCropBottomOffset() )
+  if( confBL.getWindowBottomOffset() )
   {
-    tempBufSizeBottom = pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth ();
+    tempBufSizeBottom = confBL.getWindowBottomOffset() * pcBasePic->getWidth ();
   }
   
   if( tempBufSizeRight )
@@ -240,28 +240,28 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     piDstY = tempBufRight;
     for( i = 0; i < pcBasePic->getHeight(); i++ )
     {
-      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getPicCropRightOffset());
+      memcpy(piDstY, piSrcY, sizeof(Pel) * confBL.getWindowRightOffset());
       piSrcY += iBStride;
-      piDstY += pcBasePic->getPicCropRightOffset();
+      piDstY += confBL.getWindowRightOffset();
     }
     
-    if(pcBasePic->getPicCropRightOffset()>>1)
+    if(confBL.getWindowRightOffset()>>1)
     {
       Int iBStrideChroma = (iBStride>>1);
       piSrcU = piSrcBufU + (iBWidth>>1);
-      piDstU = tempBufRight + pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+      piDstU = tempBufRight + confBL.getWindowRightOffset() * pcBasePic->getHeight();
       piSrcV = piSrcBufV + (iBWidth>>1);
-      piDstV = piDstU + (pcBasePic->getPicCropRightOffset()>>1) * (pcBasePic->getHeight()>>1);
+      piDstV = piDstU + (confBL.getWindowRightOffset()>>1) * (pcBasePic->getHeight()>>1);
     
       for( i = 0; i < pcBasePic->getHeight()>>1; i++ )
       {
-        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (confBL.getWindowRightOffset()>>1));
         piSrcU += iBStrideChroma;
-        piDstU += (pcBasePic->getPicCropRightOffset()>>1);
+        piDstU += (confBL.getWindowRightOffset()>>1);
         
-        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (confBL.getWindowRightOffset()>>1));
         piSrcV += iBStrideChroma;
-        piDstV += (pcBasePic->getPicCropRightOffset()>>1);
+        piDstV += (confBL.getWindowRightOffset()>>1);
       }
     }
     
@@ -272,22 +272,22 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
     piSrcY = piSrcBufY + iBHeight * iBStride;
     piDstY = tempBufBottom;
-    for( i = 0; i < pcBasePic->getPicCropBottomOffset(); i++ )
+    for( i = 0; i < confBL.getWindowBottomOffset(); i++ )
     {
       memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getWidth());
       piSrcY += iBStride;
       piDstY += pcBasePic->getWidth();
     }
     
-    if(pcBasePic->getPicCropBottomOffset()>>1)
+    if(confBL.getWindowBottomOffset()>>1)
     {
       Int iBStrideChroma = (iBStride>>1);
       piSrcU = piSrcBufU + (iBHeight>>1) * iBStrideChroma;
-      piDstU = tempBufBottom + pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth();
+      piDstU = tempBufBottom + confBL.getWindowBottomOffset() * pcBasePic->getWidth();
       piSrcV = piSrcBufV + (iBHeight>>1) * iBStrideChroma;
-      piDstV = piDstU + (pcBasePic->getPicCropBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
+      piDstV = piDstU + (confBL.getWindowBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
       
-      for( i = 0; i < pcBasePic->getPicCropBottomOffset()>>1; i++ )
+      for( i = 0; i < confBL.getWindowBottomOffset()>>1; i++ )
       {
         memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getWidth()>>1));
         piSrcU += iBStrideChroma;
@@ -513,15 +513,15 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   if( tempBufSizeRight )
   {
     // put the correct width back
-    pcBasePic->setWidth(pcBasePic->getWidth()+pcBasePic->getPicCropRightOffset());
+    pcBasePic->setWidth(pcBasePic->getWidth() + confBL.getWindowRightOffset());
   }
   if( tempBufSizeBottom )
   {
-    pcBasePic->setHeight(pcBasePic->getHeight()+pcBasePic->getPicCropBottomOffset());
+    pcBasePic->setHeight(pcBasePic->getHeight() + confBL.getWindowBottomOffset());
   }
   
-  iBWidth   = pcBasePic->getWidth () - pcBasePic->getPicCropLeftOffset() - pcBasePic->getPicCropRightOffset();
-  iBHeight  = pcBasePic->getHeight() - pcBasePic->getPicCropTopOffset() - pcBasePic->getPicCropBottomOffset();
+  iBWidth   = pcBasePic->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  iBHeight  = pcBasePic->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
   
   iBStride  = pcBasePic->getStride();
   
@@ -532,27 +532,27 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     
     for( i = 0; i < pcBasePic->getHeight(); i++ )
     {
-      memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getPicCropRightOffset());
-      piSrcY += pcBasePic->getPicCropRightOffset();
+      memcpy(piDstY, piSrcY, sizeof(Pel) * confBL.getWindowRightOffset() );
+      piSrcY += confBL.getWindowRightOffset();
       piDstY += iBStride;
     }
     
-    if(pcBasePic->getPicCropRightOffset()>>1)
+    if(confBL.getWindowRightOffset()>>1)
     {
       Int iBStrideChroma = (iBStride>>1);
-      piSrcU = tempBufRight + pcBasePic->getPicCropRightOffset() * pcBasePic->getHeight();
+      piSrcU = tempBufRight + confBL.getWindowRightOffset() * pcBasePic->getHeight();
       piDstU = piSrcBufU + (iBWidth>>1);
-      piSrcV = piSrcU + (pcBasePic->getPicCropRightOffset()>>1) * (pcBasePic->getHeight()>>1);
+      piSrcV = piSrcU + (confBL.getWindowRightOffset()>>1) * (pcBasePic->getHeight()>>1);
       piDstV = piSrcBufV + (iBWidth>>1);
 
       for( i = 0; i < pcBasePic->getHeight()>>1; i++ )
       {
-        memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
-        piSrcU += (pcBasePic->getPicCropRightOffset()>>1);
+        memcpy(piDstU, piSrcU, sizeof(Pel) * (confBL.getWindowRightOffset()>>1));
+        piSrcU += (confBL.getWindowRightOffset()>>1);
         piDstU += iBStrideChroma;
         
-        memcpy(piDstV, piSrcV, sizeof(Pel) * (pcBasePic->getPicCropRightOffset()>>1));
-        piSrcV += (pcBasePic->getPicCropRightOffset()>>1);
+        memcpy(piDstV, piSrcV, sizeof(Pel) * (confBL.getWindowRightOffset()>>1));
+        piSrcV += (confBL.getWindowRightOffset()>>1);
         piDstV += iBStrideChroma;
       }
     }
@@ -562,22 +562,22 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
     piDstY = piSrcBufY + iBHeight * iBStride;
     piSrcY = tempBufBottom;
-    for( i = 0; i < pcBasePic->getPicCropBottomOffset(); i++ )
+    for( i = 0; i < confBL.getWindowBottomOffset(); i++ )
     {
       memcpy(piDstY, piSrcY, sizeof(Pel) * pcBasePic->getWidth());
       piDstY += iBStride;
       piSrcY += pcBasePic->getWidth();
     }
     
-    if(pcBasePic->getPicCropBottomOffset()>>1)
+    if(confBL.getWindowBottomOffset()>>1)
     {
       Int iBStrideChroma = (iBStride>>1);
-      piSrcU = tempBufBottom + pcBasePic->getPicCropBottomOffset() * pcBasePic->getWidth();
+      piSrcU = tempBufBottom + confBL.getWindowBottomOffset() * pcBasePic->getWidth();
       piDstU = piSrcBufU + (iBHeight>>1) * iBStrideChroma;
-      piSrcV = piSrcU + (pcBasePic->getPicCropBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
+      piSrcV = piSrcU + (confBL.getWindowBottomOffset()>>1) * (pcBasePic->getWidth()>>1);
       piDstV = piSrcBufV + (iBHeight>>1) * iBStrideChroma;
             
-      for( i = 0; i < pcBasePic->getPicCropBottomOffset()>>1; i++ )
+      for( i = 0; i < confBL.getWindowBottomOffset()>>1; i++ )
       {
         memcpy(piDstU, piSrcU, sizeof(Pel) * (pcBasePic->getWidth()>>1));
         piSrcU += (pcBasePic->getWidth()>>1);
