@@ -93,14 +93,16 @@ TAppEncCfg::TAppEncCfg()
 
 TAppEncCfg::~TAppEncCfg()
 {
-#if !SVC_EXTENSION
+#if SVC_EXTENSION
+  free(m_pBitstreamFile);
+#else
+  free(m_pchBitstreamFile);
   if ( m_aidQP )
   {
     delete[] m_aidQP;
   }
   free(m_pchInputFile);
 #endif
-  free(m_pBitstreamFile);
 #if !SVC_EXTENSION  
   free(m_pchReconFile);
   free(m_pchdQPFile);
@@ -652,7 +654,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #else
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
-  m_phBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+  m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #endif  
