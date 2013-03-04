@@ -228,6 +228,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_CroppingMode[layer] = &m_acLayerCfg[layer].m_croppingMode;
   }
+#if AVC_SYNTAX
+  string  cfg_BLSyntaxFile;
+#endif
 #else
   string cfg_InputFile;
   string cfg_BitstreamFile;
@@ -258,7 +261,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepth",          m_uiOutputBitDepth, 0u, "bit-depth of output file")
   ("InternalBitDepth",        m_uiInternalBitDepth, 0u, "Internal bit-depth (BitDepth+BitIncrement)")
 #if AVC_BASE
-  ("InputBLFile,-ibl",        *cfg_InputFile[0],     string(""), "Original BL rec YUV input file name")
+  ("InputBLFile,-ibl",        *cfg_InputFile[0],     string(""), "Base layer rec YUV input file name")
+#if AVC_SYNTAX
+  ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
+#endif
 #endif
 #if REF_IDX_FRAMEWORK
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture_")
@@ -515,6 +521,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /* convert std::string to c string for compatability */
 #if SVC_EXTENSION
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+#if AVC_SYNTAX
+  m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
+#endif
 #else
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
@@ -1307,14 +1316,14 @@ Void TAppEncCfg::xPrintParameter()
 #if RECALCULATE_QP_ACCORDING_LAMBDA
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
+  printf("AVC_BASE:%d ", AVC_BASE);
 #if REF_IDX_FRAMEWORK
   printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_AROUND_ZEROMV:%d ", REF_IDX_ME_AROUND_ZEROMV);
   printf("REF_IDX_ME_ZEROMV: %d", REF_IDX_ME_ZEROMV);
-#else
+#elif INTRA_BL
   printf("INTRA_BL:%d ", INTRA_BL);
-  printf("AVC_BASE:%d ", AVC_BASE);
 #if !AVC_BASE
   printf("SVC_MVP:%d ", SVC_MVP );
   printf("SVC_BL_CAND_INTRA:%d", SVC_BL_CAND_INTRA );

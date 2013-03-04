@@ -66,6 +66,9 @@ protected:
   // source specification
   unsigned int m_FrameSkip;                                   ///< number of skipped frames from the beginning
   Int       m_iFrameToBeEncoded;                              ///< number of encoded frames
+#if AVC_SYNTAX
+  char*     m_BLSyntaxFile;                                   ///< input syntax file
+#endif
 #else
   char*     m_pchInputFile;                                   ///< source file name
   char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -304,6 +307,9 @@ public:
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
   Void getDirFilename(string& filename, string& dir, const string path);
   Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
+#if AVC_SYNTAX
+  Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
+#endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg
 

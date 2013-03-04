@@ -76,6 +76,9 @@ private:
 #if SVC_EXTENSION 
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
+#if AVC_SYNTAX
+  fstream*                m_pBLSyntaxFile;
+#endif
 #endif
   
   // encoder search
@@ -222,6 +225,10 @@ public:
               std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
 
   Void encodePrep( bool bEos, TComPicYuv* pcPicYuvOrg );
+#if AVC_SYNTAX
+  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
+  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
+#endif
 #else
   Void encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  

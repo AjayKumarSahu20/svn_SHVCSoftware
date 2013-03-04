@@ -1453,6 +1453,10 @@ public:
 
   Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
   TComPicYuv* getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
+
+#if AVC_SYNTAX
+  Void      initBaseLayerRPL( TComSlice *pcSlice );
+#endif
 #endif
 
 #if REF_IDX_MFM

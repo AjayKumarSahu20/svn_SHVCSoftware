@@ -43,6 +43,10 @@
 #include "TComPicSym.h"
 #include "TComPicYuv.h"
 #include "TComBitStream.h"
+#if AVC_BASE || SYNTAX_OUTPUT
+#include <fstream>
+#endif
+
 
 //! \ingroup TLibCommon
 //! \{
@@ -124,7 +128,9 @@ public:
 
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  (  TComPic* pcPicBase );
+#if !REUSE_BLKMAPPING
   Void          deriveUnitIdxBase     (  UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt ratio, UInt& uiBaseCUAddr, UInt& uiBaseAbsPartIdx );
+#endif
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
@@ -208,8 +214,16 @@ public:
 #if REF_IDX_FRAMEWORK
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
 #endif
+#if AVC_SYNTAX
+  Void readBLSyntax( fstream* filestream, UInt numBytes );
+#endif
+#if SYNTAX_OUTPUT
+  Void wrireBLSyntax( fstream* filestream, UInt numBytes );
+#endif
+
 };// END CLASS DEFINITION TComPic
 
 //! \}
 
 #endif // __TCOMPIC__
+

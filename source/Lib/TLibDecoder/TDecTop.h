@@ -126,11 +126,14 @@ private:
   UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
 #if AVC_BASE
-  FILE*                   m_pBLReconFile;
+  fstream*                m_pBLReconFile;
   Int                     m_iBLSourceWidth;
   Int                     m_iBLSourceHeight;
 #endif
 #endif 
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  fstream*               m_pBLSyntaxFile;
+#endif
 #if REF_IDX_FRAMEWORK
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #endif
@@ -164,12 +167,16 @@ public:
   Void                setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
   TDecTop*            getLayerDec(UInt layer)   { return m_ppcTDecTop[layer]; }
 #if AVC_BASE
-  Void      setBLReconFile( FILE* pFile ) { m_pBLReconFile = pFile; }
-  FILE*     getBLReconFile() { return m_pBLReconFile; }
+  Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
+  fstream*  getBLReconFile() { return m_pBLReconFile; }
   Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
 #endif
+#endif
+#if AVC_SYNTAX || SYNTAX_OUTPUT
+  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
+  fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
 #if REF_IDX_FRAMEWORK
   Void      xInitILRP(TComSPS *pcSPS);

@@ -525,7 +525,7 @@ public:
   // member functions for modes
   // -------------------------------------------------------------------------------------------------------------------
   
-#if INTRA_BL
+#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED 
   Void          getBaseLumaBlk   ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride );
   Void          getBaseChromaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride, UInt uiChromaId );
 #endif
@@ -592,6 +592,7 @@ public:
 
 #if SVC_COL_BLK 
   TComDataCU*   getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
+  TComDataCU*   getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
   Void          scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
 #endif
 };
