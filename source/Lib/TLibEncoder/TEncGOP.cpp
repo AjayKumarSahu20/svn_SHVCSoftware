@@ -412,7 +412,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr));
 #if REF_IDX_FRAMEWORK
-    if( m_layerId > 0 && (uiPOCCurr % m_pcCfg->getIntraPeriod() == 0) )
+    if( m_layerId > 0 && (pocCurr % m_pcCfg->getIntraPeriod() == 0) )
     {
       pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
     }

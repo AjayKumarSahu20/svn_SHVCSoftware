@@ -134,7 +134,7 @@ Void TComPic::createWithOutYuv( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt u
 #endif
 
   /* there are no SEI messages associated with this picture initially */
-  m_SEIs = NULL;
+  m_SEIs.clear();
   m_bUsedByCurr = false;
   return;
 }

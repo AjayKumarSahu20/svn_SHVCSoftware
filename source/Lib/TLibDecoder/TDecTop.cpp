@@ -143,6 +143,10 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 {
   if(m_layerId>0)
   {
+    Int  numReorderPics[MAX_TLAYER];
+    Window &conformanceWindow = pcSPS->getConformanceWindow();
+    Window defaultDisplayWindow = pcSPS->getVuiParametersPresentFlag() ? pcSPS->getVuiParameters()->getDefaultDisplayWindow() : Window();
+
     if (m_cIlpPic[0] == NULL)
     {
       for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
@@ -150,9 +154,9 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
         m_cIlpPic[j] = new  TComPic;
         //m_cIlpPic[j]->createWithOutYuv(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
 #if SVC_UPSAMPLING
-        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, pcSPS, true);
+        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
 #else
-        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
 #if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || REF_IDX_MFM
         m_cIlpPic[j]->setIsILR(true);
