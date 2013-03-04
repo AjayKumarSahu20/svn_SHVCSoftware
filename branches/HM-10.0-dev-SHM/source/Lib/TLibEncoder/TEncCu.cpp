@@ -1812,7 +1812,38 @@ Void TEncCu::xCheckRDCostIntraBL( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU
 }
 #endif
 
+#if (ENCODER_FAST_MODE)
+Void TEncCu::xCheckRDCostILRUni(TComDataCU *&rpcBestCU, TComDataCU *&rpcTempCU)
+{
+  UChar uhDepth = rpcTempCU->getDepth( 0 );
 
+  rpcTempCU->setDepthSubParts( uhDepth, 0 );
+
+#if SKIP_FLAG
+  rpcTempCU->setSkipFlagSubParts( false, 0, uhDepth );
+#endif
+
+  rpcTempCU->setPartSizeSubParts  ( SIZE_2Nx2N,  0, uhDepth );  //2Nx2N
+  rpcTempCU->setPredModeSubParts  ( MODE_INTER, 0, uhDepth );
+  rpcTempCU->setCUTransquantBypassSubParts  ( m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth );
+
+  Bool exitILR = m_pcPredSearch->predInterSearchILRUni( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] );
+
+  if(!exitILR)
+  {
+    return;
+  }
+
+  m_pcPredSearch->encodeResAndCalcRdInterCU( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false );
+
+  rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
+
+  xCheckDQP( rpcTempCU );
+  xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
+
+  return;
+}
+#endif
 
 
 //! \}
