@@ -24,12 +24,18 @@
     <ClCompile Include="..\..\source\App\TAppEncoder\TAppEncTop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\App\TAppEncoder\TAppEncLayerCfg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncCfg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncTop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncLayerCfg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
