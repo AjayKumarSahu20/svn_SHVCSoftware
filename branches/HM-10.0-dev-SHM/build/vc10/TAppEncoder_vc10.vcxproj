@@ -169,10 +169,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\App\TAppEncoder\encmain.cpp" />
     <ClCompile Include="..\..\source\App\TAppEncoder\TAppEncCfg.cpp" />
+    <ClCompile Include="..\..\source\App\TAppEncoder\TAppEncLayerCfg.cpp" />
     <ClCompile Include="..\..\source\App\TAppEncoder\TAppEncTop.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncCfg.h" />
+    <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncLayerCfg.h" />
     <ClInclude Include="..\..\source\App\TAppEncoder\TAppEncTop.h" />
   </ItemGroup>
   <ItemGroup>

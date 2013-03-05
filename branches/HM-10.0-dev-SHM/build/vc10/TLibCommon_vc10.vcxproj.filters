@@ -83,6 +83,9 @@
     <ClCompile Include="..\..\source\Lib\TLibCommon\TComYuv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\Lib\TLibCommon\TComUpsampleFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\Lib\TLibCommon\AccessUnit.h">
@@ -179,6 +182,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibCommon\TypeDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\Lib\TLibCommon\TComUpsampleFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
