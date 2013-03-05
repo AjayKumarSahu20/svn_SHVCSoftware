@@ -522,8 +522,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
     fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
-    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - pBLPic->getPicYuvRec()->getPicCropLeftOffset() - pBLPic->getPicYuvRec()->getPicCropRightOffset();;
-    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - pBLPic->getPicYuvRec()->getPicCropTopOffset() - pBLPic->getPicYuvRec()->getPicCropBottomOffset();
+    const Window &conf = pBLPic->getConformanceWindow();
+    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
+    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
         
     if( pFile->good() )
     {
@@ -961,12 +962,16 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #if SVC_UPSAMPLING
 #if AVC_SYNTAX
           TComSPS* sps = new TComSPS();
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, sps, true);
+          Int  numReorderPics[MAX_TLAYER];
+          Window &conformanceWindow = sps->getConformanceWindow();
+          Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
+
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
 #else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL, true);
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL, onformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
 #else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, onformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         }
       }

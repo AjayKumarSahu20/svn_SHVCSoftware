@@ -748,8 +748,9 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
     return;
   }
 
-  UInt   uiWidth      = this->getPicYuvRec()->getWidth() - this->getPicYuvRec()->getPicCropLeftOffset() - this->getPicYuvRec()->getPicCropRightOffset();
-  UInt   uiHeight     = this->getPicYuvRec()->getHeight() - this->getPicYuvRec()->getPicCropTopOffset() - this->getPicYuvRec()->getPicCropBottomOffset();
+  const Window &conf = this->getPicYuvRec()->getConformanceWindow();
+  UInt   uiWidth      = this->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
+  UInt   uiHeight     = this->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
   UInt64 uiPOC        = (UInt64)this->getPOC();
   UInt   uiPartWidth  = uiWidth / 4;
   UInt   uiPartHeight = uiHeight / 4;
