@@ -97,7 +97,7 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
     m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
   }
 
-  m_layerId = pcSps->getLayerId();
+  m_layerId = pcSps ? pcSps->getLayerId() : 0;
 
   /* there are no SEI messages associated with this picture initially */
   m_SEIs = NULL;
