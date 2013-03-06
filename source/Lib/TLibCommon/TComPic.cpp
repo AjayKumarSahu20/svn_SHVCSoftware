@@ -627,11 +627,14 @@ Void TComPic::deriveUnitIdxBase( UInt uiUpsamplePelX, UInt uiUpsamplePelY, UInt 
 Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 {
 #if !REUSE_MVSCALE || !REUSE_BLKMAPPING || AVC_SYNTAX
-  Int iBWidth   = pcPicBase->getPicYuvRec()->getWidth () - pcPicBase->getPicYuvRec()->getPicCropLeftOffset() - pcPicBase->getPicYuvRec()->getPicCropRightOffset();
-  Int iBHeight  = pcPicBase->getPicYuvRec()->getHeight() - pcPicBase->getPicYuvRec()->getPicCropTopOffset() - pcPicBase->getPicYuvRec()->getPicCropBottomOffset();
+  const Window &confBL = pcPicBase->getConformanceWindow();
+  const Window &confEL = getPicYuvRec()->getConformanceWindow();
 
-  Int iEWidth   = getPicYuvRec()->getWidth() -  getPicYuvRec()->getPicCropLeftOffset() - getPicYuvRec()->getPicCropRightOffset();
-  Int iEHeight  = getPicYuvRec()->getHeight() - getPicYuvRec()->getPicCropTopOffset() -  getPicYuvRec()->getPicCropBottomOffset();
+  Int iBWidth   = pcPicBase->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  Int iBHeight  = pcPicBase->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+  Int iEWidth   = getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+  Int iEHeight  = getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
 #endif
   
 #if !REUSE_MVSCALE  || !REUSE_BLKMAPPING
