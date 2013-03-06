@@ -92,9 +92,7 @@ protected:
 public:
   TAppDecCfg()
   : m_pchBitstreamFile(NULL)
-#if SVC_EXTENSION
-  , m_tgtLayerId(0)
-#else
+#if !SVC_EXTENSION
   , m_pchReconFile(NULL) 
 #endif
   , m_iSkipFrame(0)
@@ -102,6 +100,9 @@ public:
   , m_outputBitDepthC(0)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
+#if SVC_EXTENSION
+  , m_tgtLayerId(0)
+#endif
   , m_respectDefDispWindow(0)
 #if AVC_BASE
   , m_iBLSourceWidth(0)
