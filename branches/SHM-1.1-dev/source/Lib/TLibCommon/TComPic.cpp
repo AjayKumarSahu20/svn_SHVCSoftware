@@ -47,6 +47,9 @@
 
 TComPic::TComPic()
 : m_uiTLayer                              (0)
+#if SVC_EXTENSION
+, m_layerId( 0 )
+#endif
 , m_bUsedByCurr                           (false)
 , m_bIsLongTerm                           (false)
 , m_bIsUsedAsLongTerm                     (false)
@@ -65,7 +68,6 @@ TComPic::TComPic()
 , m_bCheckLTMSB                           (false)
 , m_SEIs                                  (NULL)
 #if SVC_EXTENSION
-, m_layerId( 0 )
 , m_bSpatialEnhLayer( false )
 , m_pcFullPelBaseRec( NULL )
 #if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
