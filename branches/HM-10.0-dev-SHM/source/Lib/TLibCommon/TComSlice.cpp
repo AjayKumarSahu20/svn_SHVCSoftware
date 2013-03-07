@@ -2054,7 +2054,7 @@ Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
   {
     RefPicList eRefPicList = RefPicList( iRefPicList );
 
-    assert( pcSlice->getNumRefIdx( eRefPicList) > 0 );
+    assert( pcSlice->getNumRefIdx( eRefPicList) >= 0 );
     setNumRefIdx( eRefPicList, pcSlice->getNumRefIdx( eRefPicList ) - 1 );
     assert( getNumRefIdx( eRefPicList) <= MAX_NUM_REF);
 
