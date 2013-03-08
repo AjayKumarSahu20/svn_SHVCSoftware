@@ -2065,8 +2065,7 @@ Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
       /*
       // should be set if the base layer has its own instance of the reference picture lists, currently EL RPL is reused.
       getRefPic( eRefPicList, refIdx )->setLayerId( 0 );
-      getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );
-      getRefPic( eRefPicList, refIdx )->setIsUsedAsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsUsedAsLongTerm() );
+      getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );      
       */
 
     }
