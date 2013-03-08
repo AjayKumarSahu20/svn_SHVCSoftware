@@ -60,6 +60,10 @@
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
 
+#if SVC_UPSAMPLING
+#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
+#endif
+
 #if AVC_BASE
 #define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
 #endif
@@ -92,14 +96,10 @@
 #endif
 #endif
 
-#if SVC_UPSAMPLING
-#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
-#endif
-
 #endif
 #endif
 #else
-#define SYNTAX_OUTPUT                    0
+#define SYNTAX_OUTPUT                    1
 #endif
 
 //! \ingroup TLibCommon
