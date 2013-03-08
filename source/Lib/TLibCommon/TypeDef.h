@@ -64,6 +64,10 @@
 #define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
 #endif
 
+#if SVC_UPSAMPLING
+#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
+#endif
+
 #if REF_IDX_FRAMEWORK
 #define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
@@ -90,10 +94,6 @@
 #if !AVC_SYNTAX
 #define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
 #endif
-#endif
-
-#if SVC_UPSAMPLING
-#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
 #endif
 
 #endif
