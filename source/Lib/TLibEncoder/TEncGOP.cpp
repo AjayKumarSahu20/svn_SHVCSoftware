@@ -513,22 +513,22 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif      
 
 #if SVC_EXTENSION      
-      if(m_layerId > 0)
-      {
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
-        pcSlice->setBaseColPic (*cListPic, m_layerId );
+    if(m_layerId > 0)
+    {
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
+      pcSlice->setBaseColPic (*cListPic, m_layerId );
 #if SVC_UPSAMPLING
-        if ( pcPic->isSpatialEnhLayer())
-        {    
-          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
-        }
-        else
-        {
-          pcPic->setFullPelBaseRec( pcSlice->getBaseColPic()->getPicYuvRec() );
-        }
-        pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
-#endif
+      if ( pcPic->isSpatialEnhLayer())
+      {    
+        m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
       }
+      else
+      {
+        pcPic->setFullPelBaseRec( pcSlice->getBaseColPic()->getPicYuvRec() );
+      }
+      pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
+#endif
+    }
 #endif 
 
 #if REF_IDX_FRAMEWORK

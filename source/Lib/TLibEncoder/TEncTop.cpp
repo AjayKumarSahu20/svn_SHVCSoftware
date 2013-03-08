@@ -406,7 +406,8 @@ Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicY
 
 Void TEncTop::encodePrep( TComPicYuv* pcPicYuvOrg )
 {
-  if (pcPicYuvOrg) {
+  if (pcPicYuvOrg) 
+  {
     // get original YUV
     TComPic* pcPicCurr = NULL;
     xGetNewPicBuffer( pcPicCurr );
@@ -1093,7 +1094,9 @@ Void  TEncCfg::xCheckGSParameters()
   if( m_iNumRowsMinus1 && m_iUniformSpacingIdr==0 )
   {
     for(Int i=0; i<m_iNumRowsMinus1; i++)
+    {
       uiCummulativeRowHeight += m_puiRowHeight[i];
+    }
 
     if( uiCummulativeRowHeight >= iHeightInCU )
     {
