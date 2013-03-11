@@ -187,16 +187,13 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setPPS( pPPS );
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
-#if SET_SLICE_LAYER_ID
+#if SVC_EXTENSION
   rpcSlice->initSlice( pcPic->getLayerId() );
 #else
   rpcSlice->initSlice();
 #endif
   rpcSlice->setPicOutputFlag( true );
   rpcSlice->setPOC( pocCurr );
-#if SVC_EXTENSION && !SET_SLICE_LAYER_ID
-  rpcSlice->setLayerId( pcPic->getLayerId());
-#endif
   
   // depth computation based on GOP size
   Int depth;
