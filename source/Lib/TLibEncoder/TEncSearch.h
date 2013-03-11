@@ -461,15 +461,6 @@ protected:
                                     UInt&         ruiCost 
                                    ,Bool biPred
                                    );
-#if REF_IDX_ME_AROUND_ZEROMV
-  Void xPatternSearchILR         ( TComDataCU*    pcCU,
-                                   TComPattern*   pcPatternKey,
-                                   Pel*           piRefY, 
-                                   Int            iRefStride, 
-                                   TComMv&        rcMv, 
-                                   UInt&          ruiSAD );
-#endif
-  
 #if REF_IDX_ME_ZEROMV
   Void xPatternSearchFracDIFMv0  ( TComDataCU*   pcCU,
                                    TComPattern*  pcPatternKey,

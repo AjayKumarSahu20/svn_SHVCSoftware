@@ -4206,25 +4206,6 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
 
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
   //  Do integer search
-#if REF_IDX_ME_AROUND_ZEROMV || REF_IDX_ME_ZEROMV
-#if REF_IDX_ME_AROUND_ZEROMV
-  if( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdxPred )->getIsILR())  //ILR reference pic
-  {
-    xPatternSearchILR  ( pcCU, pcPatternKey, piRefY, iRefStride, rcMv, ruiCost );
-  }
-  else  //non ILR reference pic
-  {
-  if ( !m_iFastSearch || bBi )
-  {
-    xPatternSearch      ( pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost );
-  }
-  else
-  {
-    rcMv = *pcMvPred;
-    xPatternSearchFast  ( pcCU, pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost );
-    }
-  }
-#endif
 #if REF_IDX_ME_ZEROMV
   if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->getIsILR())  //ILR reference pic 
   {
@@ -4242,7 +4223,6 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
       xPatternSearchFast  ( pcCU, pcPatternKey, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost ); 
     }
   }
-#endif
 #else
   if ( !m_iFastSearch || bBi )
   {
@@ -6189,65 +6169,6 @@ Void TEncSearch::xPatternSearchFracDIFMv0(TComDataCU* pcCU,
   ruiCost += m_pcRdCost->getCost( pcMvInt->getHor(), pcMvInt->getVer() );  //SATD rdCost
   rcMvHalf.setZero();
   rcMvQter.setZero();
-}
-#endif
-
-#if REF_IDX_ME_AROUND_ZEROMV
-//ILR integer pixel motion estimation search
-//pcCU is CU pointer
-//pcPatterney contains target PU infor
-//piRefY is the PU at the same position as the source PU, but in the reference pic
-//iRefStride is the reference stride
-//rcMv output best integer MV
-//ruiSAD outputs the SAD of best integer MV
-Void TEncSearch::xPatternSearchILR( TComDataCU* pcCU, TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, TComMv& rcMv, UInt& ruiSAD )
-{
-  Int      candMvX[5] = {0, -1, 1,  0, 0};
-  Int      candMvY[5] = {0,  0, 0, -1, 1};
-  Int      numCand    = 1;
-  Int      iBestX = 0;
-  Int      iBestY = 0;
-  Int      uiSadBest = MAX_UINT;
-  UInt     uiSad;
-
-  Pel*  piRefSrch;
-
-  //-- jclee for using the SAD function pointer
-  m_pcRdCost->setDistParam( pcPatternKey, piRefY, iRefStride,  m_cDistParam );
-
-  // fast encoder decision: use subsampled SAD for integer ME
-  if ( m_pcEncCfg->getUseFastEnc() )
-  {
-    if ( m_cDistParam.iRows > 8 )
-    {
-      m_cDistParam.iSubShift = 1;
-    }
-  }
-
-  for(Int candId = 0; candId < numCand; candId++)
-  {
-    piRefSrch         = piRefY + (candMvY[candId] * iRefStride) + candMvX[candId];
-    m_cDistParam.pCur = piRefSrch;
-
-    setDistParamComp(0);
-    
-    uiSad = m_cDistParam.DistFunc( &m_cDistParam );  //SAD
-
-    //motion cost
-    uiSad += m_pcRdCost->getCost( candMvX[candId], candMvY[candId] );  //SAD rdCost
-
-    if(uiSad < uiSadBest)
-    {
-      uiSadBest = uiSad;
-      iBestX    = candMvX[candId];
-      iBestY    = candMvY[candId];
-    }
-  }
-
-  rcMv.set( iBestX, iBestY );
-
-  ruiSAD = uiSadBest - m_pcRdCost->getCost( iBestX, iBestY );
-  return;
 }
 #endif
 
