@@ -1126,9 +1126,6 @@ Void TEncTop::xInitILRP()
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
-#if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-        m_cIlpPic[j]->setIsILR(true);
-#endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
           m_cIlpPic[j]->getPicSym()->getCU(i)->initCU(m_cIlpPic[j], i);
@@ -1145,6 +1142,7 @@ Void TEncTop::setILRPic(TComPic *pcPic)
     //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
     m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
     m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
+    m_cIlpPic[0]->setLayerId(0); //set reference layerId
     m_cIlpPic[0]->getPicYuvRec()->setBorderExtension(false);
     m_cIlpPic[0]->getPicYuvRec()->extendPicBorder();
   }
