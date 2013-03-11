@@ -333,7 +333,7 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
   TComSlice cFillSlice;
   cFillSlice.setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillSlice.setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
-#if SET_SLICE_LAYER_ID
+#if SVC_EXTENSION
   cFillSlice.initSlice( m_parameterSetManagerDecoder.getFirstSPS()->getLayerId() );
 #else
   cFillSlice.initSlice();
@@ -342,7 +342,7 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
   xGetNewPicBuffer(&cFillSlice,cFillPic);
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
-#if SET_SLICE_LAYER_ID
+#if SVC_EXTENSION
   cFillPic->getSlice(0)->initSlice( cFillPic->getLayerId() );
 #else
   cFillPic->getSlice(0)->initSlice();
@@ -433,7 +433,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 {
   TComPic*&   pcPic         = m_pcPic;
-#if SET_SLICE_LAYER_ID
+#if SVC_EXTENSION
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else
   m_apcSlicePilot->initSlice();

@@ -1343,7 +1343,7 @@ private:
 public:
   TComSlice();
   virtual ~TComSlice(); 
-#if SET_SLICE_LAYER_ID
+#if SVC_EXTENSION
   Void      initSlice       ( UInt layerId );
 #else
   Void      initSlice       ();
