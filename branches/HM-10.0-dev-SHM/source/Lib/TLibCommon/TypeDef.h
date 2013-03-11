@@ -69,7 +69,6 @@
 #endif
 
 #if REF_IDX_FRAMEWORK
-#define REF_IDX_ME_AROUND_ZEROMV         0      ///< added ME around zero MV for inter-layer reference picture
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #if !AVC_BASE || AVC_SYNTAX
