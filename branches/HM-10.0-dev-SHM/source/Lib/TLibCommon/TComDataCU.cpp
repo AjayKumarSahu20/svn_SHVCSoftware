@@ -1835,13 +1835,17 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
   {
     Int refIdxL0 = cMvFieldL0.getRefIdx();
     if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->getIsILR())
+    {
       checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+    }
   }
   if(uhInterDir&0x2)  //list1
   {
     Int refIdxL1  = cMvFieldL1.getRefIdx();
     if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->getIsILR())
+    {
       checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+    }
   }
 
   return checkZeroMVILR;
