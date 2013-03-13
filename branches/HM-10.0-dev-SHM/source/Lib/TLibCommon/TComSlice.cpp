@@ -2092,10 +2092,20 @@ Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInser
   {
 #if REF_IDX_MFM
     assert(iRefPicNum == 1);
+#if RAP_MFM_INIT
+    if(!(getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA))
+#else
     if( getPOC() != 0 )
+#endif
     { 
       pIlpPicList[0]->copyUpsampledMvField(getBaseColPic());
     }
+#if RAP_MFM_INIT
+    else
+    {
+      pIlpPicList[0]->initUpsampledMvField();
+    }
+#endif
 #endif
     //add to list 0;
     Int iOffset;
