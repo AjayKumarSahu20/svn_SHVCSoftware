@@ -740,6 +740,29 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 }
 #endif
 
+#if RAP_MFM_INIT
+Void TComPic::initUpsampledMvField()
+{
+  UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
+
+  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
+  {
+    TComDataCU* pcCUDes = getCU(cuIdx);
+    TComMvField zeroMvField;
+    for(UInt list = 0; list < 2; list++)  //each reference list
+    {
+      for(UInt i = 0; i < uiNumPartitions; i++ )  
+      {
+        pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(zeroMvField, i);
+        pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(zeroMvField, i);
+        pcCUDes->setPredictionMode(i, MODE_INTRA);
+        pcCUDes->setPartitionSize(i, SIZE_2Nx2N);
+      }
+    }
+  }
+  return;
+}
+#endif
 #endif
 
 #if AVC_SYNTAX
