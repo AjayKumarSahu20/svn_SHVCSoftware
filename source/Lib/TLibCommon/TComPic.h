@@ -131,6 +131,9 @@ public:
 #if !REUSE_BLKMAPPING
   Void          deriveUnitIdxBase     (  UInt upsamplePelX, UInt upsamplePelY, UInt ratio, UInt& baseCUAddr, UInt& baseAbsPartIdx );
 #endif
+#if RAP_MFM_INIT
+  Void          initUpsampledMvField  ();
+#endif
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
