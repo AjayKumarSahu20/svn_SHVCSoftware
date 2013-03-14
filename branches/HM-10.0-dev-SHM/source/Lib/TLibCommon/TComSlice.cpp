@@ -2114,6 +2114,7 @@ Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInser
     for (Int i=0; i<iRefPicNum; i++)
     {
       pIlpPicList[i]->setIsLongTerm(1);  //mark ilp as long-term reference
+      m_bIsUsedAsLongTerm[REF_PIC_LIST_0][iOffset + i] = 1; //mark ilp as long-term reference
       m_apcRefPicList[REF_PIC_LIST_0][iOffset + i] = pIlpPicList[i]; 
       m_aiNumRefIdx[REF_PIC_LIST_0]++;
       //m_aiNumRefIdx[REF_PIC_LIST_C]++;
@@ -2125,6 +2126,7 @@ Void TComSlice::addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInser
       for (Int i=0; i<iRefPicNum; i++)
       {
         pIlpPicList[i]->setIsLongTerm(1);  //mark ilp as long-term reference
+        m_bIsUsedAsLongTerm[REF_PIC_LIST_1][iOffset + i] = 1; //mark ilp as long-term reference
         m_apcRefPicList[REF_PIC_LIST_1][iOffset + i] = pIlpPicList[i]; 
         m_aiNumRefIdx[REF_PIC_LIST_1]++;
         //m_aiNumRefIdx[REF_PIC_LIST_C]++;
