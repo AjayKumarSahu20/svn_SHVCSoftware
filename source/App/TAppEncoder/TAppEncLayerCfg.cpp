@@ -32,6 +32,7 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   m_conformanceMode( 0 ),
   m_aidQP(NULL)
 {
+  m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
 }
 
