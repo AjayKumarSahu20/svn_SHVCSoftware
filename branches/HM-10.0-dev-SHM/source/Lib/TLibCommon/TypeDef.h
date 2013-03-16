@@ -62,6 +62,8 @@
 #define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
 #endif
 
+#define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
+
 #if AVC_BASE
 #define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
 #endif
