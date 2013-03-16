@@ -412,8 +412,20 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr));
 #if REF_IDX_FRAMEWORK
+#if IDR_ALIGNMENT
+    TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
+    pcSlice->setBaseColPic (*cListPic, m_layerId );
+#endif
+
     if( m_layerId > 0 && (pocCurr % m_pcCfg->getIntraPeriod() == 0) )
     {
+#if IDR_ALIGNMENT
+      if( pcSlice->getBaseColPic()->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR )
+      {
+        pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_IDR);
+      }
+      else
+#endif
       pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
     }
     if( m_layerId > 0 && !m_pcEncTop->getElRapSliceTypeB() )
@@ -515,8 +527,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION      
     if(m_layerId > 0)
     {
+#if !IDR_ALIGNMENT
       TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
       pcSlice->setBaseColPic (*cListPic, m_layerId );
+#endif
 #if SVC_UPSAMPLING
       if ( pcPic->isSpatialEnhLayer())
       {    
