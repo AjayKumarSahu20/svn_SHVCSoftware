@@ -1675,23 +1675,27 @@ public:
 
   //! activate a PPS and depending on isIDR parameter also SPS and VPS
   //! \returns true, if activation is successful
-#if SVC_EXTENSION
-  Bool activatePPS(Int ppsId, Bool isIDR, UInt layerId);
-#else
   Bool activatePPS(Int ppsId, Bool isIDR);
-#endif
 
   TComVPS* getActiveVPS(){ return m_vpsMap.getPS(m_activeVPSId); };
   TComSPS* getActiveSPS(){ return m_spsMap.getPS(m_activeSPSId); };
   TComPPS* getActivePPS(){ return m_ppsMap.getPS(m_activePPSId); };
 
 protected:
-  
+
+#if SVC_EXTENSION
+  static ParameterSetMap<TComVPS> m_vpsMap;
+#else
   ParameterSetMap<TComVPS> m_vpsMap;
+#endif
   ParameterSetMap<TComSPS> m_spsMap; 
   ParameterSetMap<TComPPS> m_ppsMap;
 
+#if SVC_EXTENSION
+  static Int m_activeVPSId;
+#else
   Int m_activeVPSId;
+#endif
   Int m_activeSPSId;
   Int m_activePPSId;
 };

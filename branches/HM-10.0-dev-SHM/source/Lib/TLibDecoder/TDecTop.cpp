@@ -39,7 +39,6 @@
 #include "TDecTop.h"
 
 #if SVC_EXTENSION
-ParameterSetManagerDecoder TDecTop::m_parameterSetManagerDecoder;  // storage for parameter sets 
 UInt  TDecTop::m_prevPOC = MAX_UINT;
 UInt  TDecTop::m_uiPrevLayerId = MAX_UINT;
 Bool  TDecTop::m_bFirstSliceInSequence = true;
@@ -331,20 +330,24 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 {
   printf("\ninserting lost poc : %d\n",iLostPoc);
   TComSlice cFillSlice;
+#if SVC_EXTENSION
+  cFillSlice.setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
+  cFillSlice.setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
+  cFillSlice.initSlice( m_layerId );
+#else
   cFillSlice.setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillSlice.setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
-#if SVC_EXTENSION
-  cFillSlice.initSlice( m_parameterSetManagerDecoder.getFirstSPS()->getLayerId() );
-#else
   cFillSlice.initSlice();
 #endif
   TComPic *cFillPic;
   xGetNewPicBuffer(&cFillSlice,cFillPic);
+#if SVC_EXTENSION
+  cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
+  cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
+  cFillPic->getSlice(0)->initSlice( m_layerId );
+#else
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
-#if SVC_EXTENSION
-  cFillPic->getSlice(0)->initSlice( cFillPic->getLayerId() );
-#else
   cFillPic->getSlice(0)->initSlice();
 #endif
   
@@ -387,6 +390,17 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 
 Void TDecTop::xActivateParameterSets()
 {
+#if SVC_EXTENSION
+  m_parameterSetManagerDecoder[m_layerId].applyPrefetchedPS();
+  
+  TComPPS *pps = m_parameterSetManagerDecoder[m_layerId].getPPS(m_apcSlicePilot->getPPSId());
+  assert (pps != 0);
+
+  TComSPS *sps = m_parameterSetManagerDecoder[m_layerId].getSPS(pps->getSPSId());
+  assert (sps != 0);
+
+  if( false == m_parameterSetManagerDecoder[m_layerId].activatePPS(m_apcSlicePilot->getPPSId(), m_apcSlicePilot->getIdrPicFlag()) )
+#else
   m_parameterSetManagerDecoder.applyPrefetchedPS();
   
   TComPPS *pps = m_parameterSetManagerDecoder.getPPS(m_apcSlicePilot->getPPSId());
@@ -395,9 +409,6 @@ Void TDecTop::xActivateParameterSets()
   TComSPS *sps = m_parameterSetManagerDecoder.getSPS(pps->getSPSId());
   assert (sps != 0);
 
-#if SVC_EXTENSION
-  if (false == m_parameterSetManagerDecoder.activatePPS(m_apcSlicePilot->getPPSId(), m_apcSlicePilot->getIdrPicFlag(), m_apcSlicePilot->getLayerId() ))
-#else
   if (false == m_parameterSetManagerDecoder.activatePPS(m_apcSlicePilot->getPPSId(),m_apcSlicePilot->getIdrPicFlag()))
 #endif
   {
@@ -459,7 +470,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setReferenced(true); // Putting this as true ensures that picture is referenced the first time it is in an RPS
   m_apcSlicePilot->setTLayerInfo(nalu.m_temporalId);
 
+#if SVC_EXTENSION
+  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder[m_layerId]);
+#else
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
+#endif
   if (m_apcSlicePilot->isNextSlice())
   {
     // Skip pictures due to random access
@@ -712,10 +727,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (bNextSlice)
   {
     pcSlice->checkCRA(pcSlice->getRPS(), m_pocCRA, m_prevRAPisBLA );
-#if !REF_IDX_FRAMEWORK || AVC_SYNTAX
     // Set reference list
     pcSlice->setRefPicList( m_cListPic );
-#endif
 
 #if SVC_EXTENSION   
     if(m_layerId > 0)
@@ -755,10 +768,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif 
 
 #if REF_IDX_FRAMEWORK
-#if !AVC_SYNTAX
-    // Set reference list
-    pcSlice->setRefPicList( m_cListPic );
-#endif
     if(m_layerId > 0)
     {
       setILRPic(pcPic);
@@ -868,7 +877,11 @@ Void TDecTop::xDecodeVPS()
   TComVPS* vps = new TComVPS();
   
   m_cEntropyDecoder.decodeVPS( vps );
+#if SVC_EXTENSION
+  m_parameterSetManagerDecoder[0].storePrefetchedVPS(vps);
+#else
   m_parameterSetManagerDecoder.storePrefetchedVPS(vps);  
+#endif
 }
 
 Void TDecTop::xDecodeSPS()
@@ -878,7 +891,11 @@ Void TDecTop::xDecodeSPS()
   sps->setLayerId(m_layerId);
 #endif
   m_cEntropyDecoder.decodeSPS( sps );
+#if SVC_EXTENSION
+  m_parameterSetManagerDecoder[m_layerId].storePrefetchedSPS(sps);
+#else
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
+#endif
 #if REF_IDX_MFM
   m_pcSPS = sps;
   setMFMEnabledFlag(sps->getMFMEnabledFlag());
@@ -895,7 +912,11 @@ Void TDecTop::xDecodePPS()
 {
   TComPPS* pps = new TComPPS();
   m_cEntropyDecoder.decodePPS( pps );
+#if SVC_EXTENSION
+  m_parameterSetManagerDecoder[m_layerId].storePrefetchedPPS( pps );
+#else
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
+#endif
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
   {
@@ -913,6 +934,27 @@ Void TDecTop::xDecodePPS()
 
 Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType )
 {
+#if SVC_EXTENSION
+  if(nalUnitType == NAL_UNIT_SEI_SUFFIX)
+  {
+    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+  }
+  else
+  {
+    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+    SEIMessages activeParamSets = getSeisByType(m_SEIs, SEI::ACTIVE_PARAMETER_SETS);
+    if (activeParamSets.size()>0)
+    {
+      SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
+      m_parameterSetManagerDecoder[m_layerId].applyPrefetchedPS();
+      assert(seiAps->activeSeqParamSetId.size()>0);
+      if (! m_parameterSetManagerDecoder[m_layerId].activateSPSWithSEI(seiAps->activeSeqParamSetId[0] ))
+      {
+        printf ("Warning SPS activation with Active parameter set SEI failed");
+      }
+    }
+  }
+#else
   if(nalUnitType == NAL_UNIT_SEI_SUFFIX)
   {
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
@@ -932,6 +974,7 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
       }
     }
   }
+#endif
 }
 
 #if SVC_EXTENSION

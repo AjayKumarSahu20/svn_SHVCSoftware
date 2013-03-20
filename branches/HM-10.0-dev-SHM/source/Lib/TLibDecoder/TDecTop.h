@@ -72,7 +72,7 @@ private:
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
 #if SVC_EXTENSION
-  static ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
+  ParameterSetManagerDecoder m_parameterSetManagerDecoder[MAX_LAYERS];  // storage for parameter sets 
 #else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
 #endif
