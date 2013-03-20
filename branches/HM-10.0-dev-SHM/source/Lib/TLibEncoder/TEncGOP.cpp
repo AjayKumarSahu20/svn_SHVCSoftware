@@ -411,11 +411,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr));
-#if REF_IDX_FRAMEWORK
 #if IDR_ALIGNMENT
     TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
     pcSlice->setBaseColPic (*cListPic, m_layerId );
 #endif
+#if REF_IDX_FRAMEWORK
 
     if( m_layerId > 0 && (pocCurr % m_pcCfg->getIntraPeriod() == 0) )
     {
