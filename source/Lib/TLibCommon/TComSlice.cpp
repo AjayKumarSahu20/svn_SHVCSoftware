@@ -44,6 +44,11 @@
 //! \ingroup TLibCommon
 //! \{
 
+#if SVC_EXTENSION
+  ParameterSetMap<TComVPS> ParameterSetManager::m_vpsMap(MAX_NUM_VPS);
+  Int ParameterSetManager::m_activeVPSId = -1;
+#endif
+
 TComSlice::TComSlice()
 : m_iPPSId                        ( -1 )
 , m_iPOC                          ( 0 )
@@ -1903,12 +1908,19 @@ Void TComScalingList::checkDcOfMatrix()
 }
 
 ParameterSetManager::ParameterSetManager()
+#if SVC_EXTENSION
+: m_spsMap(MAX_NUM_SPS)
+, m_ppsMap(MAX_NUM_PPS)
+, m_activeSPSId(-1)
+, m_activePPSId(-1)
+#else
 : m_vpsMap(MAX_NUM_VPS)
 , m_spsMap(MAX_NUM_SPS)
 , m_ppsMap(MAX_NUM_PPS)
 , m_activeVPSId(-1)
 , m_activeSPSId(-1)
 , m_activePPSId(-1)
+#endif
 {
 }
 
@@ -1945,21 +1957,13 @@ Bool ParameterSetManager::activateSPSWithSEI(Int spsId)
 
 //! activate a PPS and depending on isIDR parameter also SPS and VPS
 //! \returns true, if activation is successful
-#if SVC_EXTENSION
-Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIDR, UInt layerId)
-#else
 Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIDR)
-#endif
 {
   TComPPS *pps = m_ppsMap.getPS(ppsId);
   if (pps)
   {
     Int spsId = pps->getSPSId();
-#if SVC_EXTENSION
-    if (!isIDR && (spsId != layerId ))
-#else
     if (!isIDR && (spsId != m_activeSPSId))
-#endif
     {
       printf("Warning: tried to activate PPS referring to a inactive SPS at non-IDR.");
       return false;

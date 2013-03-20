@@ -1020,6 +1020,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
 #if SVC_EXTENSION
       OutputNALUnit nalu(NAL_UNIT_VPS, 0, m_layerId);
+#if AVC_BASE
+      if( m_layerId == 1 )
+#else
+      if( m_layerId == 0 )
+#endif
+      {
 #else
       OutputNALUnit nalu(NAL_UNIT_VPS);
 #endif
@@ -1029,6 +1035,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       accessUnit.push_back(new NALUnitEBSP(nalu));
 #if RATE_CONTROL_LAMBDA_DOMAIN
       actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
+#endif
+#if SVC_EXTENSION
+      }
 #endif
 
 #if SVC_EXTENSION

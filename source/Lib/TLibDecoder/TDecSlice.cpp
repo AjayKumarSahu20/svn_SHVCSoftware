@@ -40,6 +40,10 @@
 //! \ingroup TLibDecoder
 //! \{
 
+#if SVC_EXTENSION
+  ParameterSetMap<TComVPS> ParameterSetManagerDecoder::m_vpsBuffer(MAX_NUM_VPS);
+#endif
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -397,9 +401,14 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
 }
 
 ParameterSetManagerDecoder::ParameterSetManagerDecoder()
+#if SVC_EXTENSION
+: m_spsBuffer(MAX_NUM_SPS)
+, m_ppsBuffer(MAX_NUM_PPS)
+#else
 : m_vpsBuffer(MAX_NUM_VPS)
 , m_spsBuffer(MAX_NUM_SPS)
 , m_ppsBuffer(MAX_NUM_PPS)
+#endif
 {
 }
 

@@ -110,7 +110,11 @@ public:
   Void     applyPrefetchedPS();
 
 private:
+#if SVC_EXTENSION
+  static ParameterSetMap<TComVPS> m_vpsBuffer;
+#else
   ParameterSetMap<TComVPS> m_vpsBuffer;
+#endif
   ParameterSetMap<TComSPS> m_spsBuffer; 
   ParameterSetMap<TComPPS> m_ppsBuffer;
 };
