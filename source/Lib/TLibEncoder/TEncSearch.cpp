@@ -6217,15 +6217,19 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
     Int  iRefIdxTemp = -1;
     Bool foundILR    = false;
     for( Int refIdx = 0; refIdx < pcCU->getSlice()->getNumRefIdx(eRefPicList); refIdx++ )
+    {
       if( pcCU->getSlice()->getRefPic(eRefPicList, refIdx)->isILR() )
       {
         iRefIdxTemp = refIdx;
         foundILR    = true;
         break;
       }
+    }
 
     if(!foundILR)  //no ILR in eRefPiclist
+    {
       continue;  
+    }
 
     uiBitsTemp = uiMbBits[iRefList];
     if ( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 ) 
@@ -6256,7 +6260,9 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
   }
 
   if( uiCost[0] == MAX_UINT && uiCost[1] == MAX_UINT )  //no ILR in both list0 and list1
+  {
     return false;
+  }
 
   //  Clear Motion Field 
   pcCU->getCUMvField(REF_PIC_LIST_0)->setAllMvField( TComMvField(), ePartSize, uiPartAddr, 0, iPartIdx ); 
@@ -6296,7 +6302,9 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
     pcCU->setMVPNumSubParts( aaiMvpNum[1][iRefIdx[1]], REF_PIC_LIST_1, uiPartAddr, iPartIdx, pcCU->getDepth(uiPartAddr));
   }
   else
+  {
     assert(0);
+  }
 
   pcCU->setMergeFlagSubParts( false, uiPartAddr, iPartIdx, pcCU->getDepth( uiPartAddr ) );
 

@@ -109,14 +109,7 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 
 #if REF_IDX_MFM
-    if(layer == 0)
-    {
-      m_acTEncTop[layer].setMFMEnabledFlag(false);
-    }
-    else
-    {
-      m_acTEncTop[layer].setMFMEnabledFlag(true);
-    }
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
 #endif
     // set layer ID 
     m_acTEncTop[layer].setLayerId ( layer ); 
