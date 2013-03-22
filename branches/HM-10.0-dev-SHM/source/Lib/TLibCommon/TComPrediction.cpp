@@ -494,7 +494,7 @@ Void TComPrediction::xPredInterUni ( TComDataCU* pcCU, UInt uiPartAddr, Int iWid
   pcCU->clipMv(cMv);
 
 #if REF_IDX_ME_ZEROMV
-  assert( ( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getIsILR() && cMv.getHor() == 0 && cMv.getVer() == 0 ) || pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->getIsILR() == false );
+  assert( ( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR() && cMv.getHor() == 0 && cMv.getVer() == 0 ) || pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR() == false );
 #endif
 
   xPredInterLumaBlk  ( pcCU, pcCU->getSlice()->getRefPic( eRefPicList, iRefIdx )->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi );

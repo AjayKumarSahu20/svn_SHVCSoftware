@@ -123,7 +123,7 @@ public:
   TComPicYuv*   getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
 #endif
 #if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-  Bool          getIsILR( UInt refLayer = 0 )   {return (getIsLongTerm() && m_layerId == refLayer);}
+  Bool          isILR( UInt refLayer = 0 )   {return (getIsLongTerm() && m_layerId == refLayer);}
 #endif
 
 #if REF_IDX_MFM
