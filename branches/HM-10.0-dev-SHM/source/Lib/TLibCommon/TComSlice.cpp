@@ -2151,37 +2151,26 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
   ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
 #endif
 
-  //initialize reference POC of ILP 
-  for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
-  { 
-    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_0, refIdx); 
-    ilpPic[0]->getSlice(0)->setRefPOC(0, REF_PIC_LIST_1, refIdx); 
+  for( Int refList = 0; refList < 2; refList++ )
+  {
+    RefPicList refPicList = RefPicList( refList );
 
-    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_0, refIdx); 
-    ilpPic[0]->getSlice(0)->setRefPic(NULL, REF_PIC_LIST_1, refIdx); 
-  }
+    //initialize reference POC of ILP 
+    for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
+    { 
+      ilpPic[0]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
+      ilpPic[0]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+    }
 
-  //set reference POC of ILP 
-  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_0, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0));
-  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0) <= MAX_NUM_REF); 
-  ilpPic[0]->getSlice(0)->setNumRefIdx(REF_PIC_LIST_1, pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1));
-  assert(ilpPic[0]->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1) <= MAX_NUM_REF);
+    //set reference POC of ILP 
+    ilpPic[0]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
+    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF); 
 
-  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
-  {
-    ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
-  }
-  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
-  {
-    ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx);
-  }
-  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_0); refIdx++) 
-  {
-    ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_0, refIdx), REF_PIC_LIST_0, refIdx); 
-  }
-  for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(REF_PIC_LIST_1); refIdx++) 
-  {
-    ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(REF_PIC_LIST_1, refIdx), REF_PIC_LIST_1, refIdx); 
+    for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++) 
+    {
+      ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx); 
+      ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx); 
+    }
   }
   return;
 }
