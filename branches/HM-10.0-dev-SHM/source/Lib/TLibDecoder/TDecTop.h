@@ -77,11 +77,6 @@ private:
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
 #endif
 
-#if REF_IDX_MFM
-  TComSPS*               m_pcSPS;
-  Bool                   m_bMFMEnabledFlag;
-#endif
-
   TComSlice*              m_apcSlicePilot;
   
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
@@ -175,11 +170,6 @@ public:
 #if REF_IDX_FRAMEWORK
   Void      xInitILRP(TComSPS *pcSPS);
   Void      setILRPic(TComPic *pcPic);
-#endif
-#if REF_IDX_MFM
-  TComSPS*  getSPS()                       {return m_pcSPS;}
-  Void      setMFMEnabledFlag(Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool      getMFMEnabledFlag()            {return m_bMFMEnabledFlag;}
 #endif
 
 protected:
