@@ -901,10 +901,6 @@ Void TDecTop::xDecodeSPS()
 #else
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 #endif
-#if REF_IDX_MFM
-  m_pcSPS = sps;
-  setMFMEnabledFlag(sps->getMFMEnabledFlag());
-#endif
 #if REF_IDX_FRAMEWORK
   if(m_numLayer>0)
   {
