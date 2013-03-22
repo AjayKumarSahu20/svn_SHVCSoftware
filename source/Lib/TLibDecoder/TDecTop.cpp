@@ -146,6 +146,11 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
     Window &conformanceWindow = pcSPS->getConformanceWindow();
     Window defaultDisplayWindow = pcSPS->getVuiParametersPresentFlag() ? pcSPS->getVuiParameters()->getDefaultDisplayWindow() : Window();
 
+    for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
+    {
+      numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
+    }
+
     if (m_cIlpPic[0] == NULL)
     {
       for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
