@@ -661,7 +661,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 
   for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
   {
-    TComDataCU*             pcCUDes = getCU(cuIdx);
+    TComDataCU* pcCUDes = getCU(cuIdx);
 
     for(UInt absPartIdx = 0; absPartIdx < numPartitions; absPartIdx+=unitNum )  //each 16x16 unit
     {
@@ -732,10 +732,10 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       {
         pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_0)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_0)->getRefIdx(absPartIdx), absPartIdx + i);
         pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_1)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_1)->getRefIdx(absPartIdx), absPartIdx + i);
-        pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx))  ;
+        pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx));
       }
     }
-      memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(char)*numPartitions);
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(char)*numPartitions);
   }
 }
 #endif
