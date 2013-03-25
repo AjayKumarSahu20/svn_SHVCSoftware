@@ -563,42 +563,48 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_pcEncTop->setILRPic(pcPic);
 
 #if REF_IDX_MFM
-      pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
+      if( pcSlice->getSPS()->getMFMEnabledFlag() )
+      {
+        pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
+      }
 #endif
       pcSlice->addRefPicList ( m_pcEncTop->getIlpList(), 1);
 
 #if REF_IDX_MFM
-      Bool found         = false;
-      UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
-      UInt ColRefIdx     = pcSlice->getColRefIdx();
-      for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
-      { 
-        if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR() ) 
-        { 
-          ColRefIdx = colIdx; 
-          found = true;
-          break; 
-        }
-      }
-
-      if( found == false )
+      if( pcSlice->getSPS()->getMFMEnabledFlag() )
       {
-        ColFromL0Flag = 1 - ColFromL0Flag;
+        Bool found         = false;
+        UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
+        UInt ColRefIdx     = pcSlice->getColRefIdx();
         for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
         { 
           if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR() ) 
           { 
             ColRefIdx = colIdx; 
-            found = true; 
+            found = true;
             break; 
-          } 
+          }
         }
-      }
 
-      if(found == true)
-      {
-        pcSlice->setColFromL0Flag(ColFromL0Flag);
-        pcSlice->setColRefIdx(ColRefIdx);
+        if( found == false )
+        {
+          ColFromL0Flag = 1 - ColFromL0Flag;
+          for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
+          { 
+            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR() ) 
+            { 
+              ColRefIdx = colIdx; 
+              found = true; 
+              break; 
+            } 
+          }
+        }
+
+        if(found == true)
+        {
+          pcSlice->setColFromL0Flag(ColFromL0Flag);
+          pcSlice->setColRefIdx(ColRefIdx);
+        }
       }
 #endif
     }
