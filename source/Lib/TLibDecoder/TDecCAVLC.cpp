@@ -701,7 +701,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   {
     READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
     pcSPS->setMFMEnabledFlag( uiCode ? true : false );
-    assert(pcSPS->getMFMEnabledFlag()); 
   }
 #endif
   READ_FLAG( uiCode, "sps_strong_intra_smoothing_enable_flag" );  pcSPS->setUseStrongIntraSmoothing(uiCode);

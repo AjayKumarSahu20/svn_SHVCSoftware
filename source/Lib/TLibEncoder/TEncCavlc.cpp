@@ -547,7 +547,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if REF_IDX_MFM
   if( pcSPS->getLayerId() > 0 )
   {
-    assert(pcSPS->getMFMEnabledFlag());
     WRITE_FLAG( pcSPS->getMFMEnabledFlag() ? 1 : 0,          "sps_enh_mfm_enable_flag" );
   }
 #endif
