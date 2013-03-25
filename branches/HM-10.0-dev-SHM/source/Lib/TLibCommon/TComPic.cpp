@@ -735,7 +735,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
         pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx));
       }
     }
-    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(char)*numPartitions);
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(Char)*numPartitions);
   }
 }
 #endif

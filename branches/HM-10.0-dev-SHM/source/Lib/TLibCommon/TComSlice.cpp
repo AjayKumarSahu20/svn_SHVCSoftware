@@ -2154,22 +2154,23 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
   for( Int refList = 0; refList < 2; refList++ )
   {
     RefPicList refPicList = RefPicList( refList );
+    
+    //set reference POC of ILP
+    ilpPic[0]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
+    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) >= 0);
+    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF);
 
-    //initialize reference POC of ILP 
-    for(Int refIdx = 0; refIdx < MAX_NUM_REF; refIdx++) 
+    //initialize reference POC of ILP
+    for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++)
+    {
+      ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx);
+      ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx);
+    }
+
+    for(Int refIdx = pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx < MAX_NUM_REF; refIdx++) 
     { 
       ilpPic[0]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
       ilpPic[0]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
-    }
-
-    //set reference POC of ILP 
-    ilpPic[0]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
-    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF); 
-
-    for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++) 
-    {
-      ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx); 
-      ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx); 
     }
   }
   return;
