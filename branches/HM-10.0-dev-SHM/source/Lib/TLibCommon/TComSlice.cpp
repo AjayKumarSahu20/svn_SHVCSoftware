@@ -2151,6 +2151,9 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
   ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
 #endif
 
+  //copy reference pictures marking from the reference layer
+  ilpPic[0]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
+  
   for( Int refList = 0; refList < 2; refList++ )
   {
     RefPicList refPicList = RefPicList( refList );
