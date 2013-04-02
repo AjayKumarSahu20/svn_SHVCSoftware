@@ -3064,7 +3064,7 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   Int iWidth = 0;
   Int iHeight = 0; 
 
-#if REF_IDX_FRAMEWORK  // HM bug fix
+#if 0 //REF_IDX_FRAMEWORK  // HM bug fix
   for( UInt uiMergeCand = 0; uiMergeCand < pcCU->getSlice()->getMaxNumMergeCand(); ++uiMergeCand )
   {
     uhInterDirNeighbours[uiMergeCand] = 0;
