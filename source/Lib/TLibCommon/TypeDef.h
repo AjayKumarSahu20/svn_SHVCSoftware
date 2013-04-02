@@ -79,6 +79,7 @@
 #define REUSE_MVSCALE                    1      ///< using the base layer MV scaling function
 #define REUSE_BLKMAPPING                 1      ///< using the base layer get co-located block function
 #define RAP_MFM_INIT                     1      ///< initilizing MFM when base layer is RAP picture
+#define REF_LIST_BUGFIX                  1
 #endif
 
 #else

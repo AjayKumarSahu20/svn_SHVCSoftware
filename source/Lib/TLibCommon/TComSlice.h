@@ -1255,6 +1255,10 @@ private:
   
   Int         m_aiNumRefIdx   [3];    //  for multiple reference of current slice
 
+#if REF_LIST_BUGFIX
+  Int         m_aiNumILRRefIdx;       //< for inter-layer reference picture ser
+#endif
+
   Int         m_iRefIdxOfLC[2][MAX_NUM_REF_LC];
   Int         m_eListIdFromIdxOfLC[MAX_NUM_REF_LC];
   Int         m_iRefIdxFromIdxOfLC[MAX_NUM_REF_LC];
@@ -1395,7 +1399,10 @@ public:
   Bool      getDeblockingFilterOverrideFlag()           { return  m_deblockingFilterOverrideFlag; }
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
-
+#if REF_LIST_BUGFIX
+  Int       getNumILRRefIdx     ( )                     { return  m_aiNumILRRefIdx; }
+  Void      setNumILRRefIdx     ( Int i )                     { m_aiNumILRRefIdx = i; }
+#endif
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
   TComPic*  getRefPic           ( RefPicList e, Int iRefIdx)    { return  m_apcRefPicList[e][iRefIdx];  }
@@ -1471,6 +1478,11 @@ public:
   Void      setColRefIdx        ( UInt refIdx) { m_colRefIdx = refIdx; }
   Void      setCheckLDC         ( Bool b )                      { m_bCheckLDC = b; }
   Void      setMvdL1ZeroFlag     ( Bool b)                       { m_bLMvdL1Zero = b; }
+
+#if REF_LIST_BUGFIX
+  Void      setRefPicListModificationSvc();
+  Void      setRefPicListSvc    ( TComList<TComPic*>& rcListPic, TComPic** ilpPic );
+#endif
 
   Bool      isIntra         ()                          { return  m_eSliceType == I_SLICE;  }
   Bool      isInterB        ()                          { return  m_eSliceType == B_SLICE;  }
