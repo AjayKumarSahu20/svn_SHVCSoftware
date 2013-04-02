@@ -733,7 +733,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     pcSlice->checkCRA(pcSlice->getRPS(), m_pocCRA, m_prevRAPisBLA );
     // Set reference list
+#if REF_LIST_BUGFIX
+    if (m_layerId == 0)
+    {
+      pcSlice->setRefPicList( m_cListPic );
+    }
+#else
     pcSlice->setRefPicList( m_cListPic );
+#endif
 
 #if SVC_EXTENSION   
     if(m_layerId > 0)
@@ -779,11 +786,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if REF_IDX_MFM
       pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
 #endif
-
+#if REF_LIST_BUGFIX
+      pcSlice->setRefPicListSvc( m_cListPic, m_cIlpPic);
+#else
       pcSlice->addRefPicList ( m_cIlpPic, 
                                1, 
                                ((pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) && 
                                 (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ? 0: -1);
+#endif
     }
 #endif
 
