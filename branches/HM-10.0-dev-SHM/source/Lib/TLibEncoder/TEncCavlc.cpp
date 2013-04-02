@@ -648,12 +648,26 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if L0043_TIMING_INFO
   }
 #endif
+#if !VPS_EXTNS
   WRITE_FLAG( 0,                     "vps_extension_flag" );
-  
+#else
+  WRITE_FLAG( 1,                     "vps_extension_flag" );
+  codeVPSExtension(pcVPS);
+  WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
+#endif  
   //future extensions here..
   
   return;
 }
+
+#if VPS_EXTNS
+Void TEncCavlc::codeVPSExtension (TComVPS *vps)
+{
+  // ... More syntax elements to be written here
+
+  // ... More syntax elements to be written here
+}
+#endif
 
 Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 {

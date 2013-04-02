@@ -814,14 +814,35 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   READ_FLAG( uiCode,  "vps_extension_flag" );
   if (uiCode)
   {
+#if VPS_EXTNS
+    parseVPSExtension(pcVPS);
+    READ_FLAG( uiCode, "vps_entension2_flag" );
+    if(uiCode)
+    {
+      while ( xMoreRbspData() )
+      {
+        READ_FLAG( uiCode, "vps_extension_data_flag");
+      }
+    }
+#else
     while ( xMoreRbspData() )
     {
       READ_FLAG( uiCode, "vps_extension_data_flag");
     }
+#endif
   }
   
   return;
 }
+
+#if VPS_EXTNS
+Void TDecCavlc::parseVPSExtension(TComVPS *vps)
+{  
+  // ... More syntax elements to be parsed here
+
+  // ... More syntax elements to be parsed here
+}
+#endif
 
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
 {

@@ -44,6 +44,7 @@
 
 #if SVC_EXTENSION
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
+#define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
 #define SVC_COL_BLK                      1      ///< get co-located block
