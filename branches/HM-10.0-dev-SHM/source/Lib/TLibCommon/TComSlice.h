@@ -483,12 +483,20 @@ private:
   UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];
 
   UInt        m_numHrdParameters;
+#if !VPS_RENAME
   UInt        m_maxNuhReservedZeroLayerId;
+#endif
   TComHRD*    m_hrdParameters;
   UInt*       m_hrdOpSetIdx;
   Bool*       m_cprmsPresentFlag;
+#if VPS_RENAME
+  UInt        m_maxLayerId;
+  UInt        m_numLayerSets;
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#else
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
+#endif
 
   TComPTL     m_pcPTL;
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
@@ -539,11 +547,19 @@ public:
   UInt    getNumHrdParameters()                                 { return m_numHrdParameters; }
   Void    setNumHrdParameters(UInt v)                           { m_numHrdParameters = v;    }
 
+#if VPS_RENAME
+  UInt    getMaxLayerId()                                       { return m_maxLayerId; }
+  Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
+
+  UInt    getNumLayerSets()                                     { return m_numLayerSets; }
+  Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
+#else
   UInt    getMaxNuhReservedZeroLayerId()                        { return m_maxNuhReservedZeroLayerId; }
   Void    setMaxNuhReservedZeroLayerId(UInt v)                  { m_maxNuhReservedZeroLayerId = v;    }
 
   UInt    getMaxOpSets()                                        { return m_numOpSets; }
   Void    setMaxOpSets(UInt v)                                  { m_numOpSets = v;    }
+#endif
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
 
