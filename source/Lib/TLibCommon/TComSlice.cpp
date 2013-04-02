@@ -1463,10 +1463,16 @@ TComVPS::TComVPS()
 , m_uiMaxLayers               (  1)
 , m_bTemporalIdNestingFlag    (false)
 , m_numHrdParameters          (  0)
+#if !VPS_RENAME
 , m_maxNuhReservedZeroLayerId (  0)
+#endif
 , m_hrdParameters             (NULL)
 , m_hrdOpSetIdx               (NULL)
 , m_cprmsPresentFlag          (NULL)
+#if VPS_RENAME
+, m_maxLayerId                (0)
+, m_numLayerSets              (0)
+#endif
 {
 
   for( Int i = 0; i < MAX_TLAYER; i++)

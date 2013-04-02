@@ -757,6 +757,16 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
     }
   }
 
+#if VPS_RENAME
+  assert( pcVPS->getNumHrdParameters() < MAX_VPS_LAYER_SETS_PLUS1 );
+  assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_ID_PLUS1 );
+  READ_CODE( 6, uiCode, "vps_max_layer_id" );           pcVPS->setMaxLayerId( uiCode );
+  READ_UVLC(    uiCode, "vps_num_layer_sets_minus1" );  pcVPS->setNumLayerSets( uiCode + 1 );
+  for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
+  {
+    // Operation point set
+    for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
+#else
   assert( pcVPS->getNumHrdParameters() < MAX_VPS_OP_SETS_PLUS1 );
   assert( pcVPS->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1 );
   READ_CODE( 6, uiCode, "vps_max_nuh_reserved_zero_layer_id" );   pcVPS->setMaxNuhReservedZeroLayerId( uiCode );
@@ -765,6 +775,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxNuhReservedZeroLayerId(); i ++ )
+#endif
     {
       READ_FLAG( uiCode, "layer_id_included_flag[opsIdx][i]" );   pcVPS->setLayerIdIncludedFlag( uiCode == 1 ? true : false, opsIdx, i );
     }

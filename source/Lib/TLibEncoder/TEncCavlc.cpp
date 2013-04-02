@@ -587,6 +587,17 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     }
   }
 
+#if VPS_RENAME
+  assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
+  assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_ID_PLUS1 );
+  pcVPS->setNumLayerSets(1);
+  WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
+  WRITE_UVLC( pcVPS->getNumLayerSets() - 1,                 "vps_num_layer_sets_minus1" );
+  for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
+  {
+    // Operation point set
+    for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
+#else
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS );
   assert( pcVPS->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1 );
   WRITE_CODE( pcVPS->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id" );
@@ -596,6 +607,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxNuhReservedZeroLayerId(); i ++ )
+#endif
     {
       // Only applicable for version 1
       pcVPS->setLayerIdIncludedFlag( true, opsIdx, i );
