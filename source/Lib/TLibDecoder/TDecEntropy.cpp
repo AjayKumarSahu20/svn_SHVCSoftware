@@ -187,7 +187,7 @@ Void TDecEntropy::decodePUWise( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDept
     {
       decodeMergeIndex( pcCU, uiPartIdx, uiSubPartIdx, uiDepth );
       UInt uiMergeIndex = pcCU->getMergeIndex(uiSubPartIdx);
-#if REF_IDX_FRAMEWORK  // HM bug fix
+#if 0 //REF_IDX_FRAMEWORK  // HM bug fix
       if(uiPartIdx)
       {
         for(UInt ui=0; ui<uiMergeIndex+1; ui++)
