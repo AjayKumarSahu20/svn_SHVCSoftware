@@ -808,6 +808,16 @@ Void TEncTop::xInitPPS()
       m_cSliceEncoder.setCtxMem( ctx, st );
     }
   }
+#if REF_LIST_BUGFIX
+  if (!m_layerId)
+  {
+    m_cPPS.setListsModificationPresentFlag(false);
+  }
+  else
+  {
+    m_cPPS.setListsModificationPresentFlag(true);
+  }
+#endif
 #if SVC_EXTENSION
   m_cPPS.setPPSId         ( m_iPPSIdCnt         );
   m_cPPS.setSPSId         ( m_iSPSIdCnt         );

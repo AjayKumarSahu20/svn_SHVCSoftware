@@ -523,6 +523,22 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->setNumRefIdx(REF_PIC_LIST_0,min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive,pcSlice->getRPS()->getNumberOfPictures()));
     pcSlice->setNumRefIdx(REF_PIC_LIST_1,min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive,pcSlice->getRPS()->getNumberOfPictures()));
 
+#if REF_LIST_BUGFIX
+    if(m_layerId > 0)
+    {
+      if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
+      {
+        pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumILRRefIdx());
+        pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumILRRefIdx());
+      }
+      else
+      {
+        pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+pcSlice->getNumILRRefIdx());
+        pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+pcSlice->getNumILRRefIdx());
+      }
+    }
+#endif
+
 #if ADAPTIVE_QP_SELECTION
     pcSlice->setTrQuant( m_pcEncTop->getTrQuant() );
 #endif      
@@ -556,7 +572,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 
     //  Set reference list
+#if REF_LIST_BUGFIX
+    if(m_layerId ==  0)
+    {
+      pcSlice->setRefPicList( rcListPic);
+    }
+#else
     pcSlice->setRefPicList ( rcListPic );
+#endif
 #if REF_IDX_FRAMEWORK
     if(m_layerId > 0)
     {
@@ -568,7 +591,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
       }
 #endif
+#if REF_LIST_BUGFIX
+      pcSlice->setRefPicListModificationSvc();
+      pcSlice->setRefPicListSvc( rcListPic, m_pcEncTop->getIlpList() );
+#else
       pcSlice->addRefPicList ( m_pcEncTop->getIlpList(), 1);
+#endif
 
 #if REF_IDX_MFM
       if( pcSlice->getSPS()->getMFMEnabledFlag() )
