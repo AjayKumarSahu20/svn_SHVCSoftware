@@ -114,6 +114,9 @@ TComSlice::TComSlice()
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = m_aiNumRefIdx[2] = 0;
   
+#if REF_LIST_BUGFIX
+  m_aiNumILRRefIdx = 0;
+#endif
   initEqualRef();
   
   for(Int iNumCount = 0; iNumCount < MAX_NUM_REF_LC; iNumCount++)
@@ -155,7 +158,16 @@ Void TComSlice::initSlice()
 #endif
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
-  
+#if REF_LIST_BUGFIX
+  if(layerId)
+  {
+    m_aiNumILRRefIdx      = 1;  // to be set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+  }
+  else
+  {
+    m_aiNumILRRefIdx = 0;
+  }
+#endif
   m_colFromL0Flag = 1;
   
   m_colRefIdx = 0;
@@ -357,7 +369,7 @@ Void TComSlice::generateCombinedList()
   }
 }
 
-Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
+Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic)
 {
 #if REF_IDX_FRAMEWORK
   if( m_eSliceType == I_SLICE || ( getSPS()->getLayerId() && 
@@ -488,13 +500,240 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   }
 }
 
+#if REF_LIST_BUGFIX
+Void TComSlice::setRefPicListModificationSvc()
+{
+  if( !this->getPPS()->getListsModificationPresentFlag()) 
+  {
+    return;
+  }
+
+  if(this->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && this->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)
+    return;
+
+  TComRefPicListModification* refPicListModification = this->getRefPicListModification();
+  Int numberOfRpsCurrTempList = this->getNumRpsCurrTempList();  // total number of ref pics in listTemp0 including inter-layer ref pics
+
+  assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 1);
+  assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 1);
+
+  //set L0 inter-layer reference picture modification
+  Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
+  refPicListModification->setRefPicListModificationFlagL0(hasModification);
+  if(hasModification)
+  { 
+    for(Int i = 0; i < min(m_aiNumRefIdx[REF_PIC_LIST_0], numberOfRpsCurrTempList); i++)
+    {
+      refPicListModification->setRefPicSetIdxL0(i, i);
+    }
+    if(m_aiNumRefIdx[REF_PIC_LIST_0] > numberOfRpsCurrTempList)
+    {
+        // repeat last ref pic when the number of active ref idx are more than RPS entries
+      for (Int i = numberOfRpsCurrTempList; i < m_aiNumRefIdx[REF_PIC_LIST_0]; i ++)
+      {
+        refPicListModification->setRefPicSetIdxL0(i, numberOfRpsCurrTempList - 1);
+      }
+    }
+    else
+    {
+      for(Int i = m_aiNumILRRefIdx; i > 0; i-- )
+      {
+        refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfRpsCurrTempList - i);
+      }
+    }
+  }
+
+  //set L1 inter-layer reference picture modification
+  hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] == numberOfRpsCurrTempList) ? false : true;
+  refPicListModification->setRefPicListModificationFlagL1(hasModification);
+  if(hasModification)
+  { 
+    for(Int i = 0; i < min(m_aiNumRefIdx[REF_PIC_LIST_1], numberOfRpsCurrTempList); i++)
+    {
+      refPicListModification->setRefPicSetIdxL1(i, i);
+    }
+    if(m_aiNumRefIdx[REF_PIC_LIST_1] > numberOfRpsCurrTempList)
+    {
+      for (Int i = numberOfRpsCurrTempList; i < m_aiNumRefIdx[REF_PIC_LIST_1]; i ++)
+      {
+        // repeat last ref pic when the number of active ref idx are more than RPS entries
+        refPicListModification->setRefPicSetIdxL1(i, numberOfRpsCurrTempList - 1);  
+      }
+    }
+    else
+    {
+      for(Int i = m_aiNumILRRefIdx; i > 0; i-- )
+      {
+        refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
+      }
+    }
+  }
+  return;
+}
+
+Void TComSlice::setRefPicListSvc( TComList<TComPic*>& rcListPic, TComPic** ilpPic )
+{
+  assert(getLayerId() > 0);
+
+  m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
+  m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
+
+  TComPic*  pcRefPic= NULL;
+  TComPic*  RefPicSetStCurr0[16];
+  TComPic*  RefPicSetStCurr1[16];
+  TComPic*  RefPicSetLtCurr[16];
+  UInt NumPocStCurr0 = 0;
+  UInt NumPocStCurr1 = 0;
+  UInt NumPocLtCurr = 0;
+  Int i;
+
+  //temporal reference pictures
+  if( !(getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) )
+  { 
+    for(i=0; i < m_pcRPS->getNumberOfNegativePictures(); i++)
+    {
+      if(m_pcRPS->getUsed(i))
+      {
+        pcRefPic = xGetRefPic(rcListPic, getPOC()+m_pcRPS->getDeltaPOC(i));
+        pcRefPic->setIsLongTerm(0);
+        pcRefPic->getPicYuvRec()->extendPicBorder();
+        RefPicSetStCurr0[NumPocStCurr0] = pcRefPic;
+        NumPocStCurr0++;
+        pcRefPic->setCheckLTMSBPresent(false);  
+      }
+    }
+    for(; i < m_pcRPS->getNumberOfNegativePictures()+m_pcRPS->getNumberOfPositivePictures(); i++)
+    {
+      if(m_pcRPS->getUsed(i))
+      {
+        pcRefPic = xGetRefPic(rcListPic, getPOC()+m_pcRPS->getDeltaPOC(i));
+        pcRefPic->setIsLongTerm(0);
+        pcRefPic->getPicYuvRec()->extendPicBorder();
+        RefPicSetStCurr1[NumPocStCurr1] = pcRefPic;
+        NumPocStCurr1++;
+        pcRefPic->setCheckLTMSBPresent(false);  
+      }
+    }
+    for(i = m_pcRPS->getNumberOfNegativePictures()+m_pcRPS->getNumberOfPositivePictures()+m_pcRPS->getNumberOfLongtermPictures()-1; i > m_pcRPS->getNumberOfNegativePictures()+m_pcRPS->getNumberOfPositivePictures()-1 ; i--)
+    {
+      if(m_pcRPS->getUsed(i))
+      {
+        pcRefPic = xGetLongTermRefPic(rcListPic, m_pcRPS->getPOC(i));
+        pcRefPic->setIsLongTerm(1);
+        pcRefPic->getPicYuvRec()->extendPicBorder();
+        RefPicSetLtCurr[NumPocLtCurr] = pcRefPic;
+        NumPocLtCurr++;
+      }
+      if(pcRefPic==NULL) 
+      {
+        pcRefPic = xGetLongTermRefPic(rcListPic, m_pcRPS->getPOC(i));
+      }
+      pcRefPic->setCheckLTMSBPresent(m_pcRPS->getCheckLTMSBPresent(i));  
+    }
+  }
+
+  //inter-layer reference picture
+#if REF_IDX_MFM
+  assert(m_aiNumILRRefIdx == 1);
+  if(!(getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) && getSPS()->getMFMEnabledFlag())
+  { 
+    ilpPic[0]->copyUpsampledMvField(getBaseColPic());
+  }
+  else
+  {
+    ilpPic[0]->initUpsampledMvField();
+  }
+#endif
+  ilpPic[0]->setIsLongTerm(1);
+
+  // ref_pic_list_init
+  UInt cIdx = 0;
+  UInt num_ref_idx_l0_active_minus1 = m_aiNumRefIdx[0] - 1;
+  UInt num_ref_idx_l1_active_minus1 = m_aiNumRefIdx[1] - 1;
+  TComPic*  refPicListTemp0[MAX_NUM_REF+1];
+  TComPic*  refPicListTemp1[MAX_NUM_REF+1];
+  Int  numRpsCurrTempList0, numRpsCurrTempList1;
+
+  numRpsCurrTempList0 = numRpsCurrTempList1 = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_aiNumILRRefIdx;
+  if (numRpsCurrTempList0 <= num_ref_idx_l0_active_minus1)
+  {
+    numRpsCurrTempList0 = num_ref_idx_l0_active_minus1 + 1;
+  }
+  if (numRpsCurrTempList1 <= num_ref_idx_l1_active_minus1)
+  {
+    numRpsCurrTempList1 = num_ref_idx_l1_active_minus1 + 1;
+  }
+
+  assert(numRpsCurrTempList0 <= MAX_NUM_REF);
+  assert(numRpsCurrTempList1 <= MAX_NUM_REF);
+
+  cIdx = 0;
+  while (cIdx < numRpsCurrTempList0)
+  { 
+    for ( i=0; i<NumPocStCurr0 && cIdx<numRpsCurrTempList0; cIdx++,i++) 
+      refPicListTemp0[cIdx] = RefPicSetStCurr0[ i ];   
+    for ( i=0; i<NumPocStCurr1 && cIdx<numRpsCurrTempList0; cIdx++,i++) 
+      refPicListTemp0[cIdx] = RefPicSetStCurr1[ i ]; 
+    for ( i=0; i<NumPocLtCurr && cIdx<numRpsCurrTempList0; cIdx++,i++) 
+      refPicListTemp0[cIdx] = RefPicSetLtCurr[ i ];
+    for ( i=0; i<m_aiNumILRRefIdx && cIdx<numRpsCurrTempList0; cIdx++,i++)
+      refPicListTemp0[cIdx] = ilpPic[ i ];
+  }
+  cIdx = 0;
+  while (cIdx<numRpsCurrTempList1 && m_eSliceType==B_SLICE)
+  { 
+    for ( i=0; i<NumPocStCurr1 && cIdx<numRpsCurrTempList1; cIdx++,i++) 
+      refPicListTemp1[cIdx] = RefPicSetStCurr1[ i ];
+    for ( i=0; i<NumPocStCurr0 && cIdx<numRpsCurrTempList1; cIdx++,i++) 
+      refPicListTemp1[cIdx] = RefPicSetStCurr0[ i ]; 
+    for ( i=0; i<NumPocLtCurr && cIdx<numRpsCurrTempList1; cIdx++,i++) 
+      refPicListTemp1[cIdx] = RefPicSetLtCurr[ i ];
+    for ( i=0; i<m_aiNumILRRefIdx && cIdx<numRpsCurrTempList1; cIdx++,i++)
+      refPicListTemp1[cIdx] = ilpPic[ i ];
+  }
+  ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
+  for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[0]-1); rIdx ++)
+  {
+    m_apcRefPicList[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? refPicListTemp0[ m_RefPicListModification.getRefPicSetIdxL0(rIdx) ] : refPicListTemp0[rIdx % numRpsCurrTempList0];
+    m_bIsUsedAsLongTerm[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? (m_RefPicListModification.getRefPicSetIdxL0(rIdx) >= (NumPocStCurr0 + NumPocStCurr1))
+      : ((rIdx % numRpsCurrTempList0) >= (NumPocStCurr0 + NumPocStCurr1));
+  }
+  if ( m_eSliceType == P_SLICE )
+  {
+    m_aiNumRefIdx[1] = 0;
+    ::memset( m_apcRefPicList[1], 0, sizeof(m_apcRefPicList[1]));
+  }
+  else
+  {
+    for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[1]-1); rIdx ++)
+    {
+      m_apcRefPicList[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ? refPicListTemp1[ m_RefPicListModification.getRefPicSetIdxL1(rIdx) ] : refPicListTemp1[rIdx % numRpsCurrTempList1];
+      m_bIsUsedAsLongTerm[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ?
+        (m_RefPicListModification.getRefPicSetIdxL1(rIdx) >= (NumPocStCurr0 + NumPocStCurr1)): ((rIdx % numRpsCurrTempList1) >= (NumPocStCurr0 + NumPocStCurr1));
+    }
+  }
+
+  return;
+}
+#endif
+
 Int TComSlice::getNumRpsCurrTempList()
 {
   Int numRpsCurrTempList = 0;
 
+#if REF_IDX_FRAMEWORK
+  if( m_eSliceType == I_SLICE || ( getSPS()->getLayerId() && 
+    (getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) &&
+    (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) ) )
+#else
   if (m_eSliceType == I_SLICE) 
+#endif 
   {
+#if REF_LIST_BUGFIX
+    return m_aiNumILRRefIdx;
+#else
     return 0;
+#endif
   }
   for(UInt i=0; i < m_pcRPS->getNumberOfNegativePictures()+ m_pcRPS->getNumberOfPositivePictures() + m_pcRPS->getNumberOfLongtermPictures(); i++)
   {
@@ -503,6 +742,13 @@ Int TComSlice::getNumRpsCurrTempList()
       numRpsCurrTempList++;
     }
   }
+#if REF_LIST_BUGFIX
+  if(getLayerId())
+  {
+    numRpsCurrTempList += getNumILRRefIdx();
+  }
+#endif
+
   return numRpsCurrTempList;
 }
 
