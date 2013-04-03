@@ -506,6 +506,18 @@ private:
   TimingInfo  m_timingInfo;
 #endif
 
+  // ------------------------------------------
+  // Variables related to VPS extensions
+  // ------------------------------------------
+#if VPS_EXTN_OP_LAYER_SETS
+  // .. More declarations here
+  // Target output layer signalling related
+  UInt       m_numOutputLayerSets;
+  UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  // .. More declarations here
+#endif
+
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -569,6 +581,18 @@ public:
 #endif
 #if L0043_TIMING_INFO
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
+#endif
+
+#if VPS_EXTN_OP_LAYER_SETS
+  // Target output layer signalling related
+  UInt   getNumOutputLayerSets()                                { return m_numOutputLayerSets;     } 
+  Void   setNumOutputLayerSets(Int x)                           { m_numOutputLayerSets = x;        }
+  
+  UInt   getOutputLayerSetIdx(Int idx)                          { return m_outputLayerSetIdx[idx]; }
+  Void   setOutputLayerSetIdx(Int idx, UInt x)                  { m_outputLayerSetIdx[idx] = x;    }
+
+  Bool   getOutputLayerFlag(Int layerSet, Int layerId)          { return m_outputLayerFlag[layerSet][layerId]; }
+  Void   setOutputLayerFlag(Int layerSet, Int layerId, Bool x)  { m_outputLayerFlag[layerSet][layerId] = x;    }
 #endif
 };
 

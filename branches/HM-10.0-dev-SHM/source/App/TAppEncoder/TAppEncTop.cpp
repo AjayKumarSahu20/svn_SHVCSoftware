@@ -691,6 +691,32 @@ Void TAppEncTop::xInitLib()
   {
     m_acTEncTop[layer].init();
   }
+#if VPS_EXTN_OP_LAYER_SETS
+  TComVPS* vps = m_acTEncTop[0].getVPS();
+  vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
+
+  vps->setNumLayerSets(m_numLayers);
+  for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+  {
+    for(Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+    {
+      vps->setLayerIdIncludedFlag(true, setId, layerId);
+    }
+  }
+
+  // Target output layer
+  vps->setNumOutputLayerSets(1);
+  Int lsIdx = 1;
+  vps->setOutputLayerSetIdx(0, lsIdx); // Because only one layer set
+  // Include the highest layer as output layer 
+  for(UInt layer=0; layer <= vps->getMaxLayerId() ; layer++)
+  {
+    if(vps->getLayerIdIncludedFlag(lsIdx, layer))
+    {
+      vps->setOutputLayerFlag(lsIdx, layer, layer == (vps->getMaxLayerId()));
+    }
+  }
+#endif
 #else
   m_cTEncTop.init();
 #endif

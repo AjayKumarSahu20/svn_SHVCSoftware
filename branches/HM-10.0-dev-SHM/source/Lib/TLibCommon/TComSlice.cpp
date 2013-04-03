@@ -1473,6 +1473,9 @@ TComVPS::TComVPS()
 , m_maxLayerId                (0)
 , m_numLayerSets              (0)
 #endif
+#if VPS_EXTN_OP_LAYER_SETS
+, m_numOutputLayerSets        (0)  
+#endif
 {
 
   for( Int i = 0; i < MAX_TLAYER; i++)
@@ -1481,6 +1484,12 @@ TComVPS::TComVPS()
     m_uiMaxDecPicBuffering[i] = 0; 
     m_uiMaxLatencyIncrease[i] = 0;
   }
+#if VPS_EXTN_OP_LAYER_SETS
+  ::memset(m_layerIdIncludedFlag, 0, sizeof(m_layerIdIncludedFlag));
+  // Consider dynamic allocation for outputLayerSetIdx and outputLayerFlag
+  ::memset(m_outputLayerSetIdx, 0, sizeof(m_outputLayerSetIdx));
+  ::memset(m_outputLayerFlag, 0, sizeof(m_outputLayerFlag));
+#endif
 }
 
 TComVPS::~TComVPS()

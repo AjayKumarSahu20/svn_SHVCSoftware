@@ -838,8 +838,23 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 #if VPS_EXTNS
 Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {  
+  UInt uiCode;
   // ... More syntax elements to be parsed here
 
+  // Target output layer signalling
+  READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
+  for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+  {
+    READ_UVLC( uiCode,           "vps_output_layer_set_idx[i]"); vps->setOutputLayerSetIdx(i, uiCode);
+    Int lsIdx = vps->getOutputLayerSetIdx(i);
+    for(Int j = 0; j <= vps->getMaxLayerId(); j++)
+    {
+      if(vps->getLayerIdIncludedFlag(lsIdx, j))
+      {
+        READ_FLAG( uiCode, "vps_output_layer_flag[lsIdx][j]"); vps->setOutputLayerFlag(lsIdx, j, uiCode);
+      }
+    }
+  }  
   // ... More syntax elements to be parsed here
 }
 #endif

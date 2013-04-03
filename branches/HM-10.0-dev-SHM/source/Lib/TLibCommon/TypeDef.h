@@ -45,6 +45,9 @@
 #if SVC_EXTENSION
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
+#if VPS_EXTNS
+#define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
+#endif
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
 #define SVC_COL_BLK                      1      ///< get co-located block
@@ -134,7 +137,7 @@
 
 #if VPS_RENAME
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
-#define MAX_VPS_LAYER_ID_PLUS1                    1
+#define MAX_VPS_LAYER_ID_PLUS1                    2
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
