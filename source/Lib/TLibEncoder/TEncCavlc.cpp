@@ -590,7 +590,9 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if VPS_RENAME
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_ID_PLUS1 );
+#if !VPS_EXTN_OP_LAYER_SETS     // num layer sets set in TAppEncTop.cpp
   pcVPS->setNumLayerSets(1);
+#endif
   WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
   WRITE_UVLC( pcVPS->getNumLayerSets() - 1,                 "vps_num_layer_sets_minus1" );
   for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
@@ -609,8 +611,10 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     for( UInt i = 0; i <= pcVPS->getMaxNuhReservedZeroLayerId(); i ++ )
 #endif
     {
+#if !VPS_EXTN_OP_LAYER_SETS     // layer Id include flag set in TAppEncTop.cpp
       // Only applicable for version 1
       pcVPS->setLayerIdIncludedFlag( true, opsIdx, i );
+#endif
       WRITE_FLAG( pcVPS->getLayerIdIncludedFlag( opsIdx, i ) ? 1 : 0, "layer_id_included_flag[opsIdx][i]" );
     }
   }
@@ -666,6 +670,20 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   // ... More syntax elements to be written here
 
   // ... More syntax elements to be written here
+  // Target output layer signalling
+  WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
+  for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+  {
+    WRITE_UVLC( vps->getOutputLayerSetIdx(i),           "vps_output_layer_set_idx[i]");
+    Int lsIdx = vps->getOutputLayerSetIdx(i);
+    for(Int j = 0; j <= vps->getMaxLayerId(); j++)
+    {
+      if(vps->getLayerIdIncludedFlag(lsIdx, j))
+      {
+        WRITE_FLAG( vps->getOutputLayerFlag(lsIdx, j), "vps_output_layer_flag[lsIdx][j]");
+      }
+    }
+  }
 }
 #endif
 
