@@ -228,6 +228,9 @@ public:
   Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
   Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
 #endif
+#if VPS_EXTN_PROFILE_INFO
+  Void copyProfileInfo(ProfileTierLevel *ptl);
+#endif
 };
 
 
@@ -248,6 +251,9 @@ public:
 
   ProfileTierLevel* getGeneralPTL()  { return &m_generalPTL; }
   ProfileTierLevel* getSubLayerPTL(Int i)  { return &m_subLayerPTL[i]; }
+#if VPS_EXTN_PROFILE_INFO
+  Void copyProfileInfo(TComPTL *ptl);
+#endif
 };
 /// VPS class
 
@@ -509,6 +515,12 @@ private:
   // ------------------------------------------
   // Variables related to VPS extensions
   // ------------------------------------------
+#if VPS_EXTN_PROFILE_INFO
+  // Profile-tier-level signalling related
+  Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
+  UInt       m_profileLayerSetRef[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
+  std::vector<TComPTL>    m_pcPTLForExtn;  
+#endif
 #if VPS_EXTN_OP_LAYER_SETS
   // .. More declarations here
   // Target output layer signalling related
@@ -582,7 +594,16 @@ public:
 #if L0043_TIMING_INFO
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 #endif
+#if VPS_EXTN_PROFILE_INFO
+  Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
+  Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }
 
+  UInt   getProfileLayerSetRef(Int id)                          { return m_profileLayerSetRef[id]; }
+  Void   setProfileLayerSetRef(Int id, Bool x)                  { m_profileLayerSetRef[id] = x;    }
+
+  std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
+  TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
+#endif
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling related
   UInt   getNumOutputLayerSets()                                { return m_numOutputLayerSets;     } 

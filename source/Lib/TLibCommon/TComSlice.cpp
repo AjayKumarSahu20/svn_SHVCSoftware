@@ -1484,6 +1484,10 @@ TComVPS::TComVPS()
     m_uiMaxDecPicBuffering[i] = 0; 
     m_uiMaxLatencyIncrease[i] = 0;
   }
+#if VPS_EXTN_PROFILE_INFO
+  ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
+  ::memset(m_profileLayerSetRef, 0, sizeof(m_profileLayerSetRef));
+#endif
 #if VPS_EXTN_OP_LAYER_SETS
   ::memset(m_layerIdIncludedFlag, 0, sizeof(m_layerIdIncludedFlag));
   // Consider dynamic allocation for outputLayerSetIdx and outputLayerFlag
@@ -2276,12 +2280,35 @@ ProfileTierLevel::ProfileTierLevel()
 {
   ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
 }
+#if VPS_EXTN_PROFILE_INFO
+Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
+{
+  this->setProfileSpace          ( ptl->getProfileSpace()      );
+  this->setTierFlag              ( ptl->getTierFlag()          );
+  this->setProfileIdc            ( ptl->getProfileIdc()        );
+  for(Int j = 0; j < 32; j++)
+  {
+    this->setProfileCompatibilityFlag(j, ptl->getProfileCompatibilityFlag(j));
+  }
+  this->setProgressiveSourceFlag  ( ptl->getProgressiveSourceFlag()  );
+  this->setInterlacedSourceFlag   ( ptl->getInterlacedSourceFlag()   );
+  this->setNonPackedConstraintFlag( ptl->getNonPackedConstraintFlag());
+  this->setFrameOnlyConstraintFlag( ptl->getFrameOnlyConstraintFlag());  
+}
+#endif
 
 TComPTL::TComPTL()
 {
   ::memset(m_subLayerProfilePresentFlag, 0, sizeof(m_subLayerProfilePresentFlag));
   ::memset(m_subLayerLevelPresentFlag,   0, sizeof(m_subLayerLevelPresentFlag  ));
 }
+#if VPS_EXTN_PROFILE_INFO
+Void TComPTL::copyProfileInfo(TComPTL *ptl)
+{
+  // Copy all information related to general profile
+  this->getGeneralPTL()->copyProfileInfo(ptl->getGeneralPTL());
+}
+#endif
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
 TComBitRatePicRateInfo::TComBitRatePicRateInfo()
 {

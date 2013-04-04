@@ -840,6 +840,23 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {  
   UInt uiCode;
   // ... More syntax elements to be parsed here
+#if VPS_EXTN_PROFILE_INFO
+  // Profile-tier-level signalling
+  vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
+  for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
+  {
+    READ_FLAG( uiCode, "vps_profile_present_flag[i]" ); vps->setProfilePresentFlag(idx, uiCode ? true : false);
+    if( !vps->getProfilePresentFlag(idx) )
+    {
+      READ_UVLC( uiCode, "vps_profile_layer_set_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
+      assert( vps->getProfileLayerSetRef(idx) < idx );
+      // Copy profile information as indicated 
+      vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
+    }    
+    parsePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+  }
+#endif
+
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
