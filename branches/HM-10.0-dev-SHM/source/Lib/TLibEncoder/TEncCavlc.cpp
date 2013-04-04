@@ -669,7 +669,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
 
-  // ... More syntax elements to be written here
+#if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
   for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
@@ -684,6 +684,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+#endif
+  // ... More syntax elements to be written here
 }
 #endif
 
