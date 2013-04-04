@@ -668,7 +668,18 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
-
+#if VPS_EXTN_PROFILE_INFO
+  // Profile-tier-level signalling
+  for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
+  {
+    WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
+    if( !vps->getProfilePresentFlag(idx) )
+    {
+      WRITE_UVLC( vps->getProfileLayerSetRef(idx) - 1, "vps_profile_layer_set_ref_minus1[i]" );
+    }
+    codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+  }
+#endif
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");

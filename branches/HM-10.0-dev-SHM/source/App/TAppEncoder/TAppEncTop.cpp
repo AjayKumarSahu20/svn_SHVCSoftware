@@ -703,7 +703,15 @@ Void TAppEncTop::xInitLib()
       vps->setLayerIdIncludedFlag(true, setId, layerId);
     }
   }
-
+#if VPS_EXTN_PROFILE_INFO
+  vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
+  for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+  {
+    vps->setProfilePresentFlag(setId, true);
+    // Note - may need to be changed for other layer structures.
+    *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
+  }
+#endif
   // Target output layer
   vps->setNumOutputLayerSets(1);
   Int lsIdx = 1;

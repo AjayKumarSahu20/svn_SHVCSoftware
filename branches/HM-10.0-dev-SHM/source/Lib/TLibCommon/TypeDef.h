@@ -47,6 +47,7 @@
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
+#define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #endif
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
