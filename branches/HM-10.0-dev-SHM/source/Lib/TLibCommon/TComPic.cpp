@@ -837,7 +837,7 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
       // set dependent information
       pcCU->setPredictionMode( partAddr, ( refIdxL0 == NOT_VALID && refIdxL1 == NOT_VALID ) ? MODE_INTRA : MODE_INTER );
       UInt interDir = ( refIdxL0 != NOT_VALID ) + ( refIdxL1 != NOT_VALID && this->getSlice(0)->isInterB() ) * 2;
-      assert( interDir >= 0 && interDir <= 3 );
+      assert( interDir <= 3 );
       pcCU->setInterDir( partAddr, interDir );      
     }
   }
