@@ -733,7 +733,7 @@ Void TAppEncTop::xInitLib()
   vps->setNuhLayerIdPresentFlag(false);
   vps->setLayerIdInNuh(0, 0);
   vps->setLayerIdInVps(0, 0);
-  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  for(i = 1; i < vps->getMaxLayers(); i++)
   {
     vps->setLayerIdInNuh(i, i);
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);

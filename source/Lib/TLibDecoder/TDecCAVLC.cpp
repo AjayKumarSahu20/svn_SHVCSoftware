@@ -879,7 +879,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG( uiCode, "vps_nuh_layer_id_present_flag" ); vps->setNuhLayerIdPresentFlag(uiCode ? true : false);
   vps->setLayerIdInNuh(0, 0);
   vps->setLayerIdInVps(0, 0);
-  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  for(i = 1; i < vps->getMaxLayers(); i++)
   {
     if( vps->getNuhLayerIdPresentFlag() )
     {
