@@ -81,7 +81,9 @@ Void TAppEncTop::xInitLibCfg()
   {
     vps.setTemporalNestingFlag(true);
   }
+#if !VPS_RENAME
   vps.setMaxLayers                        ( 1 );
+#endif
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
     vps.setNumReorderPics                 ( m_numReorderPics[i], i );
@@ -691,6 +693,9 @@ Void TAppEncTop::xInitLib()
   {
     m_acTEncTop[layer].init();
   }
+#if VPS_RENAME
+  m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
+#endif
 #if VPS_EXTN_OP_LAYER_SETS
   TComVPS* vps = m_acTEncTop[0].getVPS();
   vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
