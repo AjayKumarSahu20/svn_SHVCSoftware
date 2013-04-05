@@ -689,7 +689,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 
   WRITE_FLAG( vps->getNuhLayerIdPresentFlag(),         "vps_nuh_layer_id_present_flag" );
-  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  for(i = 1; i < vps->getMaxLayers(); i++)
   {
     if( vps->getNuhLayerIdPresentFlag() )
     {
