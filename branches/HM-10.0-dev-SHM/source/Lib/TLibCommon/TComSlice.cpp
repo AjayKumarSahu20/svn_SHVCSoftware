@@ -1484,6 +1484,18 @@ TComVPS::TComVPS()
     m_uiMaxDecPicBuffering[i] = 0; 
     m_uiMaxLatencyIncrease[i] = 0;
   }
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  m_avcBaseLayerFlag = false;
+  m_splittingFlag = false;
+  ::memset(m_scalabilityMask, 0, sizeof(m_scalabilityMask));
+  ::memset(m_dimensionIdLen, 0, sizeof(m_dimensionIdLen));
+  m_nuhLayerIdPresentFlag = false;
+  ::memset(m_layerIdInNuh, 0, sizeof(m_layerIdInNuh));
+  ::memset(m_dimensionId, 0, sizeof(m_dimensionId));
+
+  m_numScalabilityTypes = 0;
+  ::memset(m_layerIdInVps, 0, sizeof(m_layerIdInVps));
+#endif
 #if VPS_EXTN_PROFILE_INFO
   ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
   ::memset(m_profileLayerSetRef, 0, sizeof(m_profileLayerSetRef));

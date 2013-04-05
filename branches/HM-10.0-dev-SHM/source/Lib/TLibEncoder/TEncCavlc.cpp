@@ -672,6 +672,36 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  UInt i = 0, j = 0;
+
+  WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
+  WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
+
+  for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+  {
+    WRITE_FLAG( vps->getScalabilityMask(i),            "scalability_mask[i]" );
+  }
+
+  for(j = 0; j < vps->getNumScalabilityTypes(); j++)
+  {
+    WRITE_CODE( vps->getDimensionIdLen(j) - 1, 3,      "dimension_id_len_minus1[j]" );
+  }
+
+  WRITE_FLAG( vps->getNuhLayerIdPresentFlag(),         "vps_nuh_layer_id_present_flag" );
+  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  {
+    if( vps->getNuhLayerIdPresentFlag() )
+    {
+      WRITE_CODE( vps->getLayerIdInNuh(i),     6,      "layer_id_in_nuh[i]" );
+    }
+    for(j = 0; j < vps->getNumScalabilityTypes(); j++)
+    {
+      UInt bits = vps->getDimensionIdLen(j);
+      WRITE_CODE( vps->getDimensionId(i, j),   bits,   "dimension_id[i][j]" );
+    }
+  }
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
   for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)

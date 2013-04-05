@@ -708,6 +708,38 @@ Void TAppEncTop::xInitLib()
       vps->setLayerIdIncludedFlag(true, setId, layerId);
     }
   }
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  UInt i = 0, dimIdLen = 0;
+  vps->setAvcBaseLayerFlag(false);
+  vps->setSplittingFlag(false);
+  for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+  {
+    vps->setScalabilityMask(i, false);
+  }
+  if(m_numLayers > 1) 
+  {
+    vps->setScalabilityMask(1, true); // Only turn on spatial/SNR scalability
+    vps->setNumScalabilityTypes(1);
+  }
+  else
+  {
+    vps->setNumScalabilityTypes(0);
+  }
+  while((1 << dimIdLen) < m_numLayers)
+  {
+    dimIdLen++;
+  }
+  vps->setDimensionIdLen(0, dimIdLen);
+  vps->setNuhLayerIdPresentFlag(false);
+  vps->setLayerIdInNuh(0, 0);
+  vps->setLayerIdInVps(0, 0);
+  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  {
+    vps->setLayerIdInNuh(i, i);
+    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+    vps->setDimensionId(i, 0, i);
+  }
+#endif
 #if VPS_EXTN_PROFILE_INFO
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
   for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
