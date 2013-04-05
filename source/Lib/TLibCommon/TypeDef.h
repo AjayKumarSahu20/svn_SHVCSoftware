@@ -46,6 +46,7 @@
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
+#define VPS_EXTN_MASK_AND_DIM_INFO       0      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #endif
@@ -136,6 +137,9 @@
 #define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
 #define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
 
+#if VPS_EXTN_MASK_AND_DIM_INFO
+#define MAX_VPS_NUM_SCALABILITY_TYPES             16
+#endif
 #if VPS_RENAME
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
 #define MAX_VPS_LAYER_ID_PLUS1                    2

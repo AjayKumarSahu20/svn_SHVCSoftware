@@ -515,6 +515,19 @@ private:
   // ------------------------------------------
   // Variables related to VPS extensions
   // ------------------------------------------
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  Bool       m_avcBaseLayerFlag;                                // For now, always set to true.
+  Bool       m_splittingFlag;
+  Bool       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
+  UInt       m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
+  Bool       m_nuhLayerIdPresentFlag;
+  UInt       m_layerIdInNuh[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer ID in the VPS with layer_id_in_nuh
+  UInt       m_dimensionId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
+
+  // Below are derived variables
+  UInt       m_numScalabilityTypes;
+  UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
@@ -593,6 +606,34 @@ public:
 #endif
 #if L0043_TIMING_INFO
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
+#endif
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
+  Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
+
+  Bool   getSplittingFlag()                                     { return m_splittingFlag;          }
+  Void   setSplittingFlag(Bool x)                               { m_splittingFlag = x;             }
+
+  Bool   getScalabilityMask(Int id)                             { return m_scalabilityMask[id];    }
+  Void   setScalabilityMask(Int id, Bool x)                     { m_scalabilityMask[id] = x;       }
+
+  UInt   getDimensionIdLen(Int id)                              { return m_dimensionIdLen[id];     }
+  Void   setDimensionIdLen(Int id, UInt x)                      { m_dimensionIdLen[id] = x;        }
+
+  Bool   getNuhLayerIdPresentFlag()                             { return m_nuhLayerIdPresentFlag;  }
+  Void   setNuhLayerIdPresentFlag(Bool x)                       { m_nuhLayerIdPresentFlag = x;     }
+
+  UInt   getLayerIdInNuh(Int id)                                { return m_layerIdInNuh[id];       }
+  Void   setLayerIdInNuh(Int id, UInt x)                        { m_layerIdInNuh[id] = x;          }
+
+  UInt   getDimensionId(Int lyrId, Int id)                      { return m_dimensionId[lyrId][id]; }
+  Void   setDimensionId(Int lyrId, Int id, UInt x)              { m_dimensionId[lyrId][id] = x;    }
+
+  UInt   getNumScalabilityTypes()                               { return m_numScalabilityTypes;    }
+  Void   setNumScalabilityTypes(UInt x)                         { m_numScalabilityTypes = x;       }
+
+  UInt   getLayerIdInVps(Int id)                                { return m_layerIdInVps[id];       }
+  Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
 #endif
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }

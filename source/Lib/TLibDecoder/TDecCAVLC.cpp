@@ -844,6 +844,62 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {  
   UInt uiCode;
   // ... More syntax elements to be parsed here
+#if VPS_EXTN_MASK_AND_DIM_INFO
+  UInt numScalabilityTypes = 0, i = 0, j = 0;
+
+  READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
+  READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
+
+  for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+  {
+    READ_FLAG( uiCode, "scalability_mask[i]" ); vps->setScalabilityMask(i, uiCode ? true : false);
+    numScalabilityTypes += uiCode;
+    if( i != 1 )
+    {
+      // Multiview and reserved masks are not used in this version of software
+      assert( uiCode == 0 );
+    }
+  }
+  vps->setNumScalabilityTypes(numScalabilityTypes);
+
+  for(j = 0; j < numScalabilityTypes; j++)
+  {
+    READ_CODE( 3, uiCode, "dimension_id_len_minus1[j]" ); vps->setDimensionIdLen(j, uiCode + 1);
+  }
+  if(vps->getSplittingFlag())
+  {
+    UInt numBits = 0;
+    for(j = 0; j < numScalabilityTypes; j++)
+    {
+      numBits += vps->getDimensionIdLen(j);
+    }
+    assert( numBits <= 6 );
+  }
+
+  READ_FLAG( uiCode, "vps_nuh_layer_id_present_flag" ); vps->setNuhLayerIdPresentFlag(uiCode ? true : false);
+  vps->setLayerIdInNuh(0, 0);
+  vps->setLayerIdInVps(0, 0);
+  for(i = 1; i <= vps->getMaxLayerId(); i++) // TODO: we should use vps->getMaxLayers(), but currently it is always set to 1
+  {
+    if( vps->getNuhLayerIdPresentFlag() )
+    {
+      READ_CODE( 6, uiCode, "layer_id_in_nuh[i]" ); vps->setLayerIdInNuh(i, uiCode);
+      assert( uiCode > vps->getLayerIdInNuh(i-1) );
+    }
+    else
+    {
+      vps->setLayerIdInNuh(i, i);
+    }
+    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+
+    for(j = 0; j < numScalabilityTypes; j++)
+    {
+      READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
+      assert( uiCode <= vps->getMaxLayerId() );
+    }
+  }
+#endif
+
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
