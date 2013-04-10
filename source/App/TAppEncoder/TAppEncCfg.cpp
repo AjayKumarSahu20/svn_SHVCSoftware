@@ -291,6 +291,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_FrameRate     [MAX_LAYERS];
   Int*    cfg_IntraPeriod   [MAX_LAYERS];
   Int*    cfg_conformanceMode  [MAX_LAYERS];
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int*    cfg_numDirectRefLayers [MAX_LAYERS];
+  string cfg_refLayerIds   [MAX_LAYERS];
+  string* cfg_refLayerIdsPtr   [MAX_LAYERS];
+#endif
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -301,6 +306,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+#if VPS_EXTN_DIRECT_REF_LAYERS
+    cfg_numDirectRefLayers  [layer] = &m_acLayerCfg[layer].m_numDirectRefLayers;
+    cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
+#endif
   }
 #if AVC_SYNTAX
   string  cfg_BLSyntaxFile;
@@ -336,6 +345,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  ("NumDirectRefLayers%d",    cfg_numDirectRefLayers, -1, MAX_LAYERS, "Number of direct reference layers")
+  ("RefLayerIds%d",           cfg_refLayerIdsPtr, string(""), MAX_LAYERS, "direct reference layer IDs")
+#endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
 
@@ -716,6 +729,39 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_pRowHeight = NULL;
   }
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    Char* pRefLayerIds = cfg_refLayerIds[layer].empty() ? NULL: strdup(cfg_refLayerIds[layer].c_str());
+    if( m_acLayerCfg[layer].m_numDirectRefLayers > 0 )
+    {
+      char *refLayerId;
+      int  i=0;
+      m_acLayerCfg[layer].m_refLayerIds = new Int[m_acLayerCfg[layer].m_numDirectRefLayers];
+      refLayerId = strtok(pRefLayerIds, " ,-");
+      while(refLayerId != NULL)
+      {
+        if( i >= m_acLayerCfg[layer].m_numDirectRefLayers )
+        {
+          printf( "The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          exit( EXIT_FAILURE );
+        }
+        *( m_acLayerCfg[layer].m_refLayerIds + i ) = atoi( refLayerId );
+        refLayerId = strtok(NULL, " ,-");
+        i++;
+      }
+      if( i < m_acLayerCfg[layer].m_numDirectRefLayers )
+      {
+        printf( "The width of some columns is not defined.\n" );
+        exit( EXIT_FAILURE );
+      }
+    }
+    else
+    {
+      m_acLayerCfg[layer].m_refLayerIds = NULL;
+    }
+  }
+#endif
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   readBoolString(cfg_bitRateInfoPresentFlag, m_bitRatePicRateMaxTLayers, m_bitRateInfoPresentFlag, "bit rate info. present flag" );
   readIntString (cfg_avgBitRate,             m_bitRatePicRateMaxTLayers, m_avgBitRate,             "avg. bit rate"               );
@@ -1510,7 +1556,19 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5 , "SEIFramePackingType must be in rage 3 to 5");
   }
 #endif
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  xConfirmPara( (m_acLayerCfg[0].m_numDirectRefLayers != 0) && (m_acLayerCfg[0].m_numDirectRefLayers != -1), "Layer 0 cannot have any reference layers" );
+  // NOTE: m_numDirectRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
+  for(Int layer = 1; layer < MAX_LAYERS; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_numDirectRefLayers > layer, "Cannot reference more layers than before current layer");
+    for(Int i = 0; i < m_acLayerCfg[layer].m_numDirectRefLayers; i++)
+    {
+      xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] > layer, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] == layer, "Cannot reference the current layer itself");
+    }
+  }
+#endif
 #undef xConfirmPara
   if (check_failed)
   {

@@ -933,7 +933,25 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }  
 #endif
-  // ... More syntax elements to be parsed here
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // For layer 0
+  vps->setNumDirectRefLayers(0, 0);
+  // For other layers
+  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    UInt numDirectRefLayers = 0;
+    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      READ_FLAG(uiCode, "direct_dependency_flag[i][j]" ); vps->setDirectDependencyFlag(layerCtr, refLayerCtr, uiCode? true : false);
+      if(uiCode)
+      {
+        vps->setRefLayerId(layerCtr, numDirectRefLayers, refLayerCtr);
+        numDirectRefLayers++;
+      }
+    }
+    vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
+  }
+#endif
 }
 #endif
 

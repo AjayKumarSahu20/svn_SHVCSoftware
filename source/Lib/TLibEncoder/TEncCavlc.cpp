@@ -730,7 +730,15 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
-  // ... More syntax elements to be written here
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
+    }
+  }
+#endif
 }
 #endif
 

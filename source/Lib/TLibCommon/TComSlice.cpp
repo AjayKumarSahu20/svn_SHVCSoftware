@@ -1506,6 +1506,11 @@ TComVPS::TComVPS()
   ::memset(m_outputLayerSetIdx, 0, sizeof(m_outputLayerSetIdx));
   ::memset(m_outputLayerFlag, 0, sizeof(m_outputLayerFlag));
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  ::memset(m_directDependencyFlag, 0, sizeof(m_directDependencyFlag));
+  ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));
+  ::memset(m_refLayerId,           0, sizeof(m_refLayerId          ));
+#endif
 }
 
 TComVPS::~TComVPS()

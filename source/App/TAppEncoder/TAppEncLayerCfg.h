@@ -41,7 +41,10 @@ protected:
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       *m_refLayerIds;
+  Int       m_numDirectRefLayers;
+#endif
 #if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
@@ -79,7 +82,11 @@ public:
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int     getNumDirectRefLayers()     {return m_numDirectRefLayers;}
+  Int*    getRefLayerIds()            {return m_refLayerIds;      }
+  Int     getRefLayerId(Int i)        {return m_refLayerIds[i];   }
+#endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}
