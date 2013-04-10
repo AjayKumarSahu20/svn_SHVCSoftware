@@ -540,7 +540,11 @@ private:
   UInt       m_numOutputLayerSets;
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  // .. More declarations here
+#endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Bool       m_directDependencyFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
+  UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
 
 public:
@@ -655,6 +659,17 @@ public:
 
   Bool   getOutputLayerFlag(Int layerSet, Int layerId)          { return m_outputLayerFlag[layerSet][layerId]; }
   Void   setOutputLayerFlag(Int layerSet, Int layerId, Bool x)  { m_outputLayerFlag[layerSet][layerId] = x;    }
+#endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // Direct dependency of layers
+  Bool   getDirectDependencyFlag(Int i, Int j)                  { return m_directDependencyFlag[i][j]; }
+  Void   setDirectDependencyFlag(Int i, Int j, Bool x)          { m_directDependencyFlag[i][j] = x;    }
+  
+  UInt   getNumDirectRefLayers(Int i)                                { return m_numDirectRefLayers[i];         }
+  Void   setNumDirectRefLayers(Int i, UInt x)                        { m_numDirectRefLayers[i] = x;            }
+
+  UInt   getRefLayerId(Int i, Int j)                            { return m_refLayerId[i][j];           }
+  Void   setRefLayerId(Int i, Int j, UInt x)                    { m_refLayerId[i][j] = x;              }
 #endif
 };
 

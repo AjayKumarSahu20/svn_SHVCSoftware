@@ -139,7 +139,25 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+    if(layer)
+    {
+      if(m_acLayerCfg[layer].getNumDirectRefLayers() == -1)
+      {
+        // Not included in the configuration file; assume that each layer depends on previous layer
+        m_acTEncTop[layer].setNumDirectRefLayers       (1);      // One ref. layer
+        m_acTEncTop[layer].setRefLayerId               (0, layer - 1);   // Previous layer
+      }
+      else
+      {
+        m_acTEncTop[layer].setNumDirectRefLayers       ( m_acLayerCfg[layer].getNumDirectRefLayers() );      
+        for(Int i = 0; i < m_acTEncTop[layer].getNumDirectRefLayers(); i++)
+        {
+          m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
+        }        
+      }
+    }
+#endif
     //===== Slice ========
 
     //====== Loop/Deblock Filter ========
@@ -759,6 +777,27 @@ Void TAppEncTop::xInitLib()
     if(vps->getLayerIdIncludedFlag(lsIdx, layer))
     {
       vps->setOutputLayerFlag(lsIdx, layer, layer == (vps->getMaxLayerId()));
+    }
+  }
+#endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // Direct reference layers
+  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
+    for(Int i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
+    }
+    // Set direct dependency flag
+    // Initialize flag to 0
+    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      vps->setDirectDependencyFlag( layerCtr, refLayerCtr, false );
+    }
+    for(Int i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
   }
 #endif

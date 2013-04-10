@@ -141,6 +141,10 @@ protected:
 
   Int       m_maxTempLayer;                      ///< Max temporal layer
   Bool m_useAMP;
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       m_numDirectRefLayers;
+  Int       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
+#endif
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
@@ -349,6 +353,13 @@ public:
 
   Bool      getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
   Void      setMaxTempLayer                 ( Int maxTempLayer )            { m_maxTempLayer = maxTempLayer;      }
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
+  Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
+
+  Int       getRefLayerId                   (Int i)                         { return m_refLayerId[i];           }
+  Void      setRefLayerId                   (Int i, Int refLayerId)         { m_refLayerId[i] = refLayerId;     }
+#endif
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
   Void      setQuadtreeTULog2MinSize        ( UInt  u )      { m_uiQuadtreeTULog2MinSize = u; }
