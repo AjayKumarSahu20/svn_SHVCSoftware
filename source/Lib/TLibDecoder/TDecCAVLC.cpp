@@ -920,11 +920,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
-  for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+  for(i = 0; i < vps->getNumOutputLayerSets(); i++)
   {
     READ_UVLC( uiCode,           "vps_output_layer_set_idx[i]"); vps->setOutputLayerSetIdx(i, uiCode);
     Int lsIdx = vps->getOutputLayerSetIdx(i);
-    for(Int j = 0; j <= vps->getMaxLayerId(); j++)
+    for(j = 0; j <= vps->getMaxLayerId(); j++)
     {
       if(vps->getLayerIdIncludedFlag(lsIdx, j))
       {
