@@ -785,7 +785,7 @@ Void TAppEncTop::xInitLib()
   for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
     vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
-    for(Int i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
       vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
     }
@@ -795,7 +795,7 @@ Void TAppEncTop::xInitLib()
     {
       vps->setDirectDependencyFlag( layerCtr, refLayerCtr, false );
     }
-    for(Int i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
       vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
