@@ -717,11 +717,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
-  for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+  for(i = 0; i < vps->getNumOutputLayerSets(); i++)
   {
     WRITE_UVLC( vps->getOutputLayerSetIdx(i),           "vps_output_layer_set_idx[i]");
     Int lsIdx = vps->getOutputLayerSetIdx(i);
-    for(Int j = 0; j <= vps->getMaxLayerId(); j++)
+    for(j = 0; j <= vps->getMaxLayerId(); j++)
     {
       if(vps->getLayerIdIncludedFlag(lsIdx, j))
       {
