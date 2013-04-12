@@ -74,25 +74,25 @@ TAppEncTop::~TAppEncTop()
 #if SVC_EXTENSION
 Void TAppEncTop::xInitLibCfg()
 {
-  TComVPS vps;
+  TComVPS* vps = m_acTEncTop[0].getVPS();
 
-  vps.setMaxTLayers                       ( m_maxTempLayer );
+  vps->setMaxTLayers                       ( m_maxTempLayer );
   if (m_maxTempLayer == 1)
   {
-    vps.setTemporalNestingFlag(true);
+    vps->setTemporalNestingFlag(true);
   }
 #if !VPS_RENAME
   vps.setMaxLayers                        ( 1 );
 #endif
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
-    vps.setNumReorderPics                 ( m_numReorderPics[i], i );
-    vps.setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
+    vps->setNumReorderPics                 ( m_numReorderPics[i], i );
+    vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
   }
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    m_acTEncTop[layer].setVPS(&vps);
+    //m_acTEncTop[layer].setVPS(&vps);
     m_acTEncTop[layer].setFrameRate                    ( m_acLayerCfg[layer].getFrameRate() );
     m_acTEncTop[layer].setFrameSkip                    ( m_FrameSkip );
     m_acTEncTop[layer].setSourceWidth                  ( m_acLayerCfg[layer].getSourceWidth() );

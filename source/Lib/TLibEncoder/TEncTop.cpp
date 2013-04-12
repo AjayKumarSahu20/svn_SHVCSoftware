@@ -47,6 +47,7 @@
 #if SVC_EXTENSION  
 Int TEncTop::m_iSPSIdCnt = 0;
 Int TEncTop::m_iPPSIdCnt = 0;
+TComVPS TEncCfg::m_cVPS;
 #endif
 
 // ====================================================================================================================
