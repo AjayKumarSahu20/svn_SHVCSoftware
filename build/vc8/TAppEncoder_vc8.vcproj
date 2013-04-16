@@ -339,10 +339,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\App\TAppEncoder\TAppEncLayerCfg.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\App\TAppEncoder\TAppEncTop.cpp"
 				>
 			</File>
@@ -353,10 +349,6 @@
 			>
 			<File
 				RelativePath="..\..\source\App\TAppEncoder\TAppEncCfg.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\App\TAppEncoder\TAppEncLayerCfg.h"
 				>
 			</File>
 			<File

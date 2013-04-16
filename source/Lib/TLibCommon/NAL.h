@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,57 +45,34 @@ class TComOutputBitstream;
 struct NALUnit
 {
   NalUnitType m_nalUnitType; ///< nal_unit_type
-#if !REMOVE_NAL_REF_FLAG
-  Bool        m_nalRefFlag;  ///< nal_ref_flag
-#endif
   UInt        m_temporalId;  ///< temporal_id
 #if SVC_EXTENSION
   UInt        m_layerId;   ///< layer id
 #endif
-#if TARGET_DECLAYERID_SET
   UInt        m_reservedZero6Bits; ///< reserved_zero_6bits
-#endif
 
   /** construct an NALunit structure with given header values. */
   NALUnit(
     NalUnitType nalUnitType,
-#if !REMOVE_NAL_REF_FLAG
-    Bool        nalRefFlag,
-#endif
-#if TARGET_DECLAYERID_SET
     Int         temporalId = 0,
 #if SVC_EXTENSION
     UInt        layerId = 0,
 #endif
     Int         reservedZero6Bits = 0)
-#else
-#if SVC_EXTENSION
-    UInt        layerId = 0,
-    Int         temporalId = 0)
-#else
-    Int         temporalId = 0)
-#endif
-#endif
     :m_nalUnitType (nalUnitType)
-#if !REMOVE_NAL_REF_FLAG
-    ,m_nalRefFlag  (nalRefFlag)
-#endif
     ,m_temporalId  (temporalId)
 #if SVC_EXTENSION
     ,m_layerId   (layerId)
 #endif
-#if TARGET_DECLAYERID_SET
     ,m_reservedZero6Bits(reservedZero6Bits)
-#endif
   {}
 
   /** default constructor - no initialization; must be perfomed by user */
   NALUnit() {}
 
   /** returns true if the NALunit is a slice NALunit */
-  bool isSlice()
+  Bool isSlice()
   {
-#if NAL_UNIT_TYPES_J1003_D7
     return m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA
@@ -108,19 +85,23 @@ struct NALUnit
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_DLP
+        || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_TFD;
-#else
-    return m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRANT
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_CRA
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TLA
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE_TFD
-        || m_nalUnitType == NAL_UNIT_CODED_SLICE;
-#endif
   }
+#if L0045_NON_NESTED_SEI_RESTRICTIONS
+  Bool isSei()
+  {
+    return m_nalUnitType == NAL_UNIT_SEI 
+        || m_nalUnitType == NAL_UNIT_SEI_SUFFIX;
+  }
+
+  Bool isVcl()
+  {
+    return ( (UInt)m_nalUnitType < 32 );
+  }
+#endif
 };
 
 struct OutputNALUnit;

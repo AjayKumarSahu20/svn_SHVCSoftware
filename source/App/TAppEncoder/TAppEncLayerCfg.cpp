@@ -1,5 +1,5 @@
 /** \file     TAppEncLayerCfg.cpp
-    \brief    Handle encoder configuration parameters
+\brief    Handle encoder configuration parameters
 */
 
 #include <stdlib.h>
@@ -27,12 +27,12 @@ namespace po = df::program_options_lite;
 // ====================================================================================================================
 #if SVC_EXTENSION
 TAppEncLayerCfg::TAppEncLayerCfg()
-:m_cInputFile(string("")),
- m_cReconFile(string("")),
- m_croppingMode( 0 ),
- m_aidQP(NULL)
+  :m_cInputFile(string("")),
+  m_cReconFile(string("")),
+  m_conformanceMode( 0 ),
+  m_aidQP(NULL)
 {
-  m_cropLeft = m_cropRight = m_cropTop = m_cropBottom = 0;
+  m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
 }
 
@@ -58,9 +58,9 @@ Void TAppEncLayerCfg::destroy()
 // ====================================================================================================================
 
 /** \param  argc        number of arguments
-    \param  argv        array of arguments
-    \retval             true when success
- */
+\param  argv        array of arguments
+\retval             true when success
+*/
 bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
 {
   string cfg_InputFile;
@@ -68,26 +68,26 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   string cfg_dQPFile;
   po::Options opts;
   opts.addOptions()
-  ("InputFile,i",           cfg_InputFile,  string(""), "original YUV input file name")
+    ("InputFile,i",           cfg_InputFile,  string(""), "original YUV input file name")
 #if AVC_BASE
-  ("InputBLFile,-ibl",      cfg_InputFile,  string(""), "original YUV input file name")
+    ("InputBLFile,-ibl",      cfg_InputFile,  string(""), "original YUV input file name")
 #endif
-  ("ReconFile,o",           cfg_ReconFile,  string(""), "reconstructed YUV output file name")
-  ("SourceWidth,-wdt",      m_iSourceWidth,  0, "Source picture width")
-  ("SourceHeight,-hgt",     m_iSourceHeight, 0, "Source picture height")
-  ("CroppingMode",          m_croppingMode,  0, "Cropping mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-  ("CropLeft",              m_cropLeft,      0, "Left cropping/padding for cropping mode 3")
-  ("CropRight",             m_cropRight,     0, "Right cropping/padding for cropping mode 3")
-  ("CropTop",               m_cropTop,       0, "Top cropping/padding for cropping mode 3")
-  ("CropBottom",            m_cropBottom,    0, "Bottom cropping/padding for cropping mode 3")
-  ("HorizontalPadding,-pdx",m_aiPad[0],      0, "horizontal source padding for cropping mode 2")
-  ("VerticalPadding,-pdy",  m_aiPad[1],      0, "vertical source padding for cropping mode 2")
-  ("IntraPeriod,-ip",       m_iIntraPeriod,  -1, "intra period in frames, (-1: only first frame)")
-  ("FrameRate,-fr",         m_iFrameRate,    0, "Frame rate")
-  ("dQPFile,m",             cfg_dQPFile, string(""), "dQP file name")
-  ("QP,q",                  m_fQP,          30.0, "Qp value, if value is float, QP is switched once during encoding")
-  ;
-  
+    ("ReconFile,o",           cfg_ReconFile,  string(""), "reconstructed YUV output file name")
+    ("SourceWidth,-wdt",      m_iSourceWidth,  0, "Source picture width")
+    ("SourceHeight,-hgt",     m_iSourceHeight, 0, "Source picture height")
+    ("CroppingMode",          m_conformanceMode,  0, "Cropping mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+    ("CropLeft",              m_confLeft,      0, "Left cropping/padding for cropping mode 3")
+    ("CropRight",             m_confRight,     0, "Right cropping/padding for cropping mode 3")
+    ("CropTop",               m_confTop,       0, "Top cropping/padding for cropping mode 3")
+    ("CropBottom",            m_confBottom,    0, "Bottom cropping/padding for cropping mode 3")
+    ("HorizontalPadding,-pdx",m_aiPad[0],      0, "horizontal source padding for cropping mode 2")
+    ("VerticalPadding,-pdy",  m_aiPad[1],      0, "vertical source padding for cropping mode 2")
+    ("IntraPeriod,-ip",       m_iIntraPeriod,  -1, "intra period in frames, (-1: only first frame)")
+    ("FrameRate,-fr",         m_iFrameRate,    0, "Frame rate")
+    ("dQPFile,m",             cfg_dQPFile, string(""), "dQP file name")
+    ("QP,q",                  m_fQP,          30.0, "Qp value, if value is float, QP is switched once during encoding")
+    ;
+
   po::setDefaults(opts);
   po::parseConfigFile(opts, cfgFileName);
 
@@ -122,26 +122,23 @@ Void TAppEncLayerCfg::xPrintParameter()
 #if AVC_SYNTAX
   printf("Base layer input file         : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
 #endif
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_cropLeft - m_cropRight, m_iSourceHeight - m_cropTop - m_cropBottom, m_iFrameRate );
+  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
   printf("QP                            : %5.2f\n", m_fQP );
   printf("Intra period                  : %d\n", m_iIntraPeriod );
-#if SVC_EXTENSION
-  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d",
-          m_cAppEncCfg->getWaveFrontSynchro(), m_iWaveFrontSubstreams);
-#endif
+  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_cAppEncCfg->getWaveFrontSynchro(), m_iWaveFrontSubstreams);
 }
 
 Bool confirmPara(Bool bflag, const char* message);
 
 Bool TAppEncLayerCfg::xCheckParameter()
 {
-  switch (m_croppingMode)
+  switch (m_conformanceMode)
   {
   case 0:
     {
       // no cropping or padding
-      m_cropLeft = m_cropRight = m_cropTop = m_cropBottom = 0;
+      m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
       m_aiPad[1] = m_aiPad[0] = 0;
       break;
     }
@@ -151,13 +148,13 @@ Bool TAppEncLayerCfg::xCheckParameter()
       Int minCuSize = m_cAppEncCfg->getMaxCUHeight() >> (m_cAppEncCfg->getMaxCUDepth() - 1);
       if (m_iSourceWidth % minCuSize)
       {
-        m_aiPad[0] = m_cropRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
-        m_iSourceWidth  += m_cropRight;
+        m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
+        m_iSourceWidth  += m_confRight;
       }
       if (m_iSourceHeight % minCuSize)
       {
-        m_aiPad[1] = m_cropBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
-        m_iSourceHeight += m_cropBottom;
+        m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
+        m_iSourceHeight += m_confBottom;
       }
       break;
     }
@@ -166,14 +163,14 @@ Bool TAppEncLayerCfg::xCheckParameter()
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
-      m_cropRight  = m_aiPad[0];
-      m_cropBottom = m_aiPad[1];
+      m_confRight  = m_aiPad[0];
+      m_confBottom = m_aiPad[1];
       break;
     }
   case 3:
     {
-      // cropping
-      if ((m_cropLeft == 0) && (m_cropRight == 0) && (m_cropTop == 0) && (m_cropBottom == 0))
+      // conformance
+      if ((m_confLeft == 0) && (m_confRight == 0) && (m_confTop == 0) && (m_confBottom == 0))
       {
         fprintf(stderr, "Warning: Cropping enabled, but all cropping parameters set to zero\n");
       }
@@ -199,7 +196,7 @@ Bool TAppEncLayerCfg::xCheckParameter()
   if ( m_iQP < m_fQP )
   {
     Int iSwitchPOC = (Int)( iFrameToBeEncoded - (m_fQP - m_iQP)*iFrameToBeEncoded + 0.5 );
-    
+
 
     iSwitchPOC = (Int)( (Double)iSwitchPOC / iGOPSize + 0.5 )*iGOPSize;
     for ( Int i=iSwitchPOC; i<iFrameToBeEncoded + iGOPSize + 1; i++ )
@@ -223,15 +220,24 @@ Bool TAppEncLayerCfg::xCheckParameter()
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
 
-  xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepth() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
+  xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 
-  
-#if SVC_EXTENSION
+
   m_iWaveFrontSubstreams = m_cAppEncCfg->getWaveFrontSynchro() ? (m_iSourceHeight + m_cAppEncCfg->getMaxCUHeight() - 1) / m_cAppEncCfg->getMaxCUHeight() : 1;
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
   xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_cAppEncCfg->getWaveFrontSynchro(), "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
-#endif
 
+  //chekc parameters
+  xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
+
+  xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
+
+  xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
 #undef xConfirmPara
   return check_failed;
 }

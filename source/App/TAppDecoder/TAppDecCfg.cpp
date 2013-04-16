@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ namespace po = df::program_options_lite;
  */
 Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 {
-  bool do_help = false;
+  Bool do_help = false;
   string cfg_BitstreamFile;
 #if SVC_EXTENSION
   string cfg_ReconFile [MAX_LAYERS];
@@ -77,9 +77,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   string cfg_BLSyntaxFile;
 #endif
-#if TARGET_DECLAYERID_SET
   string cfg_TargetDecLayerIdSetFile;
-#endif
 
   po::Options opts;
   opts.addOptions()
@@ -107,24 +105,23 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("BLFrames,-fr",          m_iBLFrames,       0, "BL number of frames")
 #endif
   ("SkipFrames,s", m_iSkipFrame, 0, "number of frames to skip before random access")
-  ("OutputBitDepth,d", m_outputBitDepth, 0u, "bit depth of YUV output file (use 0 for native depth)")
+  ("OutputBitDepth,d", m_outputBitDepthY, 0, "bit depth of YUV output luma component (default: use 0 for native depth)")
+  ("OutputBitDepthC,d", m_outputBitDepthC, 0, "bit depth of YUV output chroma component (default: use 0 for native depth)")
 #if SVC_EXTENSION
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
 #endif 
   ("MaxTemporalLayer,t", m_iMaxTemporalLayer, -1, "Maximum Temporal Layer to be decoded. -1 to decode all layers")
-  ("SEIpictureDigest", m_decodedPictureHashSEIEnabled, 1, "Control handling of decoded picture hash SEI messages\n"
-                                              "\t3: checksum\n"
-                                              "\t2: CRC\n"
-                                              "\t1: MD5\n"
-                                              "\t0: ignore")
-#if TARGET_DECLAYERID_SET
+  ("SEIDecodedPictureHash", m_decodedPictureHashSEIEnabled, 1, "Control handling of decoded picture hash SEI messages\n"
+                                              "\t1: check hash in SEI messages if available in the bitstream\n"
+                                              "\t0: ignore SEI message")
+  ("SEIpictureDigest", m_decodedPictureHashSEIEnabled, 1, "deprecated alias for SEIDecodedPictureHash")
   ("TarDecLayerIdSetFile,l", cfg_TargetDecLayerIdSetFile, string(""), "targetDecLayerIdSet file name. The file should include white space separated LayerId values to be decoded. Omitting the option or a value of -1 in the file decodes all layers.")
-#endif
+  ("RespectDefDispWindow,w", m_respectDefDispWindow, 0, "Only output content inside the default display window\n")
   ;
   po::setDefaults(opts);
-  const list<const char*>& argv_unhandled = po::scanArgv(opts, argc, (const char**) argv);
+  const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
-  for (list<const char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
+  for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
   {
     fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
   }
@@ -160,7 +157,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     return false;
   }
 
-#if TARGET_DECLAYERID_SET
   if ( !cfg_TargetDecLayerIdSetFile.empty() )
   {
     FILE* targetDecLayerIdSetFile = fopen ( cfg_TargetDecLayerIdSetFile.c_str(), "r" );
@@ -205,7 +201,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
       fprintf(stderr, "File %s could not be opened. Using all LayerIds as default.\n", cfg_TargetDecLayerIdSetFile.c_str() );
     }
   }
-#endif
 
   return true;
 }

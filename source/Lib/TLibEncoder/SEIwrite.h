@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,26 +46,23 @@ public:
   SEIWriter() {};
   virtual ~SEIWriter() {};
 
-  void writeSEImessage(TComBitIf& bs, const SEI& sei);
+  void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 
 protected:
-  Void xWriteSEIpayloadData(const SEI& sei);
+  Void xWriteSEIpayloadData(const SEI& sei, TComSPS *sps);
   Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
-#if ACTIVE_PARAMETER_SETS_SEI_MESSAGE 
   Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
-#endif
+  Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
   Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
-#if BUFFERING_PERIOD_AND_TIMING_SEI
-  Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei);
-  Void xWriteSEIPictureTiming(const SEIPictureTiming& sei);
+  Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps);
+  Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps);
   TComSPS *m_pSPS;
-#endif
-#if RECOVERY_POINT_SEI
   Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
-#endif
-#if RECOVERY_POINT_SEI || BUFFERING_PERIOD_AND_TIMING_SEI
+  Void xWriteSEIFramePacking(const SEIFramePacking& sei);
+  Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
+  Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
+  Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteByteAlign();
-#endif
 };
 
 //! \}

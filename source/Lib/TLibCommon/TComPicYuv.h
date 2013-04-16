@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,10 +88,7 @@ private:
   Int   m_iChromaMarginY;
   
 #if SVC_UPSAMPLING
-  Int   m_picCropLeftOffset;
-  Int   m_picCropRightOffset;
-  Int   m_picCropTopOffset;
-  Int   m_picCropBottomOffset;
+  Window  m_conformanceWindow;
 #endif
 
   Bool  m_bIsBorderExtended;
@@ -123,7 +120,7 @@ public:
   
   Int   getWidth    ()     { return  m_iPicWidth;    }
   Int   getHeight   ()     { return  m_iPicHeight;   }
-
+  
 #if SVC_EXTENSION
   Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
 #endif
@@ -136,8 +133,6 @@ public:
   
   Int   getLumaMargin   () { return m_iLumaMarginX;  }
   Int   getChromaMargin () { return m_iChromaMarginX;}
-  
-  Void  getLumaMinMax( Int* pMin, Int* pMax );
   
   // ------------------------------------------------------------------------------------------------
   //  Access function for picture buffer
@@ -162,14 +157,8 @@ public:
   Pel*  getCrAddr   ( Int iCuAddr, Int uiAbsZorderIdx ) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
   
 #if SVC_UPSAMPLING
-  Int  getPicCropLeftOffset() const        { return m_picCropLeftOffset; }
-  Void setPicCropLeftOffset(Int val)       { m_picCropLeftOffset = val; }
-  Int  getPicCropRightOffset() const       { return m_picCropRightOffset; }
-  Void setPicCropRightOffset(Int val)      { m_picCropRightOffset = val; }
-  Int  getPicCropTopOffset() const         { return m_picCropTopOffset; }
-  Void setPicCropTopOffset(Int val)        { m_picCropTopOffset = val; }
-  Int  getPicCropBottomOffset() const      { return m_picCropBottomOffset; }
-  Void setPicCropBottomOffset(Int val)     { m_picCropBottomOffset = val; }
+  Window& getConformanceWindow()                           { return  m_conformanceWindow;             }
+  Void    setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
 #endif
 
   // ------------------------------------------------------------------------------------------------
@@ -186,18 +175,15 @@ public:
   Void  extendPicBorder      ();
   
   //  Dump picture
-  Void  dump (char* pFileName, Bool bAdd = false);
+  Void  dump (Char* pFileName, Bool bAdd = false);
   
   // Set border extension flag
   Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
-#if FIXED_ROUNDING_FRAME_MEMORY
-  Void  xFixedRoundingPic();
-#endif  
 };// END CLASS DEFINITION TComPicYuv
 
-void calcChecksum(TComPicYuv& pic, unsigned char digest[3][16]);
-void calcCRC(TComPicYuv& pic, unsigned char digest[3][16]);
-void calcMD5(TComPicYuv& pic, unsigned char digest[3][16]);
+void calcChecksum(TComPicYuv& pic, UChar digest[3][16]);
+void calcCRC(TComPicYuv& pic, UChar digest[3][16]);
+void calcMD5(TComPicYuv& pic, UChar digest[3][16]);
 //! \}
 
 #endif // __TCOMPICYUV__

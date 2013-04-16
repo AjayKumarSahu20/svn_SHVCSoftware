@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,13 +70,10 @@ private:
   TDecBinCABAC*   m_pcBufferBinCABACs;
   TDecSbac*       m_pcBufferLowLatSbacDecoders;   ///< dependent tiles: line to store temporary contexts, one per column of tiles.
   TDecBinCABAC*   m_pcBufferLowLatBinCABACs;
-#if DEPENDENT_SLICES
   std::vector<TDecSbac*> CTXMem;
-#endif
-
 #if SVC_EXTENSION
   TDecTop**       m_ppcTDecTop;
-#endif  
+#endif 
   
 public:
   TDecSlice();
@@ -87,18 +84,15 @@ public:
 #else
   Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
 #endif
-  Void  create            ( TComSlice* pcSlice, Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
+  Void  create            ();
   Void  destroy           ();
   
-  Void  decompressSlice   ( TComInputBitstream* pcBitstream, TComInputBitstream** ppcSubstreams,   TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders );
-#if DEPENDENT_SLICES
+  Void  decompressSlice   ( TComInputBitstream** ppcSubstreams,   TComPic*& rpcPic, TDecSbac* pcSbacDecoder, TDecSbac* pcSbacDecoders );
   Void      initCtxMem(  UInt i );
-  Void      setCtxMem( TDecSbac* sb, int b )   { CTXMem[b] = sb; }
-#endif
-
+  Void      setCtxMem( TDecSbac* sb, Int b )   { CTXMem[b] = sb; }
 #if SVC_EXTENSION
   TDecTop*  getLayerDec   ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }  
-#endif 
+#endif
 };
 
 
@@ -113,19 +107,16 @@ public:
   TComSPS* getPrefetchedSPS  (Int spsId);
   Void     storePrefetchedPPS(TComPPS *pps)  { m_ppsBuffer.storePS( pps->getPPSId(), pps); };
   TComPPS* getPrefetchedPPS  (Int ppsId);
-#if !REMOVE_APS
-  Void     storePrefetchedAPS(TComAPS *aps)  { m_apsBuffer.storePS( aps->getAPSID(), aps); };
-  TComAPS* getPrefetchedAPS  (Int apsId);
-#endif
   Void     applyPrefetchedPS();
 
 private:
+#if SVC_EXTENSION
+  static ParameterSetMap<TComVPS> m_vpsBuffer;
+#else
   ParameterSetMap<TComVPS> m_vpsBuffer;
+#endif
   ParameterSetMap<TComSPS> m_spsBuffer; 
   ParameterSetMap<TComPPS> m_ppsBuffer;
-#if !REMOVE_APS
-  ParameterSetMap<TComAPS> m_apsBuffer;
-#endif
 };
 
 

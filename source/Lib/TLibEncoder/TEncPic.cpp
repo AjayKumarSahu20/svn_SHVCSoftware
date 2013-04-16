@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,15 +126,20 @@ TEncPic::~TEncPic()
  * \return Void
  */
 #if SVC_UPSAMPLING
-Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, TComSPS* pcSps, Bool bIsVirtual )
+Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual )
+
 #else
-Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual )
+Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual )
 #endif
 {
 #if SVC_UPSAMPLING
-  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps, bIsVirtual );
+  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSps, bIsVirtual );
 #else
-  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, bIsVirtual );
+  TComPic::create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual );
 #endif
   m_uiMaxAQDepth = uiMaxAQDepth;
   if ( uiMaxAQDepth > 0 )
