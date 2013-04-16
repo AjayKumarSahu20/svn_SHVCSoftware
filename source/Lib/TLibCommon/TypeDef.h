@@ -108,7 +108,7 @@
 #endif
 #endif
 #else
-#define SYNTAX_OUTPUT                    1
+#define SYNTAX_OUTPUT                    0
 #endif
 
 //! \ingroup TLibCommon
