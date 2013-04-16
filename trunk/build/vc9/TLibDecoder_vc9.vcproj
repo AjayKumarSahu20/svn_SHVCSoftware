@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="TLibDecoder"
 	ProjectGUID="{F8B77A48-AF6C-4746-A89F-B706ABA6AD94}"
 	RootNamespace="TLibDecoder"

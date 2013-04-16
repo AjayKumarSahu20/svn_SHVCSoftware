@@ -20,7 +20,7 @@
     <ClCompile Include="..\..\source\Lib\libmd5\libmd5.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComAdaptiveLoopFilter.cpp">
+    <ClCompile Include="..\..\source\Lib\TLibCommon\SEI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\Lib\TLibCommon\TComBitStream.cpp">
@@ -113,9 +113,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibCommon\SEI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComAdaptiveLoopFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComBitCounter.h">

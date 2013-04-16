@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,12 +95,12 @@ private:
 protected:
   // interface to option
   TEncCfg*        m_pcEncCfg;
-
+  
 #if SVC_EXTENSION
   TEncTop**       m_ppcTEncTop;
-#endif
 #if INTRA_BL
   TComPicYuv*     m_pcPicYuvRecBase;       ///< reconstructed base layer
+#endif
 #endif
   
   // interface to classes
@@ -461,15 +461,6 @@ protected:
                                     UInt&         ruiCost 
                                    ,Bool biPred
                                    );
-#if REF_IDX_ME_AROUND_ZEROMV
-  Void xPatternSearchILR         ( TComDataCU*    pcCU,
-                                   TComPattern*   pcPatternKey,
-                                   Pel*           piRefY, 
-                                   Int            iRefStride, 
-                                   TComMv&        rcMv, 
-                                   UInt&          ruiSAD );
-#endif
-  
 #if REF_IDX_ME_ZEROMV
   Void xPatternSearchFracDIFMv0  ( TComDataCU*   pcCU,
                                    TComPattern*  pcPatternKey,
@@ -489,11 +480,7 @@ protected:
   // -------------------------------------------------------------------------------------------------------------------
   
   Void xEncodeResidualQT( TComDataCU* pcCU, UInt uiAbsPartIdx, const UInt uiDepth, Bool bSubdivAndCbf, TextType eType );
-#if IBDI_DISTORTION
-  Void xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx,TComYuv* pcOrg, TComYuv* pcPred, TComYuv* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist );
-#else
   Void xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx, UInt absTUPartIdx,TComYuv* pcResi, const UInt uiDepth, Double &rdCost, UInt &ruiBits, UInt &ruiDist, UInt *puiZeroDist );
-#endif
   Void xSetResidualQTData( TComDataCU* pcCU, UInt uiQuadrant, UInt uiAbsPartIdx,UInt absTUPartIdx, TComYuv* pcResi, UInt uiDepth, Bool bSpatial );
   
   UInt  xModeBitsIntra ( TComDataCU* pcCU, UInt uiMode, UInt uiPU, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth );

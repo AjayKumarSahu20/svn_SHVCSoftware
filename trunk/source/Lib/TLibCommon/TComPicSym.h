@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,7 @@
 #include "CommonDef.h"
 #include "TComSlice.h"
 #include "TComDataCU.h"
-#if REMOVE_APS
 class TComSampleAdaptiveOffset;
-#endif
 
 //! \ingroup TLibCommon
 //! \{
@@ -109,9 +107,7 @@ private:
   UInt*         m_puiTileIdxMap;       //the map of the tile index relative to LCU raster scan address 
   UInt*         m_puiInverseCUOrderMap;
 
-#if REMOVE_APS
   SAOParam *m_saoParam;
-#endif
 public:
   Void        create  ( Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
   Void        destroy ();
@@ -124,7 +120,7 @@ public:
   UInt        getMinCUHeight()          { return m_uiMinCUHeight;               }
   UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame;  }
   TComDataCU*&  getCU( UInt uiCUAddr )  { return m_apcTComDataCU[uiCUAddr];     }
-
+  
 #if AVC_SYNTAX
   UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
   UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
@@ -154,10 +150,8 @@ public:
   Void         xCreateTComTileArray();
   Void         xInitTiles();
   UInt         xCalculateNxtCUAddr( UInt uiCurrCUAddr );
-#if REMOVE_APS
   Void allocSaoParam(TComSampleAdaptiveOffset *sao);
   SAOParam *getSaoParam() { return m_saoParam; }
-#endif
 };// END CLASS DEFINITION TComPicSym
 
 //! \}

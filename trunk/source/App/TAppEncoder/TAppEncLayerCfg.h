@@ -33,15 +33,18 @@ protected:
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel
-  Int       m_croppingMode;
-  Int       m_cropLeft;
-  Int       m_cropRight;
-  Int       m_cropTop;
-  Int       m_cropBottom;
+  Int       m_conformanceMode;
+  Int       m_confLeft;
+  Int       m_confRight;
+  Int       m_confTop;
+  Int       m_confBottom;
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       *m_refLayerIds;
+  Int       m_numDirectRefLayers;
+#endif
 #if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
@@ -63,22 +66,27 @@ public:
   Bool  xCheckParameter();
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
+
   string  getInputFile()              {return m_cInputFile;       }
   string  getReconFile()              {return m_cReconFile;       }
   Int     getFrameRate()              {return m_iFrameRate;       }
   Int     getSourceWidth()            {return m_iSourceWidth;     }
   Int     getSourceHeight()           {return m_iSourceHeight;    }
-  Int     getCroppingMode()           {return m_croppingMode;     }
-  Int     getCropLeft()               {return m_cropLeft;         }
-  Int     getCropRight()              {return m_cropRight;        }
-  Int     getCropTop()                {return m_cropTop;          }
-  Int     getCropBottom()             {return m_cropBottom;       }
+  Int     getConformanceMode()        { return m_conformanceMode; }
   Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }
+  Int     getConfLeft()               {return m_confLeft;         }
+  Int     getConfRight()              {return m_confRight;        }
+  Int     getConfTop()                {return m_confTop;          }
+  Int     getConfBottom()             {return m_confBottom;       }
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
-
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int     getNumDirectRefLayers()     {return m_numDirectRefLayers;}
+  Int*    getRefLayerIds()            {return m_refLayerIds;      }
+  Int     getRefLayerId(Int i)        {return m_refLayerIds[i];   }
+#endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}

@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,11 +72,11 @@ private:
   
   TComList<TComPicYuv*>      m_cListPicYuvRec;              ///< list of reconstruction YUV files
 #endif
-
+  
   Int                        m_iFrameRcvd;                  ///< number of received frames
   
-  unsigned m_essentialBytes;
-  unsigned m_totalBytes;
+  UInt m_essentialBytes;
+  UInt m_totalBytes;
 protected:
   // initialization
   Void  xCreateLib        ();                               ///< create files & encoder class
@@ -102,7 +102,7 @@ protected:
 #else
   Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
 #endif
-  void rateStatsAccum(const AccessUnit& au, const std::vector<unsigned>& stats);
+  void rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& stats);
   void printRateSummary();
   
 public:
@@ -115,9 +115,6 @@ public:
 #else
   TEncTop&    getTEncTop  ()   { return  m_cTEncTop; }      ///< return encoder class pointer reference
 #endif
-
-
-
 };// END CLASS DEFINITION TAppEncTop
 
 //! \}

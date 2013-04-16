@@ -2,11 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{65968186-a1e6-40bc-bda8-f69881ce59b4}</UniqueIdentifier>
+      <UniqueIdentifier>{0ac2b7f6-dac6-4568-9bf6-f0bc5d3b0ffd}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{cb19f901-43b3-4f82-9502-f2c1d70ac336}</UniqueIdentifier>
+      <UniqueIdentifier>{eaaa958a-8c26-425a-9733-07b5d97c71eb}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
   </ItemGroup>
@@ -18,9 +18,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\Lib\TLibEncoder\SyntaxElementWriter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncAdaptiveLoopFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncAnalyze.cpp">
@@ -83,9 +80,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibEncoder\SyntaxElementWriter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibEncoder\TEncAdaptiveLoopFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibEncoder\TEncAnalyze.h">

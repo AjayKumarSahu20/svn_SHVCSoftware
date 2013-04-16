@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,38 +55,15 @@ struct OutputNALUnit : public NALUnit
    */
   OutputNALUnit(
     NalUnitType nalUnitType,
-#if !REMOVE_NAL_REF_FLAG
-    Bool nalRefFlag,
-#endif
-#if TARGET_DECLAYERID_SET
-    unsigned temporalID = 0,
+    UInt temporalID = 0,
 #if SVC_EXTENSION
     UInt     layerId = 0,
 #endif
-    unsigned reserved_zero_6bits = 0)
-#else
-    unsigned temporalID = 0)
-#endif
+    UInt reserved_zero_6bits = 0)
 #if SVC_EXTENSION
-#if REMOVE_NAL_REF_FLAG
-#if TARGET_DECLAYERID_SET
   : NALUnit(nalUnitType, temporalID, layerId, reserved_zero_6bits)
 #else
-  : NALUnit(nalUnitType, temporalID, layerId)
-#endif
-#else
-  : NALUnit(nalUnitType, nalRefFlag, temporalID, layerId)
-#endif
-#else
-#if REMOVE_NAL_REF_FLAG
-#if TARGET_DECLAYERID_SET
   : NALUnit(nalUnitType, temporalID, reserved_zero_6bits)
-#else
-  : NALUnit(nalUnitType, temporalID)
-#endif
-#else
-  : NALUnit(nalUnitType, nalRefFlag, temporalID)
-#endif
 #endif
   , m_Bitstream()
   {}

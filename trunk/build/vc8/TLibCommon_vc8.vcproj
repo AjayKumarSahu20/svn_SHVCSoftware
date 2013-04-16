@@ -292,7 +292,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\Lib\TLibCommon\TComAdaptiveLoopFilter.cpp"
+				RelativePath="..\..\source\Lib\TLibCommon\SEI.cpp"
 				>
 			</File>
 			<File
@@ -368,10 +368,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\source\Lib\TLibCommon\TComUpsampleFilter.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComWeightPrediction.cpp"
 				>
 			</File>
@@ -419,10 +415,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibCommon\SEI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\Lib\TLibCommon\TComAdaptiveLoopFilter.h"
 				>
 			</File>
 			<File
@@ -503,10 +495,6 @@
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComTrQuant.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\source\Lib\TLibCommon\TComUpsampleFilter.h"
 				>
 			</File>
 			<File

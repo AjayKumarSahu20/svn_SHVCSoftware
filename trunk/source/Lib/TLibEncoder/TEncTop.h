@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,6 @@
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
 #include "TEncSearch.h"
-#include "TEncAdaptiveLoopFilter.h"
 #include "TEncSampleAdaptiveOffset.h"
 #include "TEncPreanalyzer.h"
 #include "TEncRateCtrl.h"
@@ -89,9 +88,6 @@ private:
   TComTrQuant             m_cTrQuant;                     ///< transform & quantization class
   TComLoopFilter          m_cLoopFilter;                  ///< deblocking filter class
   TEncSampleAdaptiveOffset m_cEncSAO;                     ///< sample adaptive offset class
-#if !REMOVE_ALF
-  TEncAdaptiveLoopFilter  m_cAdaptiveLoopFilter;          ///< adaptive loop filter class
-#endif
   TEncEntropy             m_cEntropyCoder;                ///< entropy encoder
   TEncCavlc               m_cCavlcCoder;                  ///< CAVLC encoder
   TEncSbac                m_cSbacCoder;                   ///< SBAC encoder
@@ -106,9 +102,6 @@ private:
   // SPS
   TComSPS                 m_cSPS;                         ///< SPS
   TComPPS                 m_cPPS;                         ///< PPS
-#if !REMOVE_APS
-  std::vector<TComAPS>    m_vAPS;  //!< APS container
-#endif
   // RD cost computation
   TComBitCounter          m_cBitCounter;                  ///< bit counter for RD optimization
   TComRdCost              m_cRdCost;                      ///< RD cost computation class
@@ -175,9 +168,6 @@ public:
   
   TComTrQuant*            getTrQuant            () { return  &m_cTrQuant;             }
   TComLoopFilter*         getLoopFilter         () { return  &m_cLoopFilter;          }
-#if !REMOVE_ALF
-  TEncAdaptiveLoopFilter* getAdaptiveLoopFilter () { return  &m_cAdaptiveLoopFilter;  }
-#endif
   TEncSampleAdaptiveOffset* getSAO              () { return  &m_cEncSAO;              }
   TEncGOP*                getGOPEncoder         () { return  &m_cGOPEncoder;          }
   TEncSlice*              getSliceEncoder       () { return  &m_cSliceEncoder;        }
@@ -200,16 +190,11 @@ public:
   TEncRateCtrl*           getRateCtrl           () { return &m_cRateCtrl;             }
   TComSPS*                getSPS                () { return  &m_cSPS;                 }
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
-#if !REMOVE_APS
-  std::vector<TComAPS>&   getAPS                () { return m_vAPS; }
-#endif
-#if SVC_EXTENSION  
-  Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
-  TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
-#endif
-  Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid,TComList<TComPic*>& listPic );
+  Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
 #if SVC_EXTENSION
+  Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
+  TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
   Int                     getPOCLast            () { return m_iPOCLast;               }
   Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
@@ -221,18 +206,6 @@ public:
 
   /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
-  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
-
-  Void encodePrep( bool bEos, TComPicYuv* pcPicYuvOrg );
-#if AVC_SYNTAX
-  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
-  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
-#endif
-#else
-  Void encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
-#endif
 #if REF_IDX_FRAMEWORK
   TComPic** getIlpList() { return m_cIlpPic; }
   Void setILRPic(TComPic *pcPic);
@@ -241,7 +214,19 @@ public:
   Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
+#if AVC_SYNTAX
+  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
+  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
+#endif
+  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
+  Void encodePrep( TComPicYuv* pcPicYuvOrg );
+#else
+  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
+#endif
 
+  void printSummary() { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded); }
 };
 
 //! \}

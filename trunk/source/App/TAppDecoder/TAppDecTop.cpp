@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,20 +52,23 @@
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
+#if SVC_EXTENSION
 TAppDecTop::TAppDecTop()
 {
   ::memset (m_abDecFlag, 0, sizeof (m_abDecFlag));
-#if SVC_EXTENSION
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
     m_aiPOCLastDisplay[layer]  = -MAX_INT;
     m_apcTDecTop[layer] = &m_acTDecTop[layer];
   }
-#else
-  m_iPOCLastDisplay  = -MAX_INT;
-#endif
-
 }
+#else
+TAppDecTop::TAppDecTop()
+: m_iPOCLastDisplay(-MAX_INT)
+{
+  ::memset (m_abDecFlag, 0, sizeof (m_abDecFlag));
+}
+#endif
 
 Void TAppDecTop::create()
 {
@@ -125,7 +128,7 @@ Void TAppDecTop::destroy()
 #if SVC_EXTENSION
 Void TAppDecTop::decode()
 {
-  UInt                uiPOC;
+  Int                poc;
   TComList<TComPic*>* pcListPic = NULL;
 
   ifstream bitstreamFile(m_pchBitstreamFile, ifstream::in | ifstream::binary);
@@ -142,7 +145,7 @@ Void TAppDecTop::decode()
   xInitDecLib  ();
 
   // main decoder loop
-  bool recon_opened[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool recon_opened[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
   {
     recon_opened[layer] = false;
@@ -199,8 +202,8 @@ Void TAppDecTop::decode()
     byteStreamNALUnit(bytestream, nalUnit, stats);
 
     // call actual decoding function
-    bool bNewPicture = false;
-    bool bNewPOC = false;
+    Bool bNewPicture = false;
+    Bool bNewPOC = false;
     if (nalUnit.empty())
     {
       /* this can happen if the following occur:
@@ -213,13 +216,8 @@ Void TAppDecTop::decode()
     else
     {
       read(nalu, nalUnit);
-#if TARGET_DECLAYERID_SET
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
         (nalu.m_layerId > m_tgtLayerId) )
-#else
-      if(m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer ||
-        (nalu.m_layerId > m_tgtLayerId) )
-#endif
       {
         bNewPicture = false;
       }
@@ -240,27 +238,24 @@ Void TAppDecTop::decode()
     }
     if (bNewPicture || !bitstreamFile)
     {
-      m_acTDecTop[curLayerId].executeDeblockAndAlf(uiPOC, pcListPic, m_iSkipFrame, m_aiPOCLastDisplay[curLayerId]);
+      m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
     }
 
     if( pcListPic )
     {
       if ( m_pchReconFile[curLayerId] && !recon_opened[curLayerId] )
       {
-        if ( m_outputBitDepth == 0 )
-        {
-          m_outputBitDepth = g_uiBitDepth + g_uiBitIncrement;
-        }
+        if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }        
+        if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
-        m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepth, g_uiBitDepth + g_uiBitIncrement ); // write mode
+        m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
+
         recon_opened[curLayerId] = true;
       }
       if ( bNewPicture && bNewPOC && 
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
-#if SUPPORT_FOR_RAP_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-#endif
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA ) )
       {
@@ -305,7 +300,7 @@ Void TAppDecTop::decode()
 #else
 Void TAppDecTop::decode()
 {
-  UInt                uiPOC;
+  Int                 poc;
   TComList<TComPic*>* pcListPic = NULL;
 
   ifstream bitstreamFile(m_pchBitstreamFile, ifstream::in | ifstream::binary);
@@ -323,7 +318,7 @@ Void TAppDecTop::decode()
   m_iPOCLastDisplay += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
 
   // main decoder loop
-  bool recon_opened = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool recon_opened = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
 
 #if SYNTAX_OUTPUT
   if( !m_pchBLSyntaxFile )
@@ -354,14 +349,14 @@ Void TAppDecTop::decode()
      * nal unit. */
     streampos location = bitstreamFile.tellg();
     AnnexBStats stats = AnnexBStats();
-    bool bPreviousPictureDecoded = false;
+    Bool bPreviousPictureDecoded = false;
 
     vector<uint8_t> nalUnit;
     InputNALUnit nalu;
     byteStreamNALUnit(bytestream, nalUnit, stats);
 
     // call actual decoding function
-    bool bNewPicture = false;
+    Bool bNewPicture = false;
     if (nalUnit.empty())
     {
       /* this can happen if the following occur:
@@ -374,11 +369,7 @@ Void TAppDecTop::decode()
     else
     {
       read(nalu, nalUnit);
-#if TARGET_DECLAYERID_SET
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  )
-#else
-      if(m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer)
-#endif
       {
         if(bPreviousPictureDecoded)
         {
@@ -408,27 +399,23 @@ Void TAppDecTop::decode()
     }
     if (bNewPicture || !bitstreamFile)
     {
-      m_cTDecTop.executeDeblockAndAlf(uiPOC, pcListPic, m_iSkipFrame, m_iPOCLastDisplay);
+      m_cTDecTop.executeLoopFilters(poc, pcListPic);
     }
 
     if( pcListPic )
     {
       if ( m_pchReconFile && !recon_opened )
       {
-        if ( m_outputBitDepth == 0 )
-        {
-          m_outputBitDepth = g_uiBitDepth + g_uiBitIncrement;
-        }
+        if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
+        if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
-        m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepth, g_uiBitDepth + g_uiBitIncrement ); // write mode
+        m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
         recon_opened = true;
       }
       if ( bNewPicture && 
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
-#if SUPPORT_FOR_RAP_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-#endif
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA ) )
       {
@@ -441,7 +428,7 @@ Void TAppDecTop::decode()
       }
     }
   }
-
+  
 #if SYNTAX_OUTPUT
   if( streamSyntaxFile.is_open() )
   {
@@ -558,12 +545,11 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
   while (iterPic != pcListPic->end())
   {
     TComPic* pcPic = *(iterPic);
-    TComSPS *sps = pcPic->getSlice(0)->getSPS();
     
 #if SVC_EXTENSION
-    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getSlice(0)->getSPS()->getNumReorderPics(tId) && pcPic->getPOC() > m_aiPOCLastDisplay[layerId]))
+    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_aiPOCLastDisplay[layerId]))
 #else
-    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getSlice(0)->getSPS()->getNumReorderPics(tId) && pcPic->getPOC() > m_iPOCLastDisplay))
+    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_iPOCLastDisplay))
 #endif
     {
       // write to file
@@ -571,7 +557,13 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #if SVC_EXTENSION
       if ( m_pchReconFile[layerId] )
       {
-        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), sps->getPicCropLeftOffset(), sps->getPicCropRightOffset(), sps->getPicCropTopOffset(), sps->getPicCropBottomOffset() );
+        const Window &conf = pcPic->getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
       }
       
       // update POC of display order
@@ -579,7 +571,13 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #else
       if ( m_pchReconFile )
       {
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(), sps->getPicCropLeftOffset(), sps->getPicCropRightOffset(), sps->getPicCropTopOffset(), sps->getPicCropBottomOffset() );
+        const Window &conf = pcPic->getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
       }
       
       // update POC of display order
@@ -629,7 +627,6 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
   while (iterPic != pcListPic->end())
   {
     TComPic* pcPic = *(iterPic);
-    TComSPS *sps = pcPic->getSlice(0)->getSPS();
 
     if ( pcPic->getOutputMark() )
     {
@@ -637,7 +634,13 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
 #if SVC_EXTENSION
       if ( m_pchReconFile[layerId] )
       {
-        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), sps->getPicCropLeftOffset(), sps->getPicCropRightOffset(), sps->getPicCropTopOffset(), sps->getPicCropBottomOffset() );
+        const Window &conf = pcPic->getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
       }
       
       // update POC of display order
@@ -645,7 +648,13 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
 #else
       if ( m_pchReconFile )
       {
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(), sps->getPicCropLeftOffset(), sps->getPicCropRightOffset(), sps->getPicCropTopOffset(), sps->getPicCropBottomOffset() );
+        const Window &conf = pcPic->getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
       }
       
       // update POC of display order
@@ -678,19 +687,18 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
       delete pcPic;
       pcPic = NULL;
     }
-#endif
+#endif    
 #endif
     iterPic++;
   }
 #if SVC_EXTENSION
   m_aiPOCLastDisplay[layerId] = -MAX_INT;
 #else
-  pcListPic->clear(); //k Cannot be cleared here. Otherwise, pictures will never be destroyed.
+  pcListPic->clear();
   m_iPOCLastDisplay = -MAX_INT;
 #endif
 }
 
-#if TARGET_DECLAYERID_SET
 /** \param nalu Input nalu to check whether its LayerId is within targetDecLayerIdSet
  */
 Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
@@ -708,6 +716,5 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   }
   return false;
 }
-#endif
 
 //! \}

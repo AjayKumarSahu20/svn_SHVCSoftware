@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,30 +64,22 @@ struct InputNALUnit;
 class TDecTop
 {
 private:
-  Int                     m_iGopSize;
-  Bool                    m_bGopSizeSet;
   Int                     m_iMaxRefPicNum;
   
-  Bool                    m_bRefreshPending;    ///< refresh pending flag
   Int                     m_pocCRA;            ///< POC number of the latest CRA picture
   Bool                    m_prevRAPisBLA;      ///< true if the previous RAP (CRA/CRANT/BLA/BLANT/IDR) picture is a BLA/BLANT picture
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
 #if SVC_EXTENSION
-  static ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
+  ParameterSetManagerDecoder m_parameterSetManagerDecoder[MAX_LAYERS];  // storage for parameter sets 
 #else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
 #endif
 
-#if REF_IDX_MFM
-  TComSPS*               m_pcSPS;
-  Bool                   m_bMFMEnabledFlag;
-#endif
-
   TComSlice*              m_apcSlicePilot;
   
-  SEImessages *m_SEIs; ///< "all" SEI messages.  If not NULL, we own the object.
+  SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
 
   // functional classes
   TComPrediction          m_cPrediction;
@@ -101,9 +93,6 @@ private:
   TDecBinCABAC            m_cBinCABAC;
   SEIReader               m_seiReader;
   TComLoopFilter          m_cLoopFilter;
-#if !REMOVE_ALF
-  TComAdaptiveLoopFilter  m_cAdaptiveLoopFilter;
-#endif
   TComSampleAdaptiveOffset m_cSAO;
 
   Bool isSkipPictureForBLA(Int& iPOCLastDisplay);
@@ -156,7 +145,7 @@ public:
   
   Void  deletePicBuffer();
 
-  Void executeDeblockAndAlf(UInt& ruiPOC, TComList<TComPic*>*& rpcListPic, Int& iSkipFrame,  Int& iPOCLastDisplay);
+  Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
 
 #if SVC_EXTENSION
   UInt      getLayerId            () { return m_layerId;              }
@@ -182,20 +171,11 @@ public:
   Void      xInitILRP(TComSPS *pcSPS);
   Void      setILRPic(TComPic *pcPic);
 #endif
-#if REF_IDX_MFM
-  TComSPS*  getSPS()                       {return m_pcSPS;}
-  Void      setMFMEnabledFlag(Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool      getMFMEnabledFlag()            {return m_bMFMEnabledFlag;}
-#endif
 
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
-  Void  xUpdateGopSize    (TComSlice* pcSlice);
   Void  xCreateLostPicture (Int iLostPOC);
 
-#if !REMOVE_APS
-  Void      decodeAPS( TComAPS* cAPS) { m_cEntropyDecoder.decodeAPS(cAPS); };
-#endif
   Void      xActivateParameterSets();
 #if SVC_EXTENSION
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
@@ -205,14 +185,8 @@ protected:
   Void      xDecodeVPS();
   Void      xDecodeSPS();
   Void      xDecodePPS();
-#if !REMOVE_APS
-  Void      xDecodeAPS();
-#endif
-  Void      xDecodeSEI( TComInputBitstream* bs );
+  Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
-#if !REMOVE_APS
-  Void      allocAPS (TComAPS* pAPS); //!< memory allocation for APS
-#endif
 };// END CLASS DEFINITION TDecTop
 
 

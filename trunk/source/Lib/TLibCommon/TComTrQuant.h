@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2012, ITU/ISO/IEC
+ * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,8 +67,6 @@ typedef struct
 
   Int blockCbpBits[3*NUM_QT_CBF_CTX][2];
   Int blockRootCbpBits[4][2];
-  Int scanZigzag[2];            ///< flag for zigzag scan
-  Int scanNonZigzag[2];         ///< flag for non zigzag scan
 } estBitsSbacStruct;
 
 // ====================================================================================================================
@@ -120,7 +118,9 @@ public:
   ~TComTrQuant();
   
   // initialize class
-  Void init                 ( UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxTrSize, Int iSymbolMode = 0, UInt *aTable4 = NULL, UInt *aTable8 = NULL, UInt *aTableLastPosVlcIndex=NULL, Bool bUseRDOQ = false,  Bool bEnc = false, Bool useTransformSkipFast = false
+  Void init                 ( UInt uiMaxTrSize, Bool useRDOQ = false,  
+    Bool useRDOQTS = false,
+    Bool bEnc = false, Bool useTransformSkipFast = false
 #if ADAPTIVE_QP_SELECTION
     , Bool bUseAdaptQpSelect = false
 #endif 
@@ -162,27 +162,22 @@ public:
 
   static Int      getSigCtxInc     (
                                      Int                             patternSigCtx,
-#if REMOVAL_8x2_2x8_CG
                                      UInt                            scanIdx,
-#endif
                                      Int                             posX,
                                      Int                             posY,
-                                     Int                             blockType,
-                                     Int                             width
-                                    ,Int                             height
-                                    ,TextType                        textureType
+                                     Int                             log2BlkSize,
+                                     TextType                        textureType
                                     );
   static UInt getSigCoeffGroupCtxInc  ( const UInt*                   uiSigCoeffGroupFlag,
                                        const UInt                       uiCGPosX,
                                        const UInt                       uiCGPosY,
-                                       const UInt                     scanIdx,
                                        Int width, Int height);
   Void initScalingList                      ();
   Void destroyScalingList                   ();
-  Void setErrScaleCoeff    ( UInt list, UInt size, UInt qp, UInt dir);
-  double* getErrScaleCoeff ( UInt list, UInt size, UInt qp, UInt dir) {return m_errScale[size][list][qp][dir];};    //!< get Error Scale Coefficent
-  Int* getQuantCoeff       ( UInt list, UInt qp, UInt size, UInt dir) {return m_quantCoef[size][list][qp][dir];};   //!< get Quant Coefficent
-  Int* getDequantCoeff     ( UInt list, UInt qp, UInt size, UInt dir) {return m_dequantCoef[size][list][qp][dir];}; //!< get DeQuant Coefficent
+  Void setErrScaleCoeff    ( UInt list, UInt size, UInt qp);
+  Double* getErrScaleCoeff ( UInt list, UInt size, UInt qp) {return m_errScale[size][list][qp];};    //!< get Error Scale Coefficent
+  Int* getQuantCoeff       ( UInt list, UInt qp, UInt size) {return m_quantCoef[size][list][qp];};   //!< get Quant Coefficent
+  Int* getDequantCoeff     ( UInt list, UInt qp, UInt size) {return m_dequantCoef[size][list][qp];}; //!< get DeQuant Coefficent
   Void setUseScalingList   ( Bool bUseScalingList){ m_scalingListEnabledFlag = bUseScalingList; };
   Bool getUseScalingList   (){ return m_scalingListEnabledFlag; };
   Void setFlatScalingList  ();
@@ -218,23 +213,24 @@ protected:
   UInt     m_uiRDOQOffset;
   UInt     m_uiMaxTrSize;
   Bool     m_bEnc;
-  Bool     m_bUseRDOQ;
+  Bool     m_useRDOQ;
+  Bool     m_useRDOQTS;
 #if ADAPTIVE_QP_SELECTION
   Bool     m_bUseAdaptQpSelect;
 #endif
   Bool     m_useTransformSkipFast;
   Bool     m_scalingListEnabledFlag;
-  Int      *m_quantCoef      [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM][SCALING_LIST_DIR_NUM]; ///< array of quantization matrix coefficient 4x4
-  Int      *m_dequantCoef    [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM][SCALING_LIST_DIR_NUM]; ///< array of dequantization matrix coefficient 4x4
-  double   *m_errScale       [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM][SCALING_LIST_DIR_NUM]; ///< array of quantization matrix coefficient 4x4
+  Int      *m_quantCoef      [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM]; ///< array of quantization matrix coefficient 4x4
+  Int      *m_dequantCoef    [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM]; ///< array of dequantization matrix coefficient 4x4
+  Double   *m_errScale       [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][SCALING_LIST_REM_NUM]; ///< array of quantization matrix coefficient 4x4
 private:
   // forward Transform
-  Void xT   ( UInt uiMode,Pel* pResidual, UInt uiStride, Int* plCoeff, Int iWidth, Int iHeight );
+  Void xT   (Int bitDepth, UInt uiMode,Pel* pResidual, UInt uiStride, Int* plCoeff, Int iWidth, Int iHeight );
   
   // skipping Transform
-  Void xTransformSkip ( Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height );
+  Void xTransformSkip (Int bitDepth, Pel* piBlkResi, UInt uiStride, Int* psCoeff, Int width, Int height );
 
-  Void signBitHidingHDQ( TComDataCU* pcCU, TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height );
+  Void signBitHidingHDQ( TCoeff* pQCoef, TCoeff* pCoef, UInt const *scan, Int* deltaU, Int width, Int height );
 
   // quantization
   Void xQuant( TComDataCU* pcCU, 
@@ -291,8 +287,7 @@ __inline Int xGetICRate  ( UInt                            uiAbsLevel,
                            UInt                            c2Idx
                          ) const;
   __inline Double xGetRateLast     ( const UInt                      uiPosX,
-                                     const UInt                      uiPosY,
-                                     const UInt                      uiBlkWdth     ) const;
+                                     const UInt                      uiPosY ) const;
   __inline Double xGetRateSigCoeffGroup (  UShort                    uiSignificanceCoeffGroup,
                                      UShort                          ui16CtxNumSig ) const;
   __inline Double xGetRateSigCoef (  UShort                          uiSignificance,
@@ -302,13 +297,13 @@ __inline Int xGetICRate  ( UInt                            uiAbsLevel,
   
   
   // dequantization
-  Void xDeQuant( const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType );
+  Void xDeQuant(Int bitDepth, const TCoeff* pSrc, Int* pDes, Int iWidth, Int iHeight, Int scalingListType );
   
   // inverse transform
-  Void xIT    ( UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight );
+  Void xIT    (Int bitDepth, UInt uiMode, Int* plCoef, Pel* pResidual, UInt uiStride, Int iWidth, Int iHeight );
   
   // inverse skipping transform
-  Void xITransformSkip ( Int* plCoef, Pel* pResidual, UInt uiStride, Int width, Int height );
+  Void xITransformSkip (Int bitDepth, Int* plCoef, Pel* pResidual, UInt uiStride, Int width, Int height );
 };// END CLASS DEFINITION TComTrQuant
 
 //! \}
