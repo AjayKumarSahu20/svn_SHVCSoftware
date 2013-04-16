@@ -64,7 +64,7 @@
 #define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
 
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
-#define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
+#define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
 
 #if SVC_UPSAMPLING
 #define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
