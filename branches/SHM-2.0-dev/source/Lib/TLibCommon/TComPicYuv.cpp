@@ -59,6 +59,7 @@ TComPicYuv::TComPicYuv()
   m_piPicOrgY       = NULL;    // m_apiPicBufY + m_iMarginLuma*getStride() + m_iMarginLuma
   m_piPicOrgU       = NULL;
   m_piPicOrgV       = NULL;
+  
   m_bIsBorderExtended = false;
 }
 
