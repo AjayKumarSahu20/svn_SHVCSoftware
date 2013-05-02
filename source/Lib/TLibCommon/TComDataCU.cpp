@@ -4244,7 +4244,6 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
 #if SIMPLIFIED_MV_POS_SCALING
   cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[m_layerId][0], g_mvScalingFactor[m_layerId][1] );
 #else
-#if MV_SCALING_FIX
   const Window &confBL = m_pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
 
@@ -4253,13 +4252,6 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
 
   Int widthEL   = m_pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
   Int heightEL  = m_pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#else
-  Int widthBL   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-  Int heightBL  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
-
-  Int widthEL   = m_pcPic->getPicYuvRec()->getWidth();
-  Int heightEL  = m_pcPic->getPicYuvRec()->getHeight();
-#endif
 
   Int iMvX = (rcMvFieldBase.getHor()*widthEL + (widthBL/2 -1) * (rcMvFieldBase.getHor() > 0 ? 1: -1) )/widthBL;
   Int iMvY = (rcMvFieldBase.getVer()*heightEL + (heightBL/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/heightBL;
