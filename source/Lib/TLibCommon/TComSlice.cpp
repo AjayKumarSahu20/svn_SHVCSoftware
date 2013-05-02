@@ -2606,9 +2606,7 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
   assert(thePoc >= 0); 
   assert(thePoc == pcRefPicBL->getPOC());
 
-#if REUSE_MVSCALE || REUSE_BLKMAPPING
   ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
-#endif
 
   //copy reference pictures marking from the reference layer
   ilpPic[0]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
