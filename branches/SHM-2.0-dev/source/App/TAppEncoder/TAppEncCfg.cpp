@@ -1277,7 +1277,7 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION
-  xConfirmPara( m_numLayers > MAX_LAYERS , "Number of the layers are greater than MAX_LAYERS" );
+  xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
 
   // verify layer configuration parameters
