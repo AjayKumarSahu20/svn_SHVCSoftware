@@ -500,28 +500,33 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
     {
       TEncPic* pcEPic = new TEncPic;
 
+#if SVC_EXTENSION //Temporal solution, should be modified
+      if(m_layerId > 0)
+      {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+#else
+        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+#endif
+        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        {
+          pcEPic->setSpatialEnhLayerFlag( true );
+        }
+      }
+
 #if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
 #endif
       rpcPic = pcEPic;
     }
     else
     {
       rpcPic = new TComPic;
-
-
-#if SVC_UPSAMPLING
-      rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
-#else
-      rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-    }
 
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
@@ -536,7 +541,16 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           rpcPic->setSpatialEnhLayerFlag( true );
         }
       }
+
+#if SVC_UPSAMPLING
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
 #endif
+#endif
+    }
 
     if (getUseSAO())
     {
