@@ -1801,6 +1801,12 @@ UInt TComDataCU::getQuadtreeTULog2MinSizeInCU( UInt absPartIdx )
 #if INTRA_BL
 UInt TComDataCU::getCtxIntraBLFlag( UInt uiAbsPartIdx )
 {
+#if INTRA_BL_CTX_CHANGE
+  Int cuDepth = getDepth(uiAbsPartIdx);
+  Int maxCuDepth = g_uiMaxCUDepth - g_uiAddCUDepth;
+  UInt uiCtx = (maxCuDepth==3 && cuDepth > 0) ? (cuDepth - 1) : cuDepth;
+  return uiCtx;
+#else
   TComDataCU* pcTempCU;
   UInt        uiTempPartIdx;
   UInt        uiCtx = 0;
@@ -1823,6 +1829,7 @@ UInt TComDataCU::getCtxIntraBLFlag( UInt uiAbsPartIdx )
   uiCtx   += ( pcTempCU ) ? pcTempCU->isIntraBL( uiTempPartIdx ) : 0;
   
   return uiCtx;
+#endif
 }
 #endif
 
