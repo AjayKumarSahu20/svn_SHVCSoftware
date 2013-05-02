@@ -4174,6 +4174,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
 {
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
 
+#if !SIMPLIFIED_MV_POS_SCALING
 #if SVC_UPSAMPLING
   const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
@@ -4190,14 +4191,20 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   Int widthEL   = m_pcPic->getPicYuvRec()->getWidth();
   Int heightEL  = m_pcPic->getPicYuvRec()->getHeight();
 #endif
+#endif
 
   uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
   uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
 
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 
+#if SIMPLIFIED_MV_POS_SCALING
+  Int iBX = (uiPelX*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
+  Int iBY = (uiPelY*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+#else
   Int iBX = (uiPelX*widthBL + widthEL/2)/widthEL;
   Int iBY = (uiPelY*heightBL+ heightEL/2)/heightEL;
+#endif
 
   if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight())
   {
@@ -4227,7 +4234,9 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
 {
   TComMvField cMvFieldBase;
   TComMv cMv;
-
+#if SIMPLIFIED_MV_POS_SCALING
+  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[m_layerId][0], g_mvScalingFactor[m_layerId][1] );
+#else
 #if MV_SCALING_FIX
   const Window &confBL = m_pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
@@ -4249,6 +4258,7 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
   Int iMvY = (rcMvFieldBase.getVer()*heightEL + (heightBL/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/heightBL;
 
   cMv.set(iMvX, iMvY);
+#endif
 
   rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
 }
