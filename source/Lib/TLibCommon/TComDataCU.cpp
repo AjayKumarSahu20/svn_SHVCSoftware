@@ -4175,7 +4175,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
 
 #if !SIMPLIFIED_MV_POS_SCALING
-#if SVC_UPSAMPLING
+#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
   const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
 
@@ -4211,7 +4211,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
     return NULL;
   }
 
-#if AVC_SYNTAX
+#if AVC_SYNTAX && !ILP_DECODED_PICTURE
   if( iBX >= widthBL || iBY >= heightBL ) //outside of the reference layer cropped picture
   {
     return NULL;

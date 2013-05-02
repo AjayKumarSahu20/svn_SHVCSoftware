@@ -62,11 +62,12 @@
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
+#define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture size for inter-layer prediction
 
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
-#if SVC_UPSAMPLING
+#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
 #define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
 #endif
 

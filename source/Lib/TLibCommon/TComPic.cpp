@@ -586,7 +586,7 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 #if REF_IDX_MFM
 Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 {
-#if AVC_SYNTAX
+#if AVC_SYNTAX && !ILP_DECODED_PICTURE
   const Window &confBL = pcPicBase->getConformanceWindow();
   const Window &confEL = getPicYuvRec()->getConformanceWindow();
 
@@ -616,7 +616,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       TComDataCU *pcColCU = 0;
       pcColCU = pcCUDes->getBaseColCU(pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
 
-#if AVC_SYNTAX
+#if AVC_SYNTAX && !ILP_DECODED_PICTURE
       Int xBL = ( (pelX + 8) * widthBL + widthEL/2 ) / widthEL;
       Int yBL = ( (pelY + 8) * heightBL+ heightEL/2 ) / heightEL;
 
@@ -688,9 +688,14 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
     return;
   }
 
+#if ILP_DECODED_PICTURE
+  UInt   width      = this->getPicYuvRec()->getWidth();
+  UInt   height     = this->getPicYuvRec()->getHeight();
+#else
   const Window &conf = this->getPicYuvRec()->getConformanceWindow();
   UInt   width      = this->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
   UInt   height     = this->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
+#endif
   UInt64 poc        = (UInt64)this->getPOC();
   UInt   partWidth  = width / 4;
   UInt   partHeight = height / 4;
@@ -767,9 +772,14 @@ Void TComPic::wrireBLSyntax( fstream* filestream, UInt numBytes )
     return;
   }
 
+#if ILP_DECODED_PICTURE
+  UInt   width       = this->getPicYuvRec()->getWidth();
+  UInt   height      = this->getPicYuvRec()->getHeight();
+#else
   const Window &conf = this->getConformanceWindow();
   UInt   width       = this->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
   UInt   height      = this->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
+#endif
 
   UInt64 poc        = (UInt64)this->getPOC();
   UInt   partWidth  = width / 4;
