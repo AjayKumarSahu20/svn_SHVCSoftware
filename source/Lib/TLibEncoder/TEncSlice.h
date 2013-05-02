@@ -140,6 +140,11 @@ public:
 
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
+
+#if JCTVC_M0259_LAMBDAREFINEMENT
+private:
+  Double  xCalEnhLambdaFactor( Double deltaQP , Double beta );
+#endif
 };
 
 //! \}
