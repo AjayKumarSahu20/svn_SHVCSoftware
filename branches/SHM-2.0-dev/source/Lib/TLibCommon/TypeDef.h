@@ -98,6 +98,7 @@
 #if INTRA_BL
 #define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
 #define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
+#define IL_MRG_SIMPLIFIED_PRUNING        1      ///< M0124: simplified pruning, Only the left and above candidates are checked with BL-C candidate for redundancy removal 
 
 // Hooks
 #if !AVC_BASE || AVC_SYNTAX

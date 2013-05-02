@@ -2670,7 +2670,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   }
 #endif
   Bool isAvailableB0 = pcCUAboveRight &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
   ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveRight->hasEqualMotion( uiAboveRightPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
 #endif
   pcCUAboveRight->isDiffMER(xP+nPSW, yP-1, xP, yP) &&
@@ -2714,7 +2714,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
   Bool isAvailableA0 = pcCULeftBottom &&
   pcCULeftBottom->isDiffMER(xP-1, yP+nPSH, xP, yP) &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
   ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeftBottom->hasEqualMotion( uiLeftBottomPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0])) &&
 #endif
   !pcCULeftBottom->isIntra( uiLeftBottomPartIdx ) ;
@@ -2758,7 +2758,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
     Bool isAvailableB2 = pcCUAboveLeft &&
     pcCUAboveLeft->isDiffMER(xP-1, yP-1, xP, yP) &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
     ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveLeft->hasEqualMotion( uiAboveLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
 #endif
     !pcCUAboveLeft->isIntra( uiAboveLeftPartIdx );
