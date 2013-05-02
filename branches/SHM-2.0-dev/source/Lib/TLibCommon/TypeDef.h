@@ -62,7 +62,6 @@
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
-#define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
 
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
