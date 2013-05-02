@@ -662,14 +662,14 @@ public:
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct dependency of layers
-  Bool   getDirectDependencyFlag(Int i, Int j)                  { return m_directDependencyFlag[i][j]; }
-  Void   setDirectDependencyFlag(Int i, Int j, Bool x)          { m_directDependencyFlag[i][j] = x;    }
+  Bool   getDirectDependencyFlag(Int currLayerId, Int refLayerId)               { return m_directDependencyFlag[currLayerId][refLayerId]; }
+  Void   setDirectDependencyFlag(Int currLayerId, Int refLayerId, Bool x)       { m_directDependencyFlag[currLayerId][refLayerId] = x;    }
   
-  UInt   getNumDirectRefLayers(Int i)                                { return m_numDirectRefLayers[i];         }
-  Void   setNumDirectRefLayers(Int i, UInt x)                        { m_numDirectRefLayers[i] = x;            }
+  UInt   getNumDirectRefLayers(Int layerId)                                     { return m_numDirectRefLayers[layerId];                   }
+  Void   setNumDirectRefLayers(Int layerId, UInt refLayerNum)                   { m_numDirectRefLayers[layerId] = refLayerNum;            }
 
-  UInt   getRefLayerId(Int i, Int j)                            { return m_refLayerId[i][j];           }
-  Void   setRefLayerId(Int i, Int j, UInt x)                    { m_refLayerId[i][j] = x;              }
+  UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
+  Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
 #endif
 };
 

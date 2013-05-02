@@ -533,7 +533,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if IDR_ALIGNMENT
     if (m_layerId > 0)
     {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId)->getListPic();
+#else
       TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
+#endif
       pcSlice->setBaseColPic (*cListPic, m_layerId );
     }
 #endif
@@ -733,7 +737,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         UInt ColRefIdx     = pcSlice->getColRefIdx();
         for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
         { 
-          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR() ) 
+          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) ) 
           { 
             ColRefIdx = colIdx; 
             found = true;
@@ -746,7 +750,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           ColFromL0Flag = 1 - ColFromL0Flag;
           for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
           { 
-            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR() ) 
+            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) ) 
             { 
               ColRefIdx = colIdx; 
               found = true; 
@@ -2549,6 +2553,13 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     printf(" [L%d ", iRefList);
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+      if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR(m_layerId) )
+      {
+        printf( "%d(%d) ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR(), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
+      }
+      else
+#endif
       printf ("%d ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR());
     }
     printf("]");

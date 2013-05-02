@@ -3295,7 +3295,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
       {
 #if (ENCODER_FAST_MODE)
         TComPic* pcPic    = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp );
-        if( !testILR && pcPic->isILR() && (ePartSize == SIZE_2Nx2N) ) 
+        if( !testILR && pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N) ) 
         {
           continue;
         }
@@ -3621,7 +3621,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 #if (ENCODER_FAST_MODE)
         Bool     testIter = true;
         TComPic* pcPic    = pcCU->getSlice()->getRefPic( RefPicList(1 - iRefList), iRefIdxBi[1 - iRefList] );
-        if(pcPic->isILR() && (ePartSize == SIZE_2Nx2N))
+        if(pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N))
         {
           testIter = false;  //the fixed part is ILR, skip this iteration       
         }
@@ -3636,7 +3636,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 #if (ENCODER_FAST_MODE)
           Bool testRefIdx = true;
           pcPic           = pcCU->getSlice()->getRefPic( RefPicList(iRefList) , iRefIdxTemp );
-          if(pcPic->isILR() && (ePartSize == SIZE_2Nx2N))
+          if(pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N))
           {
             testRefIdx = false;  //the refined part is ILR, skip this reference pic           
           }
@@ -4307,7 +4307,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
   //  Do integer search
 #if REF_IDX_ME_ZEROMV
-  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR())  //ILR reference pic 
+  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getLayerId()))  //ILR reference pic 
   {
     rcMv.setZero();  //use Mv(0, 0) for integer ME 
   }
@@ -4340,7 +4340,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   
   {
 #if REF_IDX_ME_ZEROMV
-    if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR())  //ILR reference pic
+    if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getLayerId()))  //ILR reference pic
     {
       xPatternSearchFracDIFMv0( pcCU, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost, bBi );
     }
@@ -6314,7 +6314,7 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
     Bool foundILR    = false;
     for( Int refIdx = 0; refIdx < pcCU->getSlice()->getNumRefIdx(eRefPicList); refIdx++ )
     {
-      if( pcCU->getSlice()->getRefPic(eRefPicList, refIdx)->isILR() )
+      if( pcCU->getSlice()->getRefPic(eRefPicList, refIdx)->isILR(pcCU->getLayerId()) )
       {
         iRefIdxTemp = refIdx;
         foundILR    = true;

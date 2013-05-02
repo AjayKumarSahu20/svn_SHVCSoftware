@@ -140,6 +140,15 @@ Void TAppEncCfg::create()
 
 Void TAppEncCfg::destroy()
 {
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if( m_acLayerCfg[layer].m_numDirectRefLayers > 0 )
+    {
+      delete [] m_acLayerCfg[layer].m_refLayerIds;
+    }
+  }
+#endif
 }
 
 std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //input

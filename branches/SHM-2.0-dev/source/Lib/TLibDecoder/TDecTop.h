@@ -153,8 +153,11 @@ public:
   UInt      getNumLayer           () { return m_numLayer;             }
   Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
   TComList<TComPic*>*      getListPic() { return &m_cListPic; }
-  Void                setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
-  TDecTop*            getLayerDec(UInt layer)   { return m_ppcTDecTop[layer]; }
+  Void      setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
+  TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+  TDecTop*  getRefLayerDec(UInt layerId);
+#endif
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
   fstream*  getBLReconFile() { return m_pBLReconFile; }
