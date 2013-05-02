@@ -336,6 +336,17 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     dLambda *= m_pcCfg->getLambdaModifier( m_pcCfg->getGOPEntry(iGOPid).m_temporalId );
   }
 
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  if( rpcSlice->getLayerId() > 0 && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  {
+    Int nCurLayer = rpcSlice->getLayerId();
+    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[nCurLayer-1]->getQP() - m_ppcTEncTop[nCurLayer]->getQP() ,
+      1.0 * m_ppcTEncTop[nCurLayer]->getSourceWidth() * m_ppcTEncTop[nCurLayer]->getSourceHeight() 
+      / m_ppcTEncTop[nCurLayer-1]->getSourceWidth() / m_ppcTEncTop[nCurLayer-1]->getSourceHeight() );
+    dLambda *= gamma;
+  }
+#endif
+
   // store lambda
   m_pcRdCost ->setLambda( dLambda );
 #if WEIGHTED_CHROMA_DISTORTION
@@ -353,6 +364,13 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   chromaQPOffset = rpcSlice->getPPS()->getChromaCrQpOffset() + rpcSlice->getSliceQpDeltaCr();
   qpc = Clip3( 0, 57, iQP + chromaQPOffset);
   weight = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  if( rpcSlice->getLayerId() > 0 && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
+  {
+    dLambda *= 1.1;
+    weight *= 1.15;
+  }
+#endif
   m_pcRdCost->setCrDistortionWeight(weight);
 #endif
 
@@ -1851,4 +1869,12 @@ Double TEncSlice::xGetQPValueAccordingToLambda ( Double lambda )
   return 4.2005*log(lambda) + 13.7122;
 }
 
+#if JCTVC_M0259_LAMBDAREFINEMENT
+Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP , Double beta )
+{
+  double tmp = beta * pow( 2.0 , deltaQP / 6 );
+  double gamma = tmp / ( tmp + 1 );
+  return( gamma );
+}
+#endif
 //! \}

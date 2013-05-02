@@ -63,6 +63,8 @@
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture size for inter-layer prediction
+#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
+
 
 #define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
