@@ -2536,14 +2536,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   TComMvField cMvFieldBaseColCU[2];
   if(m_layerId)  
   {
-#if MV_SCALING_POS_FIX
     pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
-#else
-    UInt uiPartIdxCenter;
-    xDeriveCenterIdx( cCurPS, uiPUIdx, uiPartIdxCenter );
-    uiPartIdxCenter -= m_uiAbsIdxInLCU;
-    pcColCU = getBaseColCU( uiPartIdxCenter, uiCUAddrBase, uiAbsPartAddrBase );
-#endif
     
 #if INTRA_BL
     if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
