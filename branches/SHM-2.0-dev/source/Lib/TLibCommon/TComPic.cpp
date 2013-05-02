@@ -584,46 +584,9 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 }
 
 #if REF_IDX_MFM
-#if !REUSE_BLKMAPPING
-Void TComPic::deriveUnitIdxBase( UInt upsamplePelX, UInt upsamplePelY, UInt ratio, UInt& baseCUAddr, UInt& baseAbsPartIdx )
-{
-  //pixel in the base layer
-
-  UInt pelX       = (upsamplePelX<<1)/ratio;
-  UInt pelY       = (upsamplePelY<<1)/ratio;
-  UInt baseWidth  = getPicYuvRec()->getWidth();
-  UInt baseHeight = getPicYuvRec()->getHeight();
-  
-  UInt widthInCU       = ( baseWidth % g_uiMaxCUWidth  ) ? baseWidth /g_uiMaxCUWidth  + 1 : baseWidth /g_uiMaxCUWidth;
-
-#if MFM_CLIPPING_FIX
-  pelX     = (UInt)Clip3<UInt>(0, getPicYuvRec()->getWidth() - 1, pelX);
-  pelY     = (UInt)Clip3<UInt>(0, getPicYuvRec()->getHeight() - 1, pelY);
-#else
-  UInt heightInCU      = ( baseHeight% g_uiMaxCUHeight ) ? baseHeight/ g_uiMaxCUHeight + 1 : baseHeight/ g_uiMaxCUHeight;
-
-  pelX     = (UInt)Clip3<UInt>(0, widthInCU * g_uiMaxCUWidth - 1, pelX);
-  pelY     = (UInt)Clip3<UInt>(0, heightInCU * g_uiMaxCUHeight - 1, pelY);
-#endif
-  
-  baseCUAddr = pelY / g_uiMaxCUHeight * widthInCU + pelX / g_uiMaxCUWidth;
-
-  UInt widthMinPU = g_uiMaxCUWidth / (1<<g_uiMaxCUDepth);
-  UInt heightMinPU = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
-  
-  UInt absPelX = pelX - (pelX / g_uiMaxCUWidth) * g_uiMaxCUWidth;
-  UInt absPelY = pelY - (pelY / g_uiMaxCUHeight) * g_uiMaxCUHeight;
-
-  UInt rasterIdx = absPelY / heightMinPU * (g_uiMaxCUWidth/widthMinPU) + absPelX / widthMinPU;
-  baseAbsPartIdx = g_auiRasterToZscan[rasterIdx];
-
-  return;
-}
-#endif
-
 Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 {
-#if !REUSE_MVSCALE || !REUSE_BLKMAPPING || AVC_SYNTAX
+#if AVC_SYNTAX
   const Window &confBL = pcPicBase->getConformanceWindow();
   const Window &confEL = getPicYuvRec()->getConformanceWindow();
 
@@ -632,26 +595,6 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
 
   Int widthEL   = getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
   Int heightEL  = getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
-  
-#if !REUSE_MVSCALE  || !REUSE_BLKMAPPING
-  UInt upSampleRatio = 0;
-  if(widthEL == widthBL && heightEL == heightBL)
-  {
-    upSampleRatio = 2;
-  }
-  else if(2*widthEL == 3*widthBL && 2*heightEL == 3*heightBL)
-  {
-    upSampleRatio = 3;
-  }
-  else if(widthEL == 2*widthBL && heightEL == 2*heightBL)
-  {
-    upSampleRatio = 4;
-  }
-  else
-  {
-    assert(0);
-  }
 #endif
 
   UInt numPartitions   = 1<<(g_uiMaxCUDepth<<1);
@@ -670,51 +613,23 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       UInt  pelY = pcCUDes->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[absPartIdx] ];
       UInt baseCUAddr, baseAbsPartIdx;
 
-#if REUSE_BLKMAPPING
       TComDataCU *pcColCU = 0;
       pcColCU = pcCUDes->getBaseColCU(pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
-#else 
-      pcPicBase->deriveUnitIdxBase(pelX + 8, pelY + 8, upSampleRatio, baseCUAddr, baseAbsPartIdx);
-#endif
 
 #if AVC_SYNTAX
       Int xBL = ( (pelX + 8) * widthBL + widthEL/2 ) / widthEL;
       Int yBL = ( (pelY + 8) * heightBL+ heightEL/2 ) / heightEL;
 
-#if REUSE_BLKMAPPING
       if( ( xBL < widthBL && yBL < heightBL ) && pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
 #else
-      if( ( xBL < widthBL && yBL < heightBL ) && (pcPicBase->getCU(baseCUAddr)->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(baseCUAddr)->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-#endif
-#else
-#if REUSE_BLKMAPPING
       if( pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-#else
-      if( (pcPicBase->getCU(baseCUAddr)->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcPicBase->getCU(baseCUAddr)->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-#endif
 #endif
       {
         for(UInt refPicList = 0; refPicList < 2; refPicList++)  //for each reference list
         {
-#if REUSE_MVSCALE
           TComMvField sMvFieldBase, sMvField;
-#if REUSE_BLKMAPPING
           pcColCU->getMvField( pcColCU, baseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
-#else
-          pcPicBase->getCU(baseCUAddr)->getMvField( pcPicBase->getCU(baseCUAddr), baseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
-#endif
           pcCUDes->scaleBaseMV( sMvField, sMvFieldBase );
-#else
-          TComMv cMv = pcPicBase->getCU(baseCUAddr)->getCUMvField((RefPicList)refPicList)->getMv(baseAbsPartIdx);
-          Int refIdx = pcPicBase->getCU(baseCUAddr)->getCUMvField((RefPicList)refPicList)->getRefIdx(baseAbsPartIdx);
-
-          Int hor =  ((Int)upSampleRatio * cMv.getHor())/2 ;
-          Int ver =  ((Int)upSampleRatio * cMv.getVer())/2 ;
-
-          TComMv cScaledMv(hor, ver);
-          TComMvField sMvField;
-          sMvField.setMvField(cScaledMv, refIdx);
-#endif
 
           pcCUDes->getCUMvField((RefPicList)refPicList)->setMvField(sMvField, absPartIdx);
           pcCUDes->setPredictionMode(absPartIdx, MODE_INTER);

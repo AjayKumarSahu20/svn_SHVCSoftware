@@ -128,9 +128,6 @@ public:
 
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  (  TComPic* pcPicBase );
-#if !REUSE_BLKMAPPING
-  Void          deriveUnitIdxBase     (  UInt upsamplePelX, UInt upsamplePelY, UInt ratio, UInt& baseCUAddr, UInt& baseAbsPartIdx );
-#endif
 #if RAP_MFM_INIT
   Void          initUpsampledMvField  ();
 #endif
