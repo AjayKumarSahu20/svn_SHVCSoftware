@@ -2573,7 +2573,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     printf(" [L%d ", iRefList);
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if REF_IDX_FRAMEWORK && VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR(m_layerId) )
       {
         printf( "%d(%d) ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR(), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
