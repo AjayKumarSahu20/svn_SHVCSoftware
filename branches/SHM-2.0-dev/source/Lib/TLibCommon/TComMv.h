@@ -148,6 +148,14 @@ public:
     Int mvy = Clip3( -32768, 32767, (iScale * getVer() + 127 + (iScale * getVer() < 0)) >> 8 );
     return TComMv( mvx, mvy );
   }
+#if SIMPLIFIED_MV_POS_SCALING
+  const TComMv scaleMv( Int iScaleX, Int iScaleY ) const
+  {
+    Int mvx = Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );
+    Int mvy = Clip3( -32768, 32767, (iScaleY * getVer() + 127 + (iScaleY * getVer() < 0)) >> 8 );
+    return TComMv( mvx, mvy );
+  }
+#endif
 };// END CLASS DEFINITION TComMV
 
 //! \}

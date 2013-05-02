@@ -970,6 +970,26 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     UInt uiNumSlices = 1;
 
+#if SIMPLIFIED_MV_POS_SCALING
+    if (m_layerId > 0)
+    {
+      const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
+      const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
+
+      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+      Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+
+      g_mvScalingFactor[m_layerId][0] = Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
+      g_mvScalingFactor[m_layerId][1] = Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+
+      g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
+      g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
+    }
+#endif
+
     UInt uiInternalAddress = pcPic->getNumPartInCU()-4;
     UInt uiExternalAddress = pcPic->getPicSym()->getNumberOfCUsInFrame()-1;
     UInt uiPosX = ( uiExternalAddress % pcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
