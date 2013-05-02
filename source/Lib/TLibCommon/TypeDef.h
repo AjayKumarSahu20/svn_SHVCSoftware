@@ -43,6 +43,8 @@
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
+#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
@@ -50,8 +52,8 @@
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
+#define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
 #endif
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
@@ -158,7 +160,7 @@
 #endif
 #if VPS_RENAME
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
-#define MAX_VPS_LAYER_ID_PLUS1                    2
+#define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024

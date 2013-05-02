@@ -178,7 +178,7 @@ Void TDecTop::setILRPic(TComPic *pcPic)
     //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
     m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
     m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
-    m_cIlpPic[0]->setLayerId(0); //set reference layerId
+    m_cIlpPic[0]->setLayerId(pcPic->getSlice(0)->getBaseColPic()->getLayerId()); //set reference layerId
     m_cIlpPic[0]->getPicYuvRec()->setBorderExtension(false);
     m_cIlpPic[0]->getPicYuvRec()->extendPicBorder();
   }
@@ -242,7 +242,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
     if(m_layerId > 0)
     {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+      TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( m_layerId );
+#else
       TDecTop *pcTDecTopBase = (TDecTop *)getLayerDec( m_layerId-1 );
+#endif
       //TComPic*                      pcPic = *(pcTDecTopBase->getListPic()->begin()); 
       TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec(); 
       if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples() )
@@ -794,7 +798,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #else
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+      TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
+#else
       TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
+#endif
       TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
       pcSlice->setBaseColPic ( *cListPic, m_layerId );
 #endif
@@ -1173,5 +1181,21 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
   // if we reach here, then the picture is not skipped.
   return false; 
 }
+
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+TDecTop* TDecTop::getRefLayerDec( UInt layerId )
+{
+  TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
+  if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
+  {
+    return NULL;
+  }
+
+  // currently only one reference layer is supported
+  assert( vps->getNumDirectRefLayers( m_layerId ) == 1 );
+
+  return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, 0 ) );
+}
+#endif
 
 //! \}

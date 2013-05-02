@@ -499,16 +499,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
     if ( getUseAdaptiveQP() )
     {
       TEncPic* pcEPic = new TEncPic;
-#if SVC_EXTENSION //Temporal solution, should be modified
-      if(m_layerId > 0)
-      {
-        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
-        {
-          pcEPic->setSpatialEnhLayerFlag( true );
-        }
-      }
-#endif
 
 #if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
@@ -523,16 +513,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
     {
       rpcPic = new TComPic;
 
-#if SVC_EXTENSION //Temporal solution, should be modified
-      if(m_layerId > 0)
-      {
-        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
-        {
-          rpcPic->setSpatialEnhLayerFlag( true );
-        }
-      }
-#endif
 
 #if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
@@ -542,6 +522,22 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
 #endif
     }
+
+#if SVC_EXTENSION //Temporal solution, should be modified
+      if(m_layerId > 0)
+      {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+#else
+        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+#endif
+        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        {
+          rpcPic->setSpatialEnhLayerFlag( true );
+        }
+      }
+#endif
+
     if (getUseSAO())
     {
       rpcPic->getPicSym()->allocSaoParam(&m_cEncSAO);
@@ -1174,6 +1170,22 @@ Void  TEncCfg::xCheckGSParameters()
   }
 }
 
+#if SVC_EXTENSION
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
+{
+  if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
+  {
+    return NULL;
+  }
+
+  // currently only one reference layer is supported
+  assert( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() == 1 );
+
+  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, 0 ) );
+}
+#endif
+
 #if REF_IDX_FRAMEWORK
 Void TEncTop::xInitILRP()
 {
@@ -1210,10 +1222,11 @@ Void TEncTop::setILRPic(TComPic *pcPic)
     //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
     m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
     m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
-    m_cIlpPic[0]->setLayerId(0); //set reference layerId
+    m_cIlpPic[0]->setLayerId(pcPic->getSlice(0)->getBaseColPic()->getLayerId()); //set reference layerId
     m_cIlpPic[0]->getPicYuvRec()->setBorderExtension(false);
     m_cIlpPic[0]->getPicYuvRec()->extendPicBorder();
   }
 }
+#endif
 #endif
 //! \}

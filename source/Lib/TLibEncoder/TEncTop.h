@@ -211,19 +211,21 @@ public:
 #if SVC_EXTENSION
 #if REF_IDX_FRAMEWORK
   TComPic** getIlpList() { return m_cIlpPic; }
-  Void setILRPic(TComPic *pcPic);
+  Void      setILRPic(TComPic *pcPic);
 #endif
 #if REF_IDX_MFM
-  Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+  Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
-  Void encodePrep( TComPicYuv* pcPicYuvOrg );
+  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
+  Void      encodePrep( TComPicYuv* pcPicYuvOrg );
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+  TEncTop*  getRefLayerEnc(UInt layerId);
+#endif
 #else
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
