@@ -102,7 +102,7 @@ public:
 #if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
-#if REF_IDX_FRAMEWORK
+#if REF_IDX_FRAMEWORK && 0
   Void          createWithOutYuv( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, TComSPS* pcSps = NULL, Bool bIsVirtual = false );  
   Void          setPicYuvRec(TComPicYuv *pPicYuv) { m_apcPicYuv[1]=pPicYuv; }
 #endif
