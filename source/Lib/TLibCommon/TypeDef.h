@@ -110,6 +110,7 @@
 #endif
 #endif
 #else
+#define ILP_DECODED_PICTURE              0
 #define SYNTAX_OUTPUT                    0
 #endif
 
