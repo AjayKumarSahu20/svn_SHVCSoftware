@@ -1315,7 +1315,11 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
     TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
     if (m_pchReconFile)
     {
+#if SYNTAX_OUTPUT && ILP_DECODED_PICTURE
+      m_cTVideoIOYuvReconFile.write( pcPicYuvRec );
+#else
       m_cTVideoIOYuvReconFile.write( pcPicYuvRec, m_confLeft, m_confRight, m_confTop, m_confBottom );
+#endif
     }
 
     const AccessUnit& au = *(iterBitstream++);
