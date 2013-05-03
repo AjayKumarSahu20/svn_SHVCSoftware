@@ -844,7 +844,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #else
       pcSlice->addRefPicList ( m_cIlpPic, 
                                1, 
-                               ((pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA) && 
+                               ((pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && 
                                 (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ? 0: -1);
 #endif
     }
