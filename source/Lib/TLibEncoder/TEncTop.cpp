@@ -1205,6 +1205,13 @@ Void TEncTop::xInitILRP()
 {
   if(m_layerId>0)
   {
+    g_bitDepthY     = m_cSPS.getBitDepthY();
+    g_bitDepthC     = m_cSPS.getBitDepthC();
+    g_uiMaxCUWidth  = m_cSPS.getMaxCUWidth();
+    g_uiMaxCUHeight = m_cSPS.getMaxCUHeight();
+    g_uiMaxCUDepth  = m_cSPS.getMaxCUDepth();
+    g_uiAddCUDepth  = max (0, m_cSPS.getLog2MinCodingBlockSize() - (Int)m_cSPS.getQuadtreeTULog2MinSize() );
+
     Int  numReorderPics[MAX_TLAYER];
     Window &conformanceWindow = m_cSPS.getConformanceWindow();
     Window defaultDisplayWindow = m_cSPS.getVuiParametersPresentFlag() ? m_cSPS.getVuiParameters()->getDefaultDisplayWindow() : Window();

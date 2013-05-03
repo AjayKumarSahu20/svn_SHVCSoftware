@@ -142,6 +142,13 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 {
   if(m_layerId>0)
   {
+    g_bitDepthY     = pcSPS->getBitDepthY();
+    g_bitDepthC     = pcSPS->getBitDepthC();
+    g_uiMaxCUWidth  = pcSPS->getMaxCUWidth();
+    g_uiMaxCUHeight = pcSPS->getMaxCUHeight();
+    g_uiMaxCUDepth  = pcSPS->getMaxCUDepth();
+    g_uiAddCUDepth  = max (0, pcSPS->getLog2MinCodingBlockSize() - (Int)pcSPS->getQuadtreeTULog2MinSize() );
+
     Int  numReorderPics[MAX_TLAYER];
     Window &conformanceWindow = pcSPS->getConformanceWindow();
     Window defaultDisplayWindow = pcSPS->getVuiParametersPresentFlag() ? pcSPS->getVuiParameters()->getDefaultDisplayWindow() : Window();
@@ -578,8 +585,13 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
     fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
     const Window &conf = pBLPic->getConformanceWindow();
+#if ILP_DECODED_PICTURE
+    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
+    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
+#else
     UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
     UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
+#endif
         
     if( pFile->good() )
     {
@@ -1081,12 +1093,12 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #if SVC_UPSAMPLING
 #if AVC_SYNTAX
 
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
 #else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
 #endif
 #else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, onformanceWindow, defaultDisplayWindow, numReorderPics, true);
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         }
       }

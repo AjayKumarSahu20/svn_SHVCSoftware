@@ -4212,6 +4212,13 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   }
 
 #if AVC_SYNTAX && !ILP_DECODED_PICTURE
+#if !ILP_DECODED_PICTURE
+  const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
+  const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
+
+  Int widthBL   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  Int heightBL  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+#endif
   if( iBX >= widthBL || iBY >= heightBL ) //outside of the reference layer cropped picture
   {
     return NULL;
