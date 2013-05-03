@@ -87,8 +87,8 @@
 
 #if REF_IDX_MFM
 #define RAP_MFM_INIT                     1      ///< initilizing MFM when base layer is RAP picture
-#define REF_LIST_BUGFIX                  1
 #endif
+#define REF_LIST_BUGFIX                  1
 
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction

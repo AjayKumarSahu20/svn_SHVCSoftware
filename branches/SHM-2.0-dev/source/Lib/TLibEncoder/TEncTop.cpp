@@ -513,6 +513,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           pcEPic->setSpatialEnhLayerFlag( true );
         }
       }
+#endif
 
 #if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
@@ -520,7 +521,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #else
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
 #endif
       rpcPic = pcEPic;
     }
@@ -541,6 +541,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           rpcPic->setSpatialEnhLayerFlag( true );
         }
       }
+#endif
 
 #if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
@@ -548,7 +549,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #else
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
 #endif
     }
 
