@@ -2498,7 +2498,7 @@ Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
 {
 // Assumed that RPL of the base layer is same to the EL, otherwise this information should be also dumped and read from the metadata file
   setPOC( pcSlice->getPOC() );
-  if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
+  if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
   {
     setSliceType( I_SLICE );
   }
