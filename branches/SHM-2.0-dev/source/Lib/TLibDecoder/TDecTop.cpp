@@ -830,7 +830,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
 #endif
     }
-#endif 
 
 #if REF_IDX_FRAMEWORK
     if(m_layerId > 0)
