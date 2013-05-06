@@ -580,10 +580,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (m_bFirstSliceInPicture)
   {
 #if AVC_BASE
-  if( m_layerId == 1 )
+  if( m_layerId == 1 && m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
   {
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
     fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
+#if ILP_DECODED_PICTURE
+    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
+    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
+#else
     const Window &conf = pBLPic->getConformanceWindow();
 #if ILP_DECODED_PICTURE
     UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
@@ -795,20 +799,32 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     if(m_layerId > 0)
     {
 #if AVC_BASE
-      pcSlice->setBaseColPic ( *m_ppcTDecTop[0]->getListPic()->begin() );
-#if AVC_SYNTAX
-      TComPic* pBLPic = pcSlice->getBaseColPic();
-      if( pcSlice->getPOC() == 0 )
+      if( m_parameterSetManagerDecoder[0].getActiveVPS()->getAvcBaseLayerFlag() )
       {
-        // initialize partition order.
-        UInt* piTmp = &g_auiZscanToRaster[0];
-        initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
-        initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
-      }      
-      pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
-      pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
+        pcSlice->setBaseColPic ( *m_ppcTDecTop[0]->getListPic()->begin() );
+#if AVC_SYNTAX
+        TComPic* pBLPic = pcSlice->getBaseColPic();
+        if( pcSlice->getPOC() == 0 )
+        {
+          // initialize partition order.
+          UInt* piTmp = &g_auiZscanToRaster[0];
+          initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
+          initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
+        }      
+        pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
+        pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
 #endif
-
+      }
+      else
+      {
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+        TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
+#else
+        TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
+#endif
+        TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
+        pcSlice->setBaseColPic ( *cListPic, m_layerId );
+      }
 #else
 #if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
       TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
@@ -836,7 +852,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       setILRPic(pcPic);
 #if REF_IDX_MFM
-      pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
+      if( pcSlice->getSPS()->getMFMEnabledFlag() )
+      {
+        pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
+      }
 #endif
 #if REF_LIST_BUGFIX
       pcSlice->setRefPicListSvc( m_cListPic, m_cIlpPic);
@@ -1078,11 +1097,34 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   {
     case NAL_UNIT_VPS:
       xDecodeVPS();
+#if AVC_BASE
+      if( m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+      {
+        if( !m_ppcTDecTop[0]->getBLReconFile()->good() )
+        {
+          printf( "Base layer YUV input reading error\n" );
+          exit(EXIT_FAILURE);
+        }        
+#if AVC_SYNTAX
+        if( !m_ppcTDecTop[0]->getBLSyntaxFile()->good() )
+        {
+          printf( "Base layer syntax input reading error\n" );
+          exit(EXIT_FAILURE);
+        }
+#endif
+      }
+      else
+      {
+        TComList<TComPic*> *cListPic = m_ppcTDecTop[0]->getListPic();
+        cListPic->clear();
+      }
+#endif
       return false;
       
     case NAL_UNIT_SPS:
       xDecodeSPS();
 #if AVC_BASE
+      if( m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
       {
         TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
         if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )

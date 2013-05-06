@@ -111,7 +111,11 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 
 #if REF_IDX_MFM
+#if AVC_BASE
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ));
+#else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
+#endif
 #endif
     // set layer ID 
     m_acTEncTop[layer].setLayerId ( layer ); 
@@ -804,7 +808,11 @@ Void TAppEncTop::xInitLib()
   }
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, dimIdLen = 0;
+#if AVC_BASE
+  vps->setAvcBaseLayerFlag(m_avcBaseLayerFlag);
+#else
   vps->setAvcBaseLayerFlag(false);
+#endif
   vps->setSplittingFlag(false);
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
   {
@@ -930,18 +938,22 @@ Void TAppEncTop::encode()
   }
 
 #if AVC_SYNTAX
-  if( !m_BLSyntaxFile )
+  fstream streamSyntaxFile;
+  if( m_acTEncTop[0].getVPS()->getAvcBaseLayerFlag() )
   {
-    printf( "Wrong base layer syntax input file\n" );
-    exit(EXIT_FAILURE);
+    if( !m_BLSyntaxFile )
+    {
+      printf( "Wrong base layer syntax input file\n" );
+      exit(EXIT_FAILURE);
+    }
+    streamSyntaxFile.open( m_BLSyntaxFile, fstream::in | fstream::binary );
+    if( !streamSyntaxFile.good() )
+    {
+      printf( "Base layer syntax input reading error\n" );
+      exit(EXIT_FAILURE);
+    }
+    m_acTEncTop[0].setBLSyntaxFile( &streamSyntaxFile );
   }
-  fstream streamSyntaxFile( m_BLSyntaxFile, fstream::in | fstream::binary );
-  if( !streamSyntaxFile.good() )
-  {
-    printf( "Base layer syntax input reading error\n" );
-    exit(EXIT_FAILURE);
-  }
-  m_acTEncTop[0].setBLSyntaxFile( &streamSyntaxFile );
 #endif
 
   Bool bFirstFrame = true;

@@ -65,7 +65,6 @@
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 
-#define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
 #if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
@@ -74,16 +73,15 @@
 
 #define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
 
+#define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
-#define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
+#define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
 #endif
 
 #if REF_IDX_FRAMEWORK
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
-#if !AVC_BASE || AVC_SYNTAX
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
-#endif
 
 #if REF_IDX_MFM
 #define RAP_MFM_INIT                     1      ///< initilizing MFM when base layer is RAP picture

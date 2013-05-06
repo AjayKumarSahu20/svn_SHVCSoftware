@@ -1108,7 +1108,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_storedStartCUAddrForEncodingSliceSegment.push_back(nextCUAddr);
     startCUAddrSliceSegmentIdx++;
 #if AVC_BASE
-    if( m_layerId == 0 )
+    if( m_layerId == 0 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() )
     {
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
 #if AVC_SYNTAX
@@ -1224,7 +1224,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
       OutputNALUnit nalu(NAL_UNIT_VPS, 0, m_layerId);
 #if AVC_BASE
-      if( m_layerId == 1 )
+      if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) )
 #else
       if( m_layerId == 0 )
 #endif

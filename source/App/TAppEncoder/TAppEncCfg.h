@@ -66,8 +66,11 @@ protected:
   // source specification
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
+#if AVC_BASE
+  Int       m_avcBaseLayerFlag;                               ///< AVC_BASElayer_flag
+#endif
 #if AVC_SYNTAX
-  char*     m_BLSyntaxFile;                                   ///< input syntax file
+  Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name

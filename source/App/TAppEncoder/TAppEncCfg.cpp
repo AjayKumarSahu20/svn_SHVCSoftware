@@ -342,6 +342,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
 #endif
   }
+#if AVC_BASE
+  string  cfg_BLInputFile;
+#endif
 #if AVC_SYNTAX
   string  cfg_BLSyntaxFile;
 #endif
@@ -398,7 +401,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 
 #if AVC_BASE
-  ("InputBLFile,-ibl",        *cfg_InputFile[0],     string(""), "Base layer rec YUV input file name")
+  ("AvcBase",                 m_avcBaseLayerFlag,     0, "AVC_BASElayer_flag")
+  ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
 #if AVC_SYNTAX
   ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
@@ -715,6 +719,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ;
   
+#if AVC_BASE
+  if( m_avcBaseLayerFlag )
+  {
+    *cfg_InputFile[0] = cfg_BLInputFile;
+  }
+#endif
+
   for(Int i=1; i<MAX_GOP+1; i++) {
     std::ostringstream cOSS;
     cOSS<<"Frame"<<i;
@@ -1905,7 +1916,11 @@ Void TAppEncCfg::xPrintParameter()
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
 #if SVC_EXTENSION
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
-  printf("AVC_BASE:%d ", AVC_BASE);
+#if AVC_BASE
+  printf("AvcBase:%d ", m_avcBaseLayerFlag ? 1 : 0);
+#else
+  printf("AvcBase:%d ", 0);
+#endif
 #if REF_IDX_FRAMEWORK
   printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
