@@ -1611,7 +1611,6 @@ TComVPS::TComVPS()
 , m_numOutputLayerSets        (0)  
 #endif
 {
-
   for( Int i = 0; i < MAX_TLAYER; i++)
   {
     m_numReorderPics[i] = 0;

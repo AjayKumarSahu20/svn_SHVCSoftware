@@ -156,16 +156,10 @@ Void TAppDecTop::decode()
 
 #if AVC_BASE
   TComPic pcBLPic;
-  if( !m_pchBLReconFile )
+  fstream streamYUV;
+  if( m_pchBLReconFile )
   {
-    printf( "Wrong base layer YUV input file\n" );
-    exit(EXIT_FAILURE);
-  }
-  fstream streamYUV( m_pchBLReconFile, fstream::in | fstream::binary );
-  if( !streamYUV.good() )
-  {
-    printf( "Base layer YUV input reading error\n" );
-    exit(EXIT_FAILURE);
+    streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
   m_acTDecTop[0].setBLsize( m_iBLSourceWidth, m_iBLSourceHeight );
@@ -173,16 +167,10 @@ Void TAppDecTop::decode()
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
 #if AVC_SYNTAX
-  if( !m_pchBLSyntaxFile )
+  fstream streamSyntaxFile;
+  if( m_pchBLSyntaxFile )
   {
-    printf( "Wrong base layer syntax file\n" );
-    exit(EXIT_FAILURE);
-  }
-  fstream streamSyntaxFile( m_pchBLSyntaxFile, fstream::in | fstream::binary );
-  if( !streamSyntaxFile.good() )
-  {
-    printf( "Base layer syntax input reading error\n" );
-    exit(EXIT_FAILURE);
+    streamSyntaxFile.open( m_pchBLSyntaxFile, fstream::in | fstream::binary );
   }
   m_acTDecTop[0].setBLSyntaxFile( &streamSyntaxFile );
 #endif
