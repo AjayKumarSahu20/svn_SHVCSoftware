@@ -902,7 +902,27 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 #endif
-
+#if VPS_MOVE_DIR_DEPENDENCY_FLAG
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // For layer 0
+  vps->setNumDirectRefLayers(0, 0);
+  // For other layers
+  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    UInt numDirectRefLayers = 0;
+    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      READ_FLAG(uiCode, "direct_dependency_flag[i][j]" ); vps->setDirectDependencyFlag(layerCtr, refLayerCtr, uiCode? true : false);
+      if(uiCode)
+      {
+        vps->setRefLayerId(layerCtr, numDirectRefLayers, refLayerCtr);
+        numDirectRefLayers++;
+      }
+    }
+    vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
+  }
+#endif
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
@@ -940,6 +960,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }  
 #endif
+#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
@@ -958,6 +979,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
   }
+#endif
 #endif
 }
 #endif

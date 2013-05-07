@@ -701,6 +701,17 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if VPS_MOVE_DIR_DEPENDENCY_FLAG
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
+    }
+  }
+#endif
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
   for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
@@ -734,6 +745,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
@@ -742,6 +754,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
     }
   }
+#endif
 #endif
 }
 #endif
