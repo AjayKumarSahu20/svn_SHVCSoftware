@@ -925,7 +925,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
   for(i = 0; i < vps->getNumOutputLayerSets(); i++)
   {
+#if VPS_OUTPUT_LAYER_SET_IDX
+    READ_UVLC( uiCode,           "vps_output_layer_set_idx_minus1[i]"); vps->setOutputLayerSetIdx(i, uiCode + 1);
+#else
     READ_UVLC( uiCode,           "vps_output_layer_set_idx[i]"); vps->setOutputLayerSetIdx(i, uiCode);
+#endif
     Int lsIdx = vps->getOutputLayerSetIdx(i);
     for(j = 0; j <= vps->getMaxLayerId(); j++)
     {

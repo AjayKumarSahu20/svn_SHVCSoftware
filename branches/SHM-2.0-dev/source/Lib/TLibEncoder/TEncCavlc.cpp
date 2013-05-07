@@ -718,7 +718,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
   for(i = 0; i < vps->getNumOutputLayerSets(); i++)
   {
+#if VPS_OUTPUT_LAYER_SET_IDX
+    assert(vps->getOutputLayerSetIdx(i) > 0);
+    WRITE_UVLC( vps->getOutputLayerSetIdx(i) - 1,           "vps_output_layer_set_idx_minus1[i]");
+#else
     WRITE_UVLC( vps->getOutputLayerSetIdx(i),           "vps_output_layer_set_idx[i]");
+#endif
     Int lsIdx = vps->getOutputLayerSetIdx(i);
     for(j = 0; j <= vps->getMaxLayerId(); j++)
     {
