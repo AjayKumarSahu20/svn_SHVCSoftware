@@ -54,6 +54,7 @@
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
 #define VPS_OUTPUT_LAYER_SET_IDX         1      ///< Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
+#define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #endif
 
 #define SVC_COL_BLK                      1      ///< get co-located block
