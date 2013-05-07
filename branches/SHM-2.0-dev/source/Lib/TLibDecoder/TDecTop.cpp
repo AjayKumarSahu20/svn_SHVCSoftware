@@ -580,63 +580,59 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (m_bFirstSliceInPicture)
   {
 #if AVC_BASE
-  if( m_layerId == 1 && m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
-  {
-    TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
-    fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
-#if ILP_DECODED_PICTURE
-    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
-    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
-#else
-    const Window &conf = pBLPic->getConformanceWindow();
-#if ILP_DECODED_PICTURE
-    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
-    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
-#else
-    UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
-    UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
-#endif
-        
-    if( pFile->good() )
+    if( m_layerId == 1 && m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
     {
-      UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
+      TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
+      fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
+#if ILP_DECODED_PICTURE
+      UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
+      UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
+#else
+      const Window &conf = pBLPic->getConformanceWindow();
+      UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
+      UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
+#endif
 
-      pFile->seekg((UInt)uiPos, ios::beg );
-
-      Pel* pPel = pBLPic->getPicYuvRec()->getLumaAddr();
-      UInt uiStride = pBLPic->getPicYuvRec()->getStride();
-      for( Int i = 0; i < uiHeight; i++ )
+      if( pFile->good() )
       {
-        for( Int j = 0; j < uiWidth; j++ )
-        {
-          pPel[j] = pFile->get();
-        }
-        pPel += uiStride;
-      }
+        UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
 
-      pPel = pBLPic->getPicYuvRec()->getCbAddr();
-      uiStride = pBLPic->getPicYuvRec()->getCStride();
-      for( Int i = 0; i < uiHeight/2; i++ )
-      {
-        for( Int j = 0; j < uiWidth/2; j++ )
-        {
-          pPel[j] = pFile->get();
-        }
-        pPel += uiStride;
-      }
+        pFile->seekg((UInt)uiPos, ios::beg );
 
-      pPel = pBLPic->getPicYuvRec()->getCrAddr();
-      uiStride = pBLPic->getPicYuvRec()->getCStride();
-      for( Int i = 0; i < uiHeight/2; i++ )
-      {
-        for( Int j = 0; j < uiWidth/2; j++ )
+        Pel* pPel = pBLPic->getPicYuvRec()->getLumaAddr();
+        UInt uiStride = pBLPic->getPicYuvRec()->getStride();
+        for( Int i = 0; i < uiHeight; i++ )
         {
-          pPel[j] = pFile->get();
+          for( Int j = 0; j < uiWidth; j++ )
+          {
+            pPel[j] = pFile->get();
+          }
+          pPel += uiStride;
         }
-        pPel += uiStride;
+
+        pPel = pBLPic->getPicYuvRec()->getCbAddr();
+        uiStride = pBLPic->getPicYuvRec()->getCStride();
+        for( Int i = 0; i < uiHeight/2; i++ )
+        {
+          for( Int j = 0; j < uiWidth/2; j++ )
+          {
+            pPel[j] = pFile->get();
+          }
+          pPel += uiStride;
+        }
+
+        pPel = pBLPic->getPicYuvRec()->getCrAddr();
+        uiStride = pBLPic->getPicYuvRec()->getCStride();
+        for( Int i = 0; i < uiHeight/2; i++ )
+        {
+          for( Int j = 0; j < uiWidth/2; j++ )
+          {
+            pPel[j] = pFile->get();
+          }
+          pPel += uiStride;
+        }
       }
     }
-  }
 #endif
 
     // Buffer initialize for prediction.
