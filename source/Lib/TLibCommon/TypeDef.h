@@ -53,6 +53,7 @@
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
+#define VPS_OUTPUT_LAYER_SET_IDX         1      ///< Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
 #endif
 
 #define SVC_COL_BLK                      1      ///< get co-located block
