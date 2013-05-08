@@ -1924,7 +1924,9 @@ Void TAppEncCfg::xPrintParameter()
 #if REF_IDX_FRAMEWORK
   printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
-  printf("REF_IDX_ME_ZEROMV: %d", REF_IDX_ME_ZEROMV);
+  printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
+  printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
+  printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
 #elif INTRA_BL
   printf("INTRA_BL:%d ", INTRA_BL);
 #if !AVC_BASE
