@@ -1387,7 +1387,7 @@ private:
   Bool        m_deblockingFilterOverrideFlag;      //< offsets for deblocking filter inherit from PPS
   Int         m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int         m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
   Int         m_aiNumILRRefIdx;       //< for inter-layer reference picture ser
 #endif
 #if L0034_COMBINED_LIST_CLEANUP
@@ -1537,7 +1537,7 @@ public:
   Bool      getDeblockingFilterOverrideFlag()           { return  m_deblockingFilterOverrideFlag; }
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
   Int       getNumILRRefIdx     ( )                     { return  m_aiNumILRRefIdx; }
   Void      setNumILRRefIdx     ( Int i )                     { m_aiNumILRRefIdx = i; }
 #endif
@@ -1616,7 +1616,7 @@ public:
 #endif
 
 #if FIX1071
-  Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false );
+  Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
 #else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
 #endif
@@ -1626,9 +1626,8 @@ public:
   Void      setCheckLDC         ( Bool b )                      { m_bCheckLDC = b; }
   Void      setMvdL1ZeroFlag     ( Bool b)                       { m_bLMvdL1Zero = b; }
 
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
   Void      setRefPicListModificationSvc();
-  Void      setRefPicListSvc    ( TComList<TComPic*>& rcListPic, TComPic** ilpPic );
 #endif
 
   Bool      isIntra         ()                          { return  m_eSliceType == I_SLICE;  }
@@ -1745,9 +1744,6 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
-#if REF_IDX_FRAMEWORK
-  Void      addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInsertOffset=0 );
-#endif
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);
