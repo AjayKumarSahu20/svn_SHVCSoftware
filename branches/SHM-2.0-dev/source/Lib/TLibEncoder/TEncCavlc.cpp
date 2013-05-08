@@ -38,7 +38,7 @@
 #include "../TLibCommon/CommonDef.h"
 #include "TEncCavlc.h"
 #include "SEIwrite.h"
-
+#include <iostream>
 //! \ingroup TLibEncoder
 //! \{
 
@@ -717,16 +717,55 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
+#if VPS_PROFILE_OUTPUT_LAYERS
+  WRITE_CODE( vps->getNumLayerSets() - 1   , 10, "vps_number_layer_sets_minus1" );     
+  WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
+  for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#else
   for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
+#endif
   {
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
     if( !vps->getProfilePresentFlag(idx) )
     {
+#if VPS_PROFILE_OUTPUT_LAYERS
+      WRITE_CODE( vps->getProfileLayerSetRef(idx) - 1, 6, "profile_ref_minus1[i]" );
+#else
       WRITE_UVLC( vps->getProfileLayerSetRef(idx) - 1, "vps_profile_layer_set_ref_minus1[i]" );
+#endif
     }
     codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
   }
 #endif
+
+#if VPS_PROFILE_OUTPUT_LAYERS
+  Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
+  WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 
+  if(numOutputLayerSets > vps->getNumLayerSets())
+  {
+    WRITE_CODE( numOutputLayerSets - vps->getNumLayerSets(), 10, "num_add_output_layer_sets" );
+  }
+  if( numOutputLayerSets > 1 )
+  {
+    WRITE_FLAG( vps->getDefaultOneTargetOutputLayerFlag(), "default_one_target_output_layer_flag" );   
+  }
+
+  for(i = 1; i < numOutputLayerSets; i++)
+  {
+    if( i > (vps->getNumLayerSets() - 1) )
+    {
+      Int numBits = std::max(1.0, ceil( log((double)vps->getNumLayerSets() - 1) / log(2.0) ));
+      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1");  
+      Int lsIdx = vps->getOutputLayerSetIdx(i);
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
+      {
+        WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
+      }
+    }
+    Int numBits = std::max(1.0, ceil( log((double)vps->getNumProfileTierLevel()) / log(2.0) ));
+    WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
+  }
+#else
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
@@ -747,6 +786,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+#endif
 #endif
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS

@@ -549,7 +549,13 @@ private:
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
-
+#if VPS_PROFILE_OUTPUT_LAYERS
+  UInt       m_numProfileTierLevel;
+  Bool       m_moreOutputLayerSetsThanDefaultFlag;
+  Int        m_numAddOutputLayerSets;
+  Bool       m_defaultOneTargetOutputLayerFlag;
+  Int        m_profileLevelTierIdx[64];     
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -681,6 +687,22 @@ public:
 
   UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
   Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
+#endif
+#if VPS_PROFILE_OUTPUT_LAYERS
+  UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
+  Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
+
+  Bool   getMoreOutputLayerSetsThanDefaultFlag()                 { return m_moreOutputLayerSetsThanDefaultFlag;}
+  Void   setMoreOutputLayerSetsThanDefaultFlag(Bool x)           { m_moreOutputLayerSetsThanDefaultFlag = x   ;}
+
+  Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
+  Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
+
+  Bool   getDefaultOneTargetOutputLayerFlag()                 { return m_defaultOneTargetOutputLayerFlag;}
+  Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
+
+  Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
+  Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
 #endif
 };
 
