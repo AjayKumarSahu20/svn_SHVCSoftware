@@ -329,6 +329,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   const Double sFactor12 = sFactor * 12;
 #endif
 
+#if ILP_DECODED_PICTURE
+  widthBL   = pcBasePic->getWidth ();
+  heightBL  = pcBasePic->getHeight();
+
+  widthEL   = pcUsPic->getWidth ();
+  heightEL  = pcUsPic->getHeight();
+#endif
+
   //========== horizontal upsampling ===========
   for( i = 0; i < widthEL; i++ )
   {
@@ -390,6 +398,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     }
   }
 
+#if ILP_DECODED_PICTURE
+  widthBL   = pcBasePic->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  heightBL  = pcBasePic->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+  widthEL   = pcUsPic->getWidth () - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+  heightEL  = pcUsPic->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+#endif
+
   //========== UV component upsampling ===========
 
   widthEL  >>= 1;
@@ -419,6 +435,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
+#endif
+
+#if ILP_DECODED_PICTURE
+  widthBL   = pcBasePic->getWidth () >> 1;
+  heightBL  = pcBasePic->getHeight() >> 1;
+
+  widthEL   = pcUsPic->getWidth () >> 1;
+  heightEL  = pcUsPic->getHeight() >> 1;
 #endif
 
   //========== horizontal upsampling ===========
