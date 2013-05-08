@@ -112,7 +112,6 @@ Void TDecTop::destroy()
   {
     if(m_cIlpPic[i])
     {
-      //m_cIlpPic[i]->setPicYuvRec(NULL);
       m_cIlpPic[i]->destroy();
       delete m_cIlpPic[i];
       m_cIlpPic[i] = NULL;
@@ -160,10 +159,10 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
+      for (Int j=0; j< 1/*MAX_NUM_REF*/; j++)  // to be set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
+
         m_cIlpPic[j] = new  TComPic;
-        //m_cIlpPic[j]->createWithOutYuv(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
 #if SVC_UPSAMPLING
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
 #else
@@ -182,7 +181,6 @@ Void TDecTop::setILRPic(TComPic *pcPic)
 {
   if(m_cIlpPic[0])
   {
-    //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
     m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
     m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
     m_cIlpPic[0]->setLayerId(pcPic->getSlice(0)->getBaseColPic()->getLayerId()); //set reference layerId
@@ -455,6 +453,7 @@ Void TDecTop::xActivateParameterSets()
 
   m_apcSlicePilot->setPPS(pps);
   m_apcSlicePilot->setSPS(sps);
+
   pps->setSPS(sps);
   pps->setNumSubstreams(pps->getEntropyCodingSyncEnabledFlag() ? ((sps->getPicHeightInLumaSamples() + sps->getMaxCUHeight() - 1) / sps->getMaxCUHeight()) * (pps->getNumColumnsMinus1() + 1) : 1);
   pps->setMinCuDQPSize( sps->getMaxCUWidth() >> ( pps->getMaxCuDQPDepth()) );
@@ -782,7 +781,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     pcSlice->checkCRA(pcSlice->getRPS(), m_pocCRA, m_prevRAPisBLA, m_cListPic );
     // Set reference list
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
     if (m_layerId == 0)
 #endif
 #if FIX1071
@@ -853,14 +852,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
       }
 #endif
-#if REF_LIST_BUGFIX
-      pcSlice->setRefPicListSvc( m_cListPic, m_cIlpPic);
-#else
-      pcSlice->addRefPicList ( m_cIlpPic, 
-                               1, 
-                               ((pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && 
-                                (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ? 0: -1);
-#endif
+      pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
 #endif
 
