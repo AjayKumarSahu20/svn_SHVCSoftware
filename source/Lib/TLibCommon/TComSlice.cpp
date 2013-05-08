@@ -1648,6 +1648,10 @@ TComVPS::TComVPS()
   ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));
   ::memset(m_refLayerId,           0, sizeof(m_refLayerId          ));
 #endif
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
+  ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
+#endif
 }
 
 TComVPS::~TComVPS()
@@ -1656,7 +1660,30 @@ TComVPS::~TComVPS()
   if( m_hrdOpSetIdx      != NULL )     delete[] m_hrdOpSetIdx;
   if( m_cprmsPresentFlag != NULL )     delete[] m_cprmsPresentFlag;
 }
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+Void TComVPS::deriveLayerIdListVariables()
+{
+  // For layer 0
+  setNumLayersInIdList(0, 1);
+  setLayerSetLayerIdList(0, 0, 0);
 
+  // For other layers
+  Int i, m, n;
+  for( i = 1; i <= getNumLayerSets() - 1; i++ )
+  {
+    n = 0;
+    for( m = 0; m <= this->getMaxLayerId(); m++)
+    {
+      if(this->getLayerIdIncludedFlag(i, m))
+      {
+        setLayerSetLayerIdList(i, n, m);
+        n++;
+      }
+    }
+    setNumLayersInIdList(i, n);
+  }
+}
+#endif
 // ------------------------------------------------------------------------------------------------
 // Sequence parameter set (SPS)
 // ------------------------------------------------------------------------------------------------
