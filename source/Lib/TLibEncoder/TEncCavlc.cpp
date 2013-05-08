@@ -833,6 +833,9 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       // Ideally this process should not be repeated for each slice in a picture
       TComReferencePictureSet altRps;
       Bool useAltRps = false;
+#if SVC_EXTENSION
+      if( pcSlice->getLayerId() == 0 )
+#endif
       if (pcSlice->getRapPicFlag())
       {
         for (Int picIdx = 0; !useAltRps && picIdx < rps->getNumberOfPictures(); picIdx++)
