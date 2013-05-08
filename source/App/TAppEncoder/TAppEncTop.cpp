@@ -852,9 +852,18 @@ Void TAppEncTop::xInitLib()
   }
 #endif
   // Target output layer
+#if VPS_PROFILE_OUTPUT_LAYERS
+  vps->setNumOutputLayerSets(2);    // 2 including the default base-layer set.
+  vps->setNumProfileTierLevel(2);   // 1 for the enhancement layer
+  vps->setProfileLevelTierIdx(1, 1);
+  vps->setDefaultOneTargetOutputLayerFlag(true);
+  Int lsIdx = 1;
+  vps->setOutputLayerSetIdx(1, lsIdx); // Because only one layer set
+#else
   vps->setNumOutputLayerSets(1);
   Int lsIdx = 1;
   vps->setOutputLayerSetIdx(0, lsIdx); // Because only one layer set
+#endif
   // Include the highest layer as output layer 
   for(UInt layer=0; layer <= vps->getMaxLayerId() ; layer++)
   {

@@ -1490,6 +1490,12 @@ TComVPS::TComVPS()
 #if VPS_EXTN_OP_LAYER_SETS
 , m_numOutputLayerSets        (0)  
 #endif
+#if VPS_PROFILE_OUTPUT_LAYERS
+, m_numProfileTierLevel       (0)
+, m_moreOutputLayerSetsThanDefaultFlag (false)
+, m_numAddOutputLayerSets     (0)
+, m_defaultOneTargetOutputLayerFlag    (false)
+#endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
   {
@@ -1531,6 +1537,9 @@ TComVPS::TComVPS()
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
   ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
+#endif
+#if VPS_PROFILE_OUTPUT_LAYERS
+  ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
 #endif
 }
 
