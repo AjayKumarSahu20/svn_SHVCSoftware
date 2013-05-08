@@ -787,6 +787,9 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       READ_FLAG( uiCode, "layer_id_included_flag[opsIdx][i]" );   pcVPS->setLayerIdIncludedFlag( uiCode == 1 ? true : false, opsIdx, i );
     }
   }
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  pcVPS->deriveLayerIdListVariables();
+#endif
 #if L0043_TIMING_INFO
   TimingInfo *timingInfo = pcVPS->getTimingInfo();
   READ_FLAG(       uiCode, "vps_timing_info_present_flag");         timingInfo->setTimingInfoPresentFlag      (uiCode ? true : false);

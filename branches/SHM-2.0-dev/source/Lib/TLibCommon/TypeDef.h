@@ -57,6 +57,8 @@
 #define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #endif
 
+#define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
+
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
 #define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic

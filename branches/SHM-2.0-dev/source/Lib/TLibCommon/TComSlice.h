@@ -503,7 +503,10 @@ private:
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 #endif
-
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
   TComPTL     m_pcPTL;
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   TComBitRatePicRateInfo    m_bitRatePicRateInfo;
@@ -603,7 +606,15 @@ public:
 #endif
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
+  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x   ; }
 
+  Int     getNumLayersInIdList(Int set)                          { return m_numLayerInIdList[set]; }
+  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x   ; }
+
+  Void    deriveLayerIdListVariables();
+#endif
   TComPTL* getPTL() { return &m_pcPTL; }
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   TComBitRatePicRateInfo *getBitratePicrateInfo() { return &m_bitRatePicRateInfo; }
