@@ -520,17 +520,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #else
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 #endif
-  if (m_apcSlicePilot->isNextSlice())
-    // Skip pictures due to random access
-    if (isRandomAccessSkipPicture(iSkipFrame, iPOCLastDisplay))
-    {
-      return false;
-    }
-    // Skip TFD pictures associated with BLA/BLANT pictures
-    if (isSkipPictureForBLA(iPOCLastDisplay))
-    {
-      return false;
-    }
+
+  // Skip pictures due to random access
+  if (isRandomAccessSkipPicture(iSkipFrame, iPOCLastDisplay))
+  {
+    return false;
+  }
+  // Skip TFD pictures associated with BLA/BLANT pictures
+  if (isSkipPictureForBLA(iPOCLastDisplay))
+  {
+    return false;
+  }
 
   // exit when a new picture is found
 #if SVC_EXTENSION
