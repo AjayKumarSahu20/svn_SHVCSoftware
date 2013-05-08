@@ -483,7 +483,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     pcPic->setLayerId( m_layerId );
 #endif
-
     m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, m_pcEncTop->getSPS(), m_pcEncTop->getPPS() );
     pcSlice->setLastIDR(m_iLastIDR);
     pcSlice->setSliceIdx(0);
@@ -654,7 +653,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->setNumRefIdx(REF_PIC_LIST_0,min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive,pcSlice->getRPS()->getNumberOfPictures()));
     pcSlice->setNumRefIdx(REF_PIC_LIST_1,min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive,pcSlice->getRPS()->getNumberOfPictures()));
 
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
     if(m_layerId > 0)
     {
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
@@ -703,7 +702,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 
     //  Set reference list
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
     if(m_layerId ==  0)
     {
       pcSlice->setRefPicList( rcListPic);
@@ -722,12 +721,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
       }
 #endif
-#if REF_LIST_BUGFIX
       pcSlice->setRefPicListModificationSvc();
-      pcSlice->setRefPicListSvc( rcListPic, m_pcEncTop->getIlpList() );
-#else
-      pcSlice->addRefPicList ( m_pcEncTop->getIlpList(), 1);
-#endif
+      pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
 #if REF_IDX_MFM
       if( pcSlice->getSPS()->getMFMEnabledFlag() )

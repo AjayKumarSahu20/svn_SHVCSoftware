@@ -293,7 +293,6 @@ Void TEncTop::destroy ()
   {
     if(m_cIlpPic[i])
     {
-      //m_cIlpPic[i]->setPicYuvRec(NULL);
       m_cIlpPic[i]->destroy();
       delete m_cIlpPic[i];
       m_cIlpPic[i] = NULL;
@@ -844,7 +843,7 @@ Void TEncTop::xInitPPS()
       m_cSliceEncoder.setCtxMem( ctx, st );
     }
   }
-#if REF_LIST_BUGFIX
+#if REF_IDX_FRAMEWORK
   if (!m_layerId)
   {
     m_cPPS.setListsModificationPresentFlag(false);
@@ -1221,7 +1220,6 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
       {
         m_cIlpPic[j] = new  TComPic;
-        //m_cIlpPic[j]->createWithOutYuv(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, &m_cSPS, true);
 #if SVC_UPSAMPLING
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
 #else
@@ -1240,7 +1238,6 @@ Void TEncTop::setILRPic(TComPic *pcPic)
 {
   if(m_cIlpPic[0])
   {
-    //m_cIlpPic[0]->setPicYuvRec(pcPic->getFullPelBaseRec());
     m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
     m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
     m_cIlpPic[0]->setLayerId(pcPic->getSlice(0)->getBaseColPic()->getLayerId()); //set reference layerId
