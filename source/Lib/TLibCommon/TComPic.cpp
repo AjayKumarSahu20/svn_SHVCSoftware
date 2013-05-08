@@ -115,29 +115,6 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
 
   return;
 }
-#if REF_IDX_FRAMEWORK && 0
-Void TComPic::createWithOutYuv( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, TComSPS* pcSps,  Bool bIsVirtual)
-{
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
-  if (!bIsVirtual)
-  {
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
-  m_apcPicYuv[1]  = NULL;
- 
-#if SVC_UPSAMPLING
-  if (m_bSpatialEnhLayer)
-  {
-    m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-  }
-#endif
-
-  /* there are no SEI messages associated with this picture initially */
-  m_SEIs.clear();
-  m_bUsedByCurr = false;
-  return;
-}
-#endif
 #else
 Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, Bool bIsVirtual)
@@ -653,9 +630,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
     memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(Char)*numPartitions);
   }
 }
-#endif
 
-#if RAP_MFM_INIT
 Void TComPic::initUpsampledMvField()
 {
   UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
