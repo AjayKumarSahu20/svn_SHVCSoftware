@@ -894,6 +894,9 @@ Void TAppEncTop::xInitLib()
     }
   }
 #endif
+#if JCTVC_M0458        
+    vps->setMaxOneActiveRefLayerFlag(true); 
+#endif 
 #else
   m_cTEncTop.init();
 #endif
