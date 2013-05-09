@@ -977,7 +977,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   {
     if( i > (vps->getNumLayerSets() - 1) )
     {
-      Int numBits = (Int)std::max(1.0, ceil( log((double)vps->getNumLayerSets() - 1) / log(2.0) ));
+      Int numBits = 1;
+      while ((1 << numBits) < (vps->getNumLayerSets() - 1))
+      {
+        numBits++;
+      }
       READ_CODE( numBits, uiCode, "output_layer_set_idx_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
       Int lsIdx = vps->getOutputLayerSetIdx(i);
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
@@ -1005,7 +1009,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         }
       }
     }
-    Int numBits = (Int)std::max(1.0, ceil( log((double)vps->getNumProfileTierLevel()) / log(2.0) ));
+    Int numBits = 1;
+    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
+    {
+      numBits++;
+    }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
   }
 #else

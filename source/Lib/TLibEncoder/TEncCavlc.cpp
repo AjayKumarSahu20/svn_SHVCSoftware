@@ -754,7 +754,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   {
     if( i > (vps->getNumLayerSets() - 1) )
     {
-      Int numBits = std::max(1.0, ceil( log((double)vps->getNumLayerSets() - 1) / log(2.0) ));
+      Int numBits = 1;
+      while ((1 << numBits) < (vps->getNumLayerSets() - 1))
+      {
+        numBits++;
+      }
       WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1");  
       Int lsIdx = vps->getOutputLayerSetIdx(i);
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
@@ -762,7 +766,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
     }
-    Int numBits = std::max(1.0, ceil( log((double)vps->getNumProfileTierLevel()) / log(2.0) ));
+    Int numBits = 1;
+    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
+    {
+      numBits++;
+    }
     WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
   }
 #else
