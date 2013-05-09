@@ -123,15 +123,14 @@ TComSlice::TComSlice()
 #endif
   
 #if REF_IDX_FRAMEWORK
-  m_numILRRefIdx = 0;
-#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-  m_activeNumILRRefIdx      = 0; 
-  m_bInterLayerPredEnabledFlag = 0;
-
-  for ( Int idx = 0; idx < MAX_VPS_LAYER_ID_PLUS1; idx++ )
-    m_aiInterLayerPredLayerIdc[idx] = 0; 
+  m_activeNumILRRefIdx        = 0; 
+  m_interLayerPredEnabledFlag = 0;
+  ::memset( m_interLayerPredLayerIdc, 0, sizeof(m_interLayerPredLayerIdc) );
+#else
+  m_numILRRefIdx = 0;
 #endif 
+#endif
 
   initEqualRef();
   
@@ -182,22 +181,13 @@ Void TComSlice::initSlice()
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
 #if REF_IDX_FRAMEWORK
-  if(layerId)
-  {
-    m_numILRRefIdx              = m_pcVPS->getNumDirectRefLayers( layerId );
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-    m_activeNumILRRefIdx         = m_pcVPS->getNumDirectRefLayers( layerId );         
-    m_bInterLayerPredEnabledFlag = 1;   
-#endif  
-  }
-  else
-  {
+    m_activeNumILRRefIdx        = 0;
+    m_interLayerPredEnabledFlag = 0;
+#else
     m_numILRRefIdx              = 0;
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-    m_activeNumILRRefIdx      = 0;
-    m_bInterLayerPredEnabledFlag = 0;
 #endif  
-  }
+
 #endif
   m_colFromL0Flag = 1;
   
