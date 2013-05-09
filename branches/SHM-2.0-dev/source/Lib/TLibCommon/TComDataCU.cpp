@@ -4199,14 +4199,26 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 
 #if SIMPLIFIED_MV_POS_SCALING
+#if SCALED_REF_LAYER_OFFSETS
+  Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowLeftOffset();
+  Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowTopOffset();
+  Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
+  Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+#else
   Int iBX = (uiPelX*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
   Int iBY = (uiPelY*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+#endif
 #else
   Int iBX = (uiPelX*widthBL + widthEL/2)/widthEL;
   Int iBY = (uiPelY*heightBL+ heightEL/2)/heightEL;
 #endif
 
+#if SCALED_REF_LAYER_OFFSETS
+  if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight() ||
+       iBX < 0                                        || iBY < 0                                           )
+#else
   if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight())
+#endif
   {
     return NULL;
   }

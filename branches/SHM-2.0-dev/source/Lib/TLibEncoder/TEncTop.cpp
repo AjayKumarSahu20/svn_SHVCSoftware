@@ -575,6 +575,9 @@ Void TEncTop::xInitSPS()
 #if REF_IDX_MFM
   m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  m_cSPS.getScaledRefLayerWindow() = m_scaledRefLayerWindow;
+#endif
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
   profileTierLevel.setTierFlag(m_levelTier);

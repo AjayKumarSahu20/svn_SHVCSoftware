@@ -417,6 +417,13 @@ Void TAppEncTop::xInitLibCfg()
 #if REF_IDX_FRAMEWORK
     m_acTEncTop[layer].setElRapSliceTypeB(layer == 0? 0 : m_elRapSliceBEnabled);
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+    if( layer > 0 )
+    {
+      m_acTEncTop[layer].getScaledRefLayerWindow().setWindow( 2*m_scaledRefLayerLeftOffset, 2*m_scaledRefLayerRightOffset,
+                                                  2*m_scaledRefLayerTopOffset, 2*m_scaledRefLayerBottomOffset);  
+    }
+#endif
   }
 }
 #else
