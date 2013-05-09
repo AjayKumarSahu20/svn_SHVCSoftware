@@ -486,7 +486,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
 
-#if SVC_EXTENSION
+#if SVC_EXTENSION && REF_IDX_FRAMEWORK
   if( layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
