@@ -184,7 +184,7 @@ Void TComSlice::initSlice()
 #if REF_IDX_FRAMEWORK
   if(layerId)
   {
-    m_aiNumILRRefIdx      = 1;  // to be set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+    m_aiNumILRRefIdx            = m_pcVPS->getNumDirectRefLayers( layerId );
 #if JCTVC_M0458
     m_aiActiveNumILRRefIdx      = 1;         
     m_InterLayerPredEnabledFlag = 1;   

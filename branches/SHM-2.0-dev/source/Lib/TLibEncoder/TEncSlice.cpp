@@ -177,7 +177,12 @@ Void TEncSlice::init( TEncTop* pcEncTop )
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
+#if SVC_EXTENSION
+//\param vps          VPS associated with the slice
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps )
+#else
 Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS )
+#endif
 {
   Double dQP;
   Double dLambda;
@@ -188,6 +193,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
 #if SVC_EXTENSION
+  rpcSlice->setVPS( vps );
   rpcSlice->initSlice( pcPic->getLayerId() );
 #else
   rpcSlice->initSlice();
