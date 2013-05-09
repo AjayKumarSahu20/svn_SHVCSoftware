@@ -484,6 +484,12 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceSegmentArgument ( m_pcCfg->getSliceSegmentArgument() );
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
+
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  // currently only one reference layer is supported in software and no decision logic to select yet.
+  // hence num of active inter layer references is set to one always
+  rpcSlice->setActiveNumILRRefIdx(1);
+#endif 
 }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN

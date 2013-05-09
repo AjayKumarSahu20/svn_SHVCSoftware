@@ -668,6 +668,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+pcSlice->getNumILRRefIdx());
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+pcSlice->getNumILRRefIdx());
       }
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+        // currently only one reference layer is supported in software and no decision logic to select yet.
+        // hence num of active inter layer references is set to one always
+          pcSlice->setActiveNumILRRefIdx(1);
+#endif 
     }
 #endif
 

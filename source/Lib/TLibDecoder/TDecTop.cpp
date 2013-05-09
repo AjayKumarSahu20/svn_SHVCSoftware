@@ -1259,7 +1259,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt layerId )
 
   // currently only one reference layer is supported
   assert( vps->getNumDirectRefLayers( m_layerId ) == 1 );
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
   assert( vps->getMaxOneActiveRefLayerFlag() == 1 );
 #endif 
 

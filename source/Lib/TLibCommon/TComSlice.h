@@ -556,7 +556,7 @@ private:
   Bool       m_defaultOneTargetOutputLayerFlag;
   Int        m_profileLevelTierIdx[64];     
 #endif
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
 public:
@@ -707,7 +707,7 @@ public:
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
 #endif
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #endif 
@@ -1419,9 +1419,9 @@ private:
 #if REF_IDX_FRAMEWORK
   Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
-#if JCTVC_M0458
-  UInt         m_aiActiveNumILRRefIdx;        //< Active inter-layer reference pictures
-  UInt         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
+  Int         m_aiInterLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if L0034_COMBINED_LIST_CLEANUP
   Int         m_list1IdxToList0Idx[MAX_NUM_REF];
@@ -1515,9 +1515,9 @@ private:
   Bool       m_LFCrossSliceBoundaryFlag;
 
   Bool       m_enableTMVPFlag;
-#if JCTVC_M0458
-  Bool       m_InterLayerPredEnabledFlag;
-  UInt       m_NumInterLayerRefPics;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Bool       m_bInterLayerPredEnabledFlag;
+  Int        m_numInterLayerRefPics;
 #endif 
 public:
   TComSlice();
@@ -1578,12 +1578,12 @@ public:
   Int       getNumILRRefIdx     ( )                     { return  m_numILRRefIdx; }
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif
-#if JCTVC_M0458
-  Int       getActiveNumILRRefIdx     ( )               { return  m_aiActiveNumILRRefIdx; }
-  Void      setActiveNumILRRefIdx     ( Int i )         { m_aiActiveNumILRRefIdx = i; }  
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
+  Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i; }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];       }
-  Void      setInterLayerPredLayerIdc (UInt val,UInt Idx)       { m_interLayerPredLayerIdc[Idx] = val;         }
+  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_aiInterLayerPredLayerIdc[Idx];       }
+  Void      setInterLayerPredLayerIdc (UInt val,UInt Idx)       { m_aiInterLayerPredLayerIdc[Idx] = val;         }
 #endif 
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
@@ -1788,12 +1788,12 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
-#if JCTVC_M0458
-  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_InterLayerPredEnabledFlag = val; }
-  Bool      getInterLayerPredEnabledFlag     ()                { return m_InterLayerPredEnabledFlag;}
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_bInterLayerPredEnabledFlag = val; }
+  Bool      getInterLayerPredEnabledFlag     ()                { return m_bInterLayerPredEnabledFlag;}
 
-  Void      setNumInterLayerRefPics          ( UInt   val )    { m_NumInterLayerRefPics = val; }
-  UInt      getNumInterLayerRefPics          ()                { return m_NumInterLayerRefPics;}  
+  Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
+  UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
 #endif 
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,

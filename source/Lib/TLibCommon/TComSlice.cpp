@@ -125,12 +125,12 @@ TComSlice::TComSlice()
 #if REF_IDX_FRAMEWORK
   m_numILRRefIdx = 0;
 #endif
-#if JCTVC_M0458
-  m_aiActiveNumILRRefIdx      = 0; 
-  m_InterLayerPredEnabledFlag = 0;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  m_activeNumILRRefIdx      = 0; 
+  m_bInterLayerPredEnabledFlag = 0;
 
   for ( Int idx = 0; idx < MAX_VPS_LAYER_ID_PLUS1; idx++ )
-    m_interLayerPredLayerIdc[idx] = 0; 
+    m_aiInterLayerPredLayerIdc[idx] = 0; 
 #endif 
 
   initEqualRef();
@@ -185,18 +185,18 @@ Void TComSlice::initSlice()
   if(layerId)
   {
     m_numILRRefIdx              = m_pcVPS->getNumDirectRefLayers( layerId );
-#if JCTVC_M0458
-    m_aiActiveNumILRRefIdx      = 1;         
-    m_InterLayerPredEnabledFlag = 1;   
-#endif 
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+    m_activeNumILRRefIdx         = m_pcVPS->getNumDirectRefLayers( layerId );         
+    m_bInterLayerPredEnabledFlag = 1;   
+#endif  
   }
   else
   {
     m_numILRRefIdx              = 0;
-#if JCTVC_M0458
-    m_aiActiveNumILRRefIdx      = 0;
-    m_InterLayerPredEnabledFlag = 0;
-#endif 
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+    m_activeNumILRRefIdx      = 0;
+    m_bInterLayerPredEnabledFlag = 0;
+#endif  
   }
 #endif
   m_colFromL0Flag = 1;
@@ -543,8 +543,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   TComPic*  rpsCurrList0[MAX_NUM_REF+1];
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
 #if REF_IDX_FRAMEWORK
-#if JCTVC_M0458
-  Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_aiActiveNumILRRefIdx;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_activeNumILRRefIdx;
 #else
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_numILRRefIdx;
 #endif 
@@ -593,8 +593,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_FRAMEWORK
     if(getLayerId())
     {
-#if JCTVC_M0458
-      for( i = 0; i < m_aiActiveNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
 #else
       for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
@@ -621,8 +621,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_FRAMEWORK
     if(getLayerId())
     {
-#if JCTVC_M0458
-      for( i = 0; i < m_aiActiveNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #else
       for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
@@ -695,8 +695,8 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-#if JCTVC_M0458
-      for(Int i = m_aiActiveNumILRRefIdx; i > 0; i-- )
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
 #else
       for(Int i = m_numILRRefIdx; i > 0; i-- )
 #endif 
@@ -725,8 +725,8 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-#if JCTVC_M0458
-      for(Int i = m_aiActiveNumILRRefIdx; i > 0; i-- )
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
 #else
       for(Int i = m_numILRRefIdx; i > 0; i-- )
 #endif 
@@ -752,8 +752,8 @@ Int TComSlice::getNumRpsCurrTempList()
 #endif 
   {
 #if REF_IDX_FRAMEWORK
-#if JCTVC_M0458
-    return m_aiActiveNumILRRefIdx;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+    return m_activeNumILRRefIdx;
 #else
     return m_numILRRefIdx;
 #endif 
@@ -771,7 +771,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #if REF_IDX_FRAMEWORK
   if(getLayerId())
   {
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
     numRpsCurrTempList += getActiveNumILRRefIdx();
 #else
     numRpsCurrTempList += getNumILRRefIdx();
@@ -1588,7 +1588,7 @@ TComVPS::TComVPS()
 #if VPS_PROFILE_OUTPUT_LAYERS
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
 #endif
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
 #endif
 }

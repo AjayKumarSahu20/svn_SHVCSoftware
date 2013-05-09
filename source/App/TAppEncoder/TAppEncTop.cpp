@@ -894,7 +894,7 @@ Void TAppEncTop::xInitLib()
     }
   }
 #endif
-#if JCTVC_M0458        
+#if JCTVC_M0458_INTERLAYER_RPS_SIG        
     vps->setMaxOneActiveRefLayerFlag(true); 
 #endif 
 #else
