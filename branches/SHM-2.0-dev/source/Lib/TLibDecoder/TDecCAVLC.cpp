@@ -1038,7 +1038,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   } 
 #endif
 #endif
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
    READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
    vps->setMaxOneActiveRefLayerFlag(uiCode);   
 #endif 
@@ -1594,7 +1594,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setNumEntryPointOffsets ( 0 );
   }
 
-  #if JCTVC_M0458    
+  #if JCTVC_M0458_INTERLAYER_RPS_SIG    
     rpcSlice->setActiveNumILRRefIdx(0); 
     if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) ) 
     {      

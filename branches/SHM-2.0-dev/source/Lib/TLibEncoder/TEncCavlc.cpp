@@ -796,7 +796,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
-#if JCTVC_M0458
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
       WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #endif 
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
@@ -1165,7 +1165,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag()?1:0, "slice_loop_filter_across_slices_enabled_flag");
     }
   }
-#if JCTVC_M0458    
+#if JCTVC_M0458_INTERLAYER_RPS_SIG    
     if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) ) 
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
@@ -1178,7 +1178,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
             WRITE_UVLC(pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");                     
           }       
           for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
-            WRITE_UVLC(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_layer_idc[i]");          
+            WRITE_UVLC(pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");     
         }
       }
     }     
