@@ -351,6 +351,7 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 #if SVC_EXTENSION
   cFillSlice.setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
   cFillSlice.setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
+  cFillSlice.setVPS( m_parameterSetManagerDecoder[m_layerId].getFirstVPS() );
   cFillSlice.initSlice( m_layerId );
 #else
   cFillSlice.setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
@@ -362,6 +363,7 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 #if SVC_EXTENSION
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
   cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
+  cFillPic->getSlice(0)->setVPS( m_parameterSetManagerDecoder[m_layerId].getFirstVPS() );
   cFillPic->getSlice(0)->initSlice( m_layerId );
 #else
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
@@ -488,6 +490,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
+  m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder[m_layerId].getActiveVPS() );
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else
   m_apcSlicePilot->initSlice();
