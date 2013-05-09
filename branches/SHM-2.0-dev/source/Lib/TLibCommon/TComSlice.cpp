@@ -123,7 +123,7 @@ TComSlice::TComSlice()
 #endif
   
 #if REF_IDX_FRAMEWORK
-  m_aiNumILRRefIdx = 0;
+  m_numILRRefIdx = 0;
 #endif
 #if JCTVC_M0458
   m_aiActiveNumILRRefIdx      = 0; 
@@ -184,7 +184,7 @@ Void TComSlice::initSlice()
 #if REF_IDX_FRAMEWORK
   if(layerId)
   {
-    m_aiNumILRRefIdx            = m_pcVPS->getNumDirectRefLayers( layerId );
+    m_numILRRefIdx              = m_pcVPS->getNumDirectRefLayers( layerId );
 #if JCTVC_M0458
     m_aiActiveNumILRRefIdx      = 1;         
     m_InterLayerPredEnabledFlag = 1;   
@@ -192,7 +192,7 @@ Void TComSlice::initSlice()
   }
   else
   {
-    m_aiNumILRRefIdx = 0;
+    m_numILRRefIdx              = 0;
 #if JCTVC_M0458
     m_aiActiveNumILRRefIdx      = 0;
     m_InterLayerPredEnabledFlag = 0;
@@ -546,7 +546,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if JCTVC_M0458
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_aiActiveNumILRRefIdx;
 #else
-  Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_aiNumILRRefIdx;
+  Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_numILRRefIdx;
 #endif 
 #else
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr;
@@ -596,7 +596,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if JCTVC_M0458
       for( i = 0; i < m_aiActiveNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
 #else
-      for( i = 0; i < m_aiNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
+      for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
       {
         rpsCurrList0[cIdx] = ilpPic[i];
@@ -624,7 +624,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if JCTVC_M0458
       for( i = 0; i < m_aiActiveNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #else
-      for( i = 0; i < m_aiNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
+      for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
       {
         rpsCurrList1[cIdx] = ilpPic[i];
@@ -698,7 +698,7 @@ Void TComSlice::setRefPicListModificationSvc()
 #if JCTVC_M0458
       for(Int i = m_aiActiveNumILRRefIdx; i > 0; i-- )
 #else
-      for(Int i = m_aiNumILRRefIdx; i > 0; i-- )
+      for(Int i = m_numILRRefIdx; i > 0; i-- )
 #endif 
       {
         refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfRpsCurrTempList - i);
@@ -728,7 +728,7 @@ Void TComSlice::setRefPicListModificationSvc()
 #if JCTVC_M0458
       for(Int i = m_aiActiveNumILRRefIdx; i > 0; i-- )
 #else
-      for(Int i = m_aiNumILRRefIdx; i > 0; i-- )
+      for(Int i = m_numILRRefIdx; i > 0; i-- )
 #endif 
       {
         refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
@@ -755,7 +755,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #if JCTVC_M0458
     return m_aiActiveNumILRRefIdx;
 #else
-    return m_aiNumILRRefIdx;
+    return m_numILRRefIdx;
 #endif 
 #else
     return 0;

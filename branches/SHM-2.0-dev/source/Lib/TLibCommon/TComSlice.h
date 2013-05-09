@@ -1417,7 +1417,7 @@ private:
   Int         m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int         m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
 #if REF_IDX_FRAMEWORK
-  Int         m_aiNumILRRefIdx;       //< for inter-layer reference picture ser
+  Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
 #if JCTVC_M0458
   UInt         m_aiActiveNumILRRefIdx;        //< Active inter-layer reference pictures
@@ -1575,8 +1575,8 @@ public:
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
 #if REF_IDX_FRAMEWORK
-  Int       getNumILRRefIdx     ( )                     { return  m_aiNumILRRefIdx; }
-  Void      setNumILRRefIdx     ( Int i )                     { m_aiNumILRRefIdx = i; }
+  Int       getNumILRRefIdx     ( )                     { return  m_numILRRefIdx; }
+  Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif
 #if JCTVC_M0458
   Int       getActiveNumILRRefIdx     ( )               { return  m_aiActiveNumILRRefIdx; }
