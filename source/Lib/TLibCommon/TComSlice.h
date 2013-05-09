@@ -1422,12 +1422,13 @@ private:
   Bool        m_deblockingFilterOverrideFlag;      //< offsets for deblocking filter inherit from PPS
   Int         m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int         m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
+  Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
+#else
 #if REF_IDX_FRAMEWORK
   Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-  Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
-  Int         m_aiInterLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if L0034_COMBINED_LIST_CLEANUP
   Int         m_list1IdxToList0Idx[MAX_NUM_REF];
@@ -1522,7 +1523,7 @@ private:
 
   Bool       m_enableTMVPFlag;
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-  Bool       m_bInterLayerPredEnabledFlag;
+  Bool       m_interLayerPredEnabledFlag;
   Int        m_numInterLayerRefPics;
 #endif 
 public:
@@ -1581,15 +1582,17 @@ public:
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
 #if REF_IDX_FRAMEWORK
-  Int       getNumILRRefIdx     ( )                     { return  m_numILRRefIdx; }
+  Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
+#if !JCTVC_M0458_INTERLAYER_RPS_SIG
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
+#endif
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i; }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_aiInterLayerPredLayerIdc[Idx];       }
-  Void      setInterLayerPredLayerIdc (UInt val,UInt Idx)       { m_aiInterLayerPredLayerIdc[Idx] = val;         }
+  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
+  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
 #endif 
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
@@ -1795,8 +1798,8 @@ public:
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_bInterLayerPredEnabledFlag = val; }
-  Bool      getInterLayerPredEnabledFlag     ()                { return m_bInterLayerPredEnabledFlag;}
+  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
+  Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
 
   Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
   UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  

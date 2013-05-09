@@ -193,8 +193,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
 #if SVC_EXTENSION
+  UInt layerId = pcPic->getLayerId();
   rpcSlice->setVPS( vps );
-  rpcSlice->initSlice( pcPic->getLayerId() );
+  rpcSlice->initSlice( layerId );
 #else
   rpcSlice->initSlice();
 #endif
@@ -485,11 +486,23 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
 
+#if SVC_EXTENSION
+  if( layerId > 0 )
+  {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   // currently only one reference layer is supported in software and no decision logic to select yet.
   // hence num of active inter layer references is set to one always
-  rpcSlice->setActiveNumILRRefIdx(1);
+    if( rpcSlice->getNumILRRefIdx() > 0 )
+    {
+      rpcSlice->setActiveNumILRRefIdx(1);
+      rpcSlice->setInterLayerPredEnabledFlag(1);
+    }
+#else
+    rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( layerId ) );
 #endif 
+  }
+
+#endif
 }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
