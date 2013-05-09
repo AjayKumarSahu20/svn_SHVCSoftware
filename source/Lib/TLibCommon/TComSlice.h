@@ -556,6 +556,9 @@ private:
   Bool       m_defaultOneTargetOutputLayerFlag;
   Int        m_profileLevelTierIdx[64];     
 #endif
+#if JCTVC_M0458
+  Bool       m_maxOneActiveRefLayerFlag;
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -704,6 +707,10 @@ public:
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
 #endif
+#if JCTVC_M0458
+  Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
+  Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
+#endif 
 };
 
 class Window
@@ -1412,6 +1419,10 @@ private:
 #if REF_IDX_FRAMEWORK
   Int         m_aiNumILRRefIdx;       //< for inter-layer reference picture ser
 #endif
+#if JCTVC_M0458
+  UInt         m_aiActiveNumILRRefIdx;        //< Active inter-layer reference pictures
+  UInt         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
+#endif 
 #if L0034_COMBINED_LIST_CLEANUP
   Int         m_list1IdxToList0Idx[MAX_NUM_REF];
   Int         m_aiNumRefIdx   [2];    //  for multiple reference of current slice
@@ -1504,6 +1515,10 @@ private:
   Bool       m_LFCrossSliceBoundaryFlag;
 
   Bool       m_enableTMVPFlag;
+#if JCTVC_M0458
+  Bool       m_InterLayerPredEnabledFlag;
+  UInt       m_NumInterLayerRefPics;
+#endif 
 public:
   TComSlice();
   virtual ~TComSlice(); 
@@ -1563,6 +1578,13 @@ public:
   Int       getNumILRRefIdx     ( )                     { return  m_aiNumILRRefIdx; }
   Void      setNumILRRefIdx     ( Int i )                     { m_aiNumILRRefIdx = i; }
 #endif
+#if JCTVC_M0458
+  Int       getActiveNumILRRefIdx     ( )               { return  m_aiActiveNumILRRefIdx; }
+  Void      setActiveNumILRRefIdx     ( Int i )         { m_aiActiveNumILRRefIdx = i; }  
+
+  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];       }
+  Void      setInterLayerPredLayerIdc (UInt val,UInt Idx)       { m_interLayerPredLayerIdc[Idx] = val;         }
+#endif 
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
   TComPic*  getRefPic           ( RefPicList e, Int iRefIdx)    { return  m_apcRefPicList[e][iRefIdx];  }
@@ -1766,6 +1788,13 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
+#if JCTVC_M0458
+  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_InterLayerPredEnabledFlag = val; }
+  Bool      getInterLayerPredEnabledFlag     ()                { return m_InterLayerPredEnabledFlag;}
+
+  Void      setNumInterLayerRefPics          ( UInt   val )    { m_NumInterLayerRefPics = val; }
+  UInt      getNumInterLayerRefPics          ()                { return m_NumInterLayerRefPics;}  
+#endif 
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);

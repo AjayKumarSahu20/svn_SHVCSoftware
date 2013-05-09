@@ -1038,6 +1038,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   } 
 #endif
 #endif
+#if JCTVC_M0458
+   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
+   vps->setMaxOneActiveRefLayerFlag(uiCode);   
+#endif 
 
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -1589,6 +1593,41 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   {
     rpcSlice->setNumEntryPointOffsets ( 0 );
   }
+
+  #if JCTVC_M0458    
+    rpcSlice->setActiveNumILRRefIdx(0); 
+    if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) ) 
+    {      
+      READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
+      rpcSlice->setInterLayerPredEnabledFlag(uiCode);
+      if( rpcSlice->getInterLayerPredEnabledFlag())
+      {
+        if(rpcSlice->getNumILRRefIdx() > 1) 
+        {
+          if( !rpcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
+          {
+            READ_UVLC(uiCode,"num_inter_layer_ref_pics_minus1");   
+            rpcSlice->setActiveNumILRRefIdx(uiCode + 1);          
+          }
+          else
+          {
+            rpcSlice->setActiveNumILRRefIdx(1);          
+            rpcSlice->setInterLayerPredLayerIdc(0,0);          
+          }
+          for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ ) 
+          {
+            READ_UVLC(uiCode,"inter_layer_pred_layer_idc[i]");          
+            rpcSlice->setInterLayerPredLayerIdc(uiCode,i);          
+          }
+        }
+        else
+        {
+          rpcSlice->setActiveNumILRRefIdx(1);          
+          rpcSlice->setInterLayerPredLayerIdc(0,0);      
+        }
+      }
+    }     
+#endif
 
   if(pps->getSliceHeaderExtensionPresentFlag())
   {
