@@ -138,6 +138,9 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window                  m_scaledRefLayerWindow;
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -201,6 +204,9 @@ public:
   Int                     getPOCLast            () { return m_iPOCLast;               }
   Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window&  getScaledRefLayerWindow()            { return m_scaledRefLayerWindow; }
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------

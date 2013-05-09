@@ -1020,6 +1020,9 @@ private:
 #if REF_IDX_MFM
   Bool m_bMFMEnabledFlag;
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window      m_scaledRefLayerWindow;
+#endif
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1158,6 +1161,9 @@ public:
 #if REF_IDX_MFM
   Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window&  getScaledRefLayerWindow(     )   { return m_scaledRefLayerWindow; }
 #endif
 };
 

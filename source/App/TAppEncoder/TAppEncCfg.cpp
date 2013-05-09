@@ -399,7 +399,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-
+#if SCALED_REF_LAYER_OFFSETS
+  ("ScaledRefLayerLeftOffset",   m_scaledRefLayerLeftOffset,  0, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
+                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerTopOffset",    m_scaledRefLayerTopOffset,   0,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
+                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerRightOffset",  m_scaledRefLayerRightOffset, 0, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
+                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerBottomOffset", m_scaledRefLayerBottomOffset,0, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
+                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
+#endif
 #if AVC_BASE
   ("AvcBase",                 m_avcBaseLayerFlag,     0, "AVC_BASElayer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")

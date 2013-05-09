@@ -552,6 +552,16 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
+#if SCALED_REF_LAYER_OFFSETS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    Window scaledWindow = pcSPS->getScaledRefLayerWindow();
+    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+  }
+#endif
 
   WRITE_FLAG( 0, "sps_extension_flag" );
 }
