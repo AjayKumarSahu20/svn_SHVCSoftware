@@ -1581,19 +1581,7 @@ public:
   Bool      getDeblockingFilterOverrideFlag()           { return  m_deblockingFilterOverrideFlag; }
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
-#if REF_IDX_FRAMEWORK
-  Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
-#if !JCTVC_M0458_INTERLAYER_RPS_SIG
-  Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
-#endif
-#endif
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-  Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
-  Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i; }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
-  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
-#endif 
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
   TComPic*  getRefPic           ( RefPicList e, Int iRefIdx)    { return  m_apcRefPicList[e][iRefIdx];  }
@@ -1647,26 +1635,6 @@ public:
   Void      setNumRefIdx        ( RefPicList e, Int i )         { m_aiNumRefIdx[e]    = i;      }
   Void      setPic              ( TComPic* p )                  { m_pcPic             = p;      }
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
-  
-#if SVC_EXTENSION  
-  Void      setBaseColPic       ( TComPic* p)                   { m_pcBaseColPic = p; }
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
-  TComPic*  getBaseColPic       ()  { return m_pcBaseColPic; }
-
-  Void      setLayerId (UInt layerId) { m_layerId = layerId; }
-  UInt      getLayerId ()               { return m_layerId; }
-
-  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
-  TComPicYuv* getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
-
-#if AVC_SYNTAX
-  Void      initBaseLayerRPL( TComSlice *pcSlice );
-#endif
-#endif
-
-#if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
-#endif
 
 #if FIX1071
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
@@ -1678,10 +1646,6 @@ public:
   Void      setColRefIdx        ( UInt refIdx) { m_colRefIdx = refIdx; }
   Void      setCheckLDC         ( Bool b )                      { m_bCheckLDC = b; }
   Void      setMvdL1ZeroFlag     ( Bool b)                       { m_bLMvdL1Zero = b; }
-
-#if REF_IDX_FRAMEWORK
-  Void      setRefPicListModificationSvc();
-#endif
 
   Bool      isIntra         ()                          { return  m_eSliceType == I_SLICE;  }
   Bool      isInterB        ()                          { return  m_eSliceType == B_SLICE;  }
@@ -1797,13 +1761,49 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
+
+#if SVC_EXTENSION
+  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
+  Void      setBaseColPic       ( TComPic* p)     { m_pcBaseColPic = p; }
+  TComPic*  getBaseColPic       ()                { return m_pcBaseColPic; }
+
+  Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
+  UInt      getLayerId ()               { return m_layerId;    }
+
+  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
+  TComPicYuv* getFullPelBaseRec   ()               { return  m_pcFullPelBaseRec;  }
+
+#if AVC_SYNTAX
+  Void      initBaseLayerRPL( TComSlice *pcSlice );
+#endif
+
+#if REF_IDX_FRAMEWORK
+  Void      setRefPicListModificationSvc();
+  Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
+
+#if REF_IDX_MFM
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+#endif
+
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
+  Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
+
+  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
+  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
+
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
 
   Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
   UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
+#else
+  Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
+#endif
+
+#endif //SVC_EXTENSION
+
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);
