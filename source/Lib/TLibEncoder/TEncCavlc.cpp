@@ -1012,11 +1012,32 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           }
         }
       }
+
       if (pcSlice->getSPS()->getTMVPFlagsPresent())
       {
         WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
       }
     }
+
+#if JCTVC_M0458_INTERLAYER_RPS_SIG    
+    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) ) 
+    {
+      WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
+      if( pcSlice->getInterLayerPredEnabledFlag())
+      {
+        if(pcSlice->getNumILRRefIdx() > 1)
+        {
+          if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
+          {
+            WRITE_UVLC(pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");                     
+          }       
+          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
+            WRITE_UVLC(pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");     
+        }
+      }
+    }     
+#endif 
+
     if(pcSlice->getSPS()->getUseSAO())
     {
       if (pcSlice->getSPS()->getUseSAO())
@@ -1175,24 +1196,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag()?1:0, "slice_loop_filter_across_slices_enabled_flag");
     }
   }
-#if JCTVC_M0458_INTERLAYER_RPS_SIG    
-    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) ) 
-    {
-      WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
-      if( pcSlice->getInterLayerPredEnabledFlag())
-      {
-        if(pcSlice->getNumILRRefIdx() > 1)
-        {
-          if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
-          {
-            WRITE_UVLC(pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");                     
-          }       
-          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
-            WRITE_UVLC(pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");     
-        }
-      }
-    }     
-#endif 
+
   if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     WRITE_UVLC(0,"slice_header_extension_length");
