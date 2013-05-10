@@ -182,10 +182,10 @@ Void TComSlice::initSlice()
   m_aiNumRefIdx[1]      = 0;
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-    m_activeNumILRRefIdx        = 0;
-    m_interLayerPredEnabledFlag = 0;
+  m_activeNumILRRefIdx        = 0;
+  m_interLayerPredEnabledFlag = 0;
 #else
-    m_numILRRefIdx              = 0;
+  m_numILRRefIdx              = 0;
 #endif  
 
 #endif
