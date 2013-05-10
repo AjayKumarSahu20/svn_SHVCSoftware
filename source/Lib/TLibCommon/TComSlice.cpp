@@ -743,7 +743,7 @@ Int TComSlice::getNumRpsCurrTempList()
   {
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-    return m_activeNumILRRefIdx;
+    return getNumILRRefIdx();
 #else
     return m_numILRRefIdx;
 #endif 
@@ -761,11 +761,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #if REF_IDX_FRAMEWORK
   if(getLayerId())
   {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-    numRpsCurrTempList += getActiveNumILRRefIdx();
-#else
     numRpsCurrTempList += getNumILRRefIdx();
-#endif
   }
 #endif
 
@@ -1000,6 +996,14 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   // access channel
 #if SVC_EXTENSION
   m_pcVPS                = pSrc->m_pcVPS;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
+  m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
+  m_numInterLayerRefPics       = pSrc->m_numInterLayerRefPics;
+  memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
+#else
+  m_numILRRefIdx               = pSrc->m_numILRRefIdx;
+#endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;
   m_pcPPS                = pSrc->m_pcPPS;
