@@ -743,9 +743,9 @@ Int TComSlice::getNumRpsCurrTempList()
   {
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-    return getNumILRRefIdx();
+    return m_activeNumILRRefIdx;
 #else
-    return m_numILRRefIdx;
+    return getNumILRRefIdx();
 #endif 
 #else
     return 0;
@@ -761,7 +761,11 @@ Int TComSlice::getNumRpsCurrTempList()
 #if REF_IDX_FRAMEWORK
   if(getLayerId())
   {
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+    numRpsCurrTempList += m_activeNumILRRefIdx;
+#else
     numRpsCurrTempList += getNumILRRefIdx();
+#endif
   }
 #endif
 
