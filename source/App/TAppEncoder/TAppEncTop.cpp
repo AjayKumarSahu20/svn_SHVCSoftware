@@ -420,8 +420,8 @@ Void TAppEncTop::xInitLibCfg()
 #if SCALED_REF_LAYER_OFFSETS
     if( layer > 0 )
     {
-      m_acTEncTop[layer].getScaledRefLayerWindow().setWindow( 2*m_scaledRefLayerLeftOffset, 2*m_scaledRefLayerRightOffset,
-                                                  2*m_scaledRefLayerTopOffset, 2*m_scaledRefLayerBottomOffset);  
+      m_acTEncTop[layer].getScaledRefLayerWindow().setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset, 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset,
+                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset, 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset);  
     }
 #endif
   }
