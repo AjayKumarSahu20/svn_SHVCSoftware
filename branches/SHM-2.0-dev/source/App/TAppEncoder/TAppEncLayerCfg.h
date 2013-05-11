@@ -53,6 +53,12 @@ protected:
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
+#if SCALED_REF_LAYER_OFFSETS
+  Int       m_scaledRefLayerLeftOffset;
+  Int       m_scaledRefLayerTopOffset;
+  Int       m_scaledRefLayerRightOffset;
+  Int       m_scaledRefLayerBottomOffset;
+#endif  
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();

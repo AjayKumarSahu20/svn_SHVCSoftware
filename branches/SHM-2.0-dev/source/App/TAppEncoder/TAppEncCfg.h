@@ -360,12 +360,6 @@ protected:
   Int*      m_avgPicRate;                                     ///< Indicates avg. picture rate information for various sub-layers
   Int*      m_constantPicRateIdc;                                ///< Indicates constant picture rate idc for various sub-layers
 #endif
-#if SCALED_REF_LAYER_OFFSETS
-  Int       m_scaledRefLayerLeftOffset;
-  Int       m_scaledRefLayerTopOffset;
-  Int       m_scaledRefLayerRightOffset;
-  Int       m_scaledRefLayerBottomOffset;
-#endif  
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

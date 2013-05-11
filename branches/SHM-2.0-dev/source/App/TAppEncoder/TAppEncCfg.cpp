@@ -327,6 +327,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_refLayerIds   [MAX_LAYERS];
   string* cfg_refLayerIdsPtr   [MAX_LAYERS];
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Int*    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
+#endif
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -340,6 +346,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if VPS_EXTN_DIRECT_REF_LAYERS
     cfg_numDirectRefLayers  [layer] = &m_acLayerCfg[layer].m_numDirectRefLayers;
     cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+    cfg_scaledRefLayerLeftOffset  [layer] = &m_acLayerCfg[layer].m_scaledRefLayerLeftOffset;
+    cfg_scaledRefLayerTopOffset   [layer] = &m_acLayerCfg[layer].m_scaledRefLayerTopOffset;
+    cfg_scaledRefLayerRightOffset [layer] = &m_acLayerCfg[layer].m_scaledRefLayerRightOffset;
+    cfg_scaledRefLayerBottomOffset[layer] = &m_acLayerCfg[layer].m_scaledRefLayerBottomOffset;
 #endif
   }
 #if AVC_BASE
@@ -400,13 +412,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #if SCALED_REF_LAYER_OFFSETS
-  ("ScaledRefLayerLeftOffset",   m_scaledRefLayerLeftOffset,  0, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffset,  0, MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerTopOffset",    m_scaledRefLayerTopOffset,   0,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffset,   0, MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerRightOffset",  m_scaledRefLayerRightOffset, 0, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerRightOffset%d",  cfg_scaledRefLayerRightOffset, 0, MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerBottomOffset", m_scaledRefLayerBottomOffset,0, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffset,0, MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
 #if AVC_BASE
