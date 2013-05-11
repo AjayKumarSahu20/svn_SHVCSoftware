@@ -1027,12 +1027,17 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
         if(pcSlice->getNumILRRefIdx() > 1)
         {
+          Int numBits = 1;
+          while ((1 << numBits) < pcSlice->getNumILRRefIdx())
+          {
+            numBits++;
+          }
           if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
           {
-            WRITE_UVLC(pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");                     
+            WRITE_CODE( numBits,pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");
           }       
           for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
-            WRITE_UVLC(pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");     
+            WRITE_CODE( numBits,pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");   
         }
       }
     }     
