@@ -1192,7 +1192,11 @@ TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
 {
   if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
   {
+#if ZERO_NUM_DIRECT_LAYERS
+    return (TEncTop *)getLayerEnc( 0 );
+#else
     return NULL;
+#endif
   }
 
   // currently only one reference layer is supported

@@ -68,7 +68,11 @@ public:
   Void  destroy   ();                                         ///< destroy option handling class
   bool  parseCfg  ( const string& cfgFileName );              ///< parse layer configuration file to fill member variables
 
+#if AVC_SYNTAX
+  Void  xPrintParameter( UInt layerId );
+#else
   Void  xPrintParameter();
+#endif
   Bool  xCheckParameter();
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }

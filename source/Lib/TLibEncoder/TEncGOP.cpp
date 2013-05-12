@@ -555,6 +555,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
     }
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
+    {
+      pcSlice->setSliceType(I_SLICE);
+    }
+    else
+#endif
     if( m_layerId > 0 && !m_pcEncTop->getElRapSliceTypeB() )
     {
       if( (pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
@@ -656,7 +663,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->setNumRefIdx(REF_PIC_LIST_1,min(m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive,pcSlice->getRPS()->getNumberOfPictures()));
 
 #if REF_IDX_FRAMEWORK
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
+#else
     if(m_layerId > 0)
+#endif
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
@@ -689,7 +700,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif      
 
 #if SVC_EXTENSION      
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
+#else
     if(m_layerId > 0)
+#endif
     {
 #if !IDR_ALIGNMENT
       TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
@@ -722,7 +737,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     //  Set reference list
 #if REF_IDX_FRAMEWORK
+#if ZERO_NUM_DIRECT_LAYERS
+    if(m_layerId ==  0 || ( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() == 0 ) )
+#else
     if(m_layerId ==  0)
+#endif
     {
       pcSlice->setRefPicList( rcListPic);
     }
@@ -730,7 +749,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->setRefPicList ( rcListPic );
 #endif
 #if REF_IDX_FRAMEWORK
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
+#else
     if(m_layerId > 0)
+#endif
     {
       m_pcEncTop->setILRPic(pcPic);
 

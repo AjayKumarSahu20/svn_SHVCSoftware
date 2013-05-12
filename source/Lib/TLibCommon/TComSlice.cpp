@@ -460,10 +460,14 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   Int i;
 
 #if REF_IDX_FRAMEWORK
+#if ZERO_NUM_DIRECT_LAYERS
+  if( m_layerId == 0 || ( m_layerId > 0 && ( m_activeNumILRRefIdx == 0 || !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ) ) )
+#else
   if ((getLayerId() == 0) || 
       ((getSPS()->getLayerId()) &&  !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
        (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) )
      )
+#endif
   {
 #endif
   for(i=0; i < m_pcRPS->getNumberOfNegativePictures(); i++)
@@ -515,7 +519,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_FRAMEWORK
   //inter-layer reference picture
 #if REF_IDX_MFM
+#if ZERO_NUM_DIRECT_LAYERS
+  if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
+#else
   if (getLayerId())
+#endif
   {
     if(!(getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) && getSPS()->getMFMEnabledFlag())
     { 

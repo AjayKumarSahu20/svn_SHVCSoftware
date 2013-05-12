@@ -1267,7 +1267,11 @@ TDecTop* TDecTop::getRefLayerDec( UInt layerId )
   TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
   {
+#if ZERO_NUM_DIRECT_LAYERS
+    return (TDecTop *)getLayerDec( 0 );
+#else
     return NULL;
+#endif
   }
 
   // currently only one reference layer is supported
@@ -1275,8 +1279,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt layerId )
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   assert( vps->getMaxOneActiveRefLayerFlag() == 1 );
 #endif 
-
-
+  
   return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, 0 ) );
 }
 #endif

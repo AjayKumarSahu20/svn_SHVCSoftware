@@ -65,6 +65,9 @@ namespace po = df::program_options_lite;
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
 : m_pBitstreamFile()
+#if AVC_BASE
+, m_avcBaseLayerFlag(0)
+#endif
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
@@ -422,14 +425,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
 #if AVC_BASE
-  ("AvcBase",                 m_avcBaseLayerFlag,     0, "AVC_BASElayer_flag")
+  ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
 #if AVC_SYNTAX
   ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
 #endif
 #if REF_IDX_FRAMEWORK
-  ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture_")
+  ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
 #endif  
 #else  
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
@@ -740,13 +743,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ;
   
-#if AVC_BASE
-  if( m_avcBaseLayerFlag )
-  {
-    *cfg_InputFile[0] = cfg_BLInputFile;
-  }
-#endif
-
   for(Int i=1; i<MAX_GOP+1; i++) {
     std::ostringstream cOSS;
     cOSS<<"Frame"<<i;
@@ -772,6 +768,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
    */
   /* convert std::string to c string for compatability */
 #if SVC_EXTENSION
+#if AVC_BASE
+  if( m_avcBaseLayerFlag )
+  {
+    *cfg_InputFile[0] = cfg_BLInputFile;
+  }
+#endif
   m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
 #if AVC_SYNTAX
   m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
@@ -1826,7 +1828,11 @@ Void TAppEncCfg::xPrintParameter()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
+#if AVC_SYNTAX
+    m_acLayerCfg[layer].xPrintParameter( layer );
+#else
     m_acLayerCfg[layer].xPrintParameter();
+#endif
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
