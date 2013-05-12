@@ -436,7 +436,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
       *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
 #if SCALED_REF_LAYER_OFFSETS
       // Only increase the x position of reference upsample picture when within the window
-      // "-2" to ensure that pointer doesn't go beyond the boundeary rightEndL-1
+      // "-2" to ensure that pointer doesn't go beyond the boundary rightEndL-1
       if( (i >= leftStartL) && (i <= rightEndL-2) )
       {
         piSrcY++;
@@ -604,7 +604,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
 #if SCALED_REF_LAYER_OFFSETS
       // Only increase the x position of reference upsample picture when within the window
-      // "-2" to ensure that pointer doesn't go beyond the boundeary rightEndC-1
+      // "-2" to ensure that pointer doesn't go beyond the boundary rightEndC-1
       if( (i >= leftStartC) && (i <= rightEndC-2) )
       {
         piSrcU++;

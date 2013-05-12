@@ -115,12 +115,19 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   return true;
 }
 
+#if AVC_SYNTAX
+Void TAppEncLayerCfg::xPrintParameter( UInt layerId )
+#else
 Void TAppEncLayerCfg::xPrintParameter()
+#endif
 {
   printf("Input File                    : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
 #if AVC_SYNTAX
-  printf("Base layer input file         : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
+  if( layerId == 0 )
+  {
+    printf("Base layer syntax file        : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
+  }
 #endif
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
