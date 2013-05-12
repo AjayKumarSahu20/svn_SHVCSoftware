@@ -1034,10 +1034,10 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           }
           if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
           {
-            WRITE_CODE( numBits,pcSlice->getNumInterLayerRefPics(),"num_inter_layer_ref_pics_minus1");
+            WRITE_CODE(pcSlice->getNumInterLayerRefPics(), numBits,"num_inter_layer_ref_pics_minus1");
           }       
           for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
-            WRITE_CODE( numBits,pcSlice->getInterLayerPredLayerIdc(i),"inter_layer_pred_layer_idc[i]");   
+            WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
         }
       }
     }     
