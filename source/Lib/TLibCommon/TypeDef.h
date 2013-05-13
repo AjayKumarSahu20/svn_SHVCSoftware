@@ -43,6 +43,9 @@
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
+#define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
+#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
@@ -50,8 +53,13 @@
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
+#define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
+#define VPS_OUTPUT_LAYER_SET_IDX         1      ///< M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
+#define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
+#define VPS_PROFILE_OUTPUT_LAYERS        1      ///< M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2
 #endif
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+
+#define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
@@ -59,43 +67,39 @@
 #define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
-#define MV_SCALING_FIX                   1      ///< fixing the base layer MV scaling
-#define MV_SCALING_POS_FIX               1      ///< use center pixels to get co-located base layer block
-#define MFM_CLIPPING_FIX                 1      ///< set the right picture size for the clipping
+#define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
+#define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
+#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 
-#define AVC_BASE                         0      ///< YUV BL reading for AVC base SVC
-#define REF_IDX_FRAMEWORK                0      ///< inter-layer reference framework
+#define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
-#if SVC_UPSAMPLING
+#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
 #define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
 #endif
 
 #define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
 
+#define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
-#define AVC_SYNTAX                       1      ///< Syntax reading for AVC base
+#define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
 #endif
 
 #if REF_IDX_FRAMEWORK
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
-#if !AVC_BASE || AVC_SYNTAX
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
+#define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178 (currently only one reference layer is supported )
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+#define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
 #endif
-
-#if REF_IDX_MFM
-#define REUSE_MVSCALE                    1      ///< using the base layer MV scaling function
-#define REUSE_BLKMAPPING                 1      ///< using the base layer get co-located block function
-#define RAP_MFM_INIT                     1      ///< initilizing MFM when base layer is RAP picture
-#define REF_LIST_BUGFIX                  1
-#endif
-
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
 #if INTRA_BL
 #define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
 #define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
+#define IL_MRG_SIMPLIFIED_PRUNING        1      ///< M0124: simplified pruning, Only the left and above candidates are checked with BL-C candidate for redundancy removal 
+#define INTRA_BL_CTX_CHANGE              1      ///< M0075: spatial dependency removal for IntraBL flag context derivation
 
 // Hooks
 #if !AVC_BASE || AVC_SYNTAX
@@ -108,11 +112,23 @@
 #endif
 #endif
 #else
+#define ILP_DECODED_PICTURE              0
 #define SYNTAX_OUTPUT                    0
 #endif
 
 //! \ingroup TLibCommon
 //! \{
+
+#define FIX1071 1 ///< Temporary fix for issue #1071
+
+#define L0208_SOP_DESCRIPTION_SEI     1 ///< L0208: add SOP descrioption SEI
+#define MAX_NUM_PICS_IN_SOP           1024
+
+#define K0180_SCALABLE_NESTING_SEI  1   ///JCTVC-K0180 scalable nesting sei message
+#define MAX_NESTING_NUM_OPS         1024
+#define MAX_NESTING_NUM_LAYER       64
+
+#define J0149_TONE_MAPPING_SEI        1 ///< J0149: Tone mapping information SEI
 #define L0363_DU_BIT_RATE             1 ///< L0363: add bit_rate_du_value_minus1 to HRD parameters
 #define L0328_SPLICING                1 ///< L0328: splicing support in HRD
 #define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
@@ -137,13 +153,17 @@
 #define L0372 1
 #define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
 #define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
+#define L0386_DB_METRIC            1  ///< L0386: non-normative blockiness metric (automatically configures deblocking parameters in bitstream)
+#define L0323_DPB                     1 ///< L0323: Specification of active reference indices and decoded picture buffer
+
+#define L0034_COMBINED_LIST_CLEANUP 1
 
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES             16
 #endif
 #if VPS_RENAME
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
-#define MAX_VPS_LAYER_ID_PLUS1                    2
+#define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
@@ -476,7 +496,9 @@ enum RefPicList
 {
   REF_PIC_LIST_0 = 0,   ///< reference list 0
   REF_PIC_LIST_1 = 1,   ///< reference list 1
+#if !L0034_COMBINED_LIST_CLEANUP
   REF_PIC_LIST_C = 2,   ///< combined reference list for uni-prediction in B-Slices
+#endif
   REF_PIC_LIST_X = 100  ///< special mark
 };
 

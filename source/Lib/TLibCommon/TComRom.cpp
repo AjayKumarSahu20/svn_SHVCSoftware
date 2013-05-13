@@ -61,7 +61,6 @@ Void initROM()
   }
   g_aucConvertToBit[ i ] = c;
   
-  // g_auiFrameScanXY[ g_aucConvertToBit[ transformSize ] ]: zigzag scan array for transformSize
   c=2;
   for ( i=0; i<MAX_CU_DEPTH; i++ )
   {
@@ -76,9 +75,7 @@ Void initROM()
 
 Void destroyROM()
 {
-  Int i;
-  
-  for ( i=0; i<MAX_CU_DEPTH; i++ )
+  for (Int i=0; i<MAX_CU_DEPTH; i++ )
   {
     delete[] g_auiSigLastScan[0][i];
     delete[] g_auiSigLastScan[1][i];
@@ -519,5 +516,10 @@ UInt g_scalingListSize   [4] = {16,64,256,1024};
 UInt g_scalingListSizeX  [4] = { 4, 8, 16,  32};
 UInt g_scalingListNum[SCALING_LIST_SIZE_NUM]={6,6,6,2};
 Int  g_eTTable[4] = {0,3,1,2};
+
+#if SIMPLIFIED_MV_POS_SCALING
+Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
+Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
+#endif
 
 //! \}

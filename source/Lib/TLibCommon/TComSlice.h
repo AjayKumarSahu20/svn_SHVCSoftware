@@ -503,7 +503,10 @@ private:
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 #endif
-
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
   TComPTL     m_pcPTL;
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   TComBitRatePicRateInfo    m_bitRatePicRateInfo;
@@ -546,7 +549,16 @@ private:
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
-
+#if VPS_PROFILE_OUTPUT_LAYERS
+  UInt       m_numProfileTierLevel;
+  Bool       m_moreOutputLayerSetsThanDefaultFlag;
+  Int        m_numAddOutputLayerSets;
+  Bool       m_defaultOneTargetOutputLayerFlag;
+  Int        m_profileLevelTierIdx[64];     
+#endif
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Bool       m_maxOneActiveRefLayerFlag;
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -603,7 +615,15 @@ public:
 #endif
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
+  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x   ; }
 
+  Int     getNumLayersInIdList(Int set)                          { return m_numLayerInIdList[set]; }
+  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x   ; }
+
+  Void    deriveLayerIdListVariables();
+#endif
   TComPTL* getPTL() { return &m_pcPTL; }
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   TComBitRatePicRateInfo *getBitratePicrateInfo() { return &m_bitRatePicRateInfo; }
@@ -662,15 +682,35 @@ public:
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct dependency of layers
-  Bool   getDirectDependencyFlag(Int i, Int j)                  { return m_directDependencyFlag[i][j]; }
-  Void   setDirectDependencyFlag(Int i, Int j, Bool x)          { m_directDependencyFlag[i][j] = x;    }
+  Bool   getDirectDependencyFlag(Int currLayerId, Int refLayerId)               { return m_directDependencyFlag[currLayerId][refLayerId]; }
+  Void   setDirectDependencyFlag(Int currLayerId, Int refLayerId, Bool x)       { m_directDependencyFlag[currLayerId][refLayerId] = x;    }
   
-  UInt   getNumDirectRefLayers(Int i)                                { return m_numDirectRefLayers[i];         }
-  Void   setNumDirectRefLayers(Int i, UInt x)                        { m_numDirectRefLayers[i] = x;            }
+  UInt   getNumDirectRefLayers(Int layerId)                                     { return m_numDirectRefLayers[layerId];                   }
+  Void   setNumDirectRefLayers(Int layerId, UInt refLayerNum)                   { m_numDirectRefLayers[layerId] = refLayerNum;            }
 
-  UInt   getRefLayerId(Int i, Int j)                            { return m_refLayerId[i][j];           }
-  Void   setRefLayerId(Int i, Int j, UInt x)                    { m_refLayerId[i][j] = x;              }
+  UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
+  Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
 #endif
+#if VPS_PROFILE_OUTPUT_LAYERS
+  UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
+  Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
+
+  Bool   getMoreOutputLayerSetsThanDefaultFlag()                 { return m_moreOutputLayerSetsThanDefaultFlag;}
+  Void   setMoreOutputLayerSetsThanDefaultFlag(Bool x)           { m_moreOutputLayerSetsThanDefaultFlag = x   ;}
+
+  Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
+  Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
+
+  Bool   getDefaultOneTargetOutputLayerFlag()                 { return m_defaultOneTargetOutputLayerFlag;}
+  Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
+
+  Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
+  Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
+#endif
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
+  Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
+#endif 
 };
 
 class Window
@@ -907,13 +947,14 @@ private:
   UInt        m_picWidthInLumaSamples;
   UInt        m_picHeightInLumaSamples;
   
-  Window      m_conformanceWindow;
-
+  Int         m_log2MinCodingBlockSize;
+  Int         m_log2DiffMaxMinCodingBlockSize;
   UInt        m_uiMaxCUWidth;
   UInt        m_uiMaxCUHeight;
   UInt        m_uiMaxCUDepth;
-  UInt        m_uiMinTrDepth;
-  UInt        m_uiMaxTrDepth;
+
+  Window      m_conformanceWindow;
+
   TComRPSList m_RPSList;
   Bool        m_bLongTermRefsPresent;
   Bool        m_TMVPFlagsPresent;
@@ -929,7 +970,9 @@ private:
   UInt        m_uiPCMLog2MinSize;
   Bool        m_useAMP;
 
+#if !L0034_COMBINED_LIST_CLEANUP
   Bool        m_bUseLComb;
+#endif
   
   // Parameter
   Int         m_bitDepthY;
@@ -977,6 +1020,9 @@ private:
 #if REF_IDX_MFM
   Bool m_bMFMEnabledFlag;
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window      m_scaledRefLayerWindow;
+#endif
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1008,6 +1054,12 @@ public:
 
   Bool getUsedByCurrPicLtSPSFlag(Int i)        {return m_usedByCurrPicLtSPSFlag[i];}
   Void setUsedByCurrPicLtSPSFlag(Int i, Bool x)      { m_usedByCurrPicLtSPSFlag[i] = x;}
+
+  Int  getLog2MinCodingBlockSize() const           { return m_log2MinCodingBlockSize; }
+  Void setLog2MinCodingBlockSize(Int val)          { m_log2MinCodingBlockSize = val; }
+  Int  getLog2DiffMaxMinCodingBlockSize() const    { return m_log2DiffMaxMinCodingBlockSize; }
+  Void setLog2DiffMaxMinCodingBlockSize(Int val)   { m_log2DiffMaxMinCodingBlockSize = val; }
+
   Void setMaxCUWidth  ( UInt u ) { m_uiMaxCUWidth = u;      }
   UInt getMaxCUWidth  ()         { return  m_uiMaxCUWidth;  }
   Void setMaxCUHeight ( UInt u ) { m_uiMaxCUHeight = u;     }
@@ -1024,10 +1076,6 @@ public:
   UInt getBitsForPOC  ()         { return m_uiBitsForPOC;   }
   Bool getUseAMP() { return m_useAMP; }
   Void setUseAMP( Bool b ) { m_useAMP = b; }
-  Void setMinTrDepth  ( UInt u ) { m_uiMinTrDepth = u;      }
-  UInt getMinTrDepth  ()         { return  m_uiMinTrDepth;  }
-  Void setMaxTrDepth  ( UInt u ) { m_uiMaxTrDepth = u;      }
-  UInt getMaxTrDepth  ()         { return  m_uiMaxTrDepth;  }
   Void setQuadtreeTULog2MaxSize( UInt u ) { m_uiQuadtreeTULog2MaxSize = u;    }
   UInt getQuadtreeTULog2MaxSize()         { return m_uiQuadtreeTULog2MaxSize; }
   Void setQuadtreeTULog2MinSize( UInt u ) { m_uiQuadtreeTULog2MinSize = u;    }
@@ -1049,8 +1097,10 @@ public:
   UInt getMaxTrSize   ()         { return  m_uiMaxTrSize;   }
   
   // Tool list
+#if !L0034_COMBINED_LIST_CLEANUP
   Void setUseLComb    (Bool b)   { m_bUseLComb = b;         }
   Bool getUseLComb    ()         { return m_bUseLComb;      }
+#endif
 
   Bool getUseLossless ()         { return m_useLossless; }
   Void setUseLossless ( Bool b ) { m_useLossless  = b; }
@@ -1111,6 +1161,9 @@ public:
 #if REF_IDX_MFM
   Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window&  getScaledRefLayerWindow(     )   { return m_scaledRefLayerWindow; }
 #endif
 };
 
@@ -1369,13 +1422,19 @@ private:
   Bool        m_deblockingFilterOverrideFlag;      //< offsets for deblocking filter inherit from PPS
   Int         m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int         m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
-  
-  Int         m_aiNumRefIdx   [3];    //  for multiple reference of current slice
-
-#if REF_LIST_BUGFIX
-  Int         m_aiNumILRRefIdx;       //< for inter-layer reference picture ser
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
+  Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
+#else
+#if REF_IDX_FRAMEWORK
+  Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
-
+#endif 
+#if L0034_COMBINED_LIST_CLEANUP
+  Int         m_list1IdxToList0Idx[MAX_NUM_REF];
+  Int         m_aiNumRefIdx   [2];    //  for multiple reference of current slice
+#else
+  Int         m_aiNumRefIdx   [3];    //  for multiple reference of current slice
   Int         m_iRefIdxOfLC[2][MAX_NUM_REF_LC];
   Int         m_eListIdFromIdxOfLC[MAX_NUM_REF_LC];
   Int         m_iRefIdxFromIdxOfLC[MAX_NUM_REF_LC];
@@ -1383,6 +1442,7 @@ private:
   Int         m_iRefIdxOfL0FromRefIdxOfL1[MAX_NUM_REF_LC];
   Bool        m_bRefPicListModificationFlagLC;
   Bool        m_bRefPicListCombinationFlag;
+#endif
 
   Bool        m_bCheckLDC;
 
@@ -1420,8 +1480,9 @@ private:
 #endif
 
   Bool        m_abEqualRef  [2][MAX_NUM_REF][MAX_NUM_REF];
-  
+#if !L0034_COMBINED_LIST_CLEANUP
   Bool        m_bNoBackPredFlag;
+#endif
   UInt        m_uiTLayer;
 #if SVC_EXTENSION
   UInt        m_layerId;
@@ -1461,6 +1522,10 @@ private:
   Bool       m_LFCrossSliceBoundaryFlag;
 
   Bool       m_enableTMVPFlag;
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Bool       m_interLayerPredEnabledFlag;
+  Int        m_numInterLayerRefPics;
+#endif 
 public:
   TComSlice();
   virtual ~TComSlice(); 
@@ -1516,10 +1581,7 @@ public:
   Bool      getDeblockingFilterOverrideFlag()           { return  m_deblockingFilterOverrideFlag; }
   Int       getDeblockingFilterBetaOffsetDiv2()         { return  m_deblockingFilterBetaOffsetDiv2; }
   Int       getDeblockingFilterTcOffsetDiv2()           { return  m_deblockingFilterTcOffsetDiv2; }
-#if REF_LIST_BUGFIX
-  Int       getNumILRRefIdx     ( )                     { return  m_aiNumILRRefIdx; }
-  Void      setNumILRRefIdx     ( Int i )                     { m_aiNumILRRefIdx = i; }
-#endif
+
   Int       getNumRefIdx        ( RefPicList e )                { return  m_aiNumRefIdx[e];             }
   TComPic*  getPic              ()                              { return  m_pcPic;                      }
   TComPic*  getRefPic           ( RefPicList e, Int iRefIdx)    { return  m_apcRefPicList[e][iRefIdx];  }
@@ -1532,6 +1594,9 @@ public:
   Bool      getCheckLDC     ()                                  { return m_bCheckLDC; }
   Bool      getMvdL1ZeroFlag ()                                  { return m_bLMvdL1Zero;    }
   Int       getNumRpsCurrTempList();
+#if L0034_COMBINED_LIST_CLEANUP
+  Int       getList1IdxToList0Idx ( Int list1Idx )               { return m_list1IdxToList0Idx[list1Idx]; }
+#else
   Int       getRefIdxOfLC       (RefPicList e, Int iRefIdx)     { return m_iRefIdxOfLC[e][iRefIdx];           }
   Int       getListIdFromIdxOfLC(Int iRefIdx)                   { return m_eListIdFromIdxOfLC[iRefIdx];       }
   Int       getRefIdxFromIdxOfLC(Int iRefIdx)                   { return m_iRefIdxFromIdxOfLC[iRefIdx];       }
@@ -1541,14 +1606,16 @@ public:
   Void      setRefPicListModificationFlagLC(Bool bflag)         {m_bRefPicListModificationFlagLC=bflag;}     
   Bool      getRefPicListCombinationFlag()                      {return m_bRefPicListCombinationFlag;}
   Void      setRefPicListCombinationFlag(Bool bflag)            {m_bRefPicListCombinationFlag=bflag;}   
+#endif
   Void      setReferenced(Bool b)                               { m_bRefenced = b; }
   Bool      isReferenced()                                      { return m_bRefenced; }
   Void      setPOC              ( Int i )                       { m_iPOC              = i; if(getTLayer()==0) m_prevPOC=i; }
   Void      setNalUnitType      ( NalUnitType e )               { m_eNalUnitType      = e;      }
-  NalUnitType getNalUnitType    ()                              { return m_eNalUnitType;        }
+  NalUnitType getNalUnitType    () const                        { return m_eNalUnitType;        }
   Bool      getRapPicFlag       ();  
-  Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
-  Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA);
+  Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
+  Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
+  Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& rcListPic);
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
   Void      setSliceQp          ( Int i )                       { m_iSliceQp          = i;      }
@@ -1568,38 +1635,17 @@ public:
   Void      setNumRefIdx        ( RefPicList e, Int i )         { m_aiNumRefIdx[e]    = i;      }
   Void      setPic              ( TComPic* p )                  { m_pcPic             = p;      }
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
-  
-#if SVC_EXTENSION  
-  Void      setBaseColPic       ( TComPic* p)                   { m_pcBaseColPic = p; }
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
-  TComPic*  getBaseColPic       ()  { return m_pcBaseColPic; }
 
-  Void      setLayerId (UInt layerId) { m_layerId = layerId; }
-  UInt      getLayerId ()               { return m_layerId; }
-
-  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
-  TComPicYuv* getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
-
-#if AVC_SYNTAX
-  Void      initBaseLayerRPL( TComSlice *pcSlice );
-#endif
-#endif
-
-#if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
-#endif
-
+#if FIX1071
+  Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
+#else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
+#endif
   Void      setRefPOCList       ();
   Void      setColFromL0Flag    ( UInt colFromL0 ) { m_colFromL0Flag = colFromL0; }
   Void      setColRefIdx        ( UInt refIdx) { m_colRefIdx = refIdx; }
   Void      setCheckLDC         ( Bool b )                      { m_bCheckLDC = b; }
   Void      setMvdL1ZeroFlag     ( Bool b)                       { m_bLMvdL1Zero = b; }
-
-#if REF_LIST_BUGFIX
-  Void      setRefPicListModificationSvc();
-  Void      setRefPicListSvc    ( TComList<TComPic*>& rcListPic, TComPic** ilpPic );
-#endif
 
   Bool      isIntra         ()                          { return  m_eSliceType == I_SLICE;  }
   Bool      isInterB        ()                          { return  m_eSliceType == B_SLICE;  }
@@ -1627,10 +1673,13 @@ public:
   }
   
   static Void      sortPicList         ( TComList<TComPic*>& rcListPic );
-  
+#if L0034_COMBINED_LIST_CLEANUP
+  Void setList1IdxToList0Idx();
+#else
   Bool getNoBackPredFlag() { return m_bNoBackPredFlag; }
   Void setNoBackPredFlag( Bool b ) { m_bNoBackPredFlag = b; }
   Void generateCombinedList       ();
+#endif
 
   UInt getTLayer             ()                            { return m_uiTLayer;                      }
   Void setTLayer             ( UInt uiTLayer )             { m_uiTLayer = uiTLayer;                  }
@@ -1678,8 +1727,7 @@ public:
   Void  setWpScaling    ( wpScalingParam  wp[2][MAX_NUM_REF][3] ) { memcpy(m_weightPredTable, wp, sizeof(wpScalingParam)*2*MAX_NUM_REF*3); }
   Void  getWpScaling    ( RefPicList e, Int iRefIdx, wpScalingParam *&wp);
 
-  Void  resetWpScaling  (wpScalingParam  wp[2][MAX_NUM_REF][3]);
-  Void  initWpScaling    (wpScalingParam  wp[2][MAX_NUM_REF][3]);
+  Void  resetWpScaling  ();
   Void  initWpScaling   ();
   inline Bool applyWP   () { return( (m_eSliceType==P_SLICE && m_pcPPS->getUseWP()) || (m_eSliceType==B_SLICE && m_pcPPS->getWPBiPred()) ); }
 
@@ -1713,14 +1761,53 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
-#if REF_IDX_FRAMEWORK
-  Void      addRefPicList( TComPic **pIlpPicList, Int iRefPicNum, Int iInsertOffset=0 );
+
+#if SVC_EXTENSION
+  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
+  Void      setBaseColPic       ( TComPic* p)     { m_pcBaseColPic = p; }
+  TComPic*  getBaseColPic       ()                { return m_pcBaseColPic; }
+
+  Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
+  UInt      getLayerId ()               { return m_layerId;    }
+
+  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
+  TComPicYuv* getFullPelBaseRec   ()               { return  m_pcFullPelBaseRec;  }
+
+#if AVC_SYNTAX
+  Void      initBaseLayerRPL( TComSlice *pcSlice );
 #endif
+
+#if REF_IDX_FRAMEWORK
+  Void      setRefPicListModificationSvc();
+  Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
+
+#if REF_IDX_MFM
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+#endif
+
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
+  Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
+
+  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
+  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
+
+  Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
+  Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
+
+  Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
+  UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
+#else
+  Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
+#endif 
+#endif
+
+#endif //SVC_EXTENSION
+
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);
-  TComPic*  xGetLongTermRefPic  (TComList<TComPic*>& rcListPic,
-                         Int                 poc);
+  TComPic*  xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, Bool pocHasMsb);
 };// END CLASS DEFINITION TComSlice
 
 
@@ -1804,7 +1891,7 @@ public:
 
   //! activate a PPS and depending on isIDR parameter also SPS and VPS
   //! \returns true, if activation is successful
-  Bool activatePPS(Int ppsId, Bool isIDR);
+  Bool activatePPS(Int ppsId, Bool isIRAP);
 
   TComVPS* getActiveVPS(){ return m_vpsMap.getPS(m_activeVPSId); };
   TComSPS* getActiveSPS(){ return m_spsMap.getPS(m_activeSPSId); };

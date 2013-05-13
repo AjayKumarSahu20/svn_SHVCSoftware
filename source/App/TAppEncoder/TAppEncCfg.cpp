@@ -65,6 +65,9 @@ namespace po = df::program_options_lite;
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
 : m_pBitstreamFile()
+#if AVC_BASE
+, m_avcBaseLayerFlag(0)
+#endif
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
@@ -88,6 +91,11 @@ TAppEncCfg::TAppEncCfg()
 , m_scalingListFile()
 {
   m_aidQP = NULL;
+#if J0149_TONE_MAPPING_SEI
+  m_startOfCodedInterval = NULL;
+  m_codedPivotValue = NULL;
+  m_targetPivotValue = NULL;
+#endif
 }
 #endif
 
@@ -101,6 +109,23 @@ TAppEncCfg::~TAppEncCfg()
   {
     delete[] m_aidQP;
   }
+#if J0149_TONE_MAPPING_SEI
+  if ( m_startOfCodedInterval )
+  {
+    delete[] m_startOfCodedInterval;
+    m_startOfCodedInterval = NULL;
+  }
+   if ( m_codedPivotValue )
+  {
+    delete[] m_codedPivotValue;
+    m_codedPivotValue = NULL;
+  }
+  if ( m_targetPivotValue )
+  {
+    delete[] m_targetPivotValue;
+    m_targetPivotValue = NULL;
+  }
+#endif
   free(m_pchInputFile);
 #endif
 #if !SVC_EXTENSION  
@@ -118,6 +143,15 @@ Void TAppEncCfg::create()
 
 Void TAppEncCfg::destroy()
 {
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if( m_acLayerCfg[layer].m_numDirectRefLayers > 0 )
+    {
+      delete [] m_acLayerCfg[layer].m_refLayerIds;
+    }
+  }
+#endif
 }
 
 std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //input
@@ -296,6 +330,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_refLayerIds   [MAX_LAYERS];
   string* cfg_refLayerIdsPtr   [MAX_LAYERS];
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Int*    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
+  Int*    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
+#endif
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -310,7 +350,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numDirectRefLayers  [layer] = &m_acLayerCfg[layer].m_numDirectRefLayers;
     cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+    cfg_scaledRefLayerLeftOffset  [layer] = &m_acLayerCfg[layer].m_scaledRefLayerLeftOffset;
+    cfg_scaledRefLayerTopOffset   [layer] = &m_acLayerCfg[layer].m_scaledRefLayerTopOffset;
+    cfg_scaledRefLayerRightOffset [layer] = &m_acLayerCfg[layer].m_scaledRefLayerRightOffset;
+    cfg_scaledRefLayerBottomOffset[layer] = &m_acLayerCfg[layer].m_scaledRefLayerBottomOffset;
+#endif
   }
+#if AVC_BASE
+  string  cfg_BLInputFile;
+#endif
 #if AVC_SYNTAX
   string  cfg_BLSyntaxFile;
 #endif
@@ -323,6 +372,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_ColumnWidth;
   string cfg_RowHeight;
   string cfg_ScalingListFile;
+#if J0149_TONE_MAPPING_SEI
+  string cfg_startOfCodedInterval;
+  string cfg_codedPivotValue;
+  string cfg_targetPivotValue;
+#endif
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   string cfg_bitRateInfoPresentFlag;
   string cfg_picRateInfoPresentFlag;
@@ -360,15 +414,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-
+#if SCALED_REF_LAYER_OFFSETS
+  ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffset,  0, MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
+                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffset,   0, MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
+                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerRightOffset%d",  cfg_scaledRefLayerRightOffset, 0, MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
+                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
+  ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffset,0, MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
+                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
+#endif
 #if AVC_BASE
-  ("InputBLFile,-ibl",        *cfg_InputFile[0],     string(""), "Base layer rec YUV input file name")
+  ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
+  ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
 #if AVC_SYNTAX
   ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
 #endif
 #if REF_IDX_FRAMEWORK
-  ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture_")
+  ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
 #endif  
 #else  
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
@@ -429,7 +493,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
   ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
+#if !L0034_COMBINED_LIST_CLEANUP
   ("ListCombination,-lc",     m_bUseLComb,               true, "Combined reference list for uni-prediction estimation in B-slices")
+#endif
   // motion options
   ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
   ("SearchRange,-sr",         m_iSearchRange,              96, "Motion search range")
@@ -487,6 +553,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("LoopFilterBetaOffset_div2",      m_loopFilterBetaOffsetDiv2,           0 )
   ("LoopFilterTcOffset_div2",        m_loopFilterTcOffsetDiv2,             0 )
   ("DeblockingFilterControlPresent", m_DeblockingFilterControlPresent, false )
+#if L0386_DB_METRIC
+  ("DeblockingFilterMetric",         m_DeblockingFilterMetric,         false )
+#endif
 
   // Coding tools
   ("AMP",                      m_enableAMP,                 true,  "Enable asymmetric motion partitions")
@@ -601,6 +670,38 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIRecoveryPoint",               m_recoveryPointSEIEnabled,                0, "Control generation of recovery point SEI messages")
   ("SEIBufferingPeriod",             m_bufferingPeriodSEIEnabled,              0, "Control generation of buffering period SEI messages")
   ("SEIPictureTiming",               m_pictureTimingSEIEnabled,                0, "Control generation of picture timing SEI messages")
+#if J0149_TONE_MAPPING_SEI
+  ("SEIToneMappingInfo",                       m_toneMappingInfoSEIEnabled,    false, "Control generation of Tone Mapping SEI messages")
+  ("SEIToneMapId",                             m_toneMapId,                        0, "Specifies Id of Tone Mapping SEI message for a given session")
+  ("SEIToneMapCancelFlag",                     m_toneMapCancelFlag,            false, "Indicates that Tone Mapping SEI message cancels the persistance or follows")
+  ("SEIToneMapPersistenceFlag",                m_toneMapPersistenceFlag,        true, "Specifies the persistence of the Tone Mapping SEI message")
+  ("SEIToneMapCodedDataBitDepth",              m_toneMapCodedDataBitDepth,         8, "Specifies Coded Data BitDepth of Tone Mapping SEI messages")
+  ("SEIToneMapTargetBitDepth",                 m_toneMapTargetBitDepth,            8, "Specifies Output BitDepth of Tome mapping function")
+  ("SEIToneMapModelId",                        m_toneMapModelId,                   0, "Specifies Model utilized for mapping coded data into target_bit_depth range\n"
+                                                                                      "\t0:  linear mapping with clipping\n"
+                                                                                      "\t1:  sigmoidal mapping\n"
+                                                                                      "\t2:  user-defined table mapping\n"
+                                                                                      "\t3:  piece-wise linear mapping\n"
+                                                                                      "\t4:  luminance dynamic range information ")
+  ("SEIToneMapMinValue",                              m_toneMapMinValue,                          0, "Specifies the minimum value in mode 0")
+  ("SEIToneMapMaxValue",                              m_toneMapMaxValue,                       1023, "Specifies the maxmum value in mode 0")
+  ("SEIToneMapSigmoidMidpoint",                       m_sigmoidMidpoint,                        512, "Specifies the centre point in mode 1")
+  ("SEIToneMapSigmoidWidth",                          m_sigmoidWidth,                           960, "Specifies the distance between 5% and 95% values of the target_bit_depth in mode 1")
+  ("SEIToneMapStartOfCodedInterval",                  cfg_startOfCodedInterval,          string(""), "Array of user-defined mapping table")
+  ("SEIToneMapNumPivots",                             m_numPivots,                                0, "Specifies the number of pivot points in mode 3")
+  ("SEIToneMapCodedPivotValue",                       cfg_codedPivotValue,               string(""), "Array of pivot point")
+  ("SEIToneMapTargetPivotValue",                      cfg_targetPivotValue,              string(""), "Array of pivot point")
+  ("SEIToneMapCameraIsoSpeedIdc",                     m_cameraIsoSpeedIdc,                        0, "Indicates the camera ISO speed for daylight illumination")
+  ("SEIToneMapCameraIsoSpeedValue",                   m_cameraIsoSpeedValue,                    400, "Specifies the camera ISO speed for daylight illumination of Extended_ISO")
+  ("SEIToneMapExposureCompensationValueSignFlag",     m_exposureCompensationValueSignFlag,        0, "Specifies the sign of ExposureCompensationValue")
+  ("SEIToneMapExposureCompensationValueNumerator",    m_exposureCompensationValueNumerator,       0, "Specifies the numerator of ExposureCompensationValue")
+  ("SEIToneMapExposureCompensationValueDenomIdc",     m_exposureCompensationValueDenomIdc,        2, "Specifies the denominator of ExposureCompensationValue")
+  ("SEIToneMapRefScreenLuminanceWhite",               m_refScreenLuminanceWhite,                350, "Specifies reference screen brightness setting in units of candela per square metre")
+  ("SEIToneMapExtendedRangeWhiteLevel",               m_extendedRangeWhiteLevel,                800, "Indicates the luminance dynamic range")
+  ("SEIToneMapNominalBlackLevelLumaCodeValue",        m_nominalBlackLevelLumaCodeValue,          16, "Specifies luma sample value of the nominal black level assigned decoded pictures")
+  ("SEIToneMapNominalWhiteLevelLumaCodeValue",        m_nominalWhiteLevelLumaCodeValue,         235, "Specifies luma sample value of the nominal white level assigned decoded pictures")
+  ("SEIToneMapExtendedWhiteLevelLumaCodeValue",       m_extendedWhiteLevelLumaCodeValue,        300, "Specifies luma sample value of the extended dynamic range assigned decoded pictures")
+#endif
   ("SEIFramePacking",                m_framePackingSEIEnabled,                 0, "Control generation of frame packing SEI messages")
   ("SEIFramePackingType",            m_framePackingSEIType,                    0, "Define frame packing arrangement\n"
                                                                                   "\t0: checkerboard - pixels alternatively represent either frames\n"
@@ -621,6 +722,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEITemporalLevel0Index",         m_temporalLevel0IndexSEIEnabled,          0, "Control generation of temporal level 0 index SEI messages")
   ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
   ("SEIDecodingUnitInfo",             m_decodingUnitInfoSEIEnabled,                       0, "Control generation of decoding unit information SEI message.")
+#if L0208_SOP_DESCRIPTION_SEI
+  ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,              0, "Control generation of SOP description SEI messages")
+#endif
+#if K0180_SCALABLE_NESTING_SEI
+  ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
+#endif
 #if SIGNAL_BITRATE_PICRATE_IN_VPS
   ("BitRatePicRateMaxTLayers",   m_bitRatePicRateMaxTLayers,           0, "Maximum number of sub-layers signalled; can be inferred otherwise; here for easy parsing of config. file")
   ("BitRateInfoPresent",         cfg_bitRateInfoPresentFlag,          string(""), "Control signalling of bit rate information of avg. bit rate and max. bit rate in VPS\n"
@@ -661,6 +768,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
    */
   /* convert std::string to c string for compatability */
 #if SVC_EXTENSION
+#if AVC_BASE
+  if( m_avcBaseLayerFlag )
+  {
+    *cfg_InputFile[0] = cfg_BLInputFile;
+  }
+#endif
   m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
 #if AVC_SYNTAX
   m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
@@ -877,6 +990,66 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
   m_iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
+#endif
+#if J0149_TONE_MAPPING_SEI
+  if( m_toneMappingInfoSEIEnabled && !m_toneMapCancelFlag )
+  {
+    Char* pcStartOfCodedInterval = cfg_startOfCodedInterval.empty() ? NULL: strdup(cfg_startOfCodedInterval.c_str());
+    Char* pcCodedPivotValue = cfg_codedPivotValue.empty() ? NULL: strdup(cfg_codedPivotValue.c_str());
+    Char* pcTargetPivotValue = cfg_targetPivotValue.empty() ? NULL: strdup(cfg_targetPivotValue.c_str());
+    if( m_toneMapModelId == 2 && pcStartOfCodedInterval )
+    {
+      char *startOfCodedInterval;
+      UInt num = 1u<< m_toneMapTargetBitDepth;
+      m_startOfCodedInterval = new Int[num];
+      ::memset( m_startOfCodedInterval, 0, sizeof(Int)*num );
+      startOfCodedInterval = strtok(pcStartOfCodedInterval, " .");
+      int i = 0;
+      while( startOfCodedInterval && ( i < num ) )
+      {
+        m_startOfCodedInterval[i] = atoi( startOfCodedInterval );
+        startOfCodedInterval = strtok(NULL, " .");
+        i++;
+      }
+    } 
+    else
+    {
+      m_startOfCodedInterval = NULL;
+    }
+    if( ( m_toneMapModelId == 3 ) && ( m_numPivots > 0 ) )
+    {
+      if( pcCodedPivotValue && pcTargetPivotValue )
+      {
+        char *codedPivotValue;
+        char *targetPivotValue;
+        m_codedPivotValue = new Int[m_numPivots];
+        m_targetPivotValue = new Int[m_numPivots];
+        ::memset( m_codedPivotValue, 0, sizeof(Int)*( m_numPivots ) );
+        ::memset( m_targetPivotValue, 0, sizeof(Int)*( m_numPivots ) );
+        codedPivotValue = strtok(pcCodedPivotValue, " .");
+        int i=0;
+        while(codedPivotValue&&i<m_numPivots)
+        {
+          m_codedPivotValue[i] = atoi( codedPivotValue );
+          codedPivotValue = strtok(NULL, " .");
+          i++;
+        }
+        i=0;
+        targetPivotValue = strtok(pcTargetPivotValue, " .");
+        while(targetPivotValue&&i<m_numPivots)
+        {
+          m_targetPivotValue[i]= atoi( targetPivotValue );
+          targetPivotValue = strtok(NULL, " .");
+          i++;
+        }
+      }
+    }
+    else
+    {
+      m_codedPivotValue = NULL;
+      m_targetPivotValue = NULL;
+    }
+  }
 #endif
   // check validity of input parameters
   xCheckParameter();
@@ -1138,6 +1311,9 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION
+  xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
+  m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
+
   // verify layer configuration parameters
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
@@ -1374,13 +1550,25 @@ Void TAppEncCfg::xCheckParameter()
   for(Int i=0; i<MAX_TLAYER; i++)
   {
     m_numReorderPics[i] = 0;
+#if L0323_DPB
+    m_maxDecPicBuffering[i] = 1;
+#else
     m_maxDecPicBuffering[i] = 0;
+#endif
   }
   for(Int i=0; i<m_iGOPSize; i++) 
   {
+#if L0323_DPB
+    if(m_GOPList[i].m_numRefPics+1 > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
+#else
     if(m_GOPList[i].m_numRefPics > m_maxDecPicBuffering[m_GOPList[i].m_temporalId])
+#endif
     {
+#if L0323_DPB
+      m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
+#else
       m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics;
+#endif
     }
     Int highestDecodingNumberWithLowerPOC = 0; 
     for(Int j=0; j<m_iGOPSize; j++)
@@ -1411,22 +1599,40 @@ Void TAppEncCfg::xCheckParameter()
     {
       m_numReorderPics[i+1] = m_numReorderPics[i];
     }
+#if L0323_DPB
+    // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] - 1, inclusive
+    if(m_numReorderPics[i] > m_maxDecPicBuffering[i] - 1)
+    {
+      m_maxDecPicBuffering[i] = m_numReorderPics[i] + 1;
+    }
+#else
     // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
     if(m_numReorderPics[i] > m_maxDecPicBuffering[i])
     {
       m_maxDecPicBuffering[i] = m_numReorderPics[i];
     }
+#endif
     // a lower layer can not have higher value of m_uiMaxDecPicBuffering than a higher layer
     if(m_maxDecPicBuffering[i+1] < m_maxDecPicBuffering[i])
     {
       m_maxDecPicBuffering[i+1] = m_maxDecPicBuffering[i];
     }
   }
+
+
+#if L0323_DPB
+  // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ] -  1, inclusive
+  if(m_numReorderPics[MAX_TLAYER-1] > m_maxDecPicBuffering[MAX_TLAYER-1] - 1)
+  {
+    m_maxDecPicBuffering[MAX_TLAYER-1] = m_numReorderPics[MAX_TLAYER-1] + 1;
+  }
+#else
   // the value of num_reorder_pics[ i ] shall be in the range of 0 to max_dec_pic_buffering[ i ], inclusive
   if(m_numReorderPics[MAX_TLAYER-1] > m_maxDecPicBuffering[MAX_TLAYER-1])
   {
     m_maxDecPicBuffering[MAX_TLAYER-1] = m_numReorderPics[MAX_TLAYER-1];
   }
+#endif
 
 #if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
@@ -1510,8 +1716,9 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-
+#if !L0034_COMBINED_LIST_CLEANUP
   xConfirmPara( m_bUseLComb==false && m_numReorderPics[MAX_TLAYER-1]!=0, "ListCombination can only be 0 in low delay coding (more precisely when L0 and L1 are identical)" );  // Note however this is not the full necessary condition as ref_pic_list_combination_flag can only be 0 if L0 == L1.
+#endif
   xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
 #if !SVC_EXTENSION
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
@@ -1519,6 +1726,19 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 
   xConfirmPara( m_decodedPictureHashSEIEnabled<0 || m_decodedPictureHashSEIEnabled>3, "this hash type is not correct!\n");
+
+#if J0149_TONE_MAPPING_SEI
+  if (m_toneMappingInfoSEIEnabled)
+  {
+    xConfirmPara( m_toneMapCodedDataBitDepth < 8 || m_toneMapCodedDataBitDepth > 14 , "SEIToneMapCodedDataBitDepth must be in rage 8 to 14");
+    xConfirmPara( m_toneMapTargetBitDepth < 1 || (m_toneMapTargetBitDepth > 16 && m_toneMapTargetBitDepth < 255) , "SEIToneMapTargetBitDepth must be in rage 1 to 16 or equal to 255");
+    xConfirmPara( m_toneMapModelId < 0 || m_toneMapModelId > 4 , "SEIToneMapModelId must be in rage 0 to 4");
+    xConfirmPara( m_cameraIsoSpeedValue == 0, "SEIToneMapCameraIsoSpeedValue shall not be equal to 0");
+    xConfirmPara( m_extendedRangeWhiteLevel < 100, "SEIToneMapExtendedRangeWhiteLevel should be greater than or equal to 100");
+    xConfirmPara( m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue, "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than SEIToneMapNominalBlackLevelLumaCodeValue");
+    xConfirmPara( m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
+  }
+#endif
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
   if ( m_RCEnableRateControl )
@@ -1608,7 +1828,11 @@ Void TAppEncCfg::xPrintParameter()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
+#if AVC_SYNTAX
+    m_acLayerCfg[layer].xPrintParameter( layer );
+#else
     m_acLayerCfg[layer].xPrintParameter();
+#endif
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
@@ -1676,7 +1900,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
   printf("SQP:%d ", m_uiDeltaQpRD         );
   printf("ASR:%d ", m_bUseASR             );
+#if !L0034_COMBINED_LIST_CLEANUP
   printf("LComb:%d ", m_bUseLComb         );
+#endif
   printf("FEN:%d ", m_bUseFastEnc         );
   printf("ECU:%d ", m_bUseEarlyCU         );
   printf("FDM:%d ", m_useFastDecisionForMerge );
@@ -1717,11 +1943,17 @@ Void TAppEncCfg::xPrintParameter()
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
 #if SVC_EXTENSION
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
-  printf("AVC_BASE:%d ", AVC_BASE);
+#if AVC_BASE
+  printf("AvcBase:%d ", m_avcBaseLayerFlag ? 1 : 0);
+#else
+  printf("AvcBase:%d ", 0);
+#endif
 #if REF_IDX_FRAMEWORK
   printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
-  printf("REF_IDX_ME_ZEROMV: %d", REF_IDX_ME_ZEROMV);
+  printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
+  printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
+  printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
 #elif INTRA_BL
   printf("INTRA_BL:%d ", INTRA_BL);
 #if !AVC_BASE

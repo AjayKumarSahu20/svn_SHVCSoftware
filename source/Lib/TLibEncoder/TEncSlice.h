@@ -115,8 +115,14 @@ public:
   Void    init                ( TEncTop* pcEncTop );
   
   /// preparation of slice encoding (reference marking, QP and lambda)
+#if SVC_EXTENSION
+  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
+                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps );
+#else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS );
+#endif
+
 #if RATE_CONTROL_LAMBDA_DOMAIN
   Void    resetQP             ( TComPic* pic, Int sliceQP, Double lambda );
 #else
@@ -125,7 +131,7 @@ public:
   // compress and encode slice
   Void    precompressSlice    ( TComPic*& rpcPic                                );      ///< precompress slice for multi-loop opt.
   Void    compressSlice       ( TComPic*& rpcPic                                );      ///< analysis stage of slice
-  Void    encodeSlice         ( TComPic*& rpcPic, TComOutputBitstream* rpcBitstream, TComOutputBitstream* pcSubstreams  );
+  Void    encodeSlice         ( TComPic*& rpcPic, TComOutputBitstream* pcSubstreams  );
   
   // misc. functions
   Void    setSearchRange      ( TComSlice* pcSlice  );                                  ///< set ME range adaptively
@@ -140,6 +146,11 @@ public:
 
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
+
+#if JCTVC_M0259_LAMBDAREFINEMENT
+private:
+  Double  xCalEnhLambdaFactor( Double deltaQP , Double beta );
+#endif
 };
 
 //! \}

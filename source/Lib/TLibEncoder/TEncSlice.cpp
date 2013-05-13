@@ -177,7 +177,12 @@ Void TEncSlice::init( TEncTop* pcEncTop )
  \param pSPS          SPS associated with the slice
  \param pPPS          PPS associated with the slice
  */
+#if SVC_EXTENSION
+//\param vps          VPS associated with the slice
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps )
+#else
 Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS )
+#endif
 {
   Double dQP;
   Double dLambda;
@@ -188,7 +193,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
 #if SVC_EXTENSION
-  rpcSlice->initSlice( pcPic->getLayerId() );
+  UInt layerId = pcPic->getLayerId();
+  rpcSlice->setVPS( vps );
+  rpcSlice->initSlice( layerId );
 #else
   rpcSlice->initSlice();
 #endif
@@ -336,6 +343,17 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     dLambda *= m_pcCfg->getLambdaModifier( m_pcCfg->getGOPEntry(iGOPid).m_temporalId );
   }
 
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  if( rpcSlice->getLayerId() > 0 && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  {
+    Int nCurLayer = rpcSlice->getLayerId();
+    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[nCurLayer-1]->getQP() - m_ppcTEncTop[nCurLayer]->getQP() ,
+      1.0 * m_ppcTEncTop[nCurLayer]->getSourceWidth() * m_ppcTEncTop[nCurLayer]->getSourceHeight() 
+      / m_ppcTEncTop[nCurLayer-1]->getSourceWidth() / m_ppcTEncTop[nCurLayer-1]->getSourceHeight() );
+    dLambda *= gamma;
+  }
+#endif
+
   // store lambda
   m_pcRdCost ->setLambda( dLambda );
 #if WEIGHTED_CHROMA_DISTORTION
@@ -353,6 +371,13 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   chromaQPOffset = rpcSlice->getPPS()->getChromaCrQpOffset() + rpcSlice->getSliceQpDeltaCr();
   qpc = Clip3( 0, 57, iQP + chromaQPOffset);
   weight = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  if( rpcSlice->getLayerId() > 0 && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
+  {
+    dLambda *= 1.1;
+    weight *= 1.15;
+  }
+#endif
   m_pcRdCost->setCrDistortionWeight(weight);
 #endif
 
@@ -399,6 +424,15 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setNumRefIdx(REF_PIC_LIST_0,m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
   rpcSlice->setNumRefIdx(REF_PIC_LIST_1,m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
   
+#if L0386_DB_METRIC
+  if ( m_pcCfg->getDeblockingFilterMetric() )
+  {
+    rpcSlice->setDeblockingFilterOverrideFlag(true);
+    rpcSlice->setDeblockingFilterDisable(false);
+    rpcSlice->setDeblockingFilterBetaOffsetDiv2( 0 );
+    rpcSlice->setDeblockingFilterTcOffsetDiv2( 0 );
+  } else
+#endif
   if (rpcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
   {
     rpcSlice->getPPS()->setDeblockingFilterOverrideEnabledFlag( !m_pcCfg->getLoopFilterOffsetInPPS() );
@@ -451,6 +485,24 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceSegmentArgument ( m_pcCfg->getSliceSegmentArgument() );
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
+
+#if SVC_EXTENSION && REF_IDX_FRAMEWORK
+  if( layerId > 0 )
+  {
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+  // currently only one reference layer is supported in software and no decision logic to select yet.
+  // hence num of active inter layer references is set to one always
+    if( rpcSlice->getNumILRRefIdx() > 0 )
+    {
+      rpcSlice->setActiveNumILRRefIdx(1);
+      rpcSlice->setInterLayerPredEnabledFlag(1);
+    }
+#else
+    rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( layerId ) );
+#endif 
+  }
+
+#endif
 }
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
@@ -1181,7 +1233,7 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
  \param  rpcPic        picture class
  \retval rpcBitstream  bitstream class
  */
-Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcBitstream, TComOutputBitstream* pcSubstreams )
+Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstreams )
 {
   UInt       uiCUAddr;
   UInt       uiStartCUAddr;
@@ -1361,39 +1413,7 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcBitstre
         }
       }
       {
-          UInt uiCounter = 0;
-          vector<uint8_t>& rbsp   = pcSubstreams[uiSubStrm].getFIFO();
-          for (vector<uint8_t>::iterator it = rbsp.begin(); it != rbsp.end();)
-          {
-            /* 1) find the next emulated 00 00 {00,01,02,03}
-             * 2a) if not found, write all remaining bytes out, stop.
-             * 2b) otherwise, write all non-emulated bytes out
-             * 3) insert emulation_prevention_three_byte
-             */
-            vector<uint8_t>::iterator found = it;
-            do
-            {
-              /* NB, end()-1, prevents finding a trailing two byte sequence */
-              found = search_n(found, rbsp.end()-1, 2, 0);
-              found++;
-              /* if not found, found == end, otherwise found = second zero byte */
-              if (found == rbsp.end())
-              {
-                break;
-              }
-              if (*(++found) <= 3)
-              {
-                break;
-              }
-            } while (true);
-            it = found;
-            if (found != rbsp.end())
-            {
-              it++;
-              uiCounter++;
-            }
-          }
-        
+        UInt numStartCodeEmulations = pcSubstreams[uiSubStrm].countStartCodeEmulations();
         UInt uiAccumulatedSubstreamLength = 0;
         for (Int iSubstrmIdx=0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
         {
@@ -1401,7 +1421,7 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcBitstre
         }
         // add bits coded in previous dependent slices + bits coded so far
         // add number of emulation prevention byte count in the tile
-        pcSlice->addTileLocation( ((pcSlice->getTileOffstForMultES() + uiAccumulatedSubstreamLength - uiBitsOriginallyInSubstreams) >> 3) + uiCounter );
+        pcSlice->addTileLocation( ((pcSlice->getTileOffstForMultES() + uiAccumulatedSubstreamLength - uiBitsOriginallyInSubstreams) >> 3) + numStartCodeEmulations );
       }
     }
 
@@ -1874,4 +1894,12 @@ Double TEncSlice::xGetQPValueAccordingToLambda ( Double lambda )
   return 4.2005*log(lambda) + 13.7122;
 }
 
+#if JCTVC_M0259_LAMBDAREFINEMENT
+Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP , Double beta )
+{
+  double tmp = beta * pow( 2.0 , deltaQP / 6 );
+  double gamma = tmp / ( tmp + 1 );
+  return( gamma );
+}
+#endif
 //! \}

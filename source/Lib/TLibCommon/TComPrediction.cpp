@@ -82,8 +82,8 @@ Void TComPrediction::initTempBuff()
 {
   if( m_piYuvExt == NULL )
   {
-    Int extWidth  = g_uiMaxCUWidth + 16; 
-    Int extHeight = g_uiMaxCUHeight + 1;
+    Int extWidth  = MAX_CU_SIZE + 16; 
+    Int extHeight = MAX_CU_SIZE + 1;
     Int i, j;
     for (i = 0; i < 4; i++)
     {
@@ -93,20 +93,20 @@ Void TComPrediction::initTempBuff()
         m_filteredBlock[i][j].create(extWidth, extHeight);
       }
     }
-    m_iYuvExtHeight  = ((g_uiMaxCUHeight + 2) << 4);
-    m_iYuvExtStride = ((g_uiMaxCUWidth  + 8) << 4);
+    m_iYuvExtHeight  = ((MAX_CU_SIZE + 2) << 4);
+    m_iYuvExtStride = ((MAX_CU_SIZE  + 8) << 4);
     m_piYuvExt = new Int[ m_iYuvExtStride * m_iYuvExtHeight ];
 
     // new structure
-    m_acYuvPred[0] .create( g_uiMaxCUWidth, g_uiMaxCUHeight );
-    m_acYuvPred[1] .create( g_uiMaxCUWidth, g_uiMaxCUHeight );
+    m_acYuvPred[0] .create( MAX_CU_SIZE, MAX_CU_SIZE );
+    m_acYuvPred[1] .create( MAX_CU_SIZE, MAX_CU_SIZE );
 
-    m_cYuvPredTemp.create( g_uiMaxCUWidth, g_uiMaxCUHeight );
+    m_cYuvPredTemp.create( MAX_CU_SIZE, MAX_CU_SIZE );
   }
 
-  if (m_iLumaRecStride != (g_uiMaxCUWidth>>1) + 1)
+  if (m_iLumaRecStride != (MAX_CU_SIZE>>1) + 1)
   {
-    m_iLumaRecStride =  (g_uiMaxCUWidth>>1) + 1;
+    m_iLumaRecStride =  (MAX_CU_SIZE>>1) + 1;
     if (!m_pLumaRecBuffer)
     {
       m_pLumaRecBuffer = new Pel[ m_iLumaRecStride * m_iLumaRecStride ];
@@ -494,7 +494,7 @@ Void TComPrediction::xPredInterUni ( TComDataCU* pcCU, UInt uiPartAddr, Int iWid
   pcCU->clipMv(cMv);
 
 #if REF_IDX_ME_ZEROMV
-  assert( ( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR() && cMv.getHor() == 0 && cMv.getVer() == 0 ) || pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR() == false );
+  assert( ( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(pcCU->getLayerId()) && cMv.getHor() == 0 && cMv.getVer() == 0 ) || pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(pcCU->getLayerId()) == false );
 #endif
 
   xPredInterLumaBlk  ( pcCU, pcCU->getSlice()->getRefPic( eRefPicList, iRefIdx )->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi );
@@ -772,9 +772,16 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
 }
 
 #if SVC_UPSAMPLING
+#if SCALED_REF_LAYER_OFFSETS
+Void TComPrediction::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
+{
+  m_cUsf.upsampleBasePic( pcUsPic, pcBasePic, pcTempPic, window);
+}
+#else
 Void TComPrediction::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic)
 {
   m_cUsf.upsampleBasePic( pcUsPic, pcBasePic, pcTempPic);
 }
+#endif
 #endif
 //! \}

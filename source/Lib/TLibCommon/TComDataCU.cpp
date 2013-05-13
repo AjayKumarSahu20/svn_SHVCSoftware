@@ -1801,6 +1801,12 @@ UInt TComDataCU::getQuadtreeTULog2MinSizeInCU( UInt absPartIdx )
 #if INTRA_BL
 UInt TComDataCU::getCtxIntraBLFlag( UInt uiAbsPartIdx )
 {
+#if INTRA_BL_CTX_CHANGE
+  Int cuDepth = getDepth(uiAbsPartIdx);
+  Int maxCuDepth = g_uiMaxCUDepth - g_uiAddCUDepth;
+  UInt uiCtx = (maxCuDepth==3 && cuDepth > 0) ? (cuDepth - 1) : cuDepth;
+  return uiCtx;
+#else
   TComDataCU* pcTempCU;
   UInt        uiTempPartIdx;
   UInt        uiCtx = 0;
@@ -1823,6 +1829,7 @@ UInt TComDataCU::getCtxIntraBLFlag( UInt uiAbsPartIdx )
   uiCtx   += ( pcTempCU ) ? pcTempCU->isIntraBL( uiTempPartIdx ) : 0;
   
   return uiCtx;
+#endif
 }
 #endif
 
@@ -1834,7 +1841,7 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
   if(uhInterDir&0x1)  //list0
   {
     Int refIdxL0 = cMvFieldL0.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->isILR())
+    if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
     }
@@ -1842,7 +1849,7 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
   if(uhInterDir&0x2)  //list1
   {
     Int refIdxL1  = cMvFieldL1.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->isILR())
+    if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
     }
@@ -1858,7 +1865,7 @@ Bool TComDataCU::xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx)
 
   Bool checkZeroMVILR = true;
 
-  if(getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR())
+  if(getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(m_layerId))
   {
     AMVPInfo* pcAMVPInfo = getCUMvField(eRefPicList)->getAMVPInfo();
     TComMv    cMv        = pcAMVPInfo->m_acMvCand[MvpIdx];
@@ -2529,14 +2536,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   TComMvField cMvFieldBaseColCU[2];
   if(m_layerId)  
   {
-#if MV_SCALING_POS_FIX
     pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
-#else
-    UInt uiPartIdxCenter;
-    xDeriveCenterIdx( cCurPS, uiPUIdx, uiPartIdxCenter );
-    uiPartIdxCenter -= m_uiAbsIdxInLCU;
-    pcColCU = getBaseColCU( uiPartIdxCenter, uiCUAddrBase, uiAbsPartAddrBase );
-#endif
     
 #if INTRA_BL
     if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
@@ -2670,7 +2670,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   }
 #endif
   Bool isAvailableB0 = pcCUAboveRight &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
   ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveRight->hasEqualMotion( uiAboveRightPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
 #endif
   pcCUAboveRight->isDiffMER(xP+nPSW, yP-1, xP, yP) &&
@@ -2714,7 +2714,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
   Bool isAvailableA0 = pcCULeftBottom &&
   pcCULeftBottom->isDiffMER(xP-1, yP+nPSH, xP, yP) &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
   ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeftBottom->hasEqualMotion( uiLeftBottomPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0])) &&
 #endif
   !pcCULeftBottom->isIntra( uiLeftBottomPartIdx ) ;
@@ -2758,7 +2758,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
     Bool isAvailableB2 = pcCUAboveLeft &&
     pcCUAboveLeft->isDiffMER(xP-1, yP-1, xP, yP) &&
-#if SVC_MVP
+#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
     ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveLeft->hasEqualMotion( uiAboveLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
 #endif
     !pcCUAboveLeft->isIntra( uiAboveLeftPartIdx );
@@ -4174,7 +4174,8 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
 {
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
 
-#if SVC_UPSAMPLING
+#if !SIMPLIFIED_MV_POS_SCALING
+#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
   const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
 
@@ -4190,21 +4191,46 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   Int widthEL   = m_pcPic->getPicYuvRec()->getWidth();
   Int heightEL  = m_pcPic->getPicYuvRec()->getHeight();
 #endif
+#endif
 
   uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
   uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
 
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 
+#if SIMPLIFIED_MV_POS_SCALING
+#if SCALED_REF_LAYER_OFFSETS
+  Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowLeftOffset();
+  Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowTopOffset();
+  Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
+  Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+#else
+  Int iBX = (uiPelX*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
+  Int iBY = (uiPelY*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+#endif
+#else
   Int iBX = (uiPelX*widthBL + widthEL/2)/widthEL;
   Int iBY = (uiPelY*heightBL+ heightEL/2)/heightEL;
+#endif
 
+#if SCALED_REF_LAYER_OFFSETS
+  if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight() ||
+       iBX < 0                                        || iBY < 0                                           )
+#else
   if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight())
+#endif
   {
     return NULL;
   }
 
-#if AVC_SYNTAX
+#if AVC_SYNTAX && !ILP_DECODED_PICTURE
+#if !ILP_DECODED_PICTURE
+  const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
+  const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
+
+  Int widthBL   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  Int heightBL  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+#endif
   if( iBX >= widthBL || iBY >= heightBL ) //outside of the reference layer cropped picture
   {
     return NULL;
@@ -4227,8 +4253,9 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
 {
   TComMvField cMvFieldBase;
   TComMv cMv;
-
-#if MV_SCALING_FIX
+#if SIMPLIFIED_MV_POS_SCALING
+  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[m_layerId][0], g_mvScalingFactor[m_layerId][1] );
+#else
   const Window &confBL = m_pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
 
@@ -4237,18 +4264,12 @@ Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFi
 
   Int widthEL   = m_pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
   Int heightEL  = m_pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#else
-  Int widthBL   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-  Int heightBL  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
-
-  Int widthEL   = m_pcPic->getPicYuvRec()->getWidth();
-  Int heightEL  = m_pcPic->getPicYuvRec()->getHeight();
-#endif
 
   Int iMvX = (rcMvFieldBase.getHor()*widthEL + (widthBL/2 -1) * (rcMvFieldBase.getHor() > 0 ? 1: -1) )/widthBL;
   Int iMvY = (rcMvFieldBase.getVer()*heightEL + (heightBL/2 -1) * (rcMvFieldBase.getVer() > 0 ? 1: -1) )/heightBL;
 
   cMv.set(iMvX, iMvY);
+#endif
 
   rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
 }
