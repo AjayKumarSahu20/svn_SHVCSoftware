@@ -138,6 +138,9 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window                  m_scaledRefLayerWindow;
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -191,6 +194,9 @@ public:
   TComSPS*                getSPS                () { return  &m_cSPS;                 }
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
   Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
+#if L0208_SOP_DESCRIPTION_SEI
+  Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid );
+#endif
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
 #if SVC_EXTENSION
   Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
@@ -198,6 +204,9 @@ public:
   Int                     getPOCLast            () { return m_iPOCLast;               }
   Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Window&  getScaledRefLayerWindow()            { return m_scaledRefLayerWindow; }
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -208,19 +217,21 @@ public:
 #if SVC_EXTENSION
 #if REF_IDX_FRAMEWORK
   TComPic** getIlpList() { return m_cIlpPic; }
-  Void setILRPic(TComPic *pcPic);
+  Void      setILRPic(TComPic *pcPic);
 #endif
 #if REF_IDX_MFM
-  Void setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+  Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
+  Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-  Void encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
-  Void encodePrep( TComPicYuv* pcPicYuvOrg );
+  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
+  Void      encodePrep( TComPicYuv* pcPicYuvOrg );
+#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+  TEncTop*  getRefLayerEnc(UInt layerId);
+#endif
 #else
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  

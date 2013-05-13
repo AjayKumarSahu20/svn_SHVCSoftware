@@ -127,7 +127,11 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 {
 }
 
+#if SCALED_REF_LAYER_OFFSETS
+Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
+#else
 Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
+#endif
 {
   assert ( NTAPS_US_LUMA == 8 );
   assert ( NTAPS_US_CHROMA == 4 );
@@ -135,6 +139,17 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Int i, j;
 
   //========== Y component upsampling ===========
+#if SCALED_REF_LAYER_OFFSETS
+  const Window &scalEL = window;
+
+  Int widthBL   = pcBasePic->getWidth ();
+  Int heightBL  = pcBasePic->getHeight();
+  Int strideBL  = pcBasePic->getStride();
+
+  Int widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+  Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+  Int strideEL  = pcUsPic->getStride();
+#else
   const Window &confBL = pcBasePic->getConformanceWindow();
   const Window &confEL = pcUsPic->getConformanceWindow();
 
@@ -145,7 +160,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Int widthEL   = pcUsPic->getWidth () - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
   Int heightEL  = pcUsPic->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
-  
+#endif
   Pel* piTempBufY = pcTempPic->getLumaAddr();
   Pel* piSrcBufY  = pcBasePic->getLumaAddr();
   Pel* piDstBufY  = pcUsPic->getLumaAddr();
@@ -328,12 +343,32 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   const Double sFactor = 1.0 * widthBL / widthEL;
   const Double sFactor12 = sFactor * 12;
 #endif
+#if ILP_DECODED_PICTURE
+  widthBL   = pcBasePic->getWidth ();
+  heightBL  = pcBasePic->getHeight();
+
+  widthEL   = pcUsPic->getWidth ();
+  heightEL  = pcUsPic->getHeight();
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Int leftStartL = scalEL.getWindowLeftOffset();
+  Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
+  Int topStartL  = scalEL.getWindowTopOffset();
+  Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
+#endif
 
   //========== horizontal upsampling ===========
   for( i = 0; i < widthEL; i++ )
   {
+#if SCALED_REF_LAYER_OFFSETS
+    Int x = Clip3( leftStartL, rightEndL - 1, i );
+#endif
 #if PHASE_DERIVATION_IN_INTEGER
+#if SCALED_REF_LAYER_OFFSETS
+    refPos16 = (((x - leftStartL)*scaleX + addX) >> shiftXM4) - deltaX;
+#else
     refPos16 = ((i*scaleX + addX) >> shiftXM4) - deltaX;
+#endif
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_lumaFilter[phase];
@@ -365,10 +400,21 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   const Int nShift = US_FILTER_PREC*2;
   Int iOffset = 1 << (nShift - 1); 
 
+#if SCALED_REF_LAYER_OFFSETS
+  for( j = 0; j < pcTempPic->getHeight(); j++ )
+#else
   for( j = 0; j < heightEL; j++ )
+#endif
   {
+#if SCALED_REF_LAYER_OFFSETS
+    Int y = Clip3(topStartL, bottomEndL - 1, j);
+#endif
 #if PHASE_DERIVATION_IN_INTEGER
+#if SCALED_REF_LAYER_OFFSETS
+    refPos16 = ((( y - topStartL )*scaleY + addY) >> shiftYM4) - deltaY;
+#else
     refPos16 = ((j*scaleY + addY) >> shiftYM4) - deltaY;
+#endif
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_lumaFilter[phase];
@@ -381,14 +427,42 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
     piSrcY = piTempBufY + (refPos -((NTAPS_US_LUMA>>1) - 1))*strideEL;
     piDstY = piDstBufY + j * strideEL;
-
+#if SCALED_REF_LAYER_OFFSETS
+    for( i = 0; i < pcTempPic->getWidth(); i++ )
+#else
     for( i = 0; i < widthEL; i++ )
+#endif
     {
       *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
+#if SCALED_REF_LAYER_OFFSETS
+      // Only increase the x position of reference upsample picture when within the window
+      // "-2" to ensure that pointer doesn't go beyond the boundary rightEndL-1
+      if( (i >= leftStartL) && (i <= rightEndL-2) )
+      {
+        piSrcY++;
+      }
+#else
       piSrcY++;
+#endif
       piDstY++;
     }
   }
+
+#if ILP_DECODED_PICTURE
+#if SCALED_REF_LAYER_OFFSETS
+  widthBL   = pcBasePic->getWidth ();
+  heightBL  = pcBasePic->getHeight();
+
+  widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+  heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+#else
+  widthBL   = pcBasePic->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  heightBL  = pcBasePic->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+  widthEL   = pcUsPic->getWidth () - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+  heightEL  = pcUsPic->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+#endif
+#endif
 
   //========== UV component upsampling ===========
 
@@ -400,6 +474,12 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
   strideBL  = pcBasePic->getCStride();
   strideEL  = pcUsPic->getCStride();
+#if SCALED_REF_LAYER_OFFSETS
+  Int leftStartC = scalEL.getWindowLeftOffset() >> 1;
+  Int rightEndC  = (pcUsPic->getWidth() >> 1) - (scalEL.getWindowRightOffset() >> 1);
+  Int topStartC  = scalEL.getWindowTopOffset() >> 1;
+  Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
+#endif
 
 #if PHASE_DERIVATION_IN_INTEGER
   shiftX = 16;
@@ -421,11 +501,26 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
 #endif
 
+#if ILP_DECODED_PICTURE
+  widthBL   = pcBasePic->getWidth () >> 1;
+  heightBL  = pcBasePic->getHeight() >> 1;
+
+  widthEL   = pcUsPic->getWidth () >> 1;
+  heightEL  = pcUsPic->getHeight() >> 1;
+#endif
+
   //========== horizontal upsampling ===========
   for( i = 0; i < widthEL; i++ )
   {
+#if SCALED_REF_LAYER_OFFSETS
+    Int x = Clip3(leftStartC, rightEndC - 1, i);
+#endif
 #if PHASE_DERIVATION_IN_INTEGER
+#if SCALED_REF_LAYER_OFFSETS
+    refPos16 = (((x - leftStartC)*scaleX + addX) >> shiftXM4) - deltaX;
+#else
     refPos16 = ((i*scaleX + addX) >> shiftXM4) - deltaX;
+#endif
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_chromaFilter[phase];
@@ -459,10 +554,21 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   pcTempPic->extendPicBorder   (); // extend the border.
   pcTempPic->setHeight(heightEL << 1);
 
-  for( j = 0; j < heightEL; j++ )
+#if SCALED_REF_LAYER_OFFSETS
+  for( j = 0; j < pcTempPic->getHeight() >> 1; j++ )
+#else
+    for( j = 0; j < heightEL; j++ )
+#endif
   {
+#if SCALED_REF_LAYER_OFFSETS
+    Int y = Clip3(topStartC, bottomEndC - 1, j);
+#endif
 #if PHASE_DERIVATION_IN_INTEGER
+#if SCALED_REF_LAYER_OFFSETS
+    refPos16 = (((y - topStartC)*scaleY + addY) >> shiftYM4) - deltaY;
+#else
     refPos16 = ((j*scaleY + addY) >> shiftYM4) - deltaY;
+#endif
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4; 
     coeff = m_chromaFilter[phase];
@@ -487,13 +593,27 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     piDstU = piDstBufU + j*strideEL;
     piDstV = piDstBufV + j*strideEL;
 
+#if SCALED_REF_LAYER_OFFSETS
+    for( i = 0; i < pcTempPic->getWidth() >> 1; i++ )
+#else
     for( i = 0; i < widthEL; i++ )
+#endif
     {
       *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
       *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
 
+#if SCALED_REF_LAYER_OFFSETS
+      // Only increase the x position of reference upsample picture when within the window
+      // "-2" to ensure that pointer doesn't go beyond the boundary rightEndC-1
+      if( (i >= leftStartC) && (i <= rightEndC-2) )
+      {
+        piSrcU++;
+        piSrcV++;
+      }
+#else
       piSrcU++;
       piSrcV++;
+#endif
       piDstU++;
       piDstV++;
     }

@@ -38,7 +38,7 @@
 #include "../TLibCommon/CommonDef.h"
 #include "TEncCavlc.h"
 #include "SEIwrite.h"
-
+#include <iostream>
 //! \ingroup TLibEncoder
 //! \{
 
@@ -284,7 +284,6 @@ Void TEncCavlc::codeVUI( TComVUI *pcVUI, TComSPS* pcSPS )
 
   WRITE_FLAG(pcVUI->getNeutralChromaIndicationFlag(),           "neutral_chroma_indication_flag");
   WRITE_FLAG(pcVUI->getFieldSeqFlag(),                          "field_seq_flag");
-  assert(pcVUI->getFieldSeqFlag() == 0);                        // not currently supported
   WRITE_FLAG(pcVUI->getFrameFieldInfoPresentFlag(),             "frame_field_info_present_flag");
 
   Window defaultDisplayWindow = pcVUI->getDefaultDisplayWindow();
@@ -473,7 +472,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,       "sps_sub_layer_ordering_info_present_flag");
   for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
   {
+#if L0323_DPB
+    WRITE_UVLC( pcSPS->getMaxDecPicBuffering(i) - 1,       "sps_max_dec_pic_buffering_minus1[i]" );
+#else
     WRITE_UVLC( pcSPS->getMaxDecPicBuffering(i),           "sps_max_dec_pic_buffering[i]" );
+#endif
     WRITE_UVLC( pcSPS->getNumReorderPics(i),               "sps_num_reorder_pics[i]" );
     WRITE_UVLC( pcSPS->getMaxLatencyIncrease(i),           "sps_max_latency_increase[i]" );
     if (!subLayerOrderingInfoPresentFlag)
@@ -483,16 +486,8 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
   assert( pcSPS->getMaxCUWidth() == pcSPS->getMaxCUHeight() );
   
-  UInt MinCUSize = pcSPS->getMaxCUWidth() >> ( pcSPS->getMaxCUDepth()-g_uiAddCUDepth );
-  UInt log2MinCUSize = 0;
-  while(MinCUSize > 1)
-  {
-    MinCUSize >>= 1;
-    log2MinCUSize++;
-  }
-
-  WRITE_UVLC( log2MinCUSize - 3,                                                     "log2_min_coding_block_size_minus3" );
-  WRITE_UVLC( pcSPS->getMaxCUDepth()-g_uiAddCUDepth,                                 "log2_diff_max_min_coding_block_size" );
+  WRITE_UVLC( pcSPS->getLog2MinCodingBlockSize() - 3,                                "log2_min_coding_block_size_minus3" );
+  WRITE_UVLC( pcSPS->getLog2DiffMaxMinCodingBlockSize(),                             "log2_diff_max_min_coding_block_size" );
   WRITE_UVLC( pcSPS->getQuadtreeTULog2MinSize() - 2,                                 "log2_min_transform_block_size_minus2" );
   WRITE_UVLC( pcSPS->getQuadtreeTULog2MaxSize() - pcSPS->getQuadtreeTULog2MinSize(), "log2_diff_max_min_transform_block_size" );
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthInter() - 1,                               "max_transform_hierarchy_depth_inter" );
@@ -557,6 +552,16 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
+#if SCALED_REF_LAYER_OFFSETS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    Window scaledWindow = pcSPS->getScaledRefLayerWindow();
+    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+  }
+#endif
 
   WRITE_FLAG( 0, "sps_extension_flag" );
 }
@@ -582,7 +587,11 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
   for(UInt i=0; i <= pcVPS->getMaxTLayers()-1; i++)
   {
+#if L0323_DPB
+    WRITE_UVLC( pcVPS->getMaxDecPicBuffering(i) - 1,       "vps_max_dec_pic_buffering_minus1[i]" );
+#else
     WRITE_UVLC( pcVPS->getMaxDecPicBuffering(i),           "vps_max_dec_pic_buffering[i]" );
+#endif
     WRITE_UVLC( pcVPS->getNumReorderPics(i),               "vps_num_reorder_pics[i]" );
     WRITE_UVLC( pcVPS->getMaxLatencyIncrease(i),           "vps_max_latency_increase[i]" );
     if (!subLayerOrderingInfoPresentFlag)
@@ -622,6 +631,9 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       WRITE_FLAG( pcVPS->getLayerIdIncludedFlag( opsIdx, i ) ? 1 : 0, "layer_id_included_flag[opsIdx][i]" );
     }
   }
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  pcVPS->deriveLayerIdListVariables();
+#endif
 #if L0043_TIMING_INFO
   TimingInfo *timingInfo = pcVPS->getTimingInfo();
   WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),          "vps_timing_info_present_flag");
@@ -702,24 +714,87 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if VPS_MOVE_DIR_DEPENDENCY_FLAG
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
+    }
+  }
+#endif
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
+#if VPS_PROFILE_OUTPUT_LAYERS
+  WRITE_CODE( vps->getNumLayerSets() - 1   , 10, "vps_number_layer_sets_minus1" );     
+  WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
+  for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#else
   for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
+#endif
   {
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
     if( !vps->getProfilePresentFlag(idx) )
     {
+#if VPS_PROFILE_OUTPUT_LAYERS
+      WRITE_CODE( vps->getProfileLayerSetRef(idx) - 1, 6, "profile_ref_minus1[i]" );
+#else
       WRITE_UVLC( vps->getProfileLayerSetRef(idx) - 1, "vps_profile_layer_set_ref_minus1[i]" );
+#endif
     }
     codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
   }
 #endif
+
+#if VPS_PROFILE_OUTPUT_LAYERS
+  Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
+  WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 
+  if(numOutputLayerSets > vps->getNumLayerSets())
+  {
+    WRITE_CODE( numOutputLayerSets - vps->getNumLayerSets(), 10, "num_add_output_layer_sets" );
+  }
+  if( numOutputLayerSets > 1 )
+  {
+    WRITE_FLAG( vps->getDefaultOneTargetOutputLayerFlag(), "default_one_target_output_layer_flag" );   
+  }
+
+  for(i = 1; i < numOutputLayerSets; i++)
+  {
+    if( i > (vps->getNumLayerSets() - 1) )
+    {
+      Int numBits = 1;
+      while ((1 << numBits) < (vps->getNumLayerSets() - 1))
+      {
+        numBits++;
+      }
+      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1");  
+      Int lsIdx = vps->getOutputLayerSetIdx(i);
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
+      {
+        WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
+      }
+    }
+    Int numBits = 1;
+    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
+    {
+      numBits++;
+    }
+    WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
+  }
+#else
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling
   WRITE_UVLC( vps->getNumOutputLayerSets(),            "vps_num_output_layer_sets");
   for(i = 0; i < vps->getNumOutputLayerSets(); i++)
   {
+#if VPS_OUTPUT_LAYER_SET_IDX
+    assert(vps->getOutputLayerSetIdx(i) > 0);
+    WRITE_UVLC( vps->getOutputLayerSetIdx(i) - 1,           "vps_output_layer_set_idx_minus1[i]");
+#else
     WRITE_UVLC( vps->getOutputLayerSetIdx(i),           "vps_output_layer_set_idx[i]");
+#endif
     Int lsIdx = vps->getOutputLayerSetIdx(i);
     for(j = 0; j <= vps->getMaxLayerId(); j++)
     {
@@ -730,6 +805,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#endif
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
+#endif 
+#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
@@ -738,6 +818,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
     }
   }
+#endif
 #endif
 }
 #endif
@@ -809,7 +890,37 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC()))%(1<<pcSlice->getSPS()->getBitsForPOC());
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
       TComReferencePictureSet* rps = pcSlice->getRPS();
+      
+#if FIX1071
+      // Deal with bitstream restriction stating that:
+      // – If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+      // Ideally this process should not be repeated for each slice in a picture
+      TComReferencePictureSet altRps;
+      Bool useAltRps = false;
+#if SVC_EXTENSION
+      if( pcSlice->getLayerId() == 0 )
+#endif
+      if (pcSlice->getRapPicFlag())
+      {
+        for (Int picIdx = 0; !useAltRps && picIdx < rps->getNumberOfPictures(); picIdx++)
+        {
+          useAltRps = rps->getUsed(picIdx);
+        }
+        if (useAltRps)
+        {
+          memcpy(&altRps, rps, sizeof(TComReferencePictureSet));
+          rps = &altRps;
+          for (Int picIdx = 0; picIdx < rps->getNumberOfPictures(); picIdx++)
+          {
+            rps->setUsed(picIdx, false);
+          }
+        }
+      }
+
+      if(pcSlice->getRPSidx() < 0 || useAltRps)
+#else
       if(pcSlice->getRPSidx() < 0)
+#endif
       {
         WRITE_FLAG( 0, "short_term_ref_pic_set_sps_flag");
         codeShortTermRefPicSet(pcSlice->getSPS(), rps, true, pcSlice->getSPS()->getRPSList()->getNumberOfReferencePictureSets());
@@ -901,11 +1012,37 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           }
         }
       }
+
       if (pcSlice->getSPS()->getTMVPFlagsPresent())
       {
         WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
       }
     }
+
+#if JCTVC_M0458_INTERLAYER_RPS_SIG    
+    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) ) 
+    {
+      WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
+      if( pcSlice->getInterLayerPredEnabledFlag())
+      {
+        if(pcSlice->getNumILRRefIdx() > 1)
+        {
+          Int numBits = 1;
+          while ((1 << numBits) < pcSlice->getNumILRRefIdx())
+          {
+            numBits++;
+          }
+          if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
+          {
+            WRITE_CODE(pcSlice->getNumInterLayerRefPics(), numBits,"num_inter_layer_ref_pics_minus1");
+          }       
+          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
+            WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+        }
+      }
+    }     
+#endif 
+
     if(pcSlice->getSPS()->getUseSAO())
     {
       if (pcSlice->getSPS()->getUseSAO())
@@ -1064,6 +1201,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag()?1:0, "slice_loop_filter_across_slices_enabled_flag");
     }
   }
+
   if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     WRITE_UVLC(0,"slice_header_extension_length");
@@ -1387,84 +1525,6 @@ Void TEncCavlc::estBit( estBitsSbacStruct* pcEstBitsCabac, Int width, Int height
 // ====================================================================================================================
 // Protected member functions
 // ====================================================================================================================
-
-
-/** Write PCM alignment bits. 
- * \returns Void
- */
-Void  TEncCavlc::xWritePCMAlignZero    ()
-{
-  m_pcBitIf->writeAlignZero();
-}
-
-Void TEncCavlc::xWriteUnaryMaxSymbol( UInt uiSymbol, UInt uiMaxSymbol )
-{
-  if (uiMaxSymbol == 0)
-  {
-    return;
-  }
-  xWriteFlag( uiSymbol ? 1 : 0 );
-  if ( uiSymbol == 0 )
-  {
-    return;
-  }
-  
-  Bool bCodeLast = ( uiMaxSymbol > uiSymbol );
-  
-  while( --uiSymbol )
-  {
-    xWriteFlag( 1 );
-  }
-  if( bCodeLast )
-  {
-    xWriteFlag( 0 );
-  }
-  return;
-}
-
-Void TEncCavlc::xWriteExGolombLevel( UInt uiSymbol )
-{
-  if( uiSymbol )
-  {
-    xWriteFlag( 1 );
-    UInt uiCount = 0;
-    Bool bNoExGo = (uiSymbol < 13);
-    
-    while( --uiSymbol && ++uiCount < 13 )
-    {
-      xWriteFlag( 1 );
-    }
-    if( bNoExGo )
-    {
-      xWriteFlag( 0 );
-    }
-    else
-    {
-      xWriteEpExGolomb( uiSymbol, 0 );
-    }
-  }
-  else
-  {
-    xWriteFlag( 0 );
-  }
-  return;
-}
-
-Void TEncCavlc::xWriteEpExGolomb( UInt uiSymbol, UInt uiCount )
-{
-  while( uiSymbol >= (UInt)(1<<uiCount) )
-  {
-    xWriteFlag( 1 );
-    uiSymbol -= 1<<uiCount;
-    uiCount  ++;
-  }
-  xWriteFlag( 0 );
-  while( uiCount-- )
-  {
-    xWriteFlag( (uiSymbol>>uiCount) & 1 );
-  }
-  return;
-}
 
 /** code explicit wp tables
  * \param TComSlice* pcSlice

@@ -53,6 +53,12 @@ protected:
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
+#if SCALED_REF_LAYER_OFFSETS
+  Int       m_scaledRefLayerLeftOffset;
+  Int       m_scaledRefLayerTopOffset;
+  Int       m_scaledRefLayerRightOffset;
+  Int       m_scaledRefLayerBottomOffset;
+#endif  
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -62,7 +68,11 @@ public:
   Void  destroy   ();                                         ///< destroy option handling class
   bool  parseCfg  ( const string& cfgFileName );              ///< parse layer configuration file to fill member variables
 
+#if AVC_SYNTAX
+  Void  xPrintParameter( UInt layerId );
+#else
   Void  xPrintParameter();
+#endif
   Bool  xCheckParameter();
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }

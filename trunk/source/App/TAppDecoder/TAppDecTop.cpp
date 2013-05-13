@@ -156,16 +156,10 @@ Void TAppDecTop::decode()
 
 #if AVC_BASE
   TComPic pcBLPic;
-  if( !m_pchBLReconFile )
+  fstream streamYUV;
+  if( m_pchBLReconFile )
   {
-    printf( "Wrong base layer YUV input file\n" );
-    exit(EXIT_FAILURE);
-  }
-  fstream streamYUV( m_pchBLReconFile, fstream::in | fstream::binary );
-  if( !streamYUV.good() )
-  {
-    printf( "Base layer YUV input reading error\n" );
-    exit(EXIT_FAILURE);
+    streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
   m_acTDecTop[0].setBLsize( m_iBLSourceWidth, m_iBLSourceHeight );
@@ -173,16 +167,10 @@ Void TAppDecTop::decode()
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
 #if AVC_SYNTAX
-  if( !m_pchBLSyntaxFile )
+  fstream streamSyntaxFile;
+  if( m_pchBLSyntaxFile )
   {
-    printf( "Wrong base layer syntax file\n" );
-    exit(EXIT_FAILURE);
-  }
-  fstream streamSyntaxFile( m_pchBLSyntaxFile, fstream::in | fstream::binary );
-  if( !streamSyntaxFile.good() )
-  {
-    printf( "Base layer syntax input reading error\n" );
-    exit(EXIT_FAILURE);
+    streamSyntaxFile.open( m_pchBLSyntaxFile, fstream::in | fstream::binary );
   }
   m_acTDecTop[0].setBLSyntaxFile( &streamSyntaxFile );
 #endif
@@ -253,11 +241,11 @@ Void TAppDecTop::decode()
         recon_opened[curLayerId] = true;
       }
       if ( bNewPicture && bNewPOC && 
-           (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
+           (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
-            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA ) )
+            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP ) )
       {
         xFlushOutput( pcListPic, curLayerId );
       }
@@ -413,11 +401,11 @@ Void TAppDecTop::decode()
         recon_opened = true;
       }
       if ( bNewPicture && 
-           (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR
+           (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
-            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLANT
-            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA ) )
+            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP ) )
       {
         xFlushOutput( pcListPic );
       }
@@ -571,6 +559,9 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #else
       if ( m_pchReconFile )
       {
+#if SYNTAX_OUTPUT && ILP_DECODED_PICTURE
+        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec() );
+#else
         const Window &conf = pcPic->getConformanceWindow();
         const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
         m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
@@ -578,6 +569,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
       }
       
       // update POC of display order
