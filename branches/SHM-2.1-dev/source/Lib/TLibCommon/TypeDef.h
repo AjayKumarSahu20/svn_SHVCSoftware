@@ -71,6 +71,7 @@
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
+#define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
