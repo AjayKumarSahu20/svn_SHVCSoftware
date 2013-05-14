@@ -669,6 +669,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if(m_layerId > 0)
 #endif
     {
+#if RESTR_CHK
+      if (pcSlice->getPOC()>0  && pcSlice->isRADL()&& pcPic->getSlice(0)->isRASL())
+      {
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+        pcSlice->setActiveNumILRRefIdx(0);
+        pcSlice->setInterLayerPredEnabledFlag(0);
+#else
+        pcSlice->setNumILRRefIdx(0);
+#endif
+      }
+#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
