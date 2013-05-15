@@ -1133,7 +1133,8 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
         if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
         {
-          TComSPS* sps = new TComSPS();
+          // using EL SPS with spsId = 1
+          TComSPS* sps = m_parameterSetManagerDecoder[nalu.m_layerId].getPrefetchedSPS(1);
           Int  numReorderPics[MAX_TLAYER];
           Window &conformanceWindow = sps->getConformanceWindow();
           Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
