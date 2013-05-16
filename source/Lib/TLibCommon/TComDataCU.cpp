@@ -2531,49 +2531,54 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   deriveLeftBottomIdxGeneral  ( uiAbsPartIdx, uiPUIdx, uiPartIdxLB );
 #if SVC_MVP
   // BL collocated
-  TComDataCU *pcColCU = 0;
-  UInt uiCUAddrBase, uiAbsPartAddrBase ;
-  TComMvField cMvFieldBaseColCU[2];
-  if(m_layerId)  
-  {
-    pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
-    
-#if INTRA_BL
-    if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
-    {
-      pcColCU = NULL;
-    }
+  TComDataCU *pcColCU = NULL;
+  UInt uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
+#if AVC_BASE
+  if( !this->getSlice()->getVPS()->getAvcBaseLayerFlag() || AVC_SYNTAX )
 #endif
-    
-    if(pcColCU && !pcColCU->isIntra( uiAbsPartAddrBase ) )
+  {
+    TComMvField cMvFieldBaseColCU[2];
+    if(m_layerId)  
     {
-      abCandIsInter[iCount] = true;
+      pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
 
-      // get interDir
-      puhInterDirNeighbours[iCount] = pcColCU->getInterDir( uiAbsPartAddrBase );
-
-      pcMvFieldNeighbours[(iCount << 1)].setMvField( TComMv(0,0), -1);
-      pcMvFieldNeighbours[(iCount << 1) + 1].setMvField( TComMv(0,0), -1);
-
-      if( puhInterDirNeighbours[iCount] & 1 )
+#if INTRA_BL
+      if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
       {
-        pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_0, cMvFieldBaseColCU[0]);
-        scaleBaseMV( pcMvFieldNeighbours[iCount<<1], cMvFieldBaseColCU[0] );
+        pcColCU = NULL;
       }
+#endif
 
-      if ( getSlice()->isInterB() && puhInterDirNeighbours[iCount] & 2 )
+      if(pcColCU && !pcColCU->isIntra( uiAbsPartAddrBase ) )
       {
-        pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_1, cMvFieldBaseColCU[1] );
-        scaleBaseMV( pcMvFieldNeighbours[(iCount<<1)+1], cMvFieldBaseColCU[1] );
-      }
+        abCandIsInter[iCount] = true;
 
-      if( puhInterDirNeighbours[iCount] > 0 )
-      {
-        if ( mrgCandIdx == iCount )
+        // get interDir
+        puhInterDirNeighbours[iCount] = pcColCU->getInterDir( uiAbsPartAddrBase );
+
+        pcMvFieldNeighbours[(iCount << 1)].setMvField( TComMv(0,0), -1);
+        pcMvFieldNeighbours[(iCount << 1) + 1].setMvField( TComMv(0,0), -1);
+
+        if( puhInterDirNeighbours[iCount] & 1 )
         {
-          return;
+          pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_0, cMvFieldBaseColCU[0]);
+          scaleBaseMV( pcMvFieldNeighbours[iCount<<1], cMvFieldBaseColCU[0] );
         }
-        iCount ++;
+
+        if ( getSlice()->isInterB() && puhInterDirNeighbours[iCount] & 2 )
+        {
+          pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_1, cMvFieldBaseColCU[1] );
+          scaleBaseMV( pcMvFieldNeighbours[(iCount<<1)+1], cMvFieldBaseColCU[1] );
+        }
+
+        if( puhInterDirNeighbours[iCount] > 0 )
+        {
+          if ( mrgCandIdx == iCount )
+          {
+            return;
+          }
+          iCount ++;
+        }
       }
     }
   }
