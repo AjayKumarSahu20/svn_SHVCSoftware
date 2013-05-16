@@ -102,11 +102,9 @@
 #define INTRA_BL_CTX_CHANGE              1      ///< M0075: spatial dependency removal for IntraBL flag context derivation
 
 // Hooks
-#if !AVC_BASE || AVC_SYNTAX
 #define SVC_MVP                          1      ///< motion hook for merge mode as an example
-#if !AVC_SYNTAX
+#if !AVC_BASE && !AVC_SYNTAX
 #define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
-#endif
 #endif
 
 #endif
