@@ -633,6 +633,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("FDM", m_useFastDecisionForMerge, true, "Fast decision for Merge RD Cost") 
   ("CFM", m_bUseCbfFastMode, false, "Cbf fast mode setting")
   ("ESD", m_useEarlySkipDetection, false, "Early SKIP detection setting")
+#if FAST_INTRA_SHVC
+  ("FIS", m_useFastIntraScalable, false, "Fast Intra Decision for Scalable HEVC")
+#endif
 #if RATE_CONTROL_LAMBDA_DOMAIN
 #if RC_SHVC_HARMONIZATION
   ("RateControl%d", cfg_RCEnableRateControl, false, MAX_LAYERS, "Rate control: enable rate control for layer %d")
@@ -1956,6 +1959,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("FDM:%d ", m_useFastDecisionForMerge );
   printf("CFM:%d ", m_bUseCbfFastMode         );
   printf("ESD:%d ", m_useEarlySkipDetection  );
+#if FAST_INTRA_SHVC
+  printf("FIS:%d ", m_useFastIntraScalable  );
+#endif
   printf("RQT:%d ", 1     );
   printf("TransformSkip:%d ",     m_useTransformSkip              );
   printf("TransformSkipFast:%d ", m_useTransformSkipFast       );
