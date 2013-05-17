@@ -45,6 +45,17 @@ protected:
   Int       *m_refLayerIds;
   Int       m_numDirectRefLayers;
 #endif
+
+#if RC_SHVC_HARMONIZATION
+  Bool      m_RCEnableRateControl;                ///< enable rate control or not
+  Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
+  Bool      m_RCKeepHierarchicalBit;              ///< whether keeping hierarchical bit allocation structure or not
+  Bool      m_RCLCULevelRC;                       ///< true: LCU level rate control; false: picture level rate control
+  Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
+  Int       m_RCInitialQP;                        ///< inital QP for rate control
+  Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
+#endif
+
 #if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
@@ -96,6 +107,15 @@ public:
   Int     getNumDirectRefLayers()     {return m_numDirectRefLayers;}
   Int*    getRefLayerIds()            {return m_refLayerIds;      }
   Int     getRefLayerId(Int i)        {return m_refLayerIds[i];   }
+#endif
+#if RC_SHVC_HARMONIZATION
+  Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }
+  Int     getRCTargetBitrate()        {return m_RCTargetBitrate;       }
+  Bool    getRCKeepHierarchicalBit()  {return m_RCKeepHierarchicalBit; }
+  Bool    getRCLCULevelRC()           {return m_RCLCULevelRC;          }
+  Bool    getRCUseLCUSeparateModel()  {return m_RCUseLCUSeparateModel; }
+  Int     getRCInitialQP()            {return m_RCInitialQP;           }
+  Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
 #endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 

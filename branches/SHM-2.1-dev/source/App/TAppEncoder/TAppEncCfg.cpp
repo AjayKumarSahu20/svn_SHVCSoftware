@@ -336,6 +336,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   Int*    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
 #endif
+#if RC_SHVC_HARMONIZATION
+  Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
+  Int*    cfg_RCTargetBitRate      [MAX_LAYERS];
+  Bool*   cfg_RCKeepHierarchicalBit[MAX_LAYERS];
+  Bool*   cfg_RCLCULevelRC         [MAX_LAYERS];
+  Bool*   cfg_RCUseLCUSeparateModel[MAX_LAYERS];
+  Int*    cfg_RCInitialQP          [MAX_LAYERS];
+  Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
+#endif
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -355,6 +364,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_scaledRefLayerTopOffset   [layer] = &m_acLayerCfg[layer].m_scaledRefLayerTopOffset;
     cfg_scaledRefLayerRightOffset [layer] = &m_acLayerCfg[layer].m_scaledRefLayerRightOffset;
     cfg_scaledRefLayerBottomOffset[layer] = &m_acLayerCfg[layer].m_scaledRefLayerBottomOffset;
+#endif
+#if RC_SHVC_HARMONIZATION
+    cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
+    cfg_RCTargetBitRate[layer]       = &m_acLayerCfg[layer].m_RCTargetBitrate;
+    cfg_RCKeepHierarchicalBit[layer] = &m_acLayerCfg[layer].m_RCKeepHierarchicalBit;
+    cfg_RCLCULevelRC[layer]          = &m_acLayerCfg[layer].m_RCLCULevelRC;
+    cfg_RCUseLCUSeparateModel[layer] = &m_acLayerCfg[layer].m_RCUseLCUSeparateModel;
+    cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
+    cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
   }
 #if AVC_BASE
@@ -616,6 +634,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CFM", m_bUseCbfFastMode, false, "Cbf fast mode setting")
   ("ESD", m_useEarlySkipDetection, false, "Early SKIP detection setting")
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+  ("RateControl%d", cfg_RCEnableRateControl, false, MAX_LAYERS, "Rate control: enable rate control for layer %d")
+  ("TargetBitrate%d", cfg_RCTargetBitRate, 0, MAX_LAYERS, "Rate control: target bitrate for layer %d")
+  ("KeepHierarchicalBit%d", cfg_RCKeepHierarchicalBit, false, MAX_LAYERS, "Rate control: keep hierarchical bit allocation for layer %d")
+  ("LCULevelRateControl%d", cfg_RCLCULevelRC, true, MAX_LAYERS, "Rate control: LCU level RC")
+  ("RCLCUSeparateModel%d", cfg_RCUseLCUSeparateModel, true, MAX_LAYERS, "Rate control: Use LCU level separate R-lambda model")
+  ("InitialQP%d", cfg_RCInitialQP, 0, MAX_LAYERS, "Rate control: initial QP")
+  ("RCForceIntraQP%d", cfg_RCForceIntraQP, false, MAX_LAYERS, "Rate control: force intra QP to be equal to initial QP")
+#else
   ( "RateControl",         m_RCEnableRateControl,   false, "Rate control: enable rate control" )
   ( "TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate" )
   ( "KeepHierarchicalBit", m_RCKeepHierarchicalBit, false, "Rate control: keep hierarchical bit allocation in rate control algorithm" )
@@ -623,6 +650,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ( "RCLCUSeparateModel",  m_RCUseLCUSeparateModel,  true, "Rate control: use LCU level separate R-lambda model" )
   ( "InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP" )
   ( "RCForceIntraQP",      m_RCForceIntraQP,        false, "Rate control: force intra QP to be equal to initial QP" )
+#endif
 #else
   ("RateCtrl,-rc", m_enableRateCtrl, false, "Rate control on/off")
   ("TargetBitrate,-tbr", m_targetBitrate, 0, "Input target bitrate")
@@ -1741,6 +1769,23 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+  for ( Int layer=0; layer<m_numLayers; layer++ )
+  {
+    if ( m_acLayerCfg[layer].m_RCEnableRateControl )
+    {
+      if ( m_acLayerCfg[layer].m_RCForceIntraQP )
+      {
+        if ( m_acLayerCfg[layer].m_RCInitialQP == 0 )
+        {
+          printf( "\nInitial QP for rate control is not specified. Reset not to use force intra QP!" );
+          m_acLayerCfg[layer].m_RCForceIntraQP = false;
+        }
+      }
+    }
+    xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
+  }
+#else
   if ( m_RCEnableRateControl )
   {
     if ( m_RCForceIntraQP )
@@ -1753,6 +1798,7 @@ Void TAppEncCfg::xCheckParameter()
     }
     xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
   }
+#endif
 #else
   if(m_enableRateCtrl)
   {
@@ -1868,6 +1914,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   printf("RateControl                  : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
   {
@@ -1878,6 +1925,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("InitialQP                    : %d\n", m_RCInitialQP );
     printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP );
   }
+#endif
 #else
   printf("RateControl                  : %d\n", m_enableRateCtrl);
   if(m_enableRateCtrl)

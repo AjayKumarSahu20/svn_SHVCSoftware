@@ -342,6 +342,15 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setScalingListFile            ( m_scalingListFile   );
     m_acTEncTop[layer].setSignHideFlag(m_signHideFlag);
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+    m_acTEncTop[layer].setUseRateCtrl     (m_acLayerCfg[layer].getRCEnableRateControl());
+    m_acTEncTop[layer].setTargetBitrate   (m_acLayerCfg[layer].getRCTargetBitrate());
+    m_acTEncTop[layer].setKeepHierBit     (m_acLayerCfg[layer].getRCKeepHierarchicalBit());
+    m_acTEncTop[layer].setLCULevelRC      (m_acLayerCfg[layer].getRCLCULevelRC());
+    m_acTEncTop[layer].setUseLCUSeparateModel (m_acLayerCfg[layer].getRCUseLCUSeparateModel());
+    m_acTEncTop[layer].setInitialQP           (m_acLayerCfg[layer].getRCInitialQP());
+    m_acTEncTop[layer].setForceIntraQP        (m_acLayerCfg[layer].getRCForceIntraQP());
+#else
     m_acTEncTop[layer].setUseRateCtrl         ( m_RCEnableRateControl );
     m_acTEncTop[layer].setTargetBitrate       ( m_RCTargetBitrate );
     m_acTEncTop[layer].setKeepHierBit         ( m_RCKeepHierarchicalBit );
@@ -349,6 +358,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
     m_acTEncTop[layer].setInitialQP           ( m_RCInitialQP );
     m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
+#endif
 #else
     m_acTEncTop[layer].setUseRateCtrl     ( m_enableRateCtrl);
     m_acTEncTop[layer].setTargetBitrate   ( m_targetBitrate);
@@ -1013,6 +1023,16 @@ Void TAppEncTop::encode()
       m_acTEncTop[m_numLayers-1].setFramesToBeEncoded(m_iFrameRcvd);
     }
 
+#if RC_SHVC_HARMONIZATION
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      if ( m_acTEncTop[layer].getUseRateCtrl() )
+      {
+        (m_acTEncTop[layer].getRateCtrl())->initRCGOP(m_acTEncTop[layer].getNumPicRcvd());
+      }
+    }
+#endif
+
     // loop through frames in one GOP 
     for ( UInt iPicIdInGOP=0; iPicIdInGOP < (bFirstFrame? 1:m_iGOPSize); iPicIdInGOP++ )
     {
@@ -1023,6 +1043,16 @@ Void TAppEncTop::encode()
         m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
       }
     }
+
+#if RC_SHVC_HARMONIZATION
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      if ( m_acTEncTop[layer].getUseRateCtrl() )
+      {
+        (m_acTEncTop[layer].getRateCtrl())->destroyRCGOP();
+      }
+    }
+#endif
 
     iTotalNumEncoded = 0;
     for(UInt layer=0; layer<m_numLayers; layer++)
