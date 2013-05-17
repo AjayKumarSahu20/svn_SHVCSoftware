@@ -116,6 +116,11 @@
 #define SYNTAX_OUTPUT                    0
 #endif
 
+#define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
+#if FAST_INTRA_SHVC
+  #define NB_REMAIN_MODES                2      ///< nb of remaining modes (M0115)
+#endif
+
 //! \ingroup TLibCommon
 //! \{
 

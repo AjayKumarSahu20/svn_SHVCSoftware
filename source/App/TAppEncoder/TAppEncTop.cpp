@@ -224,6 +224,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
     m_acTEncTop[layer].setUseCbfFastMode               ( m_bUseCbfFastMode  );
     m_acTEncTop[layer].setUseEarlySkipDetection        ( m_useEarlySkipDetection );
+#if FAST_INTRA_SHVC
+    m_acTEncTop[layer].setUseFastIntraScalable         ( m_useFastIntraScalable );
+#endif
 
     m_acTEncTop[layer].setUseTransformSkip             ( m_useTransformSkip      );
     m_acTEncTop[layer].setUseTransformSkipFast         ( m_useTransformSkipFast  );
@@ -554,6 +557,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
   m_cTEncTop.setUseCbfFastMode            ( m_bUseCbfFastMode  );
   m_cTEncTop.setUseEarlySkipDetection            ( m_useEarlySkipDetection );
+#if FAST_INTRA_SHVC
+  m_cTEncTop.setUseFastIntraScalable            ( m_useFastIntraScalable );
+#endif
 
   m_cTEncTop.setUseTransformSkip             ( m_useTransformSkip      );
   m_cTEncTop.setUseTransformSkipFast         ( m_useTransformSkipFast  );

@@ -203,6 +203,9 @@ protected:
   Bool      m_useFastDecisionForMerge;
   Bool      m_bUseCbfFastMode;
   Bool      m_useEarlySkipDetection;
+#if FAST_INTRA_SHVC
+  Bool      m_useFastIntraScalable;
+#endif
   Bool      m_useTransformSkip;
   Bool      m_useTransformSkipFast;
   Int*      m_aidQP;
@@ -506,6 +509,9 @@ public:
   Void      setUseFastDecisionForMerge      ( Bool  b )     { m_useFastDecisionForMerge = b; }
   Void      setUseCbfFastMode            ( Bool  b )     { m_bUseCbfFastMode = b; }
   Void      setUseEarlySkipDetection        ( Bool  b )     { m_useEarlySkipDetection = b; }
+#if FAST_INTRA_SHVC
+  Void      setUseFastIntraScalable         ( Bool  b )     { m_useFastIntraScalable = b; }
+#endif
   Void      setUseConstrainedIntraPred      ( Bool  b )     { m_bUseConstrainedIntraPred = b; }
   Void      setPCMInputBitDepthFlag         ( Bool  b )     { m_bPCMInputBitDepthFlag = b; }
   Void      setPCMFilterDisableFlag         ( Bool  b )     {  m_bPCMFilterDisableFlag = b; }
@@ -530,6 +536,9 @@ public:
   Bool      getUseFastDecisionForMerge      ()      { return m_useFastDecisionForMerge; }
   Bool      getUseCbfFastMode           ()      { return m_bUseCbfFastMode; }
   Bool      getUseEarlySkipDetection        ()      { return m_useEarlySkipDetection; }
+#if FAST_INTRA_SHVC
+  Bool      getUseFastIntraScalable         ()      { return m_useFastIntraScalable; }
+#endif
   Bool      getUseConstrainedIntraPred      ()      { return m_bUseConstrainedIntraPred; }
   Bool      getPCMInputBitDepthFlag         ()      { return m_bPCMInputBitDepthFlag;   }
   Bool      getPCMFilterDisableFlag         ()      { return m_bPCMFilterDisableFlag;   } 
