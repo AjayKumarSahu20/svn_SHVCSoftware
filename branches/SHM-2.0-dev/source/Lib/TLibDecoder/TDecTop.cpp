@@ -786,6 +786,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Set reference list
 #if REF_IDX_FRAMEWORK
     if (m_layerId == 0)
+#elif INTRA_BL
+    if( m_layerId > 0 )
+    {
+      pcSlice->setRefPicList( m_cListPic );
+    }
+    else
 #endif
 #if FIX1071
     pcSlice->setRefPicList( m_cListPic, true );
