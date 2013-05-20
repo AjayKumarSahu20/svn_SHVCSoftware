@@ -559,6 +559,9 @@ private:
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -711,6 +714,10 @@ public:
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #endif 
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  Bool   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
+  Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
+#endif
 };
 
 class Window
