@@ -244,8 +244,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
 #endif
 
-  assert ( widthEL == 2*widthBL || 2*widthEL == 3*widthBL );
-  assert ( heightEL == 2*heightBL || 2*heightEL == 3*heightBL );
+  assert ( widthEL == widthBL || widthEL == 2*widthBL || 2*widthEL == 3*widthBL );
+  assert ( heightEL == heightBL || heightEL == 2*heightBL || 2*heightEL == 3*heightBL );
 
 #if JCTVC_L0178
   // save the cropped region to copy back to the base picture since the base picture might be used as a reference picture
