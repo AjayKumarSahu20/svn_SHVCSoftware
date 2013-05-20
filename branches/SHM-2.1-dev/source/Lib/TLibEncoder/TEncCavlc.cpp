@@ -725,6 +725,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  for( i = 0; i < vps->getMaxLayers() - 1; i++)
+  {
+    WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+  }
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
 #if VPS_PROFILE_OUTPUT_LAYERS

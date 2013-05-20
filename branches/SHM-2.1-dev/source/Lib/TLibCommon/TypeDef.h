@@ -94,6 +94,11 @@
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
 #endif
+#define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+#define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
+#endif
+
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
