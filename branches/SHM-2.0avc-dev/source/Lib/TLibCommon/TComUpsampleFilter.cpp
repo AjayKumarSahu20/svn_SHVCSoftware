@@ -344,11 +344,11 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   const Double sFactor12 = sFactor * 12;
 #endif
 #if ILP_DECODED_PICTURE
-  widthBL   = pcBasePic->getWidth ();
-  heightBL  = pcBasePic->getHeight();
-
   widthEL   = pcUsPic->getWidth ();
   heightEL  = pcUsPic->getHeight();
+
+  widthBL   = pcBasePic->getWidth ();
+  heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   Int leftStartL = scalEL.getWindowLeftOffset();
@@ -502,11 +502,11 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 #endif
 
 #if ILP_DECODED_PICTURE
-  widthBL   = pcBasePic->getWidth () >> 1;
-  heightBL  = pcBasePic->getHeight() >> 1;
-
   widthEL   = pcUsPic->getWidth () >> 1;
   heightEL  = pcUsPic->getHeight() >> 1;
+
+  widthBL   = pcBasePic->getWidth () >> 1;
+  heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
 #endif
 
   //========== horizontal upsampling ===========
