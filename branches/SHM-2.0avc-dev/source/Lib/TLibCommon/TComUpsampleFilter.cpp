@@ -208,7 +208,45 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
  
 #endif
-  
+
+  if( widthEL == widthBL && heightEL == heightBL )
+  {
+    piSrcY = piSrcBufY - scalEL.getWindowLeftOffset() - scalEL.getWindowTopOffset() * strideEL;
+    piDstY = piDstBufY;
+    for( i = 0; i < heightEL; i++ )
+    {
+      memcpy( piDstY, piSrcY, sizeof(Pel) * widthBL );
+      piSrcY += strideBL;
+      piDstY += strideEL;
+    }
+
+    widthEL  >>= 1;
+    heightEL >>= 1;
+
+    widthBL  >>= 1;
+    heightBL >>= 1;
+
+    strideBL  = pcBasePic->getCStride();
+    strideEL  = pcUsPic->getCStride();
+
+    piSrcU = piSrcBufU - ( scalEL.getWindowLeftOffset() >> 1 ) - ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
+    piSrcV = piSrcBufV - ( scalEL.getWindowLeftOffset() >> 1 ) - ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
+
+    piDstU = piDstBufU;
+    piDstV = piDstBufV;
+
+    for( i = 0; i < heightEL; i++ )
+    {
+      memcpy( piDstU, piSrcU, sizeof(Pel) * widthBL );
+      memcpy( piDstV, piSrcV, sizeof(Pel) * widthBL );
+      piSrcU += strideBL;
+      piSrcV += strideBL;
+      piDstU += strideEL;
+      piDstV += strideEL;
+    }
+  }
+  else
+  {
 #if PHASE_DERIVATION_IN_INTEGER
   Int refPos16 = 0;
   Int phase    = 0;
@@ -719,5 +757,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     xFree( tempBufBottom );
   }
 #endif
+  }
 }
 #endif //SVC_EXTENSION
