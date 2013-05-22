@@ -79,6 +79,9 @@ public:
 #else
   Void  parseSPS            ( TComSPS* pcSPS );
 #endif
+#if SPS_EXTENSION
+  Void parseSPSExtension    ( TComSPS* pcSPS );
+#endif
   Void  parsePPS            ( TComPPS* pcPPS);
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
   Void  parseSEI            ( SEIMessages& );
