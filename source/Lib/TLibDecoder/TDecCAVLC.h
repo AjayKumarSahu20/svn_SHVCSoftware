@@ -75,6 +75,9 @@ public:
   Void  parseVPSExtension   ( TComVPS* pcVPS );
 #endif
   Void  parseSPS            ( TComSPS* pcSPS );
+#if SPS_EXTENSION
+  Void  parseSPSExtension   ( TComSPS* pcSPS );
+#endif
   Void  parsePPS            ( TComPPS* pcPPS);
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
   Void  parseSEI            ( SEIMessages& );

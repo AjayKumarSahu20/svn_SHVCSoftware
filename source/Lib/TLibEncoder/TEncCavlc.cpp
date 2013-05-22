@@ -563,9 +563,23 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 #endif
 
+#if SPS_EXTENSION
+  WRITE_FLAG( 1, "sps_extension_flag" );
+  if( 1 )   // if( sps_extension_flag )
+  {
+    codeSPSExtension( pcSPS );
+    WRITE_FLAG( 0, "sps_extension2_flag" );
+  }
+#else
   WRITE_FLAG( 0, "sps_extension_flag" );
+#endif
 }
-
+#if SPS_EXTENSION
+Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
+{
+  // syntax elements to be written here
+}
+#endif
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
