@@ -576,7 +576,12 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
 #if SCALED_REF_LAYER_OFFSETS
+#if SCALED_REF_LAYER_OFFSET_FLAG
+  WRITE_FLAG( pcSPS->getLayerId() > 0, "scaled_ref_layer_offset_present_flag" );
   if( pcSPS->getLayerId() > 0 )
+#else
+  if( pcSPS->getLayerId() > 0 )
+#endif
   {
     Window scaledWindow = pcSPS->getScaledRefLayerWindow();
     WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
