@@ -1010,7 +1010,11 @@ Void TDecTop::xDecodeSPS()
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
 #endif
+#if SPS_SUB_LAYER_INFO
+  m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder[0] );
+#else
   m_cEntropyDecoder.decodeSPS( sps );
+#endif
 #if SVC_EXTENSION
   m_parameterSetManagerDecoder[m_layerId].storePrefetchedSPS(sps);
 #else

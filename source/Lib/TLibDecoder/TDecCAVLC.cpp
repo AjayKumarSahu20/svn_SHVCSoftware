@@ -553,7 +553,11 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
   }
 }
 
+#if SPS_SUB_LAYER_INFO
+Void TDecCavlc::parseSPS(TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager)
+#else
 Void TDecCavlc::parseSPS(TComSPS* pcSPS)
+#endif
 {
 #if ENC_DEC_TRACE
   xTraceSPSHeader (pcSPS);
@@ -561,12 +565,28 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   UInt  uiCode;
   READ_CODE( 4,  uiCode, "sps_video_parameter_set_id");          pcSPS->setVPSId        ( uiCode );
-  READ_CODE( 3,  uiCode, "sps_max_sub_layers_minus1" );          pcSPS->setMaxTLayers   ( uiCode+1 );
-  READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );               pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
+#if SPS_SUB_LAYER_INFO
+  if(pcSPS->getLayerId() == 0)
+  {
+#endif
+    READ_CODE( 3,  uiCode, "sps_max_sub_layers_minus1" );          pcSPS->setMaxTLayers   ( uiCode+1 );
+    READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );               pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
+#if SPS_SUB_LAYER_INFO
+  }
+  else
+  {
+    pcSPS->setMaxTLayers           ( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getMaxTLayers()          );
+    pcSPS->setTemporalIdNestingFlag( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getTemporalNestingFlag() );
+  }
+#endif 
   if ( pcSPS->getMaxTLayers() == 1 )
   {
     // sps_temporal_id_nesting_flag must be 1 when sps_max_sub_layers_minus1 is 0
+#if SPS_SUB_LAYER_INFO
+    assert( pcSPS->getTemporalIdNestingFlag() == true );
+#else
     assert( uiCode == 1 );
+#endif
   }
 
   parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
