@@ -731,18 +731,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     parseVUI(pcSPS->getVuiParameters(), pcSPS);
   }
 
-#if SCALED_REF_LAYER_OFFSETS
-  if( pcSPS->getLayerId() > 0 )
-  {
-    Int iCode;
-    Window& scaledWindow = pcSPS->getScaledRefLayerWindow();
-    READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
-  }
-#endif
-
   READ_FLAG( uiCode, "sps_extension_flag");
   if (uiCode)
   {
@@ -765,7 +753,18 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #if SPS_EXTENSION
 Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
 {
-  // syntax elements to be parsed here
+  // more syntax elements to be parsed here
+#if SCALED_REF_LAYER_OFFSETS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    Int iCode;
+    Window& scaledWindow = pcSPS->getScaledRefLayerWindow();
+    READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
+    READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
+    READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
+    READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
+  }
+#endif
 }
 #endif
 Void TDecCavlc::parseVPS(TComVPS* pcVPS)
