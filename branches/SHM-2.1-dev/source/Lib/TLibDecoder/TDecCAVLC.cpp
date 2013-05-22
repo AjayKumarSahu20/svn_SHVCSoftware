@@ -746,13 +746,28 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   READ_FLAG( uiCode, "sps_extension_flag");
   if (uiCode)
   {
-    while ( xMoreRbspData() )
+#if SPS_EXTENSION
+    parseSPSExtension( pcSPS );
+    READ_FLAG( uiCode, "sps_extension2_flag");
+    if(uiCode)
     {
-      READ_FLAG( uiCode, "sps_extension_data_flag");
+#endif
+      while ( xMoreRbspData() )
+      {
+        READ_FLAG( uiCode, "sps_extension_data_flag");
+      }
+#if SPS_EXTENSION
     }
+#endif
   }
 }
 
+#if SPS_EXTENSION
+Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
+{
+  // syntax elements to be parsed here
+}
+#endif
 Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 {
   UInt  uiCode;
