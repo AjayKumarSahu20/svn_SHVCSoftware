@@ -753,9 +753,15 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #if SPS_EXTENSION
 Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
 {
+  UInt uiCode;
   // more syntax elements to be parsed here
 #if SCALED_REF_LAYER_OFFSETS
+#if SCALED_REF_LAYER_OFFSET_FLAG
+  READ_FLAG( uiCode, "scaled_ref_layer_offset_present_flag" );
+  if( uiCode )
+#else
   if( pcSPS->getLayerId() > 0 )
+#endif
   {
     Int iCode;
     Window& scaledWindow = pcSPS->getScaledRefLayerWindow();
