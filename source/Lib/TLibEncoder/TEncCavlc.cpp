@@ -559,16 +559,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
-#if SCALED_REF_LAYER_OFFSETS
-  if( pcSPS->getLayerId() > 0 )
-  {
-    Window scaledWindow = pcSPS->getScaledRefLayerWindow();
-    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
-    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
-    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
-    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
-  }
-#endif
 
 #if SPS_EXTENSION
   WRITE_FLAG( 1, "sps_extension_flag" );
@@ -584,7 +574,17 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if SPS_EXTENSION
 Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
-  // syntax elements to be written here
+  // more syntax elements to be written here
+#if SCALED_REF_LAYER_OFFSETS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    Window scaledWindow = pcSPS->getScaledRefLayerWindow();
+    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+  }
+#endif
 }
 #endif
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
