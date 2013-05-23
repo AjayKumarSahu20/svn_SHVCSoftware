@@ -229,7 +229,7 @@ public:
 #endif
   Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt layerId);
 #endif
 #else

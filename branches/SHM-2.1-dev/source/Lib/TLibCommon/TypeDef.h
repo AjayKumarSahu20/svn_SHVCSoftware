@@ -55,7 +55,6 @@
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
-#define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
 #define VPS_OUTPUT_LAYER_SET_IDX         1      ///< M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
 #define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #define VPS_PROFILE_OUTPUT_LAYERS        1      ///< M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2

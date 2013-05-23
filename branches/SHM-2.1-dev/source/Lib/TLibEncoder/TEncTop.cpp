@@ -506,7 +506,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
         TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
@@ -534,7 +534,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
         TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
@@ -1191,7 +1191,7 @@ Void  TEncCfg::xCheckGSParameters()
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
 TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
 {
   if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
