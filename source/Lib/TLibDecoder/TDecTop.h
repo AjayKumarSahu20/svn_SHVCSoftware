@@ -155,7 +155,7 @@ public:
   TComList<TComPic*>*      getListPic() { return &m_cListPic; }
   Void      setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec(UInt layerId);
 #endif
 #if AVC_BASE

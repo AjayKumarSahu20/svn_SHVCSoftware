@@ -247,7 +247,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
     if(m_layerId > 0)
     {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
       TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( m_layerId );
 #else
       TDecTop *pcTDecTopBase = (TDecTop *)getLayerDec( m_layerId-1 );
@@ -821,7 +821,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
       else
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
         TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
 #else
         TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
@@ -830,7 +830,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setBaseColPic ( *cListPic, m_layerId );
       }
 #else
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
       TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
 #else
       TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
@@ -1272,7 +1272,7 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
   return false; 
 }
 
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if VPS_EXTN_DIRECT_REF_LAYERS
 TDecTop* TDecTop::getRefLayerDec( UInt layerId )
 {
   TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
