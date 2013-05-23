@@ -3,18 +3,8 @@
 #include "TypeDef.h"
 
 #if SVC_UPSAMPLING
-// ====================================================================================================================
-// Tables:
-// 1. PHASE_DERIVATION_IN_INTEGER = 0 is the implementation using 2 multi-phase (12 phase and 8 phase) filter sets 
-//    by following K0378.
-// 2. PHASE_DERIVATION_IN_INTEGER = 1 is the implemetation using a 16-phase filter set just for speed up. Some phases 
-//    is approximated to x/16 (e.g. 1/3 -> 5/16). 
-// 3. It was confirmed that two implementations provides the identical result. 
-// 4. By default, PHASE_DERIVATION_IN_INTEGER is set to 1. 
-// ====================================================================================================================
 #define CNU -1 ///< Coefficients Not Used
 
-#if PHASE_DERIVATION_IN_INTEGER
 const Int TComUpsampleFilter::m_lumaFixedFilter[16][NTAPS_US_LUMA] =
 {
   {  0,  0,  0, 64,  0,  0,  0,  0}, //
@@ -73,51 +63,6 @@ const Int TComUpsampleFilter::m_chromaFixedFilter[16][NTAPS_US_CHROMA] =
   { -1,  5, 62, -2} // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
 #endif
 };
-#else
-const Int TComUpsampleFilter::m_lumaFixedFilter[12][NTAPS_US_LUMA] =
-{
-  { 0,  0,   0, 64,  0,   0, 0,  0},
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//1/12 
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//2/12 
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//3/12 
-  { -1, 4, -11, 52, 26,  -8, 3, -1},//4/12 
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//5/12 
-  { -1, 4, -11, 40, 40, -11, 4, -1},//6/12       
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//7/12 
-  { -1, 3,  -8, 26, 52, -11, 4, -1},//8/12 
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//9/12 
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//10/12
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU},//11/12
-};
-
-const Int TComUpsampleFilter::m_chromaFixedFilter15[12][NTAPS_US_CHROMA] =
-{
-  {  0, 64,  0,  0},
-  {CNU,CNU,CNU,CNU},//1/12 
-  {CNU,CNU,CNU,CNU},//2/12 
-  { -4, 54, 16, -2},//3/12 
-  { -5, 50, 22, -3},//4/12 
-  {CNU,CNU,CNU,CNU},//5/12 
-  {CNU,CNU,CNU,CNU},//6/12 
-  { -4, 30, 43, -5},//7/12 
-  { -3, 22, 50, -5},//8/12 
-  {CNU,CNU,CNU,CNU},//9/12 
-  {CNU,CNU,CNU,CNU},//10/12
-  { -1,  5, 62, -2} //11/12
-};
-
-const Int TComUpsampleFilter::m_chromaFixedFilter20[8][NTAPS_US_CHROMA] =
-{
-  {  0, 64,  0,  0},
-  {CNU,CNU,CNU,CNU},//1/8 
-  {CNU,CNU,CNU,CNU},//2/8 
-  { -6, 46, 28, -4},//3/8 
-  { -4, 36, 36, -4},//4/8 
-  {CNU,CNU,CNU,CNU},//5/8 
-  {CNU,CNU,CNU,CNU},//6/8 
-  { -2, 10, 58, -2},//7/8 
-};
-#endif
 
 TComUpsampleFilter::TComUpsampleFilter(void)
 {
@@ -247,7 +192,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   }
   else
   {
-#if PHASE_DERIVATION_IN_INTEGER
   Int refPos16 = 0;
   Int phase    = 0;
   Int refPos   = 0; 
@@ -257,30 +201,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     memcpy(   m_lumaFilter[i],   m_lumaFixedFilter[i], sizeof(Int) * NTAPS_US_LUMA   );
     memcpy( m_chromaFilter[i], m_chromaFixedFilter[i], sizeof(Int) * NTAPS_US_CHROMA );
   }
-#else
-  for ( i = 0; i < 12; i++)
-  {
-    memcpy( m_lumaFilter[i], m_lumaFixedFilter[i], sizeof(Int) * NTAPS_US_LUMA );
-  }
-
-  Int chromaPhaseDenominator;
-  if (widthEL == 2*widthBL) // 2x scalability
-  {
-    for ( i = 0; i < 8; i++)
-    {
-      memcpy( m_chromaFilter[i], m_chromaFixedFilter20[i], sizeof(Int) * NTAPS_US_CHROMA );
-    }
-    chromaPhaseDenominator = 8;
-  }
-  else
-  {
-    for ( i = 0; i < 12; i++) // 1.5x scalability
-    {
-      memcpy( m_chromaFilter[i], m_chromaFixedFilter15[i], sizeof(Int) * NTAPS_US_CHROMA );
-    }
-    chromaPhaseDenominator = 12;
-  }
-#endif
 
   assert ( widthEL == widthBL || widthEL == 2*widthBL || 2*widthEL == 3*widthBL );
   assert ( heightEL == heightBL || heightEL == 2*heightBL || 2*heightEL == 3*heightBL );
@@ -359,7 +279,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   pcBasePic->setBorderExtension(false);
   pcBasePic->extendPicBorder   (); // extend the border.
 
-#if PHASE_DERIVATION_IN_INTEGER
   Int   shiftX = 16;
   Int   shiftY = 16;
 
@@ -377,10 +296,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
   Int   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
   Int   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
-#else
-  const Double sFactor = 1.0 * widthBL / widthEL;
-  const Double sFactor12 = sFactor * 12;
-#endif
+
 #if ILP_DECODED_PICTURE
   widthEL   = pcUsPic->getWidth ();
   heightEL  = pcUsPic->getHeight();
@@ -400,9 +316,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
 #if SCALED_REF_LAYER_OFFSETS
     Int x = Clip3( leftStartL, rightEndL - 1, i );
-#endif
-#if PHASE_DERIVATION_IN_INTEGER
-#if SCALED_REF_LAYER_OFFSETS
     refPos16 = (((x - leftStartL)*scaleX + addX) >> shiftXM4) - deltaX;
 #else
     refPos16 = ((i*scaleX + addX) >> shiftXM4) - deltaX;
@@ -410,12 +323,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_lumaFilter[phase];
-#else
-    Int refPos12 = (Int) ( i * sFactor12 );
-    Int refPos = (Int)( i * sFactor );
-    Int phase = (refPos12 + 12) % 12; 
-    Int* coeff = m_lumaFilter[phase];
-#endif
 
     piSrcY = piSrcBufY + refPos -((NTAPS_US_LUMA>>1) - 1);
     piDstY = piTempBufY + i;
@@ -446,9 +353,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
 #if SCALED_REF_LAYER_OFFSETS
     Int y = Clip3(topStartL, bottomEndL - 1, j);
-#endif
-#if PHASE_DERIVATION_IN_INTEGER
-#if SCALED_REF_LAYER_OFFSETS
     refPos16 = ((( y - topStartL )*scaleY + addY) >> shiftYM4) - deltaY;
 #else
     refPos16 = ((j*scaleY + addY) >> shiftYM4) - deltaY;
@@ -456,12 +360,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_lumaFilter[phase];
-#else
-    Int refPos12 = (Int) (j * sFactor12 );
-    Int refPos = (Int)( j * sFactor );
-    Int phase = (refPos12 + 12) % 12;
-    Int* coeff = m_lumaFilter[phase];
-#endif
 
     piSrcY = piTempBufY + (refPos -((NTAPS_US_LUMA>>1) - 1))*strideEL;
     piDstY = piDstBufY + j * strideEL;
@@ -519,7 +417,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
 #endif
 
-#if PHASE_DERIVATION_IN_INTEGER
   shiftX = 16;
   shiftY = 16;
 
@@ -537,7 +434,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
-#endif
 
 #if ILP_DECODED_PICTURE
   widthEL   = pcUsPic->getWidth () >> 1;
@@ -552,9 +448,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
 #if SCALED_REF_LAYER_OFFSETS
     Int x = Clip3(leftStartC, rightEndC - 1, i);
-#endif
-#if PHASE_DERIVATION_IN_INTEGER
-#if SCALED_REF_LAYER_OFFSETS
     refPos16 = (((x - leftStartC)*scaleX + addX) >> shiftXM4) - deltaX;
 #else
     refPos16 = ((i*scaleX + addX) >> shiftXM4) - deltaX;
@@ -562,12 +455,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4;
     coeff = m_chromaFilter[phase];
-#else
-    Int refPosM = (Int) ( i * chromaPhaseDenominator * sFactor );
-    Int refPos = (Int)( i * sFactor );
-    Int phase = (refPosM + chromaPhaseDenominator) % chromaPhaseDenominator;
-    Int* coeff = m_chromaFilter[phase];
-#endif
 
     piSrcU = piSrcBufU + refPos -((NTAPS_US_CHROMA>>1) - 1);
     piSrcV = piSrcBufV + refPos -((NTAPS_US_CHROMA>>1) - 1);
@@ -600,9 +487,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   {
 #if SCALED_REF_LAYER_OFFSETS
     Int y = Clip3(topStartC, bottomEndC - 1, j);
-#endif
-#if PHASE_DERIVATION_IN_INTEGER
-#if SCALED_REF_LAYER_OFFSETS
     refPos16 = (((y - topStartC)*scaleY + addY) >> shiftYM4) - deltaY;
 #else
     refPos16 = ((j*scaleY + addY) >> shiftYM4) - deltaY;
@@ -610,20 +494,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     phase    = refPos16 & 15;
     refPos   = refPos16 >> 4; 
     coeff = m_chromaFilter[phase];
-#else
-    Int refPosM = (Int) (j * chromaPhaseDenominator * sFactor) - 1;
-    Int refPos; 
-    if ( refPosM < 0 )
-    {
-      refPos = (Int)( j * sFactor ) - 1;
-    }
-    else
-    {
-      refPos = refPosM / chromaPhaseDenominator;
-    }
-    Int phase = (refPosM + chromaPhaseDenominator) % chromaPhaseDenominator;
-    Int* coeff = m_chromaFilter[phase];
-#endif
 
     piSrcU = piTempBufU  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;
     piSrcV = piTempBufV  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;

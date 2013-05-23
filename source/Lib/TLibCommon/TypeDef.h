@@ -66,7 +66,6 @@
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic
 #define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
