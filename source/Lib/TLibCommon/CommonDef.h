@@ -55,7 +55,7 @@
 // Version information
 // ====================================================================================================================
 
-#define NV_VERSION        "trunk"                 ///< Current software version
+#define NV_VERSION        "2.0avc"                 ///< Current software version
 
 // ====================================================================================================================
 // Platform information
