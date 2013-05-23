@@ -77,10 +77,6 @@
 
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
 
-#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
-#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
-#endif
-
 #define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
