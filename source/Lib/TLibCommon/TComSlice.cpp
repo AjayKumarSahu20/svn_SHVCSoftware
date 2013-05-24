@@ -521,7 +521,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_MFM
 
 #if ILR_RESTR
-  Int maxSubLayerForILPPlus1 = (getLayerId() > 0)? getVPS()->getMaxSublayerForIlpPlus1(ilpPic[0]->getSlice(0)->getLayerId()) : 0;
+  Int maxSubLayerForILPPlus1 = (getLayerId() > 0 && m_activeNumILRRefIdx > 0)? getVPS()->getMaxSublayerForIlpPlus1(ilpPic[0]->getSlice(0)->getLayerId()) : 0;
 #if ZERO_NUM_DIRECT_LAYERS
   if( getLayerId() > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[0]->getSlice(0)->getTLayer())<=  maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[0]->getSlice(0)->getRapPicFlag()) )  ) 
 #else
