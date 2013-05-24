@@ -838,6 +838,33 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
       pcSlice->setBaseColPic ( *cListPic, m_layerId );
 #endif
+
+#if SIMPLIFIED_MV_POS_SCALING
+#if SCALED_REF_LAYER_OFFSETS
+      const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow();
+
+      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
+      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
+
+      Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+#else
+      const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
+      const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
+
+      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+      Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+#endif
+      g_mvScalingFactor[m_layerId][0] = Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
+      g_mvScalingFactor[m_layerId][1] = Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+
+      g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
+      g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
+#endif
+
 #if SVC_UPSAMPLING
       if ( pcPic->isSpatialEnhLayer())
       {    
@@ -953,35 +980,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_cTrQuant.setFlatScalingList();
     m_cTrQuant.setUseScalingList(false);
   }
-
-#if SIMPLIFIED_MV_POS_SCALING
-  if (m_layerId > 0)
-  {
-#if SCALED_REF_LAYER_OFFSETS
-    const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow();
-
-    Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-    Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
-
-    Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
-    Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
-#else
-    const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
-    const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
-
-    Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-    Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
-
-    Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
-    Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
-    g_mvScalingFactor[m_layerId][0] = Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
-    g_mvScalingFactor[m_layerId][1] = Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
-
-    g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
-    g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
-  }
-#endif
 
   //  Decode a picture
   m_cGopDecoder.decompressSlice(nalu.m_Bitstream, pcPic);
