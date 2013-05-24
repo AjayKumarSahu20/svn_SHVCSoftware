@@ -569,6 +569,12 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     {
       m_activeNumILRRefIdx = numInterLayerRPSPics;
     }
+#if MAX_ONE_RESAMPLING_DIRECT_LAYERS
+    if(getPic()->isSpatialEnhLayer())
+    {
+      assert(m_activeNumILRRefIdx == 1);
+    }
+#endif 
 #else
     if (numInterLayerRPSPics < m_numILRRefIdx)
     {

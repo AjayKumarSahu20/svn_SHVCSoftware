@@ -90,6 +90,7 @@
 #define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178 (currently only one reference layer is supported )
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
+#define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
