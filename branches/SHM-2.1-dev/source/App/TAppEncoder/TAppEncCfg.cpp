@@ -423,7 +423,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-
+  ("ScalabilityMask",       m_scalabilityMask, 1, "scalability_mask")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("InputBitDepth",         m_inputBitDepthY,    8, "Bit-depth of input file")
   ("OutputBitDepth",        m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
