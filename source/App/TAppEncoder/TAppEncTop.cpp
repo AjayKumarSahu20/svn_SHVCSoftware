@@ -843,7 +843,7 @@ Void TAppEncTop::xInitLib()
   }
   if(m_numLayers > 1) 
   {
-    vps->setScalabilityMask(1, true); // Only turn on spatial/SNR scalability
+    vps->setScalabilityMask(m_scalabilityMask, true);
     vps->setNumScalabilityTypes(1);
   }
   else

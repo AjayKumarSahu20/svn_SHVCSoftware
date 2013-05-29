@@ -60,7 +60,7 @@ protected:
 #if SVC_EXTENSION
   TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
   Int       m_numLayers;                                      ///< number of layers
-
+  Int       m_scalabilityMask;                                ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
   // source specification
