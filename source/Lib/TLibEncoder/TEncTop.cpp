@@ -514,6 +514,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
         {
           pcEPic->setSpatialEnhLayerFlag( true );
+
+          //only for scalable extension
+          assert( m_cVPS.getScalabilityMask(1) == true );
         }
       }
 #endif
@@ -542,6 +545,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
         {
           rpcPic->setSpatialEnhLayerFlag( true );
+
+          //only for scalable extension
+          assert( m_cVPS.getScalabilityMask(1) == true );
         }
       }
 #endif

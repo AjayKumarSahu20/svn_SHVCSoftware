@@ -912,11 +912,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   {
     READ_FLAG( uiCode, "scalability_mask[i]" ); vps->setScalabilityMask(i, uiCode ? true : false);
     numScalabilityTypes += uiCode;
-    if( i != 1 )
-    {
-      // Multiview and reserved masks are not used in this version of software
-      assert( uiCode == 0 );
-    }
   }
   vps->setNumScalabilityTypes(numScalabilityTypes);
 
