@@ -843,8 +843,14 @@ Void TAppEncTop::xInitLib()
   }
   if(m_numLayers > 1) 
   {
-    vps->setScalabilityMask(m_scalabilityMask, true);
-    vps->setNumScalabilityTypes(1);
+    Int scalabilityTypes = 0;
+    for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+    {
+      vps->setScalabilityMask(i, m_scalabilityMask[i]);
+      scalabilityTypes += m_scalabilityMask[i];
+    }
+    assert( scalabilityTypes == 1 );
+    vps->setNumScalabilityTypes(scalabilityTypes);
   }
   else
   {

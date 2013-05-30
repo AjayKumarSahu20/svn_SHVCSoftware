@@ -257,6 +257,9 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
       if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples() )
       {
         rpcPic->setSpatialEnhLayerFlag( true );
+
+        //only for scalable extension
+        assert( pcSlice->getVPS()->getScalabilityMask(1) == true );
       }
     }
 #endif
