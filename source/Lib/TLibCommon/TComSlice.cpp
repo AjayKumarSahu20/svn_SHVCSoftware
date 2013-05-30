@@ -574,14 +574,20 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     {
       Int numResampler = 0;
       const Window &scalEL = getSPS()->getScaledRefLayerWindow();
-      Int widthEL   = getPic()->getPicYuvRec()->getWidth() - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
-      Int heightEL  = getPic()->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+      Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
+                           (scalEL.getWindowRightOffset()  == 0 ) && 
+                           (scalEL.getWindowTopOffset()    == 0 ) && 
+                           (scalEL.getWindowBottomOffset() == 0 ) 
+                          );
+
+      Int widthEL   = getPic()->getPicYuvRec()->getWidth();
+      Int heightEL  = getPic()->getPicYuvRec()->getHeight();      
       for (i=0; i < m_activeNumILRRefIdx; i++)
       {
         Int widthBL   =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getWidth();
         Int heightBL  =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getHeight();
 
-        if(widthEL != widthBL || heightEL != heightBL )
+        if(!(widthEL == widthBL && heightEL == heightBL && (scalingOffset)))
         {
           numResampler++;
         }
