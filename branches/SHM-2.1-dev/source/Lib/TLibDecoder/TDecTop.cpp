@@ -261,6 +261,12 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
         //only for scalable extension
         assert( pcSlice->getVPS()->getScalabilityMask(1) == true );
       }
+#if MAX_ONE_RESAMPLING_DIRECT_LAYERS
+      if(pcSlice->getVPS()->getScalabilityMask(1))
+      {
+         pcSlice->setPic(rpcPic);
+      }
+#endif
     }
 #endif
     
