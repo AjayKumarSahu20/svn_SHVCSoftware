@@ -572,12 +572,12 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if MAX_ONE_RESAMPLING_DIRECT_LAYERS
     if(getVPS()->getScalabilityMask(1))
     {
-      Int numResampler = 0;  
+      Int numResampler = 0;
       const Window &scalEL = getSPS()->getScaledRefLayerWindow();
       Int widthEL   = getPic()->getPicYuvRec()->getWidth() - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
       Int heightEL  = getPic()->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
       for (i=0; i < m_activeNumILRRefIdx; i++)
-      {        
+      {
         Int widthBL   =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getWidth();
         Int heightBL  =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getHeight();
 
@@ -585,7 +585,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
         {
           numResampler++;
         }
-      }  
+      }
+
+      //Bitstream constraint for SHVC: The picture resampling process as specified in subclause G.8.1.4.1 shall not be invoked more than once for decoding of each particular picture.
       assert(numResampler <= 1);
     }
 #endif 
