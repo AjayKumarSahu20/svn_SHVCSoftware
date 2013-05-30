@@ -570,9 +570,23 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       m_activeNumILRRefIdx = numInterLayerRPSPics;
     }
 #if MAX_ONE_RESAMPLING_DIRECT_LAYERS
-    if(getPic()->isSpatialEnhLayer())
+    if(getVPS()->getScalabilityMask(1))
     {
-      assert(m_activeNumILRRefIdx == 1);
+      Int numResampler = 0;  
+      const Window &scalEL = getSPS()->getScaledRefLayerWindow();
+      Int widthEL   = getPic()->getPicYuvRec()->getWidth() - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+      Int heightEL  = getPic()->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+      for (i=0; i < m_activeNumILRRefIdx; i++)
+      {        
+        Int widthBL   =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getWidth();
+        Int heightBL  =  ilpPic[getInterLayerPredLayerIdc(i)]->getSlice(0)->getBaseColPic()->getPicYuvRec()->getHeight();
+
+        if(widthEL != widthBL || heightEL != heightBL )
+        {
+          numResampler++;
+        }
+      }  
+      assert(numResampler <= 1);
     }
 #endif 
 #else
