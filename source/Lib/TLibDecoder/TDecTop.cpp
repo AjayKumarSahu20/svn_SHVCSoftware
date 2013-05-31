@@ -248,7 +248,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     if(m_layerId > 0)
     {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-      TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( m_layerId );
+      TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( m_layerId - 1 );
 #else
       TDecTop *pcTDecTopBase = (TDecTop *)getLayerDec( m_layerId-1 );
 #endif
@@ -831,7 +831,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       else
       {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-        TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId );
+        TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( m_layerId - 1 );
 #else
         TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
 #endif
@@ -1280,7 +1280,7 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
 }
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
-TDecTop* TDecTop::getRefLayerDec( UInt layerId )
+TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 {
   TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
@@ -1298,7 +1298,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt layerId )
   assert( vps->getMaxOneActiveRefLayerFlag() == 1 );
 #endif 
   
-  return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, 0 ) );
+  return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdc ) );
 }
 #endif
 

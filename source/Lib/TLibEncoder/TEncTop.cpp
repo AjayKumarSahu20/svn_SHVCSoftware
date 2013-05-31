@@ -507,7 +507,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       if(m_layerId > 0)
       {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
@@ -538,7 +538,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       if(m_layerId > 0)
       {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
@@ -1198,7 +1198,7 @@ Void  TEncCfg::xCheckGSParameters()
 
 #if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
-TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
+TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 {
   if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
   {
@@ -1212,7 +1212,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
   // currently only one reference layer is supported
   assert( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() == 1 );
 
-  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, 0 ) );
+  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, refLayerIdc ) );
 }
 #endif
 

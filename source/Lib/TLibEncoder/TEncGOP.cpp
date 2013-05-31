@@ -535,7 +535,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if (m_layerId > 0)
     {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId)->getListPic();
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId-1)->getListPic();
 #else
       TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
 #endif
