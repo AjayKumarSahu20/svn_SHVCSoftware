@@ -1068,8 +1068,10 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           {
             WRITE_CODE(pcSlice->getNumInterLayerRefPics(), numBits,"num_inter_layer_ref_pics_minus1");
           }       
-          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
+          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+          {
             WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+          }
         }
       }
     }     
