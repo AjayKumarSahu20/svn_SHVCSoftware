@@ -156,7 +156,7 @@ public:
   Void      setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  TDecTop*  getRefLayerDec(UInt layerId);
+  TDecTop*  getRefLayerDec(UInt refLayerIdc);
 #endif
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }

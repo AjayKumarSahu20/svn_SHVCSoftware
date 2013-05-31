@@ -230,7 +230,7 @@ public:
   Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  TEncTop*  getRefLayerEnc(UInt layerId);
+  TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
 #else
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
