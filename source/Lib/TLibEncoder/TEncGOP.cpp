@@ -534,57 +534,56 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
+      for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
 #if VPS_EXTN_DIRECT_REF_LAYERS
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId-1)->getListPic();
+        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(refLayerIdc)->getListPic();
 #else
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
+        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
 #endif
-      pcSlice->setBaseColPic (*cListPic, m_layerId );
-      
+        pcSlice->setBaseColPic (*cListPic, refLayerIdc );
+
 #if SIMPLIFIED_MV_POS_SCALING
 #if SCALED_REF_LAYER_OFFSETS
-      const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow();
+        const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow();
 
-      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
+        Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
+        Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 
-      Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
-      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+        Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+        Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 #else
-      const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
-      const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
+        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getConformanceWindow();
+        const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
 
-      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+        Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+        Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
 
-      Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
-      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+        Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+        Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
 #endif
-      g_mvScalingFactor[m_layerId][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
-      g_mvScalingFactor[m_layerId][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+        g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
+        g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
 
-      g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
-      g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
+        g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
+        g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 #endif
 
-#if ZERO_NUM_DIRECT_LAYERS
-      if( pcSlice->getActiveNumILRRefIdx() )
-#endif
-      {
 #if SVC_UPSAMPLING
-        if ( pcPic->isSpatialEnhLayer())
+        if( pcPic->isSpatialEnhLayer(refLayerIdc))
         { 
 #if SCALED_REF_LAYER_OFFSETS
-          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
+          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
 #else
-          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
+          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec() );
 #endif
         }
         else
         {
-          pcPic->setFullPelBaseRec( pcSlice->getBaseColPic()->getPicYuvRec() );
+          pcPic->setFullPelBaseRec( refLayerIdc, pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec() );
         }
-        pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
+        pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
 #endif
       }
     }
@@ -594,9 +593,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId > 0 && (pocCurr % m_pcCfg->getIntraPeriod() == 0) )
     {
 #if IDR_ALIGNMENT
-      if( pcSlice->getBaseColPic()->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getBaseColPic()->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
+      TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
+      if( picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )
       {
-        pcSlice->setNalUnitType(pcSlice->getBaseColPic()->getSlice(0)->getNalUnitType());
+        pcSlice->setNalUnitType(picLayer0->getSlice(0)->getNalUnitType());
       }
       else
 #endif
