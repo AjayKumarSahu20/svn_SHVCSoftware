@@ -1221,9 +1221,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 #endif
   }
 
-  // currently only one reference layer is supported
-  assert( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() == 1 );
-
   return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, refLayerIdc ) );
 }
 #endif
@@ -1246,7 +1243,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++)
+      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
