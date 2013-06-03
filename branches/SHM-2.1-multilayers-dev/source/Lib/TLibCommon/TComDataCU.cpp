@@ -4318,12 +4318,12 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   return cBaseColPic->getCU(uiCUAddrBase);
 }
 
-Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
+Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
 {
   TComMvField cMvFieldBase;
   TComMv cMv;
 #if SIMPLIFIED_MV_POS_SCALING
-  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[m_layerId][0], g_mvScalingFactor[m_layerId][1] );
+  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[refLayerIdc][0], g_mvScalingFactor[refLayerIdc][1] );
 #else
   const Window &confBL = m_pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();

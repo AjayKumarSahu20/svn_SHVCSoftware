@@ -613,7 +613,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
         {
           TComMvField sMvFieldBase, sMvField;
           pcColCU->getMvField( pcColCU, baseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
-          pcCUDes->scaleBaseMV( sMvField, sMvFieldBase );
+          pcCUDes->scaleBaseMV( refLayerIdc, sMvField, sMvFieldBase );
 
           pcCUDes->getCUMvField((RefPicList)refPicList)->setMvField(sMvField, absPartIdx);
           pcCUDes->setPredictionMode(absPartIdx, MODE_INTER);
