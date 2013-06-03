@@ -224,6 +224,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
     m_acTEncTop[layer].setUseCbfFastMode               ( m_bUseCbfFastMode  );
     m_acTEncTop[layer].setUseEarlySkipDetection        ( m_useEarlySkipDetection );
+#if FAST_INTRA_SHVC
+    m_acTEncTop[layer].setUseFastIntraScalable         ( m_useFastIntraScalable );
+#endif
 
     m_acTEncTop[layer].setUseTransformSkip             ( m_useTransformSkip      );
     m_acTEncTop[layer].setUseTransformSkipFast         ( m_useTransformSkipFast  );
@@ -342,6 +345,15 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setScalingListFile            ( m_scalingListFile   );
     m_acTEncTop[layer].setSignHideFlag(m_signHideFlag);
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+    m_acTEncTop[layer].setUseRateCtrl     (m_acLayerCfg[layer].getRCEnableRateControl());
+    m_acTEncTop[layer].setTargetBitrate   (m_acLayerCfg[layer].getRCTargetBitrate());
+    m_acTEncTop[layer].setKeepHierBit     (m_acLayerCfg[layer].getRCKeepHierarchicalBit());
+    m_acTEncTop[layer].setLCULevelRC      (m_acLayerCfg[layer].getRCLCULevelRC());
+    m_acTEncTop[layer].setUseLCUSeparateModel (m_acLayerCfg[layer].getRCUseLCUSeparateModel());
+    m_acTEncTop[layer].setInitialQP           (m_acLayerCfg[layer].getRCInitialQP());
+    m_acTEncTop[layer].setForceIntraQP        (m_acLayerCfg[layer].getRCForceIntraQP());
+#else
     m_acTEncTop[layer].setUseRateCtrl         ( m_RCEnableRateControl );
     m_acTEncTop[layer].setTargetBitrate       ( m_RCTargetBitrate );
     m_acTEncTop[layer].setKeepHierBit         ( m_RCKeepHierarchicalBit );
@@ -349,6 +361,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
     m_acTEncTop[layer].setInitialQP           ( m_RCInitialQP );
     m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
+#endif
 #else
     m_acTEncTop[layer].setUseRateCtrl     ( m_enableRateCtrl);
     m_acTEncTop[layer].setTargetBitrate   ( m_targetBitrate);
@@ -544,6 +557,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
   m_cTEncTop.setUseCbfFastMode            ( m_bUseCbfFastMode  );
   m_cTEncTop.setUseEarlySkipDetection            ( m_useEarlySkipDetection );
+#if FAST_INTRA_SHVC
+  m_cTEncTop.setUseFastIntraScalable            ( m_useFastIntraScalable );
+#endif
 
   m_cTEncTop.setUseTransformSkip             ( m_useTransformSkip      );
   m_cTEncTop.setUseTransformSkipFast         ( m_useTransformSkipFast  );
@@ -827,8 +843,14 @@ Void TAppEncTop::xInitLib()
   }
   if(m_numLayers > 1) 
   {
-    vps->setScalabilityMask(1, true); // Only turn on spatial/SNR scalability
-    vps->setNumScalabilityTypes(1);
+    Int scalabilityTypes = 0;
+    for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
+    {
+      vps->setScalabilityMask(i, m_scalabilityMask[i]);
+      scalabilityTypes += m_scalabilityMask[i];
+    }
+    assert( scalabilityTypes == 1 );
+    vps->setNumScalabilityTypes(scalabilityTypes);
   }
   else
   {
@@ -860,23 +882,28 @@ Void TAppEncTop::xInitLib()
 #endif
   // Target output layer
 #if VPS_PROFILE_OUTPUT_LAYERS
-  vps->setNumOutputLayerSets(2);    // 2 including the default base-layer set.
-  vps->setNumProfileTierLevel(2);   // 1 for the enhancement layer
-  vps->setProfileLevelTierIdx(1, 1);
+  vps->setNumOutputLayerSets(vps->getNumLayerSets());    
+  vps->setNumProfileTierLevel(vps->getNumLayerSets());   
   vps->setDefaultOneTargetOutputLayerFlag(true);
-  Int lsIdx = 1;
-  vps->setOutputLayerSetIdx(1, lsIdx); // Because only one layer set
+  for(Int i = 1; i < vps->getNumLayerSets(); i++)
+  {
+    vps->setProfileLevelTierIdx(i, i);
+    vps->setOutputLayerSetIdx(i, i); 
+  }
 #else
   vps->setNumOutputLayerSets(1);
   Int lsIdx = 1;
   vps->setOutputLayerSetIdx(0, lsIdx); // Because only one layer set
 #endif
-  // Include the highest layer as output layer 
-  for(UInt layer=0; layer <= vps->getMaxLayerId() ; layer++)
+  for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
   {
-    if(vps->getLayerIdIncludedFlag(lsIdx, layer))
+    // Include the highest layer as output layer 
+    for(UInt layer=0; layer <= vps->getMaxLayerId() ; layer++)
     {
-      vps->setOutputLayerFlag(lsIdx, layer, layer == (vps->getMaxLayerId()));
+      if(vps->getLayerIdIncludedFlag(lsIdx, layer))
+      {
+        vps->setOutputLayerFlag(lsIdx, layer, layer == (vps->getMaxLayerId()));
+      }
     }
   }
 #endif
@@ -1013,6 +1040,16 @@ Void TAppEncTop::encode()
       m_acTEncTop[m_numLayers-1].setFramesToBeEncoded(m_iFrameRcvd);
     }
 
+#if RC_SHVC_HARMONIZATION
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      if ( m_acTEncTop[layer].getUseRateCtrl() )
+      {
+        (m_acTEncTop[layer].getRateCtrl())->initRCGOP(m_acTEncTop[layer].getNumPicRcvd());
+      }
+    }
+#endif
+
     // loop through frames in one GOP 
     for ( UInt iPicIdInGOP=0; iPicIdInGOP < (bFirstFrame? 1:m_iGOPSize); iPicIdInGOP++ )
     {
@@ -1023,6 +1060,16 @@ Void TAppEncTop::encode()
         m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
       }
     }
+
+#if RC_SHVC_HARMONIZATION
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      if ( m_acTEncTop[layer].getUseRateCtrl() )
+      {
+        (m_acTEncTop[layer].getRateCtrl())->destroyRCGOP();
+      }
+    }
+#endif
 
     iTotalNumEncoded = 0;
     for(UInt layer=0; layer<m_numLayers; layer++)

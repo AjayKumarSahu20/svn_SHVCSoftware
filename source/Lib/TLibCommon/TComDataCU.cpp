@@ -1646,7 +1646,7 @@ Int TComDataCU::getIntraDirLumaPredictor( UInt uiAbsPartIdx, Int* uiIntraDirPred
   UInt        uiTempPartIdx;
   Int         iLeftIntraDir, iAboveIntraDir;
   Int         uiPredNum = 0;
-  
+
   // Get intra direction of left PU
   pcTempCU = getPULeft( uiTempPartIdx, m_uiAbsIdxInLCU + uiAbsPartIdx );
   
@@ -1737,6 +1737,67 @@ Int TComDataCU::getIntraDirLumaPredictor( UInt uiAbsPartIdx, Int* uiIntraDirPred
   
   return uiPredNum;
 }
+
+
+#if FAST_INTRA_SHVC
+/** generate limited set of remaining modes
+*\param   uiAbsPartIdx
+*\param   uiIntraDirPred  pointer to the array for MPM storage
+*\returns Number of intra coding modes (nb of remaining modes + 3 MPMs)
+*/
+Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes )
+{
+  // check BL mode
+  UInt          uiCUAddrBase, uiAbsPartAddrBase;
+  TComDataCU*   pcTempCU = getBaseColCU( uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
+
+  if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
+    return( NUM_INTRA_MODE-1 );
+
+  // compute set of enabled modes g_reducedSetIntraModes[...]
+  Int authorizedMode[NUM_INTRA_MODE-1]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+  Int nbModes;
+  for (nbModes=0; nbModes<3; nbModes++)  // add 3 MPMs 1st
+  {
+    g_reducedSetIntraModes[nbModes] = uiIntraDirPred[nbModes];
+    authorizedMode[ uiIntraDirPred[nbModes] ] = 0;
+  }
+
+  Int iColBaseDir = pcTempCU->getLumaIntraDir( uiAbsPartAddrBase );
+  if ( authorizedMode[iColBaseDir] )  //possibly add BL mode
+  {
+    g_reducedSetIntraModes[nbModes++] = iColBaseDir;
+    authorizedMode[ iColBaseDir ] = 0;
+  }
+
+  Int iRefMode = ( iColBaseDir > 1 ) ? iColBaseDir : uiIntraDirPred[0];
+  if ( iRefMode > 1 )    //add neighboring modes of refMode
+  {
+    UInt Left  = iRefMode;
+    UInt Right = iRefMode;
+    while ( nbModes < NB_REMAIN_MODES+3 )
+    {
+      Left = ((Left + 29) % 32) + 2;
+      Right = ((Right - 1 ) % 32) + 2;
+      if ( authorizedMode[Left] )   g_reducedSetIntraModes[nbModes++] = Left;
+      if ( authorizedMode[Right] )  g_reducedSetIntraModes[nbModes++] = Right;
+    }
+  }
+  else      //add pre-defined modes
+  {
+    Int  idx = 0;
+    while ( nbModes < NB_REMAIN_MODES+3 )
+    {
+      UInt mode = g_predefSetIntraModes[idx++];
+      if ( authorizedMode[mode] )   g_reducedSetIntraModes[nbModes++] = mode;
+    }
+  }
+
+  fullSetOfModes = 0;
+  return ( nbModes );
+}
+#endif
+
 
 UInt TComDataCU::getCtxSplitFlag( UInt uiAbsPartIdx, UInt uiDepth )
 {

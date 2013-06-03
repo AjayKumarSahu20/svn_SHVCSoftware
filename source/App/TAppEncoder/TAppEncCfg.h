@@ -60,7 +60,7 @@ protected:
 #if SVC_EXTENSION
   TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
   Int       m_numLayers;                                      ///< number of layers
-
+  Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
   // source specification
@@ -207,6 +207,9 @@ protected:
   Bool      m_useFastDecisionForMerge;                        ///< flag for using Fast Decision Merge RD-Cost 
   Bool      m_bUseCbfFastMode;                              ///< flag for using Cbf Fast PU Mode Decision
   Bool      m_useEarlySkipDetection;                         ///< flag for using Early SKIP Detection
+#if FAST_INTRA_SHVC
+  Bool      m_useFastIntraScalable;                          ///< flag for using Fast Intra Decision for Scalable HEVC
+#endif
   Int       m_sliceMode;                                     ///< 0: no slice limits, 1 : max number of CTBs per slice, 2: max number of bytes per slice, 
                                                              ///< 3: max number of tiles per slice
   Int       m_sliceArgument;                                 ///< argument according to selected slice mode
@@ -286,6 +289,7 @@ protected:
   Int       m_TMVPModeId;
   Int       m_signHideFlag;
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
   Bool      m_RCKeepHierarchicalBit;              ///< whether keeping hierarchical bit allocation structure or not
@@ -293,6 +297,7 @@ protected:
   Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
+#endif
 #else
   Bool      m_enableRateCtrl;                                   ///< Flag for using rate control algorithm
   Int       m_targetBitrate;                                 ///< target bitrate

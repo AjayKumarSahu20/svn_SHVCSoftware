@@ -531,19 +531,66 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR));
-#if IDR_ALIGNMENT
+#if SVC_EXTENSION
     if (m_layerId > 0)
     {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId)->getListPic();
+#if VPS_EXTN_DIRECT_REF_LAYERS
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(m_layerId-1)->getListPic();
 #else
       TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
 #endif
       pcSlice->setBaseColPic (*cListPic, m_layerId );
+      
+#if SIMPLIFIED_MV_POS_SCALING
+#if SCALED_REF_LAYER_OFFSETS
+      const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow();
+
+      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
+      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
+
+      Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
+      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+#else
+      const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
+      const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
+
+      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+      Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+#endif
+      g_mvScalingFactor[m_layerId][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
+      g_mvScalingFactor[m_layerId][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+
+      g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
+      g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
+#endif
+
+#if ZERO_NUM_DIRECT_LAYERS
+      if( pcSlice->getActiveNumILRRefIdx() )
+#endif
+      {
+#if SVC_UPSAMPLING
+        if ( pcPic->isSpatialEnhLayer())
+        { 
+#if SCALED_REF_LAYER_OFFSETS
+          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
+#else
+          m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
+#endif
+        }
+        else
+        {
+          pcPic->setFullPelBaseRec( pcSlice->getBaseColPic()->getPicYuvRec() );
+        }
+        pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
+#endif
+      }
     }
 #endif
-#if REF_IDX_FRAMEWORK
 
+#if REF_IDX_FRAMEWORK
     if( m_layerId > 0 && (pocCurr % m_pcCfg->getIntraPeriod() == 0) )
     {
 #if IDR_ALIGNMENT
@@ -669,6 +716,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if(m_layerId > 0)
 #endif
     {
+#if RESTR_CHK
+      if (pcSlice->getPOC()>0  && pcSlice->isRADL()&& pcPic->getSlice(0)->isRASL())
+      {
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+        pcSlice->setActiveNumILRRefIdx(0);
+        pcSlice->setInterLayerPredEnabledFlag(0);
+#else
+        pcSlice->setNumILRRefIdx(0);
+#endif
+      }
+#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
@@ -698,35 +756,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if ADAPTIVE_QP_SELECTION
     pcSlice->setTrQuant( m_pcEncTop->getTrQuant() );
 #endif      
-
-#if SVC_EXTENSION      
-#if ZERO_NUM_DIRECT_LAYERS
-    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
-#else
-    if(m_layerId > 0)
-#endif
-    {
-#if !IDR_ALIGNMENT
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
-      pcSlice->setBaseColPic (*cListPic, m_layerId );
-#endif
-#if SVC_UPSAMPLING
-      if ( pcPic->isSpatialEnhLayer())
-      { 
-#if SCALED_REF_LAYER_OFFSETS
-        m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
-#else
-        m_pcPredSearch->upsampleBasePic( pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
-#endif
-      }
-      else
-      {
-        pcPic->setFullPelBaseRec( pcSlice->getBaseColPic()->getPicYuvRec() );
-      }
-      pcSlice->setFullPelBaseRec ( pcPic->getFullPelBaseRec() );
-#endif
-    }
-#endif 
 
 #if REF_IDX_FRAMEWORK
     if( pcSlice->getSliceType() == B_SLICE )
@@ -1006,35 +1035,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 
     UInt uiNumSlices = 1;
-
-#if SIMPLIFIED_MV_POS_SCALING
-    if (m_layerId > 0)
-    {
-#if SCALED_REF_LAYER_OFFSETS
-      const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow();
-
-      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth();
-      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight();
-
-      Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
-      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
-#else
-      const Window &confBL = pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
-      const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
-
-      Int widthBL   = pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-      Int heightBL  = pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
-
-      Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
-      Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
-      g_mvScalingFactor[m_layerId][0] = Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
-      g_mvScalingFactor[m_layerId][1] = Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
-
-      g_posScalingFactor[m_layerId][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
-      g_posScalingFactor[m_layerId][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
-    }
-#endif
 
     UInt uiInternalAddress = pcPic->getNumPartInCU()-4;
     UInt uiExternalAddress = pcPic->getPicSym()->getNumberOfCUsInFrame()-1;
@@ -2619,7 +2619,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     printf(" [L%d ", iRefList);
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
-#if REF_IDX_FRAMEWORK && VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
+#if REF_IDX_FRAMEWORK && VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR(m_layerId) )
       {
         printf( "%d(%d) ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR(), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );

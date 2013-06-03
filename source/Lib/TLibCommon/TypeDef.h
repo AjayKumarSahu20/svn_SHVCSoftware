@@ -43,6 +43,8 @@
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
+#define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
+#define SCALED_REF_LAYER_OFFSET_FLAG     1      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
@@ -53,29 +55,26 @@
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
-#define VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE   1
 #define VPS_OUTPUT_LAYER_SET_IDX         1      ///< M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
 #define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #define VPS_PROFILE_OUTPUT_LAYERS        1      ///< M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2
+#define SPS_SUB_LAYER_INFO               1      ///< M0268: Do not signal sps_max_sub_layers_minus1 and sps_temporal_id_nesting_flag for nuh_layer_id greater than 0
 #endif
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define PHASE_DERIVATION_IN_INTEGER      1      ///< upsampling filters implementation using only integer arithmetic
 #define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
+#define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
+#define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
 #define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
-
-#if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
-#define JCTVC_L0178                      1      ///< implementation of JCTVC-L0178 (code only supports right and bottom croppping offsets)
-#endif
 
 #define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
 
@@ -91,7 +90,13 @@
 #define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178 (currently only one reference layer is supported )
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
+#define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #endif
+#define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+#define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
+#endif
+
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 
@@ -112,6 +117,11 @@
 #else
 #define ILP_DECODED_PICTURE              0
 #define SYNTAX_OUTPUT                    0
+#endif
+
+#define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
+#if FAST_INTRA_SHVC
+  #define NB_REMAIN_MODES                2      ///< nb of remaining modes (M0115)
 #endif
 
 //! \ingroup TLibCommon
@@ -169,6 +179,7 @@
 #endif
 #define RATE_CONTROL_LAMBDA_DOMAIN                  1  ///< JCTVC-K0103, rate control by R-lambda model
 #define L0033_RC_BUGFIX                             1  ///< JCTVC-L0033, bug fix for R-lambda model based rate control
+#define RC_SHVC_HARMONIZATION                       1  ///< JCTVC-M0037, rate control for SHVC
 
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
 #define MAX_NUM_LAYER_IDS                64

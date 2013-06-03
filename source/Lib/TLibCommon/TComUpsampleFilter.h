@@ -12,20 +12,11 @@
 class TComUpsampleFilter
 {
 private:
-#if PHASE_DERIVATION_IN_INTEGER
   static const Int m_lumaFixedFilter[16][NTAPS_US_LUMA];     ///< Luma filter taps for both 1.5x and 2x scalability
   static const Int m_chromaFixedFilter[16][NTAPS_US_CHROMA]; ///< Chroma filter taps for 1.5x scalability
 
   Int m_lumaFilter[16][NTAPS_US_LUMA];
   Int m_chromaFilter[16][NTAPS_US_CHROMA];
-#else
-  static const Int m_lumaFixedFilter[12][NTAPS_US_LUMA];     ///< Luma filter taps for both 1.5x and 2x scalability
-  static const Int m_chromaFixedFilter20[8][NTAPS_US_CHROMA]; ///< Chroma filter taps for 2x scalability
-  static const Int m_chromaFixedFilter15[12][NTAPS_US_CHROMA]; ///< Chroma filter taps for 1.5x scalability
-
-  Int m_lumaFilter[12][NTAPS_US_LUMA];
-  Int m_chromaFilter[12][NTAPS_US_CHROMA];
-#endif
 
   static inline Int sumLumaHor( Pel* pel, Int* coeff )
   {

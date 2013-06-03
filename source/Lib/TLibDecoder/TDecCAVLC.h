@@ -74,7 +74,14 @@ public:
 #if VPS_EXTNS
   Void  parseVPSExtension   ( TComVPS* pcVPS );
 #endif
+#if SPS_SUB_LAYER_INFO
+  Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager );
+#else
   Void  parseSPS            ( TComSPS* pcSPS );
+#endif
+#if SPS_EXTENSION
+  Void parseSPSExtension    ( TComSPS* pcSPS );
+#endif
   Void  parsePPS            ( TComPPS* pcPPS);
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
   Void  parseSEI            ( SEIMessages& );

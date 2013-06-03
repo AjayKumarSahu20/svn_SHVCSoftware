@@ -385,20 +385,24 @@ Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicY
 {
   // compress GOP
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   if ( m_RCEnableRateControl )
   {
     m_cRateCtrl.initRCGOP( m_iNumPicRcvd );
   }
+#endif
 #endif
 
   // compress GOP
   m_cGOPEncoder.compressGOP(iPicIdInGOP, m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, accessUnitsOut);
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   if ( m_RCEnableRateControl )
   {
     m_cRateCtrl.destroyRCGOP();
   }
+#endif
 #endif
   
   m_uiNumAllPicCoded ++;
@@ -502,14 +506,17 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+#if VPS_EXTN_DIRECT_REF_LAYERS
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
         if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
         {
           pcEPic->setSpatialEnhLayerFlag( true );
+
+          //only for scalable extension
+          assert( m_cVPS.getScalabilityMask(1) == true );
         }
       }
 #endif
@@ -530,14 +537,17 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId );
+#if VPS_EXTN_DIRECT_REF_LAYERS
+        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
 #else
         TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
         if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
         {
           rpcPic->setSpatialEnhLayerFlag( true );
+
+          //only for scalable extension
+          assert( m_cVPS.getScalabilityMask(1) == true );
         }
       }
 #endif
@@ -1187,8 +1197,8 @@ Void  TEncCfg::xCheckGSParameters()
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
-TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
+#if VPS_EXTN_DIRECT_REF_LAYERS
+TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 {
   if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
   {
@@ -1202,7 +1212,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt layerId )
   // currently only one reference layer is supported
   assert( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() == 1 );
 
-  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, 0 ) );
+  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, refLayerIdc ) );
 }
 #endif
 

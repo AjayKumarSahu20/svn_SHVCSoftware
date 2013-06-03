@@ -532,6 +532,10 @@ public:
   UInt          getCtxIntraBLFlag               ( UInt   uiAbsPartIdx                                 );
 #endif  
 
+#if FAST_INTRA_SHVC
+  Int           reduceSetOfIntraModes              (  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
+#endif
+
 #if REF_IDX_ME_ZEROMV
   Bool xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
   Bool xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx);

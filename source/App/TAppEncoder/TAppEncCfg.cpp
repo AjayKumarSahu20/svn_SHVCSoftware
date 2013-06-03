@@ -79,6 +79,7 @@ TAppEncCfg::TAppEncCfg()
   {
     m_acLayerCfg[layer].setAppEncCfg(this);
   }
+  memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
 }
 #else
 TAppEncCfg::TAppEncCfg()
@@ -336,6 +337,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   Int*    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
 #endif
+#if RC_SHVC_HARMONIZATION
+  Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
+  Int*    cfg_RCTargetBitRate      [MAX_LAYERS];
+  Bool*   cfg_RCKeepHierarchicalBit[MAX_LAYERS];
+  Bool*   cfg_RCLCULevelRC         [MAX_LAYERS];
+  Bool*   cfg_RCUseLCUSeparateModel[MAX_LAYERS];
+  Int*    cfg_RCInitialQP          [MAX_LAYERS];
+  Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
+#endif
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -355,6 +365,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_scaledRefLayerTopOffset   [layer] = &m_acLayerCfg[layer].m_scaledRefLayerTopOffset;
     cfg_scaledRefLayerRightOffset [layer] = &m_acLayerCfg[layer].m_scaledRefLayerRightOffset;
     cfg_scaledRefLayerBottomOffset[layer] = &m_acLayerCfg[layer].m_scaledRefLayerBottomOffset;
+#endif
+#if RC_SHVC_HARMONIZATION
+    cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
+    cfg_RCTargetBitRate[layer]       = &m_acLayerCfg[layer].m_RCTargetBitrate;
+    cfg_RCKeepHierarchicalBit[layer] = &m_acLayerCfg[layer].m_RCKeepHierarchicalBit;
+    cfg_RCLCULevelRC[layer]          = &m_acLayerCfg[layer].m_RCLCULevelRC;
+    cfg_RCUseLCUSeparateModel[layer] = &m_acLayerCfg[layer].m_RCUseLCUSeparateModel;
+    cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
+    cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
   }
 #if AVC_BASE
@@ -405,15 +424,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-
-  ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
-  ("InputBitDepth",         m_inputBitDepthY,    8, "Bit-depth of input file")
-  ("OutputBitDepth",        m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
-  ("InternalBitDepth",      m_internalBitDepthY, 0, "Bit-depth the codec operates at. (default:InputBitDepth)"
+  ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
+  ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
+  ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
+  ("InputBitDepth",           m_inputBitDepthY,    8, "Bit-depth of input file")
+  ("OutputBitDepth",          m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
+  ("InternalBitDepth",        m_internalBitDepthY, 0, "Bit-depth the codec operates at. (default:InputBitDepth)"
                                                        "If different to InputBitDepth, source data will be converted")
-  ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
-  ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
-  ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
+  ("InputBitDepthC",          m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
+  ("OutputBitDepthC",         m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
+  ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #if SCALED_REF_LAYER_OFFSETS
   ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffset,  0, MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
@@ -615,7 +635,19 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("FDM", m_useFastDecisionForMerge, true, "Fast decision for Merge RD Cost") 
   ("CFM", m_bUseCbfFastMode, false, "Cbf fast mode setting")
   ("ESD", m_useEarlySkipDetection, false, "Early SKIP detection setting")
+#if FAST_INTRA_SHVC
+  ("FIS", m_useFastIntraScalable, false, "Fast Intra Decision for Scalable HEVC")
+#endif
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+  ("RateControl%d", cfg_RCEnableRateControl, false, MAX_LAYERS, "Rate control: enable rate control for layer %d")
+  ("TargetBitrate%d", cfg_RCTargetBitRate, 0, MAX_LAYERS, "Rate control: target bitrate for layer %d")
+  ("KeepHierarchicalBit%d", cfg_RCKeepHierarchicalBit, false, MAX_LAYERS, "Rate control: keep hierarchical bit allocation for layer %d")
+  ("LCULevelRateControl%d", cfg_RCLCULevelRC, true, MAX_LAYERS, "Rate control: LCU level RC")
+  ("RCLCUSeparateModel%d", cfg_RCUseLCUSeparateModel, true, MAX_LAYERS, "Rate control: Use LCU level separate R-lambda model")
+  ("InitialQP%d", cfg_RCInitialQP, 0, MAX_LAYERS, "Rate control: initial QP")
+  ("RCForceIntraQP%d", cfg_RCForceIntraQP, false, MAX_LAYERS, "Rate control: force intra QP to be equal to initial QP")
+#else
   ( "RateControl",         m_RCEnableRateControl,   false, "Rate control: enable rate control" )
   ( "TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate" )
   ( "KeepHierarchicalBit", m_RCKeepHierarchicalBit, false, "Rate control: keep hierarchical bit allocation in rate control algorithm" )
@@ -623,6 +655,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ( "RCLCUSeparateModel",  m_RCUseLCUSeparateModel,  true, "Rate control: use LCU level separate R-lambda model" )
   ( "InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP" )
   ( "RCForceIntraQP",      m_RCForceIntraQP,        false, "Rate control: force intra QP to be equal to initial QP" )
+#endif
 #else
   ("RateCtrl,-rc", m_enableRateCtrl, false, "Rate control on/off")
   ("TargetBitrate,-tbr", m_targetBitrate, 0, "Input target bitrate")
@@ -1741,6 +1774,23 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if RC_SHVC_HARMONIZATION
+  for ( Int layer=0; layer<m_numLayers; layer++ )
+  {
+    if ( m_acLayerCfg[layer].m_RCEnableRateControl )
+    {
+      if ( m_acLayerCfg[layer].m_RCForceIntraQP )
+      {
+        if ( m_acLayerCfg[layer].m_RCInitialQP == 0 )
+        {
+          printf( "\nInitial QP for rate control is not specified. Reset not to use force intra QP!" );
+          m_acLayerCfg[layer].m_RCForceIntraQP = false;
+        }
+      }
+    }
+    xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
+  }
+#else
   if ( m_RCEnableRateControl )
   {
     if ( m_RCForceIntraQP )
@@ -1753,6 +1803,7 @@ Void TAppEncCfg::xCheckParameter()
     }
     xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
   }
+#endif
 #else
   if(m_enableRateCtrl)
   {
@@ -1824,7 +1875,9 @@ Void TAppEncCfg::xPrintParameter()
 {
   printf("\n");
 #if SVC_EXTENSION  
-  printf("Total number of layers        : %d\n", m_numLayers            );
+  printf("Total number of layers        : %d\n", m_numLayers       );
+  printf("Multiview                     : %d\n", m_scalabilityMask[0] );
+  printf("Scalable                      : %d\n", m_scalabilityMask[1] );
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
@@ -1868,6 +1921,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   printf("RateControl                  : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
   {
@@ -1878,6 +1932,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("InitialQP                    : %d\n", m_RCInitialQP );
     printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP );
   }
+#endif
 #else
   printf("RateControl                  : %d\n", m_enableRateCtrl);
   if(m_enableRateCtrl)
@@ -1908,6 +1963,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("FDM:%d ", m_useFastDecisionForMerge );
   printf("CFM:%d ", m_bUseCbfFastMode         );
   printf("ESD:%d ", m_useEarlySkipDetection  );
+#if FAST_INTRA_SHVC
+  printf("FIS:%d ", m_useFastIntraScalable  );
+#endif
   printf("RQT:%d ", 1     );
   printf("TransformSkip:%d ",     m_useTransformSkip              );
   printf("TransformSkipFast:%d ", m_useTransformSkipFast       );

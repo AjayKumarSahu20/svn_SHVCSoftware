@@ -2505,6 +2505,27 @@ TEncSearch::estIntraPredQT( TComDataCU* pcCU,
     if (doFastSearch)
     {
       assert(numModesForFullRD < numModesAvailable);
+#if FAST_INTRA_SHVC
+      Int   uiPreds[3] = {-1, -1, -1};
+      Int   iMode = -1;
+      Bool  skipFastHAD = false;
+      Int numCand = pcCU->getIntraDirLumaPredictor( uiPartOffset, uiPreds, &iMode );
+
+      if ( m_pcEncCfg->getUseFastIntraScalable() )
+      {
+        if( pcCU->getLayerId() > 0 )
+        {
+          numModesAvailable = pcCU->reduceSetOfIntraModes(uiPartOffset, uiPreds, iMode );
+          if( numModesForFullRD > numModesAvailable ) //fast HAD can be skipped
+          {
+            skipFastHAD = true;
+            numModesForFullRD = numModesAvailable;
+            for( Int i=0; i < numModesForFullRD; i++ ) 
+              uiRdModeList[ i ] = g_reducedSetIntraModes[ i ];
+          }
+        }
+      }
+#endif
 
       for( Int i=0; i < numModesForFullRD; i++ ) 
       {
@@ -2515,6 +2536,14 @@ TEncSearch::estIntraPredQT( TComDataCU* pcCU,
       for( Int modeIdx = 0; modeIdx < numModesAvailable; modeIdx++ )
       {
         UInt uiMode = modeIdx;
+#if FAST_INTRA_SHVC
+        if ( m_pcEncCfg->getUseFastIntraScalable() )
+        {
+          if( skipFastHAD )//indicates that fast HAD can be skipped
+            break;
+          uiMode = ( iMode==0 ) ? g_reducedSetIntraModes[modeIdx] : uiMode; //(iMode=0) indicates reduced set of modes
+        }
+#endif
 
         predIntraLumaAng( pcCU->getPattern(), uiMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail );
         
@@ -2528,9 +2557,11 @@ TEncSearch::estIntraPredQT( TComDataCU* pcCU,
       }
     
 #if FAST_UDI_USE_MPM
+#if FAST_INTRA_SHVC == 0
       Int uiPreds[3] = {-1, -1, -1};
       Int iMode = -1;
       Int numCand = pcCU->getIntraDirLumaPredictor( uiPartOffset, uiPreds, &iMode );
+#endif
       if( iMode >= 0 )
       {
         numCand = iMode;

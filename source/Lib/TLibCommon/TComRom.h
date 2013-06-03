@@ -132,6 +132,11 @@ extern       UInt   g_sigLastScanCG32x32[ 64 ];
 
 extern const UChar  g_aucIntraModeNumFast[7];
 
+#if FAST_INTRA_SHVC
+extern       UInt  g_reducedSetIntraModes[NUM_INTRA_MODE-1];
+extern       UInt  g_predefSetIntraModes[NUM_INTRA_MODE-1];
+#endif
+
 // ====================================================================================================================
 // Bit-depth
 // ====================================================================================================================

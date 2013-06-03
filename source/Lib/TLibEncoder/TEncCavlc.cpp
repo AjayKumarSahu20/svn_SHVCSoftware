@@ -438,8 +438,15 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   xTraceSPSHeader (pcSPS);
 #endif
   WRITE_CODE( pcSPS->getVPSId (),          4,       "sps_video_parameter_set_id" );
-  WRITE_CODE( pcSPS->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1" );
-  WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0,                             "sps_temporal_id_nesting_flag" );
+#if SPS_SUB_LAYER_INFO
+  if(pcSPS->getLayerId() == 0)
+  {
+#endif
+    WRITE_CODE( pcSPS->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1" );
+    WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0,                             "sps_temporal_id_nesting_flag" );
+#if SPS_SUB_LAYER_INFO
+  }
+#endif
   codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
   WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
   WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
@@ -552,8 +559,29 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
+
+#if SPS_EXTENSION
+  WRITE_FLAG( 1, "sps_extension_flag" );
+  if( 1 )   // if( sps_extension_flag )
+  {
+    codeSPSExtension( pcSPS );
+    WRITE_FLAG( 0, "sps_extension2_flag" );
+  }
+#else
+  WRITE_FLAG( 0, "sps_extension_flag" );
+#endif
+}
+#if SPS_EXTENSION
+Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
+{
+  // more syntax elements to be written here
 #if SCALED_REF_LAYER_OFFSETS
+#if SCALED_REF_LAYER_OFFSET_FLAG
+  WRITE_FLAG( pcSPS->getLayerId() > 0, "scaled_ref_layer_offset_present_flag" );
   if( pcSPS->getLayerId() > 0 )
+#else
+  if( pcSPS->getLayerId() > 0 )
+#endif
   {
     Window scaledWindow = pcSPS->getScaledRefLayerWindow();
     WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
@@ -562,10 +590,8 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
   }
 #endif
-
-  WRITE_FLAG( 0, "sps_extension_flag" );
 }
-
+#endif
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
@@ -724,6 +750,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  for( i = 0; i < vps->getMaxLayers() - 1; i++)
+  {
+    WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+  }
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
@@ -1036,8 +1068,10 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           {
             WRITE_CODE(pcSlice->getNumInterLayerRefPics(), numBits,"num_inter_layer_ref_pics_minus1");
           }       
-          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ ) 
+          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+          {
             WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+          }
         }
       }
     }     

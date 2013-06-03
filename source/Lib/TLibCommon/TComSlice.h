@@ -559,6 +559,9 @@ private:
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -711,6 +714,10 @@ public:
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #endif 
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  Bool   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
+  Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
+#endif
 };
 
 class Window
@@ -1615,6 +1622,11 @@ public:
   Bool      getRapPicFlag       ();  
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
+#if RESTR_CHK
+   Bool     isRADL() {  return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_R); }
+   Bool     isRASL()   {   return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
+#endif
+
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& rcListPic);
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
