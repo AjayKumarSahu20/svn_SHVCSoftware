@@ -159,7 +159,7 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j< 1/*MAX_NUM_REF*/; j++)  // to be set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++)  // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
 
         m_cIlpPic[j] = new  TComPic;
@@ -1306,12 +1306,6 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
     return NULL;
 #endif
   }
-
-  // currently only one reference layer is supported
-  assert( vps->getNumDirectRefLayers( m_layerId ) == 1 );
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-  assert( vps->getMaxOneActiveRefLayerFlag() == 1 );
-#endif 
   
   return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdc ) );
 }
