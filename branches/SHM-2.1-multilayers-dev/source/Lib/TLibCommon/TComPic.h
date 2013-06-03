@@ -91,8 +91,8 @@ private:
 
   SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 #if SVC_EXTENSION
-  Bool                  m_bSpatialEnhLayer;       // whether current layer is a spatial enhancement layer,
-  TComPicYuv*           m_pcFullPelBaseRec;    // upsampled base layer recontruction for difference domain inter prediction
+  Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
+  TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
 #endif
 
 public:
@@ -113,10 +113,10 @@ public:
 #if SVC_EXTENSION
   Void          setLayerId (UInt layerId) { m_layerId = layerId; }
   UInt          getLayerId ()               { return m_layerId; }
-  Bool          isSpatialEnhLayer()             { return m_bSpatialEnhLayer; }
-  Void          setSpatialEnhLayerFlag (Bool b) { m_bSpatialEnhLayer = b; }
-  Void          setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
-  TComPicYuv*   getFullPelBaseRec   ()  { return  m_pcFullPelBaseRec;  }
+  Bool          isSpatialEnhLayer(UInt refLayerIdc)             { return m_bSpatialEnhLayer[refLayerIdc]; }
+  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b) { m_bSpatialEnhLayer[refLayerIdc] = b; }
+  Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
+  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
 #endif
 #if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
   Bool          isILR( UInt currLayerId )   { return ( getIsLongTerm() && m_layerId < currLayerId ); }

@@ -553,8 +553,8 @@ public:
   UInt          getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, Bool bIsIntra);
 
 #if SVC_COL_BLK 
-  TComDataCU*   getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
-  TComDataCU*   getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
   Void          scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
 #endif
 };

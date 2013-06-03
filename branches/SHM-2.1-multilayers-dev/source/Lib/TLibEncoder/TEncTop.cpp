@@ -506,17 +506,23 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
-#else
-        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-#endif
-        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-          pcEPic->setSpatialEnhLayerFlag( true );
+          const Window scalEL = getSPS()->getScaledRefLayerWindow();
+          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
-          //only for scalable extension
-          assert( m_cVPS.getScalabilityMask(1) == true );
+#if VPS_EXTN_DIRECT_REF_LAYERS
+          TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
+#else
+          TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+#endif
+          if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
+          {
+            pcEPic->setSpatialEnhLayerFlag( i, true );
+
+            //only for scalable extension
+            assert( m_cVPS.getScalabilityMask(1) == true );
+          }
         }
       }
 #endif
@@ -537,17 +543,23 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if SVC_EXTENSION //Temporal solution, should be modified
       if(m_layerId > 0)
       {
-#if VPS_EXTN_DIRECT_REF_LAYERS
-        TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( m_layerId - 1 );
-#else
-        TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-#endif
-        if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() )
+        for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-          rpcPic->setSpatialEnhLayerFlag( true );
+          const Window scalEL = getSPS()->getScaledRefLayerWindow();
+          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
-          //only for scalable extension
-          assert( m_cVPS.getScalabilityMask(1) == true );
+#if VPS_EXTN_DIRECT_REF_LAYERS
+          TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
+#else
+          TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
+#endif
+          if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
+          {
+            rpcPic->setSpatialEnhLayerFlag( i, true );
+
+            //only for scalable extension
+            assert( m_cVPS.getScalabilityMask(1) == true );
+          }
         }
       }
 #endif
@@ -1234,7 +1246,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j<1/*MAX_NUM_REF*/; j++)
+      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++)
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
@@ -1253,13 +1265,18 @@ Void TEncTop::xInitILRP()
 
 Void TEncTop::setILRPic(TComPic *pcPic)
 {
-  if(m_cIlpPic[0])
+  for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
   {
-    m_cIlpPic[0]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(), m_cIlpPic[0]->getPicYuvRec());
-    m_cIlpPic[0]->getSlice(0)->setPOC(pcPic->getPOC());
-    m_cIlpPic[0]->setLayerId(pcPic->getSlice(0)->getBaseColPic()->getLayerId()); //set reference layerId
-    m_cIlpPic[0]->getPicYuvRec()->setBorderExtension(false);
-    m_cIlpPic[0]->getPicYuvRec()->extendPicBorder();
+    Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
+
+    if(m_cIlpPic[refLayerIdc])
+    {
+      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(refLayerIdc), m_cIlpPic[refLayerIdc]->getPicYuvRec());
+      m_cIlpPic[refLayerIdc]->getSlice(0)->setPOC(pcPic->getPOC());
+      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
+      m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
+      m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
+    }
   }
 }
 #endif
