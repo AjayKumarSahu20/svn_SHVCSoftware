@@ -1089,7 +1089,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
-  m_numInterLayerRefPics       = pSrc->m_numInterLayerRefPics;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
 #elif REF_IDX_FRAMEWORK
   m_numILRRefIdx               = pSrc->m_numILRRefIdx;
