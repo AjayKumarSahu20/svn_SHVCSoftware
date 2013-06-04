@@ -1531,7 +1531,6 @@ private:
   Bool       m_enableTMVPFlag;
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_interLayerPredEnabledFlag;
-  Int        m_numInterLayerRefPics;
 #endif 
 public:
   TComSlice();
@@ -1807,8 +1806,6 @@ public:
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
 
-  Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
-  UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 

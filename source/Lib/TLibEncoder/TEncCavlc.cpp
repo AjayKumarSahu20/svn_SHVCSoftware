@@ -1066,7 +1066,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           }
           if( !pcSlice->getVPS()->getMaxOneActiveRefLayerFlag()) 
           {
-            WRITE_CODE(pcSlice->getNumInterLayerRefPics(), numBits,"num_inter_layer_ref_pics_minus1");
+            WRITE_CODE(pcSlice->getActiveNumILRRefIdx() - 1, numBits,"num_inter_layer_ref_pics_minus1");           
           }       
           for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
           {
