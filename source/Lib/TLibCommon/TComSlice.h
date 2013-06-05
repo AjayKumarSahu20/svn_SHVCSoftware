@@ -1531,7 +1531,6 @@ private:
   Bool       m_enableTMVPFlag;
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_interLayerPredEnabledFlag;
-  Int        m_numInterLayerRefPics;
 #endif 
 public:
   TComSlice();
@@ -1802,14 +1801,11 @@ public:
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
-  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
+  Int       getInterLayerPredLayerIdc (UInt layerIdx)                        { return  m_interLayerPredLayerIdc[layerIdx];}
+  Void      setInterLayerPredLayerIdc (UInt refLayerIdc, UInt layerIdx)      { m_interLayerPredLayerIdc[layerIdx] = refLayerIdc;  }
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
-  Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
-
-  Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
-  UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
+  Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;} 
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 

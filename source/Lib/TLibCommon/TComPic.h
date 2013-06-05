@@ -123,7 +123,7 @@ public:
 #endif
 
 #if REF_IDX_MFM
-  Void          copyUpsampledMvField  (  TComPic* pcPicBase );
+  Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
 #endif
 

@@ -909,9 +909,12 @@ Void TAppEncTop::xInitLib()
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
+  UInt maxDirectRefLayers = 0;
   for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
     vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
+    maxDirectRefLayers = max<UInt>( maxDirectRefLayers, vps->getNumDirectRefLayers( layerCtr ) );
+
     for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
       vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
@@ -929,7 +932,7 @@ Void TAppEncTop::xInitLib()
   }
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
-    vps->setMaxOneActiveRefLayerFlag(true); 
+    vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
 #else
   m_cTEncTop.init();
