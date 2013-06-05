@@ -1749,8 +1749,8 @@ Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, I
 {
   // check BL mode
   UInt          uiCUAddrBase, uiAbsPartAddrBase;
-  // the right reference layerIdc should be specified, currently it is set to 0
-  TComDataCU*   pcTempCU = getBaseColCU(0, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
+  // the right reference layerIdc should be specified, currently it is set to m_layerId-1
+  TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
 
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
   {
