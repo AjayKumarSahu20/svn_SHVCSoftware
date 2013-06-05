@@ -126,8 +126,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Pel* piSrcV;
   Pel* piDstV;
 
+#if SIMPLIFIED_MV_POS_SCALING
   Int scaleX = g_posScalingFactor[refLayerIdc][0];
   Int scaleY = g_posScalingFactor[refLayerIdc][1];
+#else
+  Int   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
+  Int   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
+#endif
 
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
@@ -332,6 +337,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
+
+#if !SIMPLIFIED_MV_POS_SCALING
+    scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
+    scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
+#endif
 
 #if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth () >> 1;

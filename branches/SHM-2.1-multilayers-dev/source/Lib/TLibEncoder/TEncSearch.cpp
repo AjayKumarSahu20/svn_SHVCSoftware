@@ -3312,7 +3312,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
       RefPicList  eRefPicList = ( iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
       
 #if (ENCODER_FAST_MODE)
-      if (pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1)
+      if( pcCU->getSlice()->getNumRefIdx(eRefPicList) - pcCU->getSlice()->getActiveNumILRRefIdx() > 0)
       {
         testILR = false;
       }
