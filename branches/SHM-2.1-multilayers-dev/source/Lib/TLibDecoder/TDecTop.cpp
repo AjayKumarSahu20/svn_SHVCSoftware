@@ -822,7 +822,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_EXTENSION   
     if(m_layerId > 0)
     {
-      for( UInt i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+      for( i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
 #if AVC_BASE
