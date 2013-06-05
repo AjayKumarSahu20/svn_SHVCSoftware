@@ -457,7 +457,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     bool testInter = true;
     if (rpcBestCU->getLayerId() > 0)
     {
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[rpcBestCU->getLayerId()]->getRefLayerEnc(rpcBestCU->getLayerId()-1)->getListPic();
+      TComList<TComPic*> *cListPic = m_ppcTEncTop[rpcBestCU->getLayerId()]->getRefLayerEnc(0)->getListPic();
       TComPic* picLowerLayer = pcSlice->getRefPic( *cListPic, pcSlice->getPOC() );
       if(picLowerLayer->getSlice(0)->getSliceType() == I_SLICE)
       {
