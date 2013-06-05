@@ -994,9 +994,6 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     // initialize CU encoder
     TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
     pcCU->initCU( rpcPic, uiCUAddr );
-#if SVC_EXTENSION
-    pcCU->setLayerId(m_pcCfg->getLayerId());
-#endif
 
 #if !RATE_CONTROL_LAMBDA_DOMAIN
     if(m_pcCfg->getUseRateCtrl())

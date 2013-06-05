@@ -542,7 +542,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #else
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
 #endif
-        pcSlice->setBaseColPic (*cListPic, refLayerIdc );
+        pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
 #if SIMPLIFIED_MV_POS_SCALING
 #if SCALED_REF_LAYER_OFFSETS
@@ -935,6 +935,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     else if (m_pcEncTop->getTMVPModeId() == 1)
     {
       pcSlice->getSPS()->setTMVPFlagsPresent(1);
+#if SVC_EXTENSION
+      if( pcSlice->getIdrPicFlag() )
+      {
+        pcSlice->setEnableTMVPFlag(0);
+      }
+      else
+#endif
       pcSlice->setEnableTMVPFlag(1);
     }
     else

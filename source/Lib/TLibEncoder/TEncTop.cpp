@@ -1221,7 +1221,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 #endif
   }
 
-  return (TEncTop *)getLayerEnc( getVPS()->getRefLayerId( m_layerId, refLayerIdc ) );
+  return (TEncTop *)getLayerEnc( m_cVPS.getRefLayerId( m_layerId, refLayerIdc ) );
 }
 #endif
 

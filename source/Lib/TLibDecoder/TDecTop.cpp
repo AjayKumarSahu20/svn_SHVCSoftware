@@ -185,9 +185,9 @@ Void TDecTop::setILRPic(TComPic *pcPic)
 
     if(m_cIlpPic[refLayerIdc])
     {
-      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(i), m_cIlpPic[refLayerIdc]->getPicYuvRec());
+      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(refLayerIdc), m_cIlpPic[refLayerIdc]->getPicYuvRec());
       m_cIlpPic[refLayerIdc]->getSlice(0)->setPOC(pcPic->getPOC());
-      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(i)->getLayerId()); //set reference layerId
+      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
       m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
       m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
     }
@@ -889,12 +889,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #if SVC_UPSAMPLING
-        if ( pcPic->isSpatialEnhLayer(refLayerIdc))
+        if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
 #if SCALED_REF_LAYER_OFFSETS
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
 #else
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(), pcSlice->getBaseColPic()->getPicYuvRec(), pcPic->getPicYuvRec() );
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec() );
 #endif
         }
         else
@@ -907,7 +907,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
 #if REF_IDX_FRAMEWORK
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
+#else
     if(m_layerId > 0)
+#endif
     {
       setILRPic(pcPic);
 #if REF_IDX_MFM
