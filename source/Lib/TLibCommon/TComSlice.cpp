@@ -519,7 +519,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #endif
 
 #if REF_IDX_FRAMEWORK
-  for( UInt i = 0; i < m_activeNumILRRefIdx; i++ )
+  for( i = 0; i < m_activeNumILRRefIdx; i++ )
   {
     UInt refLayerIdc = m_interLayerPredLayerIdc[i];
     //inter-layer reference picture
