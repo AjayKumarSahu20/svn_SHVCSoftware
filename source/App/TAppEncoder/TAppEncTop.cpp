@@ -885,7 +885,7 @@ Void TAppEncTop::xInitLib()
   vps->setNumOutputLayerSets(vps->getNumLayerSets());    
   vps->setNumProfileTierLevel(vps->getNumLayerSets());   
   vps->setDefaultOneTargetOutputLayerFlag(true);
-  for(Int i = 1; i < vps->getNumLayerSets(); i++)
+  for(i = 1; i < vps->getNumLayerSets(); i++)
   {
     vps->setProfileLevelTierIdx(i, i);
     vps->setOutputLayerSetIdx(i, i); 
