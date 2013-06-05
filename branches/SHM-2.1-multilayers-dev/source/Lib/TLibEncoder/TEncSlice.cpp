@@ -490,11 +490,13 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   if( layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-  // currently only one reference layer is supported in software and no decision logic to select yet.
-  // hence num of active inter layer references is set to one always
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx(1);
+      rpcSlice->setActiveNumILRRefIdx( rpcSlice->getNumILRRefIdx() );
+      for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        rpcSlice->setInterLayerPredLayerIdc(i, i);
+      }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
 #else

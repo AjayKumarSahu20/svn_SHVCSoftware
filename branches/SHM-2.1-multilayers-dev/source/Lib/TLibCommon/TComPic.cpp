@@ -567,9 +567,8 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 }
 
 #if REF_IDX_MFM
-Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
+Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
 {
-  UInt refLayerIdc = pcPicBase->getLayerId();
 #if AVC_SYNTAX && !ILP_DECODED_PICTURE
   const Window &confBL = pcPicBase->getConformanceWindow();
   const Window &confEL = getPicYuvRec()->getConformanceWindow();
