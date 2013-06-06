@@ -3312,7 +3312,11 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
       RefPicList  eRefPicList = ( iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
       
 #if (ENCODER_FAST_MODE)
-      if( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 )
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+      if( pcCU->getSlice()->getNumRefIdx(eRefPicList) - pcCU->getSlice()->getActiveNumILRRefIdx() > Int( pcCU->getSlice()->getActiveNumILRRefIdx() == 0 ) )
+#else
+      if( pcCU->getSlice()->getNumRefIdx(eRefPicList) - pcCU->getSlice()->getVPS()->getNumDirectRefLayers( pcCU->getLayerId() ) > Int( pcCU->getSlice()->getVPS()->getNumDirectRefLayers( pcCU->getLayerId() ) == 0 ) )
+#endif
       {
         testILR = false;
       }
