@@ -157,7 +157,7 @@ protected:
   Void  xCheckRDCostIntraBL ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU  );
 #endif
 #if ENCODER_FAST_MODE
-  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU );
+  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
 #endif
   Void  xCheckDQP           ( TComDataCU*  pcCU );
   
