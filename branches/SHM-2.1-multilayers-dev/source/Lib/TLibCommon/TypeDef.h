@@ -46,7 +46,7 @@
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     1      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+#define MAX_LAYERS                       3      ///< max number of layers the codec is supposed to handle
 
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions

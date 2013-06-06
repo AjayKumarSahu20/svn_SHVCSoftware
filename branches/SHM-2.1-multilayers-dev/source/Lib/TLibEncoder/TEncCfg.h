@@ -144,6 +144,9 @@ protected:
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int       m_numDirectRefLayers;
   Int       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
+
+  Int       m_numActiveRefLayers;
+  Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
 #endif
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
@@ -404,6 +407,12 @@ public:
 
   Int       getRefLayerId                   (Int i)                         { return m_refLayerId[i];           }
   Void      setRefLayerId                   (Int i, Int refLayerId)         { m_refLayerId[i] = refLayerId;     }
+
+  Int       getNumActiveRefLayers           ()                              { return m_numActiveRefLayers;      }
+  Void      setNumActiveRefLayers           (Int num)                       { m_numActiveRefLayers = num;       }
+
+  Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
+  Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
 #endif
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }

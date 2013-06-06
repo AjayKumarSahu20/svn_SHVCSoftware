@@ -492,10 +492,10 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx( rpcSlice->getNumILRRefIdx() );
+      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        rpcSlice->setInterLayerPredLayerIdc(i, i);
+        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[layerId]->getPredLayerId(i), i );
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }

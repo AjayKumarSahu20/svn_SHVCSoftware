@@ -158,7 +158,24 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumDirectRefLayers(); i++)
         {
           m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
-        }        
+        }
+      }
+
+      if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
+      {
+        m_acTEncTop[layer].setNumActiveRefLayers( m_acLayerCfg[layer].getNumDirectRefLayers() );
+        for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
+        {
+          m_acTEncTop[layer].setPredLayerId(i, i);
+        }
+      }
+      else
+      {
+        m_acTEncTop[layer].setNumActiveRefLayers       ( m_acLayerCfg[layer].getNumActiveRefLayers() );      
+        for(Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++)
+        {
+          m_acTEncTop[layer].setPredLayerId             ( i, m_acLayerCfg[layer].getPredLayerId(i));
+        }
       }
     }
 #endif

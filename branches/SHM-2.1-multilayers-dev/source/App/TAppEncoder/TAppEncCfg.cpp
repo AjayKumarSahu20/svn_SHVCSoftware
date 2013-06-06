@@ -152,6 +152,14 @@ Void TAppEncCfg::destroy()
       delete [] m_acLayerCfg[layer].m_refLayerIds;
     }
   }
+
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
+    {
+      delete [] m_acLayerCfg[layer].m_predLayerIds;
+    }
+  }
 #endif
 }
 
@@ -328,8 +336,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_conformanceMode  [MAX_LAYERS];
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int*    cfg_numDirectRefLayers [MAX_LAYERS];
-  string cfg_refLayerIds   [MAX_LAYERS];
-  string* cfg_refLayerIdsPtr   [MAX_LAYERS];
+  string  cfg_refLayerIds        [MAX_LAYERS];
+  string* cfg_refLayerIdsPtr     [MAX_LAYERS];
+
+  Int*    cfg_numActiveRefLayers [MAX_LAYERS];
+  string  cfg_predLayerIds       [MAX_LAYERS];
+  string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   Int*    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
@@ -359,6 +371,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if VPS_EXTN_DIRECT_REF_LAYERS
     cfg_numDirectRefLayers  [layer] = &m_acLayerCfg[layer].m_numDirectRefLayers;
     cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
+    cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
+    cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
 #if SCALED_REF_LAYER_OFFSETS
     cfg_scaledRefLayerLeftOffset  [layer] = &m_acLayerCfg[layer].m_scaledRefLayerLeftOffset;
@@ -421,6 +435,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if VPS_EXTN_DIRECT_REF_LAYERS
   ("NumDirectRefLayers%d",    cfg_numDirectRefLayers, -1, MAX_LAYERS, "Number of direct reference layers")
   ("RefLayerIds%d",           cfg_refLayerIdsPtr, string(""), MAX_LAYERS, "direct reference layer IDs")
+  ("NumActiveRefLayers%d",    cfg_numActiveRefLayers, -1, MAX_LAYERS, "Number of active reference layers")
+  ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
@@ -889,7 +905,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numDirectRefLayers )
         {
-          printf( "The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumDirectRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_refLayerIds + i ) = atoi( refLayerId );
@@ -898,13 +914,45 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numDirectRefLayers )
       {
-        printf( "The width of some columns is not defined.\n" );
+        printf( "NumDirectRefLayers: The width of some columns is not defined.\n" );
         exit( EXIT_FAILURE );
       }
     }
     else
     {
       m_acLayerCfg[layer].m_refLayerIds = NULL;
+    }
+  }
+
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
+    if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
+    {
+      char *refLayerId;
+      int  i=0;
+      m_acLayerCfg[layer].m_predLayerIds = new Int[m_acLayerCfg[layer].m_numActiveRefLayers];
+      refLayerId = strtok(pPredLayerIds, " ,-");
+      while(refLayerId != NULL)
+      {
+        if( i >= m_acLayerCfg[layer].m_numActiveRefLayers )
+        {
+          printf( "NumActiveRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          exit( EXIT_FAILURE );
+        }
+        *( m_acLayerCfg[layer].m_predLayerIds + i ) = atoi( refLayerId );
+        refLayerId = strtok(NULL, " ,-");
+        i++;
+      }
+      if( i < m_acLayerCfg[layer].m_numActiveRefLayers )
+      {
+        printf( "NumActiveRefLayers: The width of some columns is not defined.\n" );
+        exit( EXIT_FAILURE );
+      }
+    }
+    else
+    {
+      m_acLayerCfg[layer].m_predLayerIds = NULL;
     }
   }
 #endif
@@ -1837,6 +1885,17 @@ Void TAppEncCfg::xCheckParameter()
     {
       xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] > layer, "Cannot reference higher layers");
       xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] == layer, "Cannot reference the current layer itself");
+    }
+  }
+
+  xConfirmPara( (m_acLayerCfg[0].m_numActiveRefLayers != 0) && (m_acLayerCfg[0].m_numActiveRefLayers != -1), "Layer 0 cannot have any active reference layers" );
+  // NOTE: m_numActiveRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
+  for(Int layer = 1; layer < MAX_LAYERS; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_numActiveRefLayers > m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
+    for(Int i = 0; i < m_acLayerCfg[layer].m_numActiveRefLayers; i++)
+    {
+      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] > m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference higher layers");
     }
   }
 #endif
