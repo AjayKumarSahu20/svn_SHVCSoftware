@@ -457,13 +457,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 #if (ENCODER_FAST_MODE)
     Bool testInter = true;
     if (rpcBestCU->getLayerId() > 0)
-    { 
-      TComList<TComPic*> *cListPic = m_ppcTEncTop[rpcBestCU->getLayerId()]->getRefLayerEnc(0)->getListPic();
-      TComPic* picLowerLayer = pcSlice->getRefPic( *cListPic, pcSlice->getPOC() );
-      if(picLowerLayer->getSlice(0)->getSliceType() == I_SLICE)
-      {
-        testInter = false;
-      }
+    {
+        if(pcSlice->getSliceType() == P_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx()) 
+            testInter = false; 
+        if(pcSlice->getSliceType() == B_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) == pcSlice->getActiveNumILRRefIdx()) 
+            testInter = false;
     }
 #endif
     for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)
