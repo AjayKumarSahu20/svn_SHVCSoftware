@@ -68,7 +68,7 @@ TComPic::TComPic()
 , m_bCheckLTMSB                           (false)
 {
 #if SVC_EXTENSION
-  memset( m_pcFullPelBaseRec, NULL, sizeof( m_pcFullPelBaseRec ) );
+  memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
   memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
 #endif
   m_apcPicYuv[0]      = NULL;
