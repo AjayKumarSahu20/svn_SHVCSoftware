@@ -122,7 +122,7 @@ TComSlice::TComSlice()
 #endif
 
 #if SVC_EXTENSION
-  memset( m_pcBaseColPic, NULL, sizeof( m_pcBaseColPic ) );
+  memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0; 
@@ -2599,7 +2599,7 @@ Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
 {  
   if(m_layerId == 0)
   {
-    memset( m_pcBaseColPic, NULL, sizeof( m_pcBaseColPic ) );
+    memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
     return;
   }        
   setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
