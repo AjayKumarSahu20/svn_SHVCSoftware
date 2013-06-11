@@ -44,6 +44,8 @@ protected:
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int       *m_refLayerIds;
   Int       m_numDirectRefLayers;
+  Int       *m_predLayerIds;
+  Int       m_numActiveRefLayers;
 #endif
 
 #if RC_SHVC_HARMONIZATION
@@ -107,6 +109,10 @@ public:
   Int     getNumDirectRefLayers()     {return m_numDirectRefLayers;}
   Int*    getRefLayerIds()            {return m_refLayerIds;      }
   Int     getRefLayerId(Int i)        {return m_refLayerIds[i];   }
+
+  Int     getNumActiveRefLayers()     {return m_numActiveRefLayers;}
+  Int*    getPredLayerIds()           {return m_predLayerIds;     }
+  Int     getPredLayerId(Int i)       {return m_predLayerIds[i];  }
 #endif
 #if RC_SHVC_HARMONIZATION
   Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }

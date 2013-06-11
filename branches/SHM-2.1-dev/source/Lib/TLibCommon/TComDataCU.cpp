@@ -1749,10 +1749,13 @@ Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, I
 {
   // check BL mode
   UInt          uiCUAddrBase, uiAbsPartAddrBase;
-  TComDataCU*   pcTempCU = getBaseColCU( uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
+  // the right reference layerIdc should be specified, currently it is set to m_layerId-1
+  TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
 
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
+  {
     return( NUM_INTRA_MODE-1 );
+  }
 
   // compute set of enabled modes g_reducedSetIntraModes[...]
   Int authorizedMode[NUM_INTRA_MODE-1]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
@@ -4181,13 +4184,13 @@ Void TComDataCU::getBaseChromaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartI
 #endif
 
 #if SVC_COL_BLK
-TComDataCU*  TComDataCU::getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
+TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
 {
 #if 1 // it should provide identical resutls
   UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
   UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
 
-  return getBaseColCU( uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase );
+  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase );
 #else
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
 
@@ -4236,9 +4239,9 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, 
 #endif
 }
 
-TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
+TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
 {
-  TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
+  TComPic* cBaseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
 #if !SIMPLIFIED_MV_POS_SCALING
 #if SVC_UPSAMPLING && !ILP_DECODED_PICTURE
@@ -4268,11 +4271,11 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
 #if SCALED_REF_LAYER_OFFSETS
   Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowLeftOffset();
   Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowTopOffset();
-  Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
-  Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+  Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
+  Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #else
-  Int iBX = (uiPelX*g_posScalingFactor[m_layerId][0] + (1<<15)) >> 16;
-  Int iBY = (uiPelY*g_posScalingFactor[m_layerId][1] + (1<<15)) >> 16;
+  Int iBX = (uiPelX*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
+  Int iBY = (uiPelY*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #endif
 #else
   Int iBX = (uiPelX*widthBL + widthEL/2)/widthEL;
@@ -4294,8 +4297,8 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   const Window &confBL = cBaseColPic->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();
 
-  Int widthBL   = m_pcSlice->getBaseColPic()->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-  Int heightBL  = m_pcSlice->getBaseColPic()->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+  Int widthBL   = m_pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+  Int heightBL  = m_pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
 #endif
   if( iBX >= widthBL || iBY >= heightBL ) //outside of the reference layer cropped picture
   {
@@ -4315,12 +4318,12 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt uiPelX, UInt uiPelY, UInt &uiCUAddrB
   return cBaseColPic->getCU(uiCUAddrBase);
 }
 
-Void TComDataCU::scaleBaseMV( TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
+Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
 {
   TComMvField cMvFieldBase;
   TComMv cMv;
 #if SIMPLIFIED_MV_POS_SCALING
-  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[m_layerId][0], g_mvScalingFactor[m_layerId][1] );
+  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[refLayerIdc][0], g_mvScalingFactor[refLayerIdc][1] );
 #else
   const Window &confBL = m_pcSlice->getBaseColPic()->getPicYuvRec()->getConformanceWindow();
   const Window &confEL = m_pcPic->getPicYuvRec()->getConformanceWindow();

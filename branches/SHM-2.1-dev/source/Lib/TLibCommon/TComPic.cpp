@@ -66,11 +66,11 @@ TComPic::TComPic()
 , m_bIndependentTileBoundaryForNDBFilter  (false)
 , m_pNDBFilterYuvTmp                      (NULL)
 , m_bCheckLTMSB                           (false)
-#if SVC_EXTENSION
-, m_bSpatialEnhLayer( false )
-, m_pcFullPelBaseRec( NULL )
-#endif
 {
+#if SVC_EXTENSION
+  memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
+  memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
+#endif
   m_apcPicYuv[0]      = NULL;
   m_apcPicYuv[1]      = NULL;
 }
@@ -90,9 +90,12 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
   }
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 
-  if (m_bSpatialEnhLayer)
+  for( Int i = 0; i < MAX_LAYERS; i++ )
   {
-    m_pcFullPelBaseRec = new TComPicYuv;  m_pcFullPelBaseRec->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+    if( m_bSpatialEnhLayer[i] )
+    {
+      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+    }
   }
 
   m_layerId = pcSps ? pcSps->getLayerId() : 0;
@@ -172,11 +175,14 @@ Void TComPic::destroy()
   
   deleteSEIs(m_SEIs);
 #if SVC_EXTENSION && SVC_UPSAMPLING
-  if (m_bSpatialEnhLayer)
+  for( Int i = 0; i < MAX_LAYERS; i++ )
   {
-    m_pcFullPelBaseRec->destroy();
-    delete m_pcFullPelBaseRec;
-    m_pcFullPelBaseRec  = NULL;
+    if( m_bSpatialEnhLayer[i] )
+    {
+      m_pcFullPelBaseRec[i]->destroy();
+      delete m_pcFullPelBaseRec[i];
+      m_pcFullPelBaseRec[i]  = NULL;
+    }
   }
 #endif 
 }
@@ -561,7 +567,7 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 }
 
 #if REF_IDX_MFM
-Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
+Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
 {
 #if AVC_SYNTAX && !ILP_DECODED_PICTURE
   const Window &confBL = pcPicBase->getConformanceWindow();
@@ -591,7 +597,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
       UInt baseCUAddr, baseAbsPartIdx;
 
       TComDataCU *pcColCU = 0;
-      pcColCU = pcCUDes->getBaseColCU(pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
+      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
 
 #if AVC_SYNTAX && !ILP_DECODED_PICTURE
       Int xBL = ( (pelX + 8) * widthBL + widthEL/2 ) / widthEL;
@@ -606,7 +612,7 @@ Void TComPic::copyUpsampledMvField(TComPic* pcPicBase)
         {
           TComMvField sMvFieldBase, sMvField;
           pcColCU->getMvField( pcColCU, baseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
-          pcCUDes->scaleBaseMV( sMvField, sMvFieldBase );
+          pcCUDes->scaleBaseMV( refLayerIdc, sMvField, sMvFieldBase );
 
           pcCUDes->getCUMvField((RefPicList)refPicList)->setMvField(sMvField, absPartIdx);
           pcCUDes->setPredictionMode(absPartIdx, MODE_INTER);

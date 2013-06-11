@@ -73,9 +73,9 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 }
 
 #if SCALED_REF_LAYER_OFFSETS
-Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
+Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
 #else
-Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
+Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
 #endif
 {
   assert ( NTAPS_US_LUMA == 8 );
@@ -126,7 +126,15 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
   Pel* piSrcV;
   Pel* piDstV;
 
-  if( widthEL == widthBL && heightEL == heightBL )
+#if SIMPLIFIED_MV_POS_SCALING
+  Int scaleX = g_posScalingFactor[refLayerIdc][0];
+  Int scaleY = g_posScalingFactor[refLayerIdc][1];
+#else
+  Int   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
+  Int   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
+#endif
+
+  if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
     piSrcY = piSrcBufY - scalEL.getWindowLeftOffset() - scalEL.getWindowTopOffset() * strideEL;
     piDstY = piDstBufY;
@@ -194,9 +202,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
 
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
-
-    Int   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
-    Int   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
 
 #if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth ();
@@ -333,8 +338,10 @@ Void TComUpsampleFilter::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBas
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
 
+#if !SIMPLIFIED_MV_POS_SCALING
     scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
     scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
+#endif
 
 #if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth () >> 1;
