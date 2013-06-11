@@ -348,7 +348,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     heightEL  = pcUsPic->getHeight() >> 1;
 
     widthBL   = pcBasePic->getWidth () >> 1;
-    heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
+    heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
 #endif
 
     //========== horizontal upsampling ===========
