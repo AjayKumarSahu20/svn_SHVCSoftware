@@ -270,24 +270,32 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       piSrcY = piTempBufY + (refPos -((NTAPS_US_LUMA>>1) - 1))*strideEL;
       piDstY = piDstBufY + j * strideEL;
 #if SCALED_REF_LAYER_OFFSETS
-      for( i = 0; i < pcTempPic->getWidth(); i++ )
-#else
-      for( i = 0; i < widthEL; i++ )
-#endif
+      for( i = 0; i < leftStartL; i++ )
       {
         *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
-#if SCALED_REF_LAYER_OFFSETS
-        // Only increase the x position of reference upsample picture when within the window
-        // "-2" to ensure that pointer doesn't go beyond the boundary rightEndL-1
-        if( (i >= leftStartL) && (i <= rightEndL-2) )
-        {
-          piSrcY++;
-        }
-#else
-        piSrcY++;
-#endif
         piDstY++;
       }
+
+      for( i = leftStartL; i < rightEndL-1; i++ )
+      {
+        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcY++;
+        piDstY++;
+      }
+
+      for( i = rightEndL-1; i < pcTempPic->getWidth(); i++ )
+      {
+        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
+        piDstY++;
+      }
+#else
+      for( i = 0; i < widthEL; i++ )
+      {
+        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcY++;
+        piDstY++;
+      }
+#endif
     }
 
 #if ILP_DECODED_PICTURE
@@ -410,29 +418,42 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       piDstV = piDstBufV + j*strideEL;
 
 #if SCALED_REF_LAYER_OFFSETS
-      for( i = 0; i < pcTempPic->getWidth() >> 1; i++ )
-#else
-      for( i = 0; i < widthEL; i++ )
-#endif
+      for( i = 0; i < leftStartC; i++ )
       {
         *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
         *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
-
-#if SCALED_REF_LAYER_OFFSETS
-        // Only increase the x position of reference upsample picture when within the window
-        // "-2" to ensure that pointer doesn't go beyond the boundary rightEndC-1
-        if( (i >= leftStartC) && (i <= rightEndC-2) )
-        {
-          piSrcU++;
-          piSrcV++;
-        }
-#else
-        piSrcU++;
-        piSrcV++;
-#endif
         piDstU++;
         piDstV++;
       }
+
+      for( i = leftStartC; i < rightEndC-1; i++ )
+      {
+        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
+        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcU++;
+        piSrcV++;
+        piDstU++;
+        piDstV++;
+      }
+
+      for( i = rightEndC-1; i < pcTempPic->getWidth() >> 1; i++ )
+      {
+        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
+        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
+        piDstU++;
+        piDstV++;
+      }
+#else
+      for( i = 0; i < widthEL; i++ )
+      {
+        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
+        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcU++;
+        piSrcV++;
+        piDstU++;
+        piDstV++;
+      }
+#endif
     }
 
     pcUsPic->setBorderExtension(false);
