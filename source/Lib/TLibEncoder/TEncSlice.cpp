@@ -492,10 +492,10 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx( rpcSlice->getNumILRRefIdx() );
+      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        rpcSlice->setInterLayerPredLayerIdc(i, i);
+        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[layerId]->getPredLayerId(i), i );
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
@@ -994,9 +994,6 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     // initialize CU encoder
     TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
     pcCU->initCU( rpcPic, uiCUAddr );
-#if SVC_EXTENSION
-    pcCU->setLayerId(m_pcCfg->getLayerId());
-#endif
 
 #if !RATE_CONTROL_LAMBDA_DOMAIN
     if(m_pcCfg->getUseRateCtrl())

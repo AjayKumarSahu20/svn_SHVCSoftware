@@ -158,7 +158,24 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumDirectRefLayers(); i++)
         {
           m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
-        }        
+        }
+      }
+
+      if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
+      {
+        m_acTEncTop[layer].setNumActiveRefLayers( m_acLayerCfg[layer].getNumDirectRefLayers() );
+        for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
+        {
+          m_acTEncTop[layer].setPredLayerId(i, i);
+        }
+      }
+      else
+      {
+        m_acTEncTop[layer].setNumActiveRefLayers       ( m_acLayerCfg[layer].getNumActiveRefLayers() );      
+        for(Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++)
+        {
+          m_acTEncTop[layer].setPredLayerId             ( i, m_acLayerCfg[layer].getPredLayerId(i));
+        }
       }
     }
 #endif
@@ -885,7 +902,7 @@ Void TAppEncTop::xInitLib()
   vps->setNumOutputLayerSets(vps->getNumLayerSets());    
   vps->setNumProfileTierLevel(vps->getNumLayerSets());   
   vps->setDefaultOneTargetOutputLayerFlag(true);
-  for(Int i = 1; i < vps->getNumLayerSets(); i++)
+  for(i = 1; i < vps->getNumLayerSets(); i++)
   {
     vps->setProfileLevelTierIdx(i, i);
     vps->setOutputLayerSetIdx(i, i); 
@@ -909,9 +926,12 @@ Void TAppEncTop::xInitLib()
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
+  UInt maxDirectRefLayers = 0;
   for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
     vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
+    maxDirectRefLayers = max<UInt>( maxDirectRefLayers, vps->getNumDirectRefLayers( layerCtr ) );
+
     for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
       vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
@@ -929,7 +949,7 @@ Void TAppEncTop::xInitLib()
   }
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
-    vps->setMaxOneActiveRefLayerFlag(true); 
+    vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
 #else
   m_cTEncTop.init();

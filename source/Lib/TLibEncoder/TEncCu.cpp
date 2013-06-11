@@ -107,6 +107,7 @@ Void TEncCu::create(UChar uhTotalDepth, UInt uiMaxWidth, UInt uiMaxHeight)
   
   // initialize conversion matrix from partition index to pel
   initRasterToPelXY( uiMaxWidth, uiMaxHeight, m_uhTotalDepth );
+
 }
 
 Void TEncCu::destroy()
@@ -454,14 +455,13 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
   if(!bSliceEnd && !bSliceStart && bInsidePicture )
   {
 #if (ENCODER_FAST_MODE)
-    bool testInter = true;
+    Bool testInter = true;
     if (rpcBestCU->getLayerId() > 0)
     {
-      if (rpcBestCU->getSlice()->getBaseColPic()->getSlice(0)->getSliceType() == I_SLICE)
-      {
-        testInter = false;
-      }
-
+        if(pcSlice->getSliceType() == P_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx()) 
+            testInter = false; 
+        if(pcSlice->getSliceType() == B_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) == pcSlice->getActiveNumILRRefIdx()) 
+            testInter = false;
     }
 #endif
     for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)
@@ -766,13 +766,15 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         rpcTempCU->initEstData( uiDepth, iQP );
       }
 #endif
-
 #if (ENCODER_FAST_MODE)
-        if(pcPic->getLayerId() > 0)
-        { 
-          xCheckRDCostILRUni( rpcBestCU, rpcTempCU); 
-          rpcTempCU->initEstData( uiDepth, iQP );
-       }
+      if(pcPic->getLayerId() > 0)
+      {
+        for(Int refLayer = 0; refLayer < pcSlice->getActiveNumILRRefIdx(); refLayer++)
+        {  
+           xCheckRDCostILRUni( rpcBestCU, rpcTempCU, pcSlice->getInterLayerPredLayerIdc(refLayer));
+           rpcTempCU->initEstData( uiDepth, iQP );
+        }
+      }
 #endif
 
         if (isAddLowestQP && (iQP == lowestQP))
@@ -1811,39 +1813,27 @@ Void TEncCu::xCheckRDCostIntraBL( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU
   xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
 }
 #endif
-
 #if (ENCODER_FAST_MODE)
-Void TEncCu::xCheckRDCostILRUni(TComDataCU *&rpcBestCU, TComDataCU *&rpcTempCU)
+Void TEncCu::xCheckRDCostILRUni(TComDataCU *&rpcBestCU, TComDataCU *&rpcTempCU, UInt refLayerId)
 {
   UChar uhDepth = rpcTempCU->getDepth( 0 );
-
   rpcTempCU->setDepthSubParts( uhDepth, 0 );
-
 #if SKIP_FLAG
   rpcTempCU->setSkipFlagSubParts( false, 0, uhDepth );
 #endif
-
   rpcTempCU->setPartSizeSubParts  ( SIZE_2Nx2N,  0, uhDepth );  //2Nx2N
   rpcTempCU->setPredModeSubParts  ( MODE_INTER, 0, uhDepth );
   rpcTempCU->setCUTransquantBypassSubParts  ( m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uhDepth );
-
-  Bool exitILR = m_pcPredSearch->predInterSearchILRUni( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] );
-
+  Bool exitILR = m_pcPredSearch->predInterSearchILRUni( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], refLayerId );
   if(!exitILR)
   {
-    return;
+     return;
   }
-
   m_pcPredSearch->encodeResAndCalcRdInterCU( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcResiYuvBest[uhDepth], m_ppcRecoYuvTemp[uhDepth], false );
-
   rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
-
   xCheckDQP( rpcTempCU );
   xCheckBestMode(rpcBestCU, rpcTempCU, uhDepth);
-
   return;
 }
 #endif
-
-
 //! \}

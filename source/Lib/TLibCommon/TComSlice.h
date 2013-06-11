@@ -1493,8 +1493,8 @@ private:
   UInt        m_uiTLayer;
 #if SVC_EXTENSION
   UInt        m_layerId;
-  TComPic*    m_pcBaseColPic;
-  TComPicYuv* m_pcFullPelBaseRec;
+  TComPic*    m_pcBaseColPic[MAX_LAYERS];
+  TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
 #endif 
   Bool        m_bTLayerSwitchingFlag;
 
@@ -1774,15 +1774,16 @@ public:
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
 #if SVC_EXTENSION
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
-  Void      setBaseColPic       ( TComPic* p)     { m_pcBaseColPic = p; }
-  TComPic*  getBaseColPic       ()                { return m_pcBaseColPic; }
+  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
+  Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)     { m_pcBaseColPic[refLayerIdc] = p; }
+  TComPic*  getBaseColPic       (UInt refLayerIdc)                { return m_pcBaseColPic[refLayerIdc]; }
+  TComPic** getBaseColPic       ()                { return &m_pcBaseColPic[0]; }
 
   Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
   UInt      getLayerId ()               { return m_layerId;    }
 
-  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
-  TComPicYuv* getFullPelBaseRec   ()               { return  m_pcFullPelBaseRec;  }
+  Void        setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
+  TComPicYuv* getFullPelBaseRec   (UInt refLayerIdc)               { return  m_pcFullPelBaseRec[refLayerIdc];  }
 
 #if AVC_SYNTAX
   Void      initBaseLayerRPL( TComSlice *pcSlice );
@@ -1793,23 +1794,24 @@ public:
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
 
 #if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic** pcRefPicRL);
 #endif
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
-  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
+  Int       getInterLayerPredLayerIdc (UInt layerIdx)                        { return  m_interLayerPredLayerIdc[layerIdx];}
+  Void      setInterLayerPredLayerIdc (UInt refLayerIdc, UInt layerIdx)      { m_interLayerPredLayerIdc[layerIdx] = refLayerIdc;  }
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
-
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
 #endif
+
+TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 
 
 #endif //SVC_EXTENSION
 
