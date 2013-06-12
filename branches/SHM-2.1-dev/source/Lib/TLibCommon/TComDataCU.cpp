@@ -4269,8 +4269,8 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 
 #if SIMPLIFIED_MV_POS_SCALING
 #if SCALED_REF_LAYER_OFFSETS
-  Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowLeftOffset();
-  Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow().getWindowTopOffset();
+  Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
+  Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
   Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #else

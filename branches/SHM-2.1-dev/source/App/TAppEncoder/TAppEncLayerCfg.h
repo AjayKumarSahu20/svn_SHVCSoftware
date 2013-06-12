@@ -67,10 +67,11 @@ protected:
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
 #if SCALED_REF_LAYER_OFFSETS
-  Int       m_scaledRefLayerLeftOffset;
-  Int       m_scaledRefLayerTopOffset;
-  Int       m_scaledRefLayerRightOffset;
-  Int       m_scaledRefLayerBottomOffset;
+  Int       m_numScaledRefLayerOffsets  ;
+  Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
+  Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
+  Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
+  Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
 #endif  
 public:
   TAppEncLayerCfg();

@@ -763,12 +763,16 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   if( pcSPS->getLayerId() > 0 )
 #endif
   {
-    Int iCode;
-    Window& scaledWindow = pcSPS->getScaledRefLayerWindow();
-    READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
-    READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
+    Int iCode; 
+    READ_UVLC( uiCode,      "num_scaled_ref_layer_offsets" ); pcSPS->setNumScaledRefLayerOffsets(uiCode);
+    for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
+    {
+      Window& scaledWindow = pcSPS->getScaledRefLayerWindow(i);
+      READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
+      READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
+      READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
+      READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
+    }
   }
 #endif
 }

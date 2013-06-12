@@ -579,7 +579,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     if( m_pcVPS->getScalabilityMask(1) )
     {
       Int numResampler = 0;
-      const Window &scalEL = getSPS()->getScaledRefLayerWindow();
+      const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
       Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
                            (scalEL.getWindowRightOffset()  == 0 ) && 
                            (scalEL.getWindowTopOffset()    == 0 ) && 
@@ -1764,6 +1764,9 @@ TComSPS::TComSPS()
 , m_vuiParameters             ()
 #if SVC_EXTENSION
 , m_layerId(0)
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+, m_numScaledRefLayerOffsets  (0)
 #endif
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )

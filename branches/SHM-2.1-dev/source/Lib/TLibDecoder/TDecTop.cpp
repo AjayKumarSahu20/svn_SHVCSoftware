@@ -254,7 +254,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     {
       for(UInt i = 0; i < pcSlice->getVPS()->getNumDirectRefLayers( m_layerId ); i++ )
       {
-        const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow();
+        const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(i);
         Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -864,7 +864,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if SIMPLIFIED_MV_POS_SCALING
 #if SCALED_REF_LAYER_OFFSETS
-        const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow();
+        const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
@@ -892,7 +892,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
 #if SCALED_REF_LAYER_OFFSETS
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow() );
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
 #else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec() );
 #endif

@@ -1028,7 +1028,8 @@ private:
   Bool m_bMFMEnabledFlag;
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window      m_scaledRefLayerWindow;
+  UInt        m_numScaledRefLayerOffsets;
+  Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
 public:
   TComSPS();
@@ -1170,7 +1171,9 @@ public:
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window&  getScaledRefLayerWindow(     )   { return m_scaledRefLayerWindow; }
+  UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
+  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
+  Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
 #endif
 };
 
