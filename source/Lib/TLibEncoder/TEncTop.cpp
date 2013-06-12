@@ -88,6 +88,9 @@ TEncTop::TEncTop()
 #if REF_IDX_MFM
   m_bMFMEnabledFlag = false;
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  m_numScaledRefLayerOffsets = 0;
+#endif
 }
 
 TEncTop::~TEncTop()
@@ -508,7 +511,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-          const Window scalEL = getSPS()->getScaledRefLayerWindow();
+          const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -545,7 +548,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-          const Window scalEL = getSPS()->getScaledRefLayerWindow();
+          const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -598,7 +601,11 @@ Void TEncTop::xInitSPS()
   m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-  m_cSPS.getScaledRefLayerWindow() = m_scaledRefLayerWindow;
+  m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
+  for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
+  {
+    m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
+  }
 #endif
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);

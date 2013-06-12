@@ -583,11 +583,15 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
   if( pcSPS->getLayerId() > 0 )
 #endif
   {
-    Window scaledWindow = pcSPS->getScaledRefLayerWindow();
-    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
-    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
-    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
-    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+    WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
+    for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
+    {
+      Window scaledWindow = pcSPS->getScaledRefLayerWindow(i);
+      WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+      WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+      WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+      WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+    }
   }
 #endif
 }

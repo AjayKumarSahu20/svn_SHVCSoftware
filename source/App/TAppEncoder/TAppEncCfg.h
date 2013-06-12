@@ -389,6 +389,9 @@ public:
 #if AVC_SYNTAX
   Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
+#endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg
 

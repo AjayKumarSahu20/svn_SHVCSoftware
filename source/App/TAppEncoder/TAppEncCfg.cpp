@@ -344,10 +344,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-  Int*    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
-  Int*    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
-  Int*    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
-  Int*    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
+  string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
+  string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
+  string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
+  string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
+  Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
+
+  string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
+  string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
+  string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
+  string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
 #endif
 #if RC_SHVC_HARMONIZATION
   Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
@@ -375,10 +381,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-    cfg_scaledRefLayerLeftOffset  [layer] = &m_acLayerCfg[layer].m_scaledRefLayerLeftOffset;
-    cfg_scaledRefLayerTopOffset   [layer] = &m_acLayerCfg[layer].m_scaledRefLayerTopOffset;
-    cfg_scaledRefLayerRightOffset [layer] = &m_acLayerCfg[layer].m_scaledRefLayerRightOffset;
-    cfg_scaledRefLayerBottomOffset[layer] = &m_acLayerCfg[layer].m_scaledRefLayerBottomOffset;
+    cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+    for(Int i = 0; i < MAX_LAYERS; i++)
+    {
+      cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer]  ;
+      cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer]   ;
+      cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
+      cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
+    }
 #endif
 #if RC_SHVC_HARMONIZATION
     cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
@@ -451,13 +461,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepthC",         m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #if SCALED_REF_LAYER_OFFSETS
-  ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffset,  0, MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
+  ("NumScaledRefLayerOffsets%d",    cfg_numScaledRefLayerOffsets,     0, MAX_LAYERS,  "Number of scaled offset layer sets ")
+  ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffset,   0, MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffsetPtr,   string(""), MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerRightOffset%d",  cfg_scaledRefLayerRightOffset, 0, MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerRightOffset%d",  cfg_scaledRefLayerRightOffsetPtr, string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffset,0, MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
 #if AVC_BASE
@@ -891,6 +902,77 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_pRowHeight = NULL;
   }
+#if SCALED_REF_LAYER_OFFSETS
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
+    if(m_acLayerCfg[layer].m_numScaledRefLayerOffsets)
+    {
+      assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
+              strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
+              strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
+              strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"")
+            ); 
+    }
+
+    Int *tempArray = NULL;   // Contain the value 
+    // Left offset //
+    if(strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerLeftOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "LeftOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Top offset //
+    if(strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerTopOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "TopOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Right offset //
+    if(strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerRightOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RightOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Bottom offset //
+    if(strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerBottomOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "BottomOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+  }
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -2095,4 +2177,38 @@ Bool confirmPara(Bool bflag, const Char* message)
   return true;
 }
 
+#if SCALED_REF_LAYER_OFFSETS
+Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
+{
+  Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
+  if( numEntries > 0 )
+  {
+    Char *arrayEntry;
+    Int i = 0;
+    *arr = new Int[numEntries];
+
+    arrayEntry = strtok( tempChar, " ,");
+    while(arrayEntry != NULL)
+    {
+      if( i >= numEntries )
+      {
+        printf( "%c: The number of entries specified is larger than the allowed number.\n", logString );
+        exit( EXIT_FAILURE );
+      }
+      *( *arr + i ) = atoi( arrayEntry );
+      arrayEntry = strtok(NULL, " ,");
+      i++;
+    }
+    if( i < numEntries )
+    {
+      printf( "%c: Some entries are not specified.\n", logString );
+      exit( EXIT_FAILURE );
+    }
+  }
+  else
+  {
+    *arr = NULL;
+  }
+}
+#endif
 //! \}

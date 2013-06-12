@@ -44,7 +44,7 @@
 
 #if SVC_EXTENSION
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
-#define SCALED_REF_LAYER_OFFSET_FLAG     1      ///< M0309: Signal scaled reference layer offsets in SPS
+#define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
