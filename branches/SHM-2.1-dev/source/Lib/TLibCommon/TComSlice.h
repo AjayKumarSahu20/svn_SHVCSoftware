@@ -1468,6 +1468,10 @@ private:
   // referenced slice?
   Bool        m_bRefenced;
   
+#if SH_DISCARDABLE_FLAG
+  Bool        m_bDiscardableFlag;
+#endif
+
   // access channel
   TComVPS*    m_pcVPS;
   TComSPS*    m_pcSPS;
@@ -1627,6 +1631,11 @@ public:
 #if RESTR_CHK
    Bool     isRADL() {  return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_R); }
    Bool     isRASL()   {   return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
+#endif
+
+#if SH_DISCARDABLE_FLAG
+  Bool      getDiscardableFlag  ()                              { return m_bDiscardableFlag; }
+  Void      setDiscardableFlag  (Bool b)                        { m_bDiscardableFlag = b; }
 #endif
 
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& rcListPic);

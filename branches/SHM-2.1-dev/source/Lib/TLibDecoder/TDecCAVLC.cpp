@@ -919,10 +919,27 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   vps->setNumScalabilityTypes(numScalabilityTypes);
 
+#if VPS_SPLIT_FLAG
+  for(j = 0; j < numScalabilityTypes - vps->getSplittingFlag(); j++)
+#else
   for(j = 0; j < numScalabilityTypes; j++)
+#endif
   {
     READ_CODE( 3, uiCode, "dimension_id_len_minus1[j]" ); vps->setDimensionIdLen(j, uiCode + 1);
   }
+#if VPS_SPLIT_FLAG
+  if(vps->getSplittingFlag())
+  {
+    UInt numBits = 0;
+    for(j = 0; j < numScalabilityTypes - 1; j++)
+    {
+      numBits += vps->getDimensionIdLen(j);
+    }
+    assert( numBits < 6 );
+    vps->setDimensionIdLen(numScalabilityTypes-1, 6 - numBits);
+    numBits = 6;
+  }
+#else
   if(vps->getSplittingFlag())
   {
     UInt numBits = 0;
@@ -932,6 +949,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     assert( numBits <= 6 );
   }
+#endif
 
   READ_FLAG( uiCode, "vps_nuh_layer_id_present_flag" ); vps->setNuhLayerIdPresentFlag(uiCode ? true : false);
   vps->setLayerIdInNuh(0, 0);
@@ -949,6 +967,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
 
+#if VPS_SPLIT_FLAG
+    if(!vps->getSplittingFlag())
+#endif
     for(j = 0; j < numScalabilityTypes; j++)
     {
       READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
@@ -1192,10 +1213,22 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
   if(!rpcSlice->getDependentSliceSegmentFlag())
   {
+
+#if SH_DISCARDABLE_FLAG
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
+    {
+      READ_FLAG(uiCode, "discardable_flag"); // ignored
+    }
+    for (Int i = 1; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    {
+      READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
+    }
+#else
     for (Int i = 0; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
+#endif
 
     READ_UVLC (    uiCode, "slice_type" );            rpcSlice->setSliceType((SliceType)uiCode);
     if( pps->getOutputFlagPresentFlag() )

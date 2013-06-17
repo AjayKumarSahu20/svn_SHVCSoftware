@@ -74,6 +74,9 @@ TComSlice::TComSlice()
 , m_iSliceQpDeltaCr               ( 0 )
 , m_iDepth                        ( 0 )
 , m_bRefenced                     ( false )
+#if SH_DISCARDABLE_FLAG
+, m_bDiscardableFlag              ( false )
+#endif
 , m_pcSPS                         ( NULL )
 , m_pcPPS                         ( NULL )
 , m_pcPic                         ( NULL )
