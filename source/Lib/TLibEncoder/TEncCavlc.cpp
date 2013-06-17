@@ -725,7 +725,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_FLAG( vps->getScalabilityMask(i),            "scalability_mask[i]" );
   }
 
+#if VPS_SPLIT_FLAG
+  for(j = 0; j < vps->getNumScalabilityTypes() - vps->getSplittingFlag(); j++)
+#else
   for(j = 0; j < vps->getNumScalabilityTypes(); j++)
+#endif
   {
     WRITE_CODE( vps->getDimensionIdLen(j) - 1, 3,      "dimension_id_len_minus1[j]" );
   }
@@ -737,6 +741,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       WRITE_CODE( vps->getLayerIdInNuh(i),     6,      "layer_id_in_nuh[i]" );
     }
+#if VPS_SPLIT_FLAG
+    if(!vps->getSplittingFlag())
+#endif
     for(j = 0; j < vps->getNumScalabilityTypes(); j++)
     {
       UInt bits = vps->getDimensionIdLen(j);
@@ -903,11 +910,25 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   }
   if ( !pcSlice->getDependentSliceSegmentFlag() )
   {
+
+#if SH_DISCARDABLE_FLAG
+    if (pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
+    {
+      assert(!!"discardable_flag");
+      WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
+    }
+    for (Int i = 1; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    {
+      assert(!!"slice_reserved_undetermined_flag[]");
+      WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+    }
+#else
     for (Int i = 0; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
       assert(!!"slice_reserved_undetermined_flag[]");
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
+#endif
 
     WRITE_UVLC( pcSlice->getSliceType(),       "slice_type" );
 
