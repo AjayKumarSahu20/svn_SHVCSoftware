@@ -179,6 +179,9 @@ protected:
   Double xCalculateRVM();
 
   SEIActiveParameterSets* xCreateSEIActiveParameterSets (TComSPS *sps);
+#if M0043_LAYERS_PRESENT_SEI
+  SEILayersPresent*       xCreateSEILayersPresent ();
+#endif
   SEIFramePacking*        xCreateSEIFramePacking();
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 

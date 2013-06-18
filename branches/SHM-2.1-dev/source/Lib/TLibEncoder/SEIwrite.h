@@ -69,6 +69,9 @@ protected:
 #if J0149_TONE_MAPPING_SEI
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
 #endif
+#if M0043_LAYERS_PRESENT_SEI
+  Void xWriteSEILayersPresent(const SEILayersPresent& sei);
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #endif

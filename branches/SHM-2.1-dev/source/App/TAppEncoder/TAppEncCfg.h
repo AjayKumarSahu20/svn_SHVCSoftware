@@ -273,6 +273,9 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
+#if M0043_LAYERS_PRESENT_SEI
+  Int       m_layersPresentSEIEnabled;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Int       m_SOPDescriptionSEIEnabled;
 #endif
