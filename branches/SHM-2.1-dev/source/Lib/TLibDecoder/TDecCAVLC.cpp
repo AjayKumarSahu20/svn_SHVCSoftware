@@ -1142,6 +1142,19 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+  READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < i; j++)
+    {
+      if (vps->getDirectDependencyFlag(i, j))
+      {
+        READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); vps->setDirectDependencyType(i, j, uiCode);
+      }
+    }
+  }
+#endif
 }
 #endif
 

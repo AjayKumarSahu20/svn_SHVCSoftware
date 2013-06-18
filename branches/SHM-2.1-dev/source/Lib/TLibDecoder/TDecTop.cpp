@@ -537,6 +537,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setReferenced(true); // Putting this as true ensures that picture is referenced the first time it is in an RPS
   m_apcSlicePilot->setTLayerInfo(nalu.m_temporalId);
 
+#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+  setRefLayerParams(m_apcSlicePilot->getVPS());
+#endif
 #if SVC_EXTENSION
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder[m_layerId]);
 #else
@@ -1315,4 +1318,57 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 }
 #endif
 
+#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+
+Void TDecTop::setRefLayerParams( TComVPS* vps )
+{
+  for(UInt layer = 0; layer < m_numLayer; layer++)
+  {
+    TDecTop *decTop = (TDecTop *)getLayerDec(layer);
+    decTop->setNumSamplePredRefLayers(0);
+    decTop->setNumMotionPredRefLayers(0);
+    decTop->setNumDirectRefLayers(0);
+    for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+    {
+      decTop->setSamplePredEnabledFlag(i, false);
+      decTop->setMotionPredEnabledFlag(i, false);
+      decTop->setSamplePredRefLayerId(i, 0);
+      decTop->setMotionPredRefLayerId(i, 0);
+    }
+    for(Int j = 0; j < layer; j++)
+    {
+      if (vps->getDirectDependencyFlag(layer, j))
+      {
+        decTop->setRefLayerId(decTop->getNumDirectRefLayers(), vps->getLayerIdInNuh(layer));
+        decTop->setNumDirectRefLayers(decTop->getNumDirectRefLayers() + 1);
+
+        Int samplePredEnabledFlag = (vps->getDirectDependencyType(layer, j) + 1) & 1;
+        decTop->setSamplePredEnabledFlag(j, samplePredEnabledFlag == 1 ? true : false);
+        decTop->setNumSamplePredRefLayers(decTop->getNumSamplePredRefLayers() + samplePredEnabledFlag);
+
+        Int motionPredEnabledFlag = ((vps->getDirectDependencyType(layer, j) + 1) & 2) >> 1;
+        decTop->setMotionPredEnabledFlag(j, motionPredEnabledFlag == 1 ? true : false);
+        decTop->setNumMotionPredRefLayers(decTop->getNumMotionPredRefLayers() + motionPredEnabledFlag);
+      }
+    }
+  }
+  for ( Int i = 1, mIdx = 0, sIdx = 0; i < m_numLayer; i++ )
+  {
+    Int iNuhLId = vps->getLayerIdInNuh(i);
+    TDecTop *decTop = (TDecTop *)getLayerDec(iNuhLId);
+    for ( Int j = 0; j < i; j++ )
+    {
+      if (decTop->getMotionPredEnabledFlag(j))
+      {
+        decTop->setMotionPredRefLayerId(mIdx++, vps->getLayerIdInNuh(j));
+      }
+      if (decTop->getSamplePredEnabledFlag(j))
+      {
+        decTop->setSamplePredRefLayerId(sIdx++, vps->getLayerIdInNuh(j));
+      }
+    }
+  }
+}
+
+#endif
 //! \}

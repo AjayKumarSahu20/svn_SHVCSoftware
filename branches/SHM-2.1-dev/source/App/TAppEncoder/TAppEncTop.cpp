@@ -146,6 +146,55 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
+#if M0457_PREDICTION_INDICATIONS
+      for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+      {
+        m_acTEncTop[layer].setSamplePredEnabledFlag(i, false);
+        m_acTEncTop[layer].setMotionPredEnabledFlag(i, false);
+      }
+      if(m_acLayerCfg[layer].getNumSamplePredRefLayers() == -1)
+      {
+        // Not included in the configuration file; assume that each layer depends on previous layer
+        m_acTEncTop[layer].setNumSamplePredRefLayers   (1);      // One sample pred ref. layer
+        m_acTEncTop[layer].setSamplePredRefLayerId     (0, layer - 1);   // Previous layer
+        m_acTEncTop[layer].setSamplePredEnabledFlag    (layer - 1, true);
+      }
+      else
+      {
+        m_acTEncTop[layer].setNumSamplePredRefLayers   ( m_acLayerCfg[layer].getNumSamplePredRefLayers() );      
+        for(Int i = 0; i < m_acTEncTop[layer].getNumSamplePredRefLayers(); i++)
+        {
+          m_acTEncTop[layer].setSamplePredRefLayerId   ( i, m_acLayerCfg[layer].getSamplePredRefLayerId(i));
+          m_acTEncTop[layer].setSamplePredEnabledFlag  (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
+        }        
+      }
+      if(m_acLayerCfg[layer].getNumMotionPredRefLayers() == -1)
+      {
+        // Not included in the configuration file; assume that each layer depends on previous layer
+        m_acTEncTop[layer].setNumMotionPredRefLayers   (1);      // One motion pred ref. layer
+        m_acTEncTop[layer].setMotionPredRefLayerId     (0, layer - 1);   // Previous layer
+        m_acTEncTop[layer].setMotionPredEnabledFlag    (layer - 1, true);
+      }
+      else
+      {
+        m_acTEncTop[layer].setNumMotionPredRefLayers   ( m_acLayerCfg[layer].getNumMotionPredRefLayers() );      
+        for(Int i = 0; i < m_acTEncTop[layer].getNumMotionPredRefLayers(); i++)
+        {
+          m_acTEncTop[layer].setMotionPredRefLayerId   ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
+          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
+        }        
+      }
+      Int numDirectRefLayers = 0;
+      for (Int i = 0; i < layer; i++)
+      {
+        if (m_acTEncTop[layer].getSamplePredEnabledFlag(i) || m_acTEncTop[layer].getMotionPredEnabledFlag(i))
+        {
+          m_acTEncTop[layer].setRefLayerId(numDirectRefLayers, i);
+          numDirectRefLayers++;
+        }
+      }
+      m_acTEncTop[layer].setNumDirectRefLayers(numDirectRefLayers);
+#else
       if(m_acLayerCfg[layer].getNumDirectRefLayers() == -1)
       {
         // Not included in the configuration file; assume that each layer depends on previous layer
@@ -160,10 +209,14 @@ Void TAppEncTop::xInitLibCfg()
           m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
         }
       }
-
+#endif
       if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
       {
+#if M0457_PREDICTION_INDICATIONS
+        m_acTEncTop[layer].setNumActiveRefLayers( m_acTEncTop[layer].getNumDirectRefLayers() );
+#else
         m_acTEncTop[layer].setNumActiveRefLayers( m_acLayerCfg[layer].getNumDirectRefLayers() );
+#endif
         for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
         {
           m_acTEncTop[layer].setPredLayerId(i, i);
@@ -950,6 +1003,22 @@ Void TAppEncTop::xInitLib()
     {
       vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
+#if M0457_PREDICTION_INDICATIONS
+    vps->setDirectDepTypeLen(2); // sample and motion types are encoded
+    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
+      {
+        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
+        vps->setDirectDependencyType( layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
+                                                              (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+      }
+      else
+      {
+        vps->setDirectDependencyType( layerCtr, refLayerCtr, 0 );
+      }
+    }
+#endif
   }
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        

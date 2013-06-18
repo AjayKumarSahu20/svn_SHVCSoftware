@@ -60,6 +60,7 @@
 #define VPS_PROFILE_OUTPUT_LAYERS        1      ///< M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2
 #define SPS_SUB_LAYER_INFO               1      ///< M0268: Do not signal sps_max_sub_layers_minus1 and sps_temporal_id_nesting_flag for nuh_layer_id greater than 0
 #define VPS_SPLIT_FLAG                   1      ///< M0163: Do not signal dimension_id and the last dimension_id_len_minus1, when splitting_flag is equal to 1. 
+#define M0457_PREDICTION_INDICATIONS     1
 #endif
 
 #define SH_DISCARDABLE_FLAG              1      ///< M0152: Use one reserved flag in the slice header for discardable flag

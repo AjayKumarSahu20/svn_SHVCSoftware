@@ -1670,6 +1670,10 @@ TComVPS::TComVPS()
   ::memset(m_directDependencyFlag, 0, sizeof(m_directDependencyFlag));
   ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));
   ::memset(m_refLayerId,           0, sizeof(m_refLayerId          ));
+#if M0457_PREDICTION_INDICATIONS
+  m_directDepTypeLen = 2;
+  ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
+#endif
 #endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));

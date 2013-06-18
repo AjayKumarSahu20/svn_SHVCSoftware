@@ -119,6 +119,16 @@ private:
   Int                     m_iBLSourceWidth;
   Int                     m_iBLSourceHeight;
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+  Int                     m_numDirectRefLayers;
+  Int                     m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int                     m_numSamplePredRefLayers;
+  Int                     m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int                     m_numMotionPredRefLayers;
+  Int                     m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Bool                    m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool                    m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #endif 
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   fstream*               m_pBLSyntaxFile;
@@ -157,6 +167,36 @@ public:
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec(UInt refLayerIdc);
+#if M0457_PREDICTION_INDICATIONS
+  Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
+  Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
+
+  Int       getRefLayerId                   (Int i)                         { return m_refLayerId[i];           }
+  Void      setRefLayerId                   (Int i, Int refLayerId)         { m_refLayerId[i] = refLayerId;     }
+
+  Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
+  Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
+
+  Int       getSamplePredRefLayerId         (Int i)                         { return m_samplePredRefLayerId[i];       }
+  Void      setSamplePredRefLayerId         (Int i, Int refLayerId)         { m_samplePredRefLayerId[i] = refLayerId; }
+
+  Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
+  Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
+
+  Int       getMotionPredRefLayerId         (Int i)                         { return m_motionPredRefLayerId[i];       }
+  Void      setMotionPredRefLayerId         (Int i, Int refLayerId)         { m_motionPredRefLayerId[i] = refLayerId; }
+
+  Bool      getSamplePredEnabledFlag        (Int i)                         { return m_samplePredEnabledFlag[i];  }
+  Void      setSamplePredEnabledFlag        (Int i,Bool flag)               { m_samplePredEnabledFlag[i] = flag;  }
+
+  Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
+  Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
+
+  TDecTop*  getSamplePredRefLayerDec        ( UInt layerId );
+  TDecTop*  getMotionPredRefLayerDec        ( UInt layerId );
+
+  Void      setRefLayerParams( TComVPS* vps );
+#endif
 #endif
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }

@@ -147,6 +147,14 @@ protected:
 
   Int       m_numActiveRefLayers;
   Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
+#if M0457_PREDICTION_INDICATIONS
+  Int       m_numSamplePredRefLayers;
+  Int       m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_numMotionPredRefLayers;
+  Int       m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #endif
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
@@ -413,6 +421,26 @@ public:
 
   Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
   Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
+
+#if M0457_PREDICTION_INDICATIONS
+  Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
+  Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
+
+  Int       getSamplePredRefLayerId         (Int i)                         { return m_samplePredRefLayerId[i];       }
+  Void      setSamplePredRefLayerId         (Int i, Int refLayerId)         { m_samplePredRefLayerId[i] = refLayerId; }
+
+  Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
+  Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
+
+  Int       getMotionPredRefLayerId         (Int i)                         { return m_motionPredRefLayerId[i];       }
+  Void      setMotionPredRefLayerId         (Int i, Int refLayerId)         { m_motionPredRefLayerId[i] = refLayerId; }
+
+  Bool      getSamplePredEnabledFlag        (Int i)                         { return m_samplePredEnabledFlag[i];  }
+  Void      setSamplePredEnabledFlag        (Int i,Bool flag)               { m_samplePredEnabledFlag[i] = flag;  }
+
+  Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
+  Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
+#endif
 #endif
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
