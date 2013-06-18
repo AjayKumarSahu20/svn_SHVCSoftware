@@ -1037,7 +1037,9 @@ private:
   UInt m_layerId;
 #endif
 #if REF_IDX_MFM
+#if !M0457_COL_PICTURE_SIGNALING
   Bool m_bMFMEnabledFlag;
+#endif
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   UInt        m_numScaledRefLayerOffsets;
@@ -1179,8 +1181,10 @@ public:
   UInt     getLayerId() { return m_layerId; }
 #endif
 #if REF_IDX_MFM
+#if !M0457_COL_PICTURE_SIGNALING
   Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
+#endif
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
@@ -1514,6 +1518,15 @@ private:
   UInt        m_layerId;
   TComPic*    m_pcBaseColPic[MAX_LAYERS];
   TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+  Int         m_numMotionPredRefLayers;
+#if REF_IDX_MFM
+  Bool        m_bMFMEnabledFlag;
+  Int         m_colRefLayerIdx;
+  Bool        m_altColIndicationFlag;
+  TComPic*    m_pcIlpPic;
+#endif
+#endif
 #endif 
   Bool        m_bTLayerSwitchingFlag;
 
@@ -1833,6 +1846,22 @@ public:
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
+
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+  Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
+  Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }
+#if REF_IDX_MFM
+  Void      setMFMEnabledFlag(Bool flag)                { m_bMFMEnabledFlag = flag; }
+  Bool      getMFMEnabledFlag()                         { return m_bMFMEnabledFlag; }
+  Void      setColRefLayerIdx(Int i)                    { m_colRefLayerIdx = i;     }
+  Int       getColRefLayerIdx()                         { return m_colRefLayerIdx;  }
+  Void      setAltColIndicationFlag(Bool i)             { m_altColIndicationFlag = i; }
+  Bool      getAltColIndicationFlag()                   { return m_altColIndicationFlag; }
+  Void      setMotionPredIlp(TComPic *ilpPic)           { m_pcIlpPic = ilpPic; }
+  TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
+#endif
+#endif
+
 #endif
 
 TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 

@@ -206,6 +206,9 @@ protected:
 #if L0386_DB_METRIC
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
 #endif
+#if M0457_COL_PICTURE_SIGNALING
+  TComPic* getMotionPredIlp(TComSlice* pcSlice);
+#endif
 };// END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================

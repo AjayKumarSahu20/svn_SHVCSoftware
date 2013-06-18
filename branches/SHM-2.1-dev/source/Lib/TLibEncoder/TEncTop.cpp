@@ -598,7 +598,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setLayerId(m_layerId);
 #endif
 #if REF_IDX_MFM
+#if !M0457_COL_PICTURE_SIGNALING
   m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
+#endif
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
