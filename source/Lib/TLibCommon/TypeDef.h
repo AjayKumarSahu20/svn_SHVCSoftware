@@ -100,6 +100,7 @@
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
 #endif
+#define M0457_COL_PICTURE_SIGNALING      1
 
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
