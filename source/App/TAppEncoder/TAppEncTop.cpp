@@ -387,6 +387,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
     m_acTEncTop[layer].setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
     m_acTEncTop[layer].setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
+#if M0043_LAYERS_PRESENT_SEI
+    m_acTEncTop[layer].setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
 #endif
@@ -724,6 +727,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
   m_cTEncTop.setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
   m_cTEncTop.setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
+#if M0043_LAYERS_PRESENT_SEI
+  m_cTEncTop.setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   m_cTEncTop.setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
 #endif

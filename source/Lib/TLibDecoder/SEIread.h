@@ -55,9 +55,17 @@ class SEIReader: public SyntaxElementParser
 public:
   SEIReader() {};
   virtual ~SEIReader() {};
+#if M0043_LAYERS_PRESENT_SEI
+  Void parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
+#else
   Void parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
+#endif
 protected:
+#if M0043_LAYERS_PRESENT_SEI
+  Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
+#else
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
+#endif
   Void xParseSEIuserDataUnregistered  (SEIuserDataUnregistered &sei, UInt payloadSize);
   Void xParseSEIActiveParameterSets   (SEIActiveParameterSets  &sei, UInt payloadSize);
   Void xParseSEIDecodingUnitInfo      (SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps);
@@ -72,11 +80,18 @@ protected:
 #if J0149_TONE_MAPPING_SEI
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
 #endif
+#if M0043_LAYERS_PRESENT_SEI
+  Void xParseSEILayersPresent         (SEILayersPresent &sei, UInt payloadSize, TComVPS *vps);
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #endif
 #if K0180_SCALABLE_NESTING_SEI
+#if M0043_LAYERS_PRESENT_SEI
+  Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
+#else
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps);
+#endif
 #endif
   Void xParseByteAlign();
 };

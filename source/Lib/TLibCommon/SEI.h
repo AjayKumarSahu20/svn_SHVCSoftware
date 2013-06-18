@@ -71,6 +71,9 @@ public:
     DECODED_PICTURE_HASH                 = 132,
     SCALABLE_NESTING                     = 133,
     REGION_REFRESH_INFO                  = 134,
+#if M0043_LAYERS_PRESENT_SEI
+    LAYERS_PRESENT                       = 137,
+#endif
   };
   
   SEI() {}
@@ -353,6 +356,21 @@ public:
 
   Bool m_gdrForegroundFlag;
 };
+
+#if M0043_LAYERS_PRESENT_SEI
+class SEILayersPresent : public SEI
+{
+public:
+  PayloadType payloadType() const { return LAYERS_PRESENT; }
+
+  SEILayersPresent() {}
+  virtual ~SEILayersPresent() {}
+
+  UInt m_activeVpsId;
+  UInt m_vpsMaxLayers;
+  Bool m_layerPresentFlag[MAX_LAYERS];
+};
+#endif
 
 #if L0208_SOP_DESCRIPTION_SEI
 class SEISOPDescription : public SEI

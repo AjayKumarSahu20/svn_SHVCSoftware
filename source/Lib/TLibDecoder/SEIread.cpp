@@ -94,6 +94,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
 #endif
+#if M0043_LAYERS_PRESENT_SEI
+  case SEI::LAYERS_PRESENT:
+    fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
+    break;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
@@ -114,14 +119,22 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 /**
  * unmarshal a single SEI message from bitstream bs
  */
+#if M0043_LAYERS_PRESENT_SEI
+void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
+#else
 void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps)
+#endif
 {
   setBitstream(bs);
 
   assert(!m_pcBitstream->getNumBitsUntilByteAligned());
   do
   {
+#if M0043_LAYERS_PRESENT_SEI
+    xReadSEImessage(seis, nalUnitType, vps, sps);
+#else
     xReadSEImessage(seis, nalUnitType, sps);
+#endif
     /* SEI messages are an integer number of bytes, something has failed
     * in the parsing if bitstream not byte-aligned */
     assert(!m_pcBitstream->getNumBitsUntilByteAligned());
@@ -132,7 +145,11 @@ void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
   assert(rbspTrailingBits == 0x80);
 }
 
+#if M0043_LAYERS_PRESENT_SEI
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
+#else
 Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps)
+#endif
 {
 #if ENC_DEC_TRACE
   xTraceSEIHeader();
@@ -239,6 +256,19 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
 #endif
+#if M0043_LAYERS_PRESENT_SEI
+    case SEI::LAYERS_PRESENT:
+      if (!vps)
+      {
+        printf ("Warning: Found Layers present SEI message, but no active VPS is available. Ignoring.");
+      }
+      else
+      {
+        sei = new SEILayersPresent;
+        xParseSEILayersPresent((SEILayersPresent&) *sei, payloadSize, vps);
+      }
+      break;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
     case SEI::SOP_DESCRIPTION:
       sei = new SEISOPDescription;
@@ -248,7 +278,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
 #if K0180_SCALABLE_NESTING_SEI
     case SEI::SCALABLE_NESTING:
       sei = new SEIScalableNesting;
+#if M0043_LAYERS_PRESENT_SEI
+      xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, vps, sps);
+#else
       xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
+#endif
       break;
 #endif
     default:
@@ -750,6 +784,27 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
 }
 #endif
 
+#if M0043_LAYERS_PRESENT_SEI
+Void SEIReader::xParseSEILayersPresent(SEILayersPresent &sei, UInt payloadSize, TComVPS *vps)
+{
+  UInt uiCode;
+  UInt i = 0;
+
+  READ_UVLC( uiCode,           "lp_sei_active_vps_id" ); sei.m_activeVpsId = uiCode;
+  assert(vps->getVPSId() == sei.m_activeVpsId);
+  sei.m_vpsMaxLayers = vps->getMaxLayers();
+  for (; i < sei.m_vpsMaxLayers; i++)
+  {
+    READ_FLAG( uiCode,         "layer_present_flag"   ); sei.m_layerPresentFlag[i] = uiCode ? true : false;
+  }
+  for (; i < MAX_LAYERS; i++)
+  {
+    sei.m_layerPresentFlag[i] = false;
+  }
+  xParseByteAlign();
+}
+#endif
+
 #if L0208_SOP_DESCRIPTION_SEI
 Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize)
 {
@@ -776,8 +831,13 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 }
 #endif
 
+
 #if K0180_SCALABLE_NESTING_SEI
+#if M0043_LAYERS_PRESENT_SEI
+Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
+#else
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps)
+#endif
 {
   UInt uiCode;
   SEIMessages seis;
@@ -819,7 +879,11 @@ Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitT
 
   // read nested SEI messages
   do {
+#if M0043_LAYERS_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
+#else
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
   } while (m_pcBitstream->getNumBitsLeft() > 8);
 
 }

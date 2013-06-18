@@ -288,6 +288,9 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
+#if M0043_LAYERS_PRESENT_SEI
+  Int       m_layersPresentSEIEnabled;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Int       m_SOPDescriptionSEIEnabled;
 #endif
@@ -732,6 +735,10 @@ public:
   Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
   Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b;    }
   Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
+#if M0043_LAYERS_PRESENT_SEI
+  Void  setLayersPresentSEIEnabled(Int b)                { m_layersPresentSEIEnabled = b; }
+  Int   getLayersPresentSEIEnabled()                     { return m_layersPresentSEIEnabled; }
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }

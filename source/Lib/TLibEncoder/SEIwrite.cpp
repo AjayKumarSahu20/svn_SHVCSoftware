@@ -88,6 +88,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
     break;
 #endif
+#if M0043_LAYERS_PRESENT_SEI
+  case SEI::LAYERS_PRESENT:
+    fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
+    break;
+#endif
 #if L0208_SOP_DESCRIPTION_SEI
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
@@ -149,6 +154,11 @@ void SEIWriter::xWriteSEIpayloadData(const SEI& sei, TComSPS *sps)
 #if J0149_TONE_MAPPING_SEI
   case SEI::TONE_MAPPING_INFO:
     xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
+    break;
+#endif
+#if M0043_LAYERS_PRESENT_SEI
+  case SEI::LAYERS_PRESENT:
+    xWriteSEILayersPresent(*static_cast<const SEILayersPresent*>(&sei));
     break;
 #endif
 #if L0208_SOP_DESCRIPTION_SEI
@@ -589,6 +599,18 @@ Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefr
   WRITE_FLAG( sei.m_gdrForegroundFlag, "gdr_foreground_flag");
   xWriteByteAlign();
 }
+
+#if M0043_LAYERS_PRESENT_SEI
+Void SEIWriter::xWriteSEILayersPresent(const SEILayersPresent& sei)
+{
+  WRITE_UVLC( sei.m_activeVpsId,           "lp_sei_active_vps_id" );
+  for (UInt i = 0; i < sei.m_vpsMaxLayers; i++)
+  {
+    WRITE_FLAG( sei.m_layerPresentFlag[i], "layer_present_flag"   );
+  }
+  xWriteByteAlign();
+}
+#endif
 
 #if L0208_SOP_DESCRIPTION_SEI
 Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)

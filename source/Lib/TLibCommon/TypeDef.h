@@ -134,6 +134,8 @@
 
 #define FIX1071 1 ///< Temporary fix for issue #1071
 
+
+#define M0043_LAYERS_PRESENT_SEI      0 ///< M0043: add layers present SEI
 #define L0208_SOP_DESCRIPTION_SEI     1 ///< L0208: add SOP descrioption SEI
 #define MAX_NUM_PICS_IN_SOP           1024
 
