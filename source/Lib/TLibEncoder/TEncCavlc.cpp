@@ -863,6 +863,19 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+  WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < i; j++)
+    {
+      if (vps->getDirectDependencyFlag(i, j))
+      {
+        WRITE_CODE( vps->getDirectDependencyType(i, j), vps->getDirectDepTypeLen(), "direct_dependency_type[i][j]" );
+      }
+    }
+  }
+#endif
 }
 #endif
 
