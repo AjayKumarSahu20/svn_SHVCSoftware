@@ -2125,13 +2125,13 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layer].m_numActiveRefLayers > numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
     for(Int i = 0; i < m_acLayerCfg[layer].m_numActiveRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] > numDirectRefLayers, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
     }
 #else
     xConfirmPara(m_acLayerCfg[layer].m_numActiveRefLayers > m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
     for(Int i = 0; i < m_acLayerCfg[layer].m_numActiveRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] > m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] >= m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference higher layers");
     }
 #endif
   }
