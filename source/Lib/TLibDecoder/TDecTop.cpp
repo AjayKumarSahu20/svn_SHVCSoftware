@@ -1408,11 +1408,11 @@ TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
   for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
   {
     UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-    if (getMotionPredEnabledFlag(refLayerIdc))
+    if( getMotionPredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) ) )
     {
       if (activeMotionPredReflayerIdx == pcSlice->getColRefLayerIdx())
       {
-        ilpPic = m_cIlpPic[i];
+        ilpPic = m_cIlpPic[refLayerIdc];
         break;
       }
       else

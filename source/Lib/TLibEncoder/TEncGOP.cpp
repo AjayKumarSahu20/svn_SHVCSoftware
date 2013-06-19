@@ -3063,11 +3063,11 @@ TComPic* TEncGOP::getMotionPredIlp(TComSlice* pcSlice)
   for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
   {
     UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-    if (m_pcEncTop->getMotionPredEnabledFlag(refLayerIdc))
+    if( m_pcEncTop->getMotionPredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) ) )
     {
       if (activeMotionPredReflayerIdx == pcSlice->getColRefLayerIdx())
       {
-        ilpPic = m_pcEncTop->getIlpList()[i];
+        ilpPic = m_pcEncTop->getIlpList()[refLayerIdc];
         break;
       }
       else
