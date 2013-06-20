@@ -103,6 +103,12 @@
 #endif
 #define M0457_COL_PICTURE_SIGNALING      1
 
+#if !VPS_EXTN_DIRECT_REF_LAYERS || !M0457_PREDICTION_INDICATIONS || !JCTVC_M0458_INTERLAYER_RPS_SIG
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0
+#else
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0
+#endif
+
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
 

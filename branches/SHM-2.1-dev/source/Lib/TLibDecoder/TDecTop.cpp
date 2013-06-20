@@ -545,6 +545,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #if SVC_EXTENSION
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  m_apcSlicePilot->setNumSamplePredRefLayers( getNumSamplePredRefLayers() );
+#endif
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder[m_layerId]);
 #else
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
