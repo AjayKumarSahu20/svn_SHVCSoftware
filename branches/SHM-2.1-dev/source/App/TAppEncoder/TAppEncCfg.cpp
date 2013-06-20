@@ -2366,7 +2366,7 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     {
       if( i >= numEntries )
       {
-        printf( "%c: The number of entries specified is larger than the allowed number.\n", logString );
+        printf( "%s: The number of entries specified is larger than the allowed number.\n", logString );
         exit( EXIT_FAILURE );
       }
       *( *arr + i ) = atoi( arrayEntry );
@@ -2375,7 +2375,7 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     }
     if( i < numEntries )
     {
-      printf( "%c: Some entries are not specified.\n", logString );
+      printf( "%s: Some entries are not specified.\n", logString );
       exit( EXIT_FAILURE );
     }
   }
