@@ -514,6 +514,9 @@ Void TAppEncTop::xInitLibCfg()
       }
     }
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+    m_acTEncTop[layer].setAdaptiveResolutionChange( m_adaptiveResolutionChange );
+#endif
   }
 }
 #else
@@ -1030,6 +1033,9 @@ Void TAppEncTop::xInitLib()
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
+#endif
 #else
   m_cTEncTop.init();
 #endif
@@ -1145,6 +1151,21 @@ Void TAppEncTop::encode()
       if ( m_acTEncTop[layer].getUseRateCtrl() )
       {
         (m_acTEncTop[layer].getRateCtrl())->initRCGOP(m_acTEncTop[layer].getNumPicRcvd());
+      }
+    }
+#endif
+
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+    if (m_adaptiveResolutionChange)
+    {
+      for(UInt layer = 0; layer < m_numLayers; layer++)
+      {
+        TComList<TComPicYuv*>::iterator iterPicYuvRec;
+        for (iterPicYuvRec = m_acListPicYuvRec[layer].begin(); iterPicYuvRec != m_acListPicYuvRec[layer].end(); iterPicYuvRec++)
+        {
+          TComPicYuv* recPic = *(iterPicYuvRec);
+          recPic->setReconstructed(false);
+        }
       }
     }
 #endif
@@ -1415,7 +1436,11 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
   for ( i = 0; i < iNumEncoded; i++ )
   {
     TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+    if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed())
+#else
     if (!m_acLayerCfg[layer].getReconFile().empty())
+#endif
     {
       m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), 
         m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom() );
@@ -1429,7 +1454,11 @@ Void TAppEncTop::xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, cons
 
   list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  for ( i = 0; i < iNumEncoded && iterBitstream != accessUnits.end(); i++ )
+#else
   for ( i = 0; i < iNumEncoded; i++ )
+#endif
   {
     const AccessUnit& au = *(iterBitstream++);
     const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);

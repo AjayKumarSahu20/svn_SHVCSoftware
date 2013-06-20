@@ -842,6 +842,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("AvgPicRate",                   cfg_avgPicRate,                    string(""), "List of avg. picture rates for the different sub-layers; include non-negative number even if corresponding flag is 0")
   ("ConstantPicRateIdc",           cfg_constantPicRateIdc,            string(""), "List of constant picture rate IDCs; include non-negative number even if corresponding flag is 0")
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
@@ -2136,6 +2139,13 @@ Void TAppEncCfg::xCheckParameter()
 #endif
   }
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  if (m_adaptiveResolutionChange > 0)
+  {
+    xConfirmPara(m_numLayers != 2, "Adaptive resolution change works with 2 layers only");
+    xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
+  }
+#endif
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2174,6 +2184,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("Total number of layers        : %d\n", m_numLayers       );
   printf("Multiview                     : %d\n", m_scalabilityMask[0] );
   printf("Scalable                      : %d\n", m_scalabilityMask[1] );
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
+#endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);

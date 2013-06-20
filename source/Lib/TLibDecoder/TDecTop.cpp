@@ -936,6 +936,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+    else if ( m_layerId > 0 )
+    {
+      pcSlice->setRefPicList( m_cListPic, false, NULL);
+    }
+#endif
 #endif
 
 #endif //SVC_EXTENSION

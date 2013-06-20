@@ -571,7 +571,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_FRAMEWORK
 #if ILR_RESTR
   Int numInterLayerRPSPics = 0;
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
+#else
   if( m_layerId > 0 )
+#endif
   {
     for( i=0; i < m_pcVPS->getNumDirectRefLayers( m_layerId ); i++ )
     {
