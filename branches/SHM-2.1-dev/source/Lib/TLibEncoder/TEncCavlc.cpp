@@ -878,6 +878,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
+#endif
 }
 #endif
 
@@ -1221,10 +1224,10 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if ( pcSlice->getEnableTMVPFlag() )
     {
 #if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
-      if ( !pcSlice->getIdrPicFlag() && pcSlice->getLayerId() > 0 && pcSlice->getNumMotionPredRefLayers() > 0 )
+      if ( !pcSlice->getIdrPicFlag() && pcSlice->getLayerId() > 0 && pcSlice->getActiveNumILRRefIdx() > 0 && pcSlice->getNumMotionPredRefLayers() > 0 )
       {
-        WRITE_FLAG( 1, "alt_collocated_indication_flag" );
-        if (pcSlice->getNumMotionPredRefLayers() > 1)
+        WRITE_FLAG( pcSlice->getAltColIndicationFlag() ? 1 : 0, "alt_collocated_indication_flag" );
+        if (pcSlice->getAltColIndicationFlag() && pcSlice->getNumMotionPredRefLayers() > 1)
         {
           WRITE_UVLC(0, "collocated_ref_layer_idx");
         }

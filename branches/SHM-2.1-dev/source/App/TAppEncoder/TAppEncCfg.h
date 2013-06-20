@@ -368,6 +368,9 @@ protected:
   Int*      m_avgPicRate;                                     ///< Indicates avg. picture rate information for various sub-layers
   Int*      m_constantPicRateIdc;                                ///< Indicates constant picture rate idc for various sub-layers
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
+#endif
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

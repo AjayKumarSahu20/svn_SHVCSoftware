@@ -1157,6 +1157,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
+#endif
 }
 #endif
 
@@ -1618,7 +1621,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       rpcSlice->setMFMEnabledFlag( false );
       rpcSlice->setColRefLayerIdx( 0 );
       rpcSlice->setAltColIndicationFlag( false );
-      if ( sps->getLayerId() > 0 && rpcSlice->getNumMotionPredRefLayers() > 0 )
+      if ( sps->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() > 0 && rpcSlice->getNumMotionPredRefLayers() > 0 )
       {
         READ_FLAG( uiCode, "alt_collocated_indication_flag" );
         rpcSlice->setAltColIndicationFlag( uiCode == 1 ? true : false );

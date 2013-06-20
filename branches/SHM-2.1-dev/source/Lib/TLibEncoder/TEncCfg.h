@@ -367,6 +367,9 @@ protected:
 #if REF_IDX_FRAMEWORK
   Int      m_elRapSliceBEnabled;
 #endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Int      m_adaptiveResolutionChange;
+#endif
 
 public:
   TEncCfg()
@@ -886,6 +889,10 @@ public:
 #if REF_IDX_FRAMEWORK
   Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
   Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
+#endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
+  Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
 #endif
 };
 
