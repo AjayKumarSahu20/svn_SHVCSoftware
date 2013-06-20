@@ -1463,6 +1463,10 @@ private:
   Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
 #endif 
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int         m_numSamplePredRefLayers;
+  Bool        m_interLayerSamplePredOnlyFlag;
+#endif
 #if L0034_COMBINED_LIST_CLEANUP
   Int         m_list1IdxToList0Idx[MAX_NUM_REF];
   Int         m_aiNumRefIdx   [2];    //  for multiple reference of current slice
@@ -1853,6 +1857,13 @@ public:
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
+
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int       getNumSamplePredRefLayers      ( )          { return  m_numSamplePredRefLayers;       }
+  Void      setNumSamplePredRefLayers      ( Int i )    { m_numSamplePredRefLayers = i;           }
+  Bool      getInterLayerSamplePredOnlyFlag( )          { return  m_interLayerSamplePredOnlyFlag; }
+  Void      setInterLayerSamplePredOnlyFlag( Bool val ) { m_interLayerSamplePredOnlyFlag = val;   }
+#endif
 
 #if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }

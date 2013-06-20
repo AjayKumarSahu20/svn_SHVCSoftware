@@ -462,6 +462,10 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
             testInter = false; 
         if(pcSlice->getSliceType() == B_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) == pcSlice->getActiveNumILRRefIdx()) 
             testInter = false;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+        if( pcSlice->getInterLayerSamplePredOnlyFlag() ) 
+            testInter = false; 
+#endif
     }
 #endif
     for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)

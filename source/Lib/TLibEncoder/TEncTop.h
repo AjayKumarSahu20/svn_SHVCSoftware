@@ -138,6 +138,9 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int                     m_ilSampleOnlyPred;
+#endif
 #if SCALED_REF_LAYER_OFFSETS
   UInt                    m_numScaledRefLayerOffsets;
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
@@ -225,6 +228,10 @@ public:
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+#endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Void      setIlSampleOnlyPred( Int i )          { m_ilSampleOnlyPred = i;    }
+  Int       getIlSampleOnlyPred()                 { return m_ilSampleOnlyPred; }
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }

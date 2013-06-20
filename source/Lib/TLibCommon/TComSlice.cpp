@@ -138,6 +138,10 @@ TComSlice::TComSlice()
   m_altColIndicationFlag = false;
   m_colRefLayerIdx       = 0;
 #endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  m_numSamplePredRefLayers       = 0;
+  m_interLayerSamplePredOnlyFlag = false;
+#endif
 #endif
 #endif
 
@@ -196,7 +200,10 @@ Void TComSlice::initSlice()
 #else
   m_numILRRefIdx              = 0;
 #endif  
-
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  m_numSamplePredRefLayers       = 0;
+  m_interLayerSamplePredOnlyFlag = false;
+#endif
 #endif
   m_colFromL0Flag = 1;
   
@@ -487,6 +494,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr0[NumPocStCurr0] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocStCurr0++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -500,6 +510,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr1[NumPocStCurr1] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocStCurr1++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -513,6 +526,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(1);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetLtCurr[NumPocLtCurr] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocLtCurr++;
     }
     if(pcRefPic==NULL) 
@@ -661,7 +677,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
   }
 #endif
-  
+
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+    if( m_interLayerSamplePredOnlyFlag && getLayerId() ) 
+    {
+      m_aiNumRefIdx[0] = m_aiNumRefIdx[0] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[0];
+      m_aiNumRefIdx[1] = m_aiNumRefIdx[1] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[1];
+    }
+#endif
+ 
     Int cIdx = 0;
     for ( i=0; i<NumPocStCurr0; i++, cIdx++)
     {
