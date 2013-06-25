@@ -1051,6 +1051,14 @@ private:
   static const Int   m_winUnitY[MAX_CHROMA_FORMAT_IDC+1];
   TComPTL     m_pcPTL;
 
+#if M0463_VUI_EXT_ILP_REF
+  Bool        m_interViewMvVertConstraintFlag;
+  Int         m_numIlpRestrictedRefLayers        ;
+  Int         m_minSpatialSegmentOffsetPlus1[MAX_LAYERS];
+  Bool        m_ctuBasedOffsetEnabledFlag   [MAX_LAYERS];
+  Int         m_minHorizontalCtuOffsetPlus1 [MAX_LAYERS];
+#endif
+
 #if SVC_EXTENSION
   UInt m_layerId;
 #endif
@@ -1195,6 +1203,23 @@ public:
   TComPTL* getPTL()     { return &m_pcPTL; }
 
 #if SVC_EXTENSION
+#if M0463_VUI_EXT_ILP_REF
+  Void setInterViewMvVertConstraintFlag(Bool val) { m_interViewMvVertConstraintFlag = val; }
+  Bool getInterViewMvVertConstraintFlag()         { return m_interViewMvVertConstraintFlag;}
+
+  ////  sps_extension_vui_parameters( )
+  Void setNumIlpRestrictedRefLayers   ( Int val )        { m_numIlpRestrictedRefLayers         = val;}
+  Int  getNumIlpRestrictedRefLayers   ( )                { return m_numIlpRestrictedRefLayers        ;}
+
+  Void setMinSpatialSegmentOffsetPlus1( Int i, Int val ) { m_minSpatialSegmentOffsetPlus1[ i ] = val;}
+  Int  getMinSpatialSegmentOffsetPlus1( Int i )          { return m_minSpatialSegmentOffsetPlus1[ i ];}
+
+  Void setCtuBasedOffsetEnabledFlag   ( Int i, Bool flag ) { m_ctuBasedOffsetEnabledFlag   [ i ] = flag;}
+  Bool getCtuBasedOffsetEnabledFlag   ( Int i )            { return m_ctuBasedOffsetEnabledFlag   [ i ];}
+
+  Void setMinHorizontalCtuOffsetPlus1 ( Int i, Int val )   { m_minHorizontalCtuOffsetPlus1 [ i ] = val;}
+  Int  getMinHorizontalCtuOffsetPlus1 ( Int i )            { return m_minHorizontalCtuOffsetPlus1 [ i ];}
+#endif
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
 #endif

@@ -44,6 +44,7 @@
 
 #if SVC_EXTENSION
 #define M0464_TILE_BOUNDARY_ALIGNED_FLAG 1      ///< VUI flag to indicate tile boundary alignment
+#define M0463_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS

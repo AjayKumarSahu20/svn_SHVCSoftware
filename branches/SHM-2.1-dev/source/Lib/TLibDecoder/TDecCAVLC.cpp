@@ -783,8 +783,29 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
     }
   }
 #endif
+#if M0463_VUI_EXT_ILP_REF
+  ////   sps_extension_vui_parameters( )
+  if( pcSPS->getVuiParameters()->getBitstreamRestrictionFlag() )
+  {  
+    READ_UVLC( uiCode, "num_ilp_restricted_ref_layers" ); pcSPS->setNumIlpRestrictedRefLayers( uiCode ); 
+    for( Int i = 0; i < pcSPS->getNumIlpRestrictedRefLayers( ); i++ ) 
+    {  
+      READ_UVLC( uiCode, "min_spatial_segment_offset_plus1" ); pcSPS->setMinSpatialSegmentOffsetPlus1( i, uiCode ); 
+      if( pcSPS->getMinSpatialSegmentOffsetPlus1( i ) > 0 ) 
+      {  
+        READ_FLAG( uiCode, "ctu_based_offset_enabled_flag[ i ]"); pcSPS->setCtuBasedOffsetEnabledFlag(i, uiCode == 1 ); 
+        if( pcSPS->getCtuBasedOffsetEnabledFlag( i ) )  
+        {
+          READ_UVLC( uiCode, "min_horizontal_ctu_offset_plus1[ i ]"); pcSPS->setMinHorizontalCtuOffsetPlus1( i, uiCode ); 
+        }
+      }  
+    }  
+  }  
+  ////   sps_extension_vui_parameters( ) END
+#endif
 }
 #endif
+
 Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 {
   UInt  uiCode;
