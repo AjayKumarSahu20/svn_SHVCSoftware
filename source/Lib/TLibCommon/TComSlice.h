@@ -819,6 +819,10 @@ private:
   Bool m_pocProportionalToTimingFlag;
   Int  m_numTicksPocDiffOneMinus1;
 #endif
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+  Bool m_tileBoundariesAlignedFlag;
+#endif
+
 
 public:
   TComVUI()
@@ -854,6 +858,9 @@ public:
 #if !L0043_TIMING_INFO  
     ,m_pocProportionalToTimingFlag(false)
     ,m_numTicksPocDiffOneMinus1(0)
+#endif
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+    ,m_tileBoundariesAlignedFlag(true)
 #endif
   {}
 
@@ -956,6 +963,10 @@ public:
   Void setPocProportionalToTimingFlag(Bool x) {m_pocProportionalToTimingFlag = x;}
   Int  getNumTicksPocDiffOneMinus1() {return m_numTicksPocDiffOneMinus1;}
   Void setNumTicksPocDiffOneMinus1(Int x) { m_numTicksPocDiffOneMinus1 = x;}
+#endif
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+  Bool getTileBoundariesAlignedFlag(  ) { return m_tileBoundariesAlignedFlag; } 
+  Void setTileBoundariesAlignedFlag( Bool flag ) { m_tileBoundariesAlignedFlag = flag; } 
 #endif
 };
 

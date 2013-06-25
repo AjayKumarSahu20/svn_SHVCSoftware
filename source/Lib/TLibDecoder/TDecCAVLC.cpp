@@ -444,6 +444,12 @@ Void  TDecCavlc::parseVUI(TComVUI* pcVUI, TComSPS *pcSPS)
   if (pcVUI->getBitstreamRestrictionFlag())
   {
     READ_FLAG(   uiCode, "tiles_fixed_structure_flag");               pcVUI->setTilesFixedStructureFlag(uiCode);
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+    if ( pcSPS->getLayerId() > 0 )
+    {
+      READ_FLAG( uiCode, "tile_boundaries_aligned_flag" ); pcVUI->setTileBoundariesAlignedFlag( uiCode == 1 );
+    }
+#endif
     READ_FLAG(   uiCode, "motion_vectors_over_pic_boundaries_flag");  pcVUI->setMotionVectorsOverPicBoundariesFlag(uiCode);
     READ_FLAG(   uiCode, "restricted_ref_pic_lists_flag");            pcVUI->setRestrictedRefPicListsFlag(uiCode);
 #if L0043_MSS_IDC
