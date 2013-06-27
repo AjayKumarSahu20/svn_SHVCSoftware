@@ -43,12 +43,13 @@
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
+#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+
 #define M0464_TILE_BOUNDARY_ALIGNED_FLAG 1      ///< VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
@@ -72,7 +73,6 @@
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define ENCODER_BUGFIX                   1      ///< L0167: encoder bug fix for inter mode
 #define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
@@ -128,59 +128,29 @@
 
 #endif
 #endif
-#else
-#define ILP_DECODED_PICTURE              0
-#define SYNTAX_OUTPUT                    0
-#endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC
   #define NB_REMAIN_MODES                2      ///< nb of remaining modes (M0115)
 #endif
 
+#define RC_SHVC_HARMONIZATION            1  ///< JCTVC-M0037, rate control for SHVC
+
+#else
+#define ILP_DECODED_PICTURE              0
+#define SYNTAX_OUTPUT                    0
+#endif // SVC_EXTENSION
+
+
 //! \ingroup TLibCommon
 //! \{
 
-#define FIX1071 1 ///< Temporary fix for issue #1071
+#define FIX1071 1 ///< fix for issue #1071
 
-
-#define M0043_LAYERS_PRESENT_SEI      0 ///< M0043: add layers present SEI
-#define L0208_SOP_DESCRIPTION_SEI     1 ///< L0208: add SOP descrioption SEI
 #define MAX_NUM_PICS_IN_SOP           1024
 
-#define K0180_SCALABLE_NESTING_SEI  1   ///JCTVC-K0180 scalable nesting sei message
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
-
-#define J0149_TONE_MAPPING_SEI        1 ///< J0149: Tone mapping information SEI
-#define L0363_DU_BIT_RATE             1 ///< L0363: add bit_rate_du_value_minus1 to HRD parameters
-#define L0328_SPLICING                1 ///< L0328: splicing support in HRD
-#define L0044_DU_DPB_OUTPUT_DELAY_HRD 1 ///< L0044: Include dpb_output_delay_du_length_minus1 in hrd_parameters(), dpb_output_du_delay in
-                                        ///<        picture timing SEI and DU information SEI
-#define L0045_PERSISTENCE_FLAGS  1      ///< L0045: Replace "repetition_period" syntax elements in SEI with "persistence_flag"
-#define L0045_NON_NESTED_SEI_RESTRICTIONS 1 ///< L0045; Include restriction on the order of APS and non-nested BP, PT and DU info SEI messages
-#define L0044_CPB_DPB_DELAY_OFFSET 1  ///< L0044: Include syntax elements cpb_delay_offset and dpb_delay_offset in the BP SEI message
-#define L0047_APS_FLAGS            1  ///< L0047: Include full_random_access_flag and no_param_set_update_flag in the active parameter set SEI message
-#define L0043_TIMING_INFO          1  ///< L0043: Timing information is signalled in VUI outside hrd_parameters()
-#define L0046_RENAME_PROG_SRC_IDC  1  ///< L0046: Rename progressive_source_idc to source_scan_type
-#define L0045_CONDITION_SIGNALLING 1  ///< L0045: Condition the signaling of some syntax elements in picture timing SEI message
-#define L0043_MSS_IDC 1
-#define L0116_ENTRY_POINT 1
-#define L0363_MORE_BITS 1
-#define L0363_MVP_POC 1
-#define L0363_BYTE_ALIGN 1
-#define L0363_SEI_ALLOW_SUFFIX 1
-#define L0323_LIMIT_DEFAULT_LIST_SIZE 1
-#define L0046_CONSTRAINT_FLAGS 1
-#define L0255_MOVE_PPS_FLAGS       1  ///< move some flags to earlier positions in the PPS
-#define L0444_FPA_TYPE             1  ///< allow only FPA types 3, 4 and 5
-#define L0372 1
-#define SIGNAL_BITRATE_PICRATE_IN_VPS               0  ///< K0125: Signal bit_rate and pic_rate in VPS
-#define L0232_RD_PENALTY           1  ///< L0232: RD-penalty for 32x32 TU for intra in non-intra slices
-#define L0386_DB_METRIC            1  ///< L0386: non-normative blockiness metric (automatically configures deblocking parameters in bitstream)
-#define L0323_DPB                     1 ///< L0323: Specification of active reference indices and decoded picture buffer
-
-#define L0034_COMBINED_LIST_CLEANUP 1
 
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES             16
@@ -194,8 +164,11 @@
 #define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
 #endif
 #define RATE_CONTROL_LAMBDA_DOMAIN                  1  ///< JCTVC-K0103, rate control by R-lambda model
-#define L0033_RC_BUGFIX                             1  ///< JCTVC-L0033, bug fix for R-lambda model based rate control
-#define RC_SHVC_HARMONIZATION                       1  ///< JCTVC-M0037, rate control for SHVC
+#define M0036_RC_IMPROVEMENT                        1  ///< JCTVC-M0036, improvement for R-lambda model based rate control
+#define TICKET_1090_FIX                             1
+
+#define RC_FIX                                      1  /// suggested fix for M0036
+#define RATE_CONTROL_INTRA                          1  ///< JCTVC-M0257, rate control for intra 
 
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
 #define MAX_NUM_LAYER_IDS                64
@@ -217,8 +190,6 @@
 
 #define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3 1  ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
 
-#define REMOVE_SINGLE_SEI_EXTENSION_FLAGS 1 ///< remove display orientation SEI extension flag (there is a generic SEI extension mechanism now) 
-
 #define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
 #if SAO_ENCODING_CHOICE
 #define SAO_ENCODING_RATE                0.75
@@ -231,8 +202,6 @@
 #define MAX_NUM_VPS                16
 #define MAX_NUM_SPS                16
 #define MAX_NUM_PPS                64
-
-
 
 #define WEIGHTED_CHROMA_DISTORTION  1   ///< F386: weighting of chroma for RDO
 #define RDOQ_CHROMA_LAMBDA          1   ///< F386: weighting of chroma for RDOQ
@@ -521,9 +490,6 @@ enum RefPicList
 {
   REF_PIC_LIST_0 = 0,   ///< reference list 0
   REF_PIC_LIST_1 = 1,   ///< reference list 1
-#if !L0034_COMBINED_LIST_CLEANUP
-  REF_PIC_LIST_C = 2,   ///< combined reference list for uni-prediction in B-Slices
-#endif
   REF_PIC_LIST_X = 100  ///< special mark
 };
 

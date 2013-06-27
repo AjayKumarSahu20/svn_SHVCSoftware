@@ -77,21 +77,13 @@ protected:
   Void xParseSEIDisplayOrientation    (SEIDisplayOrientation &sei, UInt payloadSize);
   Void xParseSEITemporalLevel0Index   (SEITemporalLevel0Index &sei, UInt payloadSize);
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
-#if J0149_TONE_MAPPING_SEI
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
-#endif
+  Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #if M0043_LAYERS_PRESENT_SEI
   Void xParseSEILayersPresent         (SEILayersPresent &sei, UInt payloadSize, TComVPS *vps);
-#endif
-#if L0208_SOP_DESCRIPTION_SEI
-  Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
-#endif
-#if K0180_SCALABLE_NESTING_SEI
-#if M0043_LAYERS_PRESENT_SEI
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
 #else
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps);
-#endif
 #endif
   Void xParseByteAlign();
 };
