@@ -126,15 +126,11 @@ private:
   UInt                    m_cpbRemovalDelay;
   UInt                    m_tl0Idx;
   UInt                    m_rapIdx;
-#if L0045_NON_NESTED_SEI_RESTRICTIONS
   Bool                    m_activeParameterSetSEIPresentInAU;
   Bool                    m_bufferingPeriodSEIPresentInAU;
   Bool                    m_pictureTimingSEIPresentInAU;
-#if K0180_SCALABLE_NESTING_SEI
   Bool                    m_nestedBufferingPeriodSEIPresentInAU;
   Bool                    m_nestedPictureTimingSEIPresentInAU;
-#endif
-#endif
 public:
   TEncGOP();
   virtual ~TEncGOP();
@@ -185,12 +181,9 @@ protected:
   SEIFramePacking*        xCreateSEIFramePacking();
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
-#if J0149_TONE_MAPPING_SEI
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
-#endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
-#if L0045_NON_NESTED_SEI_RESTRICTIONS
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
   Void xResetNonNestedSEIPresentFlags()
   {
@@ -198,17 +191,12 @@ protected:
     m_bufferingPeriodSEIPresentInAU    = false;
     m_pictureTimingSEIPresentInAU      = false;
   }
-#if K0180_SCALABLE_NESTING_SEI
   Void xResetNestedSEIPresentFlags()
   {
     m_nestedBufferingPeriodSEIPresentInAU    = false;
     m_nestedPictureTimingSEIPresentInAU      = false;
   }
-#endif
-#endif
-#if L0386_DB_METRIC
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
-#endif
 #if M0457_COL_PICTURE_SIGNALING
   TComPic* getMotionPredIlp(TComSlice* pcSlice);
 #endif

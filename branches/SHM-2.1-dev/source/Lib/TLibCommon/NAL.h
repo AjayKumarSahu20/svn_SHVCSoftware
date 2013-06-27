@@ -90,7 +90,6 @@ struct NALUnit
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
         || m_nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R;
   }
-#if L0045_NON_NESTED_SEI_RESTRICTIONS
   Bool isSei()
   {
     return m_nalUnitType == NAL_UNIT_PREFIX_SEI 
@@ -101,7 +100,6 @@ struct NALUnit
   {
     return ( (UInt)m_nalUnitType < 32 );
   }
-#endif
 };
 
 struct OutputNALUnit;

@@ -89,26 +89,20 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::DECODING_UNIT_INFO:
     fprintf( g_hTrace, "=========== Decoding Unit Information SEI message ===========\n");
     break;
-#if J0149_TONE_MAPPING_SEI
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
-#endif
 #if M0043_LAYERS_PRESENT_SEI
   case SEI::LAYERS_PRESENT:
     fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
     break;
 #endif
-#if L0208_SOP_DESCRIPTION_SEI
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
     break;
-#endif
-#if K0180_SCALABLE_NESTING_SEI
   case SEI::SCALABLE_NESTING:
     fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
     break;
-#endif
   default:
     fprintf( g_hTrace, "=========== Unknown SEI message ===========\n");
     break;
@@ -250,12 +244,10 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIGradualDecodingRefreshInfo;
       xParseSEIGradualDecodingRefreshInfo((SEIGradualDecodingRefreshInfo&) *sei, payloadSize);
       break;
-#if J0149_TONE_MAPPING_SEI
     case SEI::TONE_MAPPING_INFO:
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
-#endif
 #if M0043_LAYERS_PRESENT_SEI
     case SEI::LAYERS_PRESENT:
       if (!vps)
@@ -269,13 +261,10 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       }
       break;
 #endif
-#if L0208_SOP_DESCRIPTION_SEI
     case SEI::SOP_DESCRIPTION:
       sei = new SEISOPDescription;
       xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
       break;
-#endif
-#if K0180_SCALABLE_NESTING_SEI
     case SEI::SCALABLE_NESTING:
       sei = new SEIScalableNesting;
 #if M0043_LAYERS_PRESENT_SEI
@@ -284,7 +273,6 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
 #endif
       break;
-#endif
     default:
       for (UInt i = 0; i < payloadSize; i++)
       {
@@ -298,12 +286,10 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
   {
     switch (payloadType)
     {
-#if L0363_SEI_ALLOW_SUFFIX
       case SEI::USER_DATA_UNREGISTERED:
         sei = new SEIuserDataUnregistered;
         xParseSEIuserDataUnregistered((SEIuserDataUnregistered&) *sei, payloadSize);
         break;
-#endif
       case SEI::DECODED_PICTURE_HASH:
         sei = new SEIDecodedPictureHash;
         xParseSEIDecodedPictureHash((SEIDecodedPictureHash&) *sei, payloadSize);
@@ -435,10 +421,8 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt /
 {
   UInt val; 
   READ_CODE(4, val, "active_vps_id");      sei.activeVPSId = val; 
-#if L0047_APS_FLAGS
   READ_FLAG( val, "full_random_access_flag");  sei.m_fullRandomAccessFlag = val ? true : false;
   READ_FLAG( val, "no_param_set_update_flag"); sei.m_noParamSetUpdateFlag = val ? true : false;
-#endif
   READ_UVLC(   val, "num_sps_ids_minus1"); sei.numSpsIdsMinus1 = val;
 
   sei.activeSeqParamSetId.resize(sei.numSpsIdsMinus1 + 1);
@@ -471,14 +455,12 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*paylo
   {
     sei.m_duSptCpbRemovalDelay = 0;
   }
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
   READ_FLAG( val, "dpb_output_du_delay_present_flag"); sei.m_dpbOutputDuDelayPresentFlag = val ? true : false;
   if(sei.m_dpbOutputDuDelayPresentFlag)
   {
     READ_CODE(vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, val, "pic_spt_dpb_output_du_delay"); 
     sei.m_picSptDpbOutputDuDelay = val;
   }
-#endif
   xParseByteAlign();
 }
 
@@ -495,20 +477,16 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payload
   {
     READ_FLAG( code, "rap_cpb_params_present_flag" );                   sei.m_rapCpbParamsPresentFlag = code;
   }
-#if L0328_SPLICING
   //read splicing flag and cpb_removal_delay_delta
   READ_FLAG( code, "concatenation_flag"); 
   sei.m_concatenationFlag = code;
   READ_CODE( ( pHRD->getCpbRemovalDelayLengthMinus1() + 1 ), code, "au_cpb_removal_delay_delta_minus1" );
   sei.m_auCpbRemovalDelayDelta = code + 1;
-#endif
-#if L0044_CPB_DPB_DELAY_OFFSET
   if( sei.m_rapCpbParamsPresentFlag )
   {
     READ_CODE( pHRD->getCpbRemovalDelayLengthMinus1() + 1, code, "cpb_delay_offset" );      sei.m_cpbDelayOffset = code;
     READ_CODE( pHRD->getDpbOutputDelayLengthMinus1()  + 1, code, "dpb_delay_offset" );      sei.m_dpbDelayOffset = code;
   }
-#endif
   for( nalOrVcl = 0; nalOrVcl < 2; nalOrVcl ++ )
   {
     if( ( ( nalOrVcl == 0 ) && ( pHRD->getNalHrdParametersPresentFlag() ) ) ||
@@ -540,41 +518,25 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize
   TComVUI *vui = sps->getVuiParameters();
   TComHRD *hrd = vui->getHrdParameters();
 
-#if !L0045_CONDITION_SIGNALLING
-  // This condition was probably OK before the pic_struct, progressive_source_idc, duplicate_flag were added
-  if( !hrd->getNalHrdParametersPresentFlag() && !hrd->getVclHrdParametersPresentFlag() )
-  {
-    return;
-  }
-#endif
-
   if( vui->getFrameFieldInfoPresentFlag() )
   {
     READ_CODE( 4, code, "pic_struct" );             sei.m_picStruct            = code;
-#if L0046_RENAME_PROG_SRC_IDC
     READ_CODE( 2, code, "source_scan_type" );       sei.m_sourceScanType = code;
-#else
-    READ_CODE( 2, code, "progressive_source_idc" ); sei.m_progressiveSourceIdc = code;
-#endif
     READ_FLAG(    code, "duplicate_flag" );         sei.m_duplicateFlag        = ( code == 1 ? true : false );
   }
 
-#if L0045_CONDITION_SIGNALLING
   if( hrd->getCpbDpbDelaysPresentFlag())
   {
-#endif
     READ_CODE( ( hrd->getCpbRemovalDelayLengthMinus1() + 1 ), code, "au_cpb_removal_delay_minus1" );
     sei.m_auCpbRemovalDelay = code + 1;
     READ_CODE( ( hrd->getDpbOutputDelayLengthMinus1() + 1 ), code, "pic_dpb_output_delay" );
     sei.m_picDpbOutputDelay = code;
 
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     if(hrd->getSubPicCpbParamsPresentFlag())
     {
       READ_CODE(hrd->getDpbOutputDelayDuLengthMinus1()+1, code, "pic_dpb_output_du_delay" );
       sei.m_picDpbOutputDuDelay = code;
     }
-#endif
     if( hrd->getSubPicCpbParamsPresentFlag() && hrd->getSubPicCpbParamsInPicTimingSEIFlag() )
     {
       READ_UVLC( code, "num_decoding_units_minus1");
@@ -608,9 +570,7 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize
         }
       }
     }
-#if L0045_CONDITION_SIGNALLING
   }
-#endif
   xParseByteAlign();
 }
 Void SEIReader::xParseSEIRecoveryPoint(SEIRecoveryPoint& sei, UInt /*payloadSize*/)
@@ -631,9 +591,7 @@ Void SEIReader::xParseSEIFramePacking(SEIFramePacking& sei, UInt /*payloadSize*/
   if ( !sei.m_arrangementCancelFlag )
   {
     READ_CODE( 7, val, "frame_packing_arrangement_type" );          sei.m_arrangementType = val;
-#if L0444_FPA_TYPE
     assert((sei.m_arrangementType > 2) && (sei.m_arrangementType < 6) );
-#endif
     READ_FLAG( val, "quincunx_sampling_flag" );                     sei.m_quincunxSamplingFlag = val;
 
     READ_CODE( 6, val, "content_interpretation_type" );             sei.m_contentInterpretationType = val;
@@ -653,11 +611,7 @@ Void SEIReader::xParseSEIFramePacking(SEIFramePacking& sei, UInt /*payloadSize*/
     }
 
     READ_CODE( 8, val, "frame_packing_arrangement_reserved_byte" );   sei.m_arrangementReservedByte = val;
-#if L0045_PERSISTENCE_FLAGS
     READ_FLAG( val,  "frame_packing_arrangement_persistence_flag" );  sei.m_arrangementPersistenceFlag = val ? true : false;
-#else
-    READ_UVLC( val, "frame_packing_arrangement_repetition_period" );  sei.m_arrangementRepetetionPeriod = val;
-#endif
   }
   READ_FLAG( val, "upsampled_aspect_ratio" );                       sei.m_upsampledAspectRatio = val;
 
@@ -673,15 +627,7 @@ Void SEIReader::xParseSEIDisplayOrientation(SEIDisplayOrientation& sei, UInt /*p
     READ_FLAG( val,     "hor_flip" );                              sei.horFlip               = val;
     READ_FLAG( val,     "ver_flip" );                              sei.verFlip               = val;
     READ_CODE( 16, val, "anticlockwise_rotation" );                sei.anticlockwiseRotation = val;
-#if L0045_PERSISTENCE_FLAGS
     READ_FLAG( val,     "display_orientation_persistence_flag" );  sei.persistenceFlag       = val;
-#else
-    READ_UVLC( val,     "display_orientation_repetition_period" ); sei.repetitionPeriod      = val;
-#endif
-#if !REMOVE_SINGLE_SEI_EXTENSION_FLAGS
-    READ_FLAG( val,     "display_orientation_extension_flag" );    sei.extensionFlag         = val;
-    assert( !sei.extensionFlag );
-#endif
   }
   xParseByteAlign();
 }
@@ -701,7 +647,6 @@ Void SEIReader::xParseSEIGradualDecodingRefreshInfo(SEIGradualDecodingRefreshInf
   xParseByteAlign();
 }
 
-#if J0149_TONE_MAPPING_SEI
 Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payloadSize*/)
 {
   Int i;
@@ -782,7 +727,6 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
 
   xParseByteAlign();
 }
-#endif
 
 #if M0043_LAYERS_PRESENT_SEI
 Void SEIReader::xParseSEILayersPresent(SEILayersPresent &sei, UInt payloadSize, TComVPS *vps)
@@ -805,7 +749,6 @@ Void SEIReader::xParseSEILayersPresent(SEILayersPresent &sei, UInt payloadSize, 
 }
 #endif
 
-#if L0208_SOP_DESCRIPTION_SEI
 Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize)
 {
   Int iCode;
@@ -829,10 +772,7 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 
   xParseByteAlign();
 }
-#endif
 
-
-#if K0180_SCALABLE_NESTING_SEI
 #if M0043_LAYERS_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
 #else
@@ -887,7 +827,6 @@ Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitT
   } while (m_pcBitstream->getNumBitsLeft() > 8);
 
 }
-#endif
 
 Void SEIReader::xParseByteAlign()
 {
