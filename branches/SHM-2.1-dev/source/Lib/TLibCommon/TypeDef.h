@@ -146,6 +146,7 @@
 //! \{
 
 #define FIX1071 1 ///< fix for issue #1071
+#define M0043_LAYERS_PRESENT_SEI         0 ///< M0043: add layers present SEI
 
 #define MAX_NUM_PICS_IN_SOP           1024
 
