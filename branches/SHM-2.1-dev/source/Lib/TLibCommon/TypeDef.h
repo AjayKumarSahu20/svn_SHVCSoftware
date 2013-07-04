@@ -94,7 +94,7 @@
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
-#define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178 (currently only one reference layer is supported )
+#define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
