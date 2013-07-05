@@ -1786,6 +1786,12 @@ public:
 #endif
 #endif
 
+#else
+  // temporal solution for IntraBL. Only one reference layer is supported.
+  Int       getActiveNumILRRefIdx     ( )               { return  1; }
+  Int       getInterLayerPredLayerIdc (UInt layerIdx)   { return  m_layerId - 1;}
+  Void      setActiveNumILRRefIdx     ( Int i )         {}
+  Void      setInterLayerPredEnabledFlag( Bool   val )  {}
 #endif
 
 TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 

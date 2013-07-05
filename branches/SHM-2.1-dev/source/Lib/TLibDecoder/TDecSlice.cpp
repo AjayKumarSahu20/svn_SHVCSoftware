@@ -197,7 +197,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
   UInt uiTileLCUX;
   Int iNumSubstreamsPerTile = 1; // if independent.
 #if INTRA_BL
-  m_pcCuDecoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec() : NULL);
+  m_pcCuDecoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec(rpcPic->getLayerId()-1) : NULL);
 #endif
   Bool depSliceSegmentsEnabled = rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getPPS()->getDependentSliceSegmentsEnabledFlag();
   uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(iStartCUAddr))->getFirstCUAddr();
