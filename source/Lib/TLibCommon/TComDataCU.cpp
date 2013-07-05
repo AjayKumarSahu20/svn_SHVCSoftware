@@ -2596,7 +2596,7 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
     TComMvField cMvFieldBaseColCU[2];
     if(m_layerId)  
     {
-      pcColCU = getBaseColCU( xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
+      pcColCU = getBaseColCU( m_layerId - 1, xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
 
 #if INTRA_BL
       if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
@@ -2618,13 +2618,13 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
         if( puhInterDirNeighbours[iCount] & 1 )
         {
           pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_0, cMvFieldBaseColCU[0]);
-          scaleBaseMV( pcMvFieldNeighbours[iCount<<1], cMvFieldBaseColCU[0] );
+          scaleBaseMV( m_layerId - 1, pcMvFieldNeighbours[iCount<<1], cMvFieldBaseColCU[0] );
         }
 
         if ( getSlice()->isInterB() && puhInterDirNeighbours[iCount] & 2 )
         {
           pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_1, cMvFieldBaseColCU[1] );
-          scaleBaseMV( pcMvFieldNeighbours[(iCount<<1)+1], cMvFieldBaseColCU[1] );
+          scaleBaseMV( m_layerId - 1, pcMvFieldNeighbours[(iCount<<1)+1], cMvFieldBaseColCU[1] );
         }
 
         if( puhInterDirNeighbours[iCount] > 0 )

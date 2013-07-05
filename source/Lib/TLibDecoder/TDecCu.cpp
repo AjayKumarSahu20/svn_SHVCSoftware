@@ -934,9 +934,9 @@ Void TDecCu::xFillPCMBuffer(TComDataCU* pCU, UInt depth)
 Void
 TDecCu::xReconIntraBL( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 {
-  m_ppcYuvReco[uiDepth]->copyFromPicLuma  ( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, pcCU->getWidth(0), pcCU->getHeight(0));
-  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 0);
-  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 1);
+  m_ppcYuvReco[uiDepth]->copyFromPicLuma  ( pcCU->getSlice()->getFullPelBaseRec(m_layerId - 1),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, pcCU->getWidth(0), pcCU->getHeight(0));
+  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(m_layerId - 1),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 0);
+  m_ppcYuvReco[uiDepth]->copyFromPicChroma( pcCU->getSlice()->getFullPelBaseRec(m_layerId - 1),  pcCU->getAddr(), pcCU->getZorderIdxInCU(), 0, (pcCU->getWidth(0)>>1), (pcCU->getHeight(0)>>1), 1);
 
   // inter recon
   xDecodeInterTexture( pcCU, 0, uiDepth );

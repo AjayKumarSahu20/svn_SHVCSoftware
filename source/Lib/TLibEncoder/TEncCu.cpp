@@ -1892,9 +1892,9 @@ Void TEncCu::xCheckRDCostIntraBL( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU
   rpcTempCU->setDepthSubParts( uiDepth, 0 );
   //   rpcTempCU->setLumaIntraDirSubParts( DC_IDX, 0, uiDepth );
   //   rpcTempCU->setChromIntraDirSubParts( DC_IDX, 0, uiDepth );
-  m_ppcPredYuvTemp[uiDepth]->copyFromPicLuma  ( rpcTempCU->getSlice()->getFullPelBaseRec(),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
-  m_ppcPredYuvTemp[uiDepth]->copyFromPicChroma( rpcTempCU->getSlice()->getFullPelBaseRec(),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, (rpcTempCU->getWidth(0)>>1), (rpcTempCU->getHeight(0)>>1), 0);
-  m_ppcPredYuvTemp[uiDepth]->copyFromPicChroma( rpcTempCU->getSlice()->getFullPelBaseRec(),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, (rpcTempCU->getWidth(0)>>1), (rpcTempCU->getHeight(0)>>1), 1);
+  m_ppcPredYuvTemp[uiDepth]->copyFromPicLuma  ( rpcTempCU->getSlice()->getFullPelBaseRec(rpcTempCU->getLayerId() - 1),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, rpcTempCU->getWidth(0), rpcTempCU->getHeight(0));
+  m_ppcPredYuvTemp[uiDepth]->copyFromPicChroma( rpcTempCU->getSlice()->getFullPelBaseRec(rpcTempCU->getLayerId() - 1),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, (rpcTempCU->getWidth(0)>>1), (rpcTempCU->getHeight(0)>>1), 0);
+  m_ppcPredYuvTemp[uiDepth]->copyFromPicChroma( rpcTempCU->getSlice()->getFullPelBaseRec(rpcTempCU->getLayerId() - 1),  rpcTempCU->getAddr(), rpcTempCU->getZorderIdxInCU(), 0, (rpcTempCU->getWidth(0)>>1), (rpcTempCU->getHeight(0)>>1), 1);
   m_pcPredSearch->encodeResAndCalcRdInterCU( rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcResiYuvBest[uiDepth], m_ppcRecoYuvTemp[uiDepth], false );
   rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
 #else
