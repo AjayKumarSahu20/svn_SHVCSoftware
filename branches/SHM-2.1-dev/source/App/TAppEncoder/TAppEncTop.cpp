@@ -110,9 +110,17 @@ Void TAppEncTop::xInitLibCfg()
 
 #if REF_IDX_MFM
 #if AVC_BASE
+#if M0457_PREDICTION_INDICATIONS
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+#else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ));
+#endif
+#else
+#if M0457_PREDICTION_INDICATIONS
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
 #else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
+#endif
 #endif
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
     m_acTEncTop[layer].setIlSampleOnlyPred( layer == 0 ? 0 : m_ilSampleOnlyPred[layer] );
