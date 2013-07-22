@@ -64,16 +64,15 @@ TComSlice::TComSlice()
 , m_deblockingFilterOverrideFlag   ( false )
 , m_deblockingFilterBetaOffsetDiv2 ( 0 )
 , m_deblockingFilterTcOffsetDiv2   ( 0 )
-#if !L0034_COMBINED_LIST_CLEANUP
-, m_bRefPicListModificationFlagLC ( false )
-, m_bRefPicListCombinationFlag    ( false )
-#endif
 , m_bCheckLDC                     ( false )
 , m_iSliceQpDelta                 ( 0 )
 , m_iSliceQpDeltaCb               ( 0 )
 , m_iSliceQpDeltaCr               ( 0 )
 , m_iDepth                        ( 0 )
 , m_bRefenced                     ( false )
+#if SH_DISCARDABLE_FLAG
+, m_bDiscardableFlag              ( false )
+#endif
 , m_pcSPS                         ( NULL )
 , m_pcPPS                         ( NULL )
 , m_pcPic                         ( NULL )
@@ -85,13 +84,9 @@ TComSlice::TComSlice()
 #else
 , m_dLambda                       ( 0.0 )
 #endif
-#if !L0034_COMBINED_LIST_CLEANUP
-, m_bNoBackPredFlag             ( false )
-#endif
 , m_uiTLayer                      ( 0 )
 #if SVC_EXTENSION
 , m_layerId                     ( 0 )
-, m_pcBaseColPic                  ( NULL )
 #endif
 , m_bTLayerSwitchingFlag          ( false )
 , m_sliceMode                   ( 0 )
@@ -116,12 +111,10 @@ TComSlice::TComSlice()
 , m_temporalLayerNonReferenceFlag ( false )
 , m_enableTMVPFlag                ( true )
 {
-#if L0034_COMBINED_LIST_CLEANUP
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
-#else
-  m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = m_aiNumRefIdx[2] = 0;
-#endif
-  
+
+#if SVC_EXTENSION
+  memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0; 
@@ -130,26 +123,23 @@ TComSlice::TComSlice()
 #else
   m_numILRRefIdx = 0;
 #endif 
+#if M0457_COL_PICTURE_SIGNALING
+  m_altColIndicationFlag = false;
+  m_colRefLayerIdx       = 0;
+#endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  m_numSamplePredRefLayers       = 0;
+  m_interLayerSamplePredOnlyFlag = false;
+#endif
+#endif
 #endif
 
   initEqualRef();
   
-#if L0034_COMBINED_LIST_CLEANUP
   for ( Int idx = 0; idx < MAX_NUM_REF; idx++ )
   {
     m_list1IdxToList0Idx[idx] = -1;
   }
-#else
-  for(Int iNumCount = 0; iNumCount < MAX_NUM_REF_LC; iNumCount++)
-  {
-    m_iRefIdxOfLC[REF_PIC_LIST_0][iNumCount]=-1;
-    m_iRefIdxOfLC[REF_PIC_LIST_1][iNumCount]=-1;
-    m_eListIdFromIdxOfLC[iNumCount]=0;
-    m_iRefIdxFromIdxOfLC[iNumCount]=0;
-    m_iRefIdxOfL0FromRefIdxOfL1[iNumCount] = -1;
-    m_iRefIdxOfL1FromRefIdxOfL0[iNumCount] = -1;
-  }    
-#endif
   for(Int iNumCount = 0; iNumCount < MAX_NUM_REF; iNumCount++)
   {
     m_apcRefPicList [0][iNumCount] = NULL;
@@ -187,24 +177,18 @@ Void TComSlice::initSlice()
 #else
   m_numILRRefIdx              = 0;
 #endif  
-
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  m_numSamplePredRefLayers       = 0;
+  m_interLayerSamplePredOnlyFlag = false;
+#endif
 #endif
   m_colFromL0Flag = 1;
   
   m_colRefIdx = 0;
   initEqualRef();
-#if !L0034_COMBINED_LIST_CLEANUP
-  m_bNoBackPredFlag = false;
-  m_bRefPicListCombinationFlag = false;
-  m_bRefPicListModificationFlagLC = false;
-#endif
   m_bCheckLDC = false;
   m_iSliceQpDeltaCb = 0;
   m_iSliceQpDeltaCr = 0;
-
-#if !L0034_COMBINED_LIST_CLEANUP
-  m_aiNumRefIdx[REF_PIC_LIST_C]      = 0;
-#endif
 
   m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
 
@@ -347,7 +331,6 @@ Void TComSlice::setRefPOCList()
 
 }
 
-#if L0034_COMBINED_LIST_CLEANUP
 Void TComSlice::setList1IdxToList0Idx()
 {
   Int idxL0, idxL1;
@@ -364,73 +347,13 @@ Void TComSlice::setList1IdxToList0Idx()
     }
   }
 }
-#else
-Void TComSlice::generateCombinedList()
-{
-  if(m_aiNumRefIdx[REF_PIC_LIST_C] > 0)
-  {
-    m_aiNumRefIdx[REF_PIC_LIST_C]=0;
-    for(Int iNumCount = 0; iNumCount < MAX_NUM_REF_LC; iNumCount++)
-    {
-      m_iRefIdxOfLC[REF_PIC_LIST_0][iNumCount]=-1;
-      m_iRefIdxOfLC[REF_PIC_LIST_1][iNumCount]=-1;
-      m_eListIdFromIdxOfLC[iNumCount]=0;
-      m_iRefIdxFromIdxOfLC[iNumCount]=0;
-      m_iRefIdxOfL0FromRefIdxOfL1[iNumCount] = -1;
-      m_iRefIdxOfL1FromRefIdxOfL0[iNumCount] = -1;
-    }
-
-    for (Int iNumRefIdx = 0; iNumRefIdx < MAX_NUM_REF; iNumRefIdx++)
-    {
-      if(iNumRefIdx < m_aiNumRefIdx[REF_PIC_LIST_0])
-      {
-        Bool bTempRefIdxInL2 = true;
-        for ( Int iRefIdxLC = 0; iRefIdxLC < m_aiNumRefIdx[REF_PIC_LIST_C]; iRefIdxLC++ )
-        {
-          if ( m_apcRefPicList[REF_PIC_LIST_0][iNumRefIdx]->getPOC() == m_apcRefPicList[m_eListIdFromIdxOfLC[iRefIdxLC]][m_iRefIdxFromIdxOfLC[iRefIdxLC]]->getPOC() )
-          {
-            m_iRefIdxOfL1FromRefIdxOfL0[iNumRefIdx] = m_iRefIdxFromIdxOfLC[iRefIdxLC];
-            m_iRefIdxOfL0FromRefIdxOfL1[m_iRefIdxFromIdxOfLC[iRefIdxLC]] = iNumRefIdx;
-            bTempRefIdxInL2 = false;
-            break;
-          }
-        }
-
-        if(bTempRefIdxInL2 == true)
-        { 
-          m_eListIdFromIdxOfLC[m_aiNumRefIdx[REF_PIC_LIST_C]] = REF_PIC_LIST_0;
-          m_iRefIdxFromIdxOfLC[m_aiNumRefIdx[REF_PIC_LIST_C]] = iNumRefIdx;
-          m_iRefIdxOfLC[REF_PIC_LIST_0][iNumRefIdx] = m_aiNumRefIdx[REF_PIC_LIST_C]++;
-        }
-      }
-
-      if(iNumRefIdx < m_aiNumRefIdx[REF_PIC_LIST_1])
-      {
-        Bool bTempRefIdxInL2 = true;
-        for ( Int iRefIdxLC = 0; iRefIdxLC < m_aiNumRefIdx[REF_PIC_LIST_C]; iRefIdxLC++ )
-        {
-          if ( m_apcRefPicList[REF_PIC_LIST_1][iNumRefIdx]->getPOC() == m_apcRefPicList[m_eListIdFromIdxOfLC[iRefIdxLC]][m_iRefIdxFromIdxOfLC[iRefIdxLC]]->getPOC() )
-          {
-            m_iRefIdxOfL0FromRefIdxOfL1[iNumRefIdx] = m_iRefIdxFromIdxOfLC[iRefIdxLC];
-            m_iRefIdxOfL1FromRefIdxOfL0[m_iRefIdxFromIdxOfLC[iRefIdxLC]] = iNumRefIdx;
-            bTempRefIdxInL2 = false;
-            break;
-          }
-        }
-        if(bTempRefIdxInL2 == true)
-        {
-          m_eListIdFromIdxOfLC[m_aiNumRefIdx[REF_PIC_LIST_C]] = REF_PIC_LIST_1;
-          m_iRefIdxFromIdxOfLC[m_aiNumRefIdx[REF_PIC_LIST_C]] = iNumRefIdx;
-          m_iRefIdxOfLC[REF_PIC_LIST_1][iNumRefIdx] = m_aiNumRefIdx[REF_PIC_LIST_C]++;
-        }
-      }
-    }
-  }
-}
-#endif
 
 #if FIX1071
+#if SVC_EXTENSION
 Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr, TComPic** ilpPic)
+#else
+Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr )
+#endif
 #else
 Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #endif
@@ -439,10 +362,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   if (!checkNumPocTotalCurr)
 #endif
   {
-    if( m_eSliceType == I_SLICE )
+    if (m_eSliceType == I_SLICE)
     {
       ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
       ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
+      
       return;
     }
   
@@ -478,6 +402,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr0[NumPocStCurr0] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocStCurr0++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -491,6 +418,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr1[NumPocStCurr1] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocStCurr1++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -504,6 +434,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       pcRefPic->setIsLongTerm(1);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetLtCurr[NumPocLtCurr] = pcRefPic;
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
+#endif
       NumPocLtCurr++;
     }
     if(pcRefPic==NULL) 
@@ -517,30 +450,102 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #endif
 
 #if REF_IDX_FRAMEWORK
-  //inter-layer reference picture
-#if REF_IDX_MFM
-#if ZERO_NUM_DIRECT_LAYERS
-  if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
-#else
-  if (getLayerId())
-#endif
+  for( i = 0; i < m_activeNumILRRefIdx; i++ )
   {
-    if(!(getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) && getSPS()->getMFMEnabledFlag())
-    { 
-      ilpPic[0]->copyUpsampledMvField(getBaseColPic());
-    }
-    else
+    UInt refLayerIdc = m_interLayerPredLayerIdc[i];
+    //inter-layer reference picture
+#if REF_IDX_MFM
+
+#if ILR_RESTR
+    Int maxSubLayerForILPPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
+#else
+    if( m_layerId > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  )
+#endif
+
+#else
+#if ZERO_NUM_DIRECT_LAYERS
+    if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
+#else
+    if( m_layerId > 0 )
+#endif
+#endif
     {
-      ilpPic[0]->initUpsampledMvField();
+#if M0457_COL_PICTURE_SIGNALING
+      if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && getMFMEnabledFlag())
+#else
+      if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && m_pcSPS->getMFMEnabledFlag())
+#endif
+      { 
+        ilpPic[refLayerIdc]->copyUpsampledMvField( refLayerIdc, m_pcBaseColPic[refLayerIdc] );
+      }
+      else
+      {
+        ilpPic[refLayerIdc]->initUpsampledMvField();
+      }
+#endif
+      ilpPic[refLayerIdc]->setIsLongTerm(1);
     }
-  #endif
-    ilpPic[0]->setIsLongTerm(1);
   }
 #endif
   // ref_pic_list_init
   TComPic*  rpsCurrList0[MAX_NUM_REF+1];
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
 #if REF_IDX_FRAMEWORK
+#if ILR_RESTR
+  Int numInterLayerRPSPics = 0;
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
+#else
+  if( m_layerId > 0 )
+#endif
+  {
+    for( i=0; i < m_pcVPS->getNumDirectRefLayers( m_layerId ); i++ )
+    {
+      Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[i]->getSlice(0)->getLayerId());
+      if( ((Int)(ilpPic[i]->getSlice(0)->getTLayer())<= maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[i]->getSlice(0)->getRapPicFlag() ) )
+      {
+        numInterLayerRPSPics++;
+      }
+    }
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+    if (numInterLayerRPSPics < m_activeNumILRRefIdx)
+    {
+      m_activeNumILRRefIdx = numInterLayerRPSPics;
+    }
+#if MAX_ONE_RESAMPLING_DIRECT_LAYERS && SIMPLIFIED_MV_POS_SCALING
+    if( m_pcVPS->getScalabilityMask(1) )
+    {
+      Int numResampler = 0;
+      const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
+      Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
+                           (scalEL.getWindowRightOffset()  == 0 ) && 
+                           (scalEL.getWindowTopOffset()    == 0 ) && 
+                           (scalEL.getWindowBottomOffset() == 0 ) 
+                          );
+
+      for( i=0; i < m_activeNumILRRefIdx; i++ )
+      {
+        UInt refLayerIdc = m_interLayerPredLayerIdc[i];
+        if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) && (scalingOffset)) // ratio 1x
+        {
+          numResampler++;
+        }
+      }
+
+      //Bitstream constraint for SHVC: The picture resampling process as specified in subclause G.8.1.4.1 shall not be invoked more than once for decoding of each particular picture.
+      assert(numResampler <= 1);
+    }
+#endif 
+#else
+    if (numInterLayerRPSPics < m_numILRRefIdx)
+    {
+      m_numILRRefIdx = numInterLayerRPSPics;
+    }
+#endif
+  }
+#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_activeNumILRRefIdx;
 #else
@@ -553,9 +558,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   if (checkNumPocTotalCurr)
   {
     // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance that the following applies to the value of NumPocTotalCurr:
+#if ILP_RAP    // inter-layer prediction is allowed for BLA, CRA pictures of nuh_layer_id>0
+    // – If the current picture is a BLA or CRA picture with nuh_layer_id equal to 0, the value of NumPocTotalCurr shall be equal to 0.
+    // – Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
+    if (getRapPicFlag() && getLayerId()==0)
+#else
     // – If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
     // – Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
     if (getRapPicFlag())
+#endif
     {
       assert(numPocTotalCurr == 0);
     }
@@ -568,13 +579,21 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       return;
     }
     
-    assert(numPocTotalCurr != 0);
+    assert(numPocTotalCurr > 0);
     
     m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
     m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
   }
 #endif
-  
+
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+    if( m_interLayerSamplePredOnlyFlag && getLayerId() ) 
+    {
+      m_aiNumRefIdx[0] = m_aiNumRefIdx[0] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[0];
+      m_aiNumRefIdx[1] = m_aiNumRefIdx[1] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[1];
+    }
+#endif
+ 
     Int cIdx = 0;
     for ( i=0; i<NumPocStCurr0; i++, cIdx++)
     {
@@ -587,9 +606,10 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     for ( i=0; i<NumPocLtCurr;  i++, cIdx++)
     {
       rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
-    }
+    }    
+
 #if REF_IDX_FRAMEWORK
-    if(getLayerId())
+    if( m_layerId > 0 )
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
@@ -597,10 +617,17 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
       {
-        rpsCurrList0[cIdx] = ilpPic[i];
+        Int refLayerIdc = m_interLayerPredLayerIdc[i];
+#if ILR_RESTR
+         Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
+        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+#endif
+        rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
       }
     }
 #endif
+  assert(cIdx == numPocTotalCurr);
+
   if (m_eSliceType==B_SLICE)
   {
     cIdx = 0;
@@ -615,9 +642,10 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     for ( i=0; i<NumPocLtCurr;  i++, cIdx++)
     {
       rpsCurrList1[cIdx] = RefPicSetLtCurr[i];
-    }
+    }    
+
 #if REF_IDX_FRAMEWORK
-    if(getLayerId())
+    if( m_layerId > 0 )
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
@@ -625,32 +653,41 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
 #endif 
       {
-        rpsCurrList1[cIdx] = ilpPic[i];
+        Int refLayerIdc = m_interLayerPredLayerIdc[i];
+#if ILR_RESTR
+        Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
+        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+#endif
+        rpsCurrList1[cIdx] = ilpPic[refLayerIdc];
       }
     }
 #endif
+
+    assert(cIdx == numPocTotalCurr);
   }
 
   ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
 
-  for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[0]-1); rIdx ++)
+  for (Int rIdx = 0; rIdx < m_aiNumRefIdx[0]; rIdx ++)
   {
-    m_apcRefPicList[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? rpsCurrList0[ m_RefPicListModification.getRefPicSetIdxL0(rIdx) ] : rpsCurrList0[rIdx % numPocTotalCurr];
-    m_bIsUsedAsLongTerm[0][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL0() ? (m_RefPicListModification.getRefPicSetIdxL0(rIdx) >= (NumPocStCurr0 + NumPocStCurr1))
-                                  : ((rIdx % numPocTotalCurr) >= (NumPocStCurr0 + NumPocStCurr1));
+    cIdx = m_RefPicListModification.getRefPicListModificationFlagL0() ? m_RefPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
+    assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+    m_apcRefPicList[0][rIdx] = rpsCurrList0[ cIdx ];
+    m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
   }
-  if ( m_eSliceType == P_SLICE )
+  if ( m_eSliceType != B_SLICE )
   {
     m_aiNumRefIdx[1] = 0;
     ::memset( m_apcRefPicList[1], 0, sizeof(m_apcRefPicList[1]));
   }
   else
   {
-    for (Int rIdx = 0; rIdx <= (m_aiNumRefIdx[1]-1); rIdx ++)
+    for (Int rIdx = 0; rIdx < m_aiNumRefIdx[1]; rIdx ++)
     {
-      m_apcRefPicList[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ? rpsCurrList1[ m_RefPicListModification.getRefPicSetIdxL1(rIdx) ] : rpsCurrList1[rIdx % numPocTotalCurr];
-      m_bIsUsedAsLongTerm[1][rIdx] = m_RefPicListModification.getRefPicListModificationFlagL1() ?
-                                  (m_RefPicListModification.getRefPicSetIdxL1(rIdx) >= (NumPocStCurr0 + NumPocStCurr1)): ((rIdx % numPocTotalCurr) >= (NumPocStCurr0 + NumPocStCurr1));
+      cIdx = m_RefPicListModification.getRefPicListModificationFlagL1() ? m_RefPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPocTotalCurr;
+      assert(cIdx >= 0 && cIdx < numPocTotalCurr);
+      m_apcRefPicList[1][rIdx] = rpsCurrList1[ cIdx ];
+      m_bIsUsedAsLongTerm[1][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
     }
   }
 }
@@ -658,17 +695,17 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if REF_IDX_FRAMEWORK
 Void TComSlice::setRefPicListModificationSvc()
 {
-  if( !this->getPPS()->getListsModificationPresentFlag()) 
+  if( !m_pcPPS->getListsModificationPresentFlag()) 
   {
     return;
   }
 
-  if(this->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && this->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)
+  if(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA)
   {
     return;
   }
 
-  TComRefPicListModification* refPicListModification = this->getRefPicListModification();
+  TComRefPicListModification* refPicListModification = &m_RefPicListModification;
   Int numberOfRpsCurrTempList = this->getNumRpsCurrTempList();  // total number of ref pics in listTemp0 including inter-layer ref pics
 
   assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 1);
@@ -742,9 +779,9 @@ Int TComSlice::getNumRpsCurrTempList()
   Int numRpsCurrTempList = 0;
 
 #if REF_IDX_FRAMEWORK
-  if( m_eSliceType == I_SLICE || ( getSPS()->getLayerId() && 
-    (getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
-    (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) ) )
+  if( m_eSliceType == I_SLICE || ( m_pcSPS->getLayerId() && 
+    (m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
+    (m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) ) )
 #else
   if (m_eSliceType == I_SLICE) 
 #endif 
@@ -767,7 +804,7 @@ Int TComSlice::getNumRpsCurrTempList()
     }
   }
 #if REF_IDX_FRAMEWORK
-  if(getLayerId())
+  if( m_layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     numRpsCurrTempList += m_activeNumILRRefIdx;
@@ -949,38 +986,15 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_deblockingFilterBetaOffsetDiv2 = pSrc->m_deblockingFilterBetaOffsetDiv2;
   m_deblockingFilterTcOffsetDiv2 = pSrc->m_deblockingFilterTcOffsetDiv2;
   
-#if L0034_COMBINED_LIST_CLEANUP
   for (i = 0; i < 2; i++)
-#else
-  for (i = 0; i < 3; i++)
-#endif
   {
     m_aiNumRefIdx[i]     = pSrc->m_aiNumRefIdx[i];
   }
 
-#if L0034_COMBINED_LIST_CLEANUP
   for (i = 0; i < MAX_NUM_REF; i++)
   {
     m_list1IdxToList0Idx[i] = pSrc->m_list1IdxToList0Idx[i];
   } 
-#else
-  for (i = 0; i < 2; i++)
-  {
-    for (j = 0; j < MAX_NUM_REF_LC; j++)
-    {
-       m_iRefIdxOfLC[i][j]  = pSrc->m_iRefIdxOfLC[i][j];
-    }
-  }
-  for (i = 0; i < MAX_NUM_REF_LC; i++)
-  {
-    m_eListIdFromIdxOfLC[i] = pSrc->m_eListIdFromIdxOfLC[i];
-    m_iRefIdxFromIdxOfLC[i] = pSrc->m_iRefIdxFromIdxOfLC[i];
-    m_iRefIdxOfL1FromRefIdxOfL0[i] = pSrc->m_iRefIdxOfL1FromRefIdxOfL0[i];
-    m_iRefIdxOfL0FromRefIdxOfL1[i] = pSrc->m_iRefIdxOfL0FromRefIdxOfL1[i];
-  }
-  m_bRefPicListModificationFlagLC = pSrc->m_bRefPicListModificationFlagLC;
-  m_bRefPicListCombinationFlag    = pSrc->m_bRefPicListCombinationFlag;
-#endif
   m_bCheckLDC             = pSrc->m_bCheckLDC;
   m_iSliceQpDelta        = pSrc->m_iSliceQpDelta;
   m_iSliceQpDeltaCb      = pSrc->m_iSliceQpDeltaCb;
@@ -1011,7 +1025,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
-  m_numInterLayerRefPics       = pSrc->m_numInterLayerRefPics;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
 #elif REF_IDX_FRAMEWORK
   m_numILRRefIdx               = pSrc->m_numILRRefIdx;
@@ -1043,9 +1056,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     }
   }
 
-#if !L0034_COMBINED_LIST_CLEANUP
-  m_bNoBackPredFlag      = pSrc->m_bNoBackPredFlag;
-#endif
   m_uiTLayer                      = pSrc->m_uiTLayer;
   m_bTLayerSwitchingFlag          = pSrc->m_bTLayerSwitchingFlag;
 
@@ -1350,7 +1360,11 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
 
 /** Function for constructing an explicit Reference Picture Set out of the available pictures in a referenced Reference Picture Set
 */
+#if FIX1071
+Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP)
+#else
 Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet)
+#endif
 {
   TComPic* rpcPic;
   Int i, j;
@@ -1375,7 +1389,11 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
         // This picture exists as a reference picture
         // and should be added to the explicit Reference Picture Set
         pcRPS->setDeltaPOC(k, pReferencePictureSet->getDeltaPOC(i));
+#if FIX1071
+        pcRPS->setUsed(k, pReferencePictureSet->getUsed(i) && (!isRAP));
+#else
         pcRPS->setUsed(k, pReferencePictureSet->getUsed(i));
+#endif
         if(pcRPS->getDeltaPOC(k) < 0)
         {
           nrOfNegativePictures++;
@@ -1553,11 +1571,7 @@ TComVPS::TComVPS()
   for( Int i = 0; i < MAX_TLAYER; i++)
   {
     m_numReorderPics[i] = 0;
-#if L0323_DPB
     m_uiMaxDecPicBuffering[i] = 1; 
-#else
-    m_uiMaxDecPicBuffering[i] = 0; 
-#endif
     m_uiMaxLatencyIncrease[i] = 0;
   }
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -1586,6 +1600,10 @@ TComVPS::TComVPS()
   ::memset(m_directDependencyFlag, 0, sizeof(m_directDependencyFlag));
   ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));
   ::memset(m_refLayerId,           0, sizeof(m_refLayerId          ));
+#if M0457_PREDICTION_INDICATIONS
+  m_directDepTypeLen = 2;
+  ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
+#endif
 #endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
@@ -1596,6 +1614,12 @@ TComVPS::TComVPS()
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
+#endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+  {
+    m_maxSublayerForIlpPlus1[i] = m_uiMaxTLayers + 1;
+  }
 #endif
 }
 
@@ -1655,9 +1679,6 @@ TComSPS::TComSPS()
 , m_usePCM                   (false)
 , m_pcmLog2MaxSize            (  5)
 , m_uiPCMLog2MinSize          (  7)
-#if !L0034_COMBINED_LIST_CLEANUP
-, m_bUseLComb                 (false)
-#endif
 , m_bitDepthY                 (  8)
 , m_bitDepthC                 (  8)
 , m_qpBDOffsetY               (  0)
@@ -1675,23 +1696,34 @@ TComSPS::TComSPS()
 , m_useStrongIntraSmoothing   (false)
 , m_vuiParametersPresentFlag  (false)
 , m_vuiParameters             ()
+#if M0463_VUI_EXT_ILP_REF
+, m_interViewMvVertConstraintFlag (false)
+, m_numIlpRestrictedRefLayers ( 0 )
+#endif
 #if SVC_EXTENSION
 , m_layerId(0)
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+, m_numScaledRefLayerOffsets  (0)
 #endif
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )
   {
     m_uiMaxLatencyIncrease[i] = 0;
-#if L0323_DPB
     m_uiMaxDecPicBuffering[i] = 1;
-#else
-    m_uiMaxDecPicBuffering[i] = 0;
-#endif
     m_numReorderPics[i]       = 0;
   }
   m_scalingList = new TComScalingList;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_usedByCurrPicLtSPSFlag, 0, sizeof(m_usedByCurrPicLtSPSFlag));
+#if M0463_VUI_EXT_ILP_REF
+  for (Int i = 0; i < MAX_LAYERS; i++ )
+  {
+    m_minSpatialSegmentOffsetPlus1[ i ] = 0;
+    m_ctuBasedOffsetEnabledFlag   [ i ] = false;
+    m_minHorizontalCtuOffsetPlus1 [ i ] = 0;
+  }
+#endif
 }
 
 TComSPS::~TComSPS()
@@ -1716,7 +1748,6 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
   TComVUI *vui = getVuiParameters();
   TComHRD *hrd = vui->getHrdParameters();
 
-#if L0043_TIMING_INFO
   TimingInfo *timingInfo = vui->getTimingInfo();
   timingInfo->setTimingInfoPresentFlag( true );
   switch( frameRate )
@@ -1740,30 +1771,6 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
     timingInfo->setNumUnitsInTick( 1001 );       timingInfo->setTimeScale    ( 60000 );
     break;
   }
-#else
-  hrd->setTimingInfoPresentFlag( true );
-  switch( frameRate )
-  {
-  case 24:
-    hrd->setNumUnitsInTick( 1125000 );    hrd->setTimeScale    ( 27000000 );
-    break;
-  case 25:
-    hrd->setNumUnitsInTick( 1080000 );    hrd->setTimeScale    ( 27000000 );
-    break;
-  case 30:
-    hrd->setNumUnitsInTick( 900900 );     hrd->setTimeScale    ( 27000000 );
-    break;
-  case 50:
-    hrd->setNumUnitsInTick( 540000 );     hrd->setTimeScale    ( 27000000 );
-    break;
-  case 60:
-    hrd->setNumUnitsInTick( 450450 );     hrd->setTimeScale    ( 27000000 );
-    break;
-  default:
-    hrd->setNumUnitsInTick( 1001 );       hrd->setTimeScale    ( 60000 );
-    break;
-  }
-#endif
 
   Bool rateCnt = ( bitRate > 0 );
   hrd->setNalHrdParametersPresentFlag( rateCnt );
@@ -1776,9 +1783,7 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
     hrd->setTickDivisorMinus2( 100 - 2 );                          // 
     hrd->setDuCpbRemovalDelayLengthMinus1( 7 );                    // 8-bit precision ( plus 1 for last DU in AU )
     hrd->setSubPicCpbParamsInPicTimingSEIFlag( true );
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
     hrd->setDpbOutputDelayDuLengthMinus1( 5 + 7 );                 // With sub-clock tick factor of 100, at least 7 bits to have the same value as AU dpb delay
-#endif
   }
   else
   {
@@ -1807,9 +1812,7 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
   Int i, j;
   UInt birateValue, cpbSizeValue;
   UInt ducpbSizeValue;
-#if L0363_DU_BIT_RATE
   UInt duBitRateValue = 0;
-#endif
 
   for( i = 0; i < MAX_TLAYER; i ++ )
   {
@@ -1821,9 +1824,7 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
     birateValue  = bitRate;
     cpbSizeValue = bitRate;                                     // 1 second
     ducpbSizeValue = bitRate/numDU;
-#if L0363_DU_BIT_RATE
     duBitRateValue = bitRate;
-#endif
     for( j = 0; j < ( hrd->getCpbCntMinus1( i ) + 1 ); j ++ )
     {
       hrd->setBitRateValueMinus1( i, j, 0, ( birateValue  - 1 ) );
@@ -1834,9 +1835,7 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
       hrd->setBitRateValueMinus1( i, j, 1, ( birateValue  - 1) );
       hrd->setCpbSizeValueMinus1( i, j, 1, ( cpbSizeValue - 1 ) );
       hrd->setDuCpbSizeValueMinus1( i, j, 1, ( ducpbSizeValue - 1 ) );
-#if L0363_DU_BIT_RATE
       hrd->setDuBitRateValueMinus1( i, j, 1, ( duBitRateValue - 1 ) );
-#endif
       hrd->setCbrFlag( i, j, 1, ( j == 0 ) );
     }
   }
@@ -2413,12 +2412,10 @@ ProfileTierLevel::ProfileTierLevel()
   , m_tierFlag        (false)
   , m_profileIdc      (0)
   , m_levelIdc        (0)
-#if L0046_CONSTRAINT_FLAGS
 , m_progressiveSourceFlag  (false)
 , m_interlacedSourceFlag   (false)
 , m_nonPackedConstraintFlag(false)
 , m_frameOnlyConstraintFlag(false)
-#endif
 {
   ::memset(m_profileCompatibilityFlag, 0, sizeof(m_profileCompatibilityFlag));
 }
@@ -2449,17 +2446,6 @@ Void TComPTL::copyProfileInfo(TComPTL *ptl)
 {
   // Copy all information related to general profile
   this->getGeneralPTL()->copyProfileInfo(ptl->getGeneralPTL());
-}
-#endif
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-TComBitRatePicRateInfo::TComBitRatePicRateInfo()
-{
-  ::memset(m_bitRateInfoPresentFlag, 0, sizeof(m_bitRateInfoPresentFlag));
-  ::memset(m_picRateInfoPresentFlag, 0, sizeof(m_picRateInfoPresentFlag));
-  ::memset(m_avgBitRate,             0, sizeof(m_avgBitRate));
-  ::memset(m_maxBitRate,             0, sizeof(m_maxBitRate));
-  ::memset(m_constantPicRateIdc,     0, sizeof(m_constantPicRateIdc));
-  ::memset(m_avgPicRate,             0, sizeof(m_avgPicRate));
 }
 #endif
 
@@ -2508,50 +2494,56 @@ Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
 }
 #endif
 
-Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt layerID )
+Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc )
 {  
-  if (layerID == 0)
+  if(m_layerId == 0)
   {
-    m_pcBaseColPic = NULL;
+    memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
     return;
   }        
-  setBaseColPic(xGetRefPic(rcListPic, getPOC())); 
+  setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
 }
 #endif 
 
 #if REF_IDX_MFM
-Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic *pcRefPicBL )
+Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
 {
-  //set reference picture POC of each ILP reference 
-  Int thePoc = ilpPic[0]->getPOC(); 
-  assert(thePoc >= 0); 
-  assert(thePoc == pcRefPicBL->getPOC());
-
-  ilpPic[0]->getSlice(0)->setBaseColPic( pcRefPicBL );
-
-  //copy reference pictures marking from the reference layer
-  ilpPic[0]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
-  
-  for( Int refList = 0; refList < 2; refList++ )
+  for( UInt i = 0; i < m_activeNumILRRefIdx; i++ )
   {
-    RefPicList refPicList = RefPicList( refList );
-    
-    //set reference POC of ILP
-    ilpPic[0]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
-    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) >= 0);
-    assert(ilpPic[0]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF);
+    UInt refLayerIdc = m_interLayerPredLayerIdc[i];
 
-    //initialize reference POC of ILP
-    for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++)
+    TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
+    //set reference picture POC of each ILP reference 
+    Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
+    assert(thePoc >= 0); 
+    assert(thePoc == pcRefPicBL->getPOC());
+
+    ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
+
+    //copy reference pictures marking from the reference layer
+    ilpPic[refLayerIdc]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
+
+    for( Int refList = 0; refList < 2; refList++ )
     {
-      ilpPic[0]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx);
-      ilpPic[0]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx);
-    }
+      RefPicList refPicList = RefPicList( refList );
 
-    for(Int refIdx = pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx < MAX_NUM_REF; refIdx++) 
-    { 
-      ilpPic[0]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
-      ilpPic[0]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+      //set reference POC of ILP
+      ilpPic[refLayerIdc]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
+      assert(ilpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) >= 0);
+      assert(ilpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF);
+
+      //initialize reference POC of ILP
+      for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++)
+      {
+        ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx);
+        ilpPic[refLayerIdc]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx);
+      }
+
+      for(Int refIdx = pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx < MAX_NUM_REF; refIdx++) 
+      { 
+        ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
+        ilpPic[refLayerIdc]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+      }
     }
   }
   return;

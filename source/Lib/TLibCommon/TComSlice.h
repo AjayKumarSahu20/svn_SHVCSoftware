@@ -190,12 +190,10 @@ class ProfileTierLevel
   Bool    m_profileCompatibilityFlag[32];
   Int     m_levelIdc;
 
-#if L0046_CONSTRAINT_FLAGS
   Bool m_progressiveSourceFlag;
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
-#endif
   
 public:
   ProfileTierLevel();
@@ -215,7 +213,6 @@ public:
   Int   getLevelIdc()   const   { return m_levelIdc; }
   Void  setLevelIdc(Int x)      { m_levelIdc = x; }
   
-#if L0046_CONSTRAINT_FLAGS
   Bool getProgressiveSourceFlag() const { return m_progressiveSourceFlag; }
   Void setProgressiveSourceFlag(Bool b) { m_progressiveSourceFlag = b; }
   
@@ -227,7 +224,6 @@ public:
   
   Bool getFrameOnlyConstraintFlag() const { return m_frameOnlyConstraintFlag; }
   Void setFrameOnlyConstraintFlag(Bool b) { m_frameOnlyConstraintFlag = b; }
-#endif
 #if VPS_EXTN_PROFILE_INFO
   Void copyProfileInfo(ProfileTierLevel *ptl);
 #endif
@@ -257,37 +253,6 @@ public:
 };
 /// VPS class
 
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-class TComBitRatePicRateInfo
-{
-  Bool        m_bitRateInfoPresentFlag[MAX_TLAYER];
-  Bool        m_picRateInfoPresentFlag[MAX_TLAYER];
-  Int         m_avgBitRate[MAX_TLAYER];
-  Int         m_maxBitRate[MAX_TLAYER];
-  Int         m_constantPicRateIdc[MAX_TLAYER];
-  Int         m_avgPicRate[MAX_TLAYER];
-public:
-  TComBitRatePicRateInfo();
-  Bool        getBitRateInfoPresentFlag(Int i) {return m_bitRateInfoPresentFlag[i];}
-  Void        setBitRateInfoPresentFlag(Int i, Bool x) {m_bitRateInfoPresentFlag[i] = x;}
-
-  Bool        getPicRateInfoPresentFlag(Int i) {return m_picRateInfoPresentFlag[i];}
-  Void        setPicRateInfoPresentFlag(Int i, Bool x) {m_picRateInfoPresentFlag[i] = x;}
-
-  Int         getAvgBitRate(Int i) {return m_avgBitRate[i];}
-  Void        setAvgBitRate(Int i, Int x) {m_avgBitRate[i] = x;}
-
-  Int         getMaxBitRate(Int i) {return m_maxBitRate[i];}
-  Void        setMaxBitRate(Int i, Int x) {m_maxBitRate[i] = x;}
-
-  Int         getConstantPicRateIdc(Int i) {return m_constantPicRateIdc[i];}
-  Void        setConstantPicRateIdc(Int i, Int x) {m_constantPicRateIdc[i] = x;}
-
-  Int         getAvgPicRate(Int i) {return m_avgPicRate[i];}
-  Void        setAvgPicRate(Int i, Int x) {m_avgPicRate[i] = x;}
-};
-#endif
-
 struct HrdSubLayerInfo
 {
   Bool fixedPicRateFlag;
@@ -299,28 +264,19 @@ struct HrdSubLayerInfo
   UInt cpbSizeValue      [MAX_CPB_CNT][2];
   UInt ducpbSizeValue    [MAX_CPB_CNT][2];
   UInt cbrFlag           [MAX_CPB_CNT][2];
-#if L0363_DU_BIT_RATE
   UInt duBitRateValue    [MAX_CPB_CNT][2];
-#endif
 };
 
 class TComHRD
 {
 private:
-#if !L0043_TIMING_INFO
-  Bool m_timingInfoPresentFlag;
-  UInt m_numUnitsInTick;
-  UInt m_timeScale;
-#endif
   Bool m_nalHrdParametersPresentFlag;
   Bool m_vclHrdParametersPresentFlag;
   Bool m_subPicCpbParamsPresentFlag;
   UInt m_tickDivisorMinus2;
   UInt m_duCpbRemovalDelayLengthMinus1;
   Bool m_subPicCpbParamsInPicTimingSEIFlag;
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
   UInt m_dpbOutputDelayDuLengthMinus1;
-#endif
   UInt m_bitRateScale;
   UInt m_cpbSizeScale;
   UInt m_ducpbSizeScale;
@@ -332,22 +288,13 @@ private:
 
 public:
   TComHRD()
-#if !L0043_TIMING_INFO
-  :m_timingInfoPresentFlag(false)
-  ,m_numUnitsInTick(1001)
-  ,m_timeScale(60000)
-  ,m_nalHrdParametersPresentFlag(0)
-#else
   :m_nalHrdParametersPresentFlag(0)
-#endif
   ,m_vclHrdParametersPresentFlag(0)
   ,m_subPicCpbParamsPresentFlag(false)
   ,m_tickDivisorMinus2(0)
   ,m_duCpbRemovalDelayLengthMinus1(0)
   ,m_subPicCpbParamsInPicTimingSEIFlag(false)
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
   ,m_dpbOutputDelayDuLengthMinus1(0)
-#endif
   ,m_bitRateScale(0)
   ,m_cpbSizeScale(0)
   ,m_initialCpbRemovalDelayLengthMinus1(0)
@@ -356,16 +303,6 @@ public:
   {}
 
   virtual ~TComHRD() {}
-#if !L0043_TIMING_INFO
-  Void setTimingInfoPresentFlag             ( Bool flag )  { m_timingInfoPresentFlag = flag;               }
-  Bool getTimingInfoPresentFlag             ( )            { return m_timingInfoPresentFlag;               }
-
-  Void setNumUnitsInTick                    ( UInt value ) { m_numUnitsInTick = value;                     }
-  UInt getNumUnitsInTick                    ( )            { return m_numUnitsInTick;                      }
-
-  Void setTimeScale                         ( UInt value ) { m_timeScale = value;                          }
-  UInt getTimeScale                         ( )            { return m_timeScale;                           }
-#endif
 
   Void setNalHrdParametersPresentFlag       ( Bool flag )  { m_nalHrdParametersPresentFlag = flag;         }
   Bool getNalHrdParametersPresentFlag       ( )            { return m_nalHrdParametersPresentFlag;         }
@@ -385,10 +322,8 @@ public:
   Void setSubPicCpbParamsInPicTimingSEIFlag ( Bool flag)   { m_subPicCpbParamsInPicTimingSEIFlag = flag;   }
   Bool getSubPicCpbParamsInPicTimingSEIFlag ()             { return m_subPicCpbParamsInPicTimingSEIFlag;   }
 
-#if L0044_DU_DPB_OUTPUT_DELAY_HRD
   Void setDpbOutputDelayDuLengthMinus1      (UInt value )  { m_dpbOutputDelayDuLengthMinus1 = value;       }
   UInt getDpbOutputDelayDuLengthMinus1      ()             { return m_dpbOutputDelayDuLengthMinus1;        }
-#endif
 
   Void setBitRateScale                      ( UInt value ) { m_bitRateScale = value;                       }
   UInt getBitRateScale                      ( )            { return m_bitRateScale;                        }
@@ -429,21 +364,16 @@ public:
   UInt getCpbSizeValueMinus1     ( Int layer, Int cpbcnt, Int nalOrVcl            )  { return m_HRD[layer].cpbSizeValue[cpbcnt][nalOrVcl];        }
   Void setDuCpbSizeValueMinus1     ( Int layer, Int cpbcnt, Int nalOrVcl, UInt value ) { m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl] = value;       }
   UInt getDuCpbSizeValueMinus1     ( Int layer, Int cpbcnt, Int nalOrVcl            )  { return m_HRD[layer].ducpbSizeValue[cpbcnt][nalOrVcl];        }
-#if L0363_DU_BIT_RATE
   Void setDuBitRateValueMinus1     ( Int layer, Int cpbcnt, Int nalOrVcl, UInt value ) { m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl] = value;       }
   UInt getDuBitRateValueMinus1     (Int layer, Int cpbcnt, Int nalOrVcl )              { return m_HRD[layer].duBitRateValue[cpbcnt][nalOrVcl];        }
-#endif
   Void setCbrFlag                ( Int layer, Int cpbcnt, Int nalOrVcl, UInt value ) { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
   Bool getCbrFlag                ( Int layer, Int cpbcnt, Int nalOrVcl             ) { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl];             }
 
   Void setNumDU                              ( UInt value ) { m_numDU = value;                            }
   UInt getNumDU                              ( )            { return m_numDU;          }
-#if L0045_CONDITION_SIGNALLING
   Bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
-#endif
 };
 
-#if L0043_TIMING_INFO
 class TimingInfo
 {
   Bool m_timingInfoPresentFlag;
@@ -474,7 +404,6 @@ public:
   Int  getNumTicksPocDiffOneMinus1          ( )            { return m_numTicksPocDiffOneMinus1;            }
   Void setNumTicksPocDiffOneMinus1          (Int x       ) { m_numTicksPocDiffOneMinus1 = x;               }
 };
-#endif
 
 class TComVPS
 {
@@ -486,7 +415,7 @@ private:
   
   UInt        m_numReorderPics[MAX_TLAYER];
   UInt        m_uiMaxDecPicBuffering[MAX_TLAYER]; 
-  UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];
+  UInt        m_uiMaxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
 
   UInt        m_numHrdParameters;
 #if !VPS_RENAME
@@ -508,12 +437,7 @@ private:
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
   TComPTL     m_pcPTL;
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-  TComBitRatePicRateInfo    m_bitRatePicRateInfo;
-#endif
-#if L0043_TIMING_INFO
   TimingInfo  m_timingInfo;
-#endif
 
   // ------------------------------------------
   // Variables related to VPS extensions
@@ -548,6 +472,10 @@ private:
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#if M0457_PREDICTION_INDICATIONS
+  UInt       m_directDepTypeLen;
+  UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #endif
 #if VPS_PROFILE_OUTPUT_LAYERS
   UInt       m_numProfileTierLevel;
@@ -558,6 +486,12 @@ private:
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
+#endif
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+#endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Bool       m_singleLayerForNonIrapFlag;
 #endif
 public:
   TComVPS();
@@ -625,12 +559,7 @@ public:
   Void    deriveLayerIdListVariables();
 #endif
   TComPTL* getPTL() { return &m_pcPTL; }
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-  TComBitRatePicRateInfo *getBitratePicrateInfo() { return &m_bitRatePicRateInfo; }
-#endif
-#if L0043_TIMING_INFO
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
-#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
   Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
@@ -690,6 +619,14 @@ public:
 
   UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
   Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
+
+#if M0457_PREDICTION_INDICATIONS
+  UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
+  Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
+
+  UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
+  Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
+#endif
 #endif
 #if VPS_PROFILE_OUTPUT_LAYERS
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
@@ -711,6 +648,14 @@ public:
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #endif 
+#if JCTVC_M0203_INTERLAYER_PRED_IDC
+  Bool   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
+  Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
+#endif
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
+  Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
+#endif
 };
 
 class Window
@@ -787,12 +732,11 @@ private:
   Int  m_log2MaxMvLengthHorizontal;
   Int  m_log2MaxMvLengthVertical;
   TComHRD m_hrdParameters;
-#if L0043_TIMING_INFO
   TimingInfo m_timingInfo;
-#else
-  Bool m_pocProportionalToTimingFlag;
-  Int  m_numTicksPocDiffOneMinus1;
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+  Bool m_tileBoundariesAlignedFlag;
 #endif
+
 
 public:
   TComVUI()
@@ -825,9 +769,8 @@ public:
     ,m_maxBitsPerMinCuDenom(1)
     ,m_log2MaxMvLengthHorizontal(15)
     ,m_log2MaxMvLengthVertical(15)
-#if !L0043_TIMING_INFO  
-    ,m_pocProportionalToTimingFlag(false)
-    ,m_numTicksPocDiffOneMinus1(0)
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+    ,m_tileBoundariesAlignedFlag(true)
 #endif
   {}
 
@@ -923,13 +866,10 @@ public:
   Void setLog2MaxMvLengthVertical(Int i) { m_log2MaxMvLengthVertical = i; }
 
   TComHRD* getHrdParameters                 ()             { return &m_hrdParameters; }
-#if L0043_TIMING_INFO
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
-#else
-  Bool getPocProportionalToTimingFlag() {return m_pocProportionalToTimingFlag; }
-  Void setPocProportionalToTimingFlag(Bool x) {m_pocProportionalToTimingFlag = x;}
-  Int  getNumTicksPocDiffOneMinus1() {return m_numTicksPocDiffOneMinus1;}
-  Void setNumTicksPocDiffOneMinus1(Int x) { m_numTicksPocDiffOneMinus1 = x;}
+#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
+  Bool getTileBoundariesAlignedFlag(  ) { return m_tileBoundariesAlignedFlag; } 
+  Void setTileBoundariesAlignedFlag( Bool flag ) { m_tileBoundariesAlignedFlag = flag; } 
 #endif
 };
 
@@ -970,10 +910,6 @@ private:
   UInt        m_uiPCMLog2MinSize;
   Bool        m_useAMP;
 
-#if !L0034_COMBINED_LIST_CLEANUP
-  Bool        m_bUseLComb;
-#endif
-  
   // Parameter
   Int         m_bitDepthY;
   Int         m_bitDepthC;
@@ -1002,7 +938,7 @@ private:
   Bool        m_scalingListPresentFlag;
   TComScalingList*     m_scalingList;   //!< ScalingList class pointer
   UInt        m_uiMaxDecPicBuffering[MAX_TLAYER]; 
-  UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];
+  UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
 
   Bool        m_useDF;
   Bool        m_useStrongIntraSmoothing;
@@ -1014,14 +950,25 @@ private:
   static const Int   m_winUnitY[MAX_CHROMA_FORMAT_IDC+1];
   TComPTL     m_pcPTL;
 
+#if M0463_VUI_EXT_ILP_REF
+  Bool        m_interViewMvVertConstraintFlag;
+  Int         m_numIlpRestrictedRefLayers        ;
+  Int         m_minSpatialSegmentOffsetPlus1[MAX_LAYERS];
+  Bool        m_ctuBasedOffsetEnabledFlag   [MAX_LAYERS];
+  Int         m_minHorizontalCtuOffsetPlus1 [MAX_LAYERS];
+#endif
+
 #if SVC_EXTENSION
   UInt m_layerId;
 #endif
 #if REF_IDX_MFM
+#if !M0457_COL_PICTURE_SIGNALING
   Bool m_bMFMEnabledFlag;
 #endif
+#endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window      m_scaledRefLayerWindow;
+  UInt        m_numScaledRefLayerOffsets;
+  Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
 public:
   TComSPS();
@@ -1097,11 +1044,6 @@ public:
   UInt getMaxTrSize   ()         { return  m_uiMaxTrSize;   }
   
   // Tool list
-#if !L0034_COMBINED_LIST_CLEANUP
-  Void setUseLComb    (Bool b)   { m_bUseLComb = b;         }
-  Bool getUseLComb    ()         { return m_bUseLComb;      }
-#endif
-
   Bool getUseLossless ()         { return m_useLossless; }
   Void setUseLossless ( Bool b ) { m_useLossless  = b; }
   
@@ -1155,15 +1097,36 @@ public:
   TComPTL* getPTL()     { return &m_pcPTL; }
 
 #if SVC_EXTENSION
+#if M0463_VUI_EXT_ILP_REF
+  Void setInterViewMvVertConstraintFlag(Bool val) { m_interViewMvVertConstraintFlag = val; }
+  Bool getInterViewMvVertConstraintFlag()         { return m_interViewMvVertConstraintFlag;}
+
+  ////  sps_extension_vui_parameters( )
+  Void setNumIlpRestrictedRefLayers   ( Int val )        { m_numIlpRestrictedRefLayers         = val;}
+  Int  getNumIlpRestrictedRefLayers   ( )                { return m_numIlpRestrictedRefLayers        ;}
+
+  Void setMinSpatialSegmentOffsetPlus1( Int i, Int val ) { m_minSpatialSegmentOffsetPlus1[ i ] = val;}
+  Int  getMinSpatialSegmentOffsetPlus1( Int i )          { return m_minSpatialSegmentOffsetPlus1[ i ];}
+
+  Void setCtuBasedOffsetEnabledFlag   ( Int i, Bool flag ) { m_ctuBasedOffsetEnabledFlag   [ i ] = flag;}
+  Bool getCtuBasedOffsetEnabledFlag   ( Int i )            { return m_ctuBasedOffsetEnabledFlag   [ i ];}
+
+  Void setMinHorizontalCtuOffsetPlus1 ( Int i, Int val )   { m_minHorizontalCtuOffsetPlus1 [ i ] = val;}
+  Int  getMinHorizontalCtuOffsetPlus1 ( Int i )            { return m_minHorizontalCtuOffsetPlus1 [ i ];}
+#endif
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
 #endif
 #if REF_IDX_MFM
+#if !M0457_COL_PICTURE_SIGNALING
   Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
 #endif
+#endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window&  getScaledRefLayerWindow(     )   { return m_scaledRefLayerWindow; }
+  UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
+  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
+  Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
 #endif
 };
 
@@ -1430,19 +1393,12 @@ private:
   Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
 #endif 
-#if L0034_COMBINED_LIST_CLEANUP
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int         m_numSamplePredRefLayers;
+  Bool        m_interLayerSamplePredOnlyFlag;
+#endif
   Int         m_list1IdxToList0Idx[MAX_NUM_REF];
   Int         m_aiNumRefIdx   [2];    //  for multiple reference of current slice
-#else
-  Int         m_aiNumRefIdx   [3];    //  for multiple reference of current slice
-  Int         m_iRefIdxOfLC[2][MAX_NUM_REF_LC];
-  Int         m_eListIdFromIdxOfLC[MAX_NUM_REF_LC];
-  Int         m_iRefIdxFromIdxOfLC[MAX_NUM_REF_LC];
-  Int         m_iRefIdxOfL1FromRefIdxOfL0[MAX_NUM_REF_LC];
-  Int         m_iRefIdxOfL0FromRefIdxOfL1[MAX_NUM_REF_LC];
-  Bool        m_bRefPicListModificationFlagLC;
-  Bool        m_bRefPicListCombinationFlag;
-#endif
 
   Bool        m_bCheckLDC;
 
@@ -1458,6 +1414,10 @@ private:
   // referenced slice?
   Bool        m_bRefenced;
   
+#if SH_DISCARDABLE_FLAG
+  Bool        m_bDiscardableFlag;
+#endif
+
   // access channel
   TComVPS*    m_pcVPS;
   TComSPS*    m_pcSPS;
@@ -1480,14 +1440,20 @@ private:
 #endif
 
   Bool        m_abEqualRef  [2][MAX_NUM_REF][MAX_NUM_REF];
-#if !L0034_COMBINED_LIST_CLEANUP
-  Bool        m_bNoBackPredFlag;
-#endif
   UInt        m_uiTLayer;
 #if SVC_EXTENSION
   UInt        m_layerId;
-  TComPic*    m_pcBaseColPic;
-  TComPicYuv* m_pcFullPelBaseRec;
+  TComPic*    m_pcBaseColPic[MAX_LAYERS];
+  TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+  Int         m_numMotionPredRefLayers;
+#if REF_IDX_MFM
+  Bool        m_bMFMEnabledFlag;
+  Int         m_colRefLayerIdx;
+  Bool        m_altColIndicationFlag;
+  TComPic*    m_pcIlpPic;
+#endif
+#endif
 #endif 
   Bool        m_bTLayerSwitchingFlag;
 
@@ -1524,7 +1490,6 @@ private:
   Bool       m_enableTMVPFlag;
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_interLayerPredEnabledFlag;
-  Int        m_numInterLayerRefPics;
 #endif 
 public:
   TComSlice();
@@ -1594,19 +1559,7 @@ public:
   Bool      getCheckLDC     ()                                  { return m_bCheckLDC; }
   Bool      getMvdL1ZeroFlag ()                                  { return m_bLMvdL1Zero;    }
   Int       getNumRpsCurrTempList();
-#if L0034_COMBINED_LIST_CLEANUP
   Int       getList1IdxToList0Idx ( Int list1Idx )               { return m_list1IdxToList0Idx[list1Idx]; }
-#else
-  Int       getRefIdxOfLC       (RefPicList e, Int iRefIdx)     { return m_iRefIdxOfLC[e][iRefIdx];           }
-  Int       getListIdFromIdxOfLC(Int iRefIdx)                   { return m_eListIdFromIdxOfLC[iRefIdx];       }
-  Int       getRefIdxFromIdxOfLC(Int iRefIdx)                   { return m_iRefIdxFromIdxOfLC[iRefIdx];       }
-  Int       getRefIdxOfL0FromRefIdxOfL1(Int iRefIdx)            { return m_iRefIdxOfL0FromRefIdxOfL1[iRefIdx];}
-  Int       getRefIdxOfL1FromRefIdxOfL0(Int iRefIdx)            { return m_iRefIdxOfL1FromRefIdxOfL0[iRefIdx];}
-  Bool      getRefPicListModificationFlagLC()                   {return m_bRefPicListModificationFlagLC;}
-  Void      setRefPicListModificationFlagLC(Bool bflag)         {m_bRefPicListModificationFlagLC=bflag;}     
-  Bool      getRefPicListCombinationFlag()                      {return m_bRefPicListCombinationFlag;}
-  Void      setRefPicListCombinationFlag(Bool bflag)            {m_bRefPicListCombinationFlag=bflag;}   
-#endif
   Void      setReferenced(Bool b)                               { m_bRefenced = b; }
   Bool      isReferenced()                                      { return m_bRefenced; }
   Void      setPOC              ( Int i )                       { m_iPOC              = i; if(getTLayer()==0) m_prevPOC=i; }
@@ -1615,6 +1568,16 @@ public:
   Bool      getRapPicFlag       ();  
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
+#if RESTR_CHK
+   Bool     isRADL() {  return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_R); }
+   Bool     isRASL()   {   return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
+#endif
+
+#if SH_DISCARDABLE_FLAG
+  Bool      getDiscardableFlag  ()                              { return m_bDiscardableFlag; }
+  Void      setDiscardableFlag  (Bool b)                        { m_bDiscardableFlag = b; }
+#endif
+
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& rcListPic);
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
@@ -1637,7 +1600,11 @@ public:
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
 
 #if FIX1071
+#if SVC_EXTENSION
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
+#else
+  Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false );
+#endif
 #else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
 #endif
@@ -1673,13 +1640,7 @@ public:
   }
   
   static Void      sortPicList         ( TComList<TComPic*>& rcListPic );
-#if L0034_COMBINED_LIST_CLEANUP
   Void setList1IdxToList0Idx();
-#else
-  Bool getNoBackPredFlag() { return m_bNoBackPredFlag; }
-  Void setNoBackPredFlag( Bool b ) { m_bNoBackPredFlag = b; }
-  Void generateCombinedList       ();
-#endif
 
   UInt getTLayer             ()                            { return m_uiTLayer;                      }
   Void setTLayer             ( UInt uiTLayer )             { m_uiTLayer = uiTLayer;                  }
@@ -1690,7 +1651,11 @@ public:
   Bool isTemporalLayerSwitchingPoint( TComList<TComPic*>& rcListPic );
   Bool isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic*>& rcListPic );
   Int       checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
+#if FIX1071
+  Void      createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
+#else
   Void      createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet);
+#endif
 
   Void setMaxNumMergeCand               (UInt val )         { m_maxNumMergeCand = val;                    }
   UInt getMaxNumMergeCand               ()                  { return m_maxNumMergeCand;                   }
@@ -1763,15 +1728,16 @@ public:
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
 #if SVC_EXTENSION
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt layerID );
-  Void      setBaseColPic       ( TComPic* p)     { m_pcBaseColPic = p; }
-  TComPic*  getBaseColPic       ()                { return m_pcBaseColPic; }
+  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
+  Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)     { m_pcBaseColPic[refLayerIdc] = p; }
+  TComPic*  getBaseColPic       (UInt refLayerIdc)                { return m_pcBaseColPic[refLayerIdc]; }
+  TComPic** getBaseColPic       ()                { return &m_pcBaseColPic[0]; }
 
   Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
   UInt      getLayerId ()               { return m_layerId;    }
 
-  Void        setFullPelBaseRec   ( TComPicYuv* p) { m_pcFullPelBaseRec = p; }
-  TComPicYuv* getFullPelBaseRec   ()               { return  m_pcFullPelBaseRec;  }
+  Void        setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
+  TComPicYuv* getFullPelBaseRec   (UInt refLayerIdc)               { return  m_pcFullPelBaseRec[refLayerIdc];  }
 
 #if AVC_SYNTAX
   Void      initBaseLayerRPL( TComSlice *pcSlice );
@@ -1782,25 +1748,53 @@ public:
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
 
 #if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic *pcRefPicBL);
+  Void      setRefPOCListILP(TComPic** ilpPic, TComPic** pcRefPicRL);
 #endif
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 
-  Int       getInterLayerPredLayerIdc (UInt Idx )               { return  m_interLayerPredLayerIdc[Idx];}
-  Void      setInterLayerPredLayerIdc (UInt val, UInt Idx)      { m_interLayerPredLayerIdc[Idx] = val;  }
+  Int       getInterLayerPredLayerIdc (UInt layerIdx)                        { return  m_interLayerPredLayerIdc[layerIdx];}
+  Void      setInterLayerPredLayerIdc (UInt refLayerIdc, UInt layerIdx)      { m_interLayerPredLayerIdc[layerIdx] = refLayerIdc;  }
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
-
-  Void      setNumInterLayerRefPics          ( UInt   val )    { m_numInterLayerRefPics = val; }
-  UInt      getNumInterLayerRefPics          ()                { return m_numInterLayerRefPics;}  
 #else
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
+
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int       getNumSamplePredRefLayers      ( )          { return  m_numSamplePredRefLayers;       }
+  Void      setNumSamplePredRefLayers      ( Int i )    { m_numSamplePredRefLayers = i;           }
+  Bool      getInterLayerSamplePredOnlyFlag( )          { return  m_interLayerSamplePredOnlyFlag; }
+  Void      setInterLayerSamplePredOnlyFlag( Bool val ) { m_interLayerSamplePredOnlyFlag = val;   }
 #endif
+
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+  Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
+  Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }
+#if REF_IDX_MFM
+  Void      setMFMEnabledFlag(Bool flag)                { m_bMFMEnabledFlag = flag; }
+  Bool      getMFMEnabledFlag()                         { return m_bMFMEnabledFlag; }
+  Void      setColRefLayerIdx(Int i)                    { m_colRefLayerIdx = i;     }
+  Int       getColRefLayerIdx()                         { return m_colRefLayerIdx;  }
+  Void      setAltColIndicationFlag(Bool i)             { m_altColIndicationFlag = i; }
+  Bool      getAltColIndicationFlag()                   { return m_altColIndicationFlag; }
+  Void      setMotionPredIlp(TComPic *ilpPic)           { m_pcIlpPic = ilpPic; }
+  TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
+#endif
+#endif
+
+#else
+  // temporal solution for IntraBL. Only one reference layer is supported.
+  Int       getActiveNumILRRefIdx     ( )               { return  1; }
+  Int       getInterLayerPredLayerIdc (UInt layerIdx)   { return  m_layerId - 1;}
+  Void      setActiveNumILRRefIdx     ( Int i )         {}
+  Void      setInterLayerPredEnabledFlag( Bool   val )  {}
+#endif
+
+TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 
 
 #endif //SVC_EXTENSION
 

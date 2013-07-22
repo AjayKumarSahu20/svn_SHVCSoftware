@@ -121,6 +121,7 @@ Void TComPrediction::initTempBuff()
 // Function for calculating DC value of the reference samples used in Intra prediction
 Pel TComPrediction::predIntraGetPredValDC( Int* pSrc, Int iSrcStride, UInt iWidth, UInt iHeight, Bool bAbove, Bool bLeft )
 {
+  assert(iWidth > 0 && iHeight > 0);
   Int iInd, iSum = 0;
   Pel pDcVal;
 
@@ -773,14 +774,14 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
 
 #if SVC_UPSAMPLING
 #if SCALED_REF_LAYER_OFFSETS
-Void TComPrediction::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
+Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
 {
-  m_cUsf.upsampleBasePic( pcUsPic, pcBasePic, pcTempPic, window);
+  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
 }
 #else
-Void TComPrediction::upsampleBasePic( TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic)
+Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic)
 {
-  m_cUsf.upsampleBasePic( pcUsPic, pcBasePic, pcTempPic);
+  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic);
 }
 #endif
 #endif

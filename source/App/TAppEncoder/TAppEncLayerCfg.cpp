@@ -34,6 +34,13 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 {
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
+#if SCALED_REF_LAYER_OFFSETS
+  m_numScaledRefLayerOffsets = 0;
+  ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
+  ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
+  ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
+  ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
+#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()
@@ -133,6 +140,18 @@ Void TAppEncLayerCfg::xPrintParameter()
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
   printf("QP                            : %5.2f\n", m_fQP );
   printf("Intra period                  : %d\n", m_iIntraPeriod );
+#if RC_SHVC_HARMONIZATION
+  printf("RateControl                   : %d\n", m_RCEnableRateControl );
+  if(m_RCEnableRateControl)
+  {
+    printf("TargetBitrate                 : %d\n", m_RCTargetBitrate );
+    printf("KeepHierarchicalBit           : %d\n", m_RCKeepHierarchicalBit );
+    printf("LCULevelRC                    : %d\n", m_RCLCULevelRC );
+    printf("UseLCUSeparateModel           : %d\n", m_RCUseLCUSeparateModel );
+    printf("InitialQP                     : %d\n", m_RCInitialQP );
+    printf("ForceIntraQP                  : %d\n", m_RCForceIntraQP );
+  }
+#endif
   printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_cAppEncCfg->getWaveFrontSynchro(), m_iWaveFrontSubstreams);
 }
 

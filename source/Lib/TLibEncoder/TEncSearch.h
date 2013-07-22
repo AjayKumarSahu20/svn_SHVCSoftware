@@ -215,13 +215,7 @@ public:
                                 );
   
 #if (ENCODER_FAST_MODE)
-  Bool predInterSearchILRUni    ( TComDataCU* pcCU,
-                                  TComYuv*    pcOrgYuv,
-                                  TComYuv*&   rpcPredYuv,
-                                  TComYuv*&   rpcResiYuv,
-                                  TComYuv*&   rpcRecoYuv
-                                );
-
+  Bool predInterSearchILRUni    ( TComDataCU* pcCU, TComYuv*    pcOrgYuv, TComYuv*&   rpcPredYuv, TComYuv*&   rpcResiYuv, TComYuv*&   rpcRecoYuv, UInt        refLayerId );
 #endif
   
   /// encode residual and compute rd-cost for inter mode

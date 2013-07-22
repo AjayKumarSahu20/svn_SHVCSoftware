@@ -151,8 +151,8 @@ public:
 #if SIMPLIFIED_MV_POS_SCALING
   const TComMv scaleMv( Int iScaleX, Int iScaleY ) const
   {
-    Int mvx = Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );
-    Int mvy = Clip3( -32768, 32767, (iScaleY * getVer() + 127 + (iScaleY * getVer() < 0)) >> 8 );
+    Int mvx = iScaleX == 4096 ? getHor() : Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );
+    Int mvy = iScaleY == 4096 ? getVer() : Clip3( -32768, 32767, (iScaleY * getVer() + 127 + (iScaleY * getVer() < 0)) >> 8 );
     return TComMv( mvx, mvy );
   }
 #endif

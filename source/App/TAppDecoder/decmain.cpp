@@ -55,7 +55,11 @@ int main(int argc, char* argv[])
 
   // print information
   fprintf( stdout, "\n" );
+#if SVC_EXTENSION
   fprintf( stdout, "SHM software: Decoder Version [%s]", NV_VERSION );
+#else
+  fprintf( stdout, "HM software: Decoder Version [%s]", NV_VERSION );
+#endif
   fprintf( stdout, NVM_ONOS );
   fprintf( stdout, NVM_COMPILEDBY );
   fprintf( stdout, NVM_BITS );

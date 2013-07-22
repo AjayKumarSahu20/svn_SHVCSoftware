@@ -187,16 +187,6 @@ Void TDecEntropy::decodePUWise( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDept
     {
       decodeMergeIndex( pcCU, uiPartIdx, uiSubPartIdx, uiDepth );
       UInt uiMergeIndex = pcCU->getMergeIndex(uiSubPartIdx);
-#if 0 //REF_IDX_FRAMEWORK  // HM bug fix
-      if(uiPartIdx)
-      {
-        for(UInt ui=0; ui<uiMergeIndex+1; ui++)
-        {
-          cMvFieldNeighbours[(ui<<1)].setMvField(TComMv(), NOT_VALID);
-          cMvFieldNeighbours[(ui<<1)+1].setMvField(TComMv(), NOT_VALID);
-        }
-      }
-#endif
       if ( pcCU->getSlice()->getPPS()->getLog2ParallelMergeLevelMinus2() && ePartSize != SIZE_2Nx2N && pcSubCU->getWidth( 0 ) <= 8 ) 
       {
         pcSubCU->setPartSizeSubParts( SIZE_2Nx2N, 0, uiDepth );
