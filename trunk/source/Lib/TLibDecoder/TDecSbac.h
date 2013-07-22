@@ -75,7 +75,11 @@ public:
   Void  resetEntropy (TComSlice* pSlice );
   Void  setBitstream              ( TComInputBitstream* p  ) { m_pcBitstream = p; m_pcTDecBinIf->init( p ); }
   Void  parseVPS                  ( TComVPS* /*pcVPS*/ ) {}
+#if SPS_SUB_LAYER_INFO
+  Void  parseSPS                  ( TComSPS* /*pcSPS*/, ParameterSetManagerDecoder * /*parameterSetManager*/ ) {}
+#else
   Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
+#endif
   Void  parsePPS                  ( TComPPS* /*pcPPS*/ ) {}
 
   Void  parseSliceHeader          ( TComSlice*& /*rpcSlice*/, ParameterSetManagerDecoder* /*parameterSetManager*/) {}

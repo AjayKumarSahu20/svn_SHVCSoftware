@@ -60,7 +60,7 @@ protected:
 #if SVC_EXTENSION
   TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
   Int       m_numLayers;                                      ///< number of layers
-
+  Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
   // source specification
@@ -71,6 +71,9 @@ protected:
 #endif
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
+#endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int       m_ilSampleOnlyPred[ MAX_LAYERS ];
 #endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
@@ -95,12 +98,10 @@ protected:
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
   Level::Name   m_level;
-#if L0046_CONSTRAINT_FLAGS
   Bool m_progressiveSourceFlag;
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
-#endif
   
   // coding structure
 #if !SVC_EXTENSION
@@ -111,14 +112,7 @@ protected:
   Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
   Int       m_numReorderPics[MAX_TLAYER];                     ///< total number of reorder pictures
-#if L0323_DPB
   Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of pictures in the decoded picture buffer
-#else
-  Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of reference pictures needed for decoding
-#endif
-#if !L0034_COMBINED_LIST_CLEANUP
-  Bool      m_bUseLComb;                                      ///< flag for using combined reference list for uni-prediction in B-slices (JCTVC-D421)
-#endif
   Bool      m_useTransformSkip;                               ///< flag for enabling intra transform skipping
   Bool      m_useTransformSkipFast;                           ///< flag for enabling fast intra transform skipping
   Bool      m_enableAMP;
@@ -180,9 +174,7 @@ protected:
   Int       m_loopFilterBetaOffsetDiv2;                     ///< beta offset for deblocking filter
   Int       m_loopFilterTcOffsetDiv2;                       ///< tc offset for deblocking filter
   Bool      m_DeblockingFilterControlPresent;                 ///< deblocking filter control present flag in PPS
-#if L0386_DB_METRIC
   Bool      m_DeblockingFilterMetric;                         ///< blockiness metric in encoder
-#endif
  
   // coding tools (PCM)
   Bool      m_usePCM;                                         ///< flag for using IPCM
@@ -196,9 +188,7 @@ protected:
   Bool      m_bUseHADME;                                      ///< flag for using HAD in sub-pel ME
   Bool      m_useRDOQ;                                       ///< flag for using RD optimized quantization
   Bool      m_useRDOQTS;                                     ///< flag for using RD optimized quantization for transform skip
-#if L0232_RD_PENALTY
   Int      m_rdPenalty;                                      ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty) 
-#endif
   Int       m_iFastSearch;                                    ///< ME mode, 0 = full, 1 = diamond, 2 = PMVFAST
   Int       m_iSearchRange;                                   ///< ME search range
   Int       m_bipredSearchRange;                              ///< ME search range for bipred refinement
@@ -207,6 +197,9 @@ protected:
   Bool      m_useFastDecisionForMerge;                        ///< flag for using Fast Decision Merge RD-Cost 
   Bool      m_bUseCbfFastMode;                              ///< flag for using Cbf Fast PU Mode Decision
   Bool      m_useEarlySkipDetection;                         ///< flag for using Early SKIP Detection
+#if FAST_INTRA_SHVC
+  Bool      m_useFastIntraScalable;                          ///< flag for using Fast Intra Decision for Scalable HEVC
+#endif
   Int       m_sliceMode;                                     ///< 0: no slice limits, 1 : max number of CTBs per slice, 2: max number of bytes per slice, 
                                                              ///< 3: max number of tiles per slice
   Int       m_sliceArgument;                                 ///< argument according to selected slice mode
@@ -234,7 +227,6 @@ protected:
   Int       m_recoveryPointSEIEnabled;
   Int       m_bufferingPeriodSEIEnabled;
   Int       m_pictureTimingSEIEnabled;
-#if J0149_TONE_MAPPING_SEI
   Bool      m_toneMappingInfoSEIEnabled;
   Int       m_toneMapId;
   Bool      m_toneMapCancelFlag;
@@ -260,7 +252,6 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
-#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -270,12 +261,11 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
-#if L0208_SOP_DESCRIPTION_SEI
+#if M0043_LAYERS_PRESENT_SEI
+  Int       m_layersPresentSEIEnabled;
+#endif
   Int       m_SOPDescriptionSEIEnabled;
-#endif
-#if K0180_SCALABLE_NESTING_SEI
   Int       m_scalableNestingSEIEnabled;
-#endif
   // weighted prediction
   Bool      m_useWeightedPred;                    ///< Use of weighted prediction in P slices
   Bool      m_useWeightedBiPred;                  ///< Use of bi-directional weighted prediction in B slices
@@ -286,13 +276,19 @@ protected:
   Int       m_TMVPModeId;
   Int       m_signHideFlag;
 #if RATE_CONTROL_LAMBDA_DOMAIN
+#if !RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
+#if M0036_RC_IMPROVEMENT
+  Int       m_RCKeepHierarchicalBit;              ///< 0: equal bit allocation; 1: fixed ratio bit allocation; 2: adaptive ratio bit allocation
+#else
   Bool      m_RCKeepHierarchicalBit;              ///< whether keeping hierarchical bit allocation structure or not
+#endif
   Bool      m_RCLCULevelRC;                       ///< true: LCU level rate control; false: picture level rate control
   Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
+#endif
 #else
   Bool      m_enableRateCtrl;                                   ///< Flag for using rate control algorithm
   Int       m_targetBitrate;                                 ///< target bitrate
@@ -351,14 +347,8 @@ protected:
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
-#if SIGNAL_BITRATE_PICRATE_IN_VPS
-  Int       m_bitRatePicRateMaxTLayers;                       ///< Indicates max. number of sub-layers for which bit rate is signalled.
-  Bool*     m_bitRateInfoPresentFlag;                         ///< Indicates whether bit rate information is signalled
-  Bool*     m_picRateInfoPresentFlag;                         ///< Indicates whether pic rate information is signalled
-  Int*      m_avgBitRate;                                     ///< Indicates avg. bit rate information for various sub-layers
-  Int*      m_maxBitRate;                                     ///< Indicates max. bit rate information for various sub-layers
-  Int*      m_avgPicRate;                                     ///< Indicates avg. picture rate information for various sub-layers
-  Int*      m_constantPicRateIdc;                                ///< Indicates constant picture rate idc for various sub-layers
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
 public:
   TAppEncCfg();
@@ -383,6 +373,9 @@ public:
   Void getDirFilename(string& filename, string& dir, const string path);
 #if AVC_SYNTAX
   Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
+#endif
+#if SCALED_REF_LAYER_OFFSETS
+  Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
 #endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg

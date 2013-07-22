@@ -157,6 +157,7 @@ Void TDecSbac::updateContextTables( SliceType eSliceType, Int iQp )
 {
   UInt uiBit;
   m_pcTDecBinIf->decodeBinTrm(uiBit);
+  assert(uiBit); // end_of_sub_stream_one_bit must be equal to 1
   m_pcTDecBinIf->finish();  
   m_pcBitstream->readOutTrailingBits();
   m_cCUSplitFlagSCModel.initBuffer       ( eSliceType, iQp, (UChar*)INIT_SPLIT_FLAG );
@@ -195,6 +196,10 @@ Void TDecSbac::updateContextTables( SliceType eSliceType, Int iQp )
 Void TDecSbac::parseTerminatingBit( UInt& ruiBit )
 {
   m_pcTDecBinIf->decodeBinTrm( ruiBit );
+  if ( ruiBit )
+  {
+    m_pcTDecBinIf->finish();
+  }
 }
 
 
@@ -317,18 +322,11 @@ Void TDecSbac::xReadCoefRemainExGolomb ( UInt &rSymbol, UInt &rParam )
 Void TDecSbac::parseIPCMInfo ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 {
   UInt uiSymbol;
-  Bool readPCMSampleFlag = false;
 
     m_pcTDecBinIf->decodeBinTrm(uiSymbol);
 
     if (uiSymbol)
     {
-      readPCMSampleFlag = true;
-      m_pcTDecBinIf->decodePCMAlignBits();
-    }
-
-  if (readPCMSampleFlag == true)
-  {
     Bool bIpcmFlag = true;
 
     pcCU->setPartSizeSubParts  ( SIZE_2Nx2N, uiAbsPartIdx, uiDepth );
@@ -394,7 +392,7 @@ Void TDecSbac::parseIPCMInfo ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
       piPCMSample += uiWidth;
     }
 
-      m_pcTDecBinIf->resetBac();
+    m_pcTDecBinIf->start();
   }
 }
 
@@ -680,7 +678,6 @@ Void TDecSbac::parseIntraDirLumaAng  ( TComDataCU* pcCU, UInt absPartIdx, UInt d
     }
     else
     {
-      intraPredMode = 0;
       m_pcTDecBinIf->decodeBinsEP( symbol, 5 );
       intraPredMode = symbol;
         
@@ -916,7 +913,6 @@ Void TDecSbac::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   }
   else 
   {
-    iDQp=0;
     qp = pcCU->getRefQP(uiAbsPartIdx);
   }
   pcCU->setQPSubParts(qp, uiAbsPartIdx, uiDepth);  
@@ -1101,7 +1097,7 @@ Void TDecSbac::parseCoeffNxN( TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartId
   pcCoef[ uiBlkPosLast ] = 1;
 
   //===== decode significance flags =====
-  UInt uiScanPosLast = uiBlkPosLast;
+  UInt uiScanPosLast;
   const UInt *scan   = g_auiSigLastScan[ uiScanIdx ][ uiLog2BlockSize-1 ];
   for( uiScanPosLast = 0; uiScanPosLast < uiMaxNumCoeffM1; uiScanPosLast++ )
   {

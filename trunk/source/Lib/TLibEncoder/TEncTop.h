@@ -138,8 +138,12 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Int                     m_ilSampleOnlyPred;
+#endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window                  m_scaledRefLayerWindow;
+  UInt                    m_numScaledRefLayerOffsets;
+  Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -194,9 +198,7 @@ public:
   TComSPS*                getSPS                () { return  &m_cSPS;                 }
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
   Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
-#if L0208_SOP_DESCRIPTION_SEI
   Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid );
-#endif
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
 #if SVC_EXTENSION
   Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
@@ -206,7 +208,9 @@ public:
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
 #endif
 #if SCALED_REF_LAYER_OFFSETS
-  Window&  getScaledRefLayerWindow()            { return m_scaledRefLayerWindow; }
+  Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
+  UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
+  Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -223,14 +227,18 @@ public:
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
+#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
+  Void      setIlSampleOnlyPred( Int i )          { m_ilSampleOnlyPred = i;    }
+  Int       getIlSampleOnlyPred()                 { return m_ilSampleOnlyPred; }
+#endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
   Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );
-#if VPS_EXTN_DIRECT_REF_LAYERS_CONTINUE
-  TEncTop*  getRefLayerEnc(UInt layerId);
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
 #else
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,

@@ -105,7 +105,7 @@ private:
   TEncSbac*               m_pcRDGoOnSbacCoder;
   Bool                    m_bUseSBACRD;
   TEncRateCtrl*           m_pcRateCtrl;
-#if RATE_CONTROL_LAMBDA_DOMAIN
+#if RATE_CONTROL_LAMBDA_DOMAIN && !M0036_RC_IMPROVEMENT
   UInt                    m_LCUPredictionSAD;
   Int                     m_addSADDepth;
   Int                     m_temporalSAD;
@@ -127,8 +127,11 @@ public:
   Void  encodeCU            ( TComDataCU*    pcCU );
   
   Void setBitCounter        ( TComBitCounter* pcBitCounter ) { m_pcBitCounter = pcBitCounter; }
-#if RATE_CONTROL_LAMBDA_DOMAIN
+#if RATE_CONTROL_LAMBDA_DOMAIN && !M0036_RC_IMPROVEMENT
   UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
+#endif
+#if RATE_CONTROL_INTRA
+  Int   updateLCUDataISlice ( TComDataCU* pcCU, Int LCUIdx, Int width, Int height );
 #endif
 #if INTRA_BL 
   Void  setBaseRecPic       ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }   
@@ -157,7 +160,7 @@ protected:
   Void  xCheckRDCostIntraBL ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU  );
 #endif
 #if ENCODER_FAST_MODE
-  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU );
+  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
 #endif
   Void  xCheckDQP           ( TComDataCU*  pcCU );
   
