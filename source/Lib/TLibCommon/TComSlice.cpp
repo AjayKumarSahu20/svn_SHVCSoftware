@@ -454,7 +454,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   {
     UInt refLayerIdc = m_interLayerPredLayerIdc[i];
     //inter-layer reference picture
-#if REF_IDX_MFM
 
 #if ILR_RESTR
     Int maxSubLayerForILPPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
@@ -463,15 +462,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #else
     if( m_layerId > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  )
 #endif
-
-#else
+#else //#if ILR_RESTR
 #if ZERO_NUM_DIRECT_LAYERS
     if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
 #else
     if( m_layerId > 0 )
 #endif
-#endif
+#endif //#if ILR_RESTR
     {
+#if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
       if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && getMFMEnabledFlag())
 #else
