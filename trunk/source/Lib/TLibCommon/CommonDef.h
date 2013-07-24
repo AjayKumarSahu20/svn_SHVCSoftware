@@ -56,7 +56,7 @@
 // ====================================================================================================================
 
 #if SVC_EXTENSION
-#define NV_VERSION        "2.1"                 ///< Current software version
+#define NV_VERSION        "trunk"                 ///< Current software version
 #else
 #define NV_VERSION        "11.0"                ///< Current software version
 #endif
