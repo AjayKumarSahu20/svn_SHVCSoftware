@@ -450,11 +450,7 @@ Void TDecEntropy::xDecodeTransform( TComDataCU* pcCU, UInt offsetLuma, UInt offs
     
     pcCU->setCbfSubParts ( 0, TEXT_LUMA, uiAbsPartIdx, uiDepth );
 #if INTRA_BL
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-    if( ( !pcCU->isIntra(uiAbsPartIdx) || pcCU->isIntraBL(uiAbsPartIdx)) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
-#else
     if( ( !pcCU->isIntra(uiAbsPartIdx) ) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
-#endif
 #else
     if( pcCU->getPredictionMode(uiAbsPartIdx) != MODE_INTRA && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
 #endif 
@@ -555,11 +551,7 @@ Void TDecEntropy::decodeCoeff( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
   UInt uiLumaOffset   = uiMinCoeffSize*uiAbsPartIdx;
   UInt uiChromaOffset = uiLumaOffset>>2;
   
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-  if( pcCU->isIntra(uiAbsPartIdx) && !pcCU->isIntraBL(uiAbsPartIdx) )
-#else
   if( pcCU->isIntra(uiAbsPartIdx) )
-#endif
   {
   }
   else
