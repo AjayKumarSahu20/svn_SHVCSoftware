@@ -115,11 +115,6 @@
 
 #else
 #define INTRA_BL                         1      ///< inter-layer texture prediction
-
-#if INTRA_BL
-#define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
-
-#endif
 #endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
