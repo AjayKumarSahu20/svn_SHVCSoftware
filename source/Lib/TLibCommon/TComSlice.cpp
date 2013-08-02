@@ -384,14 +384,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   Int i;
 
 #if REF_IDX_FRAMEWORK
-#if ZERO_NUM_DIRECT_LAYERS
   if( m_layerId == 0 || ( m_layerId > 0 && ( m_activeNumILRRefIdx == 0 || !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ) ) )
-#else
-  if ((getLayerId() == 0) || 
-      ((getSPS()->getLayerId()) &&  !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
-       (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) )
-     )
-#endif
   {
 #endif
   for(i=0; i < m_pcRPS->getNumberOfNegativePictures(); i++)
@@ -457,17 +450,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 
 #if ILR_RESTR
     Int maxSubLayerForILPPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
-#if ZERO_NUM_DIRECT_LAYERS
     if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
-#else
-    if( m_layerId > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  )
-#endif
 #else //#if ILR_RESTR
-#if ZERO_NUM_DIRECT_LAYERS
     if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
-#else
-    if( m_layerId > 0 )
-#endif
 #endif //#if ILR_RESTR
     {
 #if REF_IDX_MFM
