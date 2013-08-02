@@ -2190,7 +2190,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("INTRA_BL:%d ", INTRA_BL);
 #if !AVC_BASE
   printf("SVC_MVP:%d ", SVC_MVP );
-  printf("SVC_BL_CAND_INTRA:%d", SVC_BL_CAND_INTRA );
 #endif
 #endif
 #else
