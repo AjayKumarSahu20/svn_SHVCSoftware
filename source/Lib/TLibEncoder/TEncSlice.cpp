@@ -979,10 +979,6 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
   UInt uiTileStartLCU = 0;
   UInt uiTileLCUX     = 0;
 
-#if INTRA_BL
-  m_pcCuEncoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec(rpcPic->getLayerId()-1) : NULL);
-#endif
-
   Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
   uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
   uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();

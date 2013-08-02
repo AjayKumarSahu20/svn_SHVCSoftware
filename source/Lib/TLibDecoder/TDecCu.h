@@ -76,10 +76,6 @@ private:
   UInt                m_layerId;   
 #endif
   
-#if INTRA_BL
-  TComPicYuv*         m_pcPicYuvRecBase;       ///< reconstructed base layer
-#endif 
-  
 public:
   TDecCu();
   virtual ~TDecCu();
@@ -105,9 +101,6 @@ public:
   
 #if SVC_EXTENSION
   TDecTop*   getLayerDec        ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }
-#if INTRA_BL
-  Void  setBaseRecPic           ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }
-#endif 
 #endif
 protected:
   

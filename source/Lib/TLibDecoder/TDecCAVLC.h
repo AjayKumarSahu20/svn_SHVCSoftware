@@ -117,10 +117,6 @@ public:
 
   Void updateContextTables  ( SliceType /*eSliceType*/, Int /*iQp*/ ) { return; }
 
-#if INTRA_BL
-  Void parseIntraBLFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth );
-#endif
-
   Void xParsePredWeightTable ( TComSlice* pcSlice );
   Void  parseScalingList               ( TComScalingList* scalingList );
   Void xDecodeScalingList    ( TComScalingList *scalingList, UInt sizeId, UInt listId);

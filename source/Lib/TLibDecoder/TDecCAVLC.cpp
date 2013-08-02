@@ -2214,13 +2214,5 @@ Bool TDecCavlc::xMoreRbspData()
   // we have more data, if cnt is not zero
   return (cnt>0);
 }
-
-#if INTRA_BL
-Void TDecCavlc::parseIntraBLFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth )
-{
-  assert(0);
-}
-#endif
-
 //! \}
 

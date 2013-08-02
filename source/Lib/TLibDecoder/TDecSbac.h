@@ -134,9 +134,6 @@ public:
 
   Void  parseScalingList ( TComScalingList* /*scalingList*/ ) {}
 
-#if INTRA_BL
-  Void parseIntraBLFlag    ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth );
-#endif
 private:
   UInt m_uiLastDQpNonZero;
   UInt m_uiLastQp;
@@ -173,9 +170,6 @@ private:
   ContextModel3DBuffer m_cSaoTypeIdxSCModel;
   ContextModel3DBuffer m_cTransformSkipSCModel;
   ContextModel3DBuffer m_CUTransquantBypassFlagSCModel;
-#if INTRA_BL
-  ContextModel3DBuffer m_cIntraBLPredFlagSCModel;
-#endif
 };
 
 //! \}

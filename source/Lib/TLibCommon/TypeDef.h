@@ -112,9 +112,6 @@
 #else
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0
 #endif
-
-#else
-#define INTRA_BL                         1      ///< inter-layer texture prediction
 #endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
@@ -457,9 +454,6 @@ enum PredMode
 {
   MODE_INTER,           ///< inter-prediction mode
   MODE_INTRA,           ///< intra-prediction mode
-#if INTRA_BL
-  MODE_INTRA_BL,        ///< inter-layer intra-prediction mode
-#endif
   MODE_NONE = 15
 };
 

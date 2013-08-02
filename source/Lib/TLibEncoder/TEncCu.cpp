@@ -762,13 +762,6 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
             rpcTempCU->initEstData( uiDepth, iQP );
           }
         }
-#if INTRA_BL
-      if(m_pcPicYuvRecBase)
-      {
-        xCheckRDCostIntraBL( rpcBestCU, rpcTempCU );
-        rpcTempCU->initEstData( uiDepth, iQP );
-      }
-#endif
 #if (ENCODER_FAST_MODE)
       if(pcPic->getLayerId() > 0)
       {
@@ -1214,11 +1207,6 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
     finishCU(pcCU,uiAbsPartIdx,uiDepth);
     return;
   }
-#if INTRA_BL
-  m_pcEntropyCoder->encodeIntraBLFlag( pcCU, uiAbsPartIdx );
-  if ( !pcCU->isIntraBL( uiAbsPartIdx ) )
-  {
-#endif
   m_pcEntropyCoder->encodePredMode( pcCU, uiAbsPartIdx );
   
   m_pcEntropyCoder->encodePartSize( pcCU, uiAbsPartIdx, uiDepth );
@@ -1237,9 +1225,6 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 
   // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
   m_pcEntropyCoder->encodePredInfo( pcCU, uiAbsPartIdx );
-#if INTRA_BL
-  }
-#endif
   
   // Encode Coefficients
   Bool bCodeDQP = getdQPFlag();
@@ -1567,9 +1552,7 @@ Void TEncCu::xCheckRDCostIntra( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, 
   m_pcPredSearch  ->estIntraPredChromaQT( rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth], uiPreCalcDistC );
   
   m_pcEntropyCoder->resetBits();
-#if INTRA_BL
-  m_pcEntropyCoder->encodeIntraBLFlag ( rpcTempCU, 0,       true );
-#endif
+
   if ( rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
   {
     m_pcEntropyCoder->encodeCUTransquantBypassFlag( rpcTempCU, 0,          true );
@@ -1623,9 +1606,7 @@ Void TEncCu::xCheckIntraPCM( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU )
   if( m_bUseSBACRD ) m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST]);
 
   m_pcEntropyCoder->resetBits();
-#if INTRA_BL
-  m_pcEntropyCoder->encodeIntraBLFlag ( rpcTempCU, 0,       true );
-#endif
+
   if ( rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
   {
     m_pcEntropyCoder->encodeCUTransquantBypassFlag( rpcTempCU, 0,          true );
@@ -1878,44 +1859,6 @@ Void TEncCu::xLcuCollectARLStats(TComDataCU* rpcCU )
 }
 #endif
 
-#if INTRA_BL
-Void TEncCu::xCheckRDCostIntraBL( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU )
-{
-  UInt uiDepth = rpcTempCU->getDepth( 0 );
-  rpcTempCU->setSkipFlagSubParts( false, 0, uiDepth ); 
-  rpcTempCU->setPartSizeSubParts( SIZE_2Nx2N, 0, uiDepth );
-  rpcTempCU->setPredModeSubParts( MODE_INTRA_BL, 0, uiDepth );  
-  rpcTempCU->setCUTransquantBypassSubParts( m_pcEncCfg->getCUTransquantBypassFlagValue(), 0, uiDepth );
-
-  m_pcPredSearch->setBaseRecPic( m_pcPicYuvRecBase ); 
-  m_pcPredSearch->estIntraBLPredQT( rpcTempCU, m_ppcOrigYuv[uiDepth], m_ppcPredYuvTemp[uiDepth], m_ppcResiYuvTemp[uiDepth], m_ppcRecoYuvTemp[uiDepth] );
-
-  m_pcEntropyCoder->resetBits();
-  m_pcEntropyCoder->encodeIntraBLFlag ( rpcTempCU, 0,       true );
-  m_pcEntropyCoder->encodeSkipFlag( rpcTempCU, 0,       true );
-  if ( rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
-  {
-    m_pcEntropyCoder->encodeCUTransquantBypassFlag( rpcTempCU, 0,          true );
-  }
-
-  // Encode Coefficients
-  Bool bCodeDQP = getdQPFlag();
-  m_pcEntropyCoder->encodeCoeff( rpcTempCU, 0, uiDepth, rpcTempCU->getWidth (0), rpcTempCU->getHeight(0), bCodeDQP );
-  setdQPFlag( bCodeDQP );
-  
-  if( m_bUseSBACRD ) m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[uiDepth][CI_TEMP_BEST]);
-  
-  rpcTempCU->getTotalBits() = m_pcEntropyCoder->getNumberOfWrittenBits();
-  if(m_pcEncCfg->getUseSBACRD())
-  {
-    rpcTempCU->getTotalBins() = ((TEncBinCABAC *)((TEncSbac*)m_pcEntropyCoder->m_pcEntropyCoderIf)->getEncBinIf())->getBinsCoded();
-  }
-  rpcTempCU->getTotalCost() = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
-  
-  xCheckDQP( rpcTempCU );
-  xCheckBestMode(rpcBestCU, rpcTempCU, uiDepth);
-}
-#endif
 #if (ENCODER_FAST_MODE)
 Void TEncCu::xCheckRDCostILRUni(TComDataCU *&rpcBestCU, TComDataCU *&rpcTempCU, UInt refLayerId)
 {

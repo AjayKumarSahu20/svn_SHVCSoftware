@@ -76,9 +76,6 @@ TDecSbac::TDecSbac()
 , m_cSaoTypeIdxSCModel        ( 1,             1,               NUM_SAO_TYPE_IDX_CTX          , m_contextModels + m_numContextModels, m_numContextModels)
 , m_cTransformSkipSCModel     ( 1,             2,               NUM_TRANSFORMSKIP_FLAG_CTX    , m_contextModels + m_numContextModels, m_numContextModels)
 , m_CUTransquantBypassFlagSCModel( 1,          1,               NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-#if INTRA_BL
-, m_cIntraBLPredFlagSCModel   (1,              1,               NUM_INTRA_BL_PRED_CTX         , m_contextModels + m_numContextModels, m_numContextModels)
-#endif
 {
   assert( m_numContextModels <= MAX_NUM_CTX_MOD );
 }
@@ -137,9 +134,6 @@ Void TDecSbac::resetEntropy(TComSlice* pSlice)
   m_cSaoTypeIdxSCModel.initBuffer        ( sliceType, qp, (UChar*)INIT_SAO_TYPE_IDX );
 
   m_cCUTransSubdivFlagSCModel.initBuffer ( sliceType, qp, (UChar*)INIT_TRANS_SUBDIV_FLAG );
-#if INTRA_BL
-  m_cIntraBLPredFlagSCModel.initBuffer ( sliceType, qp, (UChar*)INIT_INTRA_BL_PRED_FLAG );
-#endif
   m_cTransformSkipSCModel.initBuffer     ( sliceType, qp, (UChar*)INIT_TRANSFORMSKIP_FLAG );
   m_CUTransquantBypassFlagSCModel.initBuffer( sliceType, qp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG );
   m_uiLastDQpNonZero  = 0;
@@ -185,9 +179,6 @@ Void TDecSbac::updateContextTables( SliceType eSliceType, Int iQp )
   m_cSaoMergeSCModel.initBuffer      ( eSliceType, iQp, (UChar*)INIT_SAO_MERGE_FLAG );
   m_cSaoTypeIdxSCModel.initBuffer        ( eSliceType, iQp, (UChar*)INIT_SAO_TYPE_IDX );
   m_cCUTransSubdivFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_TRANS_SUBDIV_FLAG );
-#if INTRA_BL
-  m_cIntraBLPredFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_INTRA_BL_PRED_FLAG );
-#endif
   m_cTransformSkipSCModel.initBuffer     ( eSliceType, iQp, (UChar*)INIT_TRANSFORMSKIP_FLAG );
   m_CUTransquantBypassFlagSCModel.initBuffer( eSliceType, iQp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG );
   m_pcTDecBinIf->start();
@@ -437,34 +428,6 @@ Void TDecSbac::parseSkipFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth 
   }
 }
 
-#if INTRA_BL
-Void TDecSbac::parseIntraBLFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth )
-{
-  if( pcCU->getLayerId() == 0 )
-  {
-    return;
-  }
-
-  UInt uiSymbol = 0;
-
-  UInt uiCtxIntraBL = pcCU->getCtxIntraBLFlag( uiAbsPartIdx ) ;
-  m_pcTDecBinIf->decodeBin( uiSymbol, m_cIntraBLPredFlagSCModel.get( 0, 0, uiCtxIntraBL )); 
-  DTRACE_CABAC_VL( g_nSymbolCounter++ );
-  DTRACE_CABAC_T( "\tIntrBLFlag" );
-  DTRACE_CABAC_T( "\tuiSymbol: ");
-  DTRACE_CABAC_V( uiSymbol );
-  DTRACE_CABAC_T( "\n");
-
-  if ( uiSymbol )
-  {
-    pcCU->setPartSizeSubParts( SIZE_2Nx2N, uiAbsPartIdx, uiDepth );
-    pcCU->setPredModeSubParts( MODE_INTRA_BL, uiAbsPartIdx, uiDepth );
-    pcCU->setTrIdxSubParts( 0, uiAbsPartIdx, uiDepth );
-    pcCU->setLumaIntraDirSubParts ( DC_IDX, uiAbsPartIdx, uiDepth );   
-  }
-}
-#endif
-
 /** parse merge flag
  * \param pcCU
  * \param uiAbsPartIdx 
@@ -554,13 +517,7 @@ Void TDecSbac::parsePartSize( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth 
 {
   UInt uiSymbol, uiMode = 0;
   PartSize eMode;
-  
-#if INTRA_BL
-  if ( pcCU->isIntraBL( uiAbsPartIdx ) )
-  {
-    assert( 0 );
-  }
-#endif
+
   if ( pcCU->isIntra( uiAbsPartIdx ) )
   {
     uiSymbol = 1;
