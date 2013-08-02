@@ -906,11 +906,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
 #if REF_IDX_FRAMEWORK
-#if ZERO_NUM_DIRECT_LAYERS
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
-#else
-    if(m_layerId > 0)
-#endif
     {
       setILRPic(pcPic);
 #if REF_IDX_MFM
@@ -1314,11 +1310,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
   TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
   {
-#if ZERO_NUM_DIRECT_LAYERS
     return (TDecTop *)getLayerDec( 0 );
-#else
-    return NULL;
-#endif
   }
   
   return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdc ) );
