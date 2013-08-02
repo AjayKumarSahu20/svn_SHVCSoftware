@@ -2555,60 +2555,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   PartSize cCurPS = getPartitionSize( uiAbsPartIdx );
   deriveLeftRightTopIdxGeneral( uiAbsPartIdx, uiPUIdx, uiPartIdxLT, uiPartIdxRT );
   deriveLeftBottomIdxGeneral  ( uiAbsPartIdx, uiPUIdx, uiPartIdxLB );
-#if SVC_MVP
-  // BL collocated
-  TComDataCU *pcColCU = NULL;
-  UInt uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
-#if AVC_BASE
-  if( !this->getSlice()->getVPS()->getAvcBaseLayerFlag() || AVC_SYNTAX )
-#endif
-  {
-    TComMvField cMvFieldBaseColCU[2];
-    if(m_layerId)  
-    {
-      pcColCU = getBaseColCU( m_layerId - 1, xP + nPSW/2, yP + nPSH/2, uiCUAddrBase, uiAbsPartAddrBase );
-
-#if INTRA_BL
-      if( pcColCU && pcColCU->isIntraBL( uiAbsPartAddrBase ) )
-      {
-        pcColCU = NULL;
-      }
-#endif
-
-      if(pcColCU && !pcColCU->isIntra( uiAbsPartAddrBase ) )
-      {
-        abCandIsInter[iCount] = true;
-
-        // get interDir
-        puhInterDirNeighbours[iCount] = pcColCU->getInterDir( uiAbsPartAddrBase );
-
-        pcMvFieldNeighbours[(iCount << 1)].setMvField( TComMv(0,0), -1);
-        pcMvFieldNeighbours[(iCount << 1) + 1].setMvField( TComMv(0,0), -1);
-
-        if( puhInterDirNeighbours[iCount] & 1 )
-        {
-          pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_0, cMvFieldBaseColCU[0]);
-          scaleBaseMV( m_layerId - 1, pcMvFieldNeighbours[iCount<<1], cMvFieldBaseColCU[0] );
-        }
-
-        if ( getSlice()->isInterB() && puhInterDirNeighbours[iCount] & 2 )
-        {
-          pcColCU->getMvField( pcColCU, uiAbsPartAddrBase, REF_PIC_LIST_1, cMvFieldBaseColCU[1] );
-          scaleBaseMV( m_layerId - 1, pcMvFieldNeighbours[(iCount<<1)+1], cMvFieldBaseColCU[1] );
-        }
-
-        if( puhInterDirNeighbours[iCount] > 0 )
-        {
-          if ( mrgCandIdx == iCount )
-          {
-            return;
-          }
-          iCount ++;
-        }
-      }
-    }
-  }
-#endif
 
   //left
   UInt uiLeftPartIdx = 0;
@@ -2622,9 +2568,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
   Bool isAvailableA1 = pcCULeft &&
   pcCULeft->isDiffMER(xP -1, yP+nPSH-1, xP, yP) &&
-#if SVC_MVP
-  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeft->hasEqualMotion( uiLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0])) &&
-#endif
   !( uiPUIdx == 1 && (cCurPS == SIZE_Nx2N || cCurPS == SIZE_nLx2N || cCurPS == SIZE_nRx2N) ) &&
   !pcCULeft->isIntra( uiLeftPartIdx ) ;
   if ( isAvailableA1 )
@@ -2661,9 +2604,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   }
 #endif
   Bool isAvailableB1 = pcCUAbove &&
-#if SVC_MVP
-  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAbove->hasEqualMotion( uiAbovePartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
-#endif
   pcCUAbove->isDiffMER(xP+nPSW-1, yP-1, xP, yP) &&
   !( uiPUIdx == 1 && (cCurPS == SIZE_2NxN || cCurPS == SIZE_2NxnU || cCurPS == SIZE_2NxnD) ) &&
   !pcCUAbove->isIntra( uiAbovePartIdx );
@@ -2701,9 +2641,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   }
 #endif
   Bool isAvailableB0 = pcCUAboveRight &&
-#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
-  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveRight->hasEqualMotion( uiAboveRightPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
-#endif
   pcCUAboveRight->isDiffMER(xP+nPSW, yP-1, xP, yP) &&
   !pcCUAboveRight->isIntra( uiAboveRightPartIdx );
   if ( isAvailableB0 && ( !isAvailableB1 || !pcCUAbove->hasEqualMotion( uiAbovePartIdx, pcCUAboveRight, uiAboveRightPartIdx ) ) )
@@ -2730,10 +2667,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   }
 
   //left bottom
-#if SVC_MVP
-  if( iCount < 4 )
-  {
-#endif
   UInt uiLeftBottomPartIdx = 0;
   TComDataCU* pcCULeftBottom = 0;
   pcCULeftBottom = this->getPUBelowLeft( uiLeftBottomPartIdx, uiPartIdxLB );
@@ -2745,9 +2678,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
   Bool isAvailableA0 = pcCULeftBottom &&
   pcCULeftBottom->isDiffMER(xP-1, yP+nPSH, xP, yP) &&
-#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
-  ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCULeftBottom->hasEqualMotion( uiLeftBottomPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0])) &&
-#endif
   !pcCULeftBottom->isIntra( uiLeftBottomPartIdx ) ;
   if ( isAvailableA0 && ( !isAvailableA1 || !pcCULeft->hasEqualMotion( uiLeftPartIdx, pcCULeftBottom, uiLeftBottomPartIdx ) ) )
   {
@@ -2771,9 +2701,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
   {
     return;
   }
-#if SVC_MVP
-  }
-#endif
 
   // above left 
   if( iCount < 4 )
@@ -2789,9 +2716,6 @@ Void TComDataCU::getInterMergeCandidates( UInt uiAbsPartIdx, UInt uiPUIdx, TComM
 #endif
     Bool isAvailableB2 = pcCUAboveLeft &&
     pcCUAboveLeft->isDiffMER(xP-1, yP-1, xP, yP) &&
-#if SVC_MVP && !IL_MRG_SIMPLIFIED_PRUNING
-    ( !pcColCU || pcColCU->isIntra( uiAbsPartAddrBase ) || !pcCUAboveLeft->hasEqualMotion( uiAboveLeftPartIdx, puhInterDirNeighbours[0], &pcMvFieldNeighbours[0] )) &&
-#endif
     !pcCUAboveLeft->isIntra( uiAboveLeftPartIdx );
     if ( isAvailableB2 && ( !isAvailableA1 || !pcCULeft->hasEqualMotion( uiLeftPartIdx, pcCUAboveLeft, uiAboveLeftPartIdx ) )
         && ( !isAvailableB1 || !pcCUAbove->hasEqualMotion( uiAbovePartIdx, pcCUAboveLeft, uiAboveLeftPartIdx ) ) )
@@ -3668,13 +3592,8 @@ Void TComDataCU::compressMV()
   Int scaleFactor = 4 * AMVP_DECIMATION_FACTOR / m_unitSize;
   if (scaleFactor > 0)
   {
-#if SVC_MVP
-    m_acCUMvField[0].compress(m_pePredMode, m_puhInterDir, scaleFactor);
-    m_acCUMvField[1].compress(m_pePredMode, m_puhInterDir, scaleFactor);    
-#else
     m_acCUMvField[0].compress(m_pePredMode, scaleFactor);
     m_acCUMvField[1].compress(m_pePredMode, scaleFactor);    
-#endif
   }
 }
 
@@ -4303,29 +4222,4 @@ Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, T
   rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
 }
 #endif
-
-#if SVC_MVP
-Bool TComDataCU::hasEqualMotion( UInt uiAbsPartIdx, UChar uchInterDir, TComMvField* pcMvField  )
-{
-  if ( getInterDir( uiAbsPartIdx ) != uchInterDir )
-  {
-    return false;
-  }
-
-  for ( UInt uiRefListIdx = 0; uiRefListIdx < 2; uiRefListIdx++ )
-  {
-    if ( getInterDir( uiAbsPartIdx ) & ( 1 << uiRefListIdx ) )
-    {
-      if ( getCUMvField( RefPicList( uiRefListIdx ) )->getMv( uiAbsPartIdx )  != pcMvField[uiRefListIdx].getMv() || 
-        getCUMvField( RefPicList( uiRefListIdx ) )->getRefIdx( uiAbsPartIdx ) != pcMvField[uiRefListIdx].getRefIdx() )
-      {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
-#endif
-
 //! \}

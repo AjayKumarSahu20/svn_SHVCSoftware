@@ -484,10 +484,6 @@ public:
   Void          deriveLeftRightTopIdxGeneral  ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT );
   Void          deriveLeftBottomIdxGeneral    ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLB );
   
-#if SVC_MVP
-  Bool          hasEqualMotion              ( UInt uiAbsPartIdx, UChar uchInterDir, TComMvField* pcMvField  );
-#endif
-  
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for modes
   // -------------------------------------------------------------------------------------------------------------------

@@ -2188,9 +2188,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
 #elif INTRA_BL
   printf("INTRA_BL:%d ", INTRA_BL);
-#if !AVC_BASE
-  printf("SVC_MVP:%d ", SVC_MVP );
-#endif
 #endif
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
