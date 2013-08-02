@@ -2186,8 +2186,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
-#elif INTRA_BL
-  printf("INTRA_BL:%d ", INTRA_BL);
 #endif
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );

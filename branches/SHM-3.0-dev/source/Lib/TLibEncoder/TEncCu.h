@@ -83,9 +83,6 @@ private:
   
   //  Access channel
   TEncCfg*                m_pcEncCfg;
-#if INTRA_BL
-  TComPicYuv*             m_pcPicYuvRecBase;       ///< reconstructed base layer
-#endif 
   TEncSearch*             m_pcPredSearch;
   TComTrQuant*            m_pcTrQuant;
   TComBitCounter*         m_pcBitCounter;
@@ -133,9 +130,7 @@ public:
 #if RATE_CONTROL_INTRA
   Int   updateLCUDataISlice ( TComDataCU* pcCU, Int LCUIdx, Int width, Int height );
 #endif
-#if INTRA_BL 
-  Void  setBaseRecPic       ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }   
-#endif
+
 protected:
   Void  finishCU            ( TComDataCU*  pcCU, UInt uiAbsPartIdx,           UInt uiDepth        );
 #if AMP_ENC_SPEEDUP
@@ -156,9 +151,6 @@ protected:
   Void  xCheckRDCostInter   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
 #endif
   Void  xCheckRDCostIntra   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
-#if INTRA_BL
-  Void  xCheckRDCostIntraBL ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU  );
-#endif
 #if ENCODER_FAST_MODE
   Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
 #endif

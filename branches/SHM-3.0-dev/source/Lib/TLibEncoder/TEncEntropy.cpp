@@ -165,13 +165,6 @@ Void TEncEntropy::encodePredMode( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD 
     return;
   }
 
-#if INTRA_BL
-  if( pcCU->isIntraBL( uiAbsPartIdx ) )
-  {
-    return;
-  }
-#endif
-
   m_pcEntropyCoderIf->codePredMode( pcCU, uiAbsPartIdx );
 }
 
@@ -250,12 +243,8 @@ Void TEncEntropy::xEncodeTransform( TComDataCU* pcCU,UInt offsetLuma, UInt offse
       cbfV = pcCU->getCbf( m_uiBakAbsPartIdx, TEXT_CHROMA_V, uiTrIdx );
     }
   }
-#if INTRA_BL
-    if( pcCU->isIntra(uiAbsPartIdx) && pcCU->getPartitionSize(uiAbsPartIdx) == SIZE_NxN && uiDepth == pcCU->getDepth(uiAbsPartIdx) )
-#else
   
   if( pcCU->getPredictionMode(uiAbsPartIdx) == MODE_INTRA && pcCU->getPartitionSize(uiAbsPartIdx) == SIZE_NxN && uiDepth == pcCU->getDepth(uiAbsPartIdx) )
-#endif
   {
     assert( uiSubdiv );
   }
@@ -341,11 +330,7 @@ Void TEncEntropy::xEncodeTransform( TComDataCU* pcCU,UInt offsetLuma, UInt offse
       DTRACE_CABAC_T( "\n" );
     }
     
-#if INTRA_BL
-    if( ( !pcCU->isIntra( uiAbsPartIdx ) ) && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
-#else
     if( pcCU->getPredictionMode(uiAbsPartIdx) != MODE_INTRA && uiDepth == pcCU->getDepth( uiAbsPartIdx ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, 0 ) && !pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, 0 ) )
-#endif
     {
       assert( pcCU->getCbf( uiAbsPartIdx, TEXT_LUMA, 0 ) );
       //      printf( "saved one bin! " );
@@ -426,9 +411,6 @@ Void TEncEntropy::encodeIntraDirModeChroma( TComDataCU* pcCU, UInt uiAbsPartIdx,
 
 Void TEncEntropy::encodePredInfo( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD )
 {
-#if INTRA_BL
-  assert ( !pcCU->isIntraBL( uiAbsPartIdx ) );
-#endif
   if( bRD )
   {
     uiAbsPartIdx = 0;
@@ -750,19 +732,4 @@ Void TEncEntropy::encodeScalingList( TComScalingList* scalingList )
   m_pcEntropyCoderIf->codeScalingList( scalingList );
 }
 
-#if INTRA_BL
-Void TEncEntropy::encodeIntraBLFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD )
-{
-  if( pcCU->getLayerId() == 0 )
-  {
-    return;
-  }
-
-  if( bRD )
-  {
-    uiAbsPartIdx = 0;
-  }
-  m_pcEntropyCoderIf->codeIntraBLFlag( pcCU, uiAbsPartIdx );
-}
-#endif
 //! \}

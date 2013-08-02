@@ -1725,12 +1725,4 @@ Bool TComScalingList::checkPredMode(UInt sizeId, UInt listId)
   }
   return true;
 }
-
-#if INTRA_BL
-Void TEncCavlc::codeIntraBLFlag( TComDataCU* pcCU, UInt uiAbsPartIdx )
-{
-  assert(0);
-}
-
-#endif
 //! \}
