@@ -1054,7 +1054,7 @@ TEncSearch::xIntraCodingLumaBlk( TComDataCU* pcCU,
     pcCU->getPattern()->initPattern   ( pcCU, uiTrDepth, uiAbsPartIdx );
     pcCU->getPattern()->initAdiPattern( pcCU, uiAbsPartIdx, uiTrDepth, m_piYuvExt, m_iYuvExtStride, m_iYuvExtHeight, bAboveAvail, bLeftAvail );
     //===== get prediction signal =====
-#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
+#if INTRA_BL
     if(pcCU->isIntraBL ( uiAbsPartIdx ) )
     {
       pcCU->getBaseLumaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride );
@@ -1246,7 +1246,7 @@ TEncSearch::xIntraCodingChromaBlk( TComDataCU* pcCU,
     Int*  pPatChroma  = ( uiChromaId > 0 ? pcCU->getPattern()->getAdiCrBuf( uiWidth, uiHeight, m_piYuvExt ) : pcCU->getPattern()->getAdiCbBuf( uiWidth, uiHeight, m_piYuvExt ) );
 
     //===== get prediction signal =====
-#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED
+#if INTRA_BL
   if(pcCU->isIntraBL ( uiAbsPartIdx ) )
   {
     pcCU->getBaseChromaBlk( uiWidth, uiHeight, uiAbsPartIdx, piPred, uiStride, uiChromaId );
@@ -4566,11 +4566,7 @@ Void TEncSearch::xPatternSearchFracDIF(TComDataCU* pcCU,
  */
 Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg, TComYuv* pcYuvPred, TComYuv*& rpcYuvResi, TComYuv*& rpcYuvResiBest, TComYuv*& rpcYuvRec, Bool bSkipRes )
 {
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-  if ( pcCU->isIntra(0) && !pcCU->isIntraBL(0))
-#else
   if ( pcCU->isIntra(0) )
-#endif
   {
     return;
   }
@@ -4681,20 +4677,6 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
       ::memset( pcCU->getCoeffCr()           , 0, uiWidth * uiHeight * sizeof( TCoeff ) >> 2 );
       pcCU->setTransformSkipSubParts ( 0, 0, 0, 0, pcCU->getDepth(0) );
     }
-#if NO_RESIDUAL_FLAG_FOR_BLPRED 
-    else if(pcCU->getLayerId() > 0 && pcCU->isIntraBL(0) && uiZeroDistortion == uiDistortion) // all zeros
-    {
-      const UInt uiQPartNum = pcCU->getPic()->getNumPartInCU() >> (pcCU->getDepth(0) << 1);
-      ::memset( pcCU->getTransformIdx()      , 0, uiQPartNum * sizeof(UChar) );
-      ::memset( pcCU->getCbf( TEXT_LUMA )    , 0, uiQPartNum * sizeof(UChar) );
-      ::memset( pcCU->getCbf( TEXT_CHROMA_U ), 0, uiQPartNum * sizeof(UChar) );
-      ::memset( pcCU->getCbf( TEXT_CHROMA_V ), 0, uiQPartNum * sizeof(UChar) );
-      ::memset( pcCU->getCoeffY()            , 0, uiWidth * uiHeight * sizeof( TCoeff )      );
-      ::memset( pcCU->getCoeffCb()           , 0, uiWidth * uiHeight * sizeof( TCoeff ) >> 2 );
-      ::memset( pcCU->getCoeffCr()           , 0, uiWidth * uiHeight * sizeof( TCoeff ) >> 2 );
-      pcCU->setTransformSkipSubParts ( 0, 0, 0, 0, pcCU->getDepth(0) );
-    }
-#endif
     else
     {
       xSetResidualQTData( pcCU, 0, 0, 0, NULL, pcCU->getDepth(0), false );
@@ -4993,19 +4975,7 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
 
       Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
       assert(scalingListType < 6);     
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-      if(pcCU->isIntraBL(uiAbsPartIdx) )
-      {
-        m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,DC_IDX, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType );//this is for inter mode only
-      }
-      else
-      {
-        m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,REG_DCT, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType );//this is for inter mode only
-      }
-#else
       m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,REG_DCT, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType );//this is for inter mode only
-#endif
-      
       const UInt uiNonzeroDistY = m_pcRdCost->getDistPart(g_bitDepthY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getLumaAddr( absTUPartIdx ), m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),
       pcResi->getLumaAddr( absTUPartIdx ), pcResi->getStride(), trWidth,trHeight );
       if (pcCU->isLosslessCoded(0)) 
@@ -5274,18 +5244,7 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
         Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);     
 
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-        if(pcCU->isIntraBL(uiAbsPartIdx) )
-        {
-          m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,DC_IDX, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType, true );
-        }
-        else
-        {
-          m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,REG_DCT, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType, true );
-        }
-#else
         m_pcTrQuant->invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), TEXT_LUMA,REG_DCT, pcResiCurrY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),  pcCoeffCurrY, trWidth, trHeight, scalingListType, true );
-#endif
 
         uiNonzeroDistY = m_pcRdCost->getDistPart(g_bitDepthY, m_pcQTTempTComYuv[uiQTTempAccessLayer].getLumaAddr( absTUPartIdx ), m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(),
           pcResi->getLumaAddr( absTUPartIdx ), pcResi->getStride(), trWidth, trHeight );
@@ -5617,11 +5576,7 @@ Void TEncSearch::xEncodeResidualQT( TComDataCU* pcCU, UInt uiAbsPartIdx, const U
 
   {
 #if INTRA_BL
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-    assert( !pcCU->isIntra(uiAbsPartIdx) || pcCU->isIntraBL(uiAbsPartIdx));
-#else
     assert( !pcCU->isIntra(uiAbsPartIdx) );
-#endif
 #else
     assert( pcCU->getPredictionMode(uiAbsPartIdx) != MODE_INTRA );
 #endif
@@ -5862,21 +5817,13 @@ Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt uiQp, UInt uiTrMod
     if(m_pcEncCfg->getLayerId())
     {
       m_pcEntropyCoder->encodeIntraBLFlag(pcCU, 0, true);
-#if !NO_RESIDUAL_FLAG_FOR_BLPRED
       assert( pcCU->isIntraBL( 0 ) == false );
-#endif
     }
-#endif
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-    if( !pcCU->isIntraBL(0))
-    {
 #endif
     m_pcEntropyCoder->encodePredMode( pcCU, 0, true );
     m_pcEntropyCoder->encodePartSize( pcCU, 0, pcCU->getDepth(0), true );
     m_pcEntropyCoder->encodePredInfo( pcCU, 0, true );
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-    }
-#endif
+
     Bool bDummy = false;
     m_pcEntropyCoder->encodeCoeff   ( pcCU, 0, pcCU->getDepth(0), pcCU->getWidth(0), pcCU->getHeight(0), bDummy );
     
