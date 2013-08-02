@@ -1657,36 +1657,6 @@ Int TComDataCU::getIntraDirLumaPredictor( UInt uiAbsPartIdx, Int* uiIntraDirPred
   iAboveIntraDir = pcTempCU ? ( pcTempCU->isIntra( uiTempPartIdx ) ? pcTempCU->getLumaIntraDir( uiTempPartIdx ) : DC_IDX ) : DC_IDX;
 #endif 
   
-#if SVC_BL_CAND_INTRA
-  if(m_layerId > 0)
-  {
-    UInt uiCUAddrBase, uiAbsPartAddrBase;
-    pcTempCU = getBaseColCU( uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
-
-    if(pcTempCU->getPredictionMode( uiAbsPartAddrBase ) == MODE_INTRA )
-    {
-      Int iColBaseDir = pcTempCU->getLumaIntraDir( uiAbsPartAddrBase );
-      if( iColBaseDir != iAboveIntraDir && iColBaseDir != iLeftIntraDir && iAboveIntraDir != iLeftIntraDir)
-      {
-        uiIntraDirPred[0] = iColBaseDir;
-        uiIntraDirPred[1] = iLeftIntraDir;
-        uiIntraDirPred[2] = iAboveIntraDir;
-        if( piMode )
-        {
-          *piMode = 2;
-        }
-        uiPredNum = 3;
-        return uiPredNum;
-      }
-      else 
-      {
-        iAboveIntraDir = (iColBaseDir == iLeftIntraDir) ? iAboveIntraDir : iLeftIntraDir;
-        iLeftIntraDir  = iColBaseDir;
-      }
-    }
-  }
-#endif
-  
   uiPredNum = 3;
   if(iLeftIntraDir == iAboveIntraDir)
   {
