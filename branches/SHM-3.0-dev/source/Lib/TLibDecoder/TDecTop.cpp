@@ -917,7 +917,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
       {
         pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
         pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
 #endif
       }
@@ -1371,7 +1371,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
 
 #endif
 
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
 TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
 {
   TComPic* ilpPic = NULL;

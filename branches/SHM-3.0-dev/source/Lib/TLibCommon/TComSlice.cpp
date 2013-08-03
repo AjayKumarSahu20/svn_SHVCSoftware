@@ -123,7 +123,7 @@ TComSlice::TComSlice()
 #else
   m_numILRRefIdx = 0;
 #endif 
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
   m_altColIndicationFlag = false;
   m_colRefLayerIdx       = 0;
 #endif

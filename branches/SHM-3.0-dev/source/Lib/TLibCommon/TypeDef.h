@@ -102,6 +102,7 @@
 #define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
 #endif
 #if REF_IDX_MFM
+#define REMOVE_COL_PICTURE_SIGNALING     1     ///< JCTVC-N0107 remove alternative collocated picture signalling
 #define M0457_COL_PICTURE_SIGNALING      1
 #endif
 
