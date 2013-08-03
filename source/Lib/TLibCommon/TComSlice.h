@@ -1777,12 +1777,14 @@ public:
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag(Bool flag)                { m_bMFMEnabledFlag = flag; }
   Bool      getMFMEnabledFlag()                         { return m_bMFMEnabledFlag; }
+#if !REMOVE_COL_PICTURE_SIGNALING
   Void      setColRefLayerIdx(Int i)                    { m_colRefLayerIdx = i;     }
   Int       getColRefLayerIdx()                         { return m_colRefLayerIdx;  }
   Void      setAltColIndicationFlag(Bool i)             { m_altColIndicationFlag = i; }
   Bool      getAltColIndicationFlag()                   { return m_altColIndicationFlag; }
   Void      setMotionPredIlp(TComPic *ilpPic)           { m_pcIlpPic = ilpPic; }
   TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
+#endif
 #endif
 #endif
 
