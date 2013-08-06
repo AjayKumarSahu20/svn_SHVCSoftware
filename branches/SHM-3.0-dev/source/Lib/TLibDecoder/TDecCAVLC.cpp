@@ -1572,7 +1572,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
     if ( rpcSlice->getEnableTMVPFlag() )
     {
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if REMOVE_COL_PICTURE_SIGNALING
+      rpcSlice->setMFMEnabledFlag( rpcSlice->getNumMotionPredRefLayers() > 0 ? true : false );
+#else
       rpcSlice->setMFMEnabledFlag( false );
       rpcSlice->setColRefLayerIdx( 0 );
       rpcSlice->setAltColIndicationFlag( false );
@@ -1589,6 +1592,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
       else
       {
+#endif //REMOVE_COL_PICTURE_SIGNALING
 #endif
       if ( rpcSlice->getSliceType() == B_SLICE )
       {
