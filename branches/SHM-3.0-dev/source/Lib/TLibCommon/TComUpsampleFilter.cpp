@@ -175,8 +175,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int   phaseX = 0;
     Int   phaseY = 0;
 
+#if ROUNDING_OFFSET
+    Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
+    Int   addY = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
+#else
     Int   addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
     Int   addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+#endif
 
     Int   deltaX     = 4 * phaseX;
     Int   deltaY     = 4 * phaseY;  
@@ -339,8 +344,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     phaseX = 0;
     phaseY = 1;
 
+#if ROUNDING_OFFSET
+    addX       = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
+#else
     addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
     addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+#endif
 
     deltaX     = 4 * phaseX;
     deltaY     = 4 * phaseY;
