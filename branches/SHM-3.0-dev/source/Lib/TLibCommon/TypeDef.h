@@ -51,6 +51,10 @@
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
 
+#define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2
+#define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5
+#define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1
+
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
