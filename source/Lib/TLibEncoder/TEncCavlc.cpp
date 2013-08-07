@@ -707,6 +707,18 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getDimensionIdLen(j) - 1, 3,      "dimension_id_len_minus1[j]" );
   }
 
+#if SPL_FLG_CHK
+  if(vps->getSplittingFlag())
+  {
+    UInt splDimSum=0;
+    for(j = 0; j < vps->getNumScalabilityTypes(); j++)
+    {
+      splDimSum+=(vps->getDimensionIdLen(j));
+    }
+    assert(splDimSum<=6);
+  }
+#endif
+
   WRITE_FLAG( vps->getNuhLayerIdPresentFlag(),         "vps_nuh_layer_id_present_flag" );
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
@@ -740,6 +752,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   {
     WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
   }
+#endif
+#if ILP_SSH_SIG
+    WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
@@ -1051,8 +1066,12 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       }
     }
 
-#if JCTVC_M0458_INTERLAYER_RPS_SIG    
-    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) ) 
+#if JCTVC_M0458_INTERLAYER_RPS_SIG
+#if ILP_SSH_SIG
+    if((pcSlice->getSPS()->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
+#else
+    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
+#endif
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
       if( pcSlice->getInterLayerPredEnabledFlag())
@@ -1068,10 +1087,17 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           {
             WRITE_CODE(pcSlice->getActiveNumILRRefIdx() - 1, numBits,"num_inter_layer_ref_pics_minus1");
           }       
+#if ILP_NUM_REF_CHK
+          if( pcSlice->getNumILRRefIdx() != pcSlice->getActiveNumILRRefIdx() )
+          {
+#endif
           for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
           {
             WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
           }
+#if ILP_NUM_REF_CHK
+          }
+#endif
         }
       }
     }     

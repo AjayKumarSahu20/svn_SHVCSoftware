@@ -455,6 +455,9 @@ private:
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
+#if ILP_SSH_SIG
+  Bool       m_ilpSshSignalingEnabledFlag;
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
@@ -587,6 +590,10 @@ public:
 
   UInt   getLayerIdInVps(Int id)                                { return m_layerIdInVps[id];       }
   Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
+#endif
+#if ILP_SSH_SIG
+    Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
+    Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
 #endif
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }

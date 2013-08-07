@@ -956,6 +956,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     assert( uiCode <= vps->getMaxTLayers() );
   }
 #endif
+#if ILP_SSH_SIG
+    READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
 #if VPS_PROFILE_OUTPUT_LAYERS
@@ -1381,7 +1384,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     rpcSlice->setActiveNumILRRefIdx(0);
+#if ILP_SSH_SIG
+    if((sps->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
+#else
     if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
+#endif
     {
       READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
       rpcSlice->setInterLayerPredEnabledFlag(uiCode);
@@ -1403,11 +1410,25 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
           {
             rpcSlice->setActiveNumILRRefIdx(1);
           }
+#if ILP_NUM_REF_CHK
+          if( rpcSlice->getActiveNumILRRefIdx() == rpcSlice->getNumILRRefIdx() )
+          {
+            for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+            {
+              rpcSlice->setInterLayerPredLayerIdc(i,i);
+            }
+          }
+          else
+          {
+#endif
           for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
           {
             READ_CODE( numBits,uiCode,"inter_layer_pred_layer_idc[i]" );
             rpcSlice->setInterLayerPredLayerIdc(uiCode,i);
           }
+#if ILP_NUM_REF_CHK
+          }
+#endif
         }
         else
         {
@@ -1416,6 +1437,17 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         }
       }
     }
+#if ILP_SSH_SIG
+    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == false )
+    {
+      rpcSlice->setInterLayerPredEnabledFlag(true);
+      rpcSlice->setActiveNumILRRefIdx(rpcSlice->getNumILRRefIdx());
+      for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        rpcSlice->setInterLayerPredLayerIdc(i,i);
+      }
+    }
+#endif
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
     rpcSlice->setInterLayerSamplePredOnlyFlag( false );
     if( rpcSlice->getNumSamplePredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() > 0 )

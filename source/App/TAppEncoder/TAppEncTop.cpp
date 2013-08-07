@@ -883,6 +883,9 @@ Void TAppEncTop::xInitLib()
     vps->setDimensionId(i, 0, i);
   }
 #endif
+#if ILP_SSH_SIG
+    vps->setIlpSshSignalingEnabledFlag(true);
+#endif
 #if VPS_EXTN_PROFILE_INFO
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
   for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
