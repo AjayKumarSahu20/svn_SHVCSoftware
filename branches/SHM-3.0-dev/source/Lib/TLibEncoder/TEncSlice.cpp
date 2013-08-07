@@ -344,7 +344,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   }
 
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
   {
     Int nCurLayer = rpcSlice->getLayerId();
     Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[nCurLayer-1]->getQP() - m_ppcTEncTop[nCurLayer]->getQP() ,
@@ -372,7 +372,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   qpc = Clip3( 0, 57, iQP + chromaQPOffset);
   weight = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
+  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
   {
     dLambda *= 1.1;
     weight *= 1.15;
