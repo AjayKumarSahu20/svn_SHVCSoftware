@@ -1730,10 +1730,6 @@ Void TAppEncCfg::xCheckParameter()
       m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
     }
 
-#if SVC_EXTENSION
-    m_maxDecPicBuffering[m_GOPList[i].m_temporalId] += 1; // it should be updated if more than 1 resampling picture is used
-#endif
-
     Int highestDecodingNumberWithLowerPOC = 0; 
     for(Int j=0; j<m_iGOPSize; j++)
     {
