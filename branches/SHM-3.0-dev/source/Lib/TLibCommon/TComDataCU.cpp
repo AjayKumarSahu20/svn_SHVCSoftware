@@ -4044,6 +4044,11 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   Int iBY = (uiPelY*heightBL+ heightEL/2)/heightEL;
 #endif
 
+#if N0139_POSITION_ROUNDING_OFFSET
+  iBX += 4;
+  iBY += 4;
+#endif
+
 #if SCALED_REF_LAYER_OFFSETS
   if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight() ||
        iBX < 0                                        || iBY < 0                                           )
