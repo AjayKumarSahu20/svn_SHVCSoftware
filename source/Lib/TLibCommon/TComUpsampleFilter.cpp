@@ -203,6 +203,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
 #endif
 
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+    Int shift1 = g_bitDepthY - 8;
+#endif
+
     //========== horizontal upsampling ===========
     for( i = 0; i < widthEL; i++ )
     {
@@ -221,7 +225,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+        *piDstY = sumLumaHor(piSrcY, coeff) >> shift1;
+#else
         *piDstY = sumLumaHor(piSrcY, coeff);
+#endif
         piSrcY += strideBL;
         piDstY += strideEL;
       }
@@ -233,7 +241,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL);
 
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+    Int nShift = US_FILTER_PREC*2 - shift1;
+#else
     const Int nShift = US_FILTER_PREC*2;
+#endif
     Int iOffset = 1 << (nShift - 1); 
 
 #if SCALED_REF_LAYER_OFFSETS
@@ -371,6 +383,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
 #endif
 
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+    shift1 = g_bitDepthC - 8;
+#endif
+
     //========== horizontal upsampling ===========
     for( i = 0; i < widthEL; i++ )
     {
@@ -391,8 +407,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+        *piDstU = sumChromaHor(piSrcU, coeff) >> shift1;
+        *piDstV = sumChromaHor(piSrcV, coeff) >> shift1;
+#else
         *piDstU = sumChromaHor(piSrcU, coeff);
         *piDstV = sumChromaHor(piSrcV, coeff);
+#endif
 
         piSrcU += strideBL;
         piSrcV += strideBL;
@@ -406,6 +427,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->setHeight(heightBL << 1);
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL << 1);
+
+#if  N0214_INTERMEDIATE_BUFFER_16BITS
+    nShift = US_FILTER_PREC*2 - shift1;
+    iOffset = 1 << (nShift - 1); 
+#endif
 
 #if SCALED_REF_LAYER_OFFSETS
     for( j = 0; j < pcTempPic->getHeight() >> 1; j++ )
