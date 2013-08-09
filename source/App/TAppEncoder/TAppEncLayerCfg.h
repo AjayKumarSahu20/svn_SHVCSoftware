@@ -80,6 +80,9 @@ protected:
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
 #endif  
+#if FINAL_RPL_CHANGE_N0082
+  GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
+#endif
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -139,6 +142,9 @@ public:
   Bool    getRCUseLCUSeparateModel()  {return m_RCUseLCUSeparateModel; }
   Int     getRCInitialQP()            {return m_RCInitialQP;           }
   Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
+#endif
+#if FINAL_RPL_CHANGE_N0082
+  GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
 #endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 

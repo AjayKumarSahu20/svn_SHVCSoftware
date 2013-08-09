@@ -46,7 +46,8 @@
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
-
+#define RPL_INIT_N0316_N0082             1      ///< N0316, N0082: initial reference picture list construction 
+#define FINAL_RPL_CHANGE_N0082           1      ///< N0082: final ref picture list change (encoder)
 #define M0464_TILE_BOUNDARY_ALIGNED_FLAG 1      ///< VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure

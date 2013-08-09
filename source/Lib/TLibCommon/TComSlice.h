@@ -1566,6 +1566,9 @@ public:
   Bool      getCheckLDC     ()                                  { return m_bCheckLDC; }
   Bool      getMvdL1ZeroFlag ()                                  { return m_bLMvdL1Zero;    }
   Int       getNumRpsCurrTempList();
+#if RPL_INIT_N0316_N0082
+  Int       getNumNegativeRpsCurrTempList();
+#endif
   Int       getList1IdxToList0Idx ( Int list1Idx )               { return m_list1IdxToList0Idx[list1Idx]; }
   Void      setReferenced(Bool b)                               { m_bRefenced = b; }
   Bool      isReferenced()                                      { return m_bRefenced; }
