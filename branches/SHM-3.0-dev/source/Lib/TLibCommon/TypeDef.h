@@ -54,9 +54,9 @@
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
 
-#define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2
-#define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5
-#define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1
+#define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
+#define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
+#define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1, JCTVC-N0081, JCTVC-N0154, JCTVC-N0217: a condition on signaling inter_layer_pred_layer_idc[ i ], to avoid sending when NumDirectRefLayers equals NumActiveRefLayerPics, and instead infer values
 
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
