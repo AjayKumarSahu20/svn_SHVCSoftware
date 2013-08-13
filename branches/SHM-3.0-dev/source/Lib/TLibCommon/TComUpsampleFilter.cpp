@@ -8,39 +8,82 @@
 const Int TComUpsampleFilter::m_lumaFixedFilter[16][NTAPS_US_LUMA] =
 {
   {  0,  0,  0, 64,  0,  0,  0,  0}, //
+#if ARBITRARY_SPATIAL_RATIO
+  {  0,  1, -3, 63,  4, -2,  1,  0},
+  { -1,  2, -5, 62,  8, -3,  1,  0},
+  { -1,  3, -8, 60, 13, -4,  1,  0},
+  { -1,  4,-10, 58, 17, -5,  1,  0},
+#else
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  { -1, 4, -11, 52, 26,  -8, 3, -1}, // <-> actual phase shift 1/3, used for spatial scalability x1.5      
+#endif
+  { -1, 4, -11, 52, 26,  -8,  3, -1}, // <-> actual phase shift 1/3, used for spatial scalability x1.5      
+#if ARBITRARY_SPATIAL_RATIO
+  { -1, 3,  -9, 47, 31, -10,  4, -1},
+  { -1, 4, -11, 45, 34, -10,  4, -1},
+#else
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //       
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
-  { -1, 4, -11, 40, 40, -11, 4, -1}, // <-> actual phase shift 1/2, equal to HEVC MC, used for spatial scalability x2
+#endif
+  { -1, 4, -11, 40, 40, -11,  4, -1}, // <-> actual phase shift 1/2, equal to HEVC MC, used for spatial scalability x2
+#if ARBITRARY_SPATIAL_RATIO
+  { -1,  4, -10, 34, 45, -11,  4, -1},
+  { -1,  4, -10, 31, 47,  -9,  3, -1},
+#else
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
+#endif
   { -1, 3,  -8, 26, 52, -11, 4, -1}, // <-> actual phase shift 2/3, used for spatial scalability x1.5
+#if ARBITRARY_SPATIAL_RATIO
+  { 0,  1,  -5, 17, 58, -10,  4, -1},
+  { 0,  1,  -4, 13, 60,  -8,  3, -1},
+  { 0,  1,  -3,  8, 62,  -5,  2, -1},
+  { 0,  1,  -2,  4, 63,  -3,  1,  0}
+#else
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, // 
   {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}  // 
+#endif
 };
 
 const Int TComUpsampleFilter::m_chromaFixedFilter[16][NTAPS_US_CHROMA] =
 {
   {  0, 64,  0,  0},//
+#if ARBITRARY_SPATIAL_RATIO
+  { -2, 62,  4,  0},
+  { -2, 58, 10, -2},
+  { -4, 56, 14, -2},
+#else
   {CNU,CNU,CNU,CNU},//
   {CNU,CNU,CNU,CNU},//
   {CNU,CNU,CNU,CNU},// 
+#endif
   { -4, 54, 16, -2},// <-> actual phase shift 1/4,equal to HEVC MC, used for spatial scalability x1.5 (only for accurate Chroma alignement)
   { -6, 52, 20, -2},// <-> actual phase shift 1/3, used for spatial scalability x1.5   
   { -6, 46, 28, -4},// <-> actual phase shift 3/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)      
+#if ARBITRARY_SPATIAL_RATIO
+  { -4, 42, 30, -4},
+#else
   {CNU,CNU,CNU,CNU},// 
+#endif
   { -4, 36, 36, -4},// <-> actual phase shift 1/2,equal to HEVC MC, used for spatial scalability x2
   { -4, 30, 42, -4},// <-> actual phase shift 7/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+#if ARBITRARY_SPATIAL_RATIO
+  { -4, 28, 46, -6},
+#else
   {CNU,CNU,CNU,CNU},// 
+#endif
   { -2, 20, 52, -6},// <-> actual phase shift 2/3, used for spatial scalability x1.5
+#if ARBITRARY_SPATIAL_RATIO
+  {-2, 16, 54, -4},
+  {-2, 14, 56, -4},
+#else
   {CNU,CNU,CNU,CNU},// 
   {CNU,CNU,CNU,CNU},// 
+#endif
   { -2, 10, 58, -2},// <-> actual phase shift 7/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)  
   {  0,  4, 62, -2} // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
 };
@@ -163,8 +206,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       memcpy( m_chromaFilter[i], m_chromaFixedFilter[i], sizeof(Int) * NTAPS_US_CHROMA );
     }
 
+#if ARBITRARY_SPATIAL_RATIO 
+    assert ( widthEL >= widthBL );
+    assert ( heightEL >= heightBL );
+#else
     assert ( widthEL == widthBL || widthEL == 2*widthBL || 2*widthEL == 3*widthBL );
     assert ( heightEL == heightBL || heightEL == 2*heightBL || 2*heightEL == 3*heightBL );
+#endif
 
     pcBasePic->setBorderExtension(false);
     pcBasePic->extendPicBorder   (); // extend the border.
