@@ -111,6 +111,7 @@
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
+#define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120 max_tid_ref_pics_plus1_present_flag
 #endif
 #if REF_IDX_MFM
 #define REMOVE_COL_PICTURE_SIGNALING     1     ///< JCTVC-N0107 remove alternative collocated picture signalling

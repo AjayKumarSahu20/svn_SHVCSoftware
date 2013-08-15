@@ -887,6 +887,23 @@ Void TAppEncTop::xInitLib()
     vps->setDimensionId(i, 0, i);
   }
 #endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
+  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  {
+    for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+    {
+      vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
+    }
+  }
+  else
+  {
+    for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+    {
+      vps->setMaxSublayerForIlpPlus1(i, 7);
+    }
+  }
+#endif 
 #if ILP_SSH_SIG
     vps->setIlpSshSignalingEnabledFlag(true);
 #endif

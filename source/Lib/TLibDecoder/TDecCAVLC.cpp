@@ -950,11 +950,30 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  READ_FLAG( uiCode, "max_tid_il_ref_pics_plus1_present_flag"); vps->setMaxTidIlRefPicsPlus1PresentFlag(uiCode ? true : false);
+  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  {
+    for(i = 0; i < vps->getMaxLayers() - 1; i++)
+    {
+      READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
+      assert( uiCode <= vps->getMaxTLayers() );
+    }
+  }
+  else 
+  {
+    for(i = 0; i < vps->getMaxLayers() - 1; i++)
+    {
+      vps->setMaxSublayerForIlpPlus1(i, 7);
+    }
+  }
+#else
   for(i = 0; i < vps->getMaxLayers() - 1; i++)
   {
     READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
     assert( uiCode <= vps->getMaxTLayers() );
   }
+#endif
 #endif
 #if ILP_SSH_SIG
     READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
