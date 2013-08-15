@@ -891,14 +891,14 @@ Void TAppEncTop::xInitLib()
   vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
   if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
   {
-    for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
       vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
     }
   }
   else
   {
-    for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
       vps->setMaxSublayerForIlpPlus1(i, 7);
     }
