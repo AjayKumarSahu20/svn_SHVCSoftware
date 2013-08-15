@@ -83,7 +83,7 @@
 #define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
 #define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214 support base layer input more than 8 bits
 #define ARBITRARY_SPATIAL_RATIO          0      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
-
+#define BUGFIX_RESAMPLE                  1      ///< JCTVC-N0055: resampling bug fix for positive left scalled offset
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
@@ -110,27 +110,27 @@
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-#define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
+#define ILR_RESTR                        1      ///< JCTVC-M0209 Inter-layer RPS and RPL
 #define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120 max_tid_ref_pics_plus1_present_flag
 #endif
 #if REF_IDX_MFM
-#define REMOVE_COL_PICTURE_SIGNALING     1     ///< JCTVC-N0107 remove alternative collocated picture signalling
+#define REMOVE_COL_PICTURE_SIGNALING     1      ///< JCTVC-N0107 remove alternative collocated picture signalling
 #define M0457_COL_PICTURE_SIGNALING      1
 #endif
 
 #if !VPS_EXTN_DIRECT_REF_LAYERS || !M0457_PREDICTION_INDICATIONS || !JCTVC_M0458_INTERLAYER_RPS_SIG
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0     ///< shall be 0, JCTVC-N0107
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #else
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0     ///< shall be 0, JCTVC-N0107
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #endif
 #endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC
-  #define NB_REMAIN_MODES                2      ///< nb of remaining modes (M0115)
+#define NB_REMAIN_MODES                  2      ///< nb of remaining modes (M0115)
 #endif
 
-#define RC_SHVC_HARMONIZATION            1  ///< JCTVC-M0037, rate control for SHVC
+#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037, rate control for SHVC
 
 #else
 #define ILP_DECODED_PICTURE              0

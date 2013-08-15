@@ -249,6 +249,9 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
     Int topStartL  = scalEL.getWindowTopOffset();
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
+#if BUGFIX_RESAMPLE
+    Int leftOffset = leftStartL > 0 ? leftStartL : 0;
+#endif
 #endif
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
@@ -314,6 +317,31 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       piSrcY = piTempBufY + (refPos -((NTAPS_US_LUMA>>1) - 1))*strideEL;
 #if SCALED_REF_LAYER_OFFSETS
+#if BUGFIX_RESAMPLE
+      Pel* piDstY0 = piDstBufY + j * strideEL;            
+      piDstY = piDstY0 + leftOffset;
+      piSrcY += leftOffset;
+
+      for( i = min<Int>(rightEndL, pcTempPic->getWidth()) - max<Int>(0, leftStartL); i > 0; i-- )
+      {
+        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcY++;
+        piDstY++;
+      }
+
+      for( i = rightEndL; i < pcTempPic->getWidth(); i++ )
+      {
+        *piDstY = piDstY0[rightEndL-1];
+        piDstY++;
+      }
+
+      piDstY = piDstY0;
+      for( i = 0; i < leftStartL; i++ )
+      {
+        *piDstY = piDstY0[leftStartL];
+        piDstY++;
+      }
+#else
 #if 1 // it should provide identical result
       Pel* piDstY0 = piDstBufY + j * strideEL;            
       piDstY = piDstY0 + ( leftStartL > 0 ? leftStartL : 0 );
@@ -352,6 +380,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
         }
         piDstY++;
       }
+#endif
 #endif
 #else
       piDstY = piDstBufY + j * strideEL;
@@ -396,6 +425,9 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int rightEndC  = (pcUsPic->getWidth() >> 1) - (scalEL.getWindowRightOffset() >> 1);
     Int topStartC  = scalEL.getWindowTopOffset() >> 1;
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
+#if BUGFIX_RESAMPLE
+    leftOffset = leftStartC > 0 ? leftStartC : 0;
+#endif
 #endif
 
     shiftX = 16;
@@ -500,6 +532,42 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       piSrcU = piTempBufU  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;
       piSrcV = piTempBufV  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;
 #if SCALED_REF_LAYER_OFFSETS
+#if BUGFIX_RESAMPLE
+      Pel* piDstU0 = piDstBufU + j*strideEL;
+      Pel* piDstV0 = piDstBufV + j*strideEL;
+      piDstU = piDstU0 + leftOffset;
+      piDstV = piDstV0 + leftOffset;
+      piSrcU += leftOffset;
+      piSrcV += leftOffset;
+
+      for( i = min<Int>(rightEndC, pcTempPic->getWidth() >> 1) - max<Int>(0, leftStartC); i > 0; i-- )
+      {
+        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
+        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
+        piSrcU++;
+        piSrcV++;
+        piDstU++;
+        piDstV++;
+      }
+
+      for( i = rightEndC; i < pcTempPic->getWidth() >> 1; i++ )
+      {
+        *piDstU = piDstU0[rightEndC-1];
+        *piDstV = piDstV0[rightEndC-1];
+        piDstU++;
+        piDstV++;
+      }
+
+      piDstU = piDstU0;
+      piDstV = piDstV0;
+      for( i = 0; i < leftStartC; i++ )
+      {
+        *piDstU = piDstU0[leftStartC];
+        *piDstV = piDstV0[leftStartC];
+        piDstU++;
+        piDstV++;
+      }
+#else
 #if 1 // it should provide identical result
       Pel* piDstU0 = piDstBufU + j*strideEL;
       Pel* piDstV0 = piDstBufV + j*strideEL;
@@ -553,6 +621,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
         piDstU++;
         piDstV++;
       }
+#endif
 #endif
 #else
       piDstU = piDstBufU + j*strideEL;
