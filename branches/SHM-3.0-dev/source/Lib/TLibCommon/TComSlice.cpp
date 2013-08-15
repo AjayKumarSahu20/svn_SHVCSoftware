@@ -1661,6 +1661,9 @@ TComVPS::TComVPS()
   m_maxOneActiveRefLayerFlag = true;
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  m_maxTidIlRefPicsPlus1PresentFlag = true;
+#endif 
   for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
   {
     m_maxSublayerForIlpPlus1[i] = m_uiMaxTLayers + 1;

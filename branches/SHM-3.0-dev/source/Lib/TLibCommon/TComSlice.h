@@ -493,6 +493,9 @@ private:
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
   UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
 #endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  Bool       m_maxTidIlRefPicsPlus1PresentFlag;
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
@@ -659,6 +662,10 @@ public:
   Bool   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
   Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
 #endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  Bool   getMaxTidIlRefPicsPlus1PresentFlag()                   { return m_maxTidIlRefPicsPlus1PresentFlag ;}
+  Void   setMaxTidIlRefPicsPlus1PresentFlag(Bool x)             { m_maxTidIlRefPicsPlus1PresentFlag = x;}
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
