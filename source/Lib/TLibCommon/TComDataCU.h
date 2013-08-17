@@ -484,24 +484,11 @@ public:
   Void          deriveLeftRightTopIdxGeneral  ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT );
   Void          deriveLeftBottomIdxGeneral    ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLB );
   
-#if SVC_MVP
-  Bool          hasEqualMotion              ( UInt uiAbsPartIdx, UChar uchInterDir, TComMvField* pcMvField  );
-#endif
-  
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for modes
   // -------------------------------------------------------------------------------------------------------------------
   
-#if INTRA_BL && !NO_RESIDUAL_FLAG_FOR_BLPRED 
-  Void          getBaseLumaBlk   ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride );
-  Void          getBaseChromaBlk ( UInt uiWidth, UInt uiHeight, UInt uiAbsPartIdx, Pel* piPred, UInt uiStride, UInt uiChromaId );
-#endif
-#if INTRA_BL
-  Bool          isIntraBL ( UInt uiPartIdx )  { return m_pePredMode[ uiPartIdx ] == MODE_INTRA_BL; }
-  Bool          isIntra   ( UInt uiPartIdx )  { return m_pePredMode[ uiPartIdx ] == MODE_INTRA || m_pePredMode[ uiPartIdx ] == MODE_INTRA_BL; }
-#else
   Bool          isIntra   ( UInt uiPartIdx )  { return m_pePredMode[ uiPartIdx ] == MODE_INTRA; }
-#endif 
   Bool          isSkipped ( UInt uiPartIdx );                                                     ///< SKIP (no residual)
   Bool          isBipredRestriction( UInt puIdx );
 
@@ -528,10 +515,7 @@ public:
   UInt          getSliceSegmentStartCU  ( UInt pos )                  { return m_sliceSegmentStartCU[pos-m_uiAbsIdxInLCU];                                                                                   }
   UInt&         getTotalBins            ()                            { return m_uiTotalBins;                                                                                                  }
 
-#if INTRA_BL
-  UInt          getCtxIntraBLFlag               ( UInt   uiAbsPartIdx                                 );
-#endif  
-
+#if REF_IDX_FRAMEWORK
 #if FAST_INTRA_SHVC
   Int           reduceSetOfIntraModes              (  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
 #endif
@@ -539,6 +523,7 @@ public:
 #if REF_IDX_ME_ZEROMV
   Bool xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
   Bool xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx);
+#endif
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -552,10 +537,12 @@ public:
 
   UInt          getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, Bool bIsIntra);
 
+#if REF_IDX_FRAMEWORK
 #if SVC_COL_BLK 
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
   Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
+#endif
 #endif
 };
 

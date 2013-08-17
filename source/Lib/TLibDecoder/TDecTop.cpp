@@ -241,6 +241,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
 
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+
+#if SVC_EXTENSION
+  m_iMaxRefPicNum += 1; // it should be updated if more than 1 resampling picture is used
+#endif
+
   if (m_cListPic.size() < (UInt)m_iMaxRefPicNum)
   {
     rpcPic = new TComPic();
@@ -811,12 +816,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Set reference list
 #if REF_IDX_FRAMEWORK
     if (m_layerId == 0)
-#elif INTRA_BL
-    if( m_layerId > 0 )
-    {
-      pcSlice->setRefPicList( m_cListPic );
-    }
-    else
 #endif
 #if FIX1071
     pcSlice->setRefPicList( m_cListPic, true );
@@ -912,11 +911,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
 #if REF_IDX_FRAMEWORK
-#if ZERO_NUM_DIRECT_LAYERS
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
-#else
-    if(m_layerId > 0)
-#endif
     {
       setILRPic(pcPic);
 #if REF_IDX_MFM
@@ -927,7 +922,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
       {
         pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
         pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
 #endif
       }
@@ -1320,11 +1315,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
   TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
   {
-#if ZERO_NUM_DIRECT_LAYERS
     return (TDecTop *)getLayerDec( 0 );
-#else
-    return NULL;
-#endif
   }
   
   return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdc ) );
@@ -1385,7 +1376,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
 
 #endif
 
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
 TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
 {
   TComPic* ilpPic = NULL;

@@ -100,10 +100,7 @@ public:
   virtual ~TComPrediction();
   
   Void    initTempBuff();
-  
-#if INTRA_BL
-  Void getBaseBlk ( TComDataCU* pcCU, TComYuv* pcYuvPred, Int iPartAddr, Int iWidth, Int iHeight );
-#endif
+
   // inter
   Void motionCompensation         ( TComDataCU*  pcCU, TComYuv* pcYuvPred, RefPicList eRefPicList = REF_PIC_LIST_X, Int iPartIdx = -1 );
   
@@ -120,11 +117,13 @@ public:
   Int  getPredicBufWidth()        { return m_iYuvExtStride; }
   Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
 
+#if REF_IDX_FRAMEWORK
 #if SVC_UPSAMPLING
 #if SCALED_REF_LAYER_OFFSETS
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
 #else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
+#endif
 #endif
 #endif
 };

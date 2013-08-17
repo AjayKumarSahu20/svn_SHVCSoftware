@@ -157,11 +157,7 @@ public:
     m_piRefIdx = src->m_piRefIdx + offset;
   }
   
-#if SVC_MVP
-  Void compress(Char* pePredMode, UChar* peInterDir, Int scale);
-#else
   Void compress(Char* pePredMode, Int scale); 
-#endif
 
 #if REF_IDX_MFM
   Void setMvField( TComMvField const& mvField, Int iIdx )

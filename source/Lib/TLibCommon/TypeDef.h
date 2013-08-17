@@ -40,16 +40,23 @@
 
 #define SVC_EXTENSION                    1
 
+#define N0139_POSITION_ROUNDING_OFFSET   1
+
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
-
+#define RPL_INIT_N0316_N0082             1      ///< N0316, N0082: initial reference picture list construction 
+#define FINAL_RPL_CHANGE_N0082           1      ///< N0082: final ref picture list change (encoder)
 #define M0464_TILE_BOUNDARY_ALIGNED_FLAG 1      ///< VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
+
+#define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
+#define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
+#define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1, JCTVC-N0081, JCTVC-N0154, JCTVC-N0217: a condition on signaling inter_layer_pred_layer_idc[ i ], to avoid sending when NumDirectRefLayers equals NumActiveRefLayerPics, and instead infer values
 
 #define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
@@ -73,7 +80,10 @@
 
 #define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define CHROMA_UPSAMPLING                1      ///< L0335: Chroma upsampling with 5 bits coefficients
+#define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
+#define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214 support base layer input more than 8 bits
+#define ARBITRARY_SPATIAL_RATIO          0      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
+#define BUGFIX_RESAMPLE                  1      ///< JCTVC-N0055: resampling bug fix for positive left scalled offset
 
 #define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
@@ -96,47 +106,31 @@
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
 #define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-#define ZERO_NUM_DIRECT_LAYERS           1      ///< support of zero direct reference layers
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-#define ILR_RESTR                        1     ///< JCTVC-M0209 Inter-layer RPS and RPL
+#define ILR_RESTR                        1      ///< JCTVC-M0209 Inter-layer RPS and RPL
+#define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120 max_tid_ref_pics_plus1_present_flag
 #endif
 #if REF_IDX_MFM
+#define REMOVE_COL_PICTURE_SIGNALING     1      ///< JCTVC-N0107 remove alternative collocated picture signalling
 #define M0457_COL_PICTURE_SIGNALING      1
 #endif
 
 #if !VPS_EXTN_DIRECT_REF_LAYERS || !M0457_PREDICTION_INDICATIONS || !JCTVC_M0458_INTERLAYER_RPS_SIG
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #else
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0
-#endif
-
-#else
-#define INTRA_BL                         1      ///< inter-layer texture prediction
-
-#if INTRA_BL
-#define INTRA_BL_DST4x4                  1      ///< L0067/L0204: DST4x4 for Intra BL
-#define NO_RESIDUAL_FLAG_FOR_BLPRED      1      ///< L0437: Root cbf for Intra_BL
-#define IL_MRG_SIMPLIFIED_PRUNING        1      ///< M0124: simplified pruning, Only the left and above candidates are checked with BL-C candidate for redundancy removal 
-#define INTRA_BL_CTX_CHANGE              1      ///< M0075: spatial dependency removal for IntraBL flag context derivation
-
-// Hooks
-#define SVC_MVP                          1      ///< motion hook for merge mode as an example
-#if !AVC_BASE && !AVC_SYNTAX
-#define SVC_BL_CAND_INTRA                0      ///< Intra Base Mode Prediction hook as an example 
-#endif
-
+#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #endif
 #endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC
-  #define NB_REMAIN_MODES                2      ///< nb of remaining modes (M0115)
+#define NB_REMAIN_MODES                  2      ///< nb of remaining modes (M0115)
 #endif
 
-#define RC_SHVC_HARMONIZATION            1  ///< JCTVC-M0037, rate control for SHVC
+#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037, rate control for SHVC
 
 #else
 #define ILP_DECODED_PICTURE              0
@@ -471,9 +465,6 @@ enum PredMode
 {
   MODE_INTER,           ///< inter-prediction mode
   MODE_INTRA,           ///< intra-prediction mode
-#if INTRA_BL
-  MODE_INTRA_BL,        ///< inter-layer intra-prediction mode
-#endif
   MODE_NONE = 15
 };
 

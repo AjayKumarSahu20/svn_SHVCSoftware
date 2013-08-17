@@ -455,6 +455,9 @@ private:
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
+#if ILP_SSH_SIG
+  Bool       m_ilpSshSignalingEnabledFlag;
+#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
@@ -490,6 +493,9 @@ private:
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
   UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
 #endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  Bool       m_maxTidIlRefPicsPlus1PresentFlag;
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
@@ -588,6 +594,10 @@ public:
   UInt   getLayerIdInVps(Int id)                                { return m_layerIdInVps[id];       }
   Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
 #endif
+#if ILP_SSH_SIG
+    Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
+    Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
+#endif
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }
@@ -652,6 +662,10 @@ public:
   Bool   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
   Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
 #endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  Bool   getMaxTidIlRefPicsPlus1PresentFlag()                   { return m_maxTidIlRefPicsPlus1PresentFlag ;}
+  Void   setMaxTidIlRefPicsPlus1PresentFlag(Bool x)             { m_maxTidIlRefPicsPlus1PresentFlag = x;}
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
@@ -1559,6 +1573,9 @@ public:
   Bool      getCheckLDC     ()                                  { return m_bCheckLDC; }
   Bool      getMvdL1ZeroFlag ()                                  { return m_bLMvdL1Zero;    }
   Int       getNumRpsCurrTempList();
+#if RPL_INIT_N0316_N0082
+  Int       getNumNegativeRpsCurrTempList();
+#endif
   Int       getList1IdxToList0Idx ( Int list1Idx )               { return m_list1IdxToList0Idx[list1Idx]; }
   Void      setReferenced(Bool b)                               { m_bRefenced = b; }
   Bool      isReferenced()                                      { return m_bRefenced; }
@@ -1777,12 +1794,14 @@ public:
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag(Bool flag)                { m_bMFMEnabledFlag = flag; }
   Bool      getMFMEnabledFlag()                         { return m_bMFMEnabledFlag; }
+#if !REMOVE_COL_PICTURE_SIGNALING
   Void      setColRefLayerIdx(Int i)                    { m_colRefLayerIdx = i;     }
   Int       getColRefLayerIdx()                         { return m_colRefLayerIdx;  }
   Void      setAltColIndicationFlag(Bool i)             { m_altColIndicationFlag = i; }
   Bool      getAltColIndicationFlag()                   { return m_altColIndicationFlag; }
   Void      setMotionPredIlp(TComPic *ilpPic)           { m_pcIlpPic = ilpPic; }
   TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
+#endif
 #endif
 #endif
 

@@ -82,9 +82,6 @@ TEncSbac::TEncSbac()
 , m_cSaoTypeIdxSCModel        ( 1,             1,               NUM_SAO_TYPE_IDX_CTX          , m_contextModels + m_numContextModels, m_numContextModels)
 , m_cTransformSkipSCModel     ( 1,             2,               NUM_TRANSFORMSKIP_FLAG_CTX    , m_contextModels + m_numContextModels, m_numContextModels)
 , m_CUTransquantBypassFlagSCModel( 1,          1,               NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX, m_contextModels + m_numContextModels, m_numContextModels)
-#if INTRA_BL
-, m_cIntraBLPredFlagSCModel   (1,              1,               NUM_INTRA_BL_PRED_CTX         , m_contextModels + m_numContextModels, m_numContextModels)
-#endif
 {
   assert( m_numContextModels <= MAX_NUM_CTX_MOD );
 }
@@ -133,9 +130,6 @@ Void TEncSbac::resetEntropy           ()
   m_cMVPIdxSCModel.initBuffer            ( eSliceType, iQp, (UChar*)INIT_MVP_IDX );
   m_cCUTransSubdivFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_TRANS_SUBDIV_FLAG );
   m_cSaoMergeSCModel.initBuffer      ( eSliceType, iQp, (UChar*)INIT_SAO_MERGE_FLAG );
-#if INTRA_BL
-  m_cIntraBLPredFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_INTRA_BL_PRED_FLAG );
-#endif
   m_cSaoTypeIdxSCModel.initBuffer        ( eSliceType, iQp, (UChar*)INIT_SAO_TYPE_IDX );
   m_cTransformSkipSCModel.initBuffer     ( eSliceType, iQp, (UChar*)INIT_TRANSFORMSKIP_FLAG );
   m_CUTransquantBypassFlagSCModel.initBuffer( eSliceType, iQp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG );
@@ -168,9 +162,6 @@ Void TEncSbac::determineCabacInitIdx()
 
       curCost  = m_cCUSplitFlagSCModel.calcCost       ( curSliceType, qp, (UChar*)INIT_SPLIT_FLAG );
       curCost += m_cCUSkipFlagSCModel.calcCost        ( curSliceType, qp, (UChar*)INIT_SKIP_FLAG );
-#if INTRA_BL
-      curCost += m_cIntraBLPredFlagSCModel.calcCost   ( curSliceType, qp, (UChar*)INIT_INTRA_BL_PRED_FLAG );
-#endif
       curCost += m_cCUMergeFlagExtSCModel.calcCost    ( curSliceType, qp, (UChar*)INIT_MERGE_FLAG_EXT);
       curCost += m_cCUMergeIdxExtSCModel.calcCost     ( curSliceType, qp, (UChar*)INIT_MERGE_IDX_EXT);
       curCost += m_cCUPartSizeSCModel.calcCost        ( curSliceType, qp, (UChar*)INIT_PART_SIZE );
@@ -242,9 +233,6 @@ Void TEncSbac::updateContextTables( SliceType eSliceType, Int iQp, Bool bExecute
   m_cMVPIdxSCModel.initBuffer            ( eSliceType, iQp, (UChar*)INIT_MVP_IDX );
   m_cCUTransSubdivFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_TRANS_SUBDIV_FLAG );
   m_cSaoMergeSCModel.initBuffer      ( eSliceType, iQp, (UChar*)INIT_SAO_MERGE_FLAG );
-#if INTRA_BL
-  m_cIntraBLPredFlagSCModel.initBuffer ( eSliceType, iQp, (UChar*)INIT_INTRA_BL_PRED_FLAG );
-#endif
   m_cSaoTypeIdxSCModel.initBuffer        ( eSliceType, iQp, (UChar*)INIT_SAO_TYPE_IDX );
   m_cTransformSkipSCModel.initBuffer     ( eSliceType, iQp, (UChar*)INIT_TRANSFORMSKIP_FLAG );
   m_CUTransquantBypassFlagSCModel.initBuffer( eSliceType, iQp, (UChar*)INIT_CU_TRANSQUANT_BYPASS_FLAG );
@@ -427,9 +415,7 @@ Void TEncSbac::codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRef
 Void TEncSbac::codePartSize( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 {
   PartSize eSize         = pcCU->getPartitionSize( uiAbsPartIdx );
-#if INTRA_BL
-  assert( !pcCU->isIntraBL( uiAbsPartIdx ) );
-#endif
+
   if ( pcCU->isIntra( uiAbsPartIdx ) )
   {
     if( uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth )
@@ -1599,24 +1585,4 @@ Void  TEncSbac::loadContexts ( TEncSbac* pScr)
   this->xCopyContextsFrom(pScr);
 }
 
-#if INTRA_BL
-/** code intra_bl flag
- * \param pcCU
- * \param uiAbsPartIdx 
- * \returns Void
- */
-Void TEncSbac::codeIntraBLFlag( TComDataCU* pcCU, UInt uiAbsPartIdx )
-{
-  // get context function is here
-  UInt uiSymbol = pcCU->isIntraBL( uiAbsPartIdx ) ? 1 : 0;
-
-  UInt uiCtxIntraBL = pcCU->getCtxIntraBLFlag( uiAbsPartIdx ) ;
-  m_pcBinIf->encodeBin(uiSymbol, m_cIntraBLPredFlagSCModel.get( 0, 0, uiCtxIntraBL )); 
-
-  DTRACE_CABAC_VL( g_nSymbolCounter++ );
-  DTRACE_CABAC_T( "\tuiSymbol: ");
-  DTRACE_CABAC_V( uiSymbol );
-  DTRACE_CABAC_T( "\n");
-}
-#endif
 //! \}

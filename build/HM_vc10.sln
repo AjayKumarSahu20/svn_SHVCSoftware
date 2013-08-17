@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibEncoder", "vc10\TLibEnc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibVideoIO", "vc10\TLibVideoIO_vc10.vcxproj", "{5280C25A-D316-4BE7-AE50-29D72108624F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDownConvert", "vc10\TAppDownConvert\TAppDownConvert.vcxproj", "{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -79,6 +81,14 @@ Global
 		{5280C25A-D316-4BE7-AE50-29D72108624F}.Release|Win32.Build.0 = Release|Win32
 		{5280C25A-D316-4BE7-AE50-29D72108624F}.Release|x64.ActiveCfg = Release|x64
 		{5280C25A-D316-4BE7-AE50-29D72108624F}.Release|x64.Build.0 = Release|x64
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Debug|Win32.Build.0 = Debug|Win32
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Debug|x64.ActiveCfg = Debug|x64
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Debug|x64.Build.0 = Debug|x64
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Release|Win32.ActiveCfg = Release|Win32
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Release|Win32.Build.0 = Release|Win32
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Release|x64.ActiveCfg = Release|x64
+		{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

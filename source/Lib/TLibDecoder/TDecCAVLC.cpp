@@ -950,11 +950,33 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  READ_FLAG( uiCode, "max_tid_il_ref_pics_plus1_present_flag"); vps->setMaxTidIlRefPicsPlus1PresentFlag(uiCode ? true : false);
+  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  {
+    for(i = 0; i < vps->getMaxLayers() - 1; i++)
+    {
+      READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
+      assert( uiCode <= vps->getMaxTLayers() );
+    }
+  }
+  else 
+  {
+    for(i = 0; i < vps->getMaxLayers() - 1; i++)
+    {
+      vps->setMaxSublayerForIlpPlus1(i, 7);
+    }
+  }
+#else
   for(i = 0; i < vps->getMaxLayers() - 1; i++)
   {
     READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
     assert( uiCode <= vps->getMaxTLayers() );
   }
+#endif
+#endif
+#if ILP_SSH_SIG
+    READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
@@ -1381,7 +1403,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     rpcSlice->setActiveNumILRRefIdx(0);
+#if ILP_SSH_SIG
+    if((sps->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
+#else
     if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
+#endif
     {
       READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
       rpcSlice->setInterLayerPredEnabledFlag(uiCode);
@@ -1403,11 +1429,25 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
           {
             rpcSlice->setActiveNumILRRefIdx(1);
           }
+#if ILP_NUM_REF_CHK
+          if( rpcSlice->getActiveNumILRRefIdx() == rpcSlice->getNumILRRefIdx() )
+          {
+            for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+            {
+              rpcSlice->setInterLayerPredLayerIdc(i,i);
+            }
+          }
+          else
+          {
+#endif
           for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
           {
             READ_CODE( numBits,uiCode,"inter_layer_pred_layer_idc[i]" );
             rpcSlice->setInterLayerPredLayerIdc(uiCode,i);
           }
+#if ILP_NUM_REF_CHK
+          }
+#endif
         }
         else
         {
@@ -1416,6 +1456,17 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         }
       }
     }
+#if ILP_SSH_SIG
+    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == false )
+    {
+      rpcSlice->setInterLayerPredEnabledFlag(true);
+      rpcSlice->setActiveNumILRRefIdx(rpcSlice->getNumILRRefIdx());
+      for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        rpcSlice->setInterLayerPredLayerIdc(i,i);
+      }
+    }
+#endif
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
     rpcSlice->setInterLayerSamplePredOnlyFlag( false );
     if( rpcSlice->getNumSamplePredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() > 0 )
@@ -1573,6 +1624,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     if ( rpcSlice->getEnableTMVPFlag() )
     {
 #if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if REMOVE_COL_PICTURE_SIGNALING
+      rpcSlice->setMFMEnabledFlag( rpcSlice->getNumMotionPredRefLayers() > 0 ? true : false );
+#else
       rpcSlice->setMFMEnabledFlag( false );
       rpcSlice->setColRefLayerIdx( 0 );
       rpcSlice->setAltColIndicationFlag( false );
@@ -1589,6 +1643,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
       else
       {
+#endif //REMOVE_COL_PICTURE_SIGNALING
 #endif
       if ( rpcSlice->getSliceType() == B_SLICE )
       {
@@ -1611,7 +1666,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       {
         rpcSlice->setColRefIdx(0);
       }
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
       }
 #endif
     }
@@ -2214,13 +2269,5 @@ Bool TDecCavlc::xMoreRbspData()
   // we have more data, if cnt is not zero
   return (cnt>0);
 }
-
-#if INTRA_BL
-Void TDecCavlc::parseIntraBLFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiPartIdx, UInt uiDepth )
-{
-  assert(0);
-}
-#endif
-
 //! \}
 

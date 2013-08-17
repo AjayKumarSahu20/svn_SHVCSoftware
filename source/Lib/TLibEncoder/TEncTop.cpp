@@ -885,7 +885,11 @@ Void TEncTop::xInitRPS()
 
   for( Int i = 0; i < getGOPSize()+m_extraRPSs; i++) 
   {
+#if FINAL_RPL_CHANGE_N0082
+    GOPEntry ge = m_ppcTEncTop[m_cSPS.getLayerId()]->getGOPEntry(i);
+#else
     GOPEntry ge = getGOPEntry(i);
+#endif
     rps = rpsList->getReferencePictureSet(i);
     rps->setNumberOfPictures(ge.m_numRefPics);
     rps->setNumRefIdc(ge.m_numRefIdc);
@@ -1203,11 +1207,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 {
   if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
   {
-#if ZERO_NUM_DIRECT_LAYERS
     return (TEncTop *)getLayerEnc( 0 );
-#else
-    return NULL;
-#endif
   }
 
   return (TEncTop *)getLayerEnc( m_cVPS.getRefLayerId( m_layerId, refLayerIdc ) );

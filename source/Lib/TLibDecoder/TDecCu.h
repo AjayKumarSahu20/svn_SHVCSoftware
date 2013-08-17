@@ -76,10 +76,6 @@ private:
   UInt                m_layerId;   
 #endif
   
-#if INTRA_BL
-  TComPicYuv*         m_pcPicYuvRecBase;       ///< reconstructed base layer
-#endif 
-  
 public:
   TDecCu();
   virtual ~TDecCu();
@@ -105,9 +101,6 @@ public:
   
 #if SVC_EXTENSION
   TDecTop*   getLayerDec        ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }
-#if INTRA_BL
-  Void  setBaseRecPic           ( TComPicYuv* p ) { m_pcPicYuvRecBase = p; }
-#endif 
 #endif
 protected:
   
@@ -121,9 +114,6 @@ protected:
   Void  xReconIntraQT           ( TComDataCU* pcCU, UInt uiDepth );
   Void  xIntraRecLumaBlk        ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv );
   Void  xIntraRecChromaBlk      ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, UInt uiChromaId );
-#if NO_RESIDUAL_FLAG_FOR_BLPRED
-  Void  xReconIntraBL           ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
-#endif
   
   Void  xReconPCM               ( TComDataCU* pcCU, UInt uiDepth );
 

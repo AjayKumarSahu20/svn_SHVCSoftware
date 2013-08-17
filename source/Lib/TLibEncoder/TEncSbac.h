@@ -131,10 +131,7 @@ public:
   Void codeMergeIndex    ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeSplitFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void codeMVPIdx        ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
-  
-#if INTRA_BL
-  Void codeIntraBLFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-#endif
+
   Void codePartSize      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void codePredMode      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeIPCMInfo      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
@@ -205,9 +202,6 @@ private:
   ContextModel3DBuffer m_cSaoTypeIdxSCModel;
   ContextModel3DBuffer m_cTransformSkipSCModel;
   ContextModel3DBuffer m_CUTransquantBypassFlagSCModel;
-#if INTRA_BL
-  ContextModel3DBuffer m_cIntraBLPredFlagSCModel;
-#endif
 };
 
 //! \}

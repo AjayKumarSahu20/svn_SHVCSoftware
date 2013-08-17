@@ -344,7 +344,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   }
 
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
   {
     Int nCurLayer = rpcSlice->getLayerId();
     Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[nCurLayer-1]->getQP() - m_ppcTEncTop[nCurLayer]->getQP() ,
@@ -372,7 +372,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   qpc = Clip3( 0, 57, iQP + chromaQPOffset);
   weight = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
+  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
   {
     dLambda *= 1.1;
     weight *= 1.15;
@@ -502,7 +502,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #endif
 #if M0457_COL_PICTURE_SIGNALING
     rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
+#if !REMOVE_COL_PICTURE_SIGNALING
     rpcSlice->setAltColIndicationFlag(rpcSlice->getMFMEnabledFlag());
+#endif
 #endif
   }
 
@@ -978,10 +980,6 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
   UInt uiTileCol      = 0;
   UInt uiTileStartLCU = 0;
   UInt uiTileLCUX     = 0;
-
-#if INTRA_BL
-  m_pcCuEncoder->setBaseRecPic( rpcPic->getLayerId() > 0 ? rpcPic->getFullPelBaseRec(rpcPic->getLayerId()-1) : NULL);
-#endif
 
   Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
   uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
