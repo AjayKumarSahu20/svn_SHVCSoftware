@@ -98,9 +98,6 @@ protected:
   
 #if SVC_EXTENSION
   TEncTop**       m_ppcTEncTop;
-#if INTRA_BL
-  TComPicYuv*     m_pcPicYuvRecBase;       ///< reconstructed base layer
-#endif
 #endif
   
   // interface to classes
@@ -191,16 +188,6 @@ public:
                                   TComYuv*    pcResiYuv, 
                                   TComYuv*    pcRecoYuv,
                                   UInt        uiPreCalcDistC );
-  
-#if INTRA_BL
-  Void setBaseRecPic            ( TComPicYuv* pcPicYuvRecBase ) { m_pcPicYuvRecBase = pcPicYuvRecBase; }  
-  TComPicYuv* getBaseRecPic     ()                              { return m_pcPicYuvRecBase; }
-  Void  estIntraBLPredQT        ( TComDataCU* pcCU, 
-                                  TComYuv*    pcOrgYuv, 
-                                  TComYuv*    pcPredYuv, 
-                                  TComYuv*    pcResiYuv, 
-                                  TComYuv*    pcRecoYuv );
-#endif
   
   /// encoder estimation - inter prediction (non-skip)
   Void predInterSearch          ( TComDataCU* pcCU,

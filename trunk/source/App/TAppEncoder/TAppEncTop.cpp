@@ -135,7 +135,11 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setIntraPeriod                  ( m_acLayerCfg[layer].m_iIntraPeriod );
     m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
     m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
+#if FINAL_RPL_CHANGE_N0082
+    m_acTEncTop[layer].setGopList                      ( m_acLayerCfg[layer].m_GOPListLayer );
+#else
     m_acTEncTop[layer].setGopList                      ( m_GOPList );
+#endif
     m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs );
     for(Int i = 0; i < MAX_TLAYER; i++)
     {
@@ -882,6 +886,26 @@ Void TAppEncTop::xInitLib()
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
     vps->setDimensionId(i, 0, i);
   }
+#endif
+#if N0120_MAX_TID_REF_PRESENT_FLAG
+  vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
+  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  {
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    {
+      vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
+    }
+  }
+  else
+  {
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    {
+      vps->setMaxSublayerForIlpPlus1(i, 7);
+    }
+  }
+#endif 
+#if ILP_SSH_SIG
+    vps->setIlpSshSignalingEnabledFlag(true);
 #endif
 #if VPS_EXTN_PROFILE_INFO
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());

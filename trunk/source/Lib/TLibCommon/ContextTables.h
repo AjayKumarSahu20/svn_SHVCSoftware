@@ -91,9 +91,6 @@
 
 #define NUM_SAO_MERGE_FLAG_CTX        1       ///< number of context models for SAO merge flags
 #define NUM_SAO_TYPE_IDX_CTX          1       ///< number of context models for SAO type index
-#if INTRA_BL
-#define NUM_INTRA_BL_PRED_CTX         3
-#endif
 
 #define NUM_TRANSFORMSKIP_FLAG_CTX    1       ///< number of context models for transform skipping 
 #define NUM_CU_TRANSQUANT_BYPASS_FLAG_CTX  1 
@@ -329,15 +326,6 @@ INIT_TRANS_SUBDIV_FLAG[3][NUM_TRANS_SUBDIV_FLAG_CTX] =
 #endif
 };
 
-#if INTRA_BL
-static const UChar 
-INIT_INTRA_BL_PRED_FLAG[3][NUM_INTRA_BL_PRED_CTX] = 
-{
-  { 185,  185,  201, }, 
-  { 197,  197,  185, }, 
-  { 197,  197,  185, }, 
-};
-#endif
 static const UChar
 INIT_TRANSFORMSKIP_FLAG[3][2*NUM_TRANSFORMSKIP_FLAG_CTX] = 
 {

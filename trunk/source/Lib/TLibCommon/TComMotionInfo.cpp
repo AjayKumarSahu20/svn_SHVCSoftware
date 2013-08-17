@@ -327,11 +327,7 @@ Void TComCUMvField::setAllMvField( TComMvField const & mvField, PartSize eCUMode
  * \param pePredMode Pointer to prediction modes
  * \param scale      Factor by which to subsample motion information
  */
-#if SVC_MVP
-Void TComCUMvField::compress(Char* pePredMode, UChar* peInterDir, Int scale)
-#else
 Void TComCUMvField::compress(Char* pePredMode, Int scale)
-#endif
 {
   Int N = scale * scale;
   assert( N > 0 && N <= m_uiNumPartition);
@@ -350,9 +346,6 @@ Void TComCUMvField::compress(Char* pePredMode, Int scale)
       m_pcMv[ uiPartIdx + i ] = cMv;
       pePredMode[ uiPartIdx + i ] = predMode;
       m_piRefIdx[ uiPartIdx + i ] = iRefIdx;
-#if SVC_MVP
-      peInterDir[ uiPartIdx + i ] = peInterDir[ uiPartIdx ];
-#endif
     }
   }
 } 
