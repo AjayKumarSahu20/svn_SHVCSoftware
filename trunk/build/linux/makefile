@@ -35,7 +35,7 @@ release:
 	$(MAKE) -C lib/TAppCommon       release MM32=$(M32)
 	$(MAKE) -C app/TAppDecoder      release MM32=$(M32)
 	$(MAKE) -C app/TAppEncoder      release MM32=$(M32)
-	$(MAKE) -C app/DownConvert      release MM32=$(M32)
+	$(MAKE) -C app/TAppDownConvert      release MM32=$(M32)
 	$(MAKE) -C utils/annexBbytecount       release MM32=$(M32)
 	$(MAKE) -C utils/convert_NtoMbit_YCbCr release MM32=$(M32)
 
