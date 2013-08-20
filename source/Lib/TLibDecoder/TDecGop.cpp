@@ -246,14 +246,26 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
     printf ("[L%d ", iRefList);
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
-#if REF_IDX_FRAMEWORK && VPS_EXTN_DIRECT_REF_LAYERS
+#if REF_IDX_FRAMEWORK
+#if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
       {
-        printf( "%d(%d) ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
+        printf( "%d(%d)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
       }
       else
+      {
+        printf ("%d", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex));
+      }
 #endif
+      if( pcSlice->getEnableTMVPFlag() && iRefList == 1 - pcSlice->getColFromL0Flag() && iRefIndex == pcSlice->getColRefIdx() )
+      {
+        printf( "c" );
+      }
+
+      printf( " " );
+#else
       printf ("%d ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex));
+#endif
     }
     printf ("] ");
   }
