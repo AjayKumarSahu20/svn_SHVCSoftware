@@ -803,7 +803,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif      
 
 #if REF_IDX_FRAMEWORK
-#if M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
     if ( pcSlice->getSliceType() == B_SLICE && !(pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0) )
 #else
     if( pcSlice->getSliceType() == B_SLICE )
@@ -846,7 +846,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
 #if REMOVE_COL_PICTURE_SIGNALING
-      if( pcSlice->getMFMEnabledFlag() && pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0 )
+      if( pcSlice->getMFMEnabledFlag() )
 #else
       if( pcSlice->getMFMEnabledFlag() && !(pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0) )
 #endif
