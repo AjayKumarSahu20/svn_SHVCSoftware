@@ -1529,14 +1529,16 @@ Void TAppEncCfg::xCheckParameter()
 #if FINAL_RPL_CHANGE_N0082
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0){
+    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0)
+    {
       memcpy( m_acLayerCfg[layer].m_GOPListLayer, m_GOPList, sizeof(GOPEntry)*MAX_GOP );
     }
     errorGOP = xconfirmExtraGOP( m_acLayerCfg[layer].m_GOPListLayer );
     xConfirmPara(errorGOP,"Invalid GOP structure given");
   }
   //tentative for encoder
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 ){
+  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 )
+  {
     //RA, POC5
     m_acLayerCfg[1].m_GOPListLayer[5].m_usedByCurrPic[2] = 0;
     m_acLayerCfg[1].m_GOPListLayer[5].m_refIdc[2] = 0;

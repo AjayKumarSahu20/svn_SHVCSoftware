@@ -757,12 +757,16 @@ Void TComSlice::setRefPicListModificationSvc()
       {
 #if RPL_INIT_N0316_N0082
         if((numberOfPocBeforeCurr) >= m_aiNumRefIdx[REF_PIC_LIST_0])
+        {
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr);
+        }
         else
         {
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr);
           for (Int j = numberOfPocBeforeCurr; j < (m_aiNumRefIdx[REF_PIC_LIST_0] - i); j++)
+          {
             refPicListModification->setRefPicSetIdxL0(j, j + m_activeNumILRRefIdx);
+          }
         }
 #else
         refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfRpsCurrTempList - i);
