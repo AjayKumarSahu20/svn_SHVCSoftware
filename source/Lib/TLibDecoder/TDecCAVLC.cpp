@@ -524,8 +524,15 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     assert( uiCode == 1 );
 #endif
   }
-
+#ifdef SPS_PTL_FIX
+  if ( pcSPS->getLayerId() == 0)
+  {
+    parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+  }
+#else
   parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+#endif
+
   READ_UVLC(     uiCode, "sps_seq_parameter_set_id" );           pcSPS->setSPSId( uiCode );
   assert(uiCode <= 15);
   
