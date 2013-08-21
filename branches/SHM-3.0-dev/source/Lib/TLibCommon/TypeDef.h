@@ -75,6 +75,7 @@
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
 #endif
 
+#define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
 #define SH_DISCARDABLE_FLAG              1      ///< M0152: Use one reserved flag in the slice header for discardable flag
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
