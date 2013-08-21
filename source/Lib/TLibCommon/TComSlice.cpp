@@ -679,7 +679,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     assert(cIdx >= 0 && cIdx < numPocTotalCurr);
     m_apcRefPicList[0][rIdx] = rpsCurrList0[ cIdx ];
 #if RPL_INIT_N0316_N0082
-    m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 && cIdx < NumPocStCurr0 + m_activeNumILRRefIdx );
+    m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 && cIdx < NumPocStCurr0 + m_activeNumILRRefIdx ) || ( cIdx >= NumPocStCurr0 + NumPocStCurr1 + m_activeNumILRRefIdx );
 #else
     m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
 #endif
