@@ -413,7 +413,14 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if SPS_SUB_LAYER_INFO
   }
 #endif
+#ifdef SPS_PTL_FIX
+  if (pcSPS->getLayerId() == 0)
+  {
+    codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+  }
+#else
   codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+#endif
   WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
   WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
   assert(pcSPS->getChromaFormatIdc () == 1);
