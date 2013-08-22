@@ -219,6 +219,18 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
     }
   }
 #endif
+#if EXTERNAL_USEDBYCURR_N0082
+  if(entry.m_numRefPics>0){
+    in>>entry.m_UseExtusedByCurrPic;
+    if(entry.m_UseExtusedByCurrPic)
+    {
+      for ( Int i = 0; i < entry.m_numRefPics; i++ )
+      {
+        in>>entry.m_ExtusedByCurrPic[i];
+      }
+    }
+  }
+#endif
   return in;
 }
 
@@ -1466,11 +1478,11 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
   
-#if !FINAL_RPL_CHANGE_N0082
+#if EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Bool verifiedGOP=false;
 #endif
   Bool errorGOP=false;
-#if !FINAL_RPL_CHANGE_N0082
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int checkGOP=1;
   Int numRefs = 1;
 #endif
@@ -1481,7 +1493,7 @@ Void TAppEncCfg::xCheckParameter()
   {
     isOK[i]=false;
   }
-#if !FINAL_RPL_CHANGE_N0082
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int numOK=0;
 #endif
 #if !SVC_EXTENSION
@@ -1546,7 +1558,8 @@ Void TAppEncCfg::xCheckParameter()
     m_acLayerCfg[1].m_GOPListLayer[7].m_usedByCurrPic[2] = 0;
     m_acLayerCfg[1].m_GOPListLayer[7].m_refIdc[2] = 0;
   }
-#else
+#endif
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   m_extraRPSs=0;
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -1742,6 +1755,21 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
+#endif
+#if EXTERNAL_USEDBYCURR_N0082
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    for (Int i=0; i< m_iGOPSize; i++){
+      if (m_acLayerCfg[layer].m_GOPListLayer[i].m_UseExtusedByCurrPic == 1 )
+      {
+        for(Int j=0; j<m_acLayerCfg[layer].m_GOPListLayer[i].m_numRefPics; j++ )
+        {
+          m_acLayerCfg[layer].m_GOPListLayer[i].m_usedByCurrPic[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
+          m_acLayerCfg[layer].m_GOPListLayer[i].m_refIdc[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
+        }
+      }
+    }
+  }
 #endif
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
