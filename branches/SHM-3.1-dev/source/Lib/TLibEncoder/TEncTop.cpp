@@ -1262,6 +1262,10 @@ Void TEncTop::setILRPic(TComPic *pcPic)
       m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
       m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
       m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
+      for (Int i=0; i<m_cIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); i++)    // set reference CU layerId
+      {
+        m_cIlpPic[refLayerIdc]->getPicSym()->getCU(i)->setLayerId(m_cIlpPic[refLayerIdc]->getLayerId());
+      }
     }
   }
 }
