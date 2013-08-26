@@ -269,8 +269,8 @@ int main(int argc, char *argv[])
   FILE * infile;
   FILE * outfile;
 
-  int M,N;
-  int ratio;
+  int M = -1 ,N = -1;
+  int ratio = -1;
   int Frames=0;
   int totalFrames=0;
   int StartFrame=0;
@@ -325,21 +325,20 @@ int main(int argc, char *argv[])
     printf("input frame parameter error\n");
     return -1;
   }
-  if ( ratio > 1 || ratio < 0)
+
+  switch( ratio )
   {
+  default:
     printf("\ndown sampling parameter %d is not supported (0: 2x downsampling, 1: 1.5x downsampling)\n", ratio);
     return -1;
-  }
-
-  if (ratio==0)
-  {
+  case 0:
     M=4;
     N=8;
-  }
-  else if (ratio==1)
-  {
+    break;
+  case 1:
     M=8;
     N=12;
+    break;
   }
 
   width_org_c      = width_org  >> 1;
