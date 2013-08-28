@@ -620,14 +620,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
       fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
-#if ILP_DECODED_PICTURE
       UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
       UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
-#else
-      const Window &conf = pBLPic->getConformanceWindow();
-      UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
-      UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
-#endif
 
       if( pFile->good() )
       {

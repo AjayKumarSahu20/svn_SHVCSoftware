@@ -232,13 +232,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
 
-#if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth ();
     heightEL  = pcUsPic->getHeight();
 
     widthBL   = pcBasePic->getWidth ();
     heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
-#endif
 #if SCALED_REF_LAYER_OFFSETS
     Int leftStartL = scalEL.getWindowLeftOffset();
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
@@ -389,7 +387,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
     }
 
-#if ILP_DECODED_PICTURE
 #if SCALED_REF_LAYER_OFFSETS
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
@@ -402,7 +399,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     widthEL   = pcUsPic->getWidth () - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
 #endif
 
     //========== UV component upsampling ===========
@@ -445,13 +441,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
 
-#if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth () >> 1;
     heightEL  = pcUsPic->getHeight() >> 1;
 
     widthBL   = pcBasePic->getWidth () >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
-#endif
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
     shift1 = g_bitDepthC - 8;

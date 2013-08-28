@@ -569,17 +569,6 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 #if REF_IDX_MFM
 Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
 {
-#if AVC_SYNTAX && !ILP_DECODED_PICTURE
-  const Window &confBL = pcPicBase->getConformanceWindow();
-  const Window &confEL = getPicYuvRec()->getConformanceWindow();
-
-  Int widthBL   = pcPicBase->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-  Int heightBL  = pcPicBase->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
-
-  Int widthEL   = getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
-  Int heightEL  = getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
-
   UInt numPartitions   = 1<<(g_uiMaxCUDepth<<1);
   UInt widthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
   UInt heightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
@@ -599,14 +588,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
       TComDataCU *pcColCU = 0;
       pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
 
-#if AVC_SYNTAX && !ILP_DECODED_PICTURE
-      Int xBL = ( (pelX + 8) * widthBL + widthEL/2 ) / widthEL;
-      Int yBL = ( (pelY + 8) * heightBL+ heightEL/2 ) / heightEL;
-
-      if( ( xBL < widthBL && yBL < heightBL ) && pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-#else
       if( pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
-#endif
       {
         for(UInt refPicList = 0; refPicList < 2; refPicList++)  //for each reference list
         {
@@ -669,14 +651,9 @@ Void TComPic::readBLSyntax( fstream* filestream, UInt numBytes )
     return;
   }
 
-#if ILP_DECODED_PICTURE
   UInt   width      = this->getPicYuvRec()->getWidth();
   UInt   height     = this->getPicYuvRec()->getHeight();
-#else
-  const Window &conf = this->getPicYuvRec()->getConformanceWindow();
-  UInt   width      = this->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
-  UInt   height     = this->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
-#endif
+
   UInt64 poc        = (UInt64)this->getPOC();
   UInt   partWidth  = width / 4;
   UInt   partHeight = height / 4;
@@ -753,14 +730,8 @@ Void TComPic::wrireBLSyntax( fstream* filestream, UInt numBytes )
     return;
   }
 
-#if ILP_DECODED_PICTURE
   UInt   width       = this->getPicYuvRec()->getWidth();
   UInt   height      = this->getPicYuvRec()->getHeight();
-#else
-  const Window &conf = this->getConformanceWindow();
-  UInt   width       = this->getPicYuvRec()->getWidth() - conf.getWindowLeftOffset() - conf.getWindowRightOffset();
-  UInt   height      = this->getPicYuvRec()->getHeight() - conf.getWindowTopOffset() - conf.getWindowBottomOffset();
-#endif
 
   UInt64 poc        = (UInt64)this->getPOC();
   UInt   partWidth  = width / 4;
