@@ -3948,57 +3948,10 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
 #if SVC_COL_BLK
 TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
 {
-#if 1 // it should provide identical resutls
   UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
   UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
 
   return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase );
-#else
-  TComPic* cBaseColPic = m_pcSlice->getBaseColPic();
-
-#if SVC_UPSAMPLING
-  Int widthBL   = cBaseColPic->getPicYuvRec()->getWidth () - cBaseColPic->getPicYuvRec()->getPicCropLeftOffset() - cBaseColPic->getPicYuvRec()->getPicCropRightOffset();
-  Int heightBL  = cBaseColPic->getPicYuvRec()->getHeight() - cBaseColPic->getPicYuvRec()->getPicCropTopOffset() - cBaseColPic->getPicYuvRec()->getPicCropBottomOffset();
-
-  Int widthEL   = m_pcPic->getPicYuvRec()->getWidth() - m_pcPic->getPicYuvRec()->getPicCropLeftOffset() - m_pcPic->getPicYuvRec()->getPicCropRightOffset();
-  Int heightEL  = m_pcPic->getPicYuvRec()->getHeight() - m_pcPic->getPicYuvRec()->getPicCropTopOffset() - m_pcPic->getPicYuvRec()->getPicCropBottomOffset();
-#else
-  Int widthBL   = cBaseColPic->getPicYuvRec()->getWidth();
-  Int heightBL  = cBaseColPic->getPicYuvRec()->getHeight();
-
-  Int widthEL   = m_pcPic->getPicYuvRec()->getWidth();
-  Int heightEL  = m_pcPic->getPicYuvRec()->getHeight();
-#endif
-
-  if (widthBL == widthEL && heightEL == heightBL)
-  {
-    uiAbsPartIdxBase = uiCuAbsPartIdx + m_uiAbsIdxInLCU;
-    uiCUAddrBase = m_uiCUAddr;
-  }
-  else
-  {
-    UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
-    UInt uiRasterAddr  = g_auiZscanToRaster[uiCuAbsPartIdx];
-    UInt uiNumPartInCUWidth = m_pcPic->getNumPartInWidth();
-
-    Int iEX = m_uiCUPelX + uiMinUnitSize*(uiRasterAddr%uiNumPartInCUWidth);
-    Int iEY = m_uiCUPelY + uiMinUnitSize*(uiRasterAddr/uiNumPartInCUWidth);
-
-    Int iBX = (iEX*widthBL + widthEL/2)/widthEL;
-    Int iBY = (iEY*heightBL+ heightEL/2)/heightEL;
-
-    uiCUAddrBase = (iBY/g_uiMaxCUHeight)*cBaseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
-
-    assert(uiCUAddrBase < cBaseColPic->getNumCUsInFrame());
-    
-    UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*cBaseColPic->getNumPartInWidth()
-                          + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
-
-    uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
-  }
-
-  return cBaseColPic->getCU(uiCUAddrBase);
-#endif
 }
 
 TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
