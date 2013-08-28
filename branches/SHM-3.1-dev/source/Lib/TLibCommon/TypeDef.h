@@ -89,7 +89,6 @@
 #define ARBITRARY_SPATIAL_RATIO          0      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
 #define BUGFIX_RESAMPLE                  1      ///< JCTVC-N0055: resampling bug fix for positive left scalled offset
 
-#define SIMPLIFIED_MV_POS_SCALING        1      ///< M0133/M0449: inter-layer MV scaling and pixel mapping position calculation
 #define ILP_DECODED_PICTURE              1      ///< M0274: use decoded picture for inter-layer prediction
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1

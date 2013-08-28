@@ -498,7 +498,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     {
       m_activeNumILRRefIdx = numInterLayerRPSPics;
     }
-#if MAX_ONE_RESAMPLING_DIRECT_LAYERS && SIMPLIFIED_MV_POS_SCALING
+#if MAX_ONE_RESAMPLING_DIRECT_LAYERS
     if( m_pcVPS->getScalabilityMask(1) )
     {
       Int numResampler = 0;

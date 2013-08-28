@@ -148,7 +148,7 @@ public:
     Int mvy = Clip3( -32768, 32767, (iScale * getVer() + 127 + (iScale * getVer() < 0)) >> 8 );
     return TComMv( mvx, mvy );
   }
-#if SIMPLIFIED_MV_POS_SCALING
+#if SVC_EXTENSION
   const TComMv scaleMv( Int iScaleX, Int iScaleY ) const
   {
     Int mvx = iScaleX == 4096 ? getHor() : Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );

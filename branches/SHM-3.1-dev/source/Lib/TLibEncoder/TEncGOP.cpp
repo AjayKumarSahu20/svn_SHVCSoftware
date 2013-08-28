@@ -587,7 +587,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
-#if SIMPLIFIED_MV_POS_SCALING
 #if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
 
@@ -611,7 +610,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
-#endif
 
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
