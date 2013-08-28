@@ -559,9 +559,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #else
       if ( m_pchReconFile )
       {
-#if SYNTAX_OUTPUT && ILP_DECODED_PICTURE
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec() );
-#else
+#if SYNTAX_OUTPUT
         const Window &conf = pcPic->getConformanceWindow();
         const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
         m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
