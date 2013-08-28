@@ -156,6 +156,9 @@ public:
   Void  deletePicBuffer();
 
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+#if EARLY_REF_PIC_MARKING
+  Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
+#endif
 
 #if SVC_EXTENSION
   UInt      getLayerId            () { return m_layerId;              }

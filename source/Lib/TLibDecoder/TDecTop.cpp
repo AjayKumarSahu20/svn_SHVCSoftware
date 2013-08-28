@@ -369,6 +369,71 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   return;
 }
 
+#if EARLY_REF_PIC_MARKING
+Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdSet)
+{
+  UInt currTid = m_pcPic->getTLayer();
+  UInt highestTid = (maxTemporalLayer >= 0) ? maxTemporalLayer : (m_pcPic->getSlice(0)->getSPS()->getMaxTLayers() - 1);
+  UInt latestDecLayerId = m_layerId;
+  UInt numTargetDecLayers = 0;
+  Int targetDecLayerIdList[MAX_LAYERS];
+  UInt latestDecIdx = 0;
+  TComSlice* pcSlice = m_pcPic->getSlice(0);
+
+  if ( currTid != highestTid )  // Marking  process is only applicaple for highest decoded TLayer
+  {
+    return;
+  }
+
+  // currPic must be marked as "used for reference" and must be a sub-layer non-reference picture
+  if ( !((pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_N  ||
+          pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N    ||
+          pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N   ||
+          pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N   ||
+          pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N   ||
+          pcSlice->getNalUnitType() == NAL_UNIT_RESERVED_VCL_N10     ||
+          pcSlice->getNalUnitType() == NAL_UNIT_RESERVED_VCL_N12     ||
+          pcSlice->getNalUnitType() == NAL_UNIT_RESERVED_VCL_N14) && pcSlice->isReferenced()))
+  {
+    return;
+  }
+
+  if ( targetDecLayerIdSet.size() == 0 ) // Cannot mark if we don't know the number of scalable layers
+  {
+    return;
+  }
+
+  for (std::vector<Int>::iterator it = targetDecLayerIdSet.begin(); it != targetDecLayerIdSet.end(); it++)
+  {
+    if ( latestDecLayerId == (*it) )
+    {
+      latestDecIdx = numTargetDecLayers;
+    }
+    targetDecLayerIdList[numTargetDecLayers++] = (*it);
+  }
+
+  Int remainingInterLayerReferencesFlag = 0;
+  if ( currTid <= pcSlice->getVPS()->getMaxSublayerForIlpPlus1(latestDecLayerId) - 1 )
+  {
+    for ( Int j = latestDecIdx + 1; j < numTargetDecLayers; j++ )
+    {
+      for ( Int k = 0; k < m_ppcTDecTop[targetDecLayerIdList[j]]->getNumDirectRefLayers(); k++ )
+      {
+        if ( latestDecIdx == m_ppcTDecTop[targetDecLayerIdList[j]]->getRefLayerId(k) )
+        {
+          remainingInterLayerReferencesFlag = 1;
+        }
+      }
+    }
+  }
+
+  if ( remainingInterLayerReferencesFlag == 0 )
+  {
+    pcSlice->setReferenced(false);
+  }
+}
+#endif
+
 Void TDecTop::xCreateLostPicture(Int iLostPoc) 
 {
   printf("\ninserting lost poc : %d\n",iLostPoc);

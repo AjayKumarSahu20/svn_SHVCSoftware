@@ -227,6 +227,9 @@ Void TAppDecTop::decode()
     if (bNewPicture || !bitstreamFile)
     {
       m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
+#if EARLY_REF_PIC_MARKING
+      m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
+#endif
     }
 
     if( pcListPic )
