@@ -586,7 +586,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
       UInt baseCUAddr, baseAbsPartIdx;
 
       TComDataCU *pcColCU = 0;
-      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx);
+      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx, 1);
 
       if( pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
       {
