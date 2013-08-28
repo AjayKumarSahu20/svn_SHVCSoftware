@@ -44,6 +44,7 @@
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+#define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< N0316, N0082: initial reference picture list construction 
 #define FINAL_RPL_CHANGE_N0082           1      ///< N0082: final ref picture list change (encoder)
 #if FINAL_RPL_CHANGE_N0082
