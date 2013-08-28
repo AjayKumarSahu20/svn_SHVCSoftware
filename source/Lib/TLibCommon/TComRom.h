@@ -278,7 +278,7 @@ extern UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 extern UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
 extern Int  g_eTTable[4];
 
-#if SIMPLIFIED_MV_POS_SCALING
+#if SVC_EXTENSION
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
 #endif
