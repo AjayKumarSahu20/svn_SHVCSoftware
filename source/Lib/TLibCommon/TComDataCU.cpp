@@ -1704,7 +1704,7 @@ Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, I
   // check BL mode
   UInt          uiCUAddrBase, uiAbsPartAddrBase;
   // the right reference layerIdc should be specified, currently it is set to m_layerId-1
-  TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase );
+  TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, 0 );
 
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
   {
@@ -3946,15 +3946,15 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
 }
 
 #if SVC_COL_BLK
-TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
+TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
 {
   UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
   UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
 
-  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase );
+  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase, iMotionMapping );
 }
 
-TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase )
+TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
 {
   TComPic* cBaseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
@@ -3974,8 +3974,11 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 #endif
 
 #if N0139_POSITION_ROUNDING_OFFSET
-  iBX += 4;
-  iBY += 4;
+  if( iMotionMapping == 1 )
+  {
+    iBX += 4;
+    iBY += 4;
+  }
 #endif
 
 #if SCALED_REF_LAYER_OFFSETS

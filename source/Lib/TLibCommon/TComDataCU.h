@@ -539,8 +539,8 @@ public:
 
 #if REF_IDX_FRAMEWORK
 #if SVC_COL_BLK 
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
   Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
 #endif
 #endif
