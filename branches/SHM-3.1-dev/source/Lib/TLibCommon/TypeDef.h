@@ -40,8 +40,6 @@
 
 #define SVC_EXTENSION                    1
 
-#define N0139_POSITION_ROUNDING_OFFSET   1
-
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #if SVC_EXTENSION
@@ -118,6 +116,7 @@
 #if REF_IDX_MFM
 #define REMOVE_COL_PICTURE_SIGNALING     1      ///< JCTVC-N0107 remove alternative collocated picture signalling
 #define M0457_COL_PICTURE_SIGNALING      1
+#define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
 #endif
 
 #if !VPS_EXTN_DIRECT_REF_LAYERS || !M0457_PREDICTION_INDICATIONS || !JCTVC_M0458_INTERLAYER_RPS_SIG
