@@ -575,6 +575,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR));
 #if SVC_EXTENSION
+#if ILR_RESTR && ILR_RESTR_FIX
+    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+    Int activeNumILRRefIdxTmp = 0;
+#endif
     if (m_layerId > 0)
     {
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
@@ -586,6 +590,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
+
+#if ILR_RESTR && ILR_RESTR_FIX
+        // Apply temporal layer restriction to inter-layer prediction
+        Int maxSubLayerForILPPlus1 = m_pcEncTop->getVPS()->getMaxSublayerForIlpPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
+        if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
+        {
+          interLayerPredLayerIdcTmp[activeNumILRRefIdxTmp++] = refLayerIdc; // add picture to the list of valid inter-layer pictures
+        }
+        else
+        {
+          continue; // ILP is not valid due to temporal layer restriction
+        }
+#endif
 
 #if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
@@ -627,6 +644,21 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
 #endif
       }
+
+#if ILR_RESTR && ILR_RESTR_FIX
+      // Update the list of active inter-layer pictures
+      for ( Int i = 0; i < activeNumILRRefIdxTmp; i++)
+      {
+        pcSlice->setInterLayerPredLayerIdc( interLayerPredLayerIdcTmp[i], i );
+      }
+      pcSlice->setActiveNumILRRefIdx( activeNumILRRefIdxTmp );
+      if ( pcSlice->getActiveNumILRRefIdx() == 0 )
+      {
+        // No valid inter-layer pictures -> disable inter-layer prediction
+        pcSlice->setInterLayerPredEnabledFlag(false);
+      }
+#endif
+
     }
 #endif
 
