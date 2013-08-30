@@ -129,12 +129,10 @@ private:
   Bool                    m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool                    m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #endif 
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   fstream*               m_pBLSyntaxFile;
-#endif
-#if REF_IDX_FRAMEWORK
-  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #endif
 
 public:
@@ -208,14 +206,12 @@ public:
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
 #endif
+  Void      xInitILRP(TComSPS *pcSPS);
+  Void      setILRPic(TComPic *pcPic);
 #endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
-#endif
-#if REF_IDX_FRAMEWORK
-  Void      xInitILRP(TComSPS *pcSPS);
-  Void      setILRPic(TComPic *pcPic);
 #endif
 
 protected:

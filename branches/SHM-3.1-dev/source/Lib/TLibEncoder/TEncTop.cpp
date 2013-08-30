@@ -82,14 +82,14 @@ TEncTop::TEncTop()
   m_pcRDGoOnBinCodersCABAC = NULL;
   m_pcBitCounters          = NULL;
   m_pcRdCosts              = NULL;
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
-#endif
 #if REF_IDX_MFM
   m_bMFMEnabledFlag = false;
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   m_numScaledRefLayerOffsets = 0;
+#endif
 #endif
 }
 
@@ -287,11 +287,7 @@ Void TEncTop::destroy ()
   delete[] m_pcBitCounters;
   delete[] m_pcRdCosts;
   
-#if !SVC_EXTENSION
-  // destroy ROM
-  destroyROM();
-#endif
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   for(Int i=0; i<MAX_NUM_REF; i++)
   {
     if(m_cIlpPic[i])
@@ -300,7 +296,10 @@ Void TEncTop::destroy ()
       delete m_cIlpPic[i];
       m_cIlpPic[i] = NULL;
     }
-  }    
+  }
+#else
+  // destroy ROM
+  destroyROM();
 #endif
   return;
 }
@@ -345,8 +344,6 @@ Void TEncTop::init()
 #if SVC_EXTENSION
   m_iSPSIdCnt ++;
   m_iPPSIdCnt ++;
-#endif
-#if REF_IDX_FRAMEWORK
   xInitILRP();
 #endif
 }
@@ -859,7 +856,7 @@ Void TEncTop::xInitPPS()
       m_cSliceEncoder.setCtxMem( ctx, st );
     }
   }
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if (!m_layerId)
   {
     m_cPPS.setListsModificationPresentFlag(false);
@@ -868,8 +865,7 @@ Void TEncTop::xInitPPS()
   {
     m_cPPS.setListsModificationPresentFlag(true);
   }
-#endif
-#if SVC_EXTENSION
+
   m_cPPS.setPPSId         ( m_iPPSIdCnt         );
   m_cPPS.setSPSId         ( m_iSPSIdCnt         );
 #endif
@@ -1214,7 +1210,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 }
 #endif
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 Void TEncTop::xInitILRP()
 {
   if(m_layerId>0)

@@ -523,7 +523,7 @@ Void TComPic::destroyNonDBFilterInfo()
 
 }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 Void copyOnetoOnePicture(    // SVC_NONCOLL
                   Pel *in,        
                   Pel *out,      

@@ -115,7 +115,6 @@ TComSlice::TComSlice()
 
 #if SVC_EXTENSION
   memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
-#if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0; 
   m_interLayerPredEnabledFlag = 0;
@@ -130,7 +129,6 @@ TComSlice::TComSlice()
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   m_numSamplePredRefLayers       = 0;
   m_interLayerSamplePredOnlyFlag = false;
-#endif
 #endif
 #endif
 
@@ -167,21 +165,19 @@ Void TComSlice::initSlice()
 {
 #if SVC_EXTENSION
   m_layerId = layerId;
-#endif
-  m_aiNumRefIdx[0]      = 0;
-  m_aiNumRefIdx[1]      = 0;
-#if REF_IDX_FRAMEWORK
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0;
   m_interLayerPredEnabledFlag = 0;
 #else
   m_numILRRefIdx              = 0;
-#endif  
+#endif
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   m_numSamplePredRefLayers       = 0;
   m_interLayerSamplePredOnlyFlag = false;
 #endif
 #endif
+  m_aiNumRefIdx[0]      = 0;
+  m_aiNumRefIdx[1]      = 0;
   m_colFromL0Flag = 1;
   
   m_colRefIdx = 0;
@@ -383,7 +379,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   UInt NumPocLtCurr = 0;
   Int i;
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( m_layerId == 0 || ( m_layerId > 0 && ( m_activeNumILRRefIdx == 0 || !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ) ) )
   {
 #endif
@@ -438,11 +434,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     }
     pcRefPic->setCheckLTMSBPresent(m_pcRPS->getCheckLTMSBPresent(i));  
   }
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   }
 #endif
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   for( i = 0; i < m_activeNumILRRefIdx; i++ )
   {
     UInt refLayerIdc = m_interLayerPredLayerIdc[i];
@@ -476,7 +472,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   // ref_pic_list_init
   TComPic*  rpsCurrList0[MAX_NUM_REF+1];
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if ILR_RESTR
   Int numInterLayerRPSPics = 0;
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
@@ -583,8 +579,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     {
       rpsCurrList0[cIdx] = RefPicSetStCurr0[i];
     }
+#if SVC_EXTENSION
 #if RPL_INIT_N0316_N0082
-#if REF_IDX_FRAMEWORK
     if( m_layerId > 0 )
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -612,7 +608,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
     }    
 #if !RPL_INIT_N0316_N0082
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
     if( m_layerId > 0 )
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -649,7 +645,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       rpsCurrList1[cIdx] = RefPicSetLtCurr[i];
     }    
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
     if( m_layerId > 0 )
     {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -701,7 +697,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   }
 }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 Void TComSlice::setRefPicListModificationSvc()
 {
   if( !m_pcPPS->getListsModificationPresentFlag()) 
@@ -831,7 +827,7 @@ Int TComSlice::getNumRpsCurrTempList()
 {
   Int numRpsCurrTempList = 0;
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( m_eSliceType == I_SLICE || ( m_pcSPS->getLayerId() && 
     (m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
     (m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) ) )
@@ -839,7 +835,7 @@ Int TComSlice::getNumRpsCurrTempList()
   if (m_eSliceType == I_SLICE) 
 #endif 
   {
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     return m_activeNumILRRefIdx;
 #else
@@ -856,7 +852,7 @@ Int TComSlice::getNumRpsCurrTempList()
       numRpsCurrTempList++;
     }
   }
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( m_layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -1079,8 +1075,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
-#elif REF_IDX_FRAMEWORK
-  m_numILRRefIdx               = pSrc->m_numILRRefIdx;
 #endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;

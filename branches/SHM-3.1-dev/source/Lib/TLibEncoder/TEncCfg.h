@@ -362,12 +362,10 @@ protected:
 #if SVC_EXTENSION
   UInt      m_layerId;   
   UInt      m_numLayer;
-#endif 
-#if REF_IDX_FRAMEWORK
-  Int      m_elRapSliceBEnabled;
-#endif
+  Int       m_elRapSliceBEnabled;
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  Int      m_adaptiveResolutionChange;
+  Int       m_adaptiveResolutionChange;
+#endif
 #endif
 
 public:
@@ -867,14 +865,12 @@ public:
   Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
   Void      setConformanceMode    (Int mode)     { m_conformanceMode = mode; }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-#endif
-#if REF_IDX_FRAMEWORK
   Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
   Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
 #endif
 };
 

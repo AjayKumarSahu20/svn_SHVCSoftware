@@ -146,7 +146,7 @@ Void TComPicSym::destroy()
   delete [] m_apcTComDataCU;
   m_apcTComDataCU = NULL;
 
-#if AVC_BASE || REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( m_apcTComTile )
   {
 #endif
@@ -155,7 +155,7 @@ Void TComPicSym::destroy()
     delete m_apcTComTile[i];
   }
   delete [] m_apcTComTile;
-#if AVC_BASE || REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   }
 #endif
 

@@ -399,7 +399,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   // restore original slice type
   eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
   
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if(m_pcCfg->getLayerId() > 0)
   {
     eSliceType=B_SLICE;
@@ -484,7 +484,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
 
-#if SVC_EXTENSION && REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG

@@ -71,9 +71,7 @@ TAppEncCfg::TAppEncCfg()
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
-#if REF_IDX_FRAMEWORK
 , m_elRapSliceBEnabled(0)
-#endif
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
@@ -513,13 +511,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
 #endif
-#if REF_IDX_FRAMEWORK
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
-#endif  
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
 #endif
-#else  
+#else
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -2238,13 +2234,10 @@ Void TAppEncCfg::xPrintParameter()
 #else
   printf("AvcBase:%d ", 0);
 #endif
-#if REF_IDX_FRAMEWORK
-  printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
-#endif
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif

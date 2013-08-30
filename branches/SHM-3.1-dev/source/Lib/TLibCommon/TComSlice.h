@@ -1403,7 +1403,7 @@ private:
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
 #else
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
 #endif
 #endif 
@@ -1459,7 +1459,7 @@ private:
   UInt        m_layerId;
   TComPic*    m_pcBaseColPic[MAX_LAYERS];
   TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING
   Int         m_numMotionPredRefLayers;
 #if REF_IDX_MFM
   Bool        m_bMFMEnabledFlag;
@@ -1760,7 +1760,6 @@ public:
   Void      initBaseLayerRPL( TComSlice *pcSlice );
 #endif
 
-#if REF_IDX_FRAMEWORK
   Void      setRefPicListModificationSvc();
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
 
@@ -1788,7 +1787,7 @@ public:
   Void      setInterLayerSamplePredOnlyFlag( Bool val ) { m_interLayerSamplePredOnlyFlag = val;   }
 #endif
 
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
   Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }
 #if REF_IDX_MFM
@@ -1803,14 +1802,6 @@ public:
   TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
 #endif
 #endif
-#endif
-
-#else
-  // temporal solution for IntraBL. Only one reference layer is supported.
-  Int       getActiveNumILRRefIdx     ( )               { return  1; }
-  Int       getInterLayerPredLayerIdc (UInt layerIdx)   { return  m_layerId - 1;}
-  Void      setActiveNumILRRefIdx     ( Int i )         {}
-  Void      setInterLayerPredEnabledFlag( Bool   val )  {}
 #endif
 
 TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 
