@@ -206,11 +206,11 @@ public:
    * Pointer is valid until this->destroy() is called */
   const SEIMessages& getSEIs() const { return m_SEIs; }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
-#endif
 #if AVC_SYNTAX
   Void readBLSyntax( fstream* filestream, UInt numBytes );
+#endif
 #endif
 #if SYNTAX_OUTPUT
   Void wrireBLSyntax( fstream* filestream, UInt numBytes );

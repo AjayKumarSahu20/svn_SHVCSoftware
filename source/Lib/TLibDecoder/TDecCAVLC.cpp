@@ -1413,7 +1413,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
     }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     rpcSlice->setActiveNumILRRefIdx(0);
 #if ILP_SSH_SIG
@@ -1636,7 +1636,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
     if ( rpcSlice->getEnableTMVPFlag() )
     {
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING
 #if REMOVE_COL_PICTURE_SIGNALING
       rpcSlice->setMFMEnabledFlag( rpcSlice->getNumMotionPredRefLayers() > 0 ? true : false );
 #else
@@ -1679,7 +1679,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       {
         rpcSlice->setColRefIdx(0);
       }
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
       }
 #endif
     }

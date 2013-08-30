@@ -58,7 +58,7 @@ class TAppEncCfg
 protected:
   // file I/O
 #if SVC_EXTENSION
-  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
+  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS];
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
@@ -339,7 +339,7 @@ protected:
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Int       m_elRapSliceBEnabled;
 #endif
   // internal member functions

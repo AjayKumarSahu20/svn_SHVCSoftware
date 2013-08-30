@@ -71,8 +71,6 @@ TDecTop::TDecTop()
 #if AVC_BASE
   m_pBLReconFile = NULL;
 #endif
-#endif
-#if REF_IDX_FRAMEWORK
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
 #endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
@@ -107,7 +105,7 @@ Void TDecTop::destroy()
   m_apcSlicePilot = NULL;
   
   m_cSliceDecoder.destroy();
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   for(Int i=0; i<MAX_NUM_REF; i++)
   {
     if(m_cIlpPic[i])
@@ -136,7 +134,7 @@ Void TDecTop::init()
   m_cEntropyDecoder.init(&m_cPrediction);
 }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 Void TDecTop::xInitILRP(TComSPS *pcSPS)
 {
   if(m_layerId>0)
@@ -606,14 +604,13 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setReferenced(true); // Putting this as true ensures that picture is referenced the first time it is in an RPS
   m_apcSlicePilot->setTLayerInfo(nalu.m_temporalId);
 
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING
+#if M0457_COL_PICTURE_SIGNALING
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
 #endif
-
-#if SVC_EXTENSION
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   m_apcSlicePilot->setNumSamplePredRefLayers( getNumSamplePredRefLayers() );
 #endif
@@ -877,7 +874,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     pcSlice->checkCRA(pcSlice->getRPS(), m_pocCRA, m_prevRAPisBLA, m_cListPic );
     // Set reference list
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
     if (m_layerId == 0)
 #endif
 #if FIX1071
@@ -971,7 +968,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
 
-#if REF_IDX_FRAMEWORK
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
       setILRPic(pcPic);
@@ -987,7 +983,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
 #endif
       }
-#endif
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
@@ -1102,7 +1097,7 @@ Void TDecTop::xDecodeSPS()
 #else
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 #endif
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if(m_numLayer>0)
   {
     xInitILRP(sps);

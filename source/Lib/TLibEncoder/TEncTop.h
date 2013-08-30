@@ -131,10 +131,7 @@ private:
 #if SVC_EXTENSION
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
-#endif
-#if REF_IDX_FRAMEWORK
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
-#endif
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
@@ -145,6 +142,7 @@ private:
   UInt                    m_numScaledRefLayerOffsets;
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -152,7 +150,7 @@ protected:
   
   Void  xInitPPSforTiles  ();
   Void  xInitRPS          ();                             ///< initialize PPS from encoder options
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Void xInitILRP();
 #endif
 public:
@@ -219,10 +217,8 @@ public:
 
   /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
-#if REF_IDX_FRAMEWORK
   TComPic** getIlpList() { return m_cIlpPic; }
   Void      setILRPic(TComPic *pcPic);
-#endif
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    

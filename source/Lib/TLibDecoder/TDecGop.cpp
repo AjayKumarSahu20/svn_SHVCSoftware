@@ -246,7 +246,7 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
     printf ("[L%d ", iRefList);
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
       {

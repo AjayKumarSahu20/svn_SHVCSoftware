@@ -515,7 +515,7 @@ public:
   UInt          getSliceSegmentStartCU  ( UInt pos )                  { return m_sliceSegmentStartCU[pos-m_uiAbsIdxInLCU];                                                                                   }
   UInt&         getTotalBins            ()                            { return m_uiTotalBins;                                                                                                  }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if FAST_INTRA_SHVC
   Int           reduceSetOfIntraModes              (  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
 #endif
@@ -537,7 +537,7 @@ public:
 
   UInt          getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, Bool bIsIntra);
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if SVC_COL_BLK 
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );

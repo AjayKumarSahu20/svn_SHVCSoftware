@@ -474,9 +474,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMaxBitsPerMinCuDenom( m_maxBitsPerMinCuDenom );
     m_acTEncTop[layer].setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
     m_acTEncTop[layer].setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
-#if REF_IDX_FRAMEWORK
     m_acTEncTop[layer].setElRapSliceTypeB(layer == 0? 0 : m_elRapSliceBEnabled);
-#endif
 #if SCALED_REF_LAYER_OFFSETS
     if( layer > 0 )
     {

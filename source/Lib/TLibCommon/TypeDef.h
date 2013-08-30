@@ -92,8 +92,6 @@
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
 #define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
-#define REF_IDX_FRAMEWORK                1      ///< inter-layer reference framework
-
 #define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
@@ -101,7 +99,6 @@
 #define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
 #endif
 
-#if REF_IDX_FRAMEWORK
 #define REF_IDX_ME_ZEROMV                1      ///< L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #define REF_IDX_MFM                      1      ///< L0336: motion vector mapping of inter-layer reference picture
@@ -126,7 +123,6 @@
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #else
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
-#endif
 #endif
 
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
