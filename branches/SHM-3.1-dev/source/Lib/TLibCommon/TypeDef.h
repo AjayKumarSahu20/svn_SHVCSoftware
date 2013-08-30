@@ -81,7 +81,6 @@
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
-#define SVC_COL_BLK                      1      ///< get co-located block
 #define SVC_UPSAMPLING                   1      ///< upsampling filters
 #define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
 #define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214 support base layer input more than 8 bits
