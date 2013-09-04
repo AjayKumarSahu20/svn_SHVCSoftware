@@ -42,6 +42,9 @@
 
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
+#define HM12_RANDOM_ACCESS               1
+#define RANDOM_ACCESS_SEI_FIX            1
+
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 #define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 

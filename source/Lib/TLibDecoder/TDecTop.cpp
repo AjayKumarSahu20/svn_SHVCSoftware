@@ -76,7 +76,10 @@ TDecTop::TDecTop()
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   m_pBLSyntaxFile = NULL;
 #endif
-
+#if HM12_RANDOM_ACCESS
+  m_prevSliceSkipped = false;
+  m_skippedPOC = 0;
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -619,16 +622,37 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 #endif
 
+#if HM12_RANDOM_ACCESS
+  // set POC for dependent slices in skipped pictures
+  if(m_apcSlicePilot->getDependentSliceSegmentFlag() && m_prevSliceSkipped) 
+  {
+    m_apcSlicePilot->setPOC(m_skippedPOC);
+  }
+#endif
+
   // Skip pictures due to random access
   if (isRandomAccessSkipPicture(iSkipFrame, iPOCLastDisplay))
   {
+#if HM12_RANDOM_ACCESS
+    m_prevSliceSkipped = true;
+    m_skippedPOC = m_apcSlicePilot->getPOC();
+#endif
     return false;
   }
   // Skip TFD pictures associated with BLA/BLANT pictures
   if (isSkipPictureForBLA(iPOCLastDisplay))
   {
+#if HM12_RANDOM_ACCESS
+    m_prevSliceSkipped = true;
+    m_skippedPOC = m_apcSlicePilot->getPOC();
+#endif
     return false;
   }
+
+#if HM12_RANDOM_ACCESS
+  // clear previous slice skipped flag
+  m_prevSliceSkipped = false;
+#endif
 
   // exit when a new picture is found
 #if SVC_EXTENSION
@@ -1134,6 +1158,12 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
 #if SVC_EXTENSION
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
   {
+#if RANDOM_ACCESS_SEI_FIX
+    if (m_prevSliceSkipped) // No need to decode SEI messages of a skipped access unit
+    {
+      return;
+    }
+#endif
 #if M0043_LAYERS_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveVPS(), m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
 #else
