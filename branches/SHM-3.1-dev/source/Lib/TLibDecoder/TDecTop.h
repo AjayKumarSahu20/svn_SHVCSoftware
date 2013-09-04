@@ -106,6 +106,10 @@ private:
 #if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
 #endif
+#if HM12_RANDOM_ACCESS
+  Bool                    m_prevSliceSkipped;
+  Int                     m_skippedPOC;
+#endif
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
