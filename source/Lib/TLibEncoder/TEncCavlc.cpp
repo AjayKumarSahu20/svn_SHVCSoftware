@@ -682,8 +682,15 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_FLAG( 0,                     "vps_extension_flag" );
 #else
   WRITE_FLAG( 1,                     "vps_extension_flag" );
-  codeVPSExtension(pcVPS);
-  WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
+  if(1) // Should be conditioned on the value of vps_extension_flag
+  {
+    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG(1,                  "vps_extension_alignment_bit_equal_to_one");
+    }
+    codeVPSExtension(pcVPS);
+    WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
+  }
 #endif  
   //future extensions here..
   
