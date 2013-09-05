@@ -970,7 +970,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {
       READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
-      assert( uiCode <= vps->getMaxTLayers() );
+      assert( uiCode <= vps->getMaxTLayers()+ 1 );
     }
   }
   else 
