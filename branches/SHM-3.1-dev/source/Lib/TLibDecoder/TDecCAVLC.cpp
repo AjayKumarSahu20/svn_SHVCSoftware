@@ -845,6 +845,10 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   if (uiCode)
   {
 #if VPS_EXTNS
+    while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
+    {
+      READ_FLAG( uiCode, "vps_extension_alignment_bit_equal_to_one"); assert(uiCode == 1);
+    }
     parseVPSExtension(pcVPS);
     READ_FLAG( uiCode, "vps_entension2_flag" );
     if(uiCode)
