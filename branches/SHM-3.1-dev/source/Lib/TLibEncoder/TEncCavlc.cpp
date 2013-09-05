@@ -890,7 +890,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_FLAG( 0,                     "vps_vui_present_flag" );
 #else
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );
-  codeVPSVUI(vps);  
+  if(1)   // Should be conditioned on the value of vps_vui_present_flag
+  {
+    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
+    }
+    codeVPSVUI(vps);  
+  }
 #endif 
 }
 #endif
