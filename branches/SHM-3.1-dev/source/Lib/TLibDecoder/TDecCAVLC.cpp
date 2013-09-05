@@ -1144,9 +1144,54 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 #endif
+
+  READ_FLAG( uiCode,  "vps_vui_present_flag" );
+  if (uiCode)
+  {
+#if VPS_VUI
+    parseVPSVUI(vps);
+#endif 
+  }
 }
 #endif
 
+#if VPS_VUI
+Void TDecCavlc::parseVPSVUI(TComVPS *vps)
+{
+  UInt i,j;
+  UInt uiCode;
+#if N0160_TILE_BOUNDARY_ALIGNED_FLAG
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+    {
+      READ_FLAG( uiCode, "tile_boundaries_aligned_flag[i][j]" ); vps->setTileBoundariesAlignedFlag(i,j,(uiCode == 1));      
+    }
+  }  
+#endif 
+#if N0160_VUI_EXT_ILP_REF
+    READ_FLAG( uiCode, "num_ilp_restricted_ref_layers" ); vps->setNumIlpRestrictedRefLayers( uiCode == 1 ); 
+  if( vps->getNumIlpRestrictedRefLayers())
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+      {
+        READ_UVLC( uiCode, "min_spatial_segment_offset_plus1[i][j]" ); vps->setMinSpatialSegmentOffsetPlus1( i, j, uiCode ); 
+        if( vps->getMinSpatialSegmentOffsetPlus1(i,j ) > 0 ) 
+        {  
+          READ_FLAG( uiCode, "ctu_based_offset_enabled_flag[i][j]"); vps->setCtuBasedOffsetEnabledFlag(i, j, uiCode == 1 ); 
+          if(vps->getCtuBasedOffsetEnabledFlag(i,j))  
+          {
+            READ_UVLC( uiCode, "min_horizontal_ctu_offset_plus1[i][j]"); vps->setMinHorizontalCtuOffsetPlus1( i,j, uiCode ); 
+          }
+        }  
+      }  
+    }
+  }
+#endif 
+}
+#endif 
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
 {
   UInt  uiCode;
