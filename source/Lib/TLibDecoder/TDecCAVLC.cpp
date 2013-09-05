@@ -1149,6 +1149,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if (uiCode)
   {
 #if VPS_VUI
+    while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
+    {
+      READ_FLAG( uiCode, "vps_vui_alignment_bit_equal_to_one"); assert(uiCode == 1);
+    }
     parseVPSVUI(vps);
 #endif 
   }
