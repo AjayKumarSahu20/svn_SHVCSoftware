@@ -86,6 +86,9 @@ public:
 #if VPS_EXTNS
   Void  codeVPSExtension        ( TComVPS* pcVPS );
 #endif
+#if VPS_VUI
+  Void codeVPSVUI               (TComVPS *vps);
+#endif
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
 #if SPS_EXTENSION

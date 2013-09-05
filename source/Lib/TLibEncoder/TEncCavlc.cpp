@@ -885,6 +885,52 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
+
+#if !VPS_VUI
+  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
+#else
+  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
+  codeVPSVUI(vps);  
+#endif 
+}
+#endif
+
+#if VPS_VUI
+Void TEncCavlc::codeVPSVUI (TComVPS *vps)
+{
+  Int i,j;
+#if N0160_TILE_BOUNDARY_ALIGNED_FLAG
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+    {
+      WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
+    }
+  }  
+#endif 
+#if N0160_VUI_EXT_ILP_REF
+  WRITE_FLAG( vps->getNumIlpRestrictedRefLayers() ? 1 : 0 , "num_ilp_restricted_ref_layers" );    
+  if( vps->getNumIlpRestrictedRefLayers())
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+      {        
+        WRITE_UVLC(vps->getMinSpatialSegmentOffsetPlus1( i, j),    "min_spatial_segment_offset_plus1[i][j]");
+       
+        if( vps->getMinSpatialSegmentOffsetPlus1(i,j ) > 0 ) 
+        {  
+          WRITE_FLAG( vps->getCtuBasedOffsetEnabledFlag( i, j) ? 1 : 0 , "ctu_based_offset_enabled_flag[i][j]" );    
+          
+          if(vps->getCtuBasedOffsetEnabledFlag(i,j))  
+          {
+            WRITE_UVLC(vps->getMinHorizontalCtuOffsetPlus1( i, j),    "min_horizontal_ctu_offset_plus1[i][j]");            
+          }
+        }  
+      }  
+    }
+  }
+#endif 
 }
 #endif
 

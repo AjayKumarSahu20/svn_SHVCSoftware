@@ -53,8 +53,8 @@
 #if FINAL_RPL_CHANGE_N0082
 #define EXTERNAL_USEDBYCURR_N0082        1      ///< N0082: final ref picture list change (encoder) //dev ver.
 #endif
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 1      ///< VUI flag to indicate tile boundary alignment
-#define M0463_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
+#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
+#define M0463_VUI_EXT_ILP_REF            0      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
@@ -77,6 +77,13 @@
 #define VPS_SPLIT_FLAG                   1      ///< M0163: Do not signal dimension_id and the last dimension_id_len_minus1, when splitting_flag is equal to 1. 
 #define M0457_PREDICTION_INDICATIONS     1
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
+#define VPS_VUI                          1      ///< Include function structure for VPS VUI
+
+#if VPS_VUI
+#define N0160_TILE_BOUNDARY_ALIGNED_FLAG 1     ///< VPS VUI flag to indicate tile boundary alignment
+#define N0160_VUI_EXT_ILP_REF            1     ///< VUI extension inter-layer dependency offset signalling
+#endif //VPS_VUI
+
 #endif
 
 #define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
