@@ -508,6 +508,16 @@ private:
   Bool        m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif 
+#if VPS_VUI_BITRATE_PICRATE
+  Bool        m_bitRatePresentVpsFlag;
+  Bool        m_picRatePresentVpsFlag;
+  Bool        m_bitRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Bool        m_picRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int         m_avgBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int         m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -696,7 +706,27 @@ public:
   Int  getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
   Void setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
 #endif
+#if VPS_VUI_BITRATE_PICRATE
+  Bool getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
+  Void setBitRatePresentVpsFlag(Bool x) { m_bitRatePresentVpsFlag = x;    }
+  Bool getPicRatePresentVpsFlag()       { return m_picRatePresentVpsFlag; }
+  Void setPicRatePresentVpsFlag(Bool x) { m_picRatePresentVpsFlag = x;    }
 
+  Bool getBitRatePresentFlag(Int i, Int j)          { return m_bitRatePresentFlag[i][j]; }
+  Void setBitRatePresentFlag(Int i, Int j, Bool x)  { m_bitRatePresentFlag[i][j] = x;    }
+  Bool getPicRatePresentFlag(Int i, Int j)          { return m_picRatePresentFlag[i][j]; }
+  Void setPicRatePresentFlag(Int i, Int j, Bool x)  { m_picRatePresentFlag[i][j] = x;    }
+  
+  Int  getAvgBitRate(Int i, Int j)          { return m_avgBitRate[i][j]; }
+  Void setAvgBitRate(Int i, Int j, Int x)   { m_avgBitRate[i][j] = x;    }
+  Int  getMaxBitRate(Int i, Int j)          { return m_maxBitRate[i][j]; }
+  Void setMaxBitRate(Int i, Int j, Int x)   { m_maxBitRate[i][j] = x;    }
+  
+  Int  getConstPicRateIdc(Int i, Int j)          { return m_constPicRateIdc[i][j]; }
+  Void setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
+  Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
+  Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
+#endif
 };
 
 class Window
