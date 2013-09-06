@@ -82,6 +82,7 @@
 #if VPS_VUI
 #define N0160_TILE_BOUNDARY_ALIGNED_FLAG 1     ///< VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1     ///< VUI extension inter-layer dependency offset signalling
+#define VPS_VUI_BITRATE_PICRATE          1     ///< N0085 - Signal bit rate and picture in VPS VUI
 #endif //VPS_VUI
 
 #endif

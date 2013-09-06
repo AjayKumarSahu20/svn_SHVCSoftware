@@ -913,6 +913,38 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
+#if VPS_VUI_BITRATE_PICRATE
+  WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
+  WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
+
+  if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
+  {
+    for( i = 0; i < vps->getNumLayerSets(); i++ )
+    {
+      for( j = 0; j < vps->getMaxTLayers(); j++ )
+      {
+        if( vps->getBitRatePresentVpsFlag() )
+        {
+          WRITE_FLAG( vps->getBitRatePresentFlag( i, j),        "bit_rate_present_vps_flag[i][j]" );
+        }
+        if( vps->getPicRatePresentVpsFlag() )
+        {
+          WRITE_FLAG( vps->getPicRatePresentFlag( i, j),        "pic_rate_present_vps_flag[i][j]" );
+        }
+        if( vps->getBitRatePresentFlag(i, j) )
+        {
+          WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "avg_bit_rate[i][j]" );
+          WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "max_bit_rate[i][j]" );
+        }
+        if( vps->getPicRatePresentFlag(i, j) )
+        {
+          WRITE_CODE( vps->getConstPicRateIdc( i, j), 2 , "constant_pic_rate_idc[i][j]" ); 
+          WRITE_CODE( vps->getConstPicRateIdc( i, j), 16, "avg_pic_rate[i][j]"          ); 
+        }
+      }
+    }
+  }
+#endif
 #if N0160_TILE_BOUNDARY_ALIGNED_FLAG
   for(i = 1; i < vps->getMaxLayers(); i++)
   {

@@ -1614,6 +1614,10 @@ TComVPS::TComVPS()
 , m_numAddOutputLayerSets     (0)
 , m_defaultOneTargetOutputLayerFlag    (false)
 #endif
+#if VPS_VUI_BITRATE_PICRATE
+, m_bitRatePresentVpsFlag     (false)
+, m_picRatePresentVpsFlag     (false)
+#endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
   {
@@ -1679,6 +1683,14 @@ TComVPS::TComVPS()
    ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
    ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
    ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
+#endif
+#if VPS_VUI_BITRATE_PICRATE  
+  ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));
+  ::memset(m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag));
+  ::memset(m_avgBitRate        , 0, sizeof(m_avgBitRate)        );
+  ::memset(m_maxBitRate        , 0, sizeof(m_maxBitRate)        );
+  ::memset(m_constPicRateIdc   , 0, sizeof(m_constPicRateIdc)   );
+  ::memset(m_avgPicRate        , 0, sizeof(m_avgPicRate)        );
 #endif
 }
 

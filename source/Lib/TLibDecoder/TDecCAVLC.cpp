@@ -1168,6 +1168,56 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
   UInt i,j;
   UInt uiCode;
+#if VPS_VUI_BITRATE_PICRATE
+  READ_FLAG( uiCode,        "bit_rate_present_vps_flag" );  vps->setBitRatePresentVpsFlag( uiCode ? true : false );
+  READ_FLAG( uiCode,        "pic_rate_present_vps_flag" );  vps->setPicRatePresentVpsFlag( uiCode ? true : false );
+
+  Bool parseFlag = vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag();
+  {
+    for( i = 0; i < vps->getNumLayerSets(); i++ )
+    {
+      for( j = 0; j < vps->getMaxTLayers(); j++ )
+      {
+        if( parseFlag && vps->getBitRatePresentVpsFlag() )
+        {
+          READ_FLAG( uiCode,        "bit_rate_present_vps_flag[i][j]" );  vps->setBitRatePresentFlag( i, j, uiCode ? true : false );
+        }
+        else
+        {
+          vps->setBitRatePresentFlag( i, j, false );
+        }
+        if( parseFlag && vps->getPicRatePresentVpsFlag() )
+        {
+          READ_FLAG( uiCode,        "pic_rate_present_vps_flag[i][j]" );  vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
+        }
+        else
+        {
+          vps->setPicRatePresentFlag( i, j, false );
+        }
+        if( parseFlag && vps->getBitRatePresentFlag(i, j) )
+        {
+          READ_CODE( 16, uiCode,    "avg_bit_rate[i][j]" ); vps->setAvgBitRate( i, j, uiCode );
+          READ_CODE( 16, uiCode,    "max_bit_rate[i][j]" ); vps->setMaxBitRate( i, j, uiCode );
+        }
+        else
+        {
+          vps->setAvgBitRate( i, j, 0 );
+          vps->setMaxBitRate( i, j, 0 );
+        }
+        if( parseFlag && vps->getPicRatePresentFlag(i, j) )
+        {
+          READ_CODE( 2 , uiCode,    "constant_pic_rate_idc[i][j]" ); vps->setConstPicRateIdc( i, j, uiCode );
+          READ_CODE( 16, uiCode,    "avg_pic_rate[i][j]"          ); vps->setAvgPicRate( i, j, uiCode );
+        }
+        else
+        {
+          vps->setConstPicRateIdc( i, j, 0 );
+          vps->setAvgPicRate     ( i, j, 0 );
+        }
+      }
+    }
+  }
+#endif
 #if N0160_TILE_BOUNDARY_ALIGNED_FLAG
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
