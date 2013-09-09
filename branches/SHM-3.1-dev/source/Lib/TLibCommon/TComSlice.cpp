@@ -508,7 +508,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       for( i=0; i < m_activeNumILRRefIdx; i++ )
       {
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
-        if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) && (scalingOffset)) // ratio 1x
+        if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
         {
           numResampler++;
         }
