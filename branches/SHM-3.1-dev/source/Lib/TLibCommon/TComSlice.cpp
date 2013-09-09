@@ -1675,7 +1675,7 @@ TComVPS::TComVPS()
     m_maxSublayerForIlpPlus1[i] = m_uiMaxTLayers + 1;
   }
 #endif
-#if N0160_TILE_BOUNDARY_ALIGNED_FLAG
+#if TILE_BOUNDARY_ALIGNED_FLAG
    ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
 #endif 
 #if N0160_VUI_EXT_ILP_REF
