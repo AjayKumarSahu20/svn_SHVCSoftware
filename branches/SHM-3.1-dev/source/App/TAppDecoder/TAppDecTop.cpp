@@ -550,11 +550,22 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
       {
         const Window &conf = pcPic->getConformanceWindow();
         const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+#if REPN_FORMAT_IN_VPS
+        UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+        Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+
+#else
         m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
                                        conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
       }
       
       // update POC of display order
@@ -629,11 +640,22 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
       {
         const Window &conf = pcPic->getConformanceWindow();
         const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+#if REPN_FORMAT_IN_VPS
+        UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+        Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+                                       conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+                                       conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+                                       conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+                                       conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
+
+#else
         m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
                                        conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
       }
       
       // update POC of display order

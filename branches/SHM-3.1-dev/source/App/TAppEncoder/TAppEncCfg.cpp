@@ -350,6 +350,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_ReconFile     [MAX_LAYERS];
   Double* cfg_fQP           [MAX_LAYERS];
 
+#if REPN_FORMAT_IN_VPS
+  Int*    cfg_repFormatIdx  [MAX_LAYERS];
+#endif
   Int*    cfg_SourceWidth   [MAX_LAYERS]; 
   Int*    cfg_SourceHeight  [MAX_LAYERS];
   Int*    cfg_FrameRate     [MAX_LAYERS];
@@ -398,6 +401,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
     cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
     cfg_fQP[layer]          = &m_acLayerCfg[layer].m_fQP;
+#if REPN_FORMAT_IN_VPS
+    cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
+#endif
     cfg_SourceWidth[layer]  = &m_acLayerCfg[layer].m_iSourceWidth;
     cfg_SourceHeight[layer] = &m_acLayerCfg[layer].m_iSourceHeight;
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
@@ -468,6 +474,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#if REPN_FORMAT_IN_VPS
+  ("RepFormatIdx%d",          cfg_repFormatIdx, -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   ("NumSamplePredRefLayers%d",cfg_numSamplePredRefLayers, -1, MAX_LAYERS, "Number of sample prediction reference layers")
@@ -1126,7 +1135,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-  
+
+#if REPN_FORMAT_IN_VPS_123
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    m_acLayerCfg[layer].setSourceHeight( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picHeightInLumaSamples);
+    m_acLayerCfg[layer].setSourceWidth ( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picWidthInLumaSamples );
+  }
+#endif
   /* rules for input, output and internal bitdepths as per help text */
   if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
   if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }

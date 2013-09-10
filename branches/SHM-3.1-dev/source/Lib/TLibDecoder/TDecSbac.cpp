@@ -859,7 +859,11 @@ Void TDecSbac::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   if ( uiDQp > 0 )
   {
     UInt uiSign;
+#if REPN_FORMAT_IN_VPS
+    Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffsetY();
+#else
     Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+#endif
     m_pcTDecBinIf->decodeBinEP(uiSign);
     iDQp = uiDQp;
     if(uiSign)

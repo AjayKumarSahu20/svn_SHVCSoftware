@@ -89,7 +89,45 @@ Void TAppEncTop::xInitLibCfg()
     vps->setNumReorderPics                 ( m_numReorderPics[i], i );
     vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
   }
-
+#if REPN_FORMAT_IN_VPS
+  vps->setRepFormatIdxPresentFlag( true );   // Could be disabled to optimize in some cases.
+  Int maxRepFormatIdx = -1;
+  for(UInt layer=0; layer < m_numLayers; layer++)
+  {
+    assert( m_acLayerCfg[layer].getRepFormatIdx() != -1, "RepFormatIdx not assigned for a layer" );   
+    vps->setVpsRepFormatIdx( layer, m_acLayerCfg[layer].getRepFormatIdx() );
+    maxRepFormatIdx = std::max( m_acLayerCfg[layer].getRepFormatIdx(), maxRepFormatIdx );
+  }
+  assert( vps->getVpsRepFormatIdx( 0 ) == 0 );  // Base layer should point to the first one.
+  Int* mapIdxToLayer = new Int[maxRepFormatIdx + 1];
+  // Check that all the indices from 0 to maxRepFormatIdx are used in the VPS
+  for(Int i = 0; i <= maxRepFormatIdx; i++)
+  {
+    mapIdxToLayer[i] = -1;
+    UInt layer;
+    for(layer=0; layer < m_numLayers; layer++)
+    {
+      if( vps->getVpsRepFormatIdx(layer) == i )
+      {
+        mapIdxToLayer[i] = layer;
+        break;
+      }
+    }
+    assert( layer != m_numLayers );   // One of the VPS Rep format indices not set
+  }
+  vps->setVpsNumRepFormats( maxRepFormatIdx + 1 );
+  for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
+  {
+    RepFormat *repFormat = vps->getVpsRepFormat( idx );    
+    repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
+    repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
+    repFormat->setChromaFormatVpsIdc        ( 1                                             );  // Need modification to change for each layer - corresponds to 420
+    repFormat->setSeparateColourPlaneVpsFlag( 0                                             );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
+  }
+  delete [] mapIdxToLayer;
+#endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //m_acTEncTop[layer].setVPS(&vps);

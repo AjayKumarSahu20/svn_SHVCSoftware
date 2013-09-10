@@ -1094,7 +1094,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         sliceQP = m_pcRateCtrl->getRCPic()->estimatePicQP( lambda, listPreviousPicture );
       }
 
+#if REPN_FORMAT_IN_VPS
+      sliceQP = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, sliceQP );
+#else
       sliceQP = Clip3( -pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, sliceQP );
+#endif
       m_pcRateCtrl->getRCPic()->setPicEstQP( sliceQP );
 
       m_pcSliceEncoder->resetQP( pcPic, sliceQP, lambda );
@@ -1107,8 +1111,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     UInt uiExternalAddress = pcPic->getPicSym()->getNumberOfCUsInFrame()-1;
     UInt uiPosX = ( uiExternalAddress % pcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
     UInt uiPosY = ( uiExternalAddress / pcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
+#if REPN_FORMAT_IN_VPS
+    UInt uiWidth = pcSlice->getPicWidthInLumaSamples();
+    UInt uiHeight = pcSlice->getPicHeightInLumaSamples();
+#else
     UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
     UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
     while(uiPosX>=uiWidth||uiPosY>=uiHeight) 
     {
       uiInternalAddress--;
@@ -1655,8 +1664,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           uiExternalAddress = pcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurEndCUAddr()-1) / pcPic->getNumPartInCU();
           uiPosX = ( uiExternalAddress % pcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
           uiPosY = ( uiExternalAddress / pcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
+
+#if REPN_FORMAT_IN_VPS
+          uiWidth = pcSlice->getPicWidthInLumaSamples();
+          uiHeight = pcSlice->getPicHeightInLumaSamples();
+#else
           uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
           uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
           while(uiPosX>=uiWidth||uiPosY>=uiHeight)
           {
             uiInternalAddress--;

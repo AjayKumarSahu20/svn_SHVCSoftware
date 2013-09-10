@@ -138,12 +138,28 @@ Void TDecTop::init()
 }
 
 #if SVC_EXTENSION
-Void TDecTop::xInitILRP(TComSPS *pcSPS)
+#if !REPN_FORMAT_IN_VPS
+Void TDecTop::xInitILRP(TComSPS *pcSPS
+#else
+Void TDecTop::xInitILRP(TComSlice *slice)
+#endif
 {
+#if REPN_FORMAT_IN_VPS
+  TComSPS* pcSPS = slice->getSPS();
+  Int bitDepthY   = slice->getBitDepthY();
+  Int bitDepthC   = slice->getBitDepthC();
+  Int picWidth    = slice->getPicWidthInLumaSamples();
+  Int picHeight   = slice->getPicHeightInLumaSamples();
+#endif
   if(m_layerId>0)
   {
+#if REPN_FORMAT_IN_VPS
+    g_bitDepthY     = bitDepthY;
+    g_bitDepthC     = bitDepthC;
+#else
     g_bitDepthY     = pcSPS->getBitDepthY();
     g_bitDepthC     = pcSPS->getBitDepthC();
+#endif
     g_uiMaxCUWidth  = pcSPS->getMaxCUWidth();
     g_uiMaxCUHeight = pcSPS->getMaxCUHeight();
     g_uiMaxCUDepth  = pcSPS->getMaxCUDepth();
@@ -164,10 +180,18 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
       {
 
         m_cIlpPic[j] = new  TComPic;
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+        m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
+#else
+        m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
 #if SVC_UPSAMPLING
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
 #else
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
@@ -177,6 +201,8 @@ Void TDecTop::xInitILRP(TComSPS *pcSPS)
     }
   }
 }
+
+
 
 Void TDecTop::setILRPic(TComPic *pcPic)
 {
@@ -270,7 +296,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
         //TComPic*                      pcPic = *(pcTDecTopBase->getListPic()->begin()); 
         TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec(); 
+#if REPN_FORMAT_IN_VPS
+        if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets )
+#else
         if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples() || !zeroOffsets )
+#endif
         {
           rpcPic->setSpatialEnhLayerFlag( i, true );
 
@@ -287,6 +317,15 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     }
 #endif
     
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+    rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+#else
+    rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
 #if SVC_UPSAMPLING
     rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                      conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
@@ -294,6 +333,8 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                      conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
+#endif
+
     rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
     m_cListPic.pushBack( rpcPic );
     
@@ -333,6 +374,16 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
   rpcPic->destroy();
 
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+  rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+
+#else
+  rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
 #if SVC_UPSAMPLING
   rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
                    conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
@@ -340,6 +391,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #else
   rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
                    conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
   rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 }
@@ -547,11 +599,20 @@ Void TDecTop::xActivateParameterSets()
   m_apcSlicePilot->setPPS(pps);
   m_apcSlicePilot->setSPS(sps);
   pps->setSPS(sps);
+#if REPN_FORMAT_IN_VPS
   pps->setNumSubstreams(pps->getEntropyCodingSyncEnabledFlag() ? ((sps->getPicHeightInLumaSamples() + sps->getMaxCUHeight() - 1) / sps->getMaxCUHeight()) * (pps->getNumColumnsMinus1() + 1) : 1);
+#else
+  pps->setNumSubstreams(pps->getEntropyCodingSyncEnabledFlag() ? ((sps->getPicHeightInLumaSamples() + sps->getMaxCUHeight() - 1) / sps->getMaxCUHeight()) * (pps->getNumColumnsMinus1() + 1) : 1);
+#endif
   pps->setMinCuDQPSize( sps->getMaxCUWidth() >> ( pps->getMaxCuDQPDepth()) );
 
+#if REPN_FORMAT_IN_VPS
+  g_bitDepthY     = m_apcSlicePilot->getBitDepthY();
+  g_bitDepthC     = m_apcSlicePilot->getBitDepthC();
+#else
   g_bitDepthY     = sps->getBitDepthY();
   g_bitDepthC     = sps->getBitDepthC();
+#endif
   g_uiMaxCUWidth  = sps->getMaxCUWidth();
   g_uiMaxCUHeight = sps->getMaxCUHeight();
   g_uiMaxCUDepth  = sps->getMaxCUDepth();
@@ -568,7 +629,11 @@ Void TDecTop::xActivateParameterSets()
   }
 
   m_cSAO.destroy();
+#if REPN_FORMAT_IN_VPS
+  m_cSAO.create( m_apcSlicePilot->getPicWidthInLumaSamples(), m_apcSlicePilot->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight() );
+#else
   m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight() );
+#endif
   m_cLoopFilter.create( sps->getMaxCUDepth() );
 }
 
@@ -683,7 +748,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   // actual decoding starts here
   xActivateParameterSets();
-
+#if REPN_FORMAT_IN_VPS
+  // Initialize ILRP if needed, only for the current layer  
+  // ILRP intialization should go along with activation of parameters sets, 
+  // although activation of parameter sets itself need not be done for each and every slice!!!
+  xInitILRP(m_apcSlicePilot);
+#endif
   if (m_apcSlicePilot->isNextSlice()) 
   {
     m_prevPOC = m_apcSlicePilot->getPOC();
@@ -953,6 +1023,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 
+
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 
@@ -1122,10 +1193,12 @@ Void TDecTop::xDecodeSPS()
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 #endif
 #if SVC_EXTENSION
+#if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
   if(m_numLayer>0)
   {
     xInitILRP(sps);
   }
+#endif
 #endif
 }
 

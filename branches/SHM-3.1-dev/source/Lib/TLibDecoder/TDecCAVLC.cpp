@@ -541,38 +541,66 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   READ_UVLC(     uiCode, "sps_seq_parameter_set_id" );           pcSPS->setSPSId( uiCode );
   assert(uiCode <= 15);
-  
-  READ_UVLC(     uiCode, "chroma_format_idc" );                  pcSPS->setChromaFormatIdc( uiCode );
-  assert(uiCode <= 3);
-  // in the first version we only support chroma_format_idc equal to 1 (4:2:0), so separate_colour_plane_flag cannot appear in the bitstream
-  assert (uiCode == 1);
-  if( uiCode == 3 )
-  {
-    READ_FLAG(     uiCode, "separate_colour_plane_flag");        assert(uiCode == 0);
-  }
 
-  READ_UVLC (    uiCode, "pic_width_in_luma_samples" );          pcSPS->setPicWidthInLumaSamples ( uiCode    );
-  READ_UVLC (    uiCode, "pic_height_in_luma_samples" );         pcSPS->setPicHeightInLumaSamples( uiCode    );
+#if REPN_FORMAT_IN_VPS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    READ_FLAG( uiCode, "update_rep_format_flag" );                 
+    pcSPS->setUpdateRepFormatFlag( uiCode ? true : false );
+  }
+  else
+  {
+    pcSPS->setUpdateRepFormatFlag( true );
+  }
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+#endif
+    READ_UVLC(     uiCode, "chroma_format_idc" );                  pcSPS->setChromaFormatIdc( uiCode );
+    assert(uiCode <= 3);
+    // in the first version we only support chroma_format_idc equal to 1 (4:2:0), so separate_colour_plane_flag cannot appear in the bitstream
+    assert (uiCode == 1);
+    if( uiCode == 3 )
+    {
+      READ_FLAG(     uiCode, "separate_colour_plane_flag");        assert(uiCode == 0);
+    }
+
+    READ_UVLC (    uiCode, "pic_width_in_luma_samples" );          pcSPS->setPicWidthInLumaSamples ( uiCode    );
+    READ_UVLC (    uiCode, "pic_height_in_luma_samples" );         pcSPS->setPicHeightInLumaSamples( uiCode    );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   READ_FLAG(     uiCode, "conformance_window_flag");
   if (uiCode != 0)
   {
     Window &conf = pcSPS->getConformanceWindow();
+#if REPN_FORMAT_IN_VPS
+    READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode );
+    READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode );
+    READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode );
+    READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode );
+#else
     READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
     READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
     READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
     READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
+#endif
   }
+#if REPN_FORMAT_IN_VPS
+  if(  pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+#endif
+    READ_UVLC(     uiCode, "bit_depth_luma_minus8" );
+    assert(uiCode <= 6);
+    pcSPS->setBitDepthY( uiCode + 8 );
+    pcSPS->setQpBDOffsetY( (Int) (6*uiCode) );
 
-  READ_UVLC(     uiCode, "bit_depth_luma_minus8" );
-  assert(uiCode <= 6);
-  pcSPS->setBitDepthY( uiCode + 8 );
-  pcSPS->setQpBDOffsetY( (Int) (6*uiCode) );
-
-  READ_UVLC( uiCode,    "bit_depth_chroma_minus8" );
-  assert(uiCode <= 6);
-  pcSPS->setBitDepthC( uiCode + 8 );
-  pcSPS->setQpBDOffsetC( (Int) (6*uiCode) );
-
+    READ_UVLC( uiCode,    "bit_depth_chroma_minus8" );
+    assert(uiCode <= 6);
+    pcSPS->setBitDepthC( uiCode + 8 );
+    pcSPS->setQpBDOffsetC( (Int) (6*uiCode) );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   READ_UVLC( uiCode,    "log2_max_pic_order_cnt_lsb_minus4" );   pcSPS->setBitsForPOC( 4 + uiCode );
   assert(uiCode <= 12);
 
@@ -1106,9 +1134,57 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #endif
+#if REPN_FORMAT_IN_VPS
+  READ_FLAG( uiCode, "rep_format_idx_present_flag"); 
+  vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
+
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    READ_CODE( 4, uiCode, "vps_num_rep_formats_minus1" );
+    vps->setVpsNumRepFormats( uiCode + 1 );
+  }
+  else
+  {
+    // default assignment
+    assert (vps->getMaxLayers() <= 16);       // If max_layers_is more than 15, num_rep_formats has to be signaled
+    vps->setVpsNumRepFormats( vps->getMaxLayers() );
+  }
+  for(Int i = 0; i < vps->getVpsNumRepFormats(); i++)
+  {
+    // Read rep_format_structures
+    parseRepFormat( vps->getVpsRepFormat(i) );
+  }
+  
+  // Default assignment for layer 0
+  vps->setVpsRepFormatIdx( 0, 0 );
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if( vps->getVpsNumRepFormats() > 1 )
+      {
+        READ_CODE( 4, uiCode, "vps_rep_format_idx[i]" );
+        vps->setVpsRepFormatIdx( i, uiCode );
+      }
+      else
+      {
+        // default assignment - only one rep_format() structure
+        vps->setVpsRepFormatIdx( i, 0 );
+      }
+    }
+  }
+  else
+  {
+    // default assignment - each layer assigned each rep_format() structure in the order signaled
+    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    {
+      vps->setVpsRepFormatIdx( i, i );
+    }
+  }
+#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
-   vps->setMaxOneActiveRefLayerFlag(uiCode);
+  READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
+  vps->setMaxOneActiveRefLayerFlag(uiCode);
 #endif
 
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
@@ -1162,7 +1238,25 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 }
 #endif
+#if REPN_FORMAT_IN_VPS
+Void  TDecCavlc::parseRepFormat      ( RepFormat *repFormat )
+{
+  UInt uiCode;
+  READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( uiCode );
+  
+  if( repFormat->getChromaFormatVpsIdc() == 3 )
+  {
+    READ_FLAG( uiCode, "separate_colour_plane_flag");        repFormat->setSeparateColourPlaneVpsFlag(uiCode ? true : false);
+  }
 
+  READ_CODE ( 16, uiCode, "pic_width_in_luma_samples" );     repFormat->setPicWidthVpsInLumaSamples ( uiCode );
+  READ_CODE ( 16, uiCode, "pic_height_in_luma_samples" );    repFormat->setPicHeightVpsInLumaSamples( uiCode );
+  
+  READ_CODE( 4, uiCode, "bit_depth_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
+  READ_CODE( 4, uiCode, "bit_depth_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
+
+}
+#endif
 #if VPS_VUI
 Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
@@ -1284,7 +1378,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   {
     rpcSlice->setDependentSliceSegmentFlag(false);
   }
+#if REPN_FORMAT_IN_VPS
+  Int numCTUs = ((rpcSlice->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((rpcSlice->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
+#else
   Int numCTUs = ((sps->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((sps->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
+#endif
   Int maxParts = (1<<(sps->getMaxCUDepth()<<1));
   UInt sliceSegmentAddress = 0;
   Int bitsSliceSegmentAddress = 0;
@@ -1800,7 +1898,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     READ_SVLC( iCode, "slice_qp_delta" );
     rpcSlice->setSliceQp (26 + pps->getPicInitQPMinus26() + iCode);
 
+#if REPN_FORMAT_IN_VPS
+    assert( rpcSlice->getSliceQp() >= -rpcSlice->getQpBDOffsetY() );
+#else
     assert( rpcSlice->getSliceQp() >= -sps->getQpBDOffsetY() );
+#endif
     assert( rpcSlice->getSliceQp() <=  51 );
 
     if (rpcSlice->getPPS()->getSliceChromaQpFlag())
@@ -2131,7 +2233,11 @@ Void TDecCavlc::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth 
 
   xReadSvlc( iDQp );
 
+#if REPN_FORMAT_IN_VPS
+  Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffsetY();
+#else
   Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+#endif
   qp = (((Int) pcCU->getRefQP( uiAbsPartIdx ) + iDQp + 52 + 2*qpBdOffsetY )%(52+ qpBdOffsetY)) -  qpBdOffsetY;
 
   UInt uiAbsQpCUPartIdx = (uiAbsPartIdx>>((g_uiMaxCUDepth - pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())<<1))<<((g_uiMaxCUDepth - pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())<<1) ;

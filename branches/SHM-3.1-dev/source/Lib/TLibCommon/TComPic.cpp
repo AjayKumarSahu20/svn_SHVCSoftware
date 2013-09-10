@@ -212,8 +212,13 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
 {
   UInt maxNumSUInLCU = getNumPartInCU();
   UInt numLCUInPic   = getNumCUsInFrame();
+#if REPN_FORMAT_IN_VPS
+  UInt picWidth      = getSlice(0)->getPicWidthInLumaSamples();
+  UInt picHeight     = getSlice(0)->getPicHeightInLumaSamples();
+#else
   UInt picWidth      = getSlice(0)->getSPS()->getPicWidthInLumaSamples();
   UInt picHeight     = getSlice(0)->getSPS()->getPicHeightInLumaSamples();
+#endif
   Int  numLCUsInPicWidth = getFrameWidthInCU();
   Int  numLCUsInPicHeight= getFrameHeightInCU();
   UInt maxNumSUInLCUWidth = getNumPartInWidth();

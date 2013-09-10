@@ -405,6 +405,38 @@ public:
   Void setNumTicksPocDiffOneMinus1          (Int x       ) { m_numTicksPocDiffOneMinus1 = x;               }
 };
 
+#if REPN_FORMAT_IN_VPS
+class RepFormat
+{
+  Int  m_chromaFormatVpsIdc;
+  Bool m_separateColourPlaneVpsFlag;
+  Int  m_picWidthVpsInLumaSamples;
+  Int  m_picHeightVpsInLumaSamples;
+  Int  m_bitDepthVpsLuma;               // coded as minus8
+  Int  m_bitDepthVpsChroma;             // coded as minus8
+
+public:
+  RepFormat();
+
+  Int  getChromaFormatVpsIdc()        { return m_chromaFormatVpsIdc; }
+  Void setChromaFormatVpsIdc(Int x)   { m_chromaFormatVpsIdc = x;    }
+
+  Bool getSeparateColourPlaneVpsFlag()        { return m_separateColourPlaneVpsFlag; }
+  Void setSeparateColourPlaneVpsFlag(Bool x)  { m_separateColourPlaneVpsFlag = x;    }
+
+  Int  getPicWidthVpsInLumaSamples()        { return m_picWidthVpsInLumaSamples; }
+  Void setPicWidthVpsInLumaSamples(Int x)   { m_picWidthVpsInLumaSamples = x;    }
+
+  Int  getPicHeightVpsInLumaSamples()        { return m_picHeightVpsInLumaSamples; }
+  Void setPicHeightVpsInLumaSamples(Int x)   { m_picHeightVpsInLumaSamples = x;    }
+
+  Int  getBitDepthVpsLuma()           { return m_bitDepthVpsLuma;   }
+  Void setBitDepthVpsLuma(Int x)      { m_bitDepthVpsLuma = x;      }
+
+  Int  getBitDepthVpsChroma()           { return m_bitDepthVpsChroma;   }
+  Void setBitDepthVpsChroma(Int x)      { m_bitDepthVpsChroma = x;      }
+};
+#endif
 class TComVPS
 {
 private:
@@ -517,6 +549,12 @@ private:
   Int         m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+#endif
+#if REPN_FORMAT_IN_VPS
+  Bool       m_repFormatIdxPresentFlag;
+  Int        m_vpsNumRepFormats;            // coded as minus1
+  RepFormat  m_vpsRepFormat[16];
+  Int        m_vpsRepFormatIdx[16];
 #endif
 public:
   TComVPS();
@@ -726,6 +764,19 @@ public:
   Void setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
   Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
+#endif
+
+#if REPN_FORMAT_IN_VPS
+  Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
+  Void   setRepFormatIdxPresentFlag(Bool x) { m_repFormatIdxPresentFlag = x;    }
+
+  Int    getVpsNumRepFormats()              { return m_vpsNumRepFormats;        }
+  Void   setVpsNumRepFormats(Int x)         { m_vpsNumRepFormats = x;           }
+
+  RepFormat* getVpsRepFormat(Int idx)       { return &m_vpsRepFormat[idx];      }
+
+  Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];   }
+  Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;      }         
 #endif
 };
 
@@ -1041,6 +1092,9 @@ private:
   UInt        m_numScaledRefLayerOffsets;
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
+#if REPN_FORMAT_IN_VPS
+  Bool m_updateRepFormatFlag;
+#endif
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1198,6 +1252,10 @@ public:
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
+#endif
+#if REPN_FORMAT_IN_VPS
+  Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
+  Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
 #endif
 };
 
@@ -1865,6 +1923,15 @@ TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( 
 
 #endif //SVC_EXTENSION
 
+#if REPN_FORMAT_IN_VPS
+  UInt getPicWidthInLumaSamples();
+  UInt getPicHeightInLumaSamples();
+  UInt getChromaFormatIdc();
+  UInt getBitDepthY();
+  UInt getBitDepthC();
+  Int getQpBDOffsetY();
+  Int getQpBDOffsetC();
+#endif
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
                          Int                 poc);
