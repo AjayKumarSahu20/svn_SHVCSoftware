@@ -94,7 +94,7 @@ Void TAppEncTop::xInitLibCfg()
   Int maxRepFormatIdx = -1;
   for(UInt layer=0; layer < m_numLayers; layer++)
   {
-    assert( m_acLayerCfg[layer].getRepFormatIdx() != -1, "RepFormatIdx not assigned for a layer" );   
+    assert( m_acLayerCfg[layer].getRepFormatIdx() != -1 && "RepFormatIdx not assigned for a layer" );   
     vps->setVpsRepFormatIdx( layer, m_acLayerCfg[layer].getRepFormatIdx() );
     maxRepFormatIdx = std::max( m_acLayerCfg[layer].getRepFormatIdx(), maxRepFormatIdx );
   }
