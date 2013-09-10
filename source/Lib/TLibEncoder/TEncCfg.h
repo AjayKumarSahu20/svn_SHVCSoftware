@@ -100,6 +100,28 @@ struct GOPEntry
 };
 
 std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry);     //input
+
+#if REPN_FORMAT_IN_VPS
+struct RepFormatCfg
+{
+  Int   m_chromaFormatIdc;
+  Bool  m_separateColourPlaneFlag;
+  Int   m_picWidthInLumaSamples;
+  Int   m_picHeightInLumaSamples;
+  Int   m_bitDepthLuma;
+  Int   m_bitDepthChroma;
+  RepFormatCfg()
+    : m_chromaFormatIdc         (CHROMA_420)
+    , m_separateColourPlaneFlag (0)
+    , m_picWidthInLumaSamples   (352)
+    , m_picHeightInLumaSamples  (288)
+    , m_bitDepthLuma            (8)
+    , m_bitDepthChroma          (8)
+  {}
+};
+std::istringstream &operator>>(std::istringstream &in, RepFormatCfg &repFormatCfg);
+#endif
+
 //! \ingroup TLibEncoder
 //! \{
 

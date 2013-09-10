@@ -1586,6 +1586,101 @@ Void  TComSlice::initWpScaling()
   }
 }
 
+#if REPN_FORMAT_IN_VPS
+UInt TComSlice::getPicWidthInLumaSamples()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt retVal, layerId = getLayerId();
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    retVal = sps->getPicWidthInLumaSamples();
+  }
+  else
+  {
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getPicWidthVpsInLumaSamples();
+  }
+  return retVal;
+}
+UInt TComSlice::getPicHeightInLumaSamples()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt retVal, layerId = getLayerId();
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    retVal = sps->getPicHeightInLumaSamples();
+  }
+  else
+  {
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getPicHeightVpsInLumaSamples();
+  }
+  return retVal;
+}
+UInt TComSlice::getChromaFormatIdc()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt retVal, layerId = getLayerId();
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    retVal = sps->getChromaFormatIdc();
+  }
+  else
+  {
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getChromaFormatVpsIdc();
+  }
+  return retVal;
+}
+UInt TComSlice::getBitDepthY()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt retVal, layerId = getLayerId();
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    retVal = sps->getBitDepthY();
+  }
+  else
+  {
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getBitDepthVpsLuma();
+  }
+  return retVal;
+}
+UInt TComSlice::getBitDepthC()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt retVal, layerId = getLayerId();
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    retVal = sps->getBitDepthC();
+  }
+  else
+  {
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getBitDepthVpsChroma();
+  }
+  return retVal;
+}
+Int TComSlice::getQpBDOffsetY()
+{
+  return (getBitDepthY() - 8) * 6;
+}
+Int TComSlice::getQpBDOffsetC()
+{
+  return (getBitDepthC() - 8) * 6;
+}
+
+RepFormat::RepFormat()
+: m_chromaFormatVpsIdc          (0)
+, m_separateColourPlaneVpsFlag  (false)
+, m_picWidthVpsInLumaSamples    (0)
+, m_picHeightVpsInLumaSamples   (0)
+, m_bitDepthVpsLuma             (0)
+, m_bitDepthVpsChroma           (0)
+{}
+#endif
+
 // ------------------------------------------------------------------------------------------------
 // Video parameter set (VPS)
 // ------------------------------------------------------------------------------------------------
@@ -1617,6 +1712,10 @@ TComVPS::TComVPS()
 #if VPS_VUI_BITRATE_PICRATE
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
+#endif
+#if REPN_FORMAT_IN_VPS
+, m_repFormatIdxPresentFlag   (true)
+, m_vpsNumRepFormats          (1)
 #endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
@@ -1691,6 +1790,9 @@ TComVPS::TComVPS()
   ::memset(m_maxBitRate        , 0, sizeof(m_maxBitRate)        );
   ::memset(m_constPicRateIdc   , 0, sizeof(m_constPicRateIdc)   );
   ::memset(m_avgPicRate        , 0, sizeof(m_avgPicRate)        );
+#endif
+#if REPN_FORMAT_IN_VPS
+  ::memset( m_vpsRepFormatIdx, 0, sizeof(m_vpsRepFormatIdx) );
 #endif
 }
 
@@ -1776,6 +1878,9 @@ TComSPS::TComSPS()
 #endif
 #if SCALED_REF_LAYER_OFFSETS
 , m_numScaledRefLayerOffsets  (0)
+#endif
+#if REPN_FORMAT_IN_VPS
+, m_updateRepFormatFlag       (false)
 #endif
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )

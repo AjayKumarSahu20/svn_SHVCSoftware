@@ -1103,7 +1103,11 @@ TEncSearch::xIntraCodingLumaBlk( TComDataCU* pcCU,
   UInt uiAbsSum = 0;
   pcCU       ->setTrIdxSubParts ( uiTrDepth, uiAbsPartIdx, uiFullDepth );
 
+#if REPN_FORMAT_IN_VPS
+  m_pcTrQuant->setQPforQuant    ( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
   m_pcTrQuant->setQPforQuant    ( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
   m_pcTrQuant->selectLambda     (TEXT_LUMA);  
@@ -4609,8 +4613,13 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   
   while((uiWidth>>uiMaxTrMode) < (g_uiMaxCUWidth>>g_uiMaxCUDepth)) uiMaxTrMode--;
   
+#if REPN_FORMAT_IN_VPS
+  qpMin =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+  qpMax =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+#else
   qpMin =  bHighPass ? Clip3( -pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP ) : pcCU->getQP( 0 );
   qpMax =  bHighPass ? Clip3( -pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+#endif
 
   rpcYuvResi->subtract( pcYuvOrg, pcYuvPred, 0, uiWidth );
 
@@ -4859,7 +4868,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
       m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA );        
     }
 
+#if REPN_FORMAT_IN_VPS
+    m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
     m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
     m_pcTrQuant->selectLambda(TEXT_LUMA);  
@@ -4945,7 +4958,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
     {
       Pel *pcResiCurrY = m_pcQTTempTComYuv[ uiQTTempAccessLayer ].getLumaAddr( absTUPartIdx );
 
+#if REPN_FORMAT_IN_VPS
       m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#else
+      m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
       Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
       assert(scalingListType < 6);     
@@ -5194,7 +5211,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
         m_pcEntropyCoder->estimateBit( m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA );        
       }
 
+#if REPN_FORMAT_IN_VPS
+      m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
       m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
       m_pcTrQuant->selectLambda(TEXT_LUMA);
@@ -5213,7 +5234,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
         m_pcEntropyCoder->encodeCoeffNxN( pcCU, pcCoeffCurrY, uiAbsPartIdx, trWidth, trHeight, uiDepth, TEXT_LUMA );
         const UInt uiTsSingleBitsY = m_pcEntropyCoder->getNumberOfWrittenBits();
 
+#if REPN_FORMAT_IN_VPS
+        m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
         m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
         Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);     

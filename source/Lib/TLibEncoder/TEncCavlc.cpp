@@ -422,16 +422,27 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
 #endif
   WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
-  WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
-  assert(pcSPS->getChromaFormatIdc () == 1);
-  // in the first version chroma_format_idc can only be equal to 1 (4:2:0)
-  if( pcSPS->getChromaFormatIdc () == 3 )
+#if REPN_FORMAT_IN_VPS
+  if( pcSPS->getLayerId() > 0 )
   {
-    WRITE_FLAG( 0,                                  "separate_colour_plane_flag");
+    WRITE_FLAG( pcSPS->getUpdateRepFormatFlag(), "update_rep_format_flag" );
   }
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+#endif
+    WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
+    assert(pcSPS->getChromaFormatIdc () == 1);
+    // in the first version chroma_format_idc can only be equal to 1 (4:2:0)
+    if( pcSPS->getChromaFormatIdc () == 3 )
+    {
+      WRITE_FLAG( 0,                                  "separate_colour_plane_flag");
+    }
 
-  WRITE_UVLC( pcSPS->getPicWidthInLumaSamples (),   "pic_width_in_luma_samples" );
-  WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
+    WRITE_UVLC( pcSPS->getPicWidthInLumaSamples (),   "pic_width_in_luma_samples" );
+    WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   Window conf = pcSPS->getConformanceWindow();
 
   WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
@@ -443,9 +454,17 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_UVLC( conf.getWindowBottomOffset() / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_bottom_offset" );
   }
 
-  WRITE_UVLC( pcSPS->getBitDepthY() - 8,             "bit_depth_luma_minus8" );
-  WRITE_UVLC( pcSPS->getBitDepthC() - 8,             "bit_depth_chroma_minus8" );
-
+#if REPN_FORMAT_IN_VPS
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+    assert( pcSPS->getBitDepthY() >= 8 );
+    assert( pcSPS->getBitDepthC() >= 8 );
+#endif
+    WRITE_UVLC( pcSPS->getBitDepthY() - 8,             "bit_depth_luma_minus8" );
+    WRITE_UVLC( pcSPS->getBitDepthC() - 8,             "bit_depth_chroma_minus8" );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   WRITE_UVLC( pcSPS->getBitsForPOC()-4,                 "log2_max_pic_order_cnt_lsb_minus4" );
 
   const Bool subLayerOrderingInfoPresentFlag = 1;
@@ -862,6 +881,32 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
+
+#if REPN_FORMAT_IN_VPS
+  WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
+
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
+  }
+  for(Int i = 0; i < vps->getVpsNumRepFormats(); i++)
+  {
+    // Read rep_format_structures
+    codeRepFormat( vps->getVpsRepFormat(i) );
+  }
+  
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if( vps->getVpsNumRepFormats() > 1 )
+      {
+        WRITE_CODE( vps->getVpsRepFormatIdx(i), 4, "vps_rep_format_idx[i]" );
+      }
+    }
+  }
+#endif
+
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #endif 
@@ -908,7 +953,26 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif 
 }
 #endif
+#if REPN_FORMAT_IN_VPS
+Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
+{
+  WRITE_CODE( repFormat->getChromaFormatVpsIdc(), 2, "chroma_format_idc" );    
+  
+  if( repFormat->getChromaFormatVpsIdc() == 3 )
+  {
+    WRITE_FLAG( repFormat->getSeparateColourPlaneVpsFlag(), "separate_colour_plane_flag");      
+  }
 
+  WRITE_CODE ( repFormat->getPicWidthVpsInLumaSamples (), 16, "pic_width_in_luma_samples" );    
+  WRITE_CODE ( repFormat->getPicHeightVpsInLumaSamples(), 16, "pic_height_in_luma_samples" );    
+  
+  assert( repFormat->getBitDepthVpsLuma() >= 8 );
+  assert( repFormat->getBitDepthVpsChroma() >= 8 );
+  WRITE_CODE( repFormat->getBitDepthVpsLuma() - 8,   4, "bit_depth_luma_minus8" );           
+  WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );         
+
+}
+#endif
 #if VPS_VUI
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
@@ -1051,8 +1115,13 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG( pcSlice->getPicOutputFlag() ? 1 : 0, "pic_output_flag" );
     }
 
+#if REPN_FORMAT_IN_VPS
+    // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
+    assert( pcSlice->getChromaFormatIdc() == 1 );
+#else
     // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
     assert (pcSlice->getSPS()->getChromaFormatIdc() == 1 );
+#endif
     // if( separate_colour_plane_flag  ==  1 )
     //   colour_plane_id                                      u(2)
 
@@ -1652,7 +1721,11 @@ Void TEncCavlc::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
 
+#if REPN_FORMAT_IN_VPS
+  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
+#else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+#endif
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
   xWriteSvlc( iDQp );

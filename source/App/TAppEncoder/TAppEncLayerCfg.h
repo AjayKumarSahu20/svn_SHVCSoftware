@@ -83,6 +83,9 @@ protected:
 #if FINAL_RPL_CHANGE_N0082
   GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
 #endif
+#if REPN_FORMAT_IN_VPS
+  Int       m_repFormatIdx;
+#endif
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -145,6 +148,11 @@ public:
 #endif
 #if FINAL_RPL_CHANGE_N0082
   GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
+#endif
+#if REPN_FORMAT_IN_VPS
+  Int     getRepFormatIdx()           { return m_repFormatIdx; }
+  Void    setSourceWidth(Int x)            {m_iSourceWidth = x;     }
+  Void    setSourceHeight(Int x)           {m_iSourceHeight = x;    }
 #endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 

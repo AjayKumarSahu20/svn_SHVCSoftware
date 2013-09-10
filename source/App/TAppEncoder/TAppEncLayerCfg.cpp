@@ -31,6 +31,9 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   m_cReconFile(string("")),
   m_conformanceMode( 0 ),
   m_aidQP(NULL)
+#if REPN_FORMAT_IN_VPS
+, m_repFormatIdx (-1)
+#endif
 {
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;

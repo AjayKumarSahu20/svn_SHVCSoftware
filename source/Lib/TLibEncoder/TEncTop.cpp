@@ -678,11 +678,19 @@ Void TEncTop::xInitSPS()
     m_cSPS.setAMPAcc(i, 0);
   }
 
+#if REPN_FORMAT_IN_VPS
+  m_cSPS.setBitDepthY( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma() );
+  m_cSPS.setBitDepthC( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  );
+
+  m_cSPS.setQpBDOffsetY ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma()  - 8) );
+  m_cSPS.setQpBDOffsetC ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  - 8) );
+#else
   m_cSPS.setBitDepthY( g_bitDepthY );
   m_cSPS.setBitDepthC( g_bitDepthC );
 
   m_cSPS.setQpBDOffsetY ( 6*(g_bitDepthY - 8) );
   m_cSPS.setQpBDOffsetC ( 6*(g_bitDepthC - 8) );
+#endif
 
   m_cSPS.setUseSAO( m_bUseSAO );
 
@@ -744,7 +752,19 @@ Void TEncTop::xInitPPS()
   m_cPPS.setConstrainedIntraPred( m_bUseConstrainedIntraPred );
   Bool bUseDQP = (getMaxCuDQPDepth() > 0)? true : false;
 
+#if REPN_FORMAT_IN_VPS
+  Int lowestQP;
+  if( m_layerId == 0 || m_cSPS.getUpdateRepFormatFlag() )
+  {
+    lowestQP = - m_cSPS.getQpBDOffsetY();
+  }
+  else
+  {
+    lowestQP = - (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma() - 8) * 6;
+  }
+#else
   Int lowestQP = - m_cSPS.getQpBDOffsetY();
+#endif
 
   if(getUseLossless())
   {
@@ -1211,6 +1231,7 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 #endif
 
 #if SVC_EXTENSION
+#if !REPN_FORMAT_IN_VPS
 Void TEncTop::xInitILRP()
 {
   if(m_layerId>0)
@@ -1244,7 +1265,59 @@ Void TEncTop::xInitILRP()
     }
   }
 }
+#else
+Void TEncTop::xInitILRP()
+{
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) );
+  Int bitDepthY,bitDepthC,picWidth,picHeight;
 
+  if( m_cSPS.getUpdateRepFormatFlag() )
+  {
+    bitDepthY   = m_cSPS.getBitDepthY();
+    bitDepthC   = m_cSPS.getBitDepthC();
+    picWidth    = m_cSPS.getPicWidthInLumaSamples();
+    picHeight   = m_cSPS.getPicHeightInLumaSamples();
+  }
+  else
+  {
+    bitDepthY   = repFormat->getBitDepthVpsLuma();
+    bitDepthC   = repFormat->getBitDepthVpsChroma();
+    picWidth    = repFormat->getPicWidthVpsInLumaSamples();
+    picHeight   = repFormat->getPicHeightVpsInLumaSamples();
+  }
+  
+  if(m_layerId > 0)
+  {
+    g_bitDepthY     = bitDepthY;
+    g_bitDepthC     = bitDepthC;
+    g_uiMaxCUWidth  = m_cSPS.getMaxCUWidth();
+    g_uiMaxCUHeight = m_cSPS.getMaxCUHeight();
+    g_uiMaxCUDepth  = m_cSPS.getMaxCUDepth();
+    g_uiAddCUDepth  = max (0, m_cSPS.getLog2MinCodingBlockSize() - (Int)m_cSPS.getQuadtreeTULog2MinSize() );
+
+    Int  numReorderPics[MAX_TLAYER];
+    Window &conformanceWindow = m_cSPS.getConformanceWindow();
+    Window defaultDisplayWindow = m_cSPS.getVuiParametersPresentFlag() ? m_cSPS.getVuiParameters()->getDefaultDisplayWindow() : Window();
+
+    if (m_cIlpPic[0] == NULL)
+    {
+      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      {
+        m_cIlpPic[j] = new  TComPic;
+#if SVC_UPSAMPLING
+        m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#else
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+        for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
+        {
+          m_cIlpPic[j]->getPicSym()->getCU(i)->initCU(m_cIlpPic[j], i);
+        }
+      }
+    }
+  }
+}
+#endif
 Void TEncTop::setILRPic(TComPic *pcPic)
 {
   for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )

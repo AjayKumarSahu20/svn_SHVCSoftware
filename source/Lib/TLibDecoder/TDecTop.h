@@ -210,7 +210,11 @@ public:
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
 #endif
+#if REPN_FORMAT_IN_VPS
+  Void      xInitILRP(TComSlice *slice);
+#else
   Void      xInitILRP(TComSPS *pcSPS);
+#endif
   Void      setILRPic(TComPic *pcPic);
 #endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
