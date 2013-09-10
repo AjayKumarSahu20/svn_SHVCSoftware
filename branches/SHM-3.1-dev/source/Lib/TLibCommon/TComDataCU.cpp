@@ -1718,7 +1718,7 @@ Int TComDataCU::getIntraDirLumaPredictor( UInt uiAbsPartIdx, Int* uiIntraDirPred
 Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes )
 {
   // check BL mode
-  UInt          uiCUAddrBase, uiAbsPartAddrBase;
+  UInt          uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
   // the right reference layerIdc should be specified, currently it is set to m_layerId-1
   TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, 0 );
 
