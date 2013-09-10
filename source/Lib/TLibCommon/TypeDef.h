@@ -54,7 +54,6 @@
 #if FINAL_RPL_CHANGE_N0082
 #define EXTERNAL_USEDBYCURR_N0082        1      ///< N0082: final ref picture list change (encoder) //dev ver.
 #endif
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            0      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSET_FLAG     0      ///< M0309: Signal scaled reference layer offsets in SPS
@@ -84,6 +83,8 @@
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< N0085 - Signal bit rate and picture in VPS VUI
+#else
+#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
 #endif //VPS_VUI
 
 #endif
@@ -152,7 +153,7 @@
 //! \{
 
 #define FIX1071 1 ///< fix for issue #1071
-#define M0043_LAYERS_PRESENT_SEI         0 ///< M0043: add layers present SEI
+#define M0043_LAYERS_PRESENT_SEI         0 ///< M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 
 #define MAX_NUM_PICS_IN_SOP           1024
 
