@@ -566,12 +566,7 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
 #if SCALED_REF_LAYER_OFFSETS
-#if SCALED_REF_LAYER_OFFSET_FLAG
-  WRITE_FLAG( pcSPS->getLayerId() > 0, "scaled_ref_layer_offset_present_flag" );
   if( pcSPS->getLayerId() > 0 )
-#else
-  if( pcSPS->getLayerId() > 0 )
-#endif
   {
     WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
     for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
