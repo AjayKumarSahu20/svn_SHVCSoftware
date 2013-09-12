@@ -57,6 +57,7 @@
 #define M0463_VUI_EXT_ILP_REF            0      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
+#define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
