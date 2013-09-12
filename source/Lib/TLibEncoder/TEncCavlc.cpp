@@ -565,6 +565,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
+
+#if VERT_MV_CONSTRAINT
+  // Vertical MV component restriction is not used in SHVC CTC
+  WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
+#endif
 #if SCALED_REF_LAYER_OFFSETS
   if( pcSPS->getLayerId() > 0 )
   {
