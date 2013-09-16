@@ -232,7 +232,7 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumMotionPredRefLayers(); i++)
         {
           m_acTEncTop[layer].setMotionPredRefLayerId   ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
-          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
+          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getMotionPredRefLayerId(i), true);
         }        
       }
       Int numDirectRefLayers = 0;
