@@ -76,7 +76,7 @@ protected:
   Int       m_ilSampleOnlyPred[ MAX_LAYERS ];
 #endif
 #if N0120_MAX_TID_REF_CFG
-  Bool      m_maxTidIlRefPicsPlus1PresentFlag; 
+  Bool      m_maxTidRefPresentFlag; 
 #endif 
 #else
   Char*     m_pchInputFile;                                   ///< source file name

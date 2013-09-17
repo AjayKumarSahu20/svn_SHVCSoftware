@@ -720,8 +720,8 @@ public:
   Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  Bool   getMaxTidIlRefPicsPlus1PresentFlag()                   { return m_maxTidIlRefPicsPlus1PresentFlag ;}
-  Void   setMaxTidIlRefPicsPlus1PresentFlag(Bool x)             { m_maxTidIlRefPicsPlus1PresentFlag = x;}
+  Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidIlRefPicsPlus1PresentFlag ;}
+  Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidIlRefPicsPlus1PresentFlag = x;}
 #endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }

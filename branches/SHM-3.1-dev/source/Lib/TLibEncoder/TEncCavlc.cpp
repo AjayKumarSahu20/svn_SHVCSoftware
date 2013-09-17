@@ -782,8 +782,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-   WRITE_FLAG( vps->getMaxTidIlRefPicsPlus1PresentFlag(), "max_tid_il_ref_pics_plus1_present_flag");
-   if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+   WRITE_FLAG( vps->getMaxTidRefPresentFlag(), "max_tid_ref_present_flag");
+   if (vps->getMaxTidRefPresentFlag())
    {
      for( i = 0; i < vps->getMaxLayers() - 1; i++)
      {

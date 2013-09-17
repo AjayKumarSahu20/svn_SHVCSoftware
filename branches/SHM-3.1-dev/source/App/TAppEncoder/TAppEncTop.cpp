@@ -931,11 +931,11 @@ Void TAppEncTop::xInitLib()
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
 #if N0120_MAX_TID_REF_CFG
-  vps->setMaxTidIlRefPicsPlus1PresentFlag(m_maxTidIlRefPicsPlus1PresentFlag);
+  vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
 #else 
   vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
 #endif 
-  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  if (vps->getMaxTidRefPresentFlag())
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
