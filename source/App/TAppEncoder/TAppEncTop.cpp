@@ -933,7 +933,7 @@ Void TAppEncTop::xInitLib()
 #if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
 #else 
-  vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
+  vps->setMaxTidRefPresentFlag(true);
 #endif 
   if (vps->getMaxTidRefPresentFlag())
   {
