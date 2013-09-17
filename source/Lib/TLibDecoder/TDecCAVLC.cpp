@@ -997,8 +997,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  READ_FLAG( uiCode, "max_tid_il_ref_pics_plus1_present_flag"); vps->setMaxTidIlRefPicsPlus1PresentFlag(uiCode ? true : false);
-  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+  READ_FLAG( uiCode, "max_tid_ref_present_flag"); vps->setMaxTidRefPresentFlag(uiCode ? true : false);
+  if (vps->getMaxTidRefPresentFlag())
   {
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {

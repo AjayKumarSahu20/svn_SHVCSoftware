@@ -73,7 +73,7 @@ TAppEncCfg::TAppEncCfg()
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
 #if N0120_MAX_TID_REF_CFG
-, m_maxTidIlRefPicsPlus1PresentFlag(1)
+, m_maxTidRefPresentFlag(1)
 #endif 
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
@@ -523,7 +523,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
 #if N0120_MAX_TID_REF_CFG
-  ("MaxTidIlRefPicsPlus1Present", m_maxTidIlRefPicsPlus1PresentFlag, true, "max_tid_il_ref_pics_plus1_present_flag (0: not present, 1: present(default)) " )
+  ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
 #endif 
 #if AVC_BASE
