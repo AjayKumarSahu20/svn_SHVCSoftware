@@ -186,6 +186,9 @@ protected:
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int       m_maxTidIlRefPicsPlus1;
+#endif 
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
@@ -467,6 +470,10 @@ public:
   Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
 #endif
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
+  Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
+#endif 
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
   Void      setQuadtreeTULog2MinSize        ( UInt  u )      { m_uiQuadtreeTULog2MinSize = u; }

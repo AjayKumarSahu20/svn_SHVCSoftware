@@ -72,6 +72,9 @@ TAppEncCfg::TAppEncCfg()
 , m_pRowHeight()
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
+#if N0120_MAX_TID_REF_CFG
+, m_maxTidIlRefPicsPlus1PresentFlag(1)
+#endif 
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
@@ -396,6 +399,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_RCInitialQP          [MAX_LAYERS];
   Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
+#endif 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -441,6 +447,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
     cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
+#if N0120_MAX_TID_REF_CFG
+    cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
+#endif 
   }
 #if AVC_BASE
   string  cfg_BLInputFile;
@@ -513,6 +522,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
+#if N0120_MAX_TID_REF_CFG
+  ("MaxTidIlRefPicsPlus1Present", m_maxTidIlRefPicsPlus1PresentFlag, true, "max_tid_il_ref_pics_plus1_present_flag (0: not present, 1: present(default)) " )
+  ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
+#endif 
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
@@ -2086,6 +2099,12 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
 #endif
+#if N0120_MAX_TID_REF_CFG
+  for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
+  }
+#endif 
 #undef xConfirmPara
   if (check_failed)
   {

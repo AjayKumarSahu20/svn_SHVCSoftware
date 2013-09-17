@@ -65,6 +65,9 @@ protected:
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
 
+#if N0120_MAX_TID_REF_CFG
+  Int       m_maxTidIlRefPicsPlus1;
+#endif 
 #if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
@@ -154,6 +157,9 @@ public:
   Void    setSourceWidth(Int x)            {m_iSourceWidth = x;     }
   Void    setSourceHeight(Int x)           {m_iSourceHeight = x;    }
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
+#endif 
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}
