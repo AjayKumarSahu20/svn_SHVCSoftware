@@ -940,9 +940,9 @@ Void TAppEncTop::xInitLib()
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
 #if N0120_MAX_TID_REF_CFG
-      vps->setMaxSublayerForIlpPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1()); 
+      vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1()); 
 #else 
-      vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
+      vps->setMaxTidIlRefPicsPlus1(i, vps->getMaxTLayers()+1);
 #endif 
     }
   }
@@ -950,7 +950,7 @@ Void TAppEncTop::xInitLib()
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
-      vps->setMaxSublayerForIlpPlus1(i, 7);
+      vps->setMaxTidIlRefPicsPlus1(i, 7);
     }
   }
 #endif 

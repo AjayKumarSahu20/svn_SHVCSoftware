@@ -466,7 +466,7 @@ Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecL
   }
 
   Int remainingInterLayerReferencesFlag = 0;
-  if ( currTid <= pcSlice->getVPS()->getMaxSublayerForIlpPlus1(latestDecLayerId) - 1 )
+  if ( currTid <= pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(latestDecLayerId) - 1 )
   {
     for ( Int j = latestDecIdx + 1; j < numTargetDecLayers; j++ )
     {

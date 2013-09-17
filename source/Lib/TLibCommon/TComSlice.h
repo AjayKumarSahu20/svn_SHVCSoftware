@@ -523,10 +523,10 @@ private:
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-  UInt       m_maxSublayerForIlpPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  Bool       m_maxTidIlRefPicsPlus1PresentFlag;
+  Bool       m_maxTidRefPresentFlag;
 #endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
@@ -716,12 +716,12 @@ public:
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #endif 
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-  UInt   getMaxSublayerForIlpPlus1(Int layerId)                     { return m_maxSublayerForIlpPlus1[layerId];                   }
-  Void   setMaxSublayerForIlpPlus1(Int layerId, UInt maxSublayer)   { m_maxSublayerForIlpPlus1[layerId] = maxSublayer;            }
+  UInt   getMaxTidIlRefPicsPlus1(Int layerId)                     { return m_maxTidIlRefPicsPlus1[layerId];                   }
+  Void   setMaxTidIlRefPicsPlus1(Int layerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId] = maxSublayer;            }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidIlRefPicsPlus1PresentFlag ;}
-  Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidIlRefPicsPlus1PresentFlag = x;}
+  Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
+  Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
 #endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }

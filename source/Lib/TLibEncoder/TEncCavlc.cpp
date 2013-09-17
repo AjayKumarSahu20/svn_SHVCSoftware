@@ -787,13 +787,13 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
    {
      for( i = 0; i < vps->getMaxLayers() - 1; i++)
      {
-       WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+       WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
      }
    }
 #else
   for( i = 0; i < vps->getMaxLayers() - 1; i++)
   {
-    WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+    WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
   }
 #endif
 #endif

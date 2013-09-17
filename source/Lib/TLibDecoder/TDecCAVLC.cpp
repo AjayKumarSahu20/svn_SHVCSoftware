@@ -1002,7 +1002,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   {
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {
-      READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
+      READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i]" ); vps->setMaxTidIlRefPicsPlus1(i, uiCode);
 #if N0120_MAX_TID_REF_CFG
       assert( uiCode <= vps->getMaxTLayers());
 #else 
@@ -1014,13 +1014,13 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   {
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {
-      vps->setMaxSublayerForIlpPlus1(i, 7);
+      vps->setMaxTidIlRefPicsPlus1(i, 7);
     }
   }
 #else
   for(i = 0; i < vps->getMaxLayers() - 1; i++)
   {
-    READ_CODE( 3, uiCode, "max_sublayer_for_ilp_plus1[i]" ); vps->setMaxSublayerForIlpPlus1(i, uiCode);
+    READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i]" ); vps->setMaxTidIlRefPicsPlus1(i, uiCode);
     assert( uiCode <= vps->getMaxTLayers() );
   }
 #endif

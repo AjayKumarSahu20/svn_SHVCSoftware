@@ -445,8 +445,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     //inter-layer reference picture
 
 #if ILR_RESTR
-    Int maxSubLayerForILPPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
-    if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
+    Int maxTidIlRefPicsPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
+    if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
 #else //#if ILR_RESTR
     if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
 #endif //#if ILR_RESTR
@@ -483,8 +483,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
   {
     for( i=0; i < m_pcVPS->getNumDirectRefLayers( m_layerId ); i++ )
     {
-      Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[i]->getSlice(0)->getLayerId());
-      if( ((Int)(ilpPic[i]->getSlice(0)->getTLayer())<= maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[i]->getSlice(0)->getRapPicFlag() ) )
+      Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[i]->getSlice(0)->getLayerId());
+      if( ((Int)(ilpPic[i]->getSlice(0)->getTLayer())<= maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[i]->getSlice(0)->getRapPicFlag() ) )
       {
         numInterLayerRPSPics++;
       }
@@ -624,8 +624,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if ILR_RESTR
-        Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+        Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
+        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
 #endif
           rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
       }
@@ -652,8 +652,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if ILR_RESTR
-         Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+         Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
+        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
 #endif
         rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
       }
@@ -689,8 +689,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if ILR_RESTR
-        Int maxSubLayerForILPPlus1 = getVPS()->getMaxSublayerForIlpPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+        Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId());
+        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
 #endif
         rpsCurrList1[cIdx] = ilpPic[refLayerIdc];
       }
@@ -1800,11 +1800,11 @@ TComVPS::TComVPS()
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  m_maxTidIlRefPicsPlus1PresentFlag = true;
+  m_maxTidRefPresentFlag = true;
 #endif 
   for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
   {
-    m_maxSublayerForIlpPlus1[i] = m_uiMaxTLayers + 1;
+    m_maxTidIlRefPicsPlus1[i] = m_uiMaxTLayers + 1;
   }
 #endif
 #if TILE_BOUNDARY_ALIGNED_FLAG
