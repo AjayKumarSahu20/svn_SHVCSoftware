@@ -117,6 +117,7 @@
 #define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
+#define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< implementation of JCTVC-M0203 Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC

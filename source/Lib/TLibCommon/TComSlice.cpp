@@ -498,6 +498,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
     if( m_pcVPS->getScalabilityMask(1) )
     {
       Int numResampler = 0;
+#if MOTION_RESAMPLING_CONSTRAINT
+      Int numMotionResamplers = 0;
+      Int refResamplingLayer[MAX_LAYERS];
+      memset( refResamplingLayer, 0, sizeof( refResamplingLayer ) );
+#endif
       const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
       Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
                            (scalEL.getWindowRightOffset()  == 0 ) && 
@@ -510,12 +515,40 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
         if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
         {
+#if MOTION_RESAMPLING_CONSTRAINT
+          UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, m_pcVPS->getRefLayerId( m_layerId, refLayerIdc ) ) + 1;
+
+          if( predType & 0x1 )
+          {
+            numResampler++;
+            refResamplingLayer[i] = refLayerIdc + 1;
+          }
+
+          if( predType & 0x2 )
+          {
+            numMotionResamplers++;
+            refResamplingLayer[i] -= refLayerIdc + 1;
+          }
+#else
           numResampler++;
+#endif
+        }
+      }
+      
+      // When both picture sample values and picture motion field resampling processes are invoked for decoding of a particular picture, they shall be applied to the same reference layer picture.
+      if( m_activeNumILRRefIdx > 1 && numResampler > 0 )
+      {
+        for( i=0; i < m_activeNumILRRefIdx; i++ )
+        {
+          assert( refResamplingLayer[i] >= 0 && "Motion and sample inter-layer prediction shall be from the same layer" );
         }
       }
 
-      //Bitstream constraint for SHVC: The picture resampling process as specified in subclause G.8.1.4.1 shall not be invoked more than once for decoding of each particular picture.
+      // Bitstream constraint for SHVC: The picture resampling process as specified in subclause G.8.1.4.1 shall not be invoked more than once for decoding of each particular picture.
       assert(numResampler <= 1);
+#if MOTION_RESAMPLING_CONSTRAINT
+      assert( numMotionResamplers <= 1  && "Up to 1 motion resampling is allowed" );
+#endif
     }
 #endif 
 #else
