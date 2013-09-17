@@ -194,6 +194,12 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
+#if N0120_MAX_TID_REF_CFG
+    if (layer<m_numLayers-1)
+    {
+       m_acTEncTop[layer].setMaxTidIlRefPicsPlus1 ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1()); 
+    }
+#endif 
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
@@ -924,12 +930,20 @@ Void TAppEncTop::xInitLib()
   }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
+#if N0120_MAX_TID_REF_CFG
+  vps->setMaxTidIlRefPicsPlus1PresentFlag(m_maxTidIlRefPicsPlus1PresentFlag);
+#else 
   vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
+#endif 
   if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
+#if N0120_MAX_TID_REF_CFG
+      vps->setMaxSublayerForIlpPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1()); 
+#else 
       vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
+#endif 
     }
   }
   else
