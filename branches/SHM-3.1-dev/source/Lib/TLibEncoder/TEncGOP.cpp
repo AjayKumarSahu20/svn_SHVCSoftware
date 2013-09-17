@@ -593,8 +593,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if ILR_RESTR && ILR_RESTR_FIX
         // Apply temporal layer restriction to inter-layer prediction
-        Int maxSubLayerForILPPlus1 = m_pcEncTop->getVPS()->getMaxSublayerForIlpPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
-        if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxSubLayerForILPPlus1-1) || (maxSubLayerForILPPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
+        Int maxTidIlRefPicsPlus1 = m_pcEncTop->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
+        if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
         {
           interLayerPredLayerIdcTmp[activeNumILRRefIdxTmp++] = refLayerIdc; // add picture to the list of valid inter-layer pictures
         }
