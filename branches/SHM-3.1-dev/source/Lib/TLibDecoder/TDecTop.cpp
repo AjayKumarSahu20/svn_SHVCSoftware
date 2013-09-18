@@ -139,7 +139,7 @@ Void TDecTop::init()
 
 #if SVC_EXTENSION
 #if !REPN_FORMAT_IN_VPS
-Void TDecTop::xInitILRP(TComSPS *pcSPS
+Void TDecTop::xInitILRP(TComSPS *pcSPS)
 #else
 Void TDecTop::xInitILRP(TComSlice *slice)
 #endif

@@ -478,7 +478,11 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setDepth            ( depth );
   
   pcPic->setTLayer( m_pcCfg->getGOPEntry(iGOPid).m_temporalId );
+#if TEMP_SCALABILITY_FIX
+  if((eSliceType==I_SLICE) || (rpcSlice->getPOC() == 0))
+#else
   if(eSliceType==I_SLICE)
+#endif
   {
     pcPic->setTLayer(0);
   }
