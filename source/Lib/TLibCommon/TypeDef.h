@@ -53,6 +53,7 @@
 #define FINAL_RPL_CHANGE_N0082           1      ///< N0082: final ref picture list change (encoder)
 #if FINAL_RPL_CHANGE_N0082
 #define EXTERNAL_USEDBYCURR_N0082        1      ///< N0082: final ref picture list change (encoder) //dev ver.
+#define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
 #endif
 #define M0463_VUI_EXT_ILP_REF            0      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure

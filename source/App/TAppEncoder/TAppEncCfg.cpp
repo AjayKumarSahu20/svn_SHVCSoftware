@@ -1573,8 +1573,13 @@ Void TAppEncCfg::xCheckParameter()
     errorGOP = xconfirmExtraGOP( m_acLayerCfg[layer].m_GOPListLayer );
     xConfirmPara(errorGOP,"Invalid GOP structure given");
   }
+#if TEMP_SCALABILITY_FIX
+  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7  && 
+    m_acLayerCfg[1].m_GOPListLayer[5].m_temporalId == 0 && m_acLayerCfg[1].m_GOPListLayer[7].m_temporalId == 0)
+#else
   //tentative for encoder
   if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 )
+#endif
   {
     //RA, POC5
     m_acLayerCfg[1].m_GOPListLayer[5].m_usedByCurrPic[2] = 0;
