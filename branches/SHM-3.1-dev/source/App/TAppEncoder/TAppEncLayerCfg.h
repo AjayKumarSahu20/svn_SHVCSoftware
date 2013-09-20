@@ -153,9 +153,10 @@ public:
   GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
 #endif
 #if REPN_FORMAT_IN_VPS
-  Int     getRepFormatIdx()           { return m_repFormatIdx; }
-  Void    setSourceWidth(Int x)            {m_iSourceWidth = x;     }
-  Void    setSourceHeight(Int x)           {m_iSourceHeight = x;    }
+  Int     getRepFormatIdx()           { return m_repFormatIdx;  }
+  Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
+  Void    setSourceWidth(Int x)       { m_iSourceWidth = x;     }
+  Void    setSourceHeight(Int x)      { m_iSourceHeight = x;    }
 #endif
 #if N0120_MAX_TID_REF_CFG
   Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }

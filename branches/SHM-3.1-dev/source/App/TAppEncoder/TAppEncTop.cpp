@@ -92,8 +92,30 @@ Void TAppEncTop::xInitLibCfg()
 #if REPN_FORMAT_IN_VPS
   vps->setRepFormatIdxPresentFlag( true );   // Could be disabled to optimize in some cases.
   Int maxRepFormatIdx = -1;
+  Int formatIdx = -1;
   for(UInt layer=0; layer < m_numLayers; layer++)
   {
+    // Auto generation of the format index
+    if( m_acLayerCfg[layer].getRepFormatIdx() == -1 )
+    {
+      // Currently only picture width and height are considred. It has to be updated if different chroma format and bit-depth will are used.
+      Bool found = false;
+      for( UInt idx = 0; idx < layer; idx++ )
+      {
+        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() )
+        {
+          found = true;
+          break;
+        }
+      }
+      if( !found )
+      {
+        formatIdx++;
+      }
+
+      m_acLayerCfg[layer].setRepFormatIdx( formatIdx );
+    }
+
     assert( m_acLayerCfg[layer].getRepFormatIdx() != -1 && "RepFormatIdx not assigned for a layer" );   
     vps->setVpsRepFormatIdx( layer, m_acLayerCfg[layer].getRepFormatIdx() );
     maxRepFormatIdx = std::max( m_acLayerCfg[layer].getRepFormatIdx(), maxRepFormatIdx );
