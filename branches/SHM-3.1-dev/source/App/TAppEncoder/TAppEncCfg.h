@@ -67,7 +67,7 @@ protected:
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
-  Int       m_avcBaseLayerFlag;                               ///< AVC_BASElayer_flag
+  Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
 #endif
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file

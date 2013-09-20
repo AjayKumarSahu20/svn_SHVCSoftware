@@ -1154,7 +1154,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     assert (vps->getMaxLayers() <= 16);       // If max_layers_is more than 15, num_rep_formats has to be signaled
     vps->setVpsNumRepFormats( vps->getMaxLayers() );
   }
-  for(Int i = 0; i < vps->getVpsNumRepFormats(); i++)
+  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
     parseRepFormat( vps->getVpsRepFormat(i) );
@@ -1164,7 +1164,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setVpsRepFormatIdx( 0, 0 );
   if( vps->getRepFormatIdxPresentFlag() )
   {
-    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    for(i = 1; i < vps->getMaxLayers(); i++)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
@@ -1181,7 +1181,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   else
   {
     // default assignment - each layer assigned each rep_format() structure in the order signaled
-    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    for(i = 1; i < vps->getMaxLayers(); i++)
     {
       vps->setVpsRepFormatIdx( i, i );
     }

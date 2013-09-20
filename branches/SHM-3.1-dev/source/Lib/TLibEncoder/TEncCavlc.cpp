@@ -889,7 +889,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   {
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
   }
-  for(Int i = 0; i < vps->getVpsNumRepFormats(); i++)
+  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
     codeRepFormat( vps->getVpsRepFormat(i) );
@@ -897,7 +897,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   
   if( vps->getRepFormatIdxPresentFlag() )
   {
-    for(Int i = 1; i < vps->getMaxLayers(); i++)
+    for(i = 1; i < vps->getMaxLayers(); i++)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
