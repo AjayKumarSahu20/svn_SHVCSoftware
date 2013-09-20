@@ -68,13 +68,13 @@ TAppEncCfg::TAppEncCfg()
 #if AVC_BASE
 , m_avcBaseLayerFlag(0)
 #endif
+#if N0120_MAX_TID_REF_CFG
+, m_maxTidRefPresentFlag(1)
+#endif 
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
-#if N0120_MAX_TID_REF_CFG
-, m_maxTidRefPresentFlag(1)
-#endif 
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
