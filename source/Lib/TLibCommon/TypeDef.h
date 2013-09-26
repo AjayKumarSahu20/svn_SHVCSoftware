@@ -40,6 +40,8 @@
 
 #define SVC_EXTENSION                    1
 
+#define SCALABILITY_MASK_E0104           1
+
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #define HM12_RANDOM_ACCESS               1

@@ -519,7 +519,11 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             pcEPic->setSpatialEnhLayerFlag( i, true );
 
             //only for scalable extension
+#if SCALABILITY_MASK_E0104
+            assert( m_cVPS.getScalabilityMask(2) == true );
+#else
             assert( m_cVPS.getScalabilityMask(1) == true );
+#endif
           }
         }
       }
@@ -556,7 +560,11 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             rpcPic->setSpatialEnhLayerFlag( i, true );
 
             //only for scalable extension
+#if SCALABILITY_MASK_E0104
+            assert( m_cVPS.getScalabilityMask(2) == true );
+#else
             assert( m_cVPS.getScalabilityMask(1) == true );
+#endif
           }
         }
       }
