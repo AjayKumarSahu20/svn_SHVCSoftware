@@ -501,8 +501,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+#if SCALABILITY_MASK_E0104
+  ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
+  ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
+#else
   ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
   ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
+#endif
   ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("InputBitDepth",           m_inputBitDepthY,    8, "Bit-depth of input file")
   ("OutputBitDepth",          m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
@@ -2146,8 +2151,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
 #if SVC_EXTENSION  
   printf("Total number of layers        : %d\n", m_numLayers       );
+#if SCALABILITY_MASK_E0104
+  printf("Multiview                     : %d\n", m_scalabilityMask[1] );
+  printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#else
   printf("Multiview                     : %d\n", m_scalabilityMask[0] );
   printf("Scalable                      : %d\n", m_scalabilityMask[1] );
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
 #endif
