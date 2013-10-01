@@ -158,6 +158,7 @@
 //! \{
 
 #define FIX1071 1 ///< fix for issue #1071
+#define VIEW_ID_RELATED_SIGNALING        1 ///< Introduce syntax elements view_id_len_minus1 and view_id_val
 #define M0043_LAYERS_PRESENT_SEI         0 ///< M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 
 #define MAX_NUM_PICS_IN_SOP           1024
@@ -621,6 +622,14 @@ namespace Level
     LEVEL6_2 = 186,
   };
 }
+#if VIEW_ID_RELATED_SIGNALING
+/// scalability types
+  enum ScalabilityType
+  {
+    VIEW_ORDER_INDEX  = 1,
+    SCALABILITY_ID = 2,
+  };
+#endif
 //! \}
 
 #endif

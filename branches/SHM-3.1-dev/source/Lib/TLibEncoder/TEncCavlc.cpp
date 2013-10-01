@@ -769,6 +769,18 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if VIEW_ID_RELATED_SIGNALING
+  // if ( pcVPS->getNumViews() > 1 )  
+  //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val. 
+  {
+    WRITE_CODE( vps->getViewIdLenMinus1( ), 4, "view_id_len_minus1" );
+  }
+
+  for( Int i = 0; i < vps->getNumViews(); i++ )
+  {
+    WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
+  }
+#endif
 #if VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)

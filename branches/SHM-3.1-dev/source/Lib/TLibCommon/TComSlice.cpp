@@ -1754,6 +1754,9 @@ TComVPS::TComVPS()
 , m_repFormatIdxPresentFlag   (true)
 , m_vpsNumRepFormats          (1)
 #endif
+#if VIEW_ID_RELATED_SIGNALING 
+, m_viewIdLenMinus1           (0)
+#endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
   {
@@ -1831,6 +1834,9 @@ TComVPS::TComVPS()
 #if REPN_FORMAT_IN_VPS
   ::memset( m_vpsRepFormatIdx, 0, sizeof(m_vpsRepFormatIdx) );
 #endif
+#if VIEW_ID_RELATED_SIGNALING 
+  ::memset(m_viewIdVal, 0, sizeof(m_viewIdVal));
+#endif
 }
 
 TComVPS::~TComVPS()
@@ -1861,6 +1867,39 @@ Void TComVPS::deriveLayerIdListVariables()
     }
     setNumLayersInIdList(i, n);
   }
+}
+#endif
+#if VIEW_ID_RELATED_SIGNALING 
+Int TComVPS::getNumViews()
+{
+  Int numViews = 1; 
+  for( Int i = 0; i <= getMaxLayers() - 1; i++ )
+  {
+    Int lId = getLayerIdInNuh( i ); 
+    if ( i > 0 && ( getViewIndex( lId ) != getScalabilityId( i - 1, VIEW_ORDER_INDEX ) ) )
+    {
+      numViews++; 
+    }    
+  }
+
+  return numViews;
+}
+Int TComVPS::getScalabilityId( Int layerIdInVps, ScalabilityType scalType )
+{
+  return getScalabilityMask( scalType ) ? getDimensionId( layerIdInVps, scalTypeToScalIdx( scalType ) ) : 0;
+}  
+Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
+{
+  assert( scalType >= 0 && scalType <= MAX_VPS_NUM_SCALABILITY_TYPES ); 
+  assert( scalType == MAX_VPS_NUM_SCALABILITY_TYPES || getScalabilityMask( scalType ) );
+  Int scalIdx = 0; 
+  for( Int curScalType = 0; curScalType < scalType; curScalType++ )
+  {
+    scalIdx += ( getScalabilityMask( curScalType ) ? 1 : 0 );
+
+  }
+
+  return scalIdx; 
 }
 #endif
 // ------------------------------------------------------------------------------------------------
