@@ -556,6 +556,10 @@ private:
   RepFormat  m_vpsRepFormat[16];
   Int        m_vpsRepFormatIdx[16];
 #endif
+#if VIEW_ID_RELATED_SIGNALING 
+  Int         m_viewIdLenMinus1;
+  Int         m_viewIdVal                [MAX_LAYERS];
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -777,6 +781,19 @@ public:
 
   Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];   }
   Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;      }         
+#endif
+#if VIEW_ID_RELATED_SIGNALING
+  Void    setViewIdLenMinus1( Int  val )                                   { m_viewIdLenMinus1 = val; } 
+  Int     getViewIdLenMinus1(  )                                           { return m_viewIdLenMinus1; } 
+
+  Void    setViewIdVal( Int viewOrderIndex, Int  val )                     { m_viewIdVal[viewOrderIndex] = val; } 
+  Int     getViewIdVal( Int viewOrderIndex )                               { return m_viewIdVal[viewOrderIndex]; } 
+  Int     getScalabilityId(Int, ScalabilityType scalType );
+
+  Int     getViewIndex    ( Int layerIdInNuh )                             { return getScalabilityId( getLayerIdInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
+
+  Int     getNumViews();
+  Int     scalTypeToScalIdx( ScalabilityType scalType );
 #endif
 };
 
