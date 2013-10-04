@@ -46,7 +46,7 @@
 
 #define HM12_RANDOM_ACCESS               1
 #define RANDOM_ACCESS_SEI_FIX            1
-
+#define VPS_NUH_LAYER_ID                 1      ///< N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 #define REPN_FORMAT_IN_VPS               1      ///< N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
