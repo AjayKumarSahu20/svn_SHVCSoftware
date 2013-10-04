@@ -1058,6 +1058,9 @@ Void TAppEncTop::xInitLib()
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
+#if N0147_IRAP_ALIGN_FLAG    
+    vps->setCrossLayerIrapAlignFlag(maxDirectRefLayers == 0 ? false : true); 
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif

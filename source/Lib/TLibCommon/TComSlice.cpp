@@ -1805,6 +1805,9 @@ TComVPS::TComVPS()
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
 #endif
+#if N0147_IRAP_ALIGN_FLAG
+  m_crossLayerIrapAlignFlag = true;
+#endif 
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   m_maxTidRefPresentFlag = true;

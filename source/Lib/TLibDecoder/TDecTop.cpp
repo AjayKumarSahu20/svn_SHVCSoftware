@@ -756,6 +756,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   // actual decoding starts here
   xActivateParameterSets();
+#if 0 // N0147_IRAP_ALIGN_FLAG Disabled for now!
+  //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
+  if( m_layerId > 0 && m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag())
+    assert( m_apcSlicePilot->getPPS()->getNumExtraSliceHeaderBits() > 0);
+  //When cross_layer_irap_aligned_flag is equal to 1, the value of poc_reset_flag shall be equal to 0  
+  // to be added after poc_reset_flag is integrated.
+#endif 
+
 #if REPN_FORMAT_IN_VPS
   // Initialize ILRP if needed, only for the current layer  
   // ILRP intialization should go along with activation of parameters sets, 
@@ -1098,6 +1106,16 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #endif //SVC_EXTENSION
 
+#if N0147_IRAP_ALIGN_FLAG
+    if(  m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
+    {
+      if(pcSlice->isIRAP())
+      {
+        for(Int depedentLayerId = 0; depedentLayerId < pcSlice->getVPS()->getNumDirectRefLayers(m_layerId); depedentLayerId++)
+          assert(pcSlice->getNalUnitType() == pcSlice->getBaseColPic(depedentLayerId)->getSlice(0)->getNalUnitType());
+      }
+    }
+#endif 
     // For generalized B
     // note: maybe not existed case (always L0 is copied to L1 if L1 is empty)
     if (pcSlice->isInterB() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) == 0)

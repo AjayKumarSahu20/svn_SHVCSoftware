@@ -142,6 +142,7 @@
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #endif
 
+#define N0147_IRAP_ALIGN_FLAG            1
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC
 #define NB_REMAIN_MODES                  2      ///< nb of remaining modes (M0115)

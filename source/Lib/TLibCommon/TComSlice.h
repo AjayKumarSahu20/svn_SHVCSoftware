@@ -522,6 +522,9 @@ private:
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
+#if N0147_IRAP_ALIGN_FLAG
+  Bool       m_crossLayerIrapAlignFlag;
+#endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
 #endif
@@ -718,6 +721,10 @@ public:
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
+#endif 
+#if N0147_IRAP_ALIGN_FLAG
+  Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
+  Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
 #endif 
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
   UInt   getMaxTidIlRefPicsPlus1(Int layerId)                     { return m_maxTidIlRefPicsPlus1[layerId];                   }
