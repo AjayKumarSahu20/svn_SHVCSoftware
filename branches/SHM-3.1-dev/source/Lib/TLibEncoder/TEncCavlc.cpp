@@ -922,6 +922,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #endif 
+#if N0147_IRAP_ALIGN_FLAG
+      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+#endif 
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)

@@ -1204,6 +1204,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setMaxOneActiveRefLayerFlag(uiCode);
 #endif
 
+#if N0147_IRAP_ALIGN_FLAG
+  READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
+  vps->setCrossLayerIrapAlignFlag(uiCode);
+#endif 
+
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // For layer 0
