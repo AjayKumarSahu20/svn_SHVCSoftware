@@ -78,7 +78,7 @@ private:
 #endif
 
   TComSlice*              m_apcSlicePilot;
-  
+
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
 
   // functional classes

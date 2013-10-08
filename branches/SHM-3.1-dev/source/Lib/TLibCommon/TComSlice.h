@@ -155,30 +155,66 @@ public:
   virtual ~TComScalingList();
   Void     setScalingListPresentFlag    (Bool b)                               { m_scalingListPresentFlag = b;    }
   Bool     getScalingListPresentFlag    ()                                     { return m_scalingListPresentFlag; }
+
+#if IL_SL_SIGNALLING_N0371
+  UInt     m_layerId;
+
+  Void     setPredScalingListFlag    (Bool b)                               { m_predScalingListFlag = b;    }
+  Bool     getPredScalingListFlag    ()                                     { return m_predScalingListFlag; }
+  Void     setScalingListRefLayerId  (UInt b)                               { m_scalingListRefLayerId = b;  }
+  UInt     getScalingListRefLayerId  ()                                     { return m_scalingListRefLayerId; }
+#endif
+
   Bool     getUseTransformSkip    ()                                     { return m_useTransformSkip; }      
   Void     setUseTransformSkip    (Bool b)                               { m_useTransformSkip = b;    }
+
   Int*     getScalingListAddress          (UInt sizeId, UInt listId)           { return m_scalingListCoef[sizeId][listId]; } //!< get matrix coefficient
+
   Bool     checkPredMode                  (UInt sizeId, UInt listId);
+
   Void     setRefMatrixId                 (UInt sizeId, UInt listId, UInt u)   { m_refMatrixId[sizeId][listId] = u;    }     //!< set reference matrix ID
   UInt     getRefMatrixId                 (UInt sizeId, UInt listId)           { return m_refMatrixId[sizeId][listId]; }     //!< get reference matrix ID
   Int*     getScalingListDefaultAddress   (UInt sizeId, UInt listId);                                                        //!< get default matrix coefficient
+
+#if IL_SL_SIGNALLING_N0371
+  Void     processDefaultMarix            (UInt sizeId, UInt listId, UInt layerId );
+#else
   Void     processDefaultMarix            (UInt sizeId, UInt listId);
+#endif
+
   Void     setScalingListDC               (UInt sizeId, UInt listId, UInt u)   { m_scalingListDC[sizeId][listId] = u; }      //!< set DC value
 
   Int      getScalingListDC               (UInt sizeId, UInt listId)           { return m_scalingListDC[sizeId][listId]; }   //!< get DC value
+
+#if IL_SL_SIGNALLING_N0371
+  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
+  UInt     getLayerId() { return m_layerId; }
+  Void     checkDcOfMatrix                ( UInt m_layerId );
+#else
   Void     checkDcOfMatrix                ();
+#endif
+
   Void     processRefMatrix               (UInt sizeId, UInt listId , UInt refListId );
   Bool     xParseScalingList              (Char* pchFile);
 
 private:
   Void     init                    ();
   Void     destroy                 ();
+
   Int      m_scalingListDC               [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< the DC value of the matrix coefficient for 16x16
   Bool     m_useDefaultScalingMatrixFlag [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< UseDefaultScalingMatrixFlag
   UInt     m_refMatrixId                 [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< RefMatrixID
   Bool     m_scalingListPresentFlag;                                                //!< flag for using default matrix
+
+#if IL_SL_SIGNALLING_N0371
+  Bool     m_predScalingListFlag;                                                   //!< flag for inter-layer scaling-list prediction
+  UInt     m_scalingListRefLayerId;                                                 //!< scaling_list_ref_layer_id  
+#endif
+
   UInt     m_predMatrixId                [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< reference list index
+
   Int      *m_scalingListCoef            [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< quantization matrix
+
   Bool     m_useTransformSkip;                                                      //!< transform skipping flag for setting default scaling matrix for 4x4
 };
 
@@ -468,6 +504,9 @@ private:
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
+#if IL_SL_SIGNALLING_N0371
+  Bool        m_scalingListLayerDependency[MAX_LAYERS][MAX_LAYERS];  // layer dependency for scaling list
+#endif
   TComPTL     m_pcPTL;
   TimingInfo  m_timingInfo;
 
@@ -553,6 +592,9 @@ private:
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 #endif
+<<<<<<< .mine
+
+=======
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
   Int        m_vpsNumRepFormats;            // coded as minus1
@@ -563,6 +605,7 @@ private:
   Int         m_viewIdLenMinus1;
   Int         m_viewIdVal                [MAX_LAYERS];
 #endif
+>>>>>>> .r413
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -628,6 +671,13 @@ public:
 
   Void    deriveLayerIdListVariables();
 #endif
+
+#if IL_SL_SIGNALLING_N0371
+  Bool    checkLayerDependency(UInt i, UInt j);
+  Bool    getScalingListLayerDependency  ( UInt layerId, UInt refLayerId )            { return m_scalingListLayerDependency[layerId][refLayerId]; }
+  Void    setScalingListLayerDependency  ( UInt layerId, UInt refLayerId, Bool val  ) { m_scalingListLayerDependency[layerId][refLayerId] = val;  }
+#endif
+
   TComPTL* getPTL() { return &m_pcPTL; }
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -1082,7 +1132,9 @@ private:
 
   Bool        m_scalingListEnabledFlag;
   Bool        m_scalingListPresentFlag;
+
   TComScalingList*     m_scalingList;   //!< ScalingList class pointer
+
   UInt        m_uiMaxDecPicBuffering[MAX_TLAYER]; 
   UInt        m_uiMaxLatencyIncrease[MAX_TLAYER];  // Really max latency increase plus 1 (value 0 expresses no limit)
 
@@ -1106,6 +1158,14 @@ private:
 
 #if SVC_EXTENSION
   UInt m_layerId;
+
+#if IL_SL_SIGNALLING_N0371
+  TComVPS*    m_pVPS;
+  static TComSPS* m_pcSPS[MAX_LAYERS];
+  Bool        m_predScalingListFlag;
+  UInt        m_scalingListRefLayerId;
+#endif
+
 #endif
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
@@ -1228,8 +1288,22 @@ public:
   Void setScalingListFlag       ( Bool b ) { m_scalingListEnabledFlag  = b;       }
   Bool getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
+
+#if IL_SL_SIGNALLING_N0371
+  Bool getPredScalingListFlag()         { return m_predScalingListFlag;     }
+  Void setPredScalingListFlag( Bool b ) { m_predScalingListFlag  = b;       }
+  UInt getScalingListRefLayerId()         { return m_scalingListRefLayerId;   }
+  Void setScalingListRefLayerId( UInt b ) { m_scalingListRefLayerId  = b;       }
+
+  TComVPS*  getVPS()                      { return  m_pVPS; }
+  Void      setVPS( TComVPS* vps )        { m_pVPS = vps;   }
+  static   TComSPS* getSPS(UInt layerId)               { return m_pcSPS[layerId]; }
+  static   Void     setSPS(UInt layerId, TComSPS* sps) { m_pcSPS[layerId] = sps;  }
+#endif
+
   Void setScalingList      ( TComScalingList *scalingList);
   TComScalingList* getScalingList ()       { return m_scalingList; }               //!< get ScalingList class pointer in SPS
+
   UInt getMaxDecPicBuffering  (UInt tlayer)            { return m_uiMaxDecPicBuffering[tlayer]; }
   Void setMaxDecPicBuffering  ( UInt ui, UInt tlayer ) { m_uiMaxDecPicBuffering[tlayer] = ui;   }
   UInt getMaxLatencyIncrease  (UInt tlayer)            { return m_uiMaxLatencyIncrease[tlayer];   }
@@ -1363,7 +1437,20 @@ private:
   Int      m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int      m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
   Bool     m_scalingListPresentFlag;
+
+#if SVC_EXTENSION
+  UInt m_layerId;
+
+#if IL_SL_SIGNALLING_N0371
+  static TComPPS* m_pcPPS[MAX_LAYERS];
+  Bool     m_predScalingListFlag;
+  UInt     m_scalingListRefLayerId;
+#endif
+
+#endif
+
   TComScalingList*     m_scalingList;   //!< ScalingList class pointer
+
   Bool m_listsModificationPresentFlag;
   UInt m_log2ParallelMergeLevelMinus2;
   Int m_numExtraSliceHeaderBits;
@@ -1477,6 +1564,20 @@ public:
   Int      getDeblockingFilterTcOffsetDiv2()                  { return m_deblockingFilterTcOffsetDiv2; }              //!< get tc offset for deblocking filter
   Bool     getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void     setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
+
+#if IL_SL_SIGNALLING_N0371
+  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
+  UInt     getLayerId() { return m_layerId; }
+
+  Bool     getPredScalingListFlag()         { return m_predScalingListFlag;     }
+  Void     setPredScalingListFlag( Bool b ) { m_predScalingListFlag  = b;       }
+  UInt     getScalingListRefLayerId()         { return m_scalingListRefLayerId;     }
+  Void     setScalingListRefLayerId( UInt b ) { m_scalingListRefLayerId  = b;       }
+
+  static   TComPPS* getPPS(UInt layerId)               { return m_pcPPS[layerId]; }
+  static   Void     setPPS(UInt layerId, TComPPS* pps) { m_pcPPS[layerId] = pps;  }
+#endif
+
   Void     setScalingList      ( TComScalingList *scalingList);
   TComScalingList* getScalingList ()          { return m_scalingList; }         //!< get ScalingList class pointer in PPS
   Bool getListsModificationPresentFlag ()          { return m_listsModificationPresentFlag; }
@@ -1878,7 +1979,13 @@ public:
   UInt* getSubstreamSizes               ()                  { return m_puiSubstreamSizes; }
   Void  setScalingList              ( TComScalingList* scalingList ) { m_scalingList = scalingList; }
   TComScalingList*   getScalingList ()                               { return m_scalingList; }
+
+#if IL_SL_SIGNALLING_N0371
+  Void  setDefaultScalingList       ( UInt m_layerId );
+#else
   Void  setDefaultScalingList       ();
+#endif
+
   Bool  checkDefaultScalingList     ();
   Void      setCabacInitFlag  ( Bool val ) { m_cabacInitFlag = val;      }  //!< set CABAC initial flag 
   Bool      getCabacInitFlag  ()           { return m_cabacInitFlag;     }  //!< get CABAC initial flag 

@@ -1054,6 +1054,15 @@ Void TAppEncTop::xInitLib()
     }
 #endif
   }
+#if IL_SL_SIGNALLING_N0371
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(Int j = 0; j < i; j++)
+    {
+      vps->setScalingListLayerDependency( i, j, vps->checkLayerDependency( i,j ) );
+    }
+  }
+#endif
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
