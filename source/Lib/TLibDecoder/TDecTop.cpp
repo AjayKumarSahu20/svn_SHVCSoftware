@@ -1179,7 +1179,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
 
-        if(m_cIlpPic[refLayerIdc] && m_cIlpPic[refLayerIdc]->getSlice(0)->isIRAP())
+        if(m_cIlpPic[refLayerIdc] && pcSlice->isIRAP())
         {                 
           assert(pcSlice->getNalUnitType() == m_cIlpPic[refLayerIdc]->getSlice(0)->getNalUnitType());
         }
