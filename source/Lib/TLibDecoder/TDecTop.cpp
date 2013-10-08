@@ -1109,13 +1109,18 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if N0147_IRAP_ALIGN_FLAG
     if(  m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
     {
-      if(pcSlice->isIRAP())
+      for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
       {
-        for(Int depedentLayerId = 0; depedentLayerId < pcSlice->getVPS()->getNumDirectRefLayers(m_layerId); depedentLayerId++)
-          assert(pcSlice->getNalUnitType() == pcSlice->getBaseColPic(depedentLayerId)->getSlice(0)->getNalUnitType());
+        Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
+
+        if(m_cIlpPic[refLayerIdc] && m_cIlpPic[refLayerIdc]->getSlice(0)->isIRAP())
+        {                 
+          assert(pcSlice->getNalUnitType() == m_cIlpPic[refLayerIdc]->getSlice(0)->getNalUnitType());
       }
     }
+    }
 #endif 
+    
     // For generalized B
     // note: maybe not existed case (always L0 is copied to L1 if L1 is empty)
     if (pcSlice->isInterB() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) == 0)

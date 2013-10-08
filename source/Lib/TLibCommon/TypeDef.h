@@ -107,7 +107,7 @@
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
 #define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
-#define IDR_ALIGNMENT                    1      ///< align IDR picures across layers 
+#define IDR_ALIGNMENT                    0      ///< align IDR picures across layers : As per JCTVC-N0373, IDR are not required to be aligned.
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE

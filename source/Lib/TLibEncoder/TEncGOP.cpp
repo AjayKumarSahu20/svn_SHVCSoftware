@@ -661,16 +661,36 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
-#if IDR_ALIGNMENT
+#if N0147_IRAP_ALIGN_FLAG
+       if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
+       {
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
         TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
-        if( picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )
+         if( picLayer0->getSlice(0)->isIRAP())
         {
           pcSlice->setNalUnitType(picLayer0->getSlice(0)->getNalUnitType());
         }
         else
-#endif
+         {
+           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+         }
+       }
+#else
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+#endif 
+
+#if IDR_ALIGNMENT
+         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
+         TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
+        if( picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )
+         {
+           pcSlice->setNalUnitType(picLayer0->getSlice(0)->getNalUnitType());
+         }
+         else
+         {
+          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+         }
+#endif 
       }
       
       if( pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
