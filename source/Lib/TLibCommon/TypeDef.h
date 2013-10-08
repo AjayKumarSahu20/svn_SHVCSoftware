@@ -111,8 +111,6 @@
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
 #define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
-#define IDR_ALIGNMENT                    0      ///< align IDR picures across layers : As per JCTVC-N0373, IDR are not required to be aligned.
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
 #define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
@@ -146,7 +144,10 @@
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #endif
 
-#define N0147_IRAP_ALIGN_FLAG            1
+#define N0147_IRAP_ALIGN_FLAG            1      ///< a flag to indicatate whether IRAPs are aligned across layers
+#if !N0147_IRAP_ALIGN_FLAG
+#define IDR_ALIGNMENT                    1      ///< align IDR picures across layers : As per JCTVC-N0373, IDR are not required to be aligned.
+#endif
 #define FAST_INTRA_SHVC                  1      ///< M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC
 #define NB_REMAIN_MODES                  2      ///< nb of remaining modes (M0115)
