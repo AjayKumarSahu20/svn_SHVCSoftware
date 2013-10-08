@@ -40,8 +40,6 @@
 
 #define SVC_EXTENSION                    1
 
-#define SCALABILITY_MASK_E0104           1
-
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
 #define HM12_RANDOM_ACCESS               1
@@ -65,6 +63,7 @@
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS
 #define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
+#define SCALABILITY_MASK_E0104           1      ///< scalability mask for depth
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
