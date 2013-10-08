@@ -45,8 +45,12 @@
 //! \{
 
 #if SVC_EXTENSION
-  ParameterSetMap<TComVPS> ParameterSetManager::m_vpsMap(MAX_NUM_VPS);
-  Int ParameterSetManager::m_activeVPSId = -1;
+ParameterSetMap<TComVPS> ParameterSetManager::m_vpsMap(MAX_NUM_VPS);
+Int ParameterSetManager::m_activeVPSId = -1;
+#if IL_SL_SIGNALLING_N0371
+TComSPS* TComSPS::m_pcSPS[MAX_LAYERS];
+TComPPS* TComPPS::m_pcPPS[MAX_LAYERS];
+#endif
 #endif
 
 TComSlice::TComSlice()
@@ -1878,6 +1882,30 @@ Void TComVPS::deriveLayerIdListVariables()
   }
 }
 #endif
+<<<<<<< .mine
+
+#if IL_SL_SIGNALLING_N0371
+Bool TComVPS::checkLayerDependency(UInt i, UInt j)
+{
+  if( this->getDirectDependencyFlag(i, j) == true )
+  {                                                                                                                                    
+    return true;                                                                                                                       
+  }                                                                                                                                    
+  else                                                                                                                                   
+  {                                                                                                                                    
+    for(UInt k=i-1; k>j; k--)
+    {                                                                                                                                
+      if( this->getDirectDependencyFlag(i, k) == true )
+      {                                                                                                                            
+        checkLayerDependency( k,j );                                                                                           
+      }
+    }
+  }
+  return false;        
+}
+#endif
+
+=======
 #if VIEW_ID_RELATED_SIGNALING 
 Int TComVPS::getNumViews()
 {
@@ -1911,6 +1939,7 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
   return scalIdx; 
 }
 #endif
+>>>>>>> .r413
 // ------------------------------------------------------------------------------------------------
 // Sequence parameter set (SPS)
 // ------------------------------------------------------------------------------------------------
@@ -2381,13 +2410,21 @@ TComScalingList::~TComScalingList()
 
 /** set default quantization matrix to array
 */
+#if IL_SL_SIGNALLING_N0371
+Void TComSlice::setDefaultScalingList( UInt layerId )
+#else
 Void TComSlice::setDefaultScalingList()
+#endif
 {
   for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
   {
     for(UInt listId=0;listId<g_scalingListNum[sizeId];listId++)
     {
+#if IL_SL_SIGNALLING_N0371
+      getScalingList()->processDefaultMarix(sizeId, listId, layerId);
+#else
       getScalingList()->processDefaultMarix(sizeId, listId);
+#endif
     }
   }
 }
@@ -2448,7 +2485,6 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
     for(listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
     {
       src = getScalingListAddress(sizeIdc, listIdc);
-
       fseek(fp,0,0);
       do 
       {
@@ -2562,15 +2598,40 @@ Int* TComScalingList::getScalingListDefaultAddress(UInt sizeId, UInt listId)
  * \param sizeId size index
  * \param Index of input matrix
  */
+#if IL_SL_SIGNALLING_N0371
+Void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId, UInt layerId)
+#else
 Void TComScalingList::processDefaultMarix(UInt sizeId, UInt listId)
+#endif
 {
+#if IL_SL_SIGNALLING_N0371
+  Int i,coefNum = min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId]);
+  UInt* scan  = (sizeId == 0) ? g_auiSigLastScan [ SCAN_DIAG ] [ 1 ] :  g_sigLastScanCG32x32; 
+  Int *src = getScalingListDefaultAddress(sizeId, listId);   
+#endif
+
   ::memcpy(getScalingListAddress(sizeId, listId),getScalingListDefaultAddress(sizeId,listId),sizeof(Int)*min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId]));
+
+#if IL_SL_SIGNALLING_N0371
+  for(i = 0; i < coefNum; i++) 
+  {
+    ref_scalingListCoef[layerId][sizeId][listId][i] = src[scan[i]];
+  }
+#endif
+
   setScalingListDC(sizeId,listId,SCALING_LIST_DC);
+#if IL_SL_SIGNALLING_N0371
+  ref_scalingListDC[layerId][sizeId][listId] = SCALING_LIST_DC;
+#endif
 }
 
 /** check DC value of matrix for default matrix signaling
  */
+#if IL_SL_SIGNALLING_N0371
+Void TComScalingList::checkDcOfMatrix( UInt layerId )
+#else
 Void TComScalingList::checkDcOfMatrix()
+#endif
 {
   for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
   {
@@ -2579,7 +2640,11 @@ Void TComScalingList::checkDcOfMatrix()
       //check default matrix?
       if(getScalingListDC(sizeId,listId) == 0)
       {
+#if IL_SL_SIGNALLING_N0371
+        processDefaultMarix(sizeId, listId, layerId);
+#else
         processDefaultMarix(sizeId, listId);
+#endif
       }
     }
   }
@@ -2660,6 +2725,12 @@ Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIRAP)
         m_activePPSId = ppsId;
         m_activeVPSId = vpsId;
         m_activeSPSId = spsId;
+
+#if IL_SL_SIGNALLING_N0371
+        activeRefPPSId[ sps->getLayerId() ] = ppsId;
+        activeRefSPSId[ sps->getLayerId() ] = spsId;
+#endif
+
         return true;
       }
       else

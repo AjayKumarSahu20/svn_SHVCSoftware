@@ -129,6 +129,7 @@ private:
   TEncRateCtrl            m_cRateCtrl;                    ///< Rate control class
   
 #if SVC_EXTENSION
+
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 

@@ -109,7 +109,7 @@ Void TEncTop::create ()
   // initialize global variables
   initROM();
 #endif
-  
+
   // create processing unit classes
 #if SVC_EXTENSION
   m_cGOPEncoder.        create( m_layerId );
@@ -760,6 +760,10 @@ Void TEncTop::xInitSPS()
 
 Void TEncTop::xInitPPS()
 {
+#if IL_SL_SIGNALLING_N0371
+  m_cPPS.setLayerId(m_layerId);
+#endif
+
   m_cPPS.setConstrainedIntraPred( m_bUseConstrainedIntraPred );
   Bool bUseDQP = (getMaxCuDQPDepth() > 0)? true : false;
 

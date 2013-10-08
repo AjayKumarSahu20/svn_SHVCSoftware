@@ -74,6 +74,7 @@ public:
 #if VPS_EXTNS
   Void  parseVPSExtension   ( TComVPS* pcVPS );
 #endif
+
 #if VPS_VUI
   Void  parseVPSVUI   ( TComVPS* pcVPS );
 #endif 

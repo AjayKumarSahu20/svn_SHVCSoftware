@@ -1231,22 +1231,39 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   pcPic->setCurrSliceIdx(m_uiSliceIdx);
   if(pcSlice->getSPS()->getScalingListFlag())
   {
+#if IL_SL_SIGNALLING_N0371
+    pcSlice->getSPS()->getScalingList()->setLayerId( m_layerId );
+#endif
+
     pcSlice->setScalingList ( pcSlice->getSPS()->getScalingList()  );
+
     if(pcSlice->getPPS()->getScalingListPresentFlag())
     {
+#if IL_SL_SIGNALLING_N0371
+      pcSlice->getPPS()->getScalingList()->setLayerId( m_layerId );
+#endif
+
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
     pcSlice->getScalingList()->setUseTransformSkip(pcSlice->getPPS()->getUseTransformSkip());
     if(!pcSlice->getPPS()->getScalingListPresentFlag() && !pcSlice->getSPS()->getScalingListPresentFlag())
     {
+#if IL_SL_SIGNALLING_N0371
+      pcSlice->setDefaultScalingList( m_layerId );
+#else
       pcSlice->setDefaultScalingList();
+#endif
     }
     m_cTrQuant.setScalingListDec(pcSlice->getScalingList());
     m_cTrQuant.setUseScalingList(true);
   }
   else
   {
+#if IL_SL_SIGNALLING_N0371
+    m_cTrQuant.setFlatScalingList( m_layerId );
+#else
     m_cTrQuant.setFlatScalingList();
+#endif
     m_cTrQuant.setUseScalingList(false);
   }
 
@@ -1277,6 +1294,7 @@ Void TDecTop::xDecodeSPS()
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
 #endif
+
 #if SPS_SUB_LAYER_INFO
   m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder[0] );
 #else
@@ -1300,6 +1318,11 @@ Void TDecTop::xDecodeSPS()
 Void TDecTop::xDecodePPS()
 {
   TComPPS* pps = new TComPPS();
+
+#if IL_SL_SIGNALLING_N0371
+  pps->setLayerId(m_layerId);
+#endif
+
   m_cEntropyDecoder.decodePPS( pps );
 #if SVC_EXTENSION
   m_parameterSetManagerDecoder[m_layerId].storePrefetchedPPS( pps );
