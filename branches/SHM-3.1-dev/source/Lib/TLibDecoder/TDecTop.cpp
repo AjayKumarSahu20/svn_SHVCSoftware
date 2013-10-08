@@ -1175,13 +1175,13 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if N0147_IRAP_ALIGN_FLAG
     if(  m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
     {
-      for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
+      for(Int dependentLayerIdx = 0; dependentLayerIdx < pcSlice->getVPS()->getNumDirectRefLayers(m_layerId); dependentLayerIdx++)
       {
-        Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
-
-        if(m_cIlpPic[refLayerIdc] && pcSlice->isIRAP())
+        TComList<TComPic*> *cListPic = getRefLayerDec( dependentLayerIdx )->getListPic();
+        TComPic* refpicLayer = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
+        if(refpicLayer && pcSlice->isIRAP())
         {                 
-          assert(pcSlice->getNalUnitType() == m_cIlpPic[refLayerIdc]->getSlice(0)->getNalUnitType());
+          assert(pcSlice->getNalUnitType() == refpicLayer->getSlice(0)->getNalUnitType());
         }
       }
     }
