@@ -48,8 +48,9 @@
 #define RANDOM_ACCESS_SEI_FIX            1
 #define VPS_NUH_LAYER_ID                 1      ///< N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #if SVC_EXTENSION
-#define POC_RESET_FLAG                1         ///< N0244: POC reset flag for  layer pictures.
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+#define POC_RESET_FLAG                   1      ///< N0244: POC reset flag for  layer pictures.
+#define ALIGN_TSA_STSA_PICS              1      ///< N0084: Alignment of TSA and STSA pictures across AU.
 #define REPN_FORMAT_IN_VPS               1      ///< N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
 #define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< N0316, N0082: initial reference picture list construction 
