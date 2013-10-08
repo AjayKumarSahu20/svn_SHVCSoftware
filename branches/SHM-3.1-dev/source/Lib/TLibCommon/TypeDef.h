@@ -54,7 +54,7 @@
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 #define FINAL_RPL_CHANGE_N0082           1      ///< JCTVC-N0082: final ref picture list change (encoder)
 #if FINAL_RPL_CHANGE_N0082
-#define EXTERNAL_USEDBYCURR_N0082        1      ///< N0082: final ref picture list change (encoder) //dev ver.
+#define EXTERNAL_USEDBYCURR_N0082        1      ///< JCTVC-N0082: final ref picture list change (encoder) //dev ver.
 #define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
 #endif
 #define IL_SL_SIGNALLING_N0371           1      ///< JCTVC-N0371: inter-layer scaling list
