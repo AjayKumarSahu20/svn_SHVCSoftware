@@ -1882,7 +1882,6 @@ Void TComVPS::deriveLayerIdListVariables()
   }
 }
 #endif
-<<<<<<< .mine
 
 #if IL_SL_SIGNALLING_N0371
 Bool TComVPS::checkLayerDependency(UInt i, UInt j)
@@ -1905,7 +1904,6 @@ Bool TComVPS::checkLayerDependency(UInt i, UInt j)
 }
 #endif
 
-=======
 #if VIEW_ID_RELATED_SIGNALING 
 Int TComVPS::getNumViews()
 {
@@ -1939,7 +1937,6 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
   return scalIdx; 
 }
 #endif
->>>>>>> .r413
 // ------------------------------------------------------------------------------------------------
 // Sequence parameter set (SPS)
 // ------------------------------------------------------------------------------------------------
