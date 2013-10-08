@@ -59,11 +59,8 @@
 #define EXTERNAL_USEDBYCURR_N0082        1      ///< N0082: final ref picture list change (encoder) //dev ver.
 #define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
 #endif
-<<<<<<< .mine
 #define IL_SL_SIGNALLING_N0371           1      ///< JCTVC-N0371: inter-layer scaling list
 #define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
-=======
->>>>>>> .r413
 #define M0463_VUI_EXT_ILP_REF            0      ///< VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSETS         1      ///< M0309: Signal scaled reference layer offsets in SPS

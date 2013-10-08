@@ -592,9 +592,6 @@ private:
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 #endif
-<<<<<<< .mine
-
-=======
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
   Int        m_vpsNumRepFormats;            // coded as minus1
@@ -605,7 +602,6 @@ private:
   Int         m_viewIdLenMinus1;
   Int         m_viewIdVal                [MAX_LAYERS];
 #endif
->>>>>>> .r413
 public:
   TComVPS();
   virtual ~TComVPS();
