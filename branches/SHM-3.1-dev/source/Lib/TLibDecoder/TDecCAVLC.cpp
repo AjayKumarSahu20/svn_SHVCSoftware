@@ -1438,7 +1438,23 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
   if(!rpcSlice->getDependentSliceSegmentFlag())
   {
-
+#if POC_RESET_FLAG
+    Int i = 0; 
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > i)
+    {
+      READ_FLAG(uiCode, "poc_reset_flag");      rpcSlice->setPocResetFlag( uiCode ? true : false );
+      i++;
+    }
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > i)
+    {
+      READ_FLAG(uiCode, "discardable_flag"); // ignored
+      i++;
+    }
+    for (; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    {
+      READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
+    }
+#else
 #if SH_DISCARDABLE_FLAG
     if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
@@ -1453,6 +1469,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
+#endif
 #endif
 
     READ_UVLC (    uiCode, "slice_type" );            rpcSlice->setSliceType((SliceType)uiCode);

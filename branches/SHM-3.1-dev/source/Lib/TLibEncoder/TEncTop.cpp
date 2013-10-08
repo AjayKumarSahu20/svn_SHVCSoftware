@@ -91,6 +91,9 @@ TEncTop::TEncTop()
   m_numScaledRefLayerOffsets = 0;
 #endif
 #endif
+#if POC_RESET_FLAG
+  m_pocAdjustmentValue     = 0;
+#endif
 }
 
 TEncTop::~TEncTop()
@@ -896,6 +899,9 @@ Void TEncTop::xInitPPS()
 
   m_cPPS.setPPSId         ( m_iPPSIdCnt         );
   m_cPPS.setSPSId         ( m_iSPSIdCnt         );
+#endif
+#if POC_RESET_FLAG
+  m_cPPS.setNumExtraSliceHeaderBits( 2 );
 #endif
 }
 

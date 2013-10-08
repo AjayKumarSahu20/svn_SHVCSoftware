@@ -1104,6 +1104,25 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   if ( !pcSlice->getDependentSliceSegmentFlag() )
   {
 
+#if POC_RESET_FLAG
+    Int i = 0;
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > i )
+    {
+      WRITE_FLAG( pcSlice->getPocResetFlag(), "poc_reset_flag" );
+      i++;
+    }
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > i )
+    {
+      assert(!!"discardable_flag");
+      WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
+      i++;
+    }
+    for ( ; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    {
+      assert(!!"slice_reserved_undetermined_flag[]");
+      WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+    }
+#else
 #if SH_DISCARDABLE_FLAG
     if (pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
@@ -1121,6 +1140,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       assert(!!"slice_reserved_undetermined_flag[]");
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
+#endif
 #endif
 
     WRITE_UVLC( pcSlice->getSliceType(),       "slice_type" );
@@ -1142,7 +1162,19 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 
     if( !pcSlice->getIdrPicFlag() )
     {
+#if POC_RESET_FLAG
+      Int picOrderCntLSB;
+      if( !pcSlice->getPocResetFlag() )
+      {
+        picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC()))%(1<<pcSlice->getSPS()->getBitsForPOC());
+      }
+      else
+      {
+        picOrderCntLSB = (pcSlice->getPocValueBeforeReset()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC()))%(1<<pcSlice->getSPS()->getBitsForPOC());
+      }
+#else
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC()))%(1<<pcSlice->getSPS()->getBitsForPOC());
+#endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
       TComReferencePictureSet* rps = pcSlice->getRPS();
       

@@ -143,6 +143,9 @@ private:
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
 #endif
+#if POC_RESET_FLAG
+  Int                     m_pocAdjustmentValue;
+#endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -242,6 +245,10 @@ public:
 #endif
 
   void printSummary() { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded); }
+#if POC_RESET_FLAG
+  Int  getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
+  Void setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
+#endif
 };
 
 //! \}
