@@ -817,6 +817,22 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_R);
         }
+#if ALIGN_TSA_STSA_PICS
+        if( pcSlice->getLayerId() > 0 )
+        {
+          for(Int i = 0; i < pcSlice->getLayerId(); i++)
+          {
+            TComList<TComPic*> *cListPic = m_ppcTEncTop[i]->getListPic();
+            TComPic* lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
+            if( lowerLayerPic ) // If picture exists in Layer i
+            {
+              assert( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N ) ||
+                      ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_R ) );
+              // TSA pictures are aligned within an access unit.
+            }
+          }
+        }
+#endif
       }
       else if(pcSlice->isStepwiseTemporalLayerSwitchingPointCandidate(rcListPic))
       {
@@ -858,6 +874,22 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
           }
+#if ALIGN_TSA_STSA_PICS
+          if( pcSlice->getLayerId() > 0 )
+          {
+            for(Int i = 0; i < pcSlice->getLayerId(); i++)
+            {
+              TComList<TComPic*> *cListPic = m_ppcTEncTop[i]->getListPic();
+              TComPic* lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
+              if( lowerLayerPic ) // If picture exists in Layer i
+              {
+                assert( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ) ||
+                        ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R ) );
+              }
+              // STSA pictures are aligned within an access unit.
+            }
+          }
+#endif
         }
       }
     }
