@@ -646,7 +646,11 @@ Void TDecTop::xActivateParameterSets()
 }
 
 #if SVC_EXTENSION
+#if POC_RESET_FLAG
+Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int &iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC )
+#else
 Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC )
+#endif
 #else
 Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay )
 #endif
@@ -779,6 +783,66 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   }
   m_bFirstSliceInSequence = false;
+#if POC_RESET_FLAG
+  // This operation would do the following:
+  // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
+  // 2. Update the value of m_pocCRA.
+  // 3. Reset the POC values at the decoder for the current picture to be zero.
+  // 4. update value of POCLastDisplay
+  if( m_apcSlicePilot->getPocResetFlag() )
+  {
+    if( m_apcSlicePilot->getSliceIdx() == 0 )
+    {
+      Int pocAdjustValue = m_apcSlicePilot->getPOC();
+
+      // If poc reset flag is set to 1, reset all POC for DPB -> basically do it for each slice in the picutre
+      TComList<TComPic*>::iterator  iterPic = m_cListPic.begin();  
+
+      // Iterate through all picture in DPB
+      while( iterPic != m_cListPic.end() )
+      {
+        TComPic *dpbPic = *iterPic;
+        // Check if the picture pointed to by iterPic is either used for reference or
+        // needed for output, are in the same layer, and not the current picture.
+        if( /*  ( ( dpbPic->getSlice(0)->isReferenced() ) || ( dpbPic->getOutputMark() ) )
+            &&*/ ( dpbPic->getLayerId() == m_apcSlicePilot->getLayerId() )
+              && ( dpbPic->getReconMark() ) 
+          )
+        {
+          for(Int i = dpbPic->getNumAllocatedSlice()-1; i >= 0; i--)
+          {
+
+            TComSlice *slice = dpbPic->getSlice(i);
+            TComReferencePictureSet *rps = slice->getRPS();
+            slice->setPOC( slice->getPOC() - pocAdjustValue );
+
+            // Also adjust the POC value stored in the RPS of each such slice
+            for(Int j = rps->getNumberOfPictures(); j >= 0; j--)
+            {
+              rps->setPOC( j, rps->getPOC(j) - pocAdjustValue );
+            }
+            // Also adjust the value of refPOC
+            for(Int k = 0; k < 2; k++)  // For List 0 and List 1
+            {
+              RefPicList list = (k == 1) ? REF_PIC_LIST_1 : REF_PIC_LIST_0;
+              for(Int j = 0; j < slice->getNumRefIdx(list); j++)
+              {
+                slice->setRefPOC( slice->getRefPOC(list, j) - pocAdjustValue, list, j);
+              }
+            }
+          }
+        }
+        iterPic++;
+      }
+      // Update the value of pocCRA
+      m_pocCRA -= pocAdjustValue;
+      // Update value of POCLastDisplay
+      iPOCLastDisplay -= pocAdjustValue;
+    }
+    // Reset current poc for current slice and RPS
+    m_apcSlicePilot->setPOC( 0 );
+  }
+#endif
   //detect lost reference picture and insert copy of earlier frame.
   Int lostPoc;
   while((lostPoc=m_apcSlicePilot->checkThatAllRefPicsAreAvailable(m_cListPic, m_apcSlicePilot->getRPS(), true, m_pocRandomAccess)) > 0)

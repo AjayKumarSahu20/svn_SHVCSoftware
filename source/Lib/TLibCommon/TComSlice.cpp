@@ -70,6 +70,9 @@ TComSlice::TComSlice()
 , m_iSliceQpDeltaCr               ( 0 )
 , m_iDepth                        ( 0 )
 , m_bRefenced                     ( false )
+#if POC_RESET_FLAG
+, m_bPocResetFlag                 ( false )
+#endif
 #if SH_DISCARDABLE_FLAG
 , m_bDiscardableFlag              ( false )
 #endif
@@ -268,6 +271,9 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
     iterPic++;
     pcPic = *(iterPic);
   }
+#if POC_RESET_FLAG
+    assert( pcPic->getSlice(0)->isReferenced() );
+#endif
   return  pcPic;
 }
 
@@ -2767,7 +2773,18 @@ Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
     memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
     return;
   }        
+#if POC_RESET_FLAG
+  if( this->getPocResetFlag() )
+  {
+    setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, 0)); 
+  }
+  else
+  {
+    setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
+  }
+#else
   setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
+#endif
 }
 #endif 
 
@@ -2781,7 +2798,7 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
     //set reference picture POC of each ILP reference 
     Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
-    assert(thePoc >= 0); 
+    assert(thePoc >= 0);
     assert(thePoc == pcRefPicBL->getPOC());
 
     ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );

@@ -1567,10 +1567,13 @@ private:
   // referenced slice?
   Bool        m_bRefenced;
   
+#if POC_RESET_FLAG
+  Bool        m_bPocResetFlag;
+  Int         m_pocValueBeforeReset;
+#endif  
 #if SH_DISCARDABLE_FLAG
   Bool        m_bDiscardableFlag;
 #endif
-
   // access channel
   TComVPS*    m_pcVPS;
   TComSPS*    m_pcSPS;
@@ -1729,6 +1732,12 @@ public:
    Bool     isRASL()   {   return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
 #endif
 
+#if POC_RESET_FLAG
+  Bool      getPocResetFlag  ()                              { return m_bPocResetFlag; }
+  Void      setPocResetFlag  (Bool b)                        { m_bPocResetFlag = b; }
+  Int       getPocValueBeforeReset ()                        { return m_pocValueBeforeReset; }
+  Void      setPocValueBeforeReset (Int x)                   { m_pocValueBeforeReset = x ; }
+#endif
 #if SH_DISCARDABLE_FLAG
   Bool      getDiscardableFlag  ()                              { return m_bDiscardableFlag; }
   Void      setDiscardableFlag  (Bool b)                        { m_bDiscardableFlag = b; }
