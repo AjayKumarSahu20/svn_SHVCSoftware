@@ -242,7 +242,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
       if( pcPPS->getPredScalingListFlag() )
       {
         // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
-        assert( pcPPS->getScalingListRefLayerId() >= 0 && pcPPS->getScalingListRefLayerId() <= 62 );
+        assert( /*pcPPS->getScalingListRefLayerId() >= 0 &&*/ pcPPS->getScalingListRefLayerId() <= 62 );
 
         // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of pps_scaling_list_ref_layer_id shall be greater than 0
         if( pcPPS->getSPS()->getVPS()->getAvcBaseLayerFlag() )
@@ -563,7 +563,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
       {
 
         // The value of sps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
-        assert( pcSPS->getScalingListRefLayerId() >= 0 && pcSPS->getScalingListRefLayerId() <= 62 );
+        assert( /*pcSPS->getScalingListRefLayerId() >= 0 &&*/ pcSPS->getScalingListRefLayerId() <= 62 );
         
         // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
         if( pcSPS->getVPS()->getAvcBaseLayerFlag() )
