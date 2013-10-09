@@ -1073,6 +1073,10 @@ Void TAppEncTop::xInitLib()
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif
+#if VPS_EXTN_OFFSET
+  // to be updated according to the current semantics
+  vps->setExtensionOffset( 0xffff );
+#endif
 #else
   m_cTEncTop.init();
 #endif

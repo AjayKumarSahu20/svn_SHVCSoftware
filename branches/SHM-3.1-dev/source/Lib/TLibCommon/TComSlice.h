@@ -507,6 +507,9 @@ private:
 #if IL_SL_SIGNALLING_N0371
   Bool        m_scalingListLayerDependency[MAX_LAYERS][MAX_LAYERS];  // layer dependency for scaling list
 #endif
+#if VPS_EXTN_OFFSET
+  UInt        m_extensionOffset;
+#endif
   TComPTL     m_pcPTL;
   TimingInfo  m_timingInfo;
 
@@ -847,6 +850,10 @@ public:
 
   Int     getNumViews();
   Int     scalTypeToScalIdx( ScalabilityType scalType );
+#endif
+#if VPS_EXTN_OFFSET
+  Int     getExtensionOffset()                 { return m_extensionOffset;   }
+  Void    setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
 #endif
 };
 
