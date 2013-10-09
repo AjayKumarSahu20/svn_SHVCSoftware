@@ -892,7 +892,11 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 );
   READ_FLAG(     uiCode,  "vps_temporal_id_nesting_flag" );       pcVPS->setTemporalNestingFlag( uiCode ? true:false );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
+#if VPS_EXTN_OFFSET
+  READ_CODE( 16, uiCode,  "vps_extension_offset" );               pcVPS->setExtensionOffset( uiCode );
+#else
   READ_CODE( 16, uiCode,  "vps_reserved_ffff_16bits" );           assert(uiCode == 0xffff);
+#endif
   parsePTL ( pcVPS->getPTL(), true, pcVPS->getMaxTLayers()-1);
   UInt subLayerOrderingInfoPresentFlag;
   READ_FLAG(subLayerOrderingInfoPresentFlag, "vps_sub_layer_ordering_info_present_flag");
