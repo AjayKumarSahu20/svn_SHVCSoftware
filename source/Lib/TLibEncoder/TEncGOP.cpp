@@ -772,7 +772,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
 #if N0147_IRAP_ALIGN_FLAG
-        if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
+        if(pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
         {
           TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
           TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
@@ -785,9 +785,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
           }
         }
-#else
-        pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+        else
 #endif 
+        pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
 
 #if IDR_ALIGNMENT
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
