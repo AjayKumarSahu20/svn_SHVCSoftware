@@ -762,12 +762,15 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   xActivateParameterSets();
 #if 0 // N0147_IRAP_ALIGN_FLAG Disabled for now!
   //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
-  if( m_layerId > 0 && m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
+  if(!m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
   {
     assert( m_apcSlicePilot->getPPS()->getNumExtraSliceHeaderBits() > 0);
   }
   //When cross_layer_irap_aligned_flag is equal to 1, the value of poc_reset_flag shall be equal to 0  
-  // to be added after poc_reset_flag is integrated.
+  if( m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
+  {
+    assert( m_apcSlicePilot->getPocResetFlag() == 0);
+  }
 #endif 
 
 #if REPN_FORMAT_IN_VPS
