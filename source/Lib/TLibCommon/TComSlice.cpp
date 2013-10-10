@@ -771,19 +771,14 @@ Void TComSlice::setRefPicListModificationSvc()
   assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 1);
 #endif
 
-
   //set L0 inter-layer reference picture modification
 #if RPL_INIT_N0316_N0082
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
-#if N0147_IRAP_ALIGN_FLAG
-  hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
-#endif
 #else
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
+#endif
 #if N0147_IRAP_ALIGN_FLAG
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
-#endif
-
 #endif
 #if FINAL_RPL_CHANGE_N0082
   hasModification = false; //modification is not necessary
