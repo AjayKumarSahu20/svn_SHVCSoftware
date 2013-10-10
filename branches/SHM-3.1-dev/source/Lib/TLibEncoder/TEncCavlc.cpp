@@ -879,7 +879,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getViewIdLenMinus1( ), 4, "view_id_len_minus1" );
   }
 
-  for( Int i = 0; i < vps->getNumViews(); i++ )
+  for(  i = 0; i < vps->getNumViews(); i++ )
   {
     WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
   }
@@ -1219,19 +1219,19 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   {
 
 #if POC_RESET_FLAG
-    Int i = 0;
-    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > i )
+    Int iBits = 0;
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
     {
       WRITE_FLAG( pcSlice->getPocResetFlag(), "poc_reset_flag" );
-      i++;
+      iBits++;
     }
-    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > i )
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
     {
       assert(!!"discardable_flag");
       WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
-      i++;
+      iBits++;
     }
-    for ( ; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    for ( ; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
     {
       assert(!!"slice_reserved_undetermined_flag[]");
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");

@@ -776,7 +776,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
           TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
-          if( picLayer0->getSlice(0)->isIRAP() && picLayer0)
+          if(picLayer0)
           {
             pcSlice->setNalUnitType(picLayer0->getSlice(0)->getNalUnitType());
           }
