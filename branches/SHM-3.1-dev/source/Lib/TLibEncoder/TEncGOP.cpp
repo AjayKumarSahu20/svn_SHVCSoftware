@@ -1030,12 +1030,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     //  Set reference list
     pcSlice->setRefPicList ( rcListPic );
 #endif //SVC_EXTENSION
-#if N0147_IRAP_ALIGN_FLAG
-    if(pcSlice->getNumRefIdx(REF_PIC_LIST_0) > 1 || pcSlice->getNumRefIdx(REF_PIC_LIST_1) > 1)
-#endif 
-    {
       pcSlice->setRefPicListModificationSvc();
-    }
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
 #if REF_IDX_MFM

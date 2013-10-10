@@ -763,14 +763,27 @@ Void TComSlice::setRefPicListModificationSvc()
   Int numberOfPocBeforeCurr = this->getNumNegativeRpsCurrTempList();  // number of negative temporal ref pics 
 #endif
 
+#if N0147_IRAP_ALIGN_FLAG
+  assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 0);
+  assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 0);
+#else
   assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 1);
   assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 1);
+#endif
+
 
   //set L0 inter-layer reference picture modification
 #if RPL_INIT_N0316_N0082
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
+#if N0147_IRAP_ALIGN_FLAG
+  hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
+#endif
 #else
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
+#if N0147_IRAP_ALIGN_FLAG
+  hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
+#endif
+
 #endif
 #if FINAL_RPL_CHANGE_N0082
   hasModification = false; //modification is not necessary
@@ -820,6 +833,10 @@ Void TComSlice::setRefPicListModificationSvc()
 
   //set L1 inter-layer reference picture modification
   hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] == numberOfRpsCurrTempList) ? false : true;
+#if N0147_IRAP_ALIGN_FLAG
+  hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_1] > 1 );
+#endif
+
   refPicListModification->setRefPicListModificationFlagL1(hasModification);
   if(hasModification)
   { 
