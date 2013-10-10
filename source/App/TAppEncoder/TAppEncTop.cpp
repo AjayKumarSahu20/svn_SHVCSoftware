@@ -1068,7 +1068,20 @@ Void TAppEncTop::xInitLib()
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
 #if N0147_IRAP_ALIGN_FLAG    
-    vps->setCrossLayerIrapAlignFlag(maxDirectRefLayers == 0 ? false : true); 
+    vps->setCrossLayerIrapAlignFlag(true); 
+    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    {
+      for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+      {
+        if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
+        {          
+          if(m_acTEncTop[layerCtr].getIntraPeriod() !=  m_acTEncTop[refLayerCtr].getIntraPeriod())
+          {
+            vps->setCrossLayerIrapAlignFlag(false); 
+          }
+        }
+      }
+    }   
 #endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);

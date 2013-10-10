@@ -1082,7 +1082,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( 4, uiCode, "view_id_len_minus1" ); vps->setViewIdLenMinus1( uiCode );
   }
 
-  for( Int i = 0; i < vps->getNumViews(); i++ )
+  for(  i = 0; i < vps->getNumViews(); i++ )
   {
     READ_CODE( vps->getViewIdLenMinus1( ) + 1, uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
   }
@@ -1552,18 +1552,18 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   if(!rpcSlice->getDependentSliceSegmentFlag())
   {
 #if POC_RESET_FLAG
-    Int i = 0; 
-    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > i)
+    Int iBits = 0; 
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
       READ_FLAG(uiCode, "poc_reset_flag");      rpcSlice->setPocResetFlag( uiCode ? true : false );
-      i++;
+      iBits++;
     }
-    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > i)
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
       READ_FLAG(uiCode, "discardable_flag"); // ignored
-      i++;
+      iBits++;
     }
-    for (; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+    for (; iBits < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
