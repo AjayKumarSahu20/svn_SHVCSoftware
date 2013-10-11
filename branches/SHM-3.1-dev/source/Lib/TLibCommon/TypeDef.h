@@ -42,10 +42,9 @@
 
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
-#define HM12_RANDOM_ACCESS               1
 #define RANDOM_ACCESS_SEI_FIX            1
-#define VPS_NUH_LAYER_ID                 1      ///< JCTVC-N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #if SVC_EXTENSION
+#define VPS_NUH_LAYER_ID                 1      ///< JCTVC-N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 #define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define ALIGN_TSA_STSA_PICS              1      ///< JCTVC-N0084: Alignment of TSA and STSA pictures across AU.
@@ -155,6 +154,8 @@
 
 #define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
 
+#define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id_len_minus1 and view_id_val
+#define M0043_LAYERS_PRESENT_SEI         0      ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
@@ -164,8 +165,6 @@
 //! \{
 
 #define FIX1071 1 ///< fix for issue #1071
-#define VIEW_ID_RELATED_SIGNALING        1 ///< Introduce syntax elements view_id_len_minus1 and view_id_val
-#define M0043_LAYERS_PRESENT_SEI         0 ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 
 #define MAX_NUM_PICS_IN_SOP           1024
 

@@ -143,9 +143,9 @@ private:
   UInt                    m_numScaledRefLayerOffsets;
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #endif
-#endif
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
+#endif
 #endif
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -153,7 +153,7 @@ protected:
   Void  xInitPPS          ();                             ///< initialize PPS from encoder options
   
   Void  xInitPPSforTiles  ();
-  Void  xInitRPS          ();                             ///< initialize PPS from encoder options
+  Void  xInitRPS          (Bool isFieldCoding);           ///< initialize PPS from encoder options
 #if SVC_EXTENSION
   Void xInitILRP();
 #endif
@@ -163,7 +163,7 @@ public:
   
   Void      create          ();
   Void      destroy         ();
-  Void      init            ();
+  Void      init            (Bool isFieldCoding);
   Void      deletePicBuffer ();
 
   Void      createWPPCoders(Int iNumSubstreams);
@@ -208,11 +208,11 @@ public:
   Int                     getPOCLast            () { return m_iPOCLast;               }
   Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
-#endif
 #if SCALED_REF_LAYER_OFFSETS
   Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
   UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
+#endif
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -235,21 +235,27 @@ public:
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP  );
+  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );
+  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );
+  Void      encodePrep( TComPicYuv* pcPicYuvOrg, Bool isTff );
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
-#else
-  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );  
-#endif
-
-  void printSummary() { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded); }
 #if POC_RESET_FLAG
   Int  getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif
+#else //SVC_EXTENSION
+  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );
+
+  /// encode several number of pictures until end-of-sequence
+  Void encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
+              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded, Bool isTff);
+
+  Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField); }
+#endif //#if SVC_EXTENSION
 };
 
 //! \}

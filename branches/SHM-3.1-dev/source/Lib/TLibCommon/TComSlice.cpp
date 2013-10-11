@@ -185,6 +185,7 @@ Void TComSlice::initSlice()
 #endif
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
+  
   m_colFromL0Flag = 1;
   
   m_colRefIdx = 0;
@@ -291,7 +292,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
   Int pocCycle = 1 << getSPS()->getBitsForPOC();
   if (!pocHasMsb)
   {
-    poc = poc % pocCycle;
+    poc = poc & (pocCycle - 1);
   }
   
   while ( iterPic != rcListPic.end() )
@@ -302,7 +303,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
       Int picPoc = pcPic->getPOC();
       if (!pocHasMsb)
       {
-        picPoc = picPoc % pocCycle;
+        picPoc = picPoc & (pocCycle - 1);
       }
       
       if (poc == picPoc)
@@ -965,7 +966,7 @@ Void TComSlice::checkColRefIdx(UInt curSliceIdx, TComPic* pic)
   }
 }
 
-Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, Bool& prevRAPisBLA, TComList<TComPic *>& rcListPic)
+Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic)
 {
   for(Int i = 0; i < pReferencePictureSet->getNumberOfNegativePictures()+pReferencePictureSet->getNumberOfPositivePictures(); i++)
   {
@@ -991,19 +992,19 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
   if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP ) // IDR picture found
   {
     pocCRA = getPOC();
-    prevRAPisBLA = false;
+    associatedIRAPType = getNalUnitType();
   }
   else if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA ) // CRA picture found
   {
     pocCRA = getPOC();
-    prevRAPisBLA = false;
+    associatedIRAPType = getNalUnitType();
   }
   else if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
          || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
          || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP ) // BLA picture found
   {
     pocCRA = getPOC();
-    prevRAPisBLA = true;
+    associatedIRAPType = getNalUnitType();
   }
 }
 
@@ -1028,6 +1029,7 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic)
 {
   TComPic*                 rpcPic;
+  setAssociatedIRAPPOC(pocCRA);
   Int pocCurr = getPOC(); 
 
   if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -1194,7 +1196,7 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_maxNumMergeCand               = pSrc->m_maxNumMergeCand;
 }
 
-Int TComSlice::m_prevPOC = 0;
+Int TComSlice::m_prevTid0POC = 0;
 
 /** Function for setting the slice's temporal layer ID and corresponding temporal_layer_switching_point_flag.
  * \param uiTLayer Temporal layer ID of the current slice
@@ -1249,12 +1251,174 @@ Bool TComSlice::isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic
     return true;
 }
 
+
+Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
+{
+  TComPic* rpcPic;
+
+  Int nalUnitType = this->getNalUnitType();
+
+  // When a picture is a leading picture, it shall be a RADL or RASL picture.
+  if(this->getAssociatedIRAPPOC() > this->getPOC())
+  {
+    // Do not check IRAP pictures since they may get a POC lower than their associated IRAP
+    if(nalUnitType < NAL_UNIT_CODED_SLICE_BLA_W_LP ||
+       nalUnitType > NAL_UNIT_RESERVED_IRAP_VCL23)
+    {
+      assert(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+             nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R ||
+             nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N ||
+             nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R);
+    }
+  }
+
+  // When a picture is a trailing picture, it shall not be a RADL or RASL picture.
+  if(this->getAssociatedIRAPPOC() < this->getPOC())
+  {
+    assert(nalUnitType != NAL_UNIT_CODED_SLICE_RASL_N &&
+           nalUnitType != NAL_UNIT_CODED_SLICE_RASL_R &&
+           nalUnitType != NAL_UNIT_CODED_SLICE_RADL_N &&
+           nalUnitType != NAL_UNIT_CODED_SLICE_RADL_R);
+  }
+
+  // No RASL pictures shall be present in the bitstream that are associated
+  // with a BLA picture having nal_unit_type equal to BLA_W_RADL or BLA_N_LP.
+  if(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+     nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
+  {
+    assert(this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_BLA_W_RADL &&
+           this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_BLA_N_LP);
+  }
+
+  // No RASL pictures shall be present in the bitstream that are associated with
+  // an IDR picture.
+  if(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+     nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
+  {
+    assert(this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_IDR_N_LP   &&
+           this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_IDR_W_RADL);
+  }
+
+  // No RADL pictures shall be present in the bitstream that are associated with
+  // a BLA picture having nal_unit_type equal to BLA_N_LP or that are associated
+  // with an IDR picture having nal_unit_type equal to IDR_N_LP.
+  if(nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N ||
+     nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R)
+  {
+    assert(this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_BLA_N_LP   &&
+           this->getAssociatedIRAPType() != NAL_UNIT_CODED_SLICE_IDR_N_LP);
+  }
+
+  // loop through all pictures in the reference picture buffer
+  TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+  while ( iterPic != rcListPic.end())
+  {
+    rpcPic = *(iterPic++);
+    if (rpcPic->getPOC() == this->getPOC())
+    {
+      continue;
+    }
+
+    // Any picture that has PicOutputFlag equal to 1 that precedes an IRAP picture
+    // in decoding order shall precede the IRAP picture in output order.
+    // (Note that any picture following in output order would be present in the DPB)
+    if(rpcPic->getSlice(0)->getPicOutputFlag() == 1)
+    {
+      if(nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP    ||
+         nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP    ||
+         nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL  ||
+         nalUnitType == NAL_UNIT_CODED_SLICE_CRA         ||
+         nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP    ||
+         nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
+      {
+        assert(rpcPic->getPOC() < this->getPOC());
+      }
+    }
+
+    // Any picture that has PicOutputFlag equal to 1 that precedes an IRAP picture
+    // in decoding order shall precede any RADL picture associated with the IRAP
+    // picture in output order.
+    if(rpcPic->getSlice(0)->getPicOutputFlag() == 1)
+    {
+      if((nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N ||
+          nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R))
+      {
+        // rpcPic precedes the IRAP in decoding order
+        if(this->getAssociatedIRAPPOC() > rpcPic->getSlice(0)->getAssociatedIRAPPOC())
+        {
+          // rpcPic must not be the IRAP picture
+          if(this->getAssociatedIRAPPOC() != rpcPic->getPOC())
+          {
+            assert(rpcPic->getPOC() < this->getPOC());
+          }
+        }
+      }
+    }
+
+    // When a picture is a leading picture, it shall precede, in decoding order,
+    // all trailing pictures that are associated with the same IRAP picture.
+    if(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+       nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R ||
+       nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N ||
+       nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R)
+    {
+      if(rpcPic->getSlice(0)->getAssociatedIRAPPOC() == this->getAssociatedIRAPPOC())
+      {
+        // rpcPic is a picture that preceded the leading in decoding order since it exist in the DPB
+        // rpcPic would violate the constraint if it was a trailing picture
+        assert(rpcPic->getPOC() <= this->getAssociatedIRAPPOC());
+      }
+    }
+
+    // Any RASL picture associated with a CRA or BLA picture shall precede any
+    // RADL picture associated with the CRA or BLA picture in output order
+    if(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+       nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
+    { 
+      if((this->getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_BLA_N_LP   ||
+          this->getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_BLA_W_LP   ||
+          this->getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL ||
+          this->getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_CRA)       &&
+          this->getAssociatedIRAPPOC() == rpcPic->getSlice(0)->getAssociatedIRAPPOC())
+      {
+        if(rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N ||
+           rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R)
+        {
+          assert(rpcPic->getPOC() > this->getPOC());
+        }
+      }
+    }
+
+    // Any RASL picture associated with a CRA picture shall follow, in output
+    // order, any IRAP picture that precedes the CRA picture in decoding order.
+    if(nalUnitType == NAL_UNIT_CODED_SLICE_RASL_N ||
+       nalUnitType == NAL_UNIT_CODED_SLICE_RASL_R)
+    {
+      if(this->getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_CRA)
+      {
+        if(rpcPic->getSlice(0)->getPOC() < this->getAssociatedIRAPPOC() &&
+           (rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP   ||
+            rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP   ||
+            rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL ||
+            rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP   ||
+            rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL ||
+            rpcPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA))
+        {
+          assert(this->getPOC() > rpcPic->getSlice(0)->getPOC());
+        }
+      }
+    }
+  }
+}
+
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
 Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet)
 {
   TComPic* rpcPic;
   Int i, isReference;
+
+  checkLeadingPictureRestrictions(rcListPic);
 
   // loop through all pictures in the reference picture buffer
   TComList<TComPic*>::iterator iterPic = rcListPic.begin();
@@ -1291,7 +1455,10 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
       }
       else 
       {
-        if(rpcPic->getIsLongTerm() && (rpcPic->getPicSym()->getSlice(0)->getPOC()%(1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC())) == pReferencePictureSet->getPOC(i)%(1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC()))
+        Int pocCycle = 1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC();
+        Int curPoc = rpcPic->getPicSym()->getSlice(0)->getPOC() & (pocCycle-1);
+        Int refPoc = pReferencePictureSet->getPOC(i) & (pocCycle-1);
+        if(rpcPic->getIsLongTerm() && curPoc == refPoc)
         {
           isReference = 1;
           rpcPic->setUsedByCurr(pReferencePictureSet->getUsed(i));
@@ -1310,7 +1477,7 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
     //check that pictures of higher temporal layers are not used
     assert(rpcPic->getSlice( 0 )->isReferenced()==0||rpcPic->getUsedByCurr()==0||rpcPic->getTLayer()<=this->getTLayer());
     //check that pictures of higher or equal temporal layer are not in the RPS if the current picture is a TSA picture
-    if(this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
+    if(this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R || this->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N)
     {
       assert(rpcPic->getSlice( 0 )->isReferenced()==0||rpcPic->getTLayer()<this->getTLayer());
     }
@@ -1351,7 +1518,10 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
       }
       else 
       {
-        if(rpcPic->getIsLongTerm() && (rpcPic->getPicSym()->getSlice(0)->getPOC()%(1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC())) == pReferencePictureSet->getPOC(i)%(1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC()) && rpcPic->getSlice(0)->isReferenced())
+        Int pocCycle = 1<<rpcPic->getPicSym()->getSlice(0)->getSPS()->getBitsForPOC();
+        Int curPoc = rpcPic->getPicSym()->getSlice(0)->getPOC() & (pocCycle-1);
+        Int refPoc = pReferencePictureSet->getPOC(i) & (pocCycle-1);
+        if(rpcPic->getIsLongTerm() && curPoc == refPoc && rpcPic->getSlice(0)->isReferenced())
         {
           isAvailable = 1;
         }
@@ -1370,8 +1540,8 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
         Int refPoc = pReferencePictureSet->getPOC(i);
         if (!pReferencePictureSet->getCheckLTMSBPresent(i))
         {
-          curPoc = curPoc % pocCycle;
-          refPoc = refPoc % pocCycle;
+          curPoc = curPoc & (pocCycle - 1);
+          refPoc = refPoc & (pocCycle - 1);
         }
         
         if (rpcPic->getSlice(0)->isReferenced() && curPoc == refPoc)
@@ -2113,9 +2283,9 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
       hrd->setDpbOutputDelayLengthMinus1 (9);                        // max. 2^10
     }
 
-  /*
+/*
      Note: only the case of "vps_max_temporal_layers_minus1 = 0" is supported.
-  */
+*/
     Int i, j;
     UInt birateValue, cpbSizeValue;
     UInt ducpbSizeValue;
@@ -2409,9 +2579,9 @@ TComRefPicListModification::~TComRefPicListModification()
 
 TComScalingList::TComScalingList()
 {
-  m_useTransformSkip = false;
   init();
 }
+
 TComScalingList::~TComScalingList()
 {
   destroy();
@@ -2494,6 +2664,7 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
     for(listIdc = 0; listIdc < g_scalingListNum[sizeIdc]; listIdc++)
     {
       src = getScalingListAddress(sizeIdc, listIdc);
+
       fseek(fp,0,0);
       do 
       {

@@ -347,11 +347,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Bool do_help = false;
   
 #if SVC_EXTENSION
-  string  cfg_LayerCfgFile  [MAX_LAYERS];
+  string  cfg_LayerCfgFile   [MAX_LAYERS];
   string  cfg_BitstreamFile;
-  string* cfg_InputFile     [MAX_LAYERS];
-  string* cfg_ReconFile     [MAX_LAYERS];
-  Double* cfg_fQP           [MAX_LAYERS];
+  string* cfg_InputFile      [MAX_LAYERS];
+  string* cfg_ReconFile      [MAX_LAYERS];
+  Double* cfg_fQP            [MAX_LAYERS];
 
 #if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
@@ -564,6 +564,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
 #endif
+
+  //Field coding parameters
+  ("FieldCoding", m_isField, false, "Signals if it's a field based coding")
+  ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
   
@@ -861,6 +865,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
+  if(m_isField)
+  {
+#if SVC_EXTENSION
+    for(Int layer = 0; layer < MAX_LAYERS; layer++)
+    {
+      //Frame height
+      m_acLayerCfg[layer].m_iSourceHeightOrg = m_acLayerCfg[layer].m_iSourceHeight;
+      //Field height
+      m_acLayerCfg[layer].m_iSourceHeight = m_acLayerCfg[layer].m_iSourceHeight >> 1;
+    }
+#else
+    //Frame height
+    m_iSourceHeightOrg = m_iSourceHeight;
+    //Field height
+    m_iSourceHeight = m_iSourceHeight >> 1;
+#endif
+    //number of fields to encode
+    m_framesToBeEncoded *= 2;
+  }
+  
   for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
   {
     fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
@@ -1192,6 +1216,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
         m_iSourceHeight += m_confBottom;
+        if ( m_isField )
+        {
+          m_iSourceHeightOrg += m_confBottom << 1;
+          m_aiPad[1] = m_confBottom << 1;
+        }
       }
       if (m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0)
       {
@@ -1514,10 +1543,14 @@ Void TAppEncCfg::xCheckParameter()
   Bool errorGOP=false;
 #if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int checkGOP=1;
-  Int numRefs = 1;
+  Int numRefs = m_isField ? 2 : 1;
 #endif
   Int refList[MAX_NUM_REF_PICS+1];
   refList[0]=0;
+  if(m_isField)
+  {
+    refList[1] = 1;
+  }
   Bool isOK[MAX_GOP];
   for(Int i=0; i<MAX_GOP; i++) 
   {
@@ -1545,7 +1578,7 @@ Void TAppEncCfg::xCheckParameter()
   // verify layer configuration parameters
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    if(m_acLayerCfg[layer].xCheckParameter())
+    if(m_acLayerCfg[layer].xCheckParameter(m_isField))
     {
       printf("\nError: invalid configuration parameter found in layer %d \n", layer);
       check_failed = true;
@@ -2180,7 +2213,24 @@ Void TAppEncCfg::xPrintParameter()
   printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #endif
-  printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+  if (m_isField)
+  {
+    printf("Frame/Field          : Field based coding\n");
+    printf("Field index          : %u - %d (%d fields)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+    if (m_isTopFieldFirst)
+    {
+      printf("Field Order            : Top field first\n");
+    }
+    else
+    {
+      printf("Field Order            : Bottom field first\n");
+    }
+  }
+  else
+  {
+    printf("Frame/Field                  : Frame based coding\n");
+    printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+  }
   printf("CU size / depth              : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)  : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);

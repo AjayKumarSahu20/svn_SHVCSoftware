@@ -117,10 +117,10 @@ public:
   /// preparation of slice encoding (reference marking, QP and lambda)
 #if SVC_EXTENSION
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps );
+                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField );
 #else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS );
+                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField );
 #endif
 
 #if RATE_CONTROL_LAMBDA_DOMAIN

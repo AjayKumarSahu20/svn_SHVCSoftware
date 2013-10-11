@@ -66,8 +66,8 @@ class TDecTop
 private:
   Int                     m_iMaxRefPicNum;
   
+  NalUnitType             m_associatedIRAPType; ///< NAL unit type of the associated IRAP picture
   Int                     m_pocCRA;            ///< POC number of the latest CRA picture
-  Bool                    m_prevRAPisBLA;      ///< true if the previous RAP (CRA/CRANT/BLA/BLANT/IDR) picture is a BLA/BLANT picture
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
@@ -106,10 +106,8 @@ private:
 #if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
 #endif
-#if HM12_RANDOM_ACCESS
   Bool                    m_prevSliceSkipped;
   Int                     m_skippedPOC;
-#endif
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
@@ -121,7 +119,7 @@ private:
 #if AVC_BASE
   fstream*                m_pBLReconFile;
   Int                     m_iBLSourceWidth;
-  Int                     m_iBLSourceHeight;
+  Int                     m_iBLSourceHeight;  
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   Int                     m_numDirectRefLayers;
@@ -158,11 +156,10 @@ public:
   Void  deletePicBuffer();
 
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+#if SVC_EXTENSION
 #if EARLY_REF_PIC_MARKING
   Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
 #endif
-
-#if SVC_EXTENSION
   UInt      getLayerId            () { return m_layerId;              }
   Void      setLayerId            (UInt layer) { m_layerId = layer; }
   UInt      getNumLayer           () { return m_numLayer;             }

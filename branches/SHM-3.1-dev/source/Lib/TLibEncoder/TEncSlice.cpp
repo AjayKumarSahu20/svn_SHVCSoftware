@@ -179,9 +179,9 @@ Void TEncSlice::init( TEncTop* pcEncTop )
  */
 #if SVC_EXTENSION
 //\param vps          VPS associated with the slice
-Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps )
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField )
 #else
-Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS )
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField )
 #endif
 {
   Double dQP;
@@ -297,7 +297,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     // compute lambda value
     Int    NumberBFrames = ( m_pcCfg->getGOPSize() - 1 );
     Int    SHIFT_QP = 12;
-    Double dLambda_scale = 1.0 - Clip3( 0.0, 0.5, 0.05*(Double)NumberBFrames );
+
+    Double dLambda_scale = 1.0 - Clip3( 0.0, 0.5, 0.05*(Double)(isField ? NumberBFrames/2 : NumberBFrames) );
+
 #if FULL_NBIT
     Int    bitdepth_luma_qp_scale = 6 * (g_bitDepth - 8);
 #else
