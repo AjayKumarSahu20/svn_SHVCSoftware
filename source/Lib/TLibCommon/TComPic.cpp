@@ -52,7 +52,6 @@ TComPic::TComPic()
 #endif
 , m_bUsedByCurr                           (false)
 , m_bIsLongTerm                           (false)
-, m_bIsUsedAsLongTerm                     (false)
 , m_apcPicSym                             (NULL)
 , m_pcPicYuvPred                          (NULL)
 , m_pcPicYuvResi                          (NULL)

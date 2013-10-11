@@ -69,8 +69,7 @@ private:
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
 #endif
   
-  // for output control
-  Bool                            m_abDecFlag[ MAX_GOP ];         ///< decoded flag in one GOP
+  // for output control  
 #if SVC_EXTENSION
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
 #else

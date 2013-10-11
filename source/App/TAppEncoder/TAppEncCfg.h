@@ -87,7 +87,11 @@ protected:
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_iSourceWidth;                                   ///< source width in pixel
-  Int       m_iSourceHeight;                                  ///< source height in pixel
+  Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
+  
+  Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
+  
+  
   Int       m_conformanceMode;
   Int       m_confLeft;
   Int       m_confRight;
@@ -96,6 +100,9 @@ protected:
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
+
+  Bool      m_isField;                                        ///< enable field coding
+  Bool      m_isTopFieldFirst;
 
   // profile/level
   Profile::Name m_profile;

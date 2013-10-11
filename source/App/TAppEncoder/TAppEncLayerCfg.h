@@ -32,7 +32,8 @@ protected:
 
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
-  Int       m_iSourceHeight;                                  ///< source height in pixel
+  Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
+  Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
   Int       m_conformanceMode;
   Int       m_confLeft;
   Int       m_confRight;
@@ -103,7 +104,7 @@ public:
 #else
   Void  xPrintParameter();
 #endif
-  Bool  xCheckParameter();
+  Bool  xCheckParameter( Bool isField );
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
 
@@ -112,6 +113,7 @@ public:
   Int     getFrameRate()              {return m_iFrameRate;       }
   Int     getSourceWidth()            {return m_iSourceWidth;     }
   Int     getSourceHeight()           {return m_iSourceHeight;    }
+  Int     getSourceHeightOrg()        {return m_iSourceHeightOrg; }
   Int     getConformanceMode()        { return m_conformanceMode; }
   Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }

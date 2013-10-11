@@ -160,7 +160,7 @@ Void TAppEncLayerCfg::xPrintParameter()
 
 Bool confirmPara(Bool bflag, const char* message);
 
-Bool TAppEncLayerCfg::xCheckParameter()
+Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
 {
   switch (m_conformanceMode)
   {
@@ -184,6 +184,11 @@ Bool TAppEncLayerCfg::xCheckParameter()
       {
         m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
         m_iSourceHeight += m_confBottom;
+        if ( isField )
+        {
+          m_iSourceHeightOrg += m_confBottom << 1;
+          m_aiPad[1] = m_confBottom << 1;
+        }
       }
       break;
     }
