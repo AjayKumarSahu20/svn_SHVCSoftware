@@ -275,7 +275,7 @@ Void TAppDecTop::decode()
 #endif
   pcBLPic.destroy();
 
-  UInt layerIdmin = m_acTDecTop[0].getBLReconFile() == NULL ? 0 : 1;
+  UInt layerIdmin = m_acTDecTop[0].getBLReconFile()->is_open() ? 1 : 0;
 
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
 #else
@@ -462,7 +462,7 @@ Void TAppDecTop::xDestroyDecLib()
   {
     if ( m_pchReconFile[layer] )
     {
-      m_acTVideoIOYuvReconFile[layer]. close();
+      m_acTVideoIOYuvReconFile[layer].close();
     }
 
     // destroy decoder class
