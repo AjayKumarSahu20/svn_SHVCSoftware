@@ -873,6 +873,63 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       if(pcSlice->isTemporalLayerSwitchingPoint(rcListPic) || pcSlice->getSPS()->getTemporalIdNestingFlag())
       {
+#if ALIGN_TSA_STSA_PICS
+        if( pcSlice->getLayerId() > 0 )
+        {
+          Bool oneRefLayerTSA = false, oneRefLayerNotTSA = false;
+          for( Int i = 0; i < pcSlice->getLayerId(); i++)
+          {
+            TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
+            TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
+            if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerId(), i) )
+            {
+              if( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N ) ||
+                  ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R ) 
+                )
+              {
+                if(pcSlice->getTemporalLayerNonReferenceFlag() )
+                {
+                  pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_N);
+                }
+                else
+                {
+                  pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R );
+                }
+                oneRefLayerTSA = true;
+              }
+              else
+              {
+                oneRefLayerNotTSA = true;
+              }
+            }
+          }
+          assert( !( oneRefLayerNotTSA && oneRefLayerTSA ) ); // Only one variable should be true - failure of this assert means
+                                                                // that two independent reference layers that are not dependent on
+                                                                // each other, but are reference for current layer have inconsistency
+          if( oneRefLayerNotTSA /*&& !oneRefLayerTSA*/ )          // No reference layer is TSA - set current as TRAIL
+          {
+            if(pcSlice->getTemporalLayerNonReferenceFlag() )
+            {
+              pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_N );
+            }
+            else
+            {
+              pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_R );
+            }
+          }
+          else  // This means there is no reference layer picture for current picture in this AU
+          {
+            if(pcSlice->getTemporalLayerNonReferenceFlag() )
+            {
+              pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_N);
+            }
+            else
+            {
+              pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R );
+            }
+          }
+        }
+#else
         if(pcSlice->getTemporalLayerNonReferenceFlag())
         {
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_N);
@@ -880,21 +937,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         else
         {
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TLA_R);
-        }
-#if ALIGN_TSA_STSA_PICS
-        if( pcSlice->getLayerId() > 0 )
-        {
-          for(Int i = 0; i < pcSlice->getLayerId(); i++)
-          {
-            TComList<TComPic*> *cListPic = m_ppcTEncTop[i]->getListPic();
-            TComPic* lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
-            if( lowerLayerPic ) // If picture exists in Layer i
-            {
-              assert( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N ) ||
-                      ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R ) );
-              // TSA pictures are aligned within an access unit.
-            }
-          }
         }
 #endif
       }
@@ -930,6 +972,63 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         if(isSTSA==true)
         {    
+#if ALIGN_TSA_STSA_PICS
+          if( pcSlice->getLayerId() > 0 )
+          {
+            Bool oneRefLayerSTSA = false, oneRefLayerNotSTSA = false;
+            for( Int i = 0; i < pcSlice->getLayerId(); i++)
+            {
+              TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
+              TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
+              if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerId(), i) )
+              {
+                if( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ) ||
+                    ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R ) 
+                  )
+                {
+                  if(pcSlice->getTemporalLayerNonReferenceFlag() )
+                  {
+                    pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
+                  }
+                  else
+                  {
+                    pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R );
+                  }
+                  oneRefLayerSTSA = true;
+                }
+                else
+                {
+                  oneRefLayerNotSTSA = true;
+                }
+              }
+            }
+            assert( !( oneRefLayerNotSTSA && oneRefLayerSTSA ) ); // Only one variable should be true - failure of this assert means
+                                                                  // that two independent reference layers that are not dependent on
+                                                                  // each other, but are reference for current layer have inconsistency
+            if( oneRefLayerNotSTSA /*&& !oneRefLayerSTSA*/ )          // No reference layer is STSA - set current as TRAIL
+            {
+              if(pcSlice->getTemporalLayerNonReferenceFlag() )
+              {
+                pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_N );
+              }
+              else
+              {
+                pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_R );
+              }
+            }
+            else  // This means there is no reference layer picture for current picture in this AU
+            {
+              if(pcSlice->getTemporalLayerNonReferenceFlag() )
+              {
+                pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
+              }
+              else
+              {
+                pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R );
+              }
+            }
+          }
+#else
           if(pcSlice->getTemporalLayerNonReferenceFlag())
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
@@ -937,21 +1036,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           else
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
-          }
-#if ALIGN_TSA_STSA_PICS
-          if( pcSlice->getLayerId() > 0 )
-          {
-            for(Int i = 0; i < pcSlice->getLayerId(); i++)
-            {
-              TComList<TComPic*> *cListPic = m_ppcTEncTop[i]->getListPic();
-              TComPic* lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
-              if( lowerLayerPic ) // If picture exists in Layer i
-              {
-                assert( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ) ||
-                        ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R ) );
-              }
-              // STSA pictures are aligned within an access unit.
-            }
           }
 #endif
         }
