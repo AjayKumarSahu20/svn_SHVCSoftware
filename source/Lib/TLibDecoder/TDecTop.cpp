@@ -841,6 +841,44 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_apcSlicePilot->setPOC( 0 );
   }
 #endif
+#if ALIGN_TSA_STSA_PICS
+  if( m_apcSlicePilot->getLayerId() > 0 )
+  {
+    // Check for TSA alignment
+    if( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N ||
+        m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R 
+         )
+    {
+      for(Int dependentLayerIdx = 0; dependentLayerIdx < m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId); dependentLayerIdx++)
+      {
+        TComList<TComPic*> *cListPic = getRefLayerDec( dependentLayerIdx )->getListPic();
+        TComPic* refpicLayer = m_apcSlicePilot->getRefPic(*cListPic, m_apcSlicePilot->getPOC() );
+        if( refpicLayer )
+        {
+          assert( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TSA_N ||
+                    m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TLA_R );    // TSA pictures should be aligned among depenedent layers
+        } 
+      }
+    }
+    // Check for STSA alignment
+    if( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ||
+         m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R 
+         )
+    {
+      for(Int dependentLayerIdx = 0; dependentLayerIdx < m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId); dependentLayerIdx++)
+      {
+        TComList<TComPic*> *cListPic = getRefLayerDec( dependentLayerIdx )->getListPic();
+        TComPic* refpicLayer = m_apcSlicePilot->getRefPic(*cListPic, m_apcSlicePilot->getPOC() ); // STSA pictures should be aligned among dependent layers
+        if( refpicLayer )
+
+        {
+          assert( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ||
+                    m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R );
+        }
+      }
+    }
+  }
+#endif
   //detect lost reference picture and insert copy of earlier frame.
   Int lostPoc;
   while((lostPoc=m_apcSlicePilot->checkThatAllRefPicsAreAvailable(m_cListPic, m_apcSlicePilot->getRPS(), true, m_pocRandomAccess)) > 0)
