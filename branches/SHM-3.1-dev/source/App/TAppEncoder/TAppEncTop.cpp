@@ -1077,7 +1077,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         {          
           if(m_acTEncTop[layerCtr].getIntraPeriod() !=  m_acTEncTop[refLayerCtr].getIntraPeriod())
           {
-            vps->setCrossLayerIrapAlignFlag(false); 
+            vps->setCrossLayerIrapAlignFlag(false);
+            break;
           }
         }
       }
