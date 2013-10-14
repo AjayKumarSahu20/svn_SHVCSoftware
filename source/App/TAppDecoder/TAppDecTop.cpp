@@ -558,11 +558,11 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
           m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
@@ -751,11 +751,11 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
 #if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
             conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
+            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
           m_cTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
