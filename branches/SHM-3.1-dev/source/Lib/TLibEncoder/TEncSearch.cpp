@@ -3222,7 +3222,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool disableILP = false;
-  if (pcCU->getPic()->getLayerId() > 0 && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && pcCU->getPic()->getPicSym()->getTileIdxMap(pcCU->getAddr()) >= 0)
+  if (pcCU->getPic()->getLayerId() > 0 && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() /*&& pcCU->getPic()->getPicSym()->getTileIdxMap(pcCU->getAddr()) >= 0*/) //always true condition is commented out
   {
     if (pcCU->getPic()->getPicSym()->getTileSetType(pcCU->getAddr()) == 2)
     {
