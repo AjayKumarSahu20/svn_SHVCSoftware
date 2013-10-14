@@ -67,6 +67,9 @@ protected:
   Void xWriteSEILayersPresent(const SEILayersPresent& sei);
 #endif
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstrainedTileSets& sei);
+#endif
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
   Void xWriteByteAlign();
 };

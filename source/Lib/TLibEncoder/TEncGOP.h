@@ -188,6 +188,10 @@ protected:
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
+#endif
+
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
   Void xResetNonNestedSEIPresentFlags()
@@ -201,6 +205,9 @@ protected:
     m_nestedBufferingPeriodSEIPresentInAU    = false;
     m_nestedPictureTimingSEIPresentInAU      = false;
   }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void xBuildTileSetsMap(TComPicSym* picSym);
+#endif
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
 #if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
   TComPic* getMotionPredIlp(TComSlice* pcSlice);

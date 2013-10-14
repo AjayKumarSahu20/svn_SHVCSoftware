@@ -100,6 +100,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
     break;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
+    fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
+    break;
+#endif
   case SEI::SCALABLE_NESTING:
     fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
     break;
@@ -265,6 +270,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEISOPDescription;
       xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
       break;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+    case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
+      sei = new SEIInterLayerConstrainedTileSets;
+      xParseSEIInterLayerConstrainedTileSets((SEIInterLayerConstrainedTileSets&) *sei, payloadSize);
+      break;
+#endif
     case SEI::SCALABLE_NESTING:
       sei = new SEIScalableNesting;
 #if M0043_LAYERS_PRESENT_SEI
@@ -773,6 +784,50 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 
   xParseByteAlign();
 }
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize)
+{
+  UInt uiCode;
+
+  READ_FLAG( uiCode, "il_all_tiles_exact_sample_value_match_flag"   ); sei.m_ilAllTilesExactSampleValueMatchFlag = uiCode;
+  READ_FLAG( uiCode, "il_one_tile_per_tile_set_flag"                ); sei.m_ilOneTilePerTileSetFlag = uiCode;
+  if( !sei.m_ilOneTilePerTileSetFlag )
+  {
+    READ_UVLC( uiCode, "il_num_sets_in_message_minus1"                ); sei.m_ilNumSetsInMessageMinus1 = uiCode;
+    if( sei.m_ilNumSetsInMessageMinus1 )
+    {
+      READ_FLAG( uiCode, "skipped_tile_set_present_flag"                ); sei.m_skippedTileSetPresentFlag = uiCode;
+    }
+    else
+    {
+      sei.m_skippedTileSetPresentFlag = false;
+    }
+    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 + (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for( UInt i = 0; i <= numSignificantSets; i++ )
+    {
+      READ_UVLC( uiCode, "ilcts_id"                                     ); sei.m_ilctsId[i] = uiCode;
+      READ_UVLC( uiCode, "il_num_tile_rects_in_set_minus1"              ) ;sei.m_ilNumTileRectsInSetMinus1[i] = uiCode;
+      for( UInt j = 0; j <= sei.m_ilNumTileRectsInSetMinus1[i]; j++ )
+      {
+        READ_UVLC( uiCode, "il_top_left_tile_index"                       ); sei.m_ilTopLeftTileIndex[i][j] = uiCode;
+        READ_UVLC( uiCode, "il_bottom_right_tile_index"                   ); sei.m_ilBottomRightTileIndex[i][j] = uiCode;
+      }
+      READ_CODE( 2, uiCode, "ilc_idc"                                   ); sei.m_ilcIdc[i] = uiCode;
+      if( sei.m_ilAllTilesExactSampleValueMatchFlag )
+      {
+        READ_FLAG( uiCode, "il_exact_sample_value_match_flag"             ); sei.m_ilExactSampleValueMatchFlag[i] = uiCode;
+      }
+    }
+  }
+  else
+  {
+    READ_CODE( 2, uiCode, "all_tiles_ilc_idc"                         ); sei.m_allTilesIlcIdc = uiCode;
+  }
+
+  xParseByteAlign();
+}
+#endif
 
 #if M0043_LAYERS_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)

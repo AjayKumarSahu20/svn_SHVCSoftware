@@ -74,6 +74,9 @@ public:
 #if M0043_LAYERS_PRESENT_SEI
     LAYERS_PRESENT                       = 137,
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+    INTER_LAYER_CONSTRAINED_TILE_SETS    = 138
+#endif
   };
   
   SEI() {}
@@ -379,6 +382,30 @@ public:
   Int    m_nominalWhiteLevelLumaCodeValue;
   Int    m_extendedWhiteLevelLumaCodeValue;
 };
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+class SEIInterLayerConstrainedTileSets : public SEI
+{
+public:
+  PayloadType payloadType() const { return INTER_LAYER_CONSTRAINED_TILE_SETS; }
+
+  SEIInterLayerConstrainedTileSets() {}
+  virtual ~SEIInterLayerConstrainedTileSets() {}
+
+  Bool m_ilAllTilesExactSampleValueMatchFlag;
+  Bool m_ilOneTilePerTileSetFlag;
+  UInt m_ilNumSetsInMessageMinus1;
+  Bool m_skippedTileSetPresentFlag;
+  UInt m_ilctsId[256];
+  UInt m_ilNumTileRectsInSetMinus1[256];
+  UInt m_ilTopLeftTileIndex[256][440];
+  UInt m_ilBottomRightTileIndex[256][440];
+  UInt m_ilcIdc[256];
+  Bool m_ilExactSampleValueMatchFlag[256];
+  UInt m_allTilesIlcIdc;
+};
+#endif
+
 
 typedef std::list<SEI*> SEIMessages;
 

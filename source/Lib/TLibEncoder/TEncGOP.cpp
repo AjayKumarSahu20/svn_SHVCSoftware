@@ -306,6 +306,45 @@ SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
   return seiToneMappingInfo;
 }
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+SEIInterLayerConstrainedTileSets* TEncGOP::xCreateSEIInterLayerConstrainedTileSets()
+{
+  SEIInterLayerConstrainedTileSets *seiInterLayerConstrainedTileSets = new SEIInterLayerConstrainedTileSets();
+  seiInterLayerConstrainedTileSets->m_ilAllTilesExactSampleValueMatchFlag = false;
+  seiInterLayerConstrainedTileSets->m_ilOneTilePerTileSetFlag = false;
+  if (!seiInterLayerConstrainedTileSets->m_ilOneTilePerTileSetFlag)
+  {
+    seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 = m_pcCfg->getIlNumSetsInMessage() - 1;
+    if (seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1)
+    {
+      seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag = m_pcCfg->getSkippedTileSetPresentFlag();
+    }
+    else
+    {
+      seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag = false;
+    }
+    UInt numSignificantSets = seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 - (seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for (UInt i = 0; i < numSignificantSets; i++)
+    {
+      seiInterLayerConstrainedTileSets->m_ilctsId[i] = i;
+      seiInterLayerConstrainedTileSets->m_ilNumTileRectsInSetMinus1[i] = 0;
+      for( UInt j = 0; j <= seiInterLayerConstrainedTileSets->m_ilNumTileRectsInSetMinus1[i]; j++)
+      {
+        seiInterLayerConstrainedTileSets->m_ilTopLeftTileIndex[i][j]     = m_pcCfg->getTopLeftTileIndex(i);
+        seiInterLayerConstrainedTileSets->m_ilBottomRightTileIndex[i][j] = m_pcCfg->getBottomRightTileIndex(i);
+      }
+      seiInterLayerConstrainedTileSets->m_ilcIdc[i] = m_pcCfg->getIlcIdc(i);
+      if (seiInterLayerConstrainedTileSets->m_ilAllTilesExactSampleValueMatchFlag)
+      {
+        seiInterLayerConstrainedTileSets->m_ilExactSampleValueMatchFlag[i] = false;
+      }
+    }
+  }
+
+  return seiInterLayerConstrainedTileSets;
+}
+#endif
+
 Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps)
 {
   OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -368,6 +407,19 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
   }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  if(m_pcCfg->getInterLayerConstrainedTileSetsSEIEnabled())
+  {
+    SEIInterLayerConstrainedTileSets *sei = xCreateSEIInterLayerConstrainedTileSets ();
+
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
 }
 
 // ====================================================================================================================
@@ -1470,6 +1522,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     //intialize each tile of the current picture
     pcPic->getPicSym()->xInitTiles();
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+    if (m_pcCfg->getInterLayerConstrainedTileSetsSEIEnabled())
+    {
+      xBuildTileSetsMap(pcPic->getPicSym());
+    }
+#endif
 
     // Allocate some coders, now we know how many tiles there are.
     Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
@@ -3446,6 +3505,48 @@ Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
 //  assert(it != accessUnit.end());  // Triggers with some legit configurations
   return seiStartPos;
 }
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Void TEncGOP::xBuildTileSetsMap(TComPicSym* picSym)
+{
+  Int numCUs = picSym->getFrameWidthInCU() * picSym->getFrameHeightInCU();
+
+  for (Int i = 0; i < numCUs; i++)
+  {
+    picSym->setTileSetIdxMap(i, -1, 0, false);
+  }
+
+  for (Int i = 0; i < m_pcCfg->getIlNumSetsInMessage(); i++)
+  {
+    TComTile* topLeftTile     = picSym->getTComTile(m_pcCfg->getTopLeftTileIndex(i));
+    TComTile* bottomRightTile = picSym->getTComTile(m_pcCfg->getBottomRightTileIndex(i));
+    Int tileSetLeftEdgePosInCU = topLeftTile->getRightEdgePosInCU() - topLeftTile->getTileWidth() + 1;
+    Int tileSetRightEdgePosInCU = bottomRightTile->getRightEdgePosInCU();
+    Int tileSetTopEdgePosInCU = topLeftTile->getBottomEdgePosInCU() - topLeftTile->getTileHeight() + 1;
+    Int tileSetBottomEdgePosInCU = bottomRightTile->getBottomEdgePosInCU();
+    assert(tileSetLeftEdgePosInCU < tileSetRightEdgePosInCU && tileSetTopEdgePosInCU < tileSetBottomEdgePosInCU);
+    for (Int j = tileSetTopEdgePosInCU; j <= tileSetBottomEdgePosInCU; j++)
+    {
+      for (Int k = tileSetLeftEdgePosInCU; k <= tileSetRightEdgePosInCU; k++)
+      {
+        picSym->setTileSetIdxMap(j * picSym->getFrameWidthInCU() + k, i, m_pcCfg->getIlcIdc(i), false);
+      }
+    }
+  }
+  
+  if (m_pcCfg->getSkippedTileSetPresentFlag())
+  {
+    Int skippedTileSetIdx = m_pcCfg->getIlNumSetsInMessage();
+    for (Int i = 0; i < numCUs; i++)
+    {
+      if (picSym->getTileSetIdxMap(i) < 0)
+      {
+        picSym->setTileSetIdxMap(i, skippedTileSetIdx, 0, true);
+      }
+    }
+  }
+}
+#endif
 
 Void TEncGOP::dblMetric( TComPic* pcPic, UInt uiNumSlices )
 {

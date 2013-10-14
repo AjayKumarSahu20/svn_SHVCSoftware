@@ -317,6 +317,14 @@ protected:
 #endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
+  UInt      m_ilNumSetsInMessage;
+  Bool      m_skippedTileSetPresentFlag;
+  UInt      m_topLeftTileIndex[1024];
+  UInt      m_bottomRightTileIndex[1024];
+  UInt      m_ilcIdc[1024];
+#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -756,6 +764,38 @@ public:
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
   Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void  setInterLayerConstrainedTileSetsSEIEnabled(Bool b) { m_interLayerConstrainedTileSetsSEIEnabled = b; }
+  Bool  getInterLayerConstrainedTileSetsSEIEnabled()       { return m_interLayerConstrainedTileSetsSEIEnabled; }
+  Void  setIlNumSetsInMessage(UInt b)                      { m_ilNumSetsInMessage = b; }
+  Int   getIlNumSetsInMessage()                            { return m_ilNumSetsInMessage; }
+  Void  setSkippedTileSetPresentFlag(Bool b)               { m_skippedTileSetPresentFlag = b; }
+  Bool  getSkippedTileSetPresentFlag()                     { return m_skippedTileSetPresentFlag; }
+  Void  setTopLeftTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_topLeftTileIndex[i] = b[i];
+    }
+  }
+  UInt  getTopLeftTileIndex(UInt b)                        { return m_topLeftTileIndex[b]; }
+  Void  setBottomRightTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_bottomRightTileIndex[i] = b[i];
+    }
+  }
+  UInt  getBottomRightTileIndex(UInt b)                    { return m_bottomRightTileIndex[b]; }
+  Void  setIlcIdc(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_ilcIdc[i] = b[i];
+    }
+  }
+  UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
   Void      setUseWP               ( Bool b )    { m_useWeightedPred   = b;    }
   Void      setWPBiPred            ( Bool b )    { m_useWeightedBiPred = b;    }
   Bool      getUseWP               ()            { return m_useWeightedPred;   }
