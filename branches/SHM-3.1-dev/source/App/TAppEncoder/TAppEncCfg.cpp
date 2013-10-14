@@ -457,6 +457,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_SYNTAX
   string  cfg_BLSyntaxFile;
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  string  cfg_tileSets;
+#endif
 #else
   string cfg_InputFile;
   string cfg_BitstreamFile;
@@ -847,6 +850,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
+  ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
+  ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
   ;
   
@@ -1354,6 +1362,50 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  if (m_interLayerConstrainedTileSetsSEIEnabled)
+  {
+    if (m_iNumColumnsMinus1 == 0 && m_iNumRowsMinus1 == 0)
+    {
+      printf( "Tiles are not defined (needed for inter-layer comnstrained tile sets SEI).\n" );
+      exit( EXIT_FAILURE );
+    }
+    Char* pTileSets = cfg_tileSets.empty() ? NULL : strdup(cfg_tileSets.c_str());
+    int i = 0;
+    char *topLeftTileIndex = strtok(pTileSets, " ,");
+    while(topLeftTileIndex != NULL)
+    {
+      if( i >= m_ilNumSetsInMessage )
+      {
+        printf( "The number of tile sets is larger than defined by IlNumSetsInMessage.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_topLeftTileIndex + i ) = atoi( topLeftTileIndex );
+      char *bottonRightTileIndex = strtok(NULL, " ,");
+      if( bottonRightTileIndex == NULL )
+      {
+        printf( "BottonRightTileIndex is missing in the tile sets.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_bottomRightTileIndex + i ) = atoi( bottonRightTileIndex );
+      char *ilcIdc = strtok(NULL, " ,");
+      if( ilcIdc == NULL )
+      {
+        printf( "IlcIdc is missing in the tile sets.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_ilcIdc + i ) = atoi( ilcIdc );
+      topLeftTileIndex = strtok(NULL, " ,");
+      i++;
+    }
+    if( i < m_ilNumSetsInMessage )
+    {
+      printf( "The number of tile sets is smaller than defined by IlNumSetsInMessage.\n" );
+      exit( EXIT_FAILURE );
+    }
+    m_skippedTileSetPresentFlag = false;
+  }
+#endif
   // check validity of input parameters
   xCheckParameter();
   

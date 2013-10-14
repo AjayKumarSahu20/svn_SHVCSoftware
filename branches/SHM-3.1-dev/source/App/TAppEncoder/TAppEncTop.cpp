@@ -462,6 +462,14 @@ Void TAppEncTop::xInitLibCfg()
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+    m_acTEncTop[layer].setInterLayerConstrainedTileSetsSEIEnabled( m_interLayerConstrainedTileSetsSEIEnabled );
+    m_acTEncTop[layer].setIlNumSetsInMessage( m_ilNumSetsInMessage );
+    m_acTEncTop[layer].setSkippedTileSetPresentFlag( m_skippedTileSetPresentFlag );
+    m_acTEncTop[layer].setTopLeftTileIndex( m_topLeftTileIndex );
+    m_acTEncTop[layer].setBottomRightTileIndex( m_bottomRightTileIndex );
+    m_acTEncTop[layer].setIlcIdc( m_ilcIdc );
+#endif
     m_acTEncTop[layer].setUniformSpacingIdr          ( m_iUniformSpacingIdr );
     m_acTEncTop[layer].setNumColumnsMinus1           ( m_iNumColumnsMinus1 );
     m_acTEncTop[layer].setNumRowsMinus1              ( m_iNumRowsMinus1 );

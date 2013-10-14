@@ -366,6 +366,14 @@ protected:
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
+  UInt      m_ilNumSetsInMessage;
+  Bool      m_skippedTileSetPresentFlag;
+  UInt      m_topLeftTileIndex[1024];
+  UInt      m_bottomRightTileIndex[1024];
+  UInt      m_ilcIdc[1024];
+#endif
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

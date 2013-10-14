@@ -156,6 +156,7 @@
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id_len_minus1 and view_id_val
 #define M0043_LAYERS_PRESENT_SEI         0      ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
+#define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION

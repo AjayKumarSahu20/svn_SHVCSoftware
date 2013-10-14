@@ -104,6 +104,11 @@ private:
   TComTile**    m_apcTComTile;
   UInt*         m_puiCUOrderMap;       //the map of LCU raster scan address relative to LCU encoding order 
   UInt*         m_puiTileIdxMap;       //the map of the tile index relative to LCU raster scan address 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Int*          m_piTileSetIdxMap;     //the map of the tile set index relative to LCU raster scan address
+  UChar*        m_pucTileSetType;
+  Bool*         m_pbSkippedTileSetFlag;
+#endif
   UInt*         m_puiInverseCUOrderMap;
 
   SAOParam *m_saoParam;
@@ -142,6 +147,17 @@ public:
   Void         setCUOrderMap( Int encCUOrder, Int cuAddr )           { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
   UInt         getCUOrderMap( Int encCUOrder )                       { return *(m_puiCUOrderMap + (encCUOrder>=m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
   UInt         getTileIdxMap( Int i )                                { return *(m_puiTileIdxMap + i); }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void         setTileSetIdxMap( Int i, Int tileSetIdx, UChar setType, Bool skipFlag )
+  {
+    m_piTileSetIdxMap[i]       = tileSetIdx;
+    m_pucTileSetType[i]        = setType;
+    m_pbSkippedTileSetFlag[i]  = skipFlag;
+  }
+  Int          getTileSetIdxMap( Int i )                             { return *(m_piTileSetIdxMap + i); }
+  UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i); }
+  Bool         getSkippedTileSetFlag( Int i )                        { return *(m_pbSkippedTileSetFlag + i); }
+#endif
   Void         setInverseCUOrderMap( Int cuAddr, Int encCUOrder )    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
   UInt         getInverseCUOrderMap( Int cuAddr )                    { return *(m_puiInverseCUOrderMap + (cuAddr>=m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
   UInt         getPicSCUEncOrder( UInt SCUAddr );

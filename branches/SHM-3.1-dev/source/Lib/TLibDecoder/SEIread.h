@@ -79,6 +79,9 @@ protected:
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);
+#endif
 #if M0043_LAYERS_PRESENT_SEI
   Void xParseSEILayersPresent         (SEILayersPresent &sei, UInt payloadSize, TComVPS *vps);
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
