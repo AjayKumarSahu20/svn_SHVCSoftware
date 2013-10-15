@@ -803,8 +803,8 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
     {
       sei.m_skippedTileSetPresentFlag = false;
     }
-    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 + (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
-    for( UInt i = 0; i <= numSignificantSets; i++ )
+    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 - (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for( UInt i = 0; i < numSignificantSets; i++ )
     {
       READ_UVLC( uiCode, "ilcts_id"                                     ); sei.m_ilctsId[i] = uiCode;
       READ_UVLC( uiCode, "il_num_tile_rects_in_set_minus1"              ) ;sei.m_ilNumTileRectsInSetMinus1[i] = uiCode;
