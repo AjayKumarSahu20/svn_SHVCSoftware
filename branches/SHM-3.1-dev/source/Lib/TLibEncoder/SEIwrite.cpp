@@ -580,8 +580,8 @@ Void SEIWriter::xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstr
     {
       WRITE_FLAG( sei.m_skippedTileSetPresentFlag,            "skipped_tile_set_present_flag"                );
     }
-    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 + (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
-    for( UInt i = 0; i <= numSignificantSets; i++ )
+    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 - (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for( UInt i = 0; i < numSignificantSets; i++ )
     {
       WRITE_UVLC( sei.m_ilctsId[i],                           "ilcts_id"                                     );
       WRITE_UVLC( sei.m_ilNumTileRectsInSetMinus1[i],         "il_num_tile_rects_in_set_minus1"              );

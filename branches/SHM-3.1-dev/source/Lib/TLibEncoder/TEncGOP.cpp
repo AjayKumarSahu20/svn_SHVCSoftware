@@ -323,8 +323,8 @@ SEIInterLayerConstrainedTileSets* TEncGOP::xCreateSEIInterLayerConstrainedTileSe
     {
       seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag = false;
     }
-    UInt numSignificantSets = seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 - (seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag ? 1 : 0) + 1;
-    for (UInt i = 0; i < numSignificantSets; i++)
+    seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 += seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag ? 1 : 0;
+    for (UInt i = 0; i < m_pcCfg->getIlNumSetsInMessage(); i++)
     {
       seiInterLayerConstrainedTileSets->m_ilctsId[i] = i;
       seiInterLayerConstrainedTileSets->m_ilNumTileRectsInSetMinus1[i] = 0;
