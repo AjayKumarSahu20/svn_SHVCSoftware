@@ -1274,7 +1274,11 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     // if( separate_colour_plane_flag  ==  1 )
     //   colour_plane_id                                      u(2)
 
+#if N0065_LAYER_POC_ALIGNMENT
+    if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
+#else
     if( !pcSlice->getIdrPicFlag() )
+#endif
     {
 #if POC_RESET_FLAG
       Int picOrderCntLSB;
@@ -1290,6 +1294,11 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
 #endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
+
+#if N0065_LAYER_POC_ALIGNMENT
+      if( !pcSlice->getIdrPicFlag() )
+      {
+#endif
       TComReferencePictureSet* rps = pcSlice->getRPS();
       
 #if FIX1071
@@ -1404,6 +1413,9 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
         WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
       }
+#if N0065_LAYER_POC_ALIGNMENT
+      }
+#endif
     }
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
