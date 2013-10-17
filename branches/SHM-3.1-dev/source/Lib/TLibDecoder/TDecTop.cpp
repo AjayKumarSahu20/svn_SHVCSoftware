@@ -1158,7 +1158,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 
-
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 

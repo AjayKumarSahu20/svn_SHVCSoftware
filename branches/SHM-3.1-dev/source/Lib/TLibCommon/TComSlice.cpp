@@ -277,7 +277,7 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
     pcPic = *(iterPic);
   }
 #if POC_RESET_FLAG
-    assert( pcPic->getSlice(0)->isReferenced() );
+  assert( pcPic->getSlice(0)->isReferenced() );
 #endif
   return  pcPic;
 }
