@@ -1090,7 +1090,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
           }
         }
       }
-    }   
+    }
+
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      vps->setCrossLayerIrapAlignFlag(false);
+    }
 #endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);

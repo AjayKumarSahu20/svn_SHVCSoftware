@@ -263,6 +263,8 @@ Void TAppDecTop::decode()
   }
   // delete buffers
 #if AVC_BASE
+  UInt layerIdmin = m_acTDecTop[0].getBLReconFile()->is_open() ? 1 : 0;
+
   if( streamYUV.is_open() )
   {
     streamYUV.close();
@@ -273,9 +275,7 @@ Void TAppDecTop::decode()
     streamSyntaxFile.close();
   }
 #endif
-  pcBLPic.destroy();
-
-  UInt layerIdmin = m_acTDecTop[0].getBLReconFile()->is_open() ? 1 : 0;
+  pcBLPic.destroy();  
 
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
 #else
