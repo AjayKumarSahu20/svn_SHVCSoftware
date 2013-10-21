@@ -66,8 +66,8 @@ class TDecTop
 private:
   Int                     m_iMaxRefPicNum;
   
+  NalUnitType             m_associatedIRAPType; ///< NAL unit type of the associated IRAP picture
   Int                     m_pocCRA;            ///< POC number of the latest CRA picture
-  Bool                    m_prevRAPisBLA;      ///< true if the previous RAP (CRA/CRANT/BLA/BLANT/IDR) picture is a BLA/BLANT picture
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
@@ -78,7 +78,7 @@ private:
 #endif
 
   TComSlice*              m_apcSlicePilot;
-  
+
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
 
   // functional classes
@@ -106,6 +106,8 @@ private:
 #if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
 #endif
+  Bool                    m_prevSliceSkipped;
+  Int                     m_skippedPOC;
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
@@ -117,7 +119,7 @@ private:
 #if AVC_BASE
   fstream*                m_pBLReconFile;
   Int                     m_iBLSourceWidth;
-  Int                     m_iBLSourceHeight;
+  Int                     m_iBLSourceHeight;  
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   Int                     m_numDirectRefLayers;
@@ -129,12 +131,10 @@ private:
   Bool                    m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool                    m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #endif 
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   fstream*               m_pBLSyntaxFile;
-#endif
-#if REF_IDX_FRAMEWORK
-  TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #endif
 
 public:
@@ -156,8 +156,10 @@ public:
   Void  deletePicBuffer();
 
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
-
 #if SVC_EXTENSION
+#if EARLY_REF_PIC_MARKING
+  Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
+#endif
   UInt      getLayerId            () { return m_layerId;              }
   Void      setLayerId            (UInt layer) { m_layerId = layer; }
   UInt      getNumLayer           () { return m_numLayer;             }
@@ -205,14 +207,16 @@ public:
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
 #endif
+#if REPN_FORMAT_IN_VPS
+  Void      xInitILRP(TComSlice *slice);
+#else
+  Void      xInitILRP(TComSPS *pcSPS);
+#endif
+  Void      setILRPic(TComPic *pcPic);
 #endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
-#endif
-#if REF_IDX_FRAMEWORK
-  Void      xInitILRP(TComSPS *pcSPS);
-  Void      setILRPic(TComPic *pcPic);
 #endif
 
 protected:
@@ -221,7 +225,11 @@ protected:
 
   Void      xActivateParameterSets();
 #if SVC_EXTENSION
+#if POC_RESET_FLAG
+  Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int &iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
+#else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
+#endif
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
 #endif

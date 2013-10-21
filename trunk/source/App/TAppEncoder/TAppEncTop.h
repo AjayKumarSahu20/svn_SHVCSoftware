@@ -81,7 +81,7 @@ protected:
   // initialization
   Void  xCreateLib        ();                               ///< create files & encoder class
   Void  xInitLibCfg       ();                               ///< initialize internal variables
-  Void  xInitLib          ();                               ///< initialize encoder class
+  Void  xInitLib          (Bool isFieldCoding);             ///< initialize encoder class
   Void  xDestroyLib       ();                               ///< destroy encoder class
   
   /// obtain required buffers
@@ -98,7 +98,7 @@ protected:
 #if SVC_EXTENSION
   Void xWriteRecon(UInt layer, Int iNumEncoded);
   Void xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits);
-  Void printOutSummary();
+  Void printOutSummary(Bool isField);
 #else
   Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
 #endif

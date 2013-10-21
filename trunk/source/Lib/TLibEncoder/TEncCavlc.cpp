@@ -220,12 +220,61 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
     }
   }
   WRITE_FLAG( pcPPS->getScalingListPresentFlag() ? 1 : 0,                          "pps_scaling_list_data_present_flag" ); 
+
+#if IL_SL_SIGNALLING_N0371
+  pcPPS->setPPS( pcPPS->getLayerId(), pcPPS );  
+#endif
+
   if( pcPPS->getScalingListPresentFlag() )
   {
 #if SCALING_LIST_OUTPUT_RESULT
     printf("PPS\n");
 #endif
+
+#if IL_SL_SIGNALLING_N0371
+    m_pcSlice->getScalingList()->setLayerId( pcPPS->getLayerId() );
+
+    if( pcPPS->getLayerId() > 0 )
+    {
+      WRITE_FLAG( pcPPS->getPredScalingListFlag() ? 1 : 0,                          "pps_pred_scaling_list_flag" );
+      m_pcSlice->getScalingList()->setPredScalingListFlag( pcPPS->getPredScalingListFlag() );
+
+      if( pcPPS->getPredScalingListFlag() )
+      {
+        // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+        assert( /*pcPPS->getScalingListRefLayerId() >= 0 &&*/ pcPPS->getScalingListRefLayerId() <= 62 );
+
+        // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of pps_scaling_list_ref_layer_id shall be greater than 0
+        if( pcPPS->getSPS()->getVPS()->getAvcBaseLayerFlag() )
+        {
+          assert( pcPPS->getScalingListRefLayerId() > 0 );
+        }
+
+        // It is a requirement of bitstream conformance that, when a PPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB and 
+        // pps_infer_scaling_list_flag in the PPS is equal to 1, pps_infer_scaling_list_flag shall be equal to 0 for the PPS that is active for the layer with nuh_layer_id equal to pps_scaling_list_ref_layer_id
+        assert( pcPPS->getPPS( pcPPS->getScalingListRefLayerId() )->getPredScalingListFlag() == false );
+
+        // It is a requirement of bitstream conformance that, when a PPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB, 
+        // the layer with nuh_layer_id equal to pps_scaling_list_ref_layer_id shall be a direct or indirect reference layer of the layer with nuh_layer_id equal to nuhLayerIdB
+        assert( pcPPS->getSPS()->getVPS()->getScalingListLayerDependency( pcPPS->getLayerId(), pcPPS->getScalingListRefLayerId() ) == true );
+        
+        WRITE_UVLC( pcPPS->getScalingListRefLayerId(),                            "scaling_list_pps_ref_layer_id" );
+        m_pcSlice->getScalingList()->setScalingListRefLayerId( pcPPS->getScalingListRefLayerId() );
+        codeScalingList( m_pcSlice->getScalingList() );
+      }
+      else
+      {
+        codeScalingList( m_pcSlice->getScalingList() );
+      }
+    }
+    else
+    {
+      codeScalingList( m_pcSlice->getScalingList() );
+    }
+#else
     codeScalingList( m_pcSlice->getScalingList() );
+#endif
+
   }
   WRITE_FLAG( pcPPS->getListsModificationPresentFlag(), "lists_modification_present_flag");
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
@@ -413,18 +462,36 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if SPS_SUB_LAYER_INFO
   }
 #endif
-  codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
-  WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
-  WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
-  assert(pcSPS->getChromaFormatIdc () == 1);
-  // in the first version chroma_format_idc can only be equal to 1 (4:2:0)
-  if( pcSPS->getChromaFormatIdc () == 3 )
+#ifdef SPS_PTL_FIX
+  if (pcSPS->getLayerId() == 0)
   {
-    WRITE_FLAG( 0,                                  "separate_colour_plane_flag");
+    codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
   }
+#else
+  codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+#endif
+  WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
+#if REPN_FORMAT_IN_VPS
+  if( pcSPS->getLayerId() > 0 )
+  {
+    WRITE_FLAG( pcSPS->getUpdateRepFormatFlag(), "update_rep_format_flag" );
+  }
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+#endif
+    WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
+    assert(pcSPS->getChromaFormatIdc () == 1);
+    // in the first version chroma_format_idc can only be equal to 1 (4:2:0)
+    if( pcSPS->getChromaFormatIdc () == 3 )
+    {
+      WRITE_FLAG( 0,                                  "separate_colour_plane_flag");
+    }
 
-  WRITE_UVLC( pcSPS->getPicWidthInLumaSamples (),   "pic_width_in_luma_samples" );
-  WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
+    WRITE_UVLC( pcSPS->getPicWidthInLumaSamples (),   "pic_width_in_luma_samples" );
+    WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   Window conf = pcSPS->getConformanceWindow();
 
   WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
@@ -436,9 +503,17 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_UVLC( conf.getWindowBottomOffset() / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_bottom_offset" );
   }
 
-  WRITE_UVLC( pcSPS->getBitDepthY() - 8,             "bit_depth_luma_minus8" );
-  WRITE_UVLC( pcSPS->getBitDepthC() - 8,             "bit_depth_chroma_minus8" );
-
+#if REPN_FORMAT_IN_VPS
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+  {
+    assert( pcSPS->getBitDepthY() >= 8 );
+    assert( pcSPS->getBitDepthC() >= 8 );
+#endif
+    WRITE_UVLC( pcSPS->getBitDepthY() - 8,             "bit_depth_luma_minus8" );
+    WRITE_UVLC( pcSPS->getBitDepthC() - 8,             "bit_depth_chroma_minus8" );
+#if REPN_FORMAT_IN_VPS
+  }
+#endif
   WRITE_UVLC( pcSPS->getBitsForPOC()-4,                 "log2_max_pic_order_cnt_lsb_minus4" );
 
   const Bool subLayerOrderingInfoPresentFlag = 1;
@@ -462,6 +537,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthInter() - 1,                               "max_transform_hierarchy_depth_inter" );
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthIntra() - 1,                               "max_transform_hierarchy_depth_intra" );
   WRITE_FLAG( pcSPS->getScalingListFlag() ? 1 : 0,                                   "scaling_list_enabled_flag" ); 
+
+#if IL_SL_SIGNALLING_N0371
+  pcSPS->setSPS( pcSPS->getLayerId(), pcSPS );
+#endif
+
   if(pcSPS->getScalingListFlag())
   {
     WRITE_FLAG( pcSPS->getScalingListPresentFlag() ? 1 : 0,                          "sps_scaling_list_data_present_flag" ); 
@@ -470,7 +550,52 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if SCALING_LIST_OUTPUT_RESULT
     printf("SPS\n");
 #endif
+
+#if IL_SL_SIGNALLING_N0371
+    m_pcSlice->getScalingList()->setLayerId( pcSPS->getLayerId() );
+
+    if( pcSPS->getLayerId() > 0 )
+    {
+      WRITE_FLAG( pcSPS->getPredScalingListFlag() ? 1 : 0,                          "sps_pred_scaling_list_flag" );
+      m_pcSlice->getScalingList()->setPredScalingListFlag( pcSPS->getPredScalingListFlag() );
+
+      if( pcSPS->getPredScalingListFlag() )
+      {
+
+        // The value of sps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+        assert( /*pcSPS->getScalingListRefLayerId() >= 0 &&*/ pcSPS->getScalingListRefLayerId() <= 62 );
+        
+        // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
+        if( pcSPS->getVPS()->getAvcBaseLayerFlag() )
+        {
+          assert( pcSPS->getScalingListRefLayerId() > 0 );
+        }
+
+        // It is a requirement of bitstream conformance that, when an SPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB and 
+        // sps_infer_scaling_list_flag in the SPS is equal to 1, sps_infer_scaling_list_flag shall be equal to 0 for the SPS that is active for the layer with nuh_layer_id equal to sps_scaling_list_ref_layer_id
+        assert( pcSPS->getSPS( pcSPS->getScalingListRefLayerId() )->getPredScalingListFlag() == false );
+
+        // It is a requirement of bitstream conformance that, when an SPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB, 
+        // the layer with nuh_layer_id equal to sps_scaling_list_ref_layer_id shall be a direct or indirect reference layer of the layer with nuh_layer_id equal to nuhLayerIdB
+        assert( pcSPS->getVPS()->getScalingListLayerDependency( pcSPS->getLayerId(), pcSPS->getScalingListRefLayerId() ) == true );
+
+        WRITE_UVLC( pcSPS->getScalingListRefLayerId(),                            "scaling_list_sps_ref_layer_id" );
+        m_pcSlice->getScalingList()->setScalingListRefLayerId( pcSPS->getScalingListRefLayerId() );
+        codeScalingList( m_pcSlice->getScalingList() );
+      }
+      else
+      {
+        codeScalingList( m_pcSlice->getScalingList() );
+      }
+    }
+    else
+    {
       codeScalingList( m_pcSlice->getScalingList() );
+    }
+#else
+      codeScalingList( m_pcSlice->getScalingList() );
+#endif
+
     }
   }
   WRITE_FLAG( pcSPS->getUseAMP() ? 1 : 0,                                            "amp_enabled_flag" );
@@ -490,7 +615,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 
   TComRPSList* rpsList = pcSPS->getRPSList();
   TComReferencePictureSet*      rps;
-
+  
   WRITE_UVLC(rpsList->getNumberOfReferencePictureSets(), "num_short_term_ref_pic_sets" );
   for(Int i=0; i < rpsList->getNumberOfReferencePictureSets(); i++)
   {
@@ -539,13 +664,13 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
-#if SCALED_REF_LAYER_OFFSETS
-#if SCALED_REF_LAYER_OFFSET_FLAG
-  WRITE_FLAG( pcSPS->getLayerId() > 0, "scaled_ref_layer_offset_present_flag" );
-  if( pcSPS->getLayerId() > 0 )
-#else
-  if( pcSPS->getLayerId() > 0 )
+
+#if VERT_MV_CONSTRAINT
+  // Vertical MV component restriction is not used in SHVC CTC
+  WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
 #endif
+#if SCALED_REF_LAYER_OFFSETS
+  if( pcSPS->getLayerId() > 0 )
   {
     WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
     for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
@@ -592,7 +717,11 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_CODE( pcVPS->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1" );
   WRITE_FLAG( pcVPS->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag" );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
+#if VPS_EXTN_OFFSET
+  WRITE_CODE( pcVPS->getExtensionOffset(),         16,        "vps_extension_offset" );
+#else
   WRITE_CODE( 0xffff,                              16,        "vps_reserved_ffff_16bits" );
+#endif
   codePTL( pcVPS->getPTL(), true, pcVPS->getMaxTLayers() - 1 );
   const Bool subLayerOrderingInfoPresentFlag = 1;
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
@@ -675,8 +804,15 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_FLAG( 0,                     "vps_extension_flag" );
 #else
   WRITE_FLAG( 1,                     "vps_extension_flag" );
-  codeVPSExtension(pcVPS);
-  WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
+  if(1) // Should be conditioned on the value of vps_extension_flag
+  {
+    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG(1,                  "vps_extension_alignment_bit_equal_to_one");
+    }
+    codeVPSExtension(pcVPS);
+    WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
+  }
 #endif  
   //future extensions here..
   
@@ -736,6 +872,18 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if VIEW_ID_RELATED_SIGNALING
+  // if ( pcVPS->getNumViews() > 1 )  
+  //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val. 
+  {
+    WRITE_CODE( vps->getViewIdLenMinus1( ), 4, "view_id_len_minus1" );
+  }
+
+  for(  i = 0; i < vps->getNumViews(); i++ )
+  {
+    WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
+  }
+#endif
 #if VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
@@ -749,18 +897,18 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-   WRITE_FLAG( vps->getMaxTidIlRefPicsPlus1PresentFlag(), "max_tid_il_ref_pics_plus1_present_flag");
-   if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+   WRITE_FLAG( vps->getMaxTidRefPresentFlag(), "max_tid_ref_present_flag");
+   if (vps->getMaxTidRefPresentFlag())
    {
      for( i = 0; i < vps->getMaxLayers() - 1; i++)
      {
-       WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+       WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
      }
    }
 #else
   for( i = 0; i < vps->getMaxLayers() - 1; i++)
   {
-    WRITE_CODE(vps->getMaxSublayerForIlpPlus1(i), 3, "max_sublayer_for_ilp_plus1[i]" );
+    WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
   }
 #endif
 #endif
@@ -848,8 +996,37 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
+
+#if REPN_FORMAT_IN_VPS
+  WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
+
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
+  }
+  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
+  {
+    // Read rep_format_structures
+    codeRepFormat( vps->getVpsRepFormat(i) );
+  }
+  
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if( vps->getVpsNumRepFormats() > 1 )
+      {
+        WRITE_CODE( vps->getVpsRepFormatIdx(i), 4, "vps_rep_format_idx[i]" );
+      }
+    }
+  }
+#endif
+
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
+#endif 
+#if N0147_IRAP_ALIGN_FLAG
+      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if !VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -874,10 +1051,125 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+
+#if IL_SL_SIGNALLING_N0371
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < i; j++)
+    {
+      vps->setScalingListLayerDependency( i, j, vps->checkLayerDependency( i,j ) );
+    }
+  }
+#endif
+
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
+
+#if !VPS_VUI
+  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
+#else
+  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
+  if(1)   // Should be conditioned on the value of vps_vui_present_flag
+  {
+    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
+    }
+    codeVPSVUI(vps);  
+  }
+#endif 
+}
+#endif
+#if REPN_FORMAT_IN_VPS
+Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
+{
+  WRITE_CODE( repFormat->getChromaFormatVpsIdc(), 2, "chroma_format_idc" );    
+  
+  if( repFormat->getChromaFormatVpsIdc() == 3 )
+  {
+    WRITE_FLAG( repFormat->getSeparateColourPlaneVpsFlag(), "separate_colour_plane_flag");      
+  }
+
+  WRITE_CODE ( repFormat->getPicWidthVpsInLumaSamples (), 16, "pic_width_in_luma_samples" );    
+  WRITE_CODE ( repFormat->getPicHeightVpsInLumaSamples(), 16, "pic_height_in_luma_samples" );    
+  
+  assert( repFormat->getBitDepthVpsLuma() >= 8 );
+  assert( repFormat->getBitDepthVpsChroma() >= 8 );
+  WRITE_CODE( repFormat->getBitDepthVpsLuma() - 8,   4, "bit_depth_luma_minus8" );           
+  WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );         
+
+}
+#endif
+#if VPS_VUI
+Void TEncCavlc::codeVPSVUI (TComVPS *vps)
+{
+  Int i,j;
+#if VPS_VUI_BITRATE_PICRATE
+  WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
+  WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
+
+  if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
+  {
+    for( i = 0; i < vps->getNumLayerSets(); i++ )
+    {
+      for( j = 0; j < vps->getMaxTLayers(); j++ )
+      {
+        if( vps->getBitRatePresentVpsFlag() )
+        {
+          WRITE_FLAG( vps->getBitRatePresentFlag( i, j),        "bit_rate_present_vps_flag[i][j]" );
+        }
+        if( vps->getPicRatePresentVpsFlag() )
+        {
+          WRITE_FLAG( vps->getPicRatePresentFlag( i, j),        "pic_rate_present_vps_flag[i][j]" );
+        }
+        if( vps->getBitRatePresentFlag(i, j) )
+        {
+          WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "avg_bit_rate[i][j]" );
+          WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "max_bit_rate[i][j]" );
+        }
+        if( vps->getPicRatePresentFlag(i, j) )
+        {
+          WRITE_CODE( vps->getConstPicRateIdc( i, j), 2 , "constant_pic_rate_idc[i][j]" ); 
+          WRITE_CODE( vps->getConstPicRateIdc( i, j), 16, "avg_pic_rate[i][j]"          ); 
+        }
+      }
+    }
+  }
+#endif
+#if TILE_BOUNDARY_ALIGNED_FLAG
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+    {
+      WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
+    }
+  }  
+#endif 
+#if N0160_VUI_EXT_ILP_REF
+  WRITE_FLAG( vps->getNumIlpRestrictedRefLayers() ? 1 : 0 , "num_ilp_restricted_ref_layers" );    
+  if( vps->getNumIlpRestrictedRefLayers())
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+      {        
+        WRITE_UVLC(vps->getMinSpatialSegmentOffsetPlus1( i, j),    "min_spatial_segment_offset_plus1[i][j]");
+       
+        if( vps->getMinSpatialSegmentOffsetPlus1(i,j ) > 0 ) 
+        {  
+          WRITE_FLAG( vps->getCtuBasedOffsetEnabledFlag( i, j) ? 1 : 0 , "ctu_based_offset_enabled_flag[i][j]" );    
+          
+          if(vps->getCtuBasedOffsetEnabledFlag(i,j))  
+          {
+            WRITE_UVLC(vps->getMinHorizontalCtuOffsetPlus1( i, j),    "min_horizontal_ctu_offset_plus1[i][j]");            
+          }
+        }  
+      }  
+    }
+  }
+#endif 
 }
 #endif
 
@@ -926,6 +1218,25 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   if ( !pcSlice->getDependentSliceSegmentFlag() )
   {
 
+#if POC_RESET_FLAG
+    Int iBits = 0;
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
+    {
+      WRITE_FLAG( pcSlice->getPocResetFlag(), "poc_reset_flag" );
+      iBits++;
+    }
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
+    {
+      assert(!!"discardable_flag");
+      WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
+      iBits++;
+    }
+    for ( ; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
+    {
+      assert(!!"slice_reserved_undetermined_flag[]");
+      WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+    }
+#else
 #if SH_DISCARDABLE_FLAG
     if (pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
@@ -944,6 +1255,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
 #endif
+#endif
 
     WRITE_UVLC( pcSlice->getSliceType(),       "slice_type" );
 
@@ -952,15 +1264,41 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG( pcSlice->getPicOutputFlag() ? 1 : 0, "pic_output_flag" );
     }
 
+#if REPN_FORMAT_IN_VPS
+    // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
+    assert( pcSlice->getChromaFormatIdc() == 1 );
+#else
     // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
     assert (pcSlice->getSPS()->getChromaFormatIdc() == 1 );
+#endif
     // if( separate_colour_plane_flag  ==  1 )
     //   colour_plane_id                                      u(2)
 
+#if N0065_LAYER_POC_ALIGNMENT
+    if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
+#else
     if( !pcSlice->getIdrPicFlag() )
+#endif
     {
-      Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC()))%(1<<pcSlice->getSPS()->getBitsForPOC());
+#if POC_RESET_FLAG
+      Int picOrderCntLSB;
+      if( !pcSlice->getPocResetFlag() )
+      {
+        picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+      }
+      else
+      {
+        picOrderCntLSB = (pcSlice->getPocValueBeforeReset()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+      }
+#else
+      Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+#endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
+
+#if N0065_LAYER_POC_ALIGNMENT
+      if( !pcSlice->getIdrPicFlag() )
+      {
+#endif
       TComReferencePictureSet* rps = pcSlice->getRPS();
       
 #if FIX1071
@@ -1075,6 +1413,9 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
         WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
       }
+#if N0065_LAYER_POC_ALIGNMENT
+      }
+#endif
     }
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -1223,7 +1564,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 
     if ( pcSlice->getEnableTMVPFlag() )
     {
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
+#if SVC_EXTENSION && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
       if ( !pcSlice->getIdrPicFlag() && pcSlice->getLayerId() > 0 && pcSlice->getActiveNumILRRefIdx() > 0 && pcSlice->getNumMotionPredRefLayers() > 0 )
       {
         WRITE_FLAG( pcSlice->getAltColIndicationFlag() ? 1 : 0, "alt_collocated_indication_flag" );
@@ -1246,7 +1587,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
         WRITE_UVLC( pcSlice->getColRefIdx(), "collocated_ref_idx" );
       }
-#if REF_IDX_FRAMEWORK && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
+#if SVC_EXTENSION && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
       }
 #endif
     }
@@ -1553,7 +1894,11 @@ Void TEncCavlc::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
 
+#if REPN_FORMAT_IN_VPS
+  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
+#else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+#endif
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
   xWriteSvlc( iDQp );
@@ -1681,6 +2026,35 @@ Void TEncCavlc::codeScalingList( TComScalingList* scalingList )
 #if SCALING_LIST_OUTPUT_RESULT
         startBit = m_pcBitIf->getNumberOfWrittenBits();
 #endif
+
+#if IL_SL_SIGNALLING_N0371
+        if( scalingList->getLayerId() > 0 && scalingList->getPredScalingListFlag() )
+        {
+          scalingListPredModeFlag = scalingList->checkPredMode( sizeId, listId );
+          WRITE_FLAG( scalingListPredModeFlag, "scaling_list_pred_mode_flag" );
+          if(!scalingListPredModeFlag)// Copy Mode
+          {
+            WRITE_UVLC( (Int)listId - (Int)scalingList->getRefMatrixId (sizeId,listId), "scaling_list_pred_matrix_id_delta");
+          }
+          else// DPCM Mode
+          {
+            xCodeScalingList(scalingList, sizeId, listId);
+          }
+        }
+        else
+        {
+          scalingListPredModeFlag = scalingList->checkPredMode( sizeId, listId );
+          WRITE_FLAG( scalingListPredModeFlag, "scaling_list_pred_mode_flag" );
+          if(!scalingListPredModeFlag)// Copy Mode
+          {
+            WRITE_UVLC( (Int)listId - (Int)scalingList->getRefMatrixId (sizeId,listId), "scaling_list_pred_matrix_id_delta");
+          }
+          else// DPCM Mode
+          {
+            xCodeScalingList(scalingList, sizeId, listId);
+          }
+        }
+#else
         scalingListPredModeFlag = scalingList->checkPredMode( sizeId, listId );
         WRITE_FLAG( scalingListPredModeFlag, "scaling_list_pred_mode_flag" );
         if(!scalingListPredModeFlag)// Copy Mode
@@ -1691,9 +2065,12 @@ Void TEncCavlc::codeScalingList( TComScalingList* scalingList )
         {
           xCodeScalingList(scalingList, sizeId, listId);
         }
+#endif
+
 #if SCALING_LIST_OUTPUT_RESULT
         printf("Matrix [%d][%d] Bit %d\n",sizeId,listId,m_pcBitIf->getNumberOfWrittenBits() - startBit);
 #endif
+
       }
     }
 #if SCALING_LIST_OUTPUT_RESULT
@@ -1713,13 +2090,51 @@ Void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt
   Int nextCoef = SCALING_LIST_START_VALUE;
   Int data;
   Int *src = scalingList->getScalingListAddress(sizeId, listId);
+
     if( sizeId > SCALING_LIST_8x8 )
     {
+#if IL_SL_SIGNALLING_N0371
+      if( scalingList->getLayerId() > 0 && scalingList->getPredScalingListFlag() )
+      {
+        ref_scalingListDC[scalingList->getLayerId()][sizeId][listId] = scalingList->getScalingListDC(sizeId,listId);
+        scalingList->setScalingListDC(sizeId,listId,ref_scalingListDC[scalingList->getScalingListRefLayerId()][sizeId][listId]);
+      }
+      else
+      {
+        WRITE_SVLC( scalingList->getScalingListDC(sizeId,listId) - 8, "scaling_list_dc_coef_minus8");
+        nextCoef = scalingList->getScalingListDC(sizeId,listId);
+        ref_scalingListDC[scalingList->getLayerId()][sizeId][listId] = scalingList->getScalingListDC(sizeId,listId);
+      }
+#else
       WRITE_SVLC( scalingList->getScalingListDC(sizeId,listId) - 8, "scaling_list_dc_coef_minus8");
       nextCoef = scalingList->getScalingListDC(sizeId,listId);
+#endif
     }
     for(Int i=0;i<coefNum;i++)
     {
+#if IL_SL_SIGNALLING_N0371
+      if( scalingList->getLayerId() > 0 && scalingList->getPredScalingListFlag() )
+      {
+        ref_scalingListCoef[scalingList->getLayerId()][sizeId][listId][i] = src[scan[i]];
+        src[scan[i]] = ref_scalingListCoef[scalingList->getScalingListRefLayerId()][sizeId][listId][i];
+      }
+      else
+      {
+        data = src[scan[i]] - nextCoef;
+        ref_scalingListCoef[scalingList->getLayerId()][sizeId][listId][i] = src[scan[i]];
+        nextCoef = src[scan[i]];
+        if(data > 127)
+        {
+          data = data - 256;
+        }
+        if(data < -128)
+        {
+          data = data + 256;
+        }
+
+        WRITE_SVLC( data,  "scaling_list_delta_coef");
+      }
+#else
       data = src[scan[i]] - nextCoef;
       nextCoef = src[scan[i]];
       if(data > 127)
@@ -1732,12 +2147,13 @@ Void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt
       }
 
       WRITE_SVLC( data,  "scaling_list_delta_coef");
+#endif
     }
 }
 Bool TEncCavlc::findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag )
 {
   // Bool state = true, state2 = false;
-  Int lsb = ltrpPOC % (1<<pcSlice->getSPS()->getBitsForPOC());
+  Int lsb = ltrpPOC & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
   for (Int k = 0; k < pcSlice->getSPS()->getNumLongTermRefPicSPS(); k++)
   {
     if ( (lsb == pcSlice->getSPS()->getLtRefPicPocLsbSps(k)) && (usedFlag == pcSlice->getSPS()->getUsedByCurrPicLtSPSFlag(k)) )

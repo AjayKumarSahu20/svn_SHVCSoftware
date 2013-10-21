@@ -89,7 +89,67 @@ Void TAppEncTop::xInitLibCfg()
     vps->setNumReorderPics                 ( m_numReorderPics[i], i );
     vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
   }
+#if REPN_FORMAT_IN_VPS
+  vps->setRepFormatIdxPresentFlag( true );   // Could be disabled to optimize in some cases.
+  Int maxRepFormatIdx = -1;
+  Int formatIdx = -1;
+  for(UInt layer=0; layer < m_numLayers; layer++)
+  {
+    // Auto generation of the format index
+    if( m_acLayerCfg[layer].getRepFormatIdx() == -1 )
+    {
+      // Currently only picture width and height are considred. It has to be updated if different chroma format and bit-depth will are used.
+      Bool found = false;
+      for( UInt idx = 0; idx < layer; idx++ )
+      {
+        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() )
+        {
+          found = true;
+          break;
+        }
+      }
+      if( !found )
+      {
+        formatIdx++;
+      }
 
+      m_acLayerCfg[layer].setRepFormatIdx( formatIdx );
+    }
+
+    assert( m_acLayerCfg[layer].getRepFormatIdx() != -1 && "RepFormatIdx not assigned for a layer" );   
+    vps->setVpsRepFormatIdx( layer, m_acLayerCfg[layer].getRepFormatIdx() );
+    maxRepFormatIdx = std::max( m_acLayerCfg[layer].getRepFormatIdx(), maxRepFormatIdx );
+  }
+  assert( vps->getVpsRepFormatIdx( 0 ) == 0 );  // Base layer should point to the first one.
+  Int* mapIdxToLayer = new Int[maxRepFormatIdx + 1];
+  // Check that all the indices from 0 to maxRepFormatIdx are used in the VPS
+  for(Int i = 0; i <= maxRepFormatIdx; i++)
+  {
+    mapIdxToLayer[i] = -1;
+    UInt layer;
+    for(layer=0; layer < m_numLayers; layer++)
+    {
+      if( vps->getVpsRepFormatIdx(layer) == i )
+      {
+        mapIdxToLayer[i] = layer;
+        break;
+      }
+    }
+    assert( layer != m_numLayers );   // One of the VPS Rep format indices not set
+  }
+  vps->setVpsNumRepFormats( maxRepFormatIdx + 1 );
+  for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
+  {
+    RepFormat *repFormat = vps->getVpsRepFormat( idx );    
+    repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
+    repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
+    repFormat->setChromaFormatVpsIdc        ( 1                                             );  // Need modification to change for each layer - corresponds to 420
+    repFormat->setSeparateColourPlaneVpsFlag( 0                                             );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
+  }
+  delete [] mapIdxToLayer;
+#endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //m_acTEncTop[layer].setVPS(&vps);
@@ -156,6 +216,12 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
+#if N0120_MAX_TID_REF_CFG
+    if (layer<m_numLayers-1)
+    {
+       m_acTEncTop[layer].setMaxTidIlRefPicsPlus1 ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1()); 
+    }
+#endif 
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
@@ -194,7 +260,7 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumMotionPredRefLayers(); i++)
         {
           m_acTEncTop[layer].setMotionPredRefLayerId   ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
-          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
+          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getMotionPredRefLayerId(i), true);
         }        
       }
       Int numDirectRefLayers = 0;
@@ -396,6 +462,14 @@ Void TAppEncTop::xInitLibCfg()
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+    m_acTEncTop[layer].setInterLayerConstrainedTileSetsSEIEnabled( m_interLayerConstrainedTileSetsSEIEnabled );
+    m_acTEncTop[layer].setIlNumSetsInMessage( m_ilNumSetsInMessage );
+    m_acTEncTop[layer].setSkippedTileSetPresentFlag( m_skippedTileSetPresentFlag );
+    m_acTEncTop[layer].setTopLeftTileIndex( m_topLeftTileIndex );
+    m_acTEncTop[layer].setBottomRightTileIndex( m_bottomRightTileIndex );
+    m_acTEncTop[layer].setIlcIdc( m_ilcIdc );
+#endif
     m_acTEncTop[layer].setUniformSpacingIdr          ( m_iUniformSpacingIdr );
     m_acTEncTop[layer].setNumColumnsMinus1           ( m_iNumColumnsMinus1 );
     m_acTEncTop[layer].setNumRowsMinus1              ( m_iNumRowsMinus1 );
@@ -474,9 +548,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMaxBitsPerMinCuDenom( m_maxBitsPerMinCuDenom );
     m_acTEncTop[layer].setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
     m_acTEncTop[layer].setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
-#if REF_IDX_FRAMEWORK
     m_acTEncTop[layer].setElRapSliceTypeB(layer == 0? 0 : m_elRapSliceBEnabled);
-#endif
 #if SCALED_REF_LAYER_OFFSETS
     if( layer > 0 )
     {
@@ -823,12 +895,12 @@ Void TAppEncTop::xDestroyLib()
 #endif
 }
 
-Void TAppEncTop::xInitLib()
+Void TAppEncTop::xInitLib(Bool isFieldCoding)
 {
 #if SVC_EXTENSION
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    m_acTEncTop[layer].init();
+    m_acTEncTop[layer].init(isFieldCoding);
   }
 #if VPS_RENAME
   m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
@@ -888,19 +960,27 @@ Void TAppEncTop::xInitLib()
   }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
-  vps->setMaxTidIlRefPicsPlus1PresentFlag(true);
-  if (vps->getMaxTidIlRefPicsPlus1PresentFlag())
+#if N0120_MAX_TID_REF_CFG
+  vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
+#else 
+  vps->setMaxTidRefPresentFlag(true);
+#endif 
+  if (vps->getMaxTidRefPresentFlag())
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
-      vps->setMaxSublayerForIlpPlus1(i, vps->getMaxTLayers()+1);
+#if N0120_MAX_TID_REF_CFG
+      vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1()); 
+#else 
+      vps->setMaxTidIlRefPicsPlus1(i, vps->getMaxTLayers()+1);
+#endif 
     }
   }
   else
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
-      vps->setMaxSublayerForIlpPlus1(i, 7);
+      vps->setMaxTidIlRefPicsPlus1(i, 7);
     }
   }
 #endif 
@@ -982,16 +1062,51 @@ Void TAppEncTop::xInitLib()
     }
 #endif
   }
+#if IL_SL_SIGNALLING_N0371
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    for(Int j = 0; j < i; j++)
+    {
+      vps->setScalingListLayerDependency( i, j, vps->checkLayerDependency( i,j ) );
+    }
+  }
+#endif
 #endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG        
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true); 
 #endif 
+#if N0147_IRAP_ALIGN_FLAG    
+    vps->setCrossLayerIrapAlignFlag(true); 
+    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    {
+      for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+      {
+        if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
+        {          
+          if(m_acTEncTop[layerCtr].getIntraPeriod() !=  m_acTEncTop[refLayerCtr].getIntraPeriod())
+          {
+            vps->setCrossLayerIrapAlignFlag(false);
+            break;
+          }
+        }
+      }
+    }
+
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      vps->setCrossLayerIrapAlignFlag(false);
+    }
+#endif 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif
-#else
-  m_cTEncTop.init();
+#if VPS_EXTN_OFFSET
+  // to be updated according to the current semantics
+  vps->setExtensionOffset( 0xffff );
 #endif
+#else //SVC_EXTENSION
+  m_cTEncTop.init(isFieldCoding);
+#endif //SVC_EXTENSION
 }
 
 // ====================================================================================================================
@@ -1022,7 +1137,7 @@ Void TAppEncTop::encode()
   // initialize internal class & member variables
   xInitLibCfg();
   xCreateLib();
-  xInitLib();
+  xInitLib(m_isField);
 
   // main encoder loop
   Int   iNumEncoded = 0, iTotalNumEncoded = 0;
@@ -1034,11 +1149,22 @@ Void TAppEncTop::encode()
   {
     // allocate original YUV buffer
     pcPicYuvOrg[layer] = new TComPicYuv;
+    if( m_isField )
+    {
 #if SVC_UPSAMPLING
-    pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #else
-    pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+      pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif
+    }
+    else
+    {
+#if SVC_UPSAMPLING
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#else
+      pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+#endif
+    }
   }
 
 #if AVC_SYNTAX
@@ -1080,10 +1206,17 @@ Void TAppEncTop::encode()
           // increase number of received frames
           m_iFrameRcvd++;
           // check end of file
-          bEos = (m_iFrameRcvd == m_framesToBeEncoded);
+          bEos = (m_isField && (m_iFrameRcvd == (m_framesToBeEncoded >> 1) )) || ( !m_isField && (m_iFrameRcvd == m_framesToBeEncoded) );
         }
 
-        m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer] );
+        if ( m_isField )
+        {
+          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer], m_isTopFieldFirst );
+        }
+        else
+        {
+          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer] );
+        }
       }
 
       bFramesReadyToCode = !(!bFirstFrame && ( m_acTEncTop[m_numLayers-1].getNumPicRcvd() != m_iGOPSize && m_iGOPSize ) && !bEos );
@@ -1130,7 +1263,14 @@ Void TAppEncTop::encode()
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
         // call encoding function for one frame
-        m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
+        if ( m_isField )
+        {
+          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP, m_isTopFieldFirst );
+        }
+        else
+        {
+          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
+        }
       }
     }
 
@@ -1167,7 +1307,7 @@ Void TAppEncTop::encode()
     // print out summary
     if (bEos)
     {
-      printOutSummary();
+      printOutSummary(m_isTopFieldFirst);
     }
 
     bFirstFrame = false;
@@ -1199,17 +1339,27 @@ Void TAppEncTop::encode()
   return;
 }
 
-Void TAppEncTop::printOutSummary()
+Void TAppEncTop::printOutSummary(Bool isField)
 {
   UInt layer;
 
   // set frame rate
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeAll[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate());
-    m_gcAnalyzeI[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
-    m_gcAnalyzeP[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
-    m_gcAnalyzeB[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
+    if(isField)
+    {
+      m_gcAnalyzeAll[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2);
+      m_gcAnalyzeI[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
+      m_gcAnalyzeP[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
+      m_gcAnalyzeB[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
+    }
+    else
+    {
+      m_gcAnalyzeAll[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate());
+      m_gcAnalyzeI[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
+      m_gcAnalyzeP[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
+      m_gcAnalyzeB[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
+    }
   }
 
   //-- all
@@ -1240,6 +1390,21 @@ Void TAppEncTop::printOutSummary()
   {
     m_gcAnalyzeB[layer].printOut('b', layer);
   }
+
+  if(isField)
+  {
+    for(layer = 0; layer < m_numLayers; layer++)
+    {
+      //-- interlaced summary
+      m_gcAnalyzeAll_in.setFrmRate( m_acLayerCfg[layer].getFrameRate());
+      printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
+      m_gcAnalyzeAll_in.printOutInterlaced('a',  m_gcAnalyzeAll[layer].getBits());
+
+#if _SUMMARY_OUT_
+      m_gcAnalyzeAll_in.printSummaryOutInterlaced();
+#endif
+    }
+  }
 }
 
 #else
@@ -1258,7 +1423,7 @@ Void TAppEncTop::encode()
   // initialize internal class & member variables
   xInitLibCfg();
   xCreateLib();
-  xInitLib();
+  xInitLib(m_isField);
 
   // main encoder loop
   Int   iNumEncoded = 0;
@@ -1267,7 +1432,14 @@ Void TAppEncTop::encode()
   list<AccessUnit> outputAccessUnits; ///< list of access units to write out.  is populated by the encoding process
 
   // allocate original YUV buffer
-  pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+  if( m_isField )
+  {
+    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeightOrg, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+  }
+  else
+  {
+    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+  }
 
   while ( !bEos )
   {
@@ -1280,8 +1452,7 @@ Void TAppEncTop::encode()
     // increase number of received frames
     m_iFrameRcvd++;
 
-    bEos = (m_iFrameRcvd == m_framesToBeEncoded);
-
+    bEos = (m_isField && (m_iFrameRcvd == (m_framesToBeEncoded >> 1) )) || ( !m_isField && (m_iFrameRcvd == m_framesToBeEncoded) );
     Bool flush = 0;
     // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
     if (m_cTVideoIOYuvInputFile.isEof())
@@ -1293,7 +1464,14 @@ Void TAppEncTop::encode()
     }
 
     // call encoding function for one frame
+    if ( m_isField )
+    {
+      m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, m_cListPicYuvRec, outputAccessUnits, iNumEncoded, m_isTopFieldFirst);
+    }
+    else
+    {
     m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+    }
 
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )
@@ -1303,7 +1481,7 @@ Void TAppEncTop::encode()
     }
   }
 
-  m_cTEncTop.printSummary();
+  m_cTEncTop.printSummary(m_isField);
 
   // delete original YUV buffer
   pcPicYuvOrg->destroy();
@@ -1377,45 +1555,98 @@ Void TAppEncTop::xDeleteBuffer( )
 
 Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 {
-  Int i;
-
-  TComList<TComPicYuv*>::iterator iterPicYuvRec = m_acListPicYuvRec[layer].end();
-
-  for ( i = 0; i < iNumEncoded; i++ )
+  if (m_isField)
   {
-    --iterPicYuvRec;
-  }
+    //Reinterlace fields
+    Int i;
+    TComList<TComPicYuv*>::iterator iterPicYuvRec = m_acListPicYuvRec[layer].end();
 
-  for ( i = 0; i < iNumEncoded; i++ )
-  {
-    TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed())
-#else
-    if (!m_acLayerCfg[layer].getReconFile().empty())
-#endif
+    for ( i = 0; i < iNumEncoded; i++ )
     {
-      m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), 
-        m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom() );
+      --iterPicYuvRec;
+    }
+
+    for ( i = 0; i < iNumEncoded/2; i++ )
+    {
+      TComPicYuv*  pcPicYuvRecTop  = *(iterPicYuvRec++);
+      TComPicYuv*  pcPicYuvRecBottom  = *(iterPicYuvRec++);
+
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+      if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed())
+#else
+      if (!m_acLayerCfg[layer].getReconFile().empty())
+#endif
+      {
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom(), m_isTopFieldFirst );
+      }
+    }
+  }
+  else
+  {
+    Int i;
+
+    TComList<TComPicYuv*>::iterator iterPicYuvRec = m_acListPicYuvRec[layer].end();
+
+    for ( i = 0; i < iNumEncoded; i++ )
+    {
+      --iterPicYuvRec;
+    }
+
+    for ( i = 0; i < iNumEncoded; i++ )
+    {
+      TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+      if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed())
+#else
+      if (!m_acLayerCfg[layer].getReconFile().empty())
+#endif
+      {
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), 
+          m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom() );
+      }
     }
   }
 }
 
 Void TAppEncTop::xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits)
 {
-  Int i;
-
-  list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
+  if (m_isField)
+  {
+    //Reinterlace fields
+    Int i;
+    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  for ( i = 0; i < iNumEncoded && iterBitstream != accessUnits.end(); i++ )
+    for ( i = 0; i < iNumEncoded/2 && iterBitstream != accessUnits.end(); i++ )
 #else
-  for ( i = 0; i < iNumEncoded; i++ )
+    for ( i = 0; i < iNumEncoded/2; i++ )
 #endif
+    {      
+      const AccessUnit& auTop = *(iterBitstream++);
+      const vector<UInt>& statsTop = writeAnnexB(bitstreamFile, auTop);
+      rateStatsAccum(auTop, statsTop);
+
+      const AccessUnit& auBottom = *(iterBitstream++);
+      const vector<UInt>& statsBottom = writeAnnexB(bitstreamFile, auBottom);
+      rateStatsAccum(auBottom, statsBottom);
+    }
+  }
+  else
   {
-    const AccessUnit& au = *(iterBitstream++);
-    const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
-    rateStatsAccum(au, stats);
+    Int i;
+
+    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
+
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+    for ( i = 0; i < iNumEncoded && iterBitstream != accessUnits.end(); i++ )
+#else
+    for ( i = 0; i < iNumEncoded; i++ )
+#endif
+    {
+      const AccessUnit& au = *(iterBitstream++);
+      const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
+      rateStatsAccum(au, stats);
+    }
   }
 }
 
@@ -1459,31 +1690,63 @@ Void TAppEncTop::xDeleteBuffer( )
  */
 Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits)
 {
-  Int i;
-
-  TComList<TComPicYuv*>::iterator iterPicYuvRec = m_cListPicYuvRec.end();
-  list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
-
-  for ( i = 0; i < iNumEncoded; i++ )
+  if (m_isField)
   {
-    --iterPicYuvRec;
-  }
+    //Reinterlace fields
+    Int i;
+    TComList<TComPicYuv*>::iterator iterPicYuvRec = m_cListPicYuvRec.end();
+    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
-  for ( i = 0; i < iNumEncoded; i++ )
-  {
-    TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
-    if (m_pchReconFile)
+    for ( i = 0; i < iNumEncoded; i++ )
     {
-#if SYNTAX_OUTPUT && ILP_DECODED_PICTURE
-      m_cTVideoIOYuvReconFile.write( pcPicYuvRec );
-#else
-      m_cTVideoIOYuvReconFile.write( pcPicYuvRec, m_confLeft, m_confRight, m_confTop, m_confBottom );
-#endif
+      --iterPicYuvRec;
     }
 
-    const AccessUnit& au = *(iterBitstream++);
-    const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
-    rateStatsAccum(au, stats);
+    for ( i = 0; i < iNumEncoded/2; i++ )
+    {
+      TComPicYuv*  pcPicYuvRecTop  = *(iterPicYuvRec++);
+      TComPicYuv*  pcPicYuvRecBottom  = *(iterPicYuvRec++);
+
+      if (m_pchReconFile)
+      {
+        m_cTVideoIOYuvReconFile.write( pcPicYuvRecTop, pcPicYuvRecBottom, m_confLeft, m_confRight, m_confTop, m_confBottom, m_isTopFieldFirst );
+      }
+
+      const AccessUnit& auTop = *(iterBitstream++);
+      const vector<UInt>& statsTop = writeAnnexB(bitstreamFile, auTop);
+      rateStatsAccum(auTop, statsTop);
+
+      const AccessUnit& auBottom = *(iterBitstream++);
+      const vector<UInt>& statsBottom = writeAnnexB(bitstreamFile, auBottom);
+      rateStatsAccum(auBottom, statsBottom);
+    }
+  }
+  else
+  {
+    Int i;
+
+    TComList<TComPicYuv*>::iterator iterPicYuvRec = m_cListPicYuvRec.end();
+    list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
+
+    for ( i = 0; i < iNumEncoded; i++ )
+    {
+      --iterPicYuvRec;
+    }
+
+    for ( i = 0; i < iNumEncoded; i++ )
+    {
+      TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
+      if (m_pchReconFile)
+      {
+#if SYNTAX_OUTPUT
+        m_cTVideoIOYuvReconFile.write( pcPicYuvRec, m_confLeft, m_confRight, m_confTop, m_confBottom );
+#endif
+      }
+
+      const AccessUnit& au = *(iterBitstream++);
+      const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);
+      rateStatsAccum(au, stats);
+    }
   }
 }
 #endif

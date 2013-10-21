@@ -31,6 +31,9 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   m_cReconFile(string("")),
   m_conformanceMode( 0 ),
   m_aidQP(NULL)
+#if REPN_FORMAT_IN_VPS
+, m_repFormatIdx (-1)
+#endif
 {
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
@@ -157,7 +160,7 @@ Void TAppEncLayerCfg::xPrintParameter()
 
 Bool confirmPara(Bool bflag, const char* message);
 
-Bool TAppEncLayerCfg::xCheckParameter()
+Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
 {
   switch (m_conformanceMode)
   {
@@ -181,6 +184,11 @@ Bool TAppEncLayerCfg::xCheckParameter()
       {
         m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
         m_iSourceHeight += m_confBottom;
+        if ( isField )
+        {
+          m_iSourceHeightOrg += m_confBottom << 1;
+          m_aiPad[1] = m_confBottom << 1;
+        }
       }
       break;
     }

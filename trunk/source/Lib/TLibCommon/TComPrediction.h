@@ -117,7 +117,7 @@ public:
   Int  getPredicBufWidth()        { return m_iYuvExtStride; }
   Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
 #if SVC_UPSAMPLING
 #if SCALED_REF_LAYER_OFFSETS
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );

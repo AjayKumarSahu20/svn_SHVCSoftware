@@ -180,7 +180,13 @@ public:
   Int* getDequantCoeff     ( UInt list, UInt qp, UInt size) {return m_dequantCoef[size][list][qp];}; //!< get DeQuant Coefficent
   Void setUseScalingList   ( Bool bUseScalingList){ m_scalingListEnabledFlag = bUseScalingList; };
   Bool getUseScalingList   (){ return m_scalingListEnabledFlag; };
+
+#if IL_SL_SIGNALLING_N0371
+  Void setFlatScalingList  ( UInt m_layerId );
+#else
   Void setFlatScalingList  ();
+#endif
+
   Void xsetFlatScalingList ( UInt list, UInt size, UInt qp);
   Void xSetScalingListEnc  ( TComScalingList *scalingList, UInt list, UInt size, UInt qp);
   Void xSetScalingListDec  ( TComScalingList *scalingList, UInt list, UInt size, UInt qp);

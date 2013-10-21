@@ -176,8 +176,13 @@ Bool TDecCu::xDecodeSliceEnd( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth)
   TComPic* pcPic = pcCU->getPic();
   TComSlice * pcSlice = pcPic->getSlice(pcPic->getCurrSliceIdx());
   UInt uiCurNumParts    = pcPic->getNumPartInCU() >> (uiDepth<<1);
+#if REPN_FORMAT_IN_VPS
+  UInt uiWidth  = pcSlice->getPicWidthInLumaSamples();
+  UInt uiHeight = pcSlice->getPicHeightInLumaSamples();
+#else
   UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
   UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
   UInt uiGranularityWidth = g_uiMaxCUWidth;
   UInt uiPosX = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
   UInt uiPosY = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
@@ -229,7 +234,11 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt&
   
   TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
   Bool bStartInCU = pcCU->getSCUAddr()+uiAbsPartIdx+uiCurNumParts>pcSlice->getSliceSegmentCurStartCUAddr()&&pcCU->getSCUAddr()+uiAbsPartIdx<pcSlice->getSliceSegmentCurStartCUAddr();
+#if REPN_FORMAT_IN_VPS
+  if((!bStartInCU) && ( uiRPelX < pcSlice->getPicWidthInLumaSamples()           ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples()           ) )
+#else
   if((!bStartInCU) && ( uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+#endif
   {
     m_pcEntropyDecoder->decodeSplitFlag( pcCU, uiAbsPartIdx, uiDepth );
   }
@@ -255,7 +264,11 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt&
       Bool bSubInSlice = pcCU->getSCUAddr()+uiIdx+uiQNumParts>pcSlice->getSliceSegmentCurStartCUAddr();
       if ( bSubInSlice )
       {
+#if REPN_FORMAT_IN_VPS
+        if ( !ruiIsLast && ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples()           ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples()           ) )
+#else
         if ( !ruiIsLast && ( uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples() ) )
+#endif
         {
           xDecodeCU( pcCU, uiIdx, uiDepth+1, ruiIsLast );
         }
@@ -384,7 +397,11 @@ Void TDecCu::xDecompressCU( TComDataCU* pcCU, UInt uiAbsPartIdx,  UInt uiDepth )
   UInt uiCurNumParts    = pcPic->getNumPartInCU() >> (uiDepth<<1);
   TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
   Bool bStartInCU = pcCU->getSCUAddr()+uiAbsPartIdx+uiCurNumParts>pcSlice->getSliceSegmentCurStartCUAddr()&&pcCU->getSCUAddr()+uiAbsPartIdx<pcSlice->getSliceSegmentCurStartCUAddr();
+#if REPN_FORMAT_IN_VPS
+  if(bStartInCU||( uiRPelX >= pcSlice->getPicWidthInLumaSamples()           ) || ( uiBPelY >= pcSlice->getPicHeightInLumaSamples()           ) )
+#else
   if(bStartInCU||( uiRPelX >= pcSlice->getSPS()->getPicWidthInLumaSamples() ) || ( uiBPelY >= pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+#endif
   {
     bBoundary = true;
   }
@@ -400,7 +417,11 @@ Void TDecCu::xDecompressCU( TComDataCU* pcCU, UInt uiAbsPartIdx,  UInt uiDepth )
       uiTPelY = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiIdx] ];
       
       Bool binSlice = (pcCU->getSCUAddr()+uiIdx+uiQNumParts>pcSlice->getSliceSegmentCurStartCUAddr())&&(pcCU->getSCUAddr()+uiIdx<pcSlice->getSliceSegmentCurEndCUAddr());
+#if REPN_FORMAT_IN_VPS
+      if(binSlice&&( uiLPelX < pcSlice->getPicWidthInLumaSamples()           ) && ( uiTPelY < pcSlice->getPicHeightInLumaSamples()           ) )
+#else
       if(binSlice&&( uiLPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+#endif
       {
         xDecompressCU(pcCU, uiIdx, uiNextDepth );
       }
@@ -493,7 +514,11 @@ TDecCu::xIntraRecLumaBlk( TComDataCU* pcCU,
   m_pcPrediction->predIntraLumaAng( pcCU->getPattern(), uiLumaPredMode, piPred, uiStride, uiWidth, uiHeight, bAboveAvail, bLeftAvail );
   
   //===== inverse transform =====
+#if REPN_FORMAT_IN_VPS
+  m_pcTrQuant->setQPforQuant  ( pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
   m_pcTrQuant->setQPforQuant  ( pcCU->getQP(0), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
   Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)TEXT_LUMA];
   assert(scalingListType < 6);
@@ -732,7 +757,11 @@ Void TDecCu::xDecodeInterTexture ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiD
   piCoeff = pcCU->getCoeffY();
   pResi = m_ppcYuvResi[uiDepth]->getLumaAddr();
 
+#if REPN_FORMAT_IN_VPS
+  m_pcTrQuant->setQPforQuant( pcCU->getQP( uiAbsPartIdx ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
   m_pcTrQuant->setQPforQuant( pcCU->getQP( uiAbsPartIdx ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
   m_pcTrQuant->invRecurTransformNxN ( pcCU, 0, TEXT_LUMA, pResi, 0, m_ppcYuvResi[uiDepth]->getStride(), uiWidth, uiHeight, trMode, 0, piCoeff );
   

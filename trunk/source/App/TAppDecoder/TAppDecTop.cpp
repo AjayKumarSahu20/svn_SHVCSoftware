@@ -55,7 +55,6 @@
 #if SVC_EXTENSION
 TAppDecTop::TAppDecTop()
 {
-  ::memset (m_abDecFlag, 0, sizeof (m_abDecFlag));
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
     m_aiPOCLastDisplay[layer]  = -MAX_INT;
@@ -66,7 +65,6 @@ TAppDecTop::TAppDecTop()
 TAppDecTop::TAppDecTop()
 : m_iPOCLastDisplay(-MAX_INT)
 {
-  ::memset (m_abDecFlag, 0, sizeof (m_abDecFlag));
 }
 #endif
 
@@ -145,10 +143,10 @@ Void TAppDecTop::decode()
   xInitDecLib  ();
 
   // main decoder loop
-  Bool recon_opened[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool openedReconFile[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
   {
-    recon_opened[layer] = false;
+    openedReconFile[layer] = false;
     m_aiPOCLastDisplay[layer] += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
   }
 
@@ -227,18 +225,21 @@ Void TAppDecTop::decode()
     if (bNewPicture || !bitstreamFile)
     {
       m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
+#if EARLY_REF_PIC_MARKING
+      m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
+#endif
     }
 
     if( pcListPic )
     {
-      if ( m_pchReconFile[curLayerId] && !recon_opened[curLayerId] )
+      if ( m_pchReconFile[curLayerId] && !openedReconFile[curLayerId] )
       {
         if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }        
         if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
         m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
 
-        recon_opened[curLayerId] = true;
+        openedReconFile[curLayerId] = true;
       }
       if ( bNewPicture && bNewPOC && 
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
@@ -262,6 +263,8 @@ Void TAppDecTop::decode()
   }
   // delete buffers
 #if AVC_BASE
+  UInt layerIdmin = m_acTDecTop[0].getBLReconFile()->is_open() ? 1 : 0;
+
   if( streamYUV.is_open() )
   {
     streamYUV.close();
@@ -272,9 +275,9 @@ Void TAppDecTop::decode()
     streamSyntaxFile.close();
   }
 #endif
-  pcBLPic.destroy();
+  pcBLPic.destroy();  
 
-  for(UInt layer = 1; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
@@ -306,7 +309,7 @@ Void TAppDecTop::decode()
   m_iPOCLastDisplay += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
 
   // main decoder loop
-  Bool recon_opened = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
 
 #if SYNTAX_OUTPUT
   if( !m_pchBLSyntaxFile )
@@ -337,7 +340,6 @@ Void TAppDecTop::decode()
      * nal unit. */
     streampos location = bitstreamFile.tellg();
     AnnexBStats stats = AnnexBStats();
-    Bool bPreviousPictureDecoded = false;
 
     vector<uint8_t> nalUnit;
     InputNALUnit nalu;
@@ -359,16 +361,8 @@ Void TAppDecTop::decode()
       read(nalu, nalUnit);
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  )
       {
-        if(bPreviousPictureDecoded)
-        {
-          bNewPicture = true;
-          bPreviousPictureDecoded = false;
-        }
-        else
-        {
           bNewPicture = false;
         }
-      }
       else
       {
         bNewPicture = m_cTDecTop.decode(nalu, m_iSkipFrame, m_iPOCLastDisplay);
@@ -382,7 +376,6 @@ Void TAppDecTop::decode()
           bitstreamFile.seekg(location-streamoff(3));
           bytestream.reset();
         }
-        bPreviousPictureDecoded = true; 
       }
     }
     if (bNewPicture || !bitstreamFile)
@@ -392,13 +385,13 @@ Void TAppDecTop::decode()
 
     if( pcListPic )
     {
-      if ( m_pchReconFile && !recon_opened )
+      if ( m_pchReconFile && !openedReconFile )
       {
         if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
         if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
         m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
-        recon_opened = true;
+        openedReconFile = true;
       }
       if ( bNewPicture && 
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
@@ -469,7 +462,7 @@ Void TAppDecTop::xDestroyDecLib()
   {
     if ( m_pchReconFile[layer] )
     {
-      m_acTVideoIOYuvReconFile[layer]. close();
+      m_acTVideoIOYuvReconFile[layer].close();
     }
 
     // destroy decoder class
@@ -504,8 +497,8 @@ Void TAppDecTop::xInitDecLib()
 }
 
 /** \param pcListPic list of pictures to be written to file
-    \todo            DYN_REF_FREE should be revised
- */
+\todo            DYN_REF_FREE should be revised
+*/
 #if SVC_EXTENSION
 Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt layerId, UInt tId )
 #else
@@ -513,7 +506,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #endif
 {
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
-  Int not_displayed = 0;
+  Int numPicsNotYetDisplayed = 0;
 
   while (iterPic != pcListPic->end())
   {
@@ -524,78 +517,196 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
     if(pcPic->getOutputMark() && pcPic->getPOC() > m_iPOCLastDisplay)
 #endif
     {
-       not_displayed++;
+      numPicsNotYetDisplayed++;
     }
     iterPic++;
   }
   iterPic   = pcListPic->begin();
-  
-  while (iterPic != pcListPic->end())
+  if (numPicsNotYetDisplayed>2)
   {
-    TComPic* pcPic = *(iterPic);
-    
-#if SVC_EXTENSION
-    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_aiPOCLastDisplay[layerId]))
-#else
-    if ( pcPic->getOutputMark() && (not_displayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_iPOCLastDisplay))
-#endif
-    {
-      // write to file
-       not_displayed--;
-#if SVC_EXTENSION
-      if ( m_pchReconFile[layerId] )
-      {
-        const Window &conf = pcPic->getConformanceWindow();
-        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
-                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-      }
-      
-      // update POC of display order
-      m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
-#else
-      if ( m_pchReconFile )
-      {
-#if SYNTAX_OUTPUT && ILP_DECODED_PICTURE
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec() );
-#else
-        const Window &conf = pcPic->getConformanceWindow();
-        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
-                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-#endif
-      }
-      
-      // update POC of display order
-      m_iPOCLastDisplay = pcPic->getPOC();
-#endif
-      
-      // erase non-referenced picture in the reference picture list after display
-      if ( !pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark() == true )
-      {
-#if !DYN_REF_FREE
-        pcPic->setReconMark(false);
-        
-        // mark it should be extended later
-        pcPic->getPicYuvRec()->setBorderExtension( false );
-        
-#else
-        pcPic->destroy();
-        pcListPic->erase( iterPic );
-        iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
-        continue;
-#endif
-      }
-      pcPic->setOutputMark(false);
-    }
-    
     iterPic++;
+  }
+
+  TComPic* pcPic = *(iterPic);
+  if (numPicsNotYetDisplayed>2 && pcPic->isField()) //Field Decoding
+  {
+    TComList<TComPic*>::iterator endPic   = pcListPic->end();
+    endPic--;
+    iterPic   = pcListPic->begin();
+    while (iterPic != endPic)
+    {
+      TComPic* pcPicTop = *(iterPic);
+      iterPic++;
+      TComPic* pcPicBottom = *(iterPic);
+
+#if SVC_EXTENSION
+      if ( pcPicTop->getOutputMark() && (numPicsNotYetDisplayed >  pcPicTop->getNumReorderPics(tId) && !(pcPicTop->getPOC()%2) && pcPicBottom->getPOC() == pcPicTop->getPOC()+1)
+        && pcPicBottom->getOutputMark() && (numPicsNotYetDisplayed >  pcPicBottom->getNumReorderPics(tId) && (pcPicTop->getPOC() == m_aiPOCLastDisplay[layerId]+1 || m_aiPOCLastDisplay[layerId]<0)))
+#else
+      if ( pcPicTop->getOutputMark() && (numPicsNotYetDisplayed >  pcPicTop->getNumReorderPics(tId) && !(pcPicTop->getPOC()%2) && pcPicBottom->getPOC() == pcPicTop->getPOC()+1)
+        && pcPicBottom->getOutputMark() && (numPicsNotYetDisplayed >  pcPicBottom->getNumReorderPics(tId) && (pcPicTop->getPOC() == m_iPOCLastDisplay+1 || m_iPOCLastDisplay<0)))
+#endif
+      {
+        // write to file
+        numPicsNotYetDisplayed = numPicsNotYetDisplayed-2;
+#if SVC_EXTENSION
+        if ( m_pchReconFile[layerId] )
+        {
+          const Window &conf = pcPicTop->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Bool isTff = pcPicTop->isTopField();
+#if REPN_FORMAT_IN_VPS
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
+
+#else
+          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
+#endif
+        }
+
+        // update POC of display order
+        m_aiPOCLastDisplay[layerId] = pcPicBottom->getPOC();
+#else
+        if ( m_pchReconFile )
+        {
+          const Window &conf = pcPicTop->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Bool isTff = pcPicTop->isTopField();
+          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
+        }
+
+        // update POC of display order
+        m_iPOCLastDisplay = pcPicBottom->getPOC();
+#endif
+
+        // erase non-referenced picture in the reference picture list after display
+        if ( !pcPicTop->getSlice(0)->isReferenced() && pcPicTop->getReconMark() == true )
+        {
+#if !DYN_REF_FREE
+          pcPicTop->setReconMark(false);
+
+          // mark it should be extended later
+          pcPicTop->getPicYuvRec()->setBorderExtension( false );
+
+#else
+          pcPicTop->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        if ( !pcPicBottom->getSlice(0)->isReferenced() && pcPicBottom->getReconMark() == true )
+        {
+#if !DYN_REF_FREE
+          pcPicBottom->setReconMark(false);
+
+          // mark it should be extended later
+          pcPicBottom->getPicYuvRec()->setBorderExtension( false );
+
+#else
+          pcPicBottom->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        pcPicTop->setOutputMark(false);
+        pcPicBottom->setOutputMark(false);
+      }
+    }
+  }
+  else if (!pcPic->isField()) //Frame Decoding
+  {
+    iterPic = pcListPic->begin();
+    while (iterPic != pcListPic->end())
+    {
+      pcPic = *(iterPic);
+
+#if SVC_EXTENSION
+      if ( pcPic->getOutputMark() && (numPicsNotYetDisplayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_aiPOCLastDisplay[layerId]))
+#else
+      if ( pcPic->getOutputMark() && (numPicsNotYetDisplayed >  pcPic->getNumReorderPics(tId) && pcPic->getPOC() > m_iPOCLastDisplay))
+#endif
+      {
+        // write to file
+        numPicsNotYetDisplayed--;
+#if SVC_EXTENSION
+        if ( m_pchReconFile[layerId] )
+        {
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+#if REPN_FORMAT_IN_VPS
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+
+#else
+          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
+        }
+
+        // update POC of display order
+        m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
+#else
+        if ( m_pchReconFile )
+        {
+#if SYNTAX_OUTPUT
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
+        }
+
+        // update POC of display order
+        m_iPOCLastDisplay = pcPic->getPOC();
+#endif
+
+        // erase non-referenced picture in the reference picture list after display
+        if ( !pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark() == true )
+        {
+#if !DYN_REF_FREE
+          pcPic->setReconMark(false);
+
+          // mark it should be extended later
+          pcPic->getPicYuvRec()->setBorderExtension( false );
+
+#else
+          pcPic->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        pcPic->setOutputMark(false);
+      }
+
+      iterPic++;
+    }
   }
 }
 
@@ -615,73 +726,196 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
 
   iterPic   = pcListPic->begin();
-  
-  while (iterPic != pcListPic->end())
-  {
-    TComPic* pcPic = *(iterPic);
+  TComPic* pcPic = *(iterPic);
 
-    if ( pcPic->getOutputMark() )
+  if (pcPic->isField()) //Field Decoding
+  {
+    TComList<TComPic*>::iterator endPic   = pcListPic->end();
+    endPic--;
+    TComPic *pcPicTop, *pcPicBottom = NULL;
+    while (iterPic != endPic)
     {
-      // write to file
+      pcPicTop = *(iterPic);
+      iterPic++;
+      pcPicBottom = *(iterPic);
+
+      if ( pcPicTop->getOutputMark() && pcPicBottom->getOutputMark() && !(pcPicTop->getPOC()%2) && (pcPicBottom->getPOC() == pcPicTop->getPOC()+1) )
+      {
+        // write to file
 #if SVC_EXTENSION
-      if ( m_pchReconFile[layerId] )
-      {
-        const Window &conf = pcPic->getConformanceWindow();
-        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-        m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
-                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-      }
-      
-      // update POC of display order
-      m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
+        if ( m_pchReconFile[layerId] )
+        {
+          const Window &conf = pcPicTop->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Bool isTff = pcPicTop->isTopField();
+#if REPN_FORMAT_IN_VPS
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
+
 #else
-      if ( m_pchReconFile )
-      {
-        const Window &conf = pcPic->getConformanceWindow();
-        const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-        m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
-                                       conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-                                       conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-                                       conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                       conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-      }
-      
-      // update POC of display order
-      m_iPOCLastDisplay = pcPic->getPOC();
+          m_cTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
 #endif
-      
-      // erase non-referenced picture in the reference picture list after display
-      if ( !pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark() == true )
-      {
+        }
+
+        // update POC of display order
+        m_aiPOCLastDisplay[layerId] = pcPicBottom->getPOC();
+#else
+        if ( m_pchReconFile )
+        {
+          const Window &conf = pcPicTop->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Bool isTff = pcPicTop->isTopField();
+          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
+        }
+
+        // update POC of display order
+        m_iPOCLastDisplay = pcPicBottom->getPOC();
+#endif
+
+        // erase non-referenced picture in the reference picture list after display
+        if ( !pcPicTop->getSlice(0)->isReferenced() && pcPicTop->getReconMark() == true )
+        {
 #if !DYN_REF_FREE
-        pcPic->setReconMark(false);
-        
-        // mark it should be extended later
-        pcPic->getPicYuvRec()->setBorderExtension( false );
-        
+          pcPicTop->setReconMark(false);
+
+          // mark it should be extended later
+          pcPicTop->getPicYuvRec()->setBorderExtension( false );
+
 #else
-        pcPic->destroy();
-        pcListPic->erase( iterPic );
-        iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
-        continue;
+          pcPicTop->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        if ( !pcPicBottom->getSlice(0)->isReferenced() && pcPicBottom->getReconMark() == true )
+        {
+#if !DYN_REF_FREE
+          pcPicBottom->setReconMark(false);
+
+          // mark it should be extended later
+          pcPicBottom->getPicYuvRec()->setBorderExtension( false );
+
+#else
+          pcPicBottom->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        pcPicTop->setOutputMark(false);
+        pcPicBottom->setOutputMark(false);
+
+#if !DYN_REF_FREE
+        if(pcPicTop)
+        {
+          pcPicTop->destroy();
+          delete pcPicTop;
+          pcPicTop = NULL;
+        }
 #endif
       }
-      pcPic->setOutputMark(false);
     }
+    if(pcPicBottom)
+    {
+      pcPicBottom->destroy();
+      delete pcPicBottom;
+      pcPicBottom = NULL;
+    }
+  }
+  else //Frame decoding
+  {
+    while (iterPic != pcListPic->end())
+    {
+      pcPic = *(iterPic);
+
+      if ( pcPic->getOutputMark() )
+      {
+        // write to file
+#if SVC_EXTENSION
+        if ( m_pchReconFile[layerId] )
+        {
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+#if REPN_FORMAT_IN_VPS
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
+
+#else
+          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+#endif
+        }
+
+        // update POC of display order
+        m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
+#else
+        if ( m_pchReconFile )
+        {
+          const Window &conf = pcPic->getConformanceWindow();
+          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+        }
+
+        // update POC of display order
+        m_iPOCLastDisplay = pcPic->getPOC();
+#endif
+
+        // erase non-referenced picture in the reference picture list after display
+        if ( !pcPic->getSlice(0)->isReferenced() && pcPic->getReconMark() == true )
+        {
+#if !DYN_REF_FREE
+          pcPic->setReconMark(false);
+
+          // mark it should be extended later
+          pcPic->getPicYuvRec()->setBorderExtension( false );
+
+#else
+          pcPic->destroy();
+          pcListPic->erase( iterPic );
+          iterPic = pcListPic->begin(); // to the beginning, non-efficient way, have to be revised!
+          continue;
+#endif
+        }
+        pcPic->setOutputMark(false);
+      }
 #if !SVC_EXTENSION
 #if !DYN_REF_FREE
-    if(pcPic)
-    {
-      pcPic->destroy();
-      delete pcPic;
-      pcPic = NULL;
-    }
+      if(pcPic)
+      {
+        pcPic->destroy();
+        delete pcPic;
+        pcPic = NULL;
+      }
 #endif    
 #endif
-    iterPic++;
+      iterPic++;
+    }
   }
 #if SVC_EXTENSION
   m_aiPOCLastDisplay[layerId] = -MAX_INT;

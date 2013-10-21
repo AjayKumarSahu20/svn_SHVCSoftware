@@ -144,9 +144,9 @@ public:
   
   Void  init        ( TEncTop* pcTEncTop );
 #if SVC_EXTENSION
-  Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
+  Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
 #else
-  Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP );
+  Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
 #endif
   Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
@@ -155,7 +155,9 @@ public:
   
   TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
   
-  Void  printOutSummary      ( UInt uiNumAllPicCoded );
+#if !SVC_EXTENSION
+  Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField);
+#endif
   Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits );
   
   TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
@@ -165,10 +167,13 @@ protected:
   TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
 
 protected:
+  
+  Void xInitGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Bool isField );
   Void  xInitGOP          ( Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut );
-  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr );
+  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr, Bool isField );
   
   Void  xCalculateAddPSNR ( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime );
+  Void  xCalculateInterlacedAddPSNR( TComPic* pcPicOrgTop, TComPic* pcPicOrgBottom, TComPicYuv* pcPicRecTop, TComPicYuv* pcPicRecBottom, const AccessUnit& accessUnit, Double dEncTime );
   
   UInt64 xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1);
 
@@ -183,6 +188,10 @@ protected:
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
+#endif
+
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
   Void xResetNonNestedSEIPresentFlags()
@@ -196,6 +205,9 @@ protected:
     m_nestedBufferingPeriodSEIPresentInAU    = false;
     m_nestedPictureTimingSEIPresentInAU      = false;
   }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void xBuildTileSetsMap(TComPicSym* picSym);
+#endif
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
 #if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
   TComPic* getMotionPredIlp(TComSlice* pcSlice);

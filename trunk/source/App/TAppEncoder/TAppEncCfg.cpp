@@ -68,12 +68,13 @@ TAppEncCfg::TAppEncCfg()
 #if AVC_BASE
 , m_avcBaseLayerFlag(0)
 #endif
+#if N0120_MAX_TID_REF_CFG
+, m_maxTidRefPresentFlag(1)
+#endif 
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
-#if REF_IDX_FRAMEWORK
 , m_elRapSliceBEnabled(0)
-#endif
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
@@ -219,6 +220,18 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
     }
   }
 #endif
+#if EXTERNAL_USEDBYCURR_N0082
+  if(entry.m_numRefPics>0){
+    in>>entry.m_UseExtusedByCurrPic;
+    if(entry.m_UseExtusedByCurrPic)
+    {
+      for ( Int i = 0; i < entry.m_numRefPics; i++ )
+      {
+        in>>entry.m_ExtusedByCurrPic[i];
+      }
+    }
+  }
+#endif
   return in;
 }
 
@@ -334,12 +347,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Bool do_help = false;
   
 #if SVC_EXTENSION
-  string  cfg_LayerCfgFile  [MAX_LAYERS];
+  string  cfg_LayerCfgFile   [MAX_LAYERS];
   string  cfg_BitstreamFile;
-  string* cfg_InputFile     [MAX_LAYERS];
-  string* cfg_ReconFile     [MAX_LAYERS];
-  Double* cfg_fQP           [MAX_LAYERS];
+  string* cfg_InputFile      [MAX_LAYERS];
+  string* cfg_ReconFile      [MAX_LAYERS];
+  Double* cfg_fQP            [MAX_LAYERS];
 
+#if REPN_FORMAT_IN_VPS
+  Int*    cfg_repFormatIdx  [MAX_LAYERS];
+#endif
   Int*    cfg_SourceWidth   [MAX_LAYERS]; 
   Int*    cfg_SourceHeight  [MAX_LAYERS];
   Int*    cfg_FrameRate     [MAX_LAYERS];
@@ -383,11 +399,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_RCInitialQP          [MAX_LAYERS];
   Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
+#endif 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
     cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
     cfg_fQP[layer]          = &m_acLayerCfg[layer].m_fQP;
+#if REPN_FORMAT_IN_VPS
+    cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
+#endif
     cfg_SourceWidth[layer]  = &m_acLayerCfg[layer].m_iSourceWidth;
     cfg_SourceHeight[layer] = &m_acLayerCfg[layer].m_iSourceHeight;
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
@@ -425,12 +447,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
     cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
+#if N0120_MAX_TID_REF_CFG
+    cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
+#endif 
   }
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
 #if AVC_SYNTAX
   string  cfg_BLSyntaxFile;
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  string  cfg_tileSets;
 #endif
 #else
   string cfg_InputFile;
@@ -458,6 +486,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#if REPN_FORMAT_IN_VPS
+  ("RepFormatIdx%d",          cfg_repFormatIdx, -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   ("NumSamplePredRefLayers%d",cfg_numSamplePredRefLayers, -1, MAX_LAYERS, "Number of sample prediction reference layers")
@@ -473,8 +504,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+#if SCALABILITY_MASK_E0104
+  ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
+  ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
+#else
   ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
   ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
+#endif
   ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("InputBitDepth",           m_inputBitDepthY,    8, "Bit-depth of input file")
   ("OutputBitDepth",          m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
@@ -494,6 +530,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
 #endif
+#if N0120_MAX_TID_REF_CFG
+  ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
+  ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
+#endif 
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
@@ -501,13 +541,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
 #endif
-#if REF_IDX_FRAMEWORK
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
-#endif  
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
 #endif
-#else  
+#else
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -529,6 +567,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
 #endif
+
+  //Field coding parameters
+  ("FieldCoding", m_isField, false, "Signals if it's a field based coding")
+  ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
   
@@ -809,6 +851,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
+  ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
+  ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
@@ -826,6 +873,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
+  if(m_isField)
+  {
+#if SVC_EXTENSION
+    for(Int layer = 0; layer < MAX_LAYERS; layer++)
+    {
+      //Frame height
+      m_acLayerCfg[layer].m_iSourceHeightOrg = m_acLayerCfg[layer].m_iSourceHeight;
+      //Field height
+      m_acLayerCfg[layer].m_iSourceHeight = m_acLayerCfg[layer].m_iSourceHeight >> 1;
+    }
+#else
+    //Frame height
+    m_iSourceHeightOrg = m_iSourceHeight;
+    //Field height
+    m_iSourceHeight = m_iSourceHeight >> 1;
+#endif
+    //number of fields to encode
+    m_framesToBeEncoded *= 2;
+  }
+  
   for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
   {
     fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
@@ -1118,7 +1185,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-  
+
+#if REPN_FORMAT_IN_VPS_123
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    m_acLayerCfg[layer].setSourceHeight( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picHeightInLumaSamples);
+    m_acLayerCfg[layer].setSourceWidth ( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picWidthInLumaSamples );
+  }
+#endif
   /* rules for input, output and internal bitdepths as per help text */
   if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
   if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
@@ -1150,6 +1224,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
         m_iSourceHeight += m_confBottom;
+        if ( m_isField )
+        {
+          m_iSourceHeightOrg += m_confBottom << 1;
+          m_aiPad[1] = m_confBottom << 1;
+        }
       }
       if (m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0)
       {
@@ -1283,6 +1362,50 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  if (m_interLayerConstrainedTileSetsSEIEnabled)
+  {
+    if (m_iNumColumnsMinus1 == 0 && m_iNumRowsMinus1 == 0)
+    {
+      printf( "Tiles are not defined (needed for inter-layer comnstrained tile sets SEI).\n" );
+      exit( EXIT_FAILURE );
+    }
+    Char* pTileSets = cfg_tileSets.empty() ? NULL : strdup(cfg_tileSets.c_str());
+    int i = 0;
+    char *topLeftTileIndex = strtok(pTileSets, " ,");
+    while(topLeftTileIndex != NULL)
+    {
+      if( i >= m_ilNumSetsInMessage )
+      {
+        printf( "The number of tile sets is larger than defined by IlNumSetsInMessage.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_topLeftTileIndex + i ) = atoi( topLeftTileIndex );
+      char *bottonRightTileIndex = strtok(NULL, " ,");
+      if( bottonRightTileIndex == NULL )
+      {
+        printf( "BottonRightTileIndex is missing in the tile sets.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_bottomRightTileIndex + i ) = atoi( bottonRightTileIndex );
+      char *ilcIdc = strtok(NULL, " ,");
+      if( ilcIdc == NULL )
+      {
+        printf( "IlcIdc is missing in the tile sets.\n" );
+        exit( EXIT_FAILURE );
+      }
+      *( m_ilcIdc + i ) = atoi( ilcIdc );
+      topLeftTileIndex = strtok(NULL, " ,");
+      i++;
+    }
+    if( i < m_ilNumSetsInMessage )
+    {
+      printf( "The number of tile sets is smaller than defined by IlNumSetsInMessage.\n" );
+      exit( EXIT_FAILURE );
+    }
+    m_skippedTileSetPresentFlag = false;
+  }
+#endif
   // check validity of input parameters
   xCheckParameter();
   
@@ -1466,22 +1589,26 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
   
-#if !FINAL_RPL_CHANGE_N0082
+#if EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Bool verifiedGOP=false;
 #endif
   Bool errorGOP=false;
-#if !FINAL_RPL_CHANGE_N0082
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int checkGOP=1;
-  Int numRefs = 1;
+  Int numRefs = m_isField ? 2 : 1;
 #endif
   Int refList[MAX_NUM_REF_PICS+1];
   refList[0]=0;
+  if(m_isField)
+  {
+    refList[1] = 1;
+  }
   Bool isOK[MAX_GOP];
   for(Int i=0; i<MAX_GOP; i++) 
   {
     isOK[i]=false;
   }
-#if !FINAL_RPL_CHANGE_N0082
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int numOK=0;
 #endif
 #if !SVC_EXTENSION
@@ -1503,7 +1630,7 @@ Void TAppEncCfg::xCheckParameter()
   // verify layer configuration parameters
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    if(m_acLayerCfg[layer].xCheckParameter())
+    if(m_acLayerCfg[layer].xCheckParameter(m_isField))
     {
       printf("\nError: invalid configuration parameter found in layer %d \n", layer);
       check_failed = true;
@@ -1529,14 +1656,21 @@ Void TAppEncCfg::xCheckParameter()
 #if FINAL_RPL_CHANGE_N0082
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0){
+    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0)
+    {
       memcpy( m_acLayerCfg[layer].m_GOPListLayer, m_GOPList, sizeof(GOPEntry)*MAX_GOP );
     }
     errorGOP = xconfirmExtraGOP( m_acLayerCfg[layer].m_GOPListLayer );
     xConfirmPara(errorGOP,"Invalid GOP structure given");
   }
+#if TEMP_SCALABILITY_FIX
+  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7  && 
+    m_acLayerCfg[1].m_GOPListLayer[5].m_temporalId == 0 && m_acLayerCfg[1].m_GOPListLayer[7].m_temporalId == 0)
+#else
   //tentative for encoder
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 ){
+  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 )
+#endif
+  {
     //RA, POC5
     m_acLayerCfg[1].m_GOPListLayer[5].m_usedByCurrPic[2] = 0;
     m_acLayerCfg[1].m_GOPListLayer[5].m_refIdc[2] = 0;
@@ -1544,7 +1678,8 @@ Void TAppEncCfg::xCheckParameter()
     m_acLayerCfg[1].m_GOPListLayer[7].m_usedByCurrPic[2] = 0;
     m_acLayerCfg[1].m_GOPListLayer[7].m_refIdc[2] = 0;
   }
-#else
+#endif
+#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   m_extraRPSs=0;
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -1740,6 +1875,21 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
+#endif
+#if EXTERNAL_USEDBYCURR_N0082
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    for (Int i=0; i< m_iGOPSize; i++){
+      if (m_acLayerCfg[layer].m_GOPListLayer[i].m_UseExtusedByCurrPic == 1 )
+      {
+        for(Int j=0; j<m_acLayerCfg[layer].m_GOPListLayer[i].m_numRefPics; j++ )
+        {
+          m_acLayerCfg[layer].m_GOPListLayer[i].m_usedByCurrPic[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
+          m_acLayerCfg[layer].m_GOPListLayer[i].m_refIdc[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
+        }
+      }
+    }
+  }
 #endif
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
@@ -2044,6 +2194,12 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
 #endif
+#if N0120_MAX_TID_REF_CFG
+  for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
+  }
+#endif 
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2080,8 +2236,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
 #if SVC_EXTENSION  
   printf("Total number of layers        : %d\n", m_numLayers       );
+#if SCALABILITY_MASK_E0104
+  printf("Multiview                     : %d\n", m_scalabilityMask[1] );
+  printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#else
   printf("Multiview                     : %d\n", m_scalabilityMask[0] );
   printf("Scalable                      : %d\n", m_scalabilityMask[1] );
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
 #endif
@@ -2104,7 +2265,24 @@ Void TAppEncCfg::xPrintParameter()
   printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #endif
-  printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+  if (m_isField)
+  {
+    printf("Frame/Field          : Field based coding\n");
+    printf("Field index          : %u - %d (%d fields)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+    if (m_isTopFieldFirst)
+    {
+      printf("Field Order            : Top field first\n");
+    }
+    else
+    {
+      printf("Field Order            : Bottom field first\n");
+    }
+  }
+  else
+  {
+    printf("Frame/Field                  : Frame based coding\n");
+    printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
+  }
   printf("CU size / depth              : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)  : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);
@@ -2208,13 +2386,10 @@ Void TAppEncCfg::xPrintParameter()
 #else
   printf("AvcBase:%d ", 0);
 #endif
-#if REF_IDX_FRAMEWORK
-  printf("REF_IDX_FRAMEWORK:%d ", REF_IDX_FRAMEWORK);
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
-#endif
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif

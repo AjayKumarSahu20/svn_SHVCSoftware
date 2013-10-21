@@ -68,6 +68,10 @@ struct GOPEntry
   Int m_deltaRPS;
   Int m_numRefIdc;
   Int m_refIdc[MAX_NUM_REF_PICS+1];
+#if EXTERNAL_USEDBYCURR_N0082
+  Int m_UseExtusedByCurrPic;
+  Int m_ExtusedByCurrPic[MAX_NUM_REF_PICS];
+#endif
   GOPEntry()
   : m_POC(-1)
   , m_QPOffset(0)
@@ -82,14 +86,42 @@ struct GOPEntry
   , m_interRPSPrediction(false)
   , m_deltaRPS(0)
   , m_numRefIdc(0)
+#if EXTERNAL_USEDBYCURR_N0082
+  , m_UseExtusedByCurrPic(0)
+#endif
   {
     ::memset( m_referencePics, 0, sizeof(m_referencePics) );
     ::memset( m_usedByCurrPic, 0, sizeof(m_usedByCurrPic) );
     ::memset( m_refIdc,        0, sizeof(m_refIdc) );
+#if EXTERNAL_USEDBYCURR_N0082
+    ::memset( m_usedByCurrPic, 0, sizeof(m_ExtusedByCurrPic) );
+#endif
   }
 };
 
 std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry);     //input
+
+#if REPN_FORMAT_IN_VPS
+struct RepFormatCfg
+{
+  Int   m_chromaFormatIdc;
+  Bool  m_separateColourPlaneFlag;
+  Int   m_picWidthInLumaSamples;
+  Int   m_picHeightInLumaSamples;
+  Int   m_bitDepthLuma;
+  Int   m_bitDepthChroma;
+  RepFormatCfg()
+    : m_chromaFormatIdc         (CHROMA_420)
+    , m_separateColourPlaneFlag (0)
+    , m_picWidthInLumaSamples   (352)
+    , m_picHeightInLumaSamples  (288)
+    , m_bitDepthLuma            (8)
+    , m_bitDepthChroma          (8)
+  {}
+};
+std::istringstream &operator>>(std::istringstream &in, RepFormatCfg &repFormatCfg);
+#endif
+
 //! \ingroup TLibEncoder
 //! \{
 
@@ -154,6 +186,9 @@ protected:
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int       m_maxTidIlRefPicsPlus1;
+#endif 
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
@@ -282,6 +317,14 @@ protected:
 #endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
+  UInt      m_ilNumSetsInMessage;
+  Bool      m_skippedTileSetPresentFlag;
+  UInt      m_topLeftTileIndex[1024];
+  UInt      m_bottomRightTileIndex[1024];
+  UInt      m_ilcIdc[1024];
+#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -352,12 +395,10 @@ protected:
 #if SVC_EXTENSION
   UInt      m_layerId;   
   UInt      m_numLayer;
-#endif 
-#if REF_IDX_FRAMEWORK
-  Int      m_elRapSliceBEnabled;
-#endif
+  Int       m_elRapSliceBEnabled;
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  Int      m_adaptiveResolutionChange;
+  Int       m_adaptiveResolutionChange;
+#endif
 #endif
 
 public:
@@ -437,6 +478,10 @@ public:
   Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
 #endif
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
+  Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
+#endif 
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
   Void      setQuadtreeTULog2MinSize        ( UInt  u )      { m_uiQuadtreeTULog2MinSize = u; }
@@ -719,6 +764,38 @@ public:
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
   Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void  setInterLayerConstrainedTileSetsSEIEnabled(Bool b) { m_interLayerConstrainedTileSetsSEIEnabled = b; }
+  Bool  getInterLayerConstrainedTileSetsSEIEnabled()       { return m_interLayerConstrainedTileSetsSEIEnabled; }
+  Void  setIlNumSetsInMessage(UInt b)                      { m_ilNumSetsInMessage = b; }
+  Int   getIlNumSetsInMessage()                            { return m_ilNumSetsInMessage; }
+  Void  setSkippedTileSetPresentFlag(Bool b)               { m_skippedTileSetPresentFlag = b; }
+  Bool  getSkippedTileSetPresentFlag()                     { return m_skippedTileSetPresentFlag; }
+  Void  setTopLeftTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_topLeftTileIndex[i] = b[i];
+    }
+  }
+  UInt  getTopLeftTileIndex(UInt b)                        { return m_topLeftTileIndex[b]; }
+  Void  setBottomRightTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_bottomRightTileIndex[i] = b[i];
+    }
+  }
+  UInt  getBottomRightTileIndex(UInt b)                    { return m_bottomRightTileIndex[b]; }
+  Void  setIlcIdc(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_ilcIdc[i] = b[i];
+    }
+  }
+  UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
   Void      setUseWP               ( Bool b )    { m_useWeightedPred   = b;    }
   Void      setWPBiPred            ( Bool b )    { m_useWeightedBiPred = b;    }
   Bool      getUseWP               ()            { return m_useWeightedPred;   }
@@ -857,14 +934,12 @@ public:
   Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
   Void      setConformanceMode    (Int mode)     { m_conformanceMode = mode; }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-#endif
-#if REF_IDX_FRAMEWORK
   Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
   Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
 #endif
 };
 
