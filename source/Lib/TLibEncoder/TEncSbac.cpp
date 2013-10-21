@@ -803,7 +803,11 @@ Void TEncSbac::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
   
+#if REPN_FORMAT_IN_VPS
+  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
+#else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffsetY();
+#endif
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
   UInt uiAbsDQp = (UInt)((iDQp > 0)? iDQp  : (-iDQp));

@@ -50,7 +50,7 @@
 // Macros
 // ====================================================================================================================
 
-#define     MAX_CU_DEPTH            7                           // log2(LCUSize)
+#define     MAX_CU_DEPTH            6                           // log2(LCUSize)
 #define     MAX_CU_SIZE             (1<<(MAX_CU_DEPTH))         // maximum allowable size of CU
 #define     MIN_PU_SIZE             4
 #define     MAX_NUM_SPU_W           (MAX_CU_SIZE/MIN_PU_SIZE)   // maximum number of SPU in horizontal line
@@ -130,7 +130,7 @@ extern       UInt   g_sigLastScanCG32x32[ 64 ];
 // ADI table
 // ====================================================================================================================
 
-extern const UChar  g_aucIntraModeNumFast[7];
+extern const UChar  g_aucIntraModeNumFast[ MAX_CU_DEPTH ];
 
 #if FAST_INTRA_SHVC
 extern       UInt  g_reducedSetIntraModes[NUM_INTRA_MODE-1];
@@ -278,9 +278,16 @@ extern UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 extern UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
 extern Int  g_eTTable[4];
 
-#if SIMPLIFIED_MV_POS_SCALING
+#if SVC_EXTENSION
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
+
+#if IL_SL_SIGNALLING_N0371
+extern Int ref_scalingListDC         [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
+extern Int ref_scalingListCoef       [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][MAX_MATRIX_COEF_NUM];
+extern Int activeRefPPSId            [MAX_LAYERS];
+extern Int activeRefSPSId            [MAX_LAYERS];  
+#endif   
 #endif
 
 //! \}

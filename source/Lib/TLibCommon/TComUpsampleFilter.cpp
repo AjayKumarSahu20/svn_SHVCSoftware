@@ -150,19 +150,14 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Pel* piSrcV;
   Pel* piDstV;
 
-#if SIMPLIFIED_MV_POS_SCALING
   Int scaleX = g_posScalingFactor[refLayerIdc][0];
   Int scaleY = g_posScalingFactor[refLayerIdc][1];
-#else
-  Int   scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
-  Int   scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
-#endif
 
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
-    piSrcY = piSrcBufY - scalEL.getWindowLeftOffset() - scalEL.getWindowTopOffset() * strideEL;
-    piDstY = piDstBufY;
-    for( i = 0; i < heightEL; i++ )
+    piSrcY = piSrcBufY;
+    piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
+    for( i = 0; i < heightBL; i++ )
     {
       memcpy( piDstY, piSrcY, sizeof(Pel) * widthBL );
       piSrcY += strideBL;
@@ -178,13 +173,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     strideBL  = pcBasePic->getCStride();
     strideEL  = pcUsPic->getCStride();
 
-    piSrcU = piSrcBufU - ( scalEL.getWindowLeftOffset() >> 1 ) - ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
-    piSrcV = piSrcBufV - ( scalEL.getWindowLeftOffset() >> 1 ) - ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
+    piSrcU = piSrcBufU;
+    piSrcV = piSrcBufV;
 
-    piDstU = piDstBufU;
-    piDstV = piDstBufV;
+    piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
+    piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
 
-    for( i = 0; i < heightEL; i++ )
+    for( i = 0; i < heightBL; i++ )
     {
       memcpy( piDstU, piSrcU, sizeof(Pel) * widthBL );
       memcpy( piDstV, piSrcV, sizeof(Pel) * widthBL );
@@ -237,13 +232,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
 
-#if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth ();
     heightEL  = pcUsPic->getHeight();
 
     widthBL   = pcBasePic->getWidth ();
     heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
-#endif
 #if SCALED_REF_LAYER_OFFSETS
     Int leftStartL = scalEL.getWindowLeftOffset();
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
@@ -394,7 +387,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
     }
 
-#if ILP_DECODED_PICTURE
 #if SCALED_REF_LAYER_OFFSETS
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
@@ -407,7 +399,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     widthEL   = pcUsPic->getWidth () - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
 #endif
 
     //========== UV component upsampling ===========
@@ -450,18 +441,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
 
-#if !SIMPLIFIED_MV_POS_SCALING
-    scaleX     = ( ( widthBL << shiftX ) + ( widthEL >> 1 ) ) / widthEL;
-    scaleY     = ( ( heightBL << shiftY ) + ( heightEL >> 1 ) ) / heightEL;
-#endif
-
-#if ILP_DECODED_PICTURE
     widthEL   = pcUsPic->getWidth () >> 1;
     heightEL  = pcUsPic->getHeight() >> 1;
 
     widthBL   = pcBasePic->getWidth () >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
-#endif
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
     shift1 = g_bitDepthC - 8;
@@ -638,7 +622,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       }
 #endif
     }
-
+  }
     pcUsPic->setBorderExtension(false);
     pcUsPic->extendPicBorder   (); // extend the border.
 
@@ -646,6 +630,5 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcUsPic->setBorderExtension(false);
     pcTempPic->setBorderExtension(false);
     pcBasePic->setBorderExtension(false);
-  }
 }
 #endif //SVC_EXTENSION

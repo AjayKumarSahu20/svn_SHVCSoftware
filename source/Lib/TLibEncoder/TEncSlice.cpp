@@ -179,9 +179,9 @@ Void TEncSlice::init( TEncTop* pcEncTop )
  */
 #if SVC_EXTENSION
 //\param vps          VPS associated with the slice
-Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps )
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField )
 #else
-Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS )
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField )
 #endif
 {
   Double dQP;
@@ -259,7 +259,11 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   dQP = m_pcCfg->getQP();
   if(eSliceType!=I_SLICE)
   {
+#if REPN_FORMAT_IN_VPS
+    if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getQpBDOffsetY() ) && (rpcSlice->getSPS()->getUseLossless()))) 
+#else
     if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getSPS()->getQpBDOffsetY() ) && (rpcSlice->getSPS()->getUseLossless()))) 
+#endif
     {
       dQP += m_pcCfg->getGOPEntry(iGOPid).m_QPOffset;
     }
@@ -293,7 +297,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     // compute lambda value
     Int    NumberBFrames = ( m_pcCfg->getGOPSize() - 1 );
     Int    SHIFT_QP = 12;
-    Double dLambda_scale = 1.0 - Clip3( 0.0, 0.5, 0.05*(Double)NumberBFrames );
+
+    Double dLambda_scale = 1.0 - Clip3( 0.0, 0.5, 0.05*(Double)(isField ? NumberBFrames/2 : NumberBFrames) );
+
 #if FULL_NBIT
     Int    bitdepth_luma_qp_scale = 6 * (g_bitDepth - 8);
 #else
@@ -326,7 +332,11 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
       dLambda *= 0.95;
     }
     
+#if REPN_FORMAT_IN_VPS
+    iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
+#else
     iQP = max( -pSPS->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
+#endif
 
     m_pdRdPicLambda[iDQpIdx] = dLambda;
     m_pdRdPicQp    [iDQpIdx] = dQP;
@@ -399,7 +409,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   // restore original slice type
   eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
   
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if(m_pcCfg->getLayerId() > 0)
   {
     eSliceType=B_SLICE;
@@ -411,7 +421,11 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   if (m_pcCfg->getUseRecalculateQPAccordingToLambda())
   {
     dQP = xGetQPValueAccordingToLambda( dLambda );
+#if REPN_FORMAT_IN_VPS
+    iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );    
+#else
     iQP = max( -pSPS->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );    
+#endif
   }
 
   rpcSlice->setSliceQp          ( iQP );
@@ -466,7 +480,11 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setDepth            ( depth );
   
   pcPic->setTLayer( m_pcCfg->getGOPEntry(iGOPid).m_temporalId );
+#if TEMP_SCALABILITY_FIX
+  if((eSliceType==I_SLICE) || (rpcSlice->getPOC() == 0))
+#else
   if(eSliceType==I_SLICE)
+#endif
   {
     pcPic->setTLayer(0);
   }
@@ -484,7 +502,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
 
-#if SVC_EXTENSION && REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( layerId > 0 )
   {
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -605,7 +623,11 @@ Void TEncSlice::xLamdaRecalculation(Int changeQP, Int idGOP, Int depth, SliceTyp
       lambda *= 0.95;
     }
 
+#if REPN_FORMAT_IN_VPS
+    qp = max( -pcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( recalQP + 0.5 ) ) );
+#else
     qp = max( -pcSPS->getQpBDOffsetY(), min( MAX_QP, (Int) floor( recalQP + 0.5 ) ) );
+#endif
 
     m_pdRdPicLambda[deltqQpIdx] = lambda;
     m_pdRdPicQp    [deltqQpIdx] = recalQP;
@@ -848,8 +870,13 @@ Void TEncSlice::calCostSliceI(TComPic*& rpcPic)
     TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
     pcCU->initCU( rpcPic, uiCUAddr );
 
+#if REPN_FORMAT_IN_VPS
+    Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
+    Int width   = min( pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#else
     Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
     Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#endif
 
     iSumHad = m_pcCuEncoder->updateLCUDataISlice(pcCU, uiCUAddr, width, height);
 
@@ -1147,7 +1174,11 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
           estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP    ( estLambda, pcSlice->getSliceQp() );
 #endif
 
+#if REPN_FORMAT_IN_VPS
+          estQP     = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, estQP );
+#else
           estQP     = Clip3( -pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, estQP );
+#endif
 
           m_pcRdCost->setLambda(estLambda);
 #if M0036_RC_IMPROVEMENT
@@ -1175,8 +1206,13 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       {
 #if !M0036_RC_IMPROVEMENT
         UInt SAD    = m_pcCuEncoder->getLCUPredictionSAD();
+#if REPN_FORMAT_IN_VPS
+        Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
+        Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->>getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#else
         Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
         Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#endif
         Double MAD = (Double)SAD / (Double)(height * width);
         MAD = MAD * MAD;
         ( m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr) ).m_MAD = MAD;
@@ -1252,8 +1288,13 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       {
 #if !M0036_RC_IMPROVEMENT
         UInt SAD    = m_pcCuEncoder->getLCUPredictionSAD();
+#if REPN_FORMAT_IN_VPS
+        Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
+        Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#else
         Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
         Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+#endif
         Double MAD = (Double)SAD / (Double)(height * width);
         MAD = MAD * MAD;
         ( m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr) ).m_MAD = MAD;
@@ -1918,8 +1959,13 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr  ( UInt& startCUAddr, UInt& bou
   UInt uiExternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU();
   UInt uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
   UInt uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
+#if REPN_FORMAT_IN_VPS
+  UInt uiWidth = pcSlice->getPicWidthInLumaSamples();
+  UInt uiHeight = pcSlice->getPicHeightInLumaSamples();
+#else
   UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
   UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
   while((uiPosX>=uiWidth||uiPosY>=uiHeight)&&!(uiPosX>=uiWidth&&uiPosY>=uiHeight))
   {
     uiInternalAddress++;
@@ -1941,8 +1987,13 @@ Void TEncSlice::xDetermineStartAndBoundingCUAddr  ( UInt& startCUAddr, UInt& bou
   uiExternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU();
   uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
   uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
+#if REPN_FORMAT_IN_VPS
+  uiWidth = pcSlice->getPicWidthInLumaSamples();
+  uiHeight = pcSlice->getPicHeightInLumaSamples();
+#else
   uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
   uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
   while((uiPosX>=uiWidth||uiPosY>=uiHeight)&&!(uiPosX>=uiWidth&&uiPosY>=uiHeight))
   {
     uiInternalAddress++;

@@ -32,7 +32,8 @@ protected:
 
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
-  Int       m_iSourceHeight;                                  ///< source height in pixel
+  Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
+  Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
   Int       m_conformanceMode;
   Int       m_confLeft;
   Int       m_confRight;
@@ -65,6 +66,9 @@ protected:
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
 
+#if N0120_MAX_TID_REF_CFG
+  Int       m_maxTidIlRefPicsPlus1;
+#endif 
 #if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
@@ -83,6 +87,9 @@ protected:
 #if FINAL_RPL_CHANGE_N0082
   GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
 #endif
+#if REPN_FORMAT_IN_VPS
+  Int       m_repFormatIdx;
+#endif
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -97,7 +104,7 @@ public:
 #else
   Void  xPrintParameter();
 #endif
-  Bool  xCheckParameter();
+  Bool  xCheckParameter( Bool isField );
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
 
@@ -106,6 +113,7 @@ public:
   Int     getFrameRate()              {return m_iFrameRate;       }
   Int     getSourceWidth()            {return m_iSourceWidth;     }
   Int     getSourceHeight()           {return m_iSourceHeight;    }
+  Int     getSourceHeightOrg()        {return m_iSourceHeightOrg; }
   Int     getConformanceMode()        { return m_conformanceMode; }
   Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }
@@ -146,6 +154,15 @@ public:
 #if FINAL_RPL_CHANGE_N0082
   GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
 #endif
+#if REPN_FORMAT_IN_VPS
+  Int     getRepFormatIdx()           { return m_repFormatIdx;  }
+  Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
+  Void    setSourceWidth(Int x)       { m_iSourceWidth = x;     }
+  Void    setSourceHeight(Int x)      { m_iSourceHeight = x;    }
+#endif
+#if N0120_MAX_TID_REF_CFG
+  Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
+#endif 
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}

@@ -94,6 +94,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
     break;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
+    fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
+    break;
+#endif
   case SEI::SCALABLE_NESTING:
     fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
     break;
@@ -152,6 +157,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::SOP_DESCRIPTION:
     xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
     break;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
+    xWriteSEIInterLayerConstrainedTileSets(*static_cast<const SEIInterLayerConstrainedTileSets*>(&sei));
+    break;
+#endif
   case SEI::SCALABLE_NESTING:
     xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
     break;
@@ -557,6 +567,44 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 
   xWriteByteAlign();
 }
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Void SEIWriter::xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstrainedTileSets& sei)
+{
+  WRITE_FLAG( sei.m_ilAllTilesExactSampleValueMatchFlag,  "il_all_tiles_exact_sample_value_match_flag"   );
+  WRITE_FLAG( sei.m_ilOneTilePerTileSetFlag,              "il_one_tile_per_tile_set_flag"                );
+  if( !sei.m_ilOneTilePerTileSetFlag )
+  {
+    WRITE_UVLC( sei.m_ilNumSetsInMessageMinus1,             "il_num_sets_in_message_minus1"                );
+    if( sei.m_ilNumSetsInMessageMinus1 )
+    {
+      WRITE_FLAG( sei.m_skippedTileSetPresentFlag,            "skipped_tile_set_present_flag"                );
+    }
+    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 - (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for( UInt i = 0; i < numSignificantSets; i++ )
+    {
+      WRITE_UVLC( sei.m_ilctsId[i],                           "ilcts_id"                                     );
+      WRITE_UVLC( sei.m_ilNumTileRectsInSetMinus1[i],         "il_num_tile_rects_in_set_minus1"              );
+      for( UInt j = 0; j <= sei.m_ilNumTileRectsInSetMinus1[i]; j++ )
+      {
+        WRITE_UVLC( sei.m_ilTopLeftTileIndex[i][j],             "il_top_left_tile_index"                       );
+        WRITE_UVLC( sei.m_ilBottomRightTileIndex[i][j],         "il_bottom_right_tile_index"                   );
+      }
+      WRITE_CODE( sei.m_ilcIdc[i], 2,                         "ilc_idc"                                      );
+      if( sei.m_ilAllTilesExactSampleValueMatchFlag )
+      {
+        WRITE_FLAG( sei.m_ilExactSampleValueMatchFlag[i],        "il_exact_sample_value_match_flag"            );
+      }
+    }
+  }
+  else
+  {
+    WRITE_CODE( sei.m_allTilesIlcIdc, 2,                    "all_tiles_ilc_idc"                          );
+  }
+
+  xWriteByteAlign();
+}
+#endif
 
 Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
 {

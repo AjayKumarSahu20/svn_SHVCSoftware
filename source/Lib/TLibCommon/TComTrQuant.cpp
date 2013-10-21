@@ -41,7 +41,7 @@
 #include "TComTrQuant.h"
 #include "TComPic.h"
 #include "ContextTables.h"
-
+#define MAYBE_BUGFIX 1
 typedef struct
 {
   Int    iNNZbeforePos0;
@@ -49,6 +49,16 @@ typedef struct
   Double d64UncodedDist;    // all zero coded block distortion
   Double d64SigCost;
   Double d64SigCost_0;
+#if MAYBE_BUGFIX
+  Void init()
+  {
+    iNNZbeforePos0 = 0;
+  d64CodedLevelandDist = 0;
+  d64UncodedDist = 0;
+  d64SigCost = 0;
+  d64SigCost_0 = 0;
+  }
+#endif
 } coeffGroupRDStats;
 
 //! \ingroup TLibCommon
@@ -1032,7 +1042,11 @@ Void TComTrQuant::xQuant( TComDataCU* pcCU,
     Int iQpBase = pcCU->getSlice()->getSliceQpBase();
 
     Int qpScaled;
+#if REPN_FORMAT_IN_VPS
+    Int qpBDOffset = (eTType == TEXT_LUMA)? pcCU->getSlice()->getQpBDOffsetY() : pcCU->getSlice()->getQpBDOffsetC();
+#else
     Int qpBDOffset = (eTType == TEXT_LUMA)? pcCU->getSlice()->getSPS()->getQpBDOffsetY() : pcCU->getSlice()->getSPS()->getQpBDOffsetC();
+#endif
 
     if(eTType == TEXT_LUMA)
     {
@@ -1580,8 +1594,11 @@ Void TComTrQuant::xRateDistOptQuant                 ( TComDataCU*               
     UInt uiCGBlkPos = scanCG[ iCGScanPos ];
     UInt uiCGPosY   = uiCGBlkPos / uiNumBlkSide;
     UInt uiCGPosX   = uiCGBlkPos - (uiCGPosY * uiNumBlkSide);
+#if MAYBE_BUGFIX
+    rdStats.init();
+#else
     ::memset( &rdStats, 0, sizeof (coeffGroupRDStats));
-    
+#endif
     const Int patternSigCtx = TComTrQuant::calcPatternSigCtx(uiSigCoeffGroupFlag, uiCGPosX, uiCGPosY, uiWidth, uiHeight);
     for (Int iScanPosinCG = uiCGSize-1; iScanPosinCG >= 0; iScanPosinCG--)
     {
@@ -2476,7 +2493,11 @@ Void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, 
 
 /** set flat matrix value to quantized coefficient
  */
+#if IL_SL_SIGNALLING_N0371
+Void TComTrQuant::setFlatScalingList( UInt m_layerId )
+#else
 Void TComTrQuant::setFlatScalingList()
+#endif
 {
   UInt size,list;
   UInt qp;
@@ -2485,6 +2506,14 @@ Void TComTrQuant::setFlatScalingList()
   {
     for(list = 0; list <  g_scalingListNum[size]; list++)
     {
+#if IL_SL_SIGNALLING_N0371
+      ref_scalingListDC[m_layerId][size][list] = SCALING_LIST_DC;
+      for(UInt i=0; i<MAX_MATRIX_COEF_NUM; i++)
+      {
+        ref_scalingListCoef[m_layerId][size][list][i] = SCALING_LIST_DC;
+      }
+#endif
+
       for(qp=0;qp<SCALING_LIST_REM_NUM;qp++)
       {
         xsetFlatScalingList(list,size,qp);

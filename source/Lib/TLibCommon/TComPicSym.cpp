@@ -60,7 +60,6 @@ TComPicSym::TComPicSym()
 ,m_apcTComSlice(NULL)
 ,m_uiNumAllocatedSlice (0)
 ,m_apcTComDataCU (NULL)
-,m_iTileBoundaryIndependenceIdr (0)
 ,m_iNumColumnsMinus1 (0)
 ,m_iNumRowsMinus1(0)
 ,m_apcTComTile(NULL)
@@ -115,6 +114,11 @@ Void TComPicSym::create  ( Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt 
 
   m_puiCUOrderMap = new UInt[m_uiNumCUsInFrame+1];
   m_puiTileIdxMap = new UInt[m_uiNumCUsInFrame];
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  m_piTileSetIdxMap = new Int[m_uiNumCUsInFrame];
+  m_pucTileSetType = new UChar[m_uiNumCUsInFrame];
+  m_pbSkippedTileSetFlag = new Bool[m_uiNumCUsInFrame];
+#endif
   m_puiInverseCUOrderMap = new UInt[m_uiNumCUsInFrame+1];
 
   for( i=0; i<m_uiNumCUsInFrame; i++ )
@@ -146,7 +150,7 @@ Void TComPicSym::destroy()
   delete [] m_apcTComDataCU;
   m_apcTComDataCU = NULL;
 
-#if AVC_BASE || REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   if( m_apcTComTile )
   {
 #endif
@@ -155,7 +159,7 @@ Void TComPicSym::destroy()
     delete m_apcTComTile[i];
   }
   delete [] m_apcTComTile;
-#if AVC_BASE || REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   }
 #endif
 
@@ -166,6 +170,14 @@ Void TComPicSym::destroy()
 
   delete [] m_puiTileIdxMap;
   m_puiTileIdxMap = NULL;
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  delete [] m_piTileSetIdxMap;
+  m_piTileSetIdxMap = NULL;
+  delete [] m_pucTileSetType;
+  m_pucTileSetType = NULL;
+  delete [] m_pbSkippedTileSetFlag;
+  m_pbSkippedTileSetFlag = NULL;
+#endif
 
   delete [] m_puiInverseCUOrderMap;
   m_puiInverseCUOrderMap = NULL;

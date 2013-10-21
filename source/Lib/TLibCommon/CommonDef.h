@@ -56,9 +56,9 @@
 // ====================================================================================================================
 
 #if SVC_EXTENSION
-#define NV_VERSION        "3.0.1"                 ///< Current software version
+#define NV_VERSION        "3.1"                 ///< Current software version
 #else
-#define NV_VERSION        "11.0"                ///< Current software version
+#define NV_VERSION        "12.0"                ///< Current software version
 #endif
 
 // ====================================================================================================================

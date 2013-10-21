@@ -65,7 +65,6 @@ private:
 #endif
   Bool                  m_bUsedByCurr;            //  Used by current picture
   Bool                  m_bIsLongTerm;            //  IS long term picture
-  Bool                  m_bIsUsedAsLongTerm;      //  long term picture is used as reference before
   TComPicSym*           m_apcPicSym;              //  Symbol
   
   TComPicYuv*           m_apcPicYuv[2];           //  Texture,  0:org / 1:rec
@@ -87,6 +86,9 @@ private:
   Window                m_conformanceWindow;
   Window                m_defaultDisplayWindow;
 
+  Bool                  m_isTop;
+  Bool                  m_isField;
+  
   std::vector<std::vector<TComDataCU*> > m_vSliceCUDataLink;
 
   SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
@@ -193,6 +195,13 @@ public:
   TComPicYuv*   getYuvPicBufferForIndependentBoundaryProcessing()             {return m_pNDBFilterYuvTmp;}
   std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter      (Int sliceID) { return m_vSliceCUDataLink[sliceID];}
 
+  /* field coding parameters*/
+
+  Void              setTopField(bool b)                  {m_isTop = b;}
+  Bool              isTopField()                         {return m_isTop;}
+  Void              setField(bool b)                     {m_isField = b;}
+  Bool              isField()                            {return m_isField;}
+
   /** transfer ownership of seis to this picture */
   void setSEIs(SEIMessages& seis) { m_SEIs = seis; }
 
@@ -206,11 +215,11 @@ public:
    * Pointer is valid until this->destroy() is called */
   const SEIMessages& getSEIs() const { return m_SEIs; }
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
-#endif
 #if AVC_SYNTAX
   Void readBLSyntax( fstream* filestream, UInt numBytes );
+#endif
 #endif
 #if SYNTAX_OUTPUT
   Void wrireBLSyntax( fstream* filestream, UInt numBytes );

@@ -58,7 +58,7 @@ class TAppEncCfg
 protected:
   // file I/O
 #if SVC_EXTENSION
-  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS]; 
+  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS];
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
@@ -67,7 +67,7 @@ protected:
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
-  Int       m_avcBaseLayerFlag;                               ///< AVC_BASElayer_flag
+  Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
 #endif
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
@@ -75,6 +75,9 @@ protected:
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   Int       m_ilSampleOnlyPred[ MAX_LAYERS ];
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Bool      m_maxTidRefPresentFlag; 
+#endif 
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -84,7 +87,11 @@ protected:
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_iSourceWidth;                                   ///< source width in pixel
-  Int       m_iSourceHeight;                                  ///< source height in pixel
+  Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
+  
+  Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
+  
+  
   Int       m_conformanceMode;
   Int       m_confLeft;
   Int       m_confRight;
@@ -93,6 +100,9 @@ protected:
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
+
+  Bool      m_isField;                                        ///< enable field coding
+  Bool      m_isTopFieldFirst;
 
   // profile/level
   Profile::Name m_profile;
@@ -339,7 +349,7 @@ protected:
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 
-#if REF_IDX_FRAMEWORK
+#if SVC_EXTENSION
   Int       m_elRapSliceBEnabled;
 #endif
   // internal member functions
@@ -352,6 +362,17 @@ protected:
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
+#endif
+#if REPN_FORMAT_IN_VPS
+  RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
+  UInt      m_ilNumSetsInMessage;
+  Bool      m_skippedTileSetPresentFlag;
+  UInt      m_topLeftTileIndex[1024];
+  UInt      m_bottomRightTileIndex[1024];
+  UInt      m_ilcIdc[1024];
 #endif
 public:
   TAppEncCfg();
@@ -379,6 +400,9 @@ public:
 #endif
 #if SCALED_REF_LAYER_OFFSETS
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
+#endif
+#if REPN_FORMAT_IN_VPS
+  RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
 #endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg

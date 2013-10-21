@@ -1103,7 +1103,11 @@ TEncSearch::xIntraCodingLumaBlk( TComDataCU* pcCU,
   UInt uiAbsSum = 0;
   pcCU       ->setTrIdxSubParts ( uiTrDepth, uiAbsPartIdx, uiFullDepth );
 
+#if REPN_FORMAT_IN_VPS
+  m_pcTrQuant->setQPforQuant    ( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
   m_pcTrQuant->setQPforQuant    ( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
   m_pcTrQuant->selectLambda     (TEXT_LUMA);  
@@ -3216,6 +3220,40 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
   UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
   Int numValidMergeCand = 0 ;
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool disableILP = false;
+  if (pcCU->getPic()->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && pcCU->getPic()->getPicSym()->getTileSetIdxMap(pcCU->getAddr()) >= 0)
+  {
+    if (pcCU->getPic()->getPicSym()->getTileSetType(pcCU->getAddr()) == 2)
+    {
+      disableILP = true;
+    }
+    if (pcCU->getPic()->getPicSym()->getTileSetType(pcCU->getAddr()) == 1)
+    {
+      Int currCUaddr = pcCU->getAddr();
+      Int frameWitdhInCU  = pcCU->getPic()->getPicSym()->getFrameWidthInCU();
+      Int frameHeightInCU = pcCU->getPic()->getPicSym()->getFrameHeightInCU();
+      Bool leftCUExists   = (currCUaddr % frameWitdhInCU) > 0;
+      Bool aboveCUExists  = (currCUaddr / frameWitdhInCU) > 0;
+      Bool rightCUExists  = (currCUaddr % frameWitdhInCU) < (frameWitdhInCU - 1);
+      Bool belowCUExists  = (currCUaddr / frameWitdhInCU) < (frameHeightInCU - 1);
+      Int currTileSetIdx  = pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr);
+      // Check if CU is at tile set boundary
+      if ( (leftCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr-1) != currTileSetIdx) ||
+           (leftCUExists && aboveCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr-frameWitdhInCU-1) != currTileSetIdx) ||
+           (aboveCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr-frameWitdhInCU) != currTileSetIdx) ||
+           (aboveCUExists && rightCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr-frameWitdhInCU+1) != currTileSetIdx) ||
+           (rightCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr+1) != currTileSetIdx) ||
+           (rightCUExists && belowCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr+frameWitdhInCU+1) != currTileSetIdx) ||
+           (belowCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr+frameWitdhInCU) != currTileSetIdx) ||
+           (belowCUExists && leftCUExists && pcCU->getPic()->getPicSym()->getTileIdxMap(currCUaddr+frameWitdhInCU-1) != currTileSetIdx) )
+      {
+        disableILP = true;  // Disable ILP in tile set boundary CU
+      }
+    }
+  }
+#endif
+
   for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
   {
     UInt          uiCost[2] = { MAX_UINT, MAX_UINT };
@@ -3265,6 +3303,12 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
       
       for ( Int iRefIdxTemp = 0; iRefIdxTemp < pcCU->getSlice()->getNumRefIdx(eRefPicList); iRefIdxTemp++ )
       {
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+        if (pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp )->isILR(pcCU->getLayerId()) && disableILP)
+        {
+          continue;
+        }
+#endif
 #if (ENCODER_FAST_MODE)
         TComPic* pcPic    = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp );
         if( pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N) ) 
@@ -3483,6 +3527,12 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
         {
           testIter = false;  //the fixed part is ILR, skip this iteration       
         }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+        if (pcPic->isILR(pcCU->getLayerId()) && disableILP)
+        {
+          testIter = false;
+        }
+#endif
         if(testIter)
         {
 #endif
@@ -3498,6 +3548,12 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
           {
             testRefIdx = false;  //the refined part is ILR, skip this reference pic           
           }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+          if (pcPic->isILR(pcCU->getLayerId()) && disableILP)
+          {
+            testRefIdx = false;
+          }
+#endif
           if(testRefIdx)
           {
 #endif
@@ -4609,8 +4665,13 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   
   while((uiWidth>>uiMaxTrMode) < (g_uiMaxCUWidth>>g_uiMaxCUDepth)) uiMaxTrMode--;
   
+#if REPN_FORMAT_IN_VPS
+  qpMin =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+  qpMax =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+#else
   qpMin =  bHighPass ? Clip3( -pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP ) : pcCU->getQP( 0 );
   qpMax =  bHighPass ? Clip3( -pcCU->getSlice()->getSPS()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP ) : pcCU->getQP( 0 );
+#endif
 
   rpcYuvResi->subtract( pcYuvOrg, pcYuvPred, 0, uiWidth );
 
@@ -4859,7 +4920,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
       m_pcEntropyCoder->estimateBit(m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA );        
     }
 
+#if REPN_FORMAT_IN_VPS
+    m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
     m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
     m_pcTrQuant->selectLambda(TEXT_LUMA);  
@@ -4945,7 +5010,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
     {
       Pel *pcResiCurrY = m_pcQTTempTComYuv[ uiQTTempAccessLayer ].getLumaAddr( absTUPartIdx );
 
+#if REPN_FORMAT_IN_VPS
       m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#else
+      m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
       Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
       assert(scalingListType < 6);     
@@ -5194,7 +5263,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
         m_pcEntropyCoder->estimateBit( m_pcTrQuant->m_pcEstBitsSbac, trWidth, trHeight, TEXT_LUMA );        
       }
 
+#if REPN_FORMAT_IN_VPS
+      m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
       m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
 #if RDOQ_CHROMA_LAMBDA 
       m_pcTrQuant->selectLambda(TEXT_LUMA);
@@ -5213,7 +5286,11 @@ Void TEncSearch::xEstimateResidualQT( TComDataCU* pcCU, UInt uiQuadrant, UInt ui
         m_pcEntropyCoder->encodeCoeffNxN( pcCU, pcCoeffCurrY, uiAbsPartIdx, trWidth, trHeight, uiDepth, TEXT_LUMA );
         const UInt uiTsSingleBitsY = m_pcEntropyCoder->getNumberOfWrittenBits();
 
+#if REPN_FORMAT_IN_VPS
+        m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getQpBDOffsetY(), 0 );
+#else
         m_pcTrQuant->setQPforQuant( pcCU->getQP( 0 ), TEXT_LUMA, pcCU->getSlice()->getSPS()->getQpBDOffsetY(), 0 );
+#endif
 
         Int scalingListType = 3 + g_eTTable[(Int)TEXT_LUMA];
         assert(scalingListType < 6);     
