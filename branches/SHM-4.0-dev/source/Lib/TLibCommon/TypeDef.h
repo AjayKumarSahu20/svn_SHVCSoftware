@@ -63,6 +63,7 @@
 #define SCALED_REF_LAYER_OFFSETS         1      ///< JCTVC-M0309: Signal scaled reference layer offsets in SPS
 #define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
+#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6

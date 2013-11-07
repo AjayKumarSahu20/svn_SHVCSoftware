@@ -4003,7 +4003,9 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
   uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
 
+#if !LAYER_CTB
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
+#endif
 
 #if SCALED_REF_LAYER_OFFSETS
   Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
@@ -4033,14 +4035,28 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
     return NULL;
   }
 
+#if LAYER_CTB
+  UInt baseMaxCUHeight = cBaseColPic->getPicSym()->getMaxCUHeight();
+  UInt baseMaxCUWidth  = cBaseColPic->getPicSym()->getMaxCUWidth();
+  UInt baseMinUnitSize = cBaseColPic->getMinCUWidth();
+  
+  uiCUAddrBase = ( iBY / cBaseColPic->getPicSym()->getMaxCUHeight() ) * cBaseColPic->getFrameWidthInCU() + ( iBX / cBaseColPic->getPicSym()->getMaxCUWidth() );
+#else
   uiCUAddrBase = (iBY/g_uiMaxCUHeight)*cBaseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
+#endif
 
   assert(uiCUAddrBase < cBaseColPic->getNumCUsInFrame());
 
+#if LAYER_CTB
+  UInt uiRasterAddrBase = ( iBY - (iBY/baseMaxCUHeight)*baseMaxCUHeight ) / baseMinUnitSize * cBaseColPic->getNumPartInWidth() + ( iBX - (iBX/baseMaxCUWidth)*baseMaxCUWidth ) / baseMinUnitSize;
+  
+  uiAbsPartIdxBase = g_auiLayerRasterToZscan[cBaseColPic->getLayerId()][uiRasterAddrBase];
+#else
   UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*cBaseColPic->getNumPartInWidth()
     + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
 
   uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
+#endif
 
   return cBaseColPic->getCU(uiCUAddrBase);
 }

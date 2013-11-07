@@ -85,7 +85,16 @@ Void destroyROM()
 // ====================================================================================================================
 // Data structure related table & variable
 // ====================================================================================================================
-
+#if LAYER_CTB
+UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
+UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
+UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
+UInt g_auiLayerAddCUDepth[MAX_LAYERS];
+UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+#endif
 UInt g_uiMaxCUWidth  = MAX_CU_SIZE;
 UInt g_uiMaxCUHeight = MAX_CU_SIZE;
 UInt g_uiMaxCUDepth  = MAX_CU_DEPTH;
