@@ -149,6 +149,7 @@ protected:
   
   Int       m_maxTempLayer;                                  ///< Max temporal layer
 
+#if !LAYER_CTB
   // coding unit (CU) definition
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
@@ -160,6 +161,7 @@ protected:
   
   UInt      m_uiQuadtreeTUMaxDepthInter;
   UInt      m_uiQuadtreeTUMaxDepthIntra;
+#endif
   
   // coding tools (bit-depth)
   Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
@@ -353,7 +355,11 @@ protected:
   Int       m_elRapSliceBEnabled;
 #endif
   // internal member functions
+#if LAYER_CTB
+  Void  xSetGlobal      (UInt layerId);                       ///< set global variables
+#else
   Void  xSetGlobal      ();                                   ///< set global variables
+#endif
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
@@ -389,9 +395,11 @@ public:
   Int  getGOPSize()                {return m_iGOPSize;          }
   UInt getInternalBitDepthY()      {return m_internalBitDepthY; }
   UInt getInternalBitDepthC()      {return m_internalBitDepthC; }
+#if !LAYER_CTB
   UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
   UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
+#endif
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
   Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
@@ -403,6 +411,10 @@ public:
 #endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
+#endif
+#if LAYER_CTB
+  Bool getUsePCM()                  { return m_usePCM;               }
+  UInt getPCMLog2MinSize  ()        { return  m_uiPCMLog2MinSize;    }
 #endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg

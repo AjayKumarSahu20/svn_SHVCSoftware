@@ -357,10 +357,17 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseRDOQ                      ( m_useRDOQ     );
     m_acTEncTop[layer].setUseRDOQTS                    ( m_useRDOQTS   );
     m_acTEncTop[layer].setRDpenalty                    ( m_rdPenalty );
+#if LAYER_CTB
+    m_acTEncTop[layer].setQuadtreeTULog2MaxSize        ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize );
+    m_acTEncTop[layer].setQuadtreeTULog2MinSize        ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthInter      ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra      ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra );
+#else
     m_acTEncTop[layer].setQuadtreeTULog2MaxSize        ( m_uiQuadtreeTULog2MaxSize );
     m_acTEncTop[layer].setQuadtreeTULog2MinSize        ( m_uiQuadtreeTULog2MinSize );
     m_acTEncTop[layer].setQuadtreeTUMaxDepthInter      ( m_uiQuadtreeTUMaxDepthInter );
     m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra      ( m_uiQuadtreeTUMaxDepthIntra );
+#endif
     m_acTEncTop[layer].setUseFastEnc                   ( m_bUseFastEnc  );
     m_acTEncTop[layer].setUseEarlyCU                   ( m_bUseEarlyCU  ); 
     m_acTEncTop[layer].setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
@@ -392,7 +399,11 @@ Void TAppEncTop::xInitLibCfg()
     //====== Dependent Slice ========
     m_acTEncTop[layer].setSliceSegmentMode        ( m_sliceSegmentMode         );
     m_acTEncTop[layer].setSliceSegmentArgument    ( m_sliceSegmentArgument     );
+#if LAYER_CTB
+    Int iNumPartInCU = 1<<(m_acLayerCfg[layer].m_uiMaxCUDepth<<1);
+#else
     Int iNumPartInCU = 1<<(m_uiMaxCUDepth<<1);
+#endif
     if(m_sliceSegmentMode==FIXED_NUMBER_OF_LCU)
     {
       m_acTEncTop[layer].setSliceSegmentArgument ( m_sliceSegmentArgument * iNumPartInCU );
@@ -850,6 +861,12 @@ Void TAppEncTop::xCreateLib()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
+#if LAYER_CTB
+    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+#endif
     m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC );  // read  mode
     m_acTVideoIOYuvInputFile[layer].skipFrames(m_FrameSkip, m_acLayerCfg[layer].getSourceWidth() - m_acLayerCfg[layer].getPad()[0], m_acLayerCfg[layer].getSourceHeight() - m_acLayerCfg[layer].getPad()[1]);
 
@@ -881,6 +898,13 @@ Void TAppEncTop::xDestroyLib()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
+#if LAYER_CTB
+    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+#endif
+
     m_acTVideoIOYuvInputFile[layer].close();
     m_acTVideoIOYuvReconFile[layer].close();
 
@@ -900,6 +924,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if SVC_EXTENSION
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
+#if LAYER_CTB
+    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+        
+    memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
+    memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
+    memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
+    memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
+#endif
     m_acTEncTop[layer].init(isFieldCoding);
   }
 #if VPS_RENAME
@@ -1152,7 +1187,11 @@ Void TAppEncTop::encode()
     if( m_isField )
     {
 #if SVC_UPSAMPLING
+#if LAYER_CTB
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #else
       pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif
@@ -1160,7 +1199,11 @@ Void TAppEncTop::encode()
     else
     {
 #if SVC_UPSAMPLING
+#if LAYER_CTB
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #else
       pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif
@@ -1195,6 +1238,13 @@ Void TAppEncTop::encode()
     {
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
+#if LAYER_CTB
+        g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+        g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+        g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+        g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+#endif
+
         // get buffers
         xGetBuffer(pcPicYuvRec, layer);
 
@@ -1262,6 +1312,17 @@ Void TAppEncTop::encode()
       // layer by layer for each frame
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
+#if LAYER_CTB
+        g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+        g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+        g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+        g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+
+        memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
+        memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
+        memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
+        memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
+#endif
         // call encoding function for one frame
         if ( m_isField )
         {
@@ -1527,7 +1588,11 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
     rpcPicYuvRec = new TComPicYuv;
 
 #if SVC_UPSAMPLING
+#if LAYER_CTB
+    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif

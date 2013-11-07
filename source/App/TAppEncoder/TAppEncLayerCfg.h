@@ -56,6 +56,20 @@ protected:
   Int       m_numActiveRefLayers;
 #endif
 
+#if LAYER_CTB
+  // coding unit (CU) definition
+  UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
+  UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
+  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth
+  
+  // transfom unit (TU) definition
+  UInt      m_uiQuadtreeTULog2MaxSize;
+  UInt      m_uiQuadtreeTULog2MinSize;
+  
+  UInt      m_uiQuadtreeTUMaxDepthInter;
+  UInt      m_uiQuadtreeTUMaxDepthIntra;
+#endif
+
 #if RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
@@ -162,7 +176,12 @@ public:
 #endif
 #if N0120_MAX_TID_REF_CFG
   Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
-#endif 
+#endif
+#if LAYER_CTB
+  UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
+  UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
+  UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
+#endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}
