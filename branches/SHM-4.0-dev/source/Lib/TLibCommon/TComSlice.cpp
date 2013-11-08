@@ -74,12 +74,6 @@ TComSlice::TComSlice()
 , m_iSliceQpDeltaCr               ( 0 )
 , m_iDepth                        ( 0 )
 , m_bRefenced                     ( false )
-#if POC_RESET_FLAG
-, m_bPocResetFlag                 ( false )
-#endif
-#if SH_DISCARDABLE_FLAG
-, m_bDiscardableFlag              ( false )
-#endif
 , m_pcSPS                         ( NULL )
 , m_pcPPS                         ( NULL )
 , m_pcPic                         ( NULL )
@@ -92,9 +86,6 @@ TComSlice::TComSlice()
 , m_dLambda                       ( 0.0 )
 #endif
 , m_uiTLayer                      ( 0 )
-#if SVC_EXTENSION
-, m_layerId                     ( 0 )
-#endif
 , m_bTLayerSwitchingFlag          ( false )
 , m_sliceMode                   ( 0 )
 , m_sliceArgument               ( 0 )
@@ -117,9 +108,16 @@ TComSlice::TComSlice()
 , m_numEntryPointOffsets          ( 0 )
 , m_temporalLayerNonReferenceFlag ( false )
 , m_enableTMVPFlag                ( true )
+#if SVC_EXTENSION
+, m_layerId                     ( 0 )
+#if POC_RESET_FLAG
+, m_bPocResetFlag                 ( false )
+#endif
+, m_bDiscardableFlag              ( false )
 #if REF_IDX_MFM
 , m_bMFMEnabledFlag               ( false )
 #endif
+#endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
 
@@ -140,7 +138,7 @@ TComSlice::TComSlice()
   m_numSamplePredRefLayers       = 0;
   m_interLayerSamplePredOnlyFlag = false;
 #endif
-#endif
+#endif //SVC_EXTENSION
 
   initEqualRef();
   
