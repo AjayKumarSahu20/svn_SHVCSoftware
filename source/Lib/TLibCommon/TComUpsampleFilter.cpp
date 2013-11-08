@@ -226,9 +226,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
     Int topStartL  = scalEL.getWindowTopOffset();
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
-#if BUGFIX_RESAMPLE
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
-#endif
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
     Int shift1 = g_bitDepthY - 8;
@@ -280,7 +278,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       coeff = m_lumaFilter[phase];
 
       piSrcY = piTempBufY + (refPos -((NTAPS_US_LUMA>>1) - 1))*strideEL;
-#if BUGFIX_RESAMPLE
       Pel* piDstY0 = piDstBufY + j * strideEL;            
       piDstY = piDstY0 + leftOffset;
       piSrcY += leftOffset;
@@ -304,47 +301,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
         *piDstY = piDstY0[leftStartL];
         piDstY++;
       }
-#else
-#if 1 // it should provide identical result
-      Pel* piDstY0 = piDstBufY + j * strideEL;            
-      piDstY = piDstY0 + ( leftStartL > 0 ? leftStartL : 0 );
 
-      for( i = min<Int>(rightEndL, pcTempPic->getWidth()) - max<Int>(0, leftStartL); i > 0; i-- )
-      {
-        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
-        piSrcY++;
-        piDstY++;
-      }
-
-      for( i = rightEndL; i < pcTempPic->getWidth(); i++ )
-      {
-        *piDstY = piDstY0[rightEndL-1];
-        piDstY++;
-      }
-
-      piDstY = piDstY0;
-      for( i = 0; i < leftStartL; i++ )
-      {
-        *piDstY = piDstY0[leftStartL];
-        piDstY++;
-      }
-#else
-      piDstY = piDstBufY + j * strideEL;
-
-      for( i = 0; i < pcTempPic->getWidth(); i++ )
-      {
-        *piDstY = ClipY( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift));
-
-        // Only increase the x position of reference upsample picture when within the window
-        // "-2" to ensure that pointer doesn't go beyond the boundary rightEndL-1
-        if( (i >= leftStartL) && (i <= rightEndL-2) )
-        {
-          piSrcY++;
-        }
-        piDstY++;
-      }
-#endif
-#endif
     }
 
     widthBL   = pcBasePic->getWidth ();
@@ -368,9 +325,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int rightEndC  = (pcUsPic->getWidth() >> 1) - (scalEL.getWindowRightOffset() >> 1);
     Int topStartC  = scalEL.getWindowTopOffset() >> 1;
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
-#if BUGFIX_RESAMPLE
     leftOffset = leftStartC > 0 ? leftStartC : 0;
-#endif
 
     shiftX = 16;
     shiftY = 16;
@@ -451,11 +406,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       phase    = refPos16 & 15;
       refPos   = refPos16 >> 4; 
       coeff = m_chromaFilter[phase];
-      
+
       piSrcU = piTempBufU  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;
       piSrcV = piTempBufV  + (refPos -((NTAPS_US_CHROMA>>1) - 1))*strideEL;
 
-#if BUGFIX_RESAMPLE
       Pel* piDstU0 = piDstBufU + j*strideEL;
       Pel* piDstV0 = piDstBufV + j*strideEL;
       piDstU = piDstU0 + leftOffset;
@@ -490,70 +444,15 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
         piDstU++;
         piDstV++;
       }
-#else
-#if 1 // it should provide identical result
-      Pel* piDstU0 = piDstBufU + j*strideEL;
-      Pel* piDstV0 = piDstBufV + j*strideEL;
-      piDstU = piDstU0 + ( leftStartC > 0 ? leftStartC : 0 );
-      piDstV = piDstV0 + ( leftStartC > 0 ? leftStartC : 0 );
 
-      for( i = min<Int>(rightEndC, pcTempPic->getWidth() >> 1) - max<Int>(0, leftStartC); i > 0; i-- )
-      {
-        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
-        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
-        piSrcU++;
-        piSrcV++;
-        piDstU++;
-        piDstV++;
-      }
-
-      for( i = rightEndC; i < pcTempPic->getWidth() >> 1; i++ )
-      {
-        *piDstU = piDstU0[rightEndC-1];
-        *piDstV = piDstV0[rightEndC-1];
-        piDstU++;
-        piDstV++;
-      }
-
-      piDstU = piDstU0;
-      piDstV = piDstV0;
-      for( i = 0; i < leftStartC; i++ )
-      {
-        *piDstU = piDstU0[leftStartC];
-        *piDstV = piDstV0[leftStartC];
-        piDstU++;
-        piDstV++;
-      }
-#else
-      piDstU = piDstBufU + j*strideEL;
-      piDstV = piDstBufV + j*strideEL;
-
-      for( i = 0; i < pcTempPic->getWidth() >> 1; i++ )
-      {
-        *piDstU = ClipC( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift));
-        *piDstV = ClipC( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift));
-
-        // Only increase the x position of reference upsample picture when within the window
-        // "-2" to ensure that pointer doesn't go beyond the boundary rightEndC-1
-        if( (i >= leftStartC) && (i <= rightEndC-2) )
-        {
-          piSrcU++;
-          piSrcV++;
-        }
-
-        piDstU++;
-        piDstV++;
-      }
-#endif
-#endif
     }
   }
-    pcUsPic->setBorderExtension(false);
-    pcUsPic->extendPicBorder   (); // extend the border.
+  pcUsPic->setBorderExtension(false);
+  pcUsPic->extendPicBorder   (); // extend the border.
 
-    //Reset the Border extension flag
-    pcUsPic->setBorderExtension(false);
-    pcTempPic->setBorderExtension(false);
-    pcBasePic->setBorderExtension(false);
+  //Reset the Border extension flag
+  pcUsPic->setBorderExtension(false);
+  pcTempPic->setBorderExtension(false);
+  pcBasePic->setBorderExtension(false);
 }
 #endif //SVC_EXTENSION
