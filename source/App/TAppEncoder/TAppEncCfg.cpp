@@ -1237,13 +1237,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
-#if REPN_FORMAT_IN_VPS_123
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    m_acLayerCfg[layer].setSourceHeight( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picHeightInLumaSamples);
-    m_acLayerCfg[layer].setSourceWidth ( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picWidthInLumaSamples );
-  }
-#endif
   /* rules for input, output and internal bitdepths as per help text */
   if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
   if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
