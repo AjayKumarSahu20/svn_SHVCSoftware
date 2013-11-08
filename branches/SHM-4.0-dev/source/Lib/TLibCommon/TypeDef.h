@@ -77,7 +77,6 @@
 #define VPS_OUTPUT_LAYER_SET_IDX         1      ///< JCTVC-M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
 #define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< JCTVC-M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #define VPS_PROFILE_OUTPUT_LAYERS        1      ///< JCTVC-M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2
-#define SPS_SUB_LAYER_INFO               1      ///< JCTVC-M0268: Do not signal sps_max_sub_layers_minus1 and sps_temporal_id_nesting_flag for nuh_layer_id greater than 0
 #define M0457_PREDICTION_INDICATIONS     1
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI
