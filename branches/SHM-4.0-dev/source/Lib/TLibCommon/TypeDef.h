@@ -101,7 +101,6 @@
 #define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
 #define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214: support base layer input more than 8 bits
 #define ARBITRARY_SPATIAL_RATIO          0      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
-#define BUGFIX_RESAMPLE                  1      ///< JCTVC-N0055: resampling bug fix for positive left scalled offset
 
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
