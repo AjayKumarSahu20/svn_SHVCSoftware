@@ -113,10 +113,10 @@ TComSlice::TComSlice()
 #if POC_RESET_FLAG
 , m_bPocResetFlag                 ( false )
 #endif
-, m_bDiscardableFlag              ( false )
 #if REF_IDX_MFM
 , m_bMFMEnabledFlag               ( false )
 #endif
+, m_bDiscardableFlag              ( false )
 #endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
@@ -1909,6 +1909,7 @@ RepFormat::RepFormat()
 // ------------------------------------------------------------------------------------------------
 // Video parameter set (VPS)
 // ------------------------------------------------------------------------------------------------
+#if SVC_EXTENSION
 TComVPS::TComVPS()
 : m_VPSId                     (  0)
 , m_uiMaxTLayers              (  1)
@@ -1928,12 +1929,10 @@ TComVPS::TComVPS()
 #if VPS_EXTN_OP_LAYER_SETS
 , m_numOutputLayerSets        (0)  
 #endif
-#if VPS_PROFILE_OUTPUT_LAYERS
 , m_numProfileTierLevel       (0)
 , m_moreOutputLayerSetsThanDefaultFlag (false)
 , m_numAddOutputLayerSets     (0)
 , m_defaultOneTargetOutputLayerFlag    (false)
-#endif
 #if VPS_VUI_BITRATE_PICRATE
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
@@ -1987,9 +1986,7 @@ TComVPS::TComVPS()
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
   ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
 #endif
-#if VPS_PROFILE_OUTPUT_LAYERS
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
-#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
 #endif
@@ -2029,6 +2026,26 @@ TComVPS::TComVPS()
   ::memset(m_viewIdVal, 0, sizeof(m_viewIdVal));
 #endif
 }
+#else
+TComVPS::TComVPS()
+: m_VPSId                     (  0)
+, m_uiMaxTLayers              (  1)
+, m_uiMaxLayers               (  1)
+, m_bTemporalIdNestingFlag    (false)
+, m_numHrdParameters          (  0)
+, m_maxNuhReservedZeroLayerId (  0)
+, m_hrdParameters             (NULL)
+, m_hrdOpSetIdx               (NULL)
+, m_cprmsPresentFlag          (NULL)
+{
+  for( Int i = 0; i < MAX_TLAYER; i++)
+  {
+    m_numReorderPics[i] = 0;
+    m_uiMaxDecPicBuffering[i] = 1; 
+    m_uiMaxLatencyIncrease[i] = 0;
+  }
+}
+#endif //SVC_EXTENSION
 
 TComVPS::~TComVPS()
 {

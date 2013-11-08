@@ -991,6 +991,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   return;
 }
 
+#if SVC_EXTENSION
 #if VPS_EXTNS
 Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {
@@ -1120,25 +1121,17 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
-#if VPS_PROFILE_OUTPUT_LAYERS
   READ_CODE( 10, uiCode, "vps_number_layer_sets_minus1" );     assert( uiCode == (vps->getNumLayerSets() - 1) );
   READ_CODE(  6, uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
-#else
-  vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
-  for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
-#endif
   {
     READ_FLAG( uiCode, "vps_profile_present_flag[i]" ); vps->setProfilePresentFlag(idx, uiCode ? true : false);
     if( !vps->getProfilePresentFlag(idx) )
     {
-#if VPS_PROFILE_OUTPUT_LAYERS
       READ_CODE( 6, uiCode, "profile_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
-#else
-      READ_UVLC( uiCode, "vps_profile_layer_set_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
-#endif
       assert( vps->getProfileLayerSetRef(idx) < idx );
+
       // Copy profile information as indicated
       vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
     }
@@ -1146,7 +1139,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
-#if VPS_PROFILE_OUTPUT_LAYERS
   READ_FLAG( uiCode, "more_output_layer_sets_than_default_flag" ); vps->setMoreOutputLayerSetsThanDefaultFlag( uiCode ? true : false );
   Int numOutputLayerSets = 0;
   if(! vps->getMoreOutputLayerSetsThanDefaultFlag() )
@@ -1207,28 +1199,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
   }
-#else
-#if VPS_EXTN_OP_LAYER_SETS
-  // Target output layer signalling
-  READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
-  for(i = 0; i < vps->getNumOutputLayerSets(); i++)
-  {
-#if VPS_OUTPUT_LAYER_SET_IDX
-    READ_UVLC( uiCode,           "vps_output_layer_set_idx_minus1[i]"); vps->setOutputLayerSetIdx(i, uiCode + 1);
-#else
-    READ_UVLC( uiCode,           "vps_output_layer_set_idx[i]"); vps->setOutputLayerSetIdx(i, uiCode);
-#endif
-    Int lsIdx = vps->getOutputLayerSetIdx(i);
-    for(j = 0; j <= vps->getMaxLayerId(); j++)
-    {
-      if(vps->getLayerIdIncludedFlag(lsIdx, j))
-      {
-        READ_FLAG( uiCode, "vps_output_layer_flag[lsIdx][j]"); vps->setOutputLayerFlag(lsIdx, j, uiCode);
-      }
-    }
-  }
-#endif
-#endif
+
 #if REPN_FORMAT_IN_VPS
   READ_FLAG( uiCode, "rep_format_idx_present_flag"); 
   vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
@@ -1455,7 +1426,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif 
 }
-#endif 
+#endif
+#endif //SVC_EXTENSION
+
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
 {
   UInt  uiCode;

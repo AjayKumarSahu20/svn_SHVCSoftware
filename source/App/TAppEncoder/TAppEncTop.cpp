@@ -1030,7 +1030,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
   // Target output layer
-#if VPS_PROFILE_OUTPUT_LAYERS
   vps->setNumOutputLayerSets(vps->getNumLayerSets());    
   vps->setNumProfileTierLevel(vps->getNumLayerSets());   
   vps->setDefaultOneTargetOutputLayerFlag(true);
@@ -1039,11 +1038,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setProfileLevelTierIdx(i, i);
     vps->setOutputLayerSetIdx(i, i); 
   }
-#else
-  vps->setNumOutputLayerSets(1);
-  Int lsIdx = 1;
-  vps->setOutputLayerSetIdx(0, lsIdx); // Because only one layer set
-#endif
+
   for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
   {
     // Include the highest layer as output layer 
