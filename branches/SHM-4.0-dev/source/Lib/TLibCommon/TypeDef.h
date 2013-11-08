@@ -75,7 +75,6 @@
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
 #define VPS_OUTPUT_LAYER_SET_IDX         1      ///< JCTVC-M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
-#define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< JCTVC-M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
 #define M0457_PREDICTION_INDICATIONS     1
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI

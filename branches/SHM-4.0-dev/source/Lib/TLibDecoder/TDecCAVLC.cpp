@@ -1065,7 +1065,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( vps->getViewIdLenMinus1( ) + 1, uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
   }
 #endif
-#if VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
@@ -1084,7 +1083,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
   }
-#endif
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
@@ -1258,27 +1256,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setCrossLayerIrapAlignFlag(uiCode);
 #endif 
 
-#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  // For layer 0
-  vps->setNumDirectRefLayers(0, 0);
-  // For other layers
-  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    UInt numDirectRefLayers = 0;
-    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      READ_FLAG(uiCode, "direct_dependency_flag[i][j]" ); vps->setDirectDependencyFlag(layerCtr, refLayerCtr, uiCode? true : false);
-      if(uiCode)
-      {
-        vps->setRefLayerId(layerCtr, numDirectRefLayers, refLayerCtr);
-        numDirectRefLayers++;
-      }
-    }
-    vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
-  }
-#endif
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
   for(i = 1; i < vps->getMaxLayers(); i++)

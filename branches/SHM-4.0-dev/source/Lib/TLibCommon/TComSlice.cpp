@@ -110,11 +110,11 @@ TComSlice::TComSlice()
 , m_enableTMVPFlag                ( true )
 #if SVC_EXTENSION
 , m_layerId                     ( 0 )
-#if POC_RESET_FLAG
-, m_bPocResetFlag                 ( false )
-#endif
 #if REF_IDX_MFM
 , m_bMFMEnabledFlag               ( false )
+#endif
+#if POC_RESET_FLAG
+, m_bPocResetFlag                 ( false )
 #endif
 , m_bDiscardableFlag              ( false )
 #endif //SVC_EXTENSION

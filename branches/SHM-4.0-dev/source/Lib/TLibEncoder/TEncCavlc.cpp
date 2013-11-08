@@ -874,7 +874,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
   }
 #endif
-#if VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
@@ -883,7 +882,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
     }
   }
-#endif
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
@@ -981,22 +979,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
-      WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
+  WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #endif 
 #if N0147_IRAP_ALIGN_FLAG
-      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+  WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
-#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
-    }
-  }
-#endif
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
   for(i = 1; i < vps->getMaxLayers(); i++)
