@@ -57,7 +57,6 @@
 #define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
 #endif
 #define IL_SL_SIGNALLING_N0371           0      ///< JCTVC-N0371: inter-layer scaling list
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< JCTVC-M0464: VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            0      ///< JCTVC-M0463: VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
 #define SCALED_REF_LAYER_OFFSETS         1      ///< JCTVC-M0309: Signal scaled reference layer offsets in SPS
@@ -89,8 +88,6 @@
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
-#else
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
 #endif //VPS_VUI
 
 #endif
