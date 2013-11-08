@@ -752,12 +752,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR));
 #if SVC_EXTENSION
-#if ILR_RESTR && ILR_RESTR_FIX
-    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
-    Int activeNumILRRefIdxTmp = 0;
-#endif
     if (m_layerId > 0)
     {
+      Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+      Int activeNumILRRefIdxTmp = 0;
+
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
@@ -768,7 +767,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
-#if ILR_RESTR && ILR_RESTR_FIX
         // Apply temporal layer restriction to inter-layer prediction
         Int maxTidIlRefPicsPlus1 = m_pcEncTop->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
         if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
@@ -779,7 +777,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           continue; // ILP is not valid due to temporal layer restriction
         }
-#endif
 
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
 
@@ -808,7 +805,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       }
 
-#if ILR_RESTR && ILR_RESTR_FIX
       // Update the list of active inter-layer pictures
       for ( Int i = 0; i < activeNumILRRefIdxTmp; i++)
       {
@@ -820,7 +816,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // No valid inter-layer pictures -> disable inter-layer prediction
         pcSlice->setInterLayerPredEnabledFlag(false);
       }
-#endif
       
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
