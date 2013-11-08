@@ -1009,15 +1009,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   vps->setNumScalabilityTypes(numScalabilityTypes);
 
-#if VPS_SPLIT_FLAG
   for(j = 0; j < numScalabilityTypes - vps->getSplittingFlag(); j++)
-#else
-  for(j = 0; j < numScalabilityTypes; j++)
-#endif
   {
     READ_CODE( 3, uiCode, "dimension_id_len_minus1[j]" ); vps->setDimensionIdLen(j, uiCode + 1);
   }
-#if VPS_SPLIT_FLAG
+
   if(vps->getSplittingFlag())
   {
     UInt numBits = 0;
@@ -1029,17 +1025,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setDimensionIdLen(numScalabilityTypes-1, 6 - numBits);
     numBits = 6;
   }
-#else
-  if(vps->getSplittingFlag())
-  {
-    UInt numBits = 0;
-    for(j = 0; j < numScalabilityTypes; j++)
-    {
-      numBits += vps->getDimensionIdLen(j);
-    }
-    assert( numBits <= 6 );
-  }
-#endif
 
   READ_FLAG( uiCode, "vps_nuh_layer_id_present_flag" ); vps->setNuhLayerIdPresentFlag(uiCode ? true : false);
   vps->setLayerIdInNuh(0, 0);
@@ -1057,13 +1042,13 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
 
-#if VPS_SPLIT_FLAG
-    if(!vps->getSplittingFlag())
-#endif
-    for(j = 0; j < numScalabilityTypes; j++)
+    if( !vps->getSplittingFlag() )
     {
-      READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
-      assert( uiCode <= vps->getMaxLayerId() );
+      for(j = 0; j < numScalabilityTypes; j++)
+      {
+        READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
+        assert( uiCode <= vps->getMaxLayerId() );
+      }
     }
   }
 #endif
