@@ -391,7 +391,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
@@ -402,7 +401,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
-#endif
 #if RC_SHVC_HARMONIZATION
   Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
   Int*    cfg_RCTargetBitRate      [MAX_LAYERS];
@@ -454,7 +452,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
-#if SCALED_REF_LAYER_OFFSETS
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
@@ -463,7 +460,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
     }
-#endif
 #if RC_SHVC_HARMONIZATION
     cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
     cfg_RCTargetBitRate[layer]       = &m_acLayerCfg[layer].m_RCTargetBitrate;
@@ -486,12 +482,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   string  cfg_tileSets;
 #endif
-#else
+#else //SVC_EXTENSION
   string cfg_InputFile;
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
-#endif
+#endif //SVC_EXTENSION
   string cfg_ColumnWidth;
   string cfg_RowHeight;
   string cfg_ScalingListFile;
@@ -545,7 +541,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",          m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",         m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-#if SCALED_REF_LAYER_OFFSETS
   ("NumScaledRefLayerOffsets%d",    cfg_numScaledRefLayerOffsets,     0, MAX_LAYERS,  "Number of scaled offset layer sets ")
   ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
@@ -555,7 +550,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
-#endif
 #if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
@@ -571,7 +565,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
 #endif
-#else
+#else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -592,7 +586,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfTop",               m_confTop,             0, "Top offset for window conformance mode 3")
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
-#endif
+#endif //SVC_EXTENSION
 
   //Field coding parameters
   ("FieldCoding", m_isField, false, "Signals if it's a field based coding")
@@ -977,12 +971,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_SYNTAX
   m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
 #endif
-#else
+#else //SVC_EXTENSION
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
-#endif  
+#endif //SVC_EXTENSION 
 
   Char* pColumnWidth = cfg_ColumnWidth.empty() ? NULL: strdup(cfg_ColumnWidth.c_str());
   Char* pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
@@ -1041,7 +1035,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_pRowHeight = NULL;
   }
-#if SCALED_REF_LAYER_OFFSETS
+#if SVC_EXTENSION
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
@@ -1111,7 +1105,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
   }
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
@@ -1241,6 +1234,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #endif
+#endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
 #if REPN_FORMAT_IN_VPS_123
@@ -2515,7 +2509,7 @@ Bool confirmPara(Bool bflag, const Char* message)
   return true;
 }
 
-#if SCALED_REF_LAYER_OFFSETS
+#if SVC_EXTENSION
 Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
@@ -2548,7 +2542,6 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     *arr = NULL;
   }
 }
-#endif
 
 #if FINAL_RPL_CHANGE_N0082
 Bool  TAppEncCfg::xconfirmExtraGOP (GOPEntry * ge)
@@ -2764,4 +2757,5 @@ Bool  TAppEncCfg::xconfirmExtraGOP (GOPEntry * ge)
   return errorGOP; //update
 }
 #endif
+#endif //SVC_EXTENSION
 //! \}

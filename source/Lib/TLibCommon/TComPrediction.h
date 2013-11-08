@@ -119,13 +119,9 @@ public:
 
 #if SVC_EXTENSION
 #if SVC_UPSAMPLING
-#if SCALED_REF_LAYER_OFFSETS
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
-#else
-  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
 #endif
-#endif
-#endif
+#endif //SVC_EXTENSION
 };
 
 //! \}

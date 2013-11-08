@@ -1131,6 +1131,7 @@ private:
   static const Int   m_winUnitY[MAX_CHROMA_FORMAT_IDC+1];
   TComPTL     m_pcPTL;
 
+#if SVC_EXTENSION
 #if M0463_VUI_EXT_ILP_REF
   Bool        m_interViewMvVertConstraintFlag;
   Int         m_numIlpRestrictedRefLayers        ;
@@ -1139,7 +1140,6 @@ private:
   Int         m_minHorizontalCtuOffsetPlus1 [MAX_LAYERS];
 #endif
 
-#if SVC_EXTENSION
   UInt m_layerId;
 
 #if IL_SL_SIGNALLING_N0371
@@ -1149,19 +1149,17 @@ private:
   UInt        m_scalingListRefLayerId;
 #endif
 
-#endif
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
   Bool m_bMFMEnabledFlag;
 #endif
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   UInt        m_numScaledRefLayerOffsets;
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool m_updateRepFormatFlag;
 #endif
+#endif //SVC_EXTENSION
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1322,22 +1320,20 @@ public:
 #endif
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
-#endif
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
   Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
   Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
 #endif
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
 #endif
+#endif //SVC_EXTENSION
 };
 
 /// Reference Picture Lists class

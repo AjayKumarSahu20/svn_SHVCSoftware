@@ -37,13 +37,11 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 {
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
-#if SCALED_REF_LAYER_OFFSETS
   m_numScaledRefLayerOffsets = 0;
   ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
   ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
-#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()
@@ -331,7 +329,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   return check_failed;
 }
 
-#endif
+#endif //SVC_EXTENSION
 
 
 //! \}

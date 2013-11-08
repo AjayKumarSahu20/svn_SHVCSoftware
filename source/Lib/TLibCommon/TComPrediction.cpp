@@ -764,16 +764,9 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
 }
 
 #if SVC_UPSAMPLING
-#if SCALED_REF_LAYER_OFFSETS
 Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
 {
   m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
 }
-#else
-Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic)
-{
-  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic);
-}
-#endif
 #endif
 //! \}
