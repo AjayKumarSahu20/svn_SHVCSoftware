@@ -71,6 +71,7 @@ public:
   Void  parseQtCbf          ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth, UInt uiDepth );
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
+#if SPS_EXTENSION
 #if VPS_EXTNS
   Void  parseVPSExtension   ( TComVPS* pcVPS );
 #endif
@@ -81,14 +82,11 @@ public:
 #if REPN_FORMAT_IN_VPS
   Void  parseRepFormat      ( RepFormat *repFormat );
 #endif
-#if SPS_SUB_LAYER_INFO
   Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager );
-#else
+  Void  parseSPSExtension    ( TComSPS* pcSPS );
+#else //SVC_EXTENSION
   Void  parseSPS            ( TComSPS* pcSPS );
-#endif
-#if SPS_EXTENSION
-  Void parseSPSExtension    ( TComSPS* pcSPS );
-#endif
+#endif //SVC_EXTENSION
   Void  parsePPS            ( TComPPS* pcPPS);
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
   Void  parseSEI            ( SEIMessages& );

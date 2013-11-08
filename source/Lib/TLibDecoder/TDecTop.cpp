@@ -1377,26 +1377,18 @@ Void TDecTop::xDecodeSPS()
   TComSPS* sps = new TComSPS();
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
-#endif
-
-#if SPS_SUB_LAYER_INFO
   m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder[0] );
-#else
-  m_cEntropyDecoder.decodeSPS( sps );
-#endif
-#if SVC_EXTENSION
   m_parameterSetManagerDecoder[m_layerId].storePrefetchedSPS(sps);
-#else
-  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
-#endif
-#if SVC_EXTENSION
 #if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
   if(m_numLayer>0)
   {
     xInitILRP(sps);
   }
 #endif
-#endif
+#else //SVC_EXTENSION
+  m_cEntropyDecoder.decodeSPS( sps );
+  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
+#endif //SVC_EXTENSION
 }
 
 Void TDecTop::xDecodePPS()

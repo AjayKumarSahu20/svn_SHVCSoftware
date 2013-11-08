@@ -447,13 +447,13 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   xTraceSPSHeader (pcSPS);
 #endif
   WRITE_CODE( pcSPS->getVPSId (),          4,       "sps_video_parameter_set_id" );
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
   if(pcSPS->getLayerId() == 0)
   {
 #endif
     WRITE_CODE( pcSPS->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1" );
     WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0,                             "sps_temporal_id_nesting_flag" );
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
   }
 #endif
 #ifdef SPS_PTL_FIX
