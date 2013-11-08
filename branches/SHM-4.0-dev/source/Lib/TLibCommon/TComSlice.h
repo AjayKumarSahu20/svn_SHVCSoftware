@@ -483,14 +483,14 @@ private:
   TComHRD*    m_hrdParameters;
   UInt*       m_hrdOpSetIdx;
   Bool*       m_cprmsPresentFlag;
-#if VPS_RENAME
-  UInt        m_maxLayerId;
-  UInt        m_numLayerSets;
-  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#else
+#if !SVC_EXTENSION
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 #endif
+  TComPTL     m_pcPTL;
+  TimingInfo  m_timingInfo;
+
+#if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -501,8 +501,11 @@ private:
 #if VPS_EXTN_OFFSET
   UInt        m_extensionOffset;
 #endif
-  TComPTL     m_pcPTL;
-  TimingInfo  m_timingInfo;
+#if VPS_RENAME
+  UInt        m_maxLayerId;
+  UInt        m_numLayerSets;
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 
   // ------------------------------------------
   // Variables related to VPS extensions
@@ -545,13 +548,11 @@ private:
   UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
 #endif
-#if VPS_PROFILE_OUTPUT_LAYERS
   UInt       m_numProfileTierLevel;
   Bool       m_moreOutputLayerSetsThanDefaultFlag;
   Int        m_numAddOutputLayerSets;
   Bool       m_defaultOneTargetOutputLayerFlag;
   Int        m_profileLevelTierIdx[64];     
-#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
 #endif
@@ -596,6 +597,7 @@ private:
   Int         m_viewIdLenMinus1;
   Int         m_viewIdVal                [MAX_LAYERS];
 #endif
+#endif //SVC_EXTENSION
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -636,14 +638,8 @@ public:
 
   UInt    getNumHrdParameters()                                 { return m_numHrdParameters; }
   Void    setNumHrdParameters(UInt v)                           { m_numHrdParameters = v;    }
-
-#if VPS_RENAME
-  UInt    getMaxLayerId()                                       { return m_maxLayerId; }
-  Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
-
-  UInt    getNumLayerSets()                                     { return m_numLayerSets; }
-  Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
-#else
+  
+#if !SVC_EXTENSION
   UInt    getMaxNuhReservedZeroLayerId()                        { return m_maxNuhReservedZeroLayerId; }
   Void    setMaxNuhReservedZeroLayerId(UInt v)                  { m_maxNuhReservedZeroLayerId = v;    }
 
@@ -652,6 +648,11 @@ public:
 #endif
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
+
+  TComPTL* getPTL() { return &m_pcPTL; }
+  TimingInfo* getTimingInfo() { return &m_timingInfo; }
+
+#if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x   ; }
@@ -668,8 +669,13 @@ public:
   Void    setScalingListLayerDependency  ( UInt layerId, UInt refLayerId, Bool val  ) { m_scalingListLayerDependency[layerId][refLayerId] = val;  }
 #endif
 
-  TComPTL* getPTL() { return &m_pcPTL; }
-  TimingInfo* getTimingInfo() { return &m_timingInfo; }
+#if VPS_RENAME
+  UInt    getMaxLayerId()                                       { return m_maxLayerId; }
+  Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
+
+  UInt    getNumLayerSets()                                     { return m_numLayerSets; }
+  Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
   Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
@@ -742,7 +748,6 @@ public:
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
 #endif
 #endif
-#if VPS_PROFILE_OUTPUT_LAYERS
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
 
@@ -757,7 +762,6 @@ public:
 
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
-#endif
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
@@ -846,6 +850,7 @@ public:
   Int     getExtensionOffset()                 { return m_extensionOffset;   }
   Void    setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
 #endif
+#endif //SVC_EXTENSION
 };
 
 class Window
