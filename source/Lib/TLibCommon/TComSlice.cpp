@@ -117,6 +117,9 @@ TComSlice::TComSlice()
 , m_numEntryPointOffsets          ( 0 )
 , m_temporalLayerNonReferenceFlag ( false )
 , m_enableTMVPFlag                ( true )
+#if REF_IDX_MFM
+, m_bMFMEnabledFlag               ( false )
+#endif
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
 
@@ -630,7 +633,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
 #if SVC_EXTENSION
 #if RPL_INIT_N0316_N0082
     if( m_layerId > 0 )
-    {
+    {      
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
 #else
@@ -1132,6 +1135,7 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   // access channel
 #if SVC_EXTENSION
   m_pcVPS                = pSrc->m_pcVPS;
+  m_layerId              = pSrc->m_layerId;
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;

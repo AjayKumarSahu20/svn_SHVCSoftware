@@ -683,6 +683,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setTLayerInfo(nalu.m_temporalId);
 
 #if SVC_EXTENSION
+  m_apcSlicePilot->setSliceIdx( m_uiSliceIdx ); // it should be removed if HM will reflect it in above
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
@@ -1112,12 +1113,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     pcSlice->setRefPicList( m_cListPic );
 #endif
 
-#if SVC_EXTENSION   
-    if(m_layerId > 0)
-    {
-      for( i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+#if SVC_EXTENSION
+    // Create upsampling reference layer pictures for all possible dependent layers and do it only once for the first slice. 
+    // Other slices might choose which reference pictures to be used for inter-layer prediction
+    if( m_layerId > 0 && m_uiSliceIdx == 0 )
+    {      
+      for( i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {
-        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
+        UInt refLayerIdc = i;
 #if AVC_BASE
         if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder[0].getActiveVPS()->getAvcBaseLayerFlag() )
         {
@@ -1199,6 +1202,49 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
+      for( i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
+#if AVC_BASE
+        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder[0].getActiveVPS()->getAvcBaseLayerFlag() )
+        {
+          pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
+#if AVC_SYNTAX
+          TComPic* pBLPic = pcSlice->getBaseColPic(refLayerIdc);
+          if( pcSlice->getPOC() == 0 )
+          {
+            // initialize partition order.
+            UInt* piTmp = &g_auiZscanToRaster[0];
+            initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
+            initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
+          }      
+          pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
+          pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
+#endif
+        }
+        else
+        {
+#if VPS_EXTN_DIRECT_REF_LAYERS
+          TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
+#else
+          TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
+#endif
+          TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
+          pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
+        }
+#else
+#if VPS_EXTN_DIRECT_REF_LAYERS
+        TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
+#else
+        TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
+#endif
+        TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
+        pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
+#endif
+
+        pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
+      }
+
       setILRPic(pcPic);
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING

@@ -1606,6 +1606,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pcSlice->setSliceCurStartCUAddr         ( startCUAddrSlice      );
           pcSlice->setSliceSegmentCurStartCUAddr  ( startCUAddrSlice      );
           pcSlice->setSliceBits(0);
+#if SVC_EXTENSION
+          // copy reference list modification info from the first slice, assuming that this information is the same across all slices in the picture
+          memcpy( pcSlice->getRefPicListModification(), pcPic->getSlice(0)->getRefPicListModification(), sizeof(TComRefPicListModification) );
+#endif
           uiNumSlices ++;
         }
       }
