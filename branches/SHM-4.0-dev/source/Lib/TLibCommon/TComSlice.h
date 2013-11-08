@@ -923,10 +923,6 @@ private:
   Int  m_log2MaxMvLengthVertical;
   TComHRD m_hrdParameters;
   TimingInfo m_timingInfo;
-#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
-  Bool m_tileBoundariesAlignedFlag;
-#endif
-
 
 public:
   TComVUI()
@@ -959,9 +955,6 @@ public:
     ,m_maxBitsPerMinCuDenom(1)
     ,m_log2MaxMvLengthHorizontal(15)
     ,m_log2MaxMvLengthVertical(15)
-#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
-    ,m_tileBoundariesAlignedFlag(true)
-#endif
   {}
 
   virtual ~TComVUI() {}
@@ -1057,10 +1050,6 @@ public:
 
   TComHRD* getHrdParameters                 ()             { return &m_hrdParameters; }
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
-#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
-  Bool getTileBoundariesAlignedFlag(  ) { return m_tileBoundariesAlignedFlag; } 
-  Void setTileBoundariesAlignedFlag( Bool flag ) { m_tileBoundariesAlignedFlag = flag; } 
-#endif
 };
 
 /// SPS class
