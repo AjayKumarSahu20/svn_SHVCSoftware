@@ -121,8 +121,6 @@
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< JCTVC-M0203: implementation of Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-#define ILR_RESTR                        1      ///< JCTVC-M0209: Inter-layer RPS and RPL
-#define ILR_RESTR_FIX                    1      ///< Fix encoder crash when temporal layers are used with scalable coding
 #define EARLY_REF_PIC_MARKING            1      ///< Decoded picture marking of sub-layer non-reference pictures
 #define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120: max_tid_ref_pics_plus1_present_flag
 #define N0120_MAX_TID_REF_CFG            1      ///< set max_tid_il_ref_pics_plus1 and max_tid_ref_present_flag in the config. file (configuration setting)
