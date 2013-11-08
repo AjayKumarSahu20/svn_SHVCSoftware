@@ -663,7 +663,6 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
   // Vertical MV component restriction is not used in SHVC CTC
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   if( pcSPS->getLayerId() > 0 )
   {
     WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
@@ -676,7 +675,6 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
       WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
     }
   }
-#endif
 #if M0463_VUI_EXT_ILP_REF
   ////   sps_extension_vui_parameters( )
   if( pcSPS->getVuiParameters()->getBitstreamRestrictionFlag() )

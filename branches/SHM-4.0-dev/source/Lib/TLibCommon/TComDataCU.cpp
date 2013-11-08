@@ -4007,15 +4007,10 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 #endif
 
-#if SCALED_REF_LAYER_OFFSETS
   Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
   Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
   Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
-#else
-  Int iBX = (uiPelX*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
-  Int iBY = (uiPelY*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
-#endif
 
 #if N0139_POSITION_ROUNDING_OFFSET
   if( iMotionMapping == 1 )
@@ -4025,12 +4020,8 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   }
 #endif
 
-#if SCALED_REF_LAYER_OFFSETS
   if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight() ||
        iBX < 0                                        || iBY < 0                                           )
-#else
-  if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight())
-#endif
   {
     return NULL;
   }

@@ -42,6 +42,7 @@ protected:
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int       *m_samplePredRefLayerIds;
@@ -83,27 +84,26 @@ protected:
 #if N0120_MAX_TID_REF_CFG
   Int       m_maxTidIlRefPicsPlus1;
 #endif 
-#if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
-#endif
+#endif //SVC_EXTENSION
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
-#if SCALED_REF_LAYER_OFFSETS
+#if SVC_EXTENSION
   Int       m_numScaledRefLayerOffsets  ;
   Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#endif  
 #if FINAL_RPL_CHANGE_N0082
   GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
 #endif
 #if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
 #endif
+#endif //SVC_EXTENSION
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -138,6 +138,7 @@ public:
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
@@ -182,6 +183,7 @@ public:
   UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
 #endif
+#endif //SVC_EXTENSION
 }; // END CLASS DEFINITION TAppEncLayerCfg
 
 //! \}

@@ -2166,19 +2166,17 @@ TComSPS::TComSPS()
 , m_useStrongIntraSmoothing   (false)
 , m_vuiParametersPresentFlag  (false)
 , m_vuiParameters             ()
+#if SVC_EXTENSION
 #if M0463_VUI_EXT_ILP_REF
 , m_interViewMvVertConstraintFlag (false)
 , m_numIlpRestrictedRefLayers ( 0 )
 #endif
-#if SVC_EXTENSION
-, m_layerId(0)
-#endif
-#if SCALED_REF_LAYER_OFFSETS
-, m_numScaledRefLayerOffsets  (0)
-#endif
+, m_layerId                   ( 0 )
+, m_numScaledRefLayerOffsets  ( 0 )
 #if REPN_FORMAT_IN_VPS
 , m_updateRepFormatFlag       (false)
 #endif
+#endif //SVC_EXTENSION
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )
   {

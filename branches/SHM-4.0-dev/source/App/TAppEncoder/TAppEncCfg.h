@@ -406,9 +406,7 @@ public:
 #if AVC_SYNTAX
   Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
-#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
 #endif

@@ -87,13 +87,11 @@ TEncTop::TEncTop()
 #if REF_IDX_MFM
   m_bMFMEnabledFlag = false;
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   m_numScaledRefLayerOffsets = 0;
-#endif
-#endif
 #if POC_RESET_FLAG
   m_pocAdjustmentValue     = 0;
 #endif
+#endif //SVC_EXTENSION
 }
 
 TEncTop::~TEncTop()
@@ -877,19 +875,17 @@ Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
   m_cSPS.setLayerId(m_layerId);
-#endif
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
   m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
 #endif
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
     m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
   }
-#endif
+#endif //SVC_EXTENSION
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
   profileTierLevel.setTierFlag(m_levelTier);

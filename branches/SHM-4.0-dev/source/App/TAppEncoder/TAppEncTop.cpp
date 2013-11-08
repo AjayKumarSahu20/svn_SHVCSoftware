@@ -560,7 +560,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
     m_acTEncTop[layer].setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
     m_acTEncTop[layer].setElRapSliceTypeB(layer == 0? 0 : m_elRapSliceBEnabled);
-#if SCALED_REF_LAYER_OFFSETS
     if( layer > 0 )
     {
       m_acTEncTop[layer].setNumScaledRefLayerOffsets( m_acLayerCfg[layer].m_numScaledRefLayerOffsets );
@@ -570,13 +569,12 @@ Void TAppEncTop::xInitLibCfg()
                                                   2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);  
       }
     }
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     m_acTEncTop[layer].setAdaptiveResolutionChange( m_adaptiveResolutionChange );
 #endif
   }
 }
-#else
+#else //SVC_EXTENSION
 Void TAppEncTop::xInitLibCfg()
 {
   TComVPS vps;
@@ -850,7 +848,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
   m_cTEncTop.setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
 }
-#endif
+#endif //SVC_EXTENSION
 
 Void TAppEncTop::xCreateLib()
 {
@@ -877,7 +875,7 @@ Void TAppEncTop::xCreateLib()
 
     m_acTEncTop[layer].create();
   }
-#else
+#else //SVC_EXTENSION
   m_cTVideoIOYuvInputFile.open( m_pchInputFile,     false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC );  // read  mode
   m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1]);
 
@@ -886,7 +884,7 @@ Void TAppEncTop::xCreateLib()
 
   // Neo Decoder
   m_cTEncTop.create();
-#endif
+#endif //SVC_EXTENSION
 }
 
 Void TAppEncTop::xDestroyLib()
@@ -910,13 +908,13 @@ Void TAppEncTop::xDestroyLib()
 
     m_acTEncTop[layer].destroy();
   }
-#else
+#else //SVC_EXTENSION
   m_cTVideoIOYuvInputFile.close();
   m_cTVideoIOYuvReconFile.close();
 
   // Neo Decoder
   m_cTEncTop.destroy();
-#endif
+#endif //SVC_EXTENSION
 }
 
 Void TAppEncTop::xInitLib(Bool isFieldCoding)

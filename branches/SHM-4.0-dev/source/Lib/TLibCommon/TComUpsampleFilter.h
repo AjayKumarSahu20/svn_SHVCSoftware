@@ -42,11 +42,7 @@ public:
   TComUpsampleFilter(void);
   ~TComUpsampleFilter(void);
 
-#if SCALED_REF_LAYER_OFFSETS
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
-#else
- Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
-#endif
 };
 
 #endif //__TCOMUPSAMPLEFILTER__
