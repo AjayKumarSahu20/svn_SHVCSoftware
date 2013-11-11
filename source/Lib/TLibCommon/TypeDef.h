@@ -44,6 +44,7 @@
 
 #define RANDOM_ACCESS_SEI_FIX            1
 #if SVC_EXTENSION
+#define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
 #define VPS_NUH_LAYER_ID                 1      ///< JCTVC-N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 #define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.

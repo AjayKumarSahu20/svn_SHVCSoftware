@@ -1252,6 +1252,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       pcSlice->setRefPicList( m_cListPic, false, NULL);
     }
 #endif
+#if MFM_ENCCONSTRAINT
+    if( pcSlice->getMFMEnabledFlag() )
+    {
+      Int nRefLayerID = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() )->getLayerId();
+      if( nRefLayerID != pcSlice->getLayerId() )
+      {
+        TComPic * pColBasePic = pcSlice->getBaseColPic( nRefLayerID );
+        assert( pColBasePic->checkSameRefInfo() == true );
+      }
+    }
+#endif
 #endif
     
 #if N0147_IRAP_ALIGN_FLAG
