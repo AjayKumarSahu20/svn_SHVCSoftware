@@ -1714,7 +1714,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     rpcSlice->setActiveNumILRRefIdx(0);
 #if ILP_SSH_SIG
+#if ILP_SSH_SIG_FIX
+    if((sps->getLayerId() > 0) && !(rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (rpcSlice->getNumILRRefIdx() > 0) )
+#else
     if((sps->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
+#endif
 #else
     if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
 #endif
@@ -1767,7 +1771,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
     }
 #if ILP_SSH_SIG
+#if ILP_SSH_SIG_FIX
+    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == true )
+#else
     else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == false )
+#endif 
     {
       rpcSlice->setInterLayerPredEnabledFlag(true);
       rpcSlice->setActiveNumILRRefIdx(rpcSlice->getNumILRRefIdx());
