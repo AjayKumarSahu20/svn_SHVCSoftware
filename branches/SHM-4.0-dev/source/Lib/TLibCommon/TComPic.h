@@ -128,6 +128,9 @@ public:
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
 #endif
+#if MFM_ENCCONSTRAINT
+  Bool          checkSameRefInfo();
+#endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
   Void          setUsedByCurr( Bool bUsed ) { m_bUsedByCurr = bUsed; }

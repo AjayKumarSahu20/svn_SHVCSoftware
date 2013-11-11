@@ -800,5 +800,46 @@ Void TComPic::wrireBLSyntax( fstream* filestream, UInt numBytes )
 }
 #endif
 
+#if MFM_ENCCONSTRAINT
+Bool TComPic::checkSameRefInfo()
+{
+  Bool bSameRefInfo = true;
+  TComSlice * pSlice0 = getSlice( 0 );
+  for( UInt uSliceID = getNumAllocatedSlice() - 1 ; bSameRefInfo && uSliceID > 0 ; uSliceID-- )
+  {
+    TComSlice * pSliceN = getSlice( uSliceID );
+    if( pSlice0->getSliceType() != pSliceN->getSliceType() )
+    {
+      bSameRefInfo = false;
+    }
+    else if( pSlice0->getSliceType() != I_SLICE )
+    {
+      Int nListNum = pSlice0->getSliceType() == B_SLICE ? 2 : 1;
+      for( Int nList = 0 ; nList < nListNum ; nList++ )
+      {
+        RefPicList eRefList = ( RefPicList )nList;
+        if( pSlice0->getNumRefIdx( eRefList ) == pSliceN->getNumRefIdx( eRefList ) )
+        {
+          for( Int refIdx = pSlice0->getNumRefIdx( eRefList ) - 1 ; refIdx >= 0 ; refIdx-- )
+          {
+            if( pSlice0->getRefPic( eRefList , refIdx ) != pSliceN->getRefPic( eRefList , refIdx ) )
+            {
+              bSameRefInfo = false;
+              break;
+            }
+          }
+        }
+        else
+        {
+          bSameRefInfo = false;
+          break;
+        }
+      }
+    }
+  }
+
+  return( bSameRefInfo );  
+}
+#endif
 
 //! \}
