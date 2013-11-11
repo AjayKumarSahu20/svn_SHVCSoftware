@@ -1365,7 +1365,11 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
 #if ILP_SSH_SIG
+#if ILP_SSH_SIG_FIX
+    if((pcSlice->getSPS()->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
+#else
     if((pcSlice->getSPS()->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
+#endif
 #else
     if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
 #endif

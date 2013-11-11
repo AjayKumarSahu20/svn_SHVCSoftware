@@ -1018,7 +1018,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif 
 #if ILP_SSH_SIG
+#if ILP_SSH_SIG_FIX
+    vps->setIlpSshSignalingEnabledFlag(false);
+#else
     vps->setIlpSshSignalingEnabledFlag(true);
+#endif
 #endif
 #if VPS_EXTN_PROFILE_INFO
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
