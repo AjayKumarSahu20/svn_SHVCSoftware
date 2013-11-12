@@ -2057,9 +2057,11 @@ public:
   UInt getChromaFormatIdc();
   UInt getBitDepthY();
   UInt getBitDepthC();
-  Int getQpBDOffsetY();
-  Int getQpBDOffsetC();
+  Int  getQpBDOffsetY();
+  Int  getQpBDOffsetC();
 #endif
+
+  Void setILRPic(TComPic **pcIlpPic);
 
 #endif //SVC_EXTENSION
 protected:

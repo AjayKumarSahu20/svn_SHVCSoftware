@@ -199,29 +199,6 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     }
   }
 }
-
-
-
-Void TDecTop::setILRPic(TComPic *pcPic)
-{
-  for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
-  {
-    Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
-
-    if(m_cIlpPic[refLayerIdc])
-    {
-      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(refLayerIdc), m_cIlpPic[refLayerIdc]->getPicYuvRec());
-      m_cIlpPic[refLayerIdc]->getSlice(0)->setPOC(pcPic->getPOC());
-      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
-      for (Int j=0; j<m_cIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)  // set reference CU layerId
-      {
-        m_cIlpPic[refLayerIdc]->getPicSym()->getCU(j)->setLayerId(m_cIlpPic[refLayerIdc]->getLayerId());
-      }
-    }
-  }
-}
 #endif
 
 Void TDecTop::deletePicBuffer ( )
@@ -309,16 +286,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
           assert( pcSlice->getVPS()->getScalabilityMask(1) == true );
 #endif
         }
-#if MAX_ONE_RESAMPLING_DIRECT_LAYERS
-#if SCALABILITY_MASK_E0104
-        if(pcSlice->getVPS()->getScalabilityMask(2))
-#else
-        if(pcSlice->getVPS()->getScalabilityMask(1))
-#endif
-        {
-          pcSlice->setPic(rpcPic);
-        }
-#endif
       }
     }
 #endif
@@ -1098,6 +1065,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_EXTENSION
   pcPic->setLayerId(nalu.m_layerId);
   pcSlice->setLayerId(nalu.m_layerId);
+  pcSlice->setPic(pcPic);
 #endif
 
   if (bNextSlice)
@@ -1231,7 +1199,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
       }
 
-      setILRPic(pcPic);
+      pcSlice->setILRPic( m_cIlpPic );
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
@@ -1255,10 +1223,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if MFM_ENCCONSTRAINT
     if( pcSlice->getMFMEnabledFlag() )
     {
-      Int nRefLayerID = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() )->getLayerId();
-      if( nRefLayerID != pcSlice->getLayerId() )
-      {
-        TComPic * pColBasePic = pcSlice->getBaseColPic( nRefLayerID );
+      Int refLayerId = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() )->getLayerId();
+      if( refLayerId != pcSlice->getLayerId() )
+      {        
+        TComPic * pColBasePic = pcSlice->getBaseColPic( refLayerId );
         assert( pColBasePic->checkSameRefInfo() == true );
       }
     }

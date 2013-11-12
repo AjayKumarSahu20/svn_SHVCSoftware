@@ -1147,7 +1147,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
-      m_pcEncTop->setILRPic(pcPic);
+      pcSlice->setILRPic( m_pcEncTop->getIlpList() );
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
