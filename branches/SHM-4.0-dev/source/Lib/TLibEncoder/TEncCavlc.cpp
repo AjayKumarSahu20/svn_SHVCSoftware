@@ -699,6 +699,9 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 #endif
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
+#if VPS_EXTN_OFFSET_CALC
+  UInt numBytesInVps = this->m_pcBitIf->getNumberOfWrittenBits();
+#endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
 #if VPS_RENAME
@@ -802,6 +805,11 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     {
       WRITE_FLAG(1,                  "vps_extension_alignment_bit_equal_to_one");
     }
+#if VPS_EXTN_OFFSET_CALC
+    Int vpsExntOffsetValueInBits = this->m_pcBitIf->getNumberOfWrittenBits() - numBytesInVps + 16; // 2 bytes for NUH
+    assert( vpsExntOffsetValueInBits % 8 == 0 );
+    pcVPS->setExtensionOffset( vpsExntOffsetValueInBits >> 3 );
+#endif
     codeVPSExtension(pcVPS);
     WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
   }
