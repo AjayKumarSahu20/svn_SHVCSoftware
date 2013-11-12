@@ -1225,8 +1225,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       Int refLayerId = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() )->getLayerId();
       if( refLayerId != pcSlice->getLayerId() )
-      {        
-        TComPic * pColBasePic = pcSlice->getBaseColPic( refLayerId );
+      {
+        TComPic* pColBasePic = pcSlice->getBaseColPic( *m_ppcTDecTop[refLayerId]->getListPic() );
         assert( pColBasePic->checkSameRefInfo() == true );
       }
     }
