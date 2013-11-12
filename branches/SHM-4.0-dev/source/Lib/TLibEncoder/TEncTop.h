@@ -218,7 +218,6 @@ public:
   /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
   TComPic** getIlpList() { return m_cIlpPic; }
-  Void      setILRPic(TComPic *pcPic);
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    

@@ -1538,7 +1538,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 }
 #endif
 
-#if SVC_EXTENSION
 #if !REPN_FORMAT_IN_VPS
 Void TEncTop::xInitILRP()
 {
@@ -1626,26 +1625,5 @@ Void TEncTop::xInitILRP()
   }
 }
 #endif
-Void TEncTop::setILRPic(TComPic *pcPic)
-{
-  for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
-  {
-    Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
-
-    if(m_cIlpPic[refLayerIdc])
-    {
-      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(refLayerIdc), m_cIlpPic[refLayerIdc]->getPicYuvRec());
-      m_cIlpPic[refLayerIdc]->getSlice(0)->setPOC(pcPic->getPOC());
-      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
-      for (Int j=0; j<m_cIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)    // set reference CU layerId
-      {
-        m_cIlpPic[refLayerIdc]->getPicSym()->getCU(j)->setLayerId(m_cIlpPic[refLayerIdc]->getLayerId());
-      }
-    }
-  }
-}
-#endif
-#endif
+#endif //SVC_EXTENSION
 //! \}

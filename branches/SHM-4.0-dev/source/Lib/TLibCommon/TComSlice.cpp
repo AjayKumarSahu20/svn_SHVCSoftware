@@ -3048,7 +3048,6 @@ Void TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
   setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
 #endif
 }
-#endif 
 
 #if REF_IDX_MFM
 Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
@@ -3094,5 +3093,28 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
   return;
 }
 #endif
+
+Void TComSlice::setILRPic(TComPic **pcIlpPic)
+{
+  for( Int i = 0; i < m_activeNumILRRefIdx; i++ )
+  {
+    Int refLayerIdc = m_interLayerPredLayerIdc[i];
+
+    if( pcIlpPic[refLayerIdc] )
+    {
+      pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );
+      pcIlpPic[refLayerIdc]->getSlice(0)->setPOC( m_iPOC );
+      pcIlpPic[refLayerIdc]->setLayerId( m_layerId ); //set reference layerId
+      pcIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension( false );
+      pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
+      for (Int j=0; j<pcIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)    // set reference CU layerId
+      {
+        pcIlpPic[refLayerIdc]->getPicSym()->getCU(j)->setLayerId( pcIlpPic[refLayerIdc]->getLayerId() );
+      }
+    }
+  }
+}
+
+#endif //SVC_EXTENSION
 
 //! \}
