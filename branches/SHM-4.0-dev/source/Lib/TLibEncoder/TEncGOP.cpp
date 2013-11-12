@@ -1181,11 +1181,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         Bool found         = false;
         UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
         UInt ColRefIdx     = pcSlice->getColRefIdx();
+
         for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
         { 
           if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
 #if MFM_ENCCONSTRAINT
-            && pcSlice->getBaseColPic( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId() )->checkSameRefInfo() == true 
+            && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
             ) 
           { 
@@ -1202,7 +1203,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           { 
             if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
 #if MFM_ENCCONSTRAINT
-              && pcSlice->getBaseColPic( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId() )->checkSameRefInfo() == true 
+              && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
               ) 
             { 
