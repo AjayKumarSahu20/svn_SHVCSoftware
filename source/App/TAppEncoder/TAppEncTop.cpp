@@ -1132,9 +1132,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif
+#if !VPS_EXTN_OFFSET_CALC
 #if VPS_EXTN_OFFSET
   // to be updated according to the current semantics
   vps->setExtensionOffset( 0xffff );
+#endif
 #endif
 #else //SVC_EXTENSION
   m_cTEncTop.init(isFieldCoding);

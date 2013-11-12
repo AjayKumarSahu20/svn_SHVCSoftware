@@ -91,6 +91,7 @@
 #endif
 
 #define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element
+#define VPS_EXTN_OFFSET_CALC             1      ///< Calculation of VPS extension offset
 #define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
