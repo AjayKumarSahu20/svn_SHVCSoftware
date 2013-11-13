@@ -380,6 +380,9 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
+#if O0215_PHASE_ALIGNMENT
+  bool m_phaseAlignFlag;
+#endif
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

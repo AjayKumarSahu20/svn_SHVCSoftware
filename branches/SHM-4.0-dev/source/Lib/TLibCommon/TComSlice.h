@@ -597,6 +597,10 @@ private:
   Int         m_viewIdLenMinus1;
   Int         m_viewIdVal                [MAX_LAYERS];
 #endif
+
+#if O0215_PHASE_ALIGNMENT
+  Bool       m_phaseAlignFlag;
+#endif
 #endif //SVC_EXTENSION
 public:
   TComVPS();
@@ -849,6 +853,10 @@ public:
 #if VPS_EXTN_OFFSET
   Int     getExtensionOffset()                 { return m_extensionOffset;   }
   Void    setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
+#endif
+#if O0215_PHASE_ALIGNMENT
+  Bool   getPhaseAlignFlag()                             { return m_phaseAlignFlag; }
+  Void   setPhaseAlignFlag(Bool x)                       { m_phaseAlignFlag = x;    }
 #endif
 #endif //SVC_EXTENSION
 };

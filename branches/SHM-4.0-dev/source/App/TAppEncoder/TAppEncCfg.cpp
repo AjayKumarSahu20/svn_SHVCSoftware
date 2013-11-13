@@ -508,6 +508,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#if O0215_PHASE_ALIGNMENT
+  ("PhaseAlignment",          m_phaseAlignFlag, false, "indicate the sample location alignment between layers (0: zero position aligned, 1: central position aligned)")
+#endif
 #if REPN_FORMAT_IN_VPS
   ("RepFormatIdx%d",          cfg_repFormatIdx, -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
 #endif
@@ -593,7 +596,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
-  
   // Profile and level
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
@@ -2398,6 +2400,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("GOP size                     : %d\n", m_iGOPSize );
   printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
+#if O0215_PHASE_ALIGNMENT
+  printf("cross-layer sample alignment : %d\n", m_phaseAlignFlag);
+#endif
 #if RATE_CONTROL_LAMBDA_DOMAIN
 #if !RC_SHVC_HARMONIZATION
   printf("RateControl                  : %d\n", m_RCEnableRateControl );

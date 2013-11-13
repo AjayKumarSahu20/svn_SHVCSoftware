@@ -96,7 +96,11 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 {
 }
 
+#if O0215_PHASE_ALIGNMENT
+Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+#else
 Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
+#endif
 {
   assert ( NTAPS_US_LUMA == 8 );
   assert ( NTAPS_US_CHROMA == 4 );
@@ -199,8 +203,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int   shiftX = 16;
     Int   shiftY = 16;
 
+#if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
+    Int   phaseX = 2*phaseAlignFlag; 
+    Int   phaseY = 2*phaseAlignFlag;  
+#else
     Int   phaseX = 0;
     Int   phaseY = 0;
+#endif
 
 #if ROUNDING_OFFSET
     Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
@@ -330,6 +339,21 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     shiftX = 16;
     shiftY = 16;
 
+#if O0215_PHASE_ALIGNMENT  
+    Int phaseXC = 0; 
+    Int phaseYC = 1; 
+
+#if ROUNDING_OFFSET
+    addX       = ( ( (phaseXC+phaseAlignFlag) * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( (phaseYC+phaseAlignFlag) * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
+#else
+    addX       = ( ( ( widthBL * (phaseXC+phaseAlignFlag) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( ( heightBL * (phaseYC+phaseAlignFlag) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+#endif
+
+    deltaX     = 4 * (phaseXC+phaseAlignFlag);
+    deltaY     = 4 * (phaseYC+phaseAlignFlag);
+#else
     phaseX = 0;
     phaseY = 1;
 
@@ -343,6 +367,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     deltaX     = 4 * phaseX;
     deltaY     = 4 * phaseY;
+#endif
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;

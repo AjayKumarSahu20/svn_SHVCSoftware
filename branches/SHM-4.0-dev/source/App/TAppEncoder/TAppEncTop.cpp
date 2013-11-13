@@ -1138,6 +1138,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setExtensionOffset( 0xffff );
 #endif
 #endif
+
+#if O0215_PHASE_ALIGNMENT
+  vps->setPhaseAlignFlag( m_phaseAlignFlag );
+#endif
+
 #else //SVC_EXTENSION
   m_cTEncTop.init(isFieldCoding);
 #endif //SVC_EXTENSION
