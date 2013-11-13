@@ -292,7 +292,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
           return (false);
 #if O0194_WEIGHTED_PREDICTION_CGS
         // make sure the reference frames other than ILR are not using weighted prediction
-        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1))){
+        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1)))
+        {
           continue;
         }
 #endif

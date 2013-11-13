@@ -64,12 +64,11 @@
 #define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
 #endif
 #define IL_SL_SIGNALLING_N0371           0      ///< JCTVC-N0371: inter-layer scaling list
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< JCTVC-M0464: VUI flag to indicate tile boundary alignment
 #define M0463_VUI_EXT_ILP_REF            0      ///< JCTVC-M0463: VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
-#define SCALED_REF_LAYER_OFFSETS         1      ///< JCTVC-M0309: Signal scaled reference layer offsets in SPS
 #define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
+#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #if ILP_SSH_SIG
@@ -85,11 +84,6 @@
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
-#define VPS_OUTPUT_LAYER_SET_IDX         1      ///< JCTVC-M0268: Signal output_layer_set_idx[i] as output_layer_set_idx_minus1[i]
-#define VPS_MOVE_DIR_DEPENDENCY_FLAG     1      ///< JCTVC-M0268: Move the syntax element direct_dependency_flag to follow the syntax element dimension_id
-#define VPS_PROFILE_OUTPUT_LAYERS        1      ///< JCTVC-M0268: Signal profile information and output layer information as in Sec. 3 of M0268v2
-#define SPS_SUB_LAYER_INFO               1      ///< JCTVC-M0268: Do not signal sps_max_sub_layers_minus1 and sps_temporal_id_nesting_flag for nuh_layer_id greater than 0
-#define VPS_SPLIT_FLAG                   1      ///< JCTVC-M0163: Do not signal dimension_id and the last dimension_id_len_minus1, when splitting_flag is equal to 1. 
 #define M0457_PREDICTION_INDICATIONS     1
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI
@@ -98,8 +92,6 @@
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
-#else
-#define M0464_TILE_BOUNDARY_ALIGNED_FLAG 0      ///< VUI flag to indicate tile boundary alignment
 #endif //VPS_VUI
 
 #endif
@@ -107,7 +99,6 @@
 #define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element
 #define VPS_EXTN_OFFSET_CALC             1      ///< Calculation of VPS extension offset
 #define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
-#define SH_DISCARDABLE_FLAG              1      ///< JCTVC-M0152: Use one reserved flag in the slice header for discardable flag
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
@@ -115,7 +106,6 @@
 #define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
 #define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214: support base layer input more than 8 bits
 #define ARBITRARY_SPATIAL_RATIO          1      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
-#define BUGFIX_RESAMPLE                  1      ///< JCTVC-N0055: resampling bug fix for positive left scalled offset
 
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
@@ -136,8 +126,6 @@
 #endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< JCTVC-M0203: implementation of Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
-#define ILR_RESTR                        1      ///< JCTVC-M0209: Inter-layer RPS and RPL
-#define ILR_RESTR_FIX                    1      ///< Fix encoder crash when temporal layers are used with scalable coding
 #define EARLY_REF_PIC_MARKING            1      ///< Decoded picture marking of sub-layer non-reference pictures
 #define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120: max_tid_ref_pics_plus1_present_flag
 #define N0120_MAX_TID_REF_CFG            1      ///< set max_tid_il_ref_pics_plus1 and max_tid_ref_present_flag in the config. file (configuration setting)

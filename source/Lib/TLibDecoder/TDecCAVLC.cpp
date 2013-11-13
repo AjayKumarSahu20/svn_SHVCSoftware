@@ -449,12 +449,6 @@ Void  TDecCavlc::parseVUI(TComVUI* pcVUI, TComSPS *pcSPS)
   if (pcVUI->getBitstreamRestrictionFlag())
   {
     READ_FLAG(   uiCode, "tiles_fixed_structure_flag");               pcVUI->setTilesFixedStructureFlag(uiCode);
-#if M0464_TILE_BOUNDARY_ALIGNED_FLAG
-    if ( pcSPS->getLayerId() > 0 )
-    {
-      READ_FLAG( uiCode, "tile_boundaries_aligned_flag" ); pcVUI->setTileBoundariesAlignedFlag( uiCode == 1 );
-    }
-#endif
     READ_FLAG(   uiCode, "motion_vectors_over_pic_boundaries_flag");  pcVUI->setMotionVectorsOverPicBoundariesFlag(uiCode);
     READ_FLAG(   uiCode, "restricted_ref_pic_lists_flag");            pcVUI->setRestrictedRefPicListsFlag(uiCode);
     READ_UVLC( uiCode, "min_spatial_segmentation_idc");            pcVUI->setMinSpatialSegmentationIdc(uiCode);
@@ -541,7 +535,7 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
   }
 }
 
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
 Void TDecCavlc::parseSPS(TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager)
 #else
 Void TDecCavlc::parseSPS(TComSPS* pcSPS)
@@ -553,7 +547,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   UInt  uiCode;
   READ_CODE( 4,  uiCode, "sps_video_parameter_set_id");          pcSPS->setVPSId        ( uiCode );
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
   if(pcSPS->getLayerId() == 0)
   {
 #endif
@@ -561,22 +555,22 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     assert(uiCode <= 6);
 
     READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );               pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
   }
   else
   {
     pcSPS->setMaxTLayers           ( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getMaxTLayers()          );
     pcSPS->setTemporalIdNestingFlag( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getTemporalNestingFlag() );
   }
-#endif
 #if IL_SL_SIGNALLING_N0371
   pcSPS->setVPS( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId()) );
   pcSPS->setSPS( pcSPS->getLayerId(), pcSPS );
 #endif
+#endif
   if ( pcSPS->getMaxTLayers() == 1 )
   {
     // sps_temporal_id_nesting_flag must be 1 when sps_max_sub_layers_minus1 is 0
-#if SPS_SUB_LAYER_INFO
+#if SVC_EXTENSION
     assert( pcSPS->getTemporalIdNestingFlag() == true );
 #else
     assert( uiCode == 1 );
@@ -840,7 +834,6 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   // Vertical MV component restriction is not used in SHVC CTC
   assert( uiCode == 0 );
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   if( pcSPS->getLayerId() > 0 )
   {
     Int iCode;
@@ -854,7 +847,6 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
       READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
     }
   }
-#endif
 #if M0463_VUI_EXT_ILP_REF
   ////   sps_extension_vui_parameters( )
   if( pcSPS->getVuiParameters()->getBitstreamRestrictionFlag() )
@@ -999,6 +991,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   return;
 }
 
+#if SVC_EXTENSION
 #if VPS_EXTNS
 Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {
@@ -1017,15 +1010,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   vps->setNumScalabilityTypes(numScalabilityTypes);
 
-#if VPS_SPLIT_FLAG
   for(j = 0; j < numScalabilityTypes - vps->getSplittingFlag(); j++)
-#else
-  for(j = 0; j < numScalabilityTypes; j++)
-#endif
   {
     READ_CODE( 3, uiCode, "dimension_id_len_minus1[j]" ); vps->setDimensionIdLen(j, uiCode + 1);
   }
-#if VPS_SPLIT_FLAG
+
   if(vps->getSplittingFlag())
   {
     UInt numBits = 0;
@@ -1037,17 +1026,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setDimensionIdLen(numScalabilityTypes-1, 6 - numBits);
     numBits = 6;
   }
-#else
-  if(vps->getSplittingFlag())
-  {
-    UInt numBits = 0;
-    for(j = 0; j < numScalabilityTypes; j++)
-    {
-      numBits += vps->getDimensionIdLen(j);
-    }
-    assert( numBits <= 6 );
-  }
-#endif
 
   READ_FLAG( uiCode, "vps_nuh_layer_id_present_flag" ); vps->setNuhLayerIdPresentFlag(uiCode ? true : false);
   vps->setLayerIdInNuh(0, 0);
@@ -1065,14 +1043,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
 
-#if VPS_SPLIT_FLAG
-    if(!vps->getSplittingFlag())
-#endif
+    if( !vps->getSplittingFlag() )
+    {
     for(j = 0; j < numScalabilityTypes; j++)
     {
       READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
       assert( uiCode <= vps->getMaxLayerId() );
     }
+  }
   }
 #endif
 #if VIEW_ID_RELATED_SIGNALING
@@ -1087,7 +1065,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( vps->getViewIdLenMinus1( ) + 1, uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
   }
 #endif
-#if VPS_MOVE_DIR_DEPENDENCY_FLAG
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
@@ -1106,7 +1083,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
   }
-#endif
 #endif
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
@@ -1143,25 +1119,17 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
-#if VPS_PROFILE_OUTPUT_LAYERS
   READ_CODE( 10, uiCode, "vps_number_layer_sets_minus1" );     assert( uiCode == (vps->getNumLayerSets() - 1) );
   READ_CODE(  6, uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
-#else
-  vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
-  for(Int idx = 1; idx <= vps->getNumLayerSets() - 1; idx++)
-#endif
   {
     READ_FLAG( uiCode, "vps_profile_present_flag[i]" ); vps->setProfilePresentFlag(idx, uiCode ? true : false);
     if( !vps->getProfilePresentFlag(idx) )
     {
-#if VPS_PROFILE_OUTPUT_LAYERS
       READ_CODE( 6, uiCode, "profile_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
-#else
-      READ_UVLC( uiCode, "vps_profile_layer_set_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
-#endif
       assert( vps->getProfileLayerSetRef(idx) < idx );
+
       // Copy profile information as indicated
       vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
     }
@@ -1169,7 +1137,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
-#if VPS_PROFILE_OUTPUT_LAYERS
   READ_FLAG( uiCode, "more_output_layer_sets_than_default_flag" ); vps->setMoreOutputLayerSetsThanDefaultFlag( uiCode ? true : false );
   Int numOutputLayerSets = 0;
   if(! vps->getMoreOutputLayerSetsThanDefaultFlag() )
@@ -1230,28 +1197,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
   }
-#else
-#if VPS_EXTN_OP_LAYER_SETS
-  // Target output layer signalling
-  READ_UVLC( uiCode,            "vps_num_output_layer_sets"); vps->setNumOutputLayerSets(uiCode);
-  for(i = 0; i < vps->getNumOutputLayerSets(); i++)
-  {
-#if VPS_OUTPUT_LAYER_SET_IDX
-    READ_UVLC( uiCode,           "vps_output_layer_set_idx_minus1[i]"); vps->setOutputLayerSetIdx(i, uiCode + 1);
-#else
-    READ_UVLC( uiCode,           "vps_output_layer_set_idx[i]"); vps->setOutputLayerSetIdx(i, uiCode);
-#endif
-    Int lsIdx = vps->getOutputLayerSetIdx(i);
-    for(j = 0; j <= vps->getMaxLayerId(); j++)
-    {
-      if(vps->getLayerIdIncludedFlag(lsIdx, j))
-      {
-        READ_FLAG( uiCode, "vps_output_layer_flag[lsIdx][j]"); vps->setOutputLayerFlag(lsIdx, j, uiCode);
-      }
-    }
-  }
-#endif
-#endif
+
 #if REPN_FORMAT_IN_VPS
   READ_FLAG( uiCode, "rep_format_idx_present_flag");
   vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
@@ -1313,27 +1259,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setCrossLayerIrapAlignFlag(uiCode);
 #endif
 
-#if !VPS_MOVE_DIR_DEPENDENCY_FLAG
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  // For layer 0
-  vps->setNumDirectRefLayers(0, 0);
-  // For other layers
-  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    UInt numDirectRefLayers = 0;
-    for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      READ_FLAG(uiCode, "direct_dependency_flag[i][j]" ); vps->setDirectDependencyFlag(layerCtr, refLayerCtr, uiCode? true : false);
-      if(uiCode)
-      {
-        vps->setRefLayerId(layerCtr, numDirectRefLayers, refLayerCtr);
-        numDirectRefLayers++;
-      }
-    }
-    vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
-  }
-#endif
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
   for(i = 1; i < vps->getMaxLayers(); i++)
@@ -1482,6 +1407,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #endif
 }
 #endif
+#endif //SVC_EXTENSION
+
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
 {
   UInt  uiCode;
@@ -1554,6 +1481,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
   if(!rpcSlice->getDependentSliceSegmentFlag())
   {
+#if SVC_EXTENSION
 #if POC_RESET_FLAG
     Int iBits = 0;
     if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
@@ -1571,7 +1499,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
 #else
-#if SH_DISCARDABLE_FLAG
     if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
       READ_FLAG(uiCode, "discardable_flag"); // ignored
@@ -1580,13 +1507,13 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
-#else
+#endif
+#else //SVC_EXTENSION
     for (Int i = 0; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
-#endif
-#endif
+#endif //SVC_EXTENSION
 
     READ_UVLC (    uiCode, "slice_type" );            rpcSlice->setSliceType((SliceType)uiCode);
     if( pps->getOutputFlagPresentFlag() )
