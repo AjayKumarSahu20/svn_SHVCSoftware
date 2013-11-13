@@ -37,11 +37,13 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 {
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
+#if SCALED_REF_LAYER_OFFSETS
   m_numScaledRefLayerOffsets = 0;
   ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
   ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
+#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()
@@ -139,12 +141,6 @@ Void TAppEncLayerCfg::xPrintParameter()
 #endif
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
-#if LAYER_CTB
-  printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
-  printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
-  printf("Max RQT depth inter           : %d\n", m_uiQuadtreeTUMaxDepthInter);
-  printf("Max RQT depth intra           : %d\n", m_uiQuadtreeTUMaxDepthIntra);
-#endif
   printf("QP                            : %5.2f\n", m_fQP );
   printf("Intra period                  : %d\n", m_iIntraPeriod );
 #if RC_SHVC_HARMONIZATION
@@ -160,9 +156,6 @@ Void TAppEncLayerCfg::xPrintParameter()
   }
 #endif
   printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_cAppEncCfg->getWaveFrontSynchro(), m_iWaveFrontSubstreams);
-#if LAYER_CTB
-  printf("PCM:%d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
-#endif
 }
 
 Bool confirmPara(Bool bflag, const char* message);
@@ -181,11 +174,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   case 1:
     {
       // automatic padding to minimum CU size
-#if LAYER_CTB
-      Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
-#else
       Int minCuSize = m_cAppEncCfg->getMaxCUHeight() >> (m_cAppEncCfg->getMaxCUDepth() - 1);
-#endif
       if (m_iSourceWidth % minCuSize)
       {
         m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
@@ -250,15 +239,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   }
 
-#if LAYER_CTB
-  UInt maxCUWidth = m_uiMaxCUWidth;
-  UInt maxCUHeight = m_uiMaxCUHeight;
-  UInt maxCUDepth = m_uiMaxCUDepth;
-#else
   UInt maxCUWidth = m_cAppEncCfg->getMaxCUWidth();
   UInt maxCUHeight = m_cAppEncCfg->getMaxCUHeight();
   UInt maxCUDepth = m_cAppEncCfg->getMaxCUDepth();
-#endif
   bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
   // check range of parameters
@@ -271,10 +254,16 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
 
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++){
+    xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY(layer) - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
+  }
+#else
   xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
+#endif
 
 
-  m_iWaveFrontSubstreams = m_cAppEncCfg->getWaveFrontSynchro() ? (m_iSourceHeight + maxCUHeight - 1) / maxCUHeight : 1;
+  m_iWaveFrontSubstreams = m_cAppEncCfg->getWaveFrontSynchro() ? (m_iSourceHeight + m_cAppEncCfg->getMaxCUHeight() - 1) / m_cAppEncCfg->getMaxCUHeight() : 1;
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
   xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_cAppEncCfg->getWaveFrontSynchro(), "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 
@@ -289,47 +278,11 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
-
-#if LAYER_CTB  
-  xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
-  xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
-  xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
-  xConfirmPara( m_uiMaxCUHeight < 16,                                                       "Maximum partition height size should be larger than or equal to 16");
-  xConfirmPara( m_uiQuadtreeTULog2MinSize < 2,                                        "QuadtreeTULog2MinSize must be 2 or greater.");
-  xConfirmPara( m_uiQuadtreeTULog2MaxSize > 5,                                        "QuadtreeTULog2MaxSize must be 5 or smaller.");
-  xConfirmPara( (1<<m_uiQuadtreeTULog2MaxSize) > m_uiMaxCUWidth,                                        "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
-  xConfirmPara( m_uiQuadtreeTULog2MaxSize < m_uiQuadtreeTULog2MinSize,                "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
-  xConfirmPara( (1<<m_uiQuadtreeTULog2MinSize)>(m_uiMaxCUWidth >>(m_uiMaxCUDepth-1)), "QuadtreeTULog2MinSize must not be greater than minimum CU size" ); // HS
-  xConfirmPara( (1<<m_uiQuadtreeTULog2MinSize)>(m_uiMaxCUHeight>>(m_uiMaxCUDepth-1)), "QuadtreeTULog2MinSize must not be greater than minimum CU size" ); // HS
-  xConfirmPara( ( 1 << m_uiQuadtreeTULog2MinSize ) > ( m_uiMaxCUWidth  >> m_uiMaxCUDepth ), "Minimum CU width must be greater than minimum transform size." );
-  xConfirmPara( ( 1 << m_uiQuadtreeTULog2MinSize ) > ( m_uiMaxCUHeight >> m_uiMaxCUDepth ), "Minimum CU height must be greater than minimum transform size." );
-  xConfirmPara( m_uiQuadtreeTUMaxDepthInter < 1,                                                         "QuadtreeTUMaxDepthInter must be greater than or equal to 1" );
-  xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthInter - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
-  xConfirmPara( m_uiQuadtreeTUMaxDepthIntra < 1,                                                         "QuadtreeTUMaxDepthIntra must be greater than or equal to 1" );
-  xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthIntra - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
-
-  // max CU width and height should be power of 2
-  UInt ui = m_uiMaxCUWidth;
-  while(ui)
-  {
-    ui >>= 1;
-    if( (ui & 1) == 1)
-      xConfirmPara( ui != 1 , "Width should be 2^n");
-  }
-  ui = m_uiMaxCUHeight;
-  while(ui)
-  {
-    ui >>= 1;
-    if( (ui & 1) == 1)
-      xConfirmPara( ui != 1 , "Height should be 2^n");
-  }
-#endif
-
 #undef xConfirmPara
   return check_failed;
 }
 
-#endif //SVC_EXTENSION
+#endif
 
 
 //! \}

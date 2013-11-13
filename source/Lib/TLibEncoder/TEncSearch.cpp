@@ -4118,7 +4118,12 @@ UInt TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
   pcCU->clipMv( cMvCand );
 
   // prediction pattern
+#if O0194_WEIGHTED_PREDICTION_CGS
+  // Bug Fix (It did not check WP for BSlices)
+  if ( pcCU->getSlice()->getPPS()->getUseWP())
+#else
   if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
+#endif
   {
     xPredInterLumaBlk( pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, true );
   }
@@ -4127,7 +4132,12 @@ UInt TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
     xPredInterLumaBlk( pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, false );
   }
 
+#if O0194_WEIGHTED_PREDICTION_CGS
+  if ( pcCU->getSlice()->getPPS()->getUseWP())
+  ///< Bug Fix (It did not check WP for BSlices)
+#else
   if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
+#endif
   {
     xWeightedPredictionUni( pcCU, pcTemplateCand, uiPartAddr, iSizeX, iSizeY, eRefPicList, pcTemplateCand, iRefIdx );
   }

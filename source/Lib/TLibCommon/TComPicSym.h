@@ -125,11 +125,6 @@ public:
   UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame;  }
   TComDataCU*&  getCU( UInt uiCUAddr )  { return m_apcTComDataCU[uiCUAddr];     }
   
-#if LAYER_CTB
-  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
-  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
-#endif
-
 #if AVC_SYNTAX
   UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
   UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
