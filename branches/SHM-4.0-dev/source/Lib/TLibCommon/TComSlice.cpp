@@ -3115,7 +3115,7 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
     {
       pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );
       pcIlpPic[refLayerIdc]->getSlice(0)->setPOC( m_iPOC );
-      pcIlpPic[refLayerIdc]->setLayerId( m_layerId ); //set reference layerId
+      pcIlpPic[refLayerIdc]->setLayerId( m_pcBaseColPic[refLayerIdc]->getLayerId() ); //set reference layerId
       pcIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension( false );
       pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
       for (Int j=0; j<pcIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)    // set reference CU layerId
