@@ -1601,6 +1601,9 @@ typedef struct
 {
   Int64 iAC;
   Int64 iDC;
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Int iSamples;
+#endif
 } wpACDCParam;
 
 /// slice header class

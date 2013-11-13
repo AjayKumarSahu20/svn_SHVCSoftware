@@ -224,6 +224,11 @@ Void TAppDecTop::decode()
     }
     if (bNewPicture || !bitstreamFile)
     {
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+      //Bug fix: The bit depth was not set correctly for each layer when doing DBF
+      g_bitDepthY = g_bitDepthYLayer[curLayerId];
+      g_bitDepthC = g_bitDepthCLayer[curLayerId];
+#endif
       m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
 #if EARLY_REF_PIC_MARKING
       m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
@@ -236,7 +241,6 @@ Void TAppDecTop::decode()
       {
         if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }        
         if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
-
         m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
 
         openedReconFile[curLayerId] = true;
@@ -565,7 +569,11 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
             conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
+#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#else
           m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -758,7 +766,11 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
+#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#else
           m_cTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),

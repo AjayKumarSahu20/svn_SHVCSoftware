@@ -80,16 +80,6 @@ extern       UInt   g_auiRasterToPelY[ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 Void         initRasterToPelXY ( UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth );
 
 // global variable (LCU width/height, max. CU depth)
-#if LAYER_CTB
-extern       UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
-extern       UInt g_auiLayerAddCUDepth[MAX_LAYERS];
-extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-#endif
 extern       UInt g_uiMaxCUWidth;
 extern       UInt g_uiMaxCUHeight;
 extern       UInt g_uiMaxCUDepth;

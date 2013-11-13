@@ -752,11 +752,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR));
 #if SVC_EXTENSION
+#if ILR_RESTR && ILR_RESTR_FIX
+    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+    Int activeNumILRRefIdxTmp = 0;
+#endif
     if (m_layerId > 0)
     {
-      Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
-      Int activeNumILRRefIdxTmp = 0;
-
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
@@ -767,6 +768,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
+#if ILR_RESTR && ILR_RESTR_FIX
         // Apply temporal layer restriction to inter-layer prediction
         Int maxTidIlRefPicsPlus1 = m_pcEncTop->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
         if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
@@ -777,7 +779,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           continue; // ILP is not valid due to temporal layer restriction
         }
+#endif
 
+#if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
@@ -785,7 +789,16 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+#else
+        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getConformanceWindow();
+        const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
 
+        Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
+        Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
+
+        Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
+        Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
+#endif
         g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
         g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
 
@@ -809,6 +822,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       }
 
+#if ILR_RESTR && ILR_RESTR_FIX
       // Update the list of active inter-layer pictures
       for ( Int i = 0; i < activeNumILRRefIdxTmp; i++)
       {
@@ -820,6 +834,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // No valid inter-layer pictures -> disable inter-layer prediction
         pcSlice->setInterLayerPredEnabledFlag(false);
       }
+#endif
       
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
@@ -1600,10 +1615,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pcSlice->setSliceCurStartCUAddr         ( startCUAddrSlice      );
           pcSlice->setSliceSegmentCurStartCUAddr  ( startCUAddrSlice      );
           pcSlice->setSliceBits(0);
-#if SVC_EXTENSION
-          // copy reference list modification info from the first slice, assuming that this information is the same across all slices in the picture
-          memcpy( pcSlice->getRefPicListModification(), pcPic->getSlice(0)->getRefPicListModification(), sizeof(TComRefPicListModification) );
-#endif
           uiNumSlices ++;
         }
       }
