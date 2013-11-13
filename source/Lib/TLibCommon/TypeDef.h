@@ -151,6 +151,9 @@
 #define M0043_LAYERS_PRESENT_SEI         0      ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
+
+#define O0215_PHASE_ALIGNMENT            1     // JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
+
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION

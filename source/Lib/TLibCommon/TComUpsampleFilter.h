@@ -42,7 +42,12 @@ public:
   TComUpsampleFilter(void);
   ~TComUpsampleFilter(void);
 
+#if O0215_PHASE_ALIGNMENT
+  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag );
+#else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
+#endif
+
 };
 
 #endif //__TCOMUPSAMPLEFILTER__

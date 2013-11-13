@@ -1250,6 +1250,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
 #endif
+#if O0215_PHASE_ALIGNMENT
+  READ_FLAG( uiCode, "phase_align_flag"); vps->setPhaseAlignFlag( uiCode == 1 ? true : false );
+#endif
 
 #if N0147_IRAP_ALIGN_FLAG
   READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );

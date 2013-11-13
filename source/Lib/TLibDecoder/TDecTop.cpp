@@ -1143,7 +1143,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
+#if O0215_PHASE_ALIGNMENT
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
+#endif
         }
         else
         {
@@ -1200,6 +1204,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
 
       pcSlice->setILRPic( m_cIlpPic );
+
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
