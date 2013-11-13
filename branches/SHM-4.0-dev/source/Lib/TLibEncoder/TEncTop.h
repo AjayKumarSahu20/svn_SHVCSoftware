@@ -139,14 +139,12 @@ private:
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   Int                     m_ilSampleOnlyPred;
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   UInt                    m_numScaledRefLayerOffsets;
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
-#endif
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
 #endif
-#endif
+#endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
@@ -208,12 +206,10 @@ public:
   Int                     getPOCLast            () { return m_iPOCLast;               }
   Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
-#if SCALED_REF_LAYER_OFFSETS
   Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
   UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
-#endif
-#endif
+#endif //SVC_EXTENSION
 
   // -------------------------------------------------------------------------------------------------------------------
   // encoder function
