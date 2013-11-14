@@ -172,6 +172,7 @@ protected:
   Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
   Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
 #endif
+
   // coding tools (PCM bit-depth)
   Bool      m_bPCMInputBitDepthFlag;                          ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
 

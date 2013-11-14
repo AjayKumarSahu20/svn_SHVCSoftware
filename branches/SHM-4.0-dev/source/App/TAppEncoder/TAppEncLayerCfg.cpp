@@ -272,7 +272,8 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   }
 
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++){
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
     xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY(layer) - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
   }
 #else
