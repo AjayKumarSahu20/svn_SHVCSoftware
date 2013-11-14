@@ -1268,7 +1268,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   /* rules for input, output and internal bitdepths as per help text */
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(Int layer = 0; layer < MAX_LAYERS; layer++){
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
     if (!m_acLayerCfg[layer].m_internalBitDepthY) { m_acLayerCfg[layer].m_internalBitDepthY = m_acLayerCfg[layer].m_inputBitDepthY; }
     if (!m_acLayerCfg[layer].m_internalBitDepthC) { m_acLayerCfg[layer].m_internalBitDepthC = m_acLayerCfg[layer].m_internalBitDepthY; }
     if (!m_acLayerCfg[layer].m_inputBitDepthC) { m_acLayerCfg[layer].m_inputBitDepthC = m_acLayerCfg[layer].m_inputBitDepthY; }
@@ -1540,7 +1541,8 @@ Void TAppEncCfg::xCheckParameter()
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
   // check range of parameters
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(UInt layer=0; layer<m_numLayers; layer++){
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
     xConfirmPara( m_acLayerCfg[layer].m_inputBitDepthY < 8,                                                     "InputBitDepth must be at least 8" );
     xConfirmPara( m_acLayerCfg[layer].m_inputBitDepthC < 8,                                                     "InputBitDepthC must be at least 8" );
   }
@@ -2460,6 +2462,8 @@ Void TAppEncCfg::xPrintParameter()
   printf("QP adaptation                : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0) );
   printf("GOP size                     : %d\n", m_iGOPSize );
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
+  printf("Input bit depth Layer0       : (Y:%d, C:%d)\n", m_acLayerCfg[0].m_inputBitDepthY   , m_acLayerCfg[0].m_inputBitDepthC    );
+  printf("Input bit depth Layer1       : (Y:%d, C:%d)\n", m_acLayerCfg[1].m_internalBitDepthY, m_acLayerCfg[1].m_internalBitDepthC );
   printf("Internal bit depth Layer0    : (Y:%d, C:%d)\n", m_acLayerCfg[0].m_internalBitDepthY, m_acLayerCfg[0].m_internalBitDepthC );
   printf("Internal bit depth Layer1    : (Y:%d, C:%d)\n", m_acLayerCfg[1].m_internalBitDepthY, m_acLayerCfg[1].m_internalBitDepthC );
 #else
@@ -2567,7 +2571,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
   printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
-  printf("O0194_REPN_FORMAT_IN_VPS_BUGFIX: %d ",O0194_REPN_FORMAT_IN_VPS_BUGFIX);
   printf("\n\n");
   
   fflush(stdout);

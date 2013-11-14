@@ -930,7 +930,8 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     xCalcACDCParamSlice(pcSlice);
   }
 #if O0194_WEIGHTED_PREDICTION_CGS
-  else{
+  else
+  {
     // Calculate for the base layer to be used in EL as Inter layer reference
     xCalcACDCParamSlice(pcSlice);
     wpACDCParam * temp_weightACDCParam;

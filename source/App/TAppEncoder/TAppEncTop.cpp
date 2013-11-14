@@ -145,7 +145,7 @@ Void TAppEncTop::xInitLibCfg()
     repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
     repFormat->setChromaFormatVpsIdc        ( 1                                             );  // Need modification to change for each layer - corresponds to 420
     repFormat->setSeparateColourPlaneVpsFlag( 0                                             );  // Need modification to change for each layer
-#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
     repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY(mapIdxToLayer[idx])      );  // Need modification to change for each layer
     repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC(mapIdxToLayer[idx])      );  // Need modification to change for each layer
 #else
@@ -407,7 +407,8 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseWP                   ( m_useWeightedPred      );
     m_acTEncTop[layer].setWPBiPred                ( m_useWeightedBiPred   );
 #if O0194_WEIGHTED_PREDICTION_CGS
-    if (layer!=0){
+    if (layer!=0)
+    {
       // Enable weighted prediction for enhancement layer
       m_acTEncTop[layer].setUseWP                 ( true   );
       m_acTEncTop[layer].setWPBiPred              ( true   );
@@ -883,12 +884,6 @@ Void TAppEncTop::xCreateLib()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if LAYER_CTB
-    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //2
     g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
@@ -896,6 +891,12 @@ Void TAppEncTop::xCreateLib()
 
     g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
     g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+#endif
+#if LAYER_CTB
+    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_acLayerCfg[layer].m_inputBitDepthY, m_acLayerCfg[layer].m_inputBitDepthC, m_acLayerCfg[layer].m_internalBitDepthY, m_acLayerCfg[layer].m_internalBitDepthC );  // read  mode
@@ -962,17 +963,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if SVC_EXTENSION
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if LAYER_CTB
-    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-        
-    memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
-    memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
-    memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
-    memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //3
     g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
@@ -980,6 +970,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
     g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
     g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+#endif
+#if LAYER_CTB
+    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+
+    memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
+    memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
+    memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
+    memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
     m_acTEncTop[layer].init(isFieldCoding);
   }
@@ -1306,12 +1307,6 @@ Void TAppEncTop::encode()
     {
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
-#if LAYER_CTB
-        g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-        g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-        g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-        g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //6
         g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
@@ -1320,6 +1315,13 @@ Void TAppEncTop::encode()
         g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
         g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
 #endif
+#if LAYER_CTB
+        g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
+        g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
+        g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
+        g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
+#endif
+
         // get buffers
         xGetBuffer(pcPicYuvRec, layer);
 
@@ -1387,6 +1389,14 @@ Void TAppEncTop::encode()
       // layer by layer for each frame
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        //7
+        g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
+        g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
+
+        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
+        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+#endif
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
         g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1397,14 +1407,6 @@ Void TAppEncTop::encode()
         memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
         memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
         memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
-#endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-        //7
-        g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-        g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
 #endif
         // call encoding function for one frame
         if ( m_isField )

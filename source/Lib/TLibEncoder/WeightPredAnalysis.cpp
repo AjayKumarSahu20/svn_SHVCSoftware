@@ -231,7 +231,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
       slice->getWpAcDcParam(currWeightACDCParam);
       slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
 #if O0194_WEIGHTED_PREDICTION_CGS
-      if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1)){
+      if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))
+      {
         refWeightACDCParam = (wpACDCParam *)g_refWeightACDCParam;
       }
 #endif
@@ -249,7 +250,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         Int64 refDC = refWeightACDCParam[comp].iDC;
         Int64 refAC = refWeightACDCParam[comp].iAC;
 #if O0194_WEIGHTED_PREDICTION_CGS
-        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1)){
+        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))
+        {
           refAC *= (double)currWeightACDCParam[comp].iSamples/refWeightACDCParam[comp].iSamples;
 #if O0194_JOINT_US_BITSHIFT
           refAC *= (1<<(g_bitDepthYLayer[1]-g_bitDepthYLayer[0]));
@@ -263,7 +265,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         Int weight = (Int)( 0.5 + dWeight * (Double)(1<<log2Denom) );
         Int offset = (Int)( ((currDC<<log2Denom) - ((Int64)weight * refDC) + (Int64)realOffset) >> realLog2Denom );
 #if O0194_WEIGHTED_PREDICTION_CGS
-        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1)){
+        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId())){
         }
         else{
           dWeight = 1;
@@ -292,8 +294,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
           return (false);
 #if O0194_WEIGHTED_PREDICTION_CGS
         // make sure the reference frames other than ILR are not using weighted prediction
-        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(1)))
-        {
+        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))){
           continue;
         }
 #endif

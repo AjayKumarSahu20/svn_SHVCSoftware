@@ -2006,7 +2006,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setSliceQp (26 + pps->getPicInitQPMinus26() + iCode);
 
 #if REPN_FORMAT_IN_VPS
-#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
     g_bitDepthYLayer[rpcSlice->getLayerId()]     = rpcSlice->getBitDepthY();
     g_bitDepthCLayer[rpcSlice->getLayerId()]     = rpcSlice->getBitDepthC();
 #endif

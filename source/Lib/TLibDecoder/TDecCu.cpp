@@ -615,7 +615,8 @@ TDecCu::xIntraRecChromaBlk( TComDataCU* pcCU,
   {
     curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCrQpOffset() + pcCU->getSlice()->getSliceQpDeltaCr();
   }
-#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  // Bug-fix
 #if REPN_FORMAT_IN_VPS
   m_pcTrQuant->setQPforQuant  ( pcCU->getQP(0), eText, pcCU->getSlice()->getQpBDOffsetC(), curChromaQpOffset );
 #else
@@ -775,7 +776,8 @@ Void TDecCu::xDecodeInterTexture ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiD
   
   // Cb and Cr
   Int curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCbQpOffset() + pcCU->getSlice()->getSliceQpDeltaCb();
-#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  // Bug-fix
 #if REPN_FORMAT_IN_VPS
   m_pcTrQuant->setQPforQuant( pcCU->getQP( uiAbsPartIdx ), TEXT_CHROMA, pcCU->getSlice()->getQpBDOffsetC(), curChromaQpOffset );
 #else
@@ -791,7 +793,8 @@ Void TDecCu::xDecodeInterTexture ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiD
   m_pcTrQuant->invRecurTransformNxN ( pcCU, 0, TEXT_CHROMA_U, pResi, 0, m_ppcYuvResi[uiDepth]->getCStride(), uiWidth, uiHeight, trMode, 0, piCoeff );
 
   curChromaQpOffset = pcCU->getSlice()->getPPS()->getChromaCrQpOffset() + pcCU->getSlice()->getSliceQpDeltaCr();
-#if O0194_REPN_FORMAT_IN_VPS_BUGFIX
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  // Bug-fix
 #if REPN_FORMAT_IN_VPS
   m_pcTrQuant->setQPforQuant( pcCU->getQP( uiAbsPartIdx ), TEXT_CHROMA, pcCU->getSlice()->getQpBDOffsetC(), curChromaQpOffset );
 #else
