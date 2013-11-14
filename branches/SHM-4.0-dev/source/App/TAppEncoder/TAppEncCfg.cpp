@@ -220,18 +220,6 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
     }
   }
 #endif
-#if EXTERNAL_USEDBYCURR_N0082
-  if(entry.m_numRefPics>0){
-    in>>entry.m_UseExtusedByCurrPic;
-    if(entry.m_UseExtusedByCurrPic)
-    {
-      for ( Int i = 0; i < entry.m_numRefPics; i++ )
-      {
-        in>>entry.m_ExtusedByCurrPic[i];
-      }
-    }
-  }
-#endif
   return in;
 }
 
@@ -943,13 +931,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cOSS<<"Frame"<<i;
     opts.addOptions()(cOSS.str(), m_GOPList[i-1], GOPEntry());
   }
-#if FINAL_RPL_CHANGE_N0082
-  for(Int i=1; i<MAX_GOP+1; i++) {
-    std::ostringstream cOSS;
-    cOSS<<"FrameEL"<<i;
-    opts.addOptions()(cOSS.str(), m_acLayerCfg[1].m_GOPListLayer[i-1], GOPEntry());
-  }
-#endif
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
@@ -1700,14 +1681,11 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
   
-#if EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
+
   Bool verifiedGOP=false;
-#endif
   Bool errorGOP=false;
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int checkGOP=1;
   Int numRefs = m_isField ? 2 : 1;
-#endif
   Int refList[MAX_NUM_REF_PICS+1];
   refList[0]=0;
   if(m_isField)
@@ -1719,9 +1697,7 @@ Void TAppEncCfg::xCheckParameter()
   {
     isOK[i]=false;
   }
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int numOK=0;
-#endif
 #if !SVC_EXTENSION
   xConfirmPara( m_iIntraPeriod >=0&&(m_iIntraPeriod%m_iGOPSize!=0), "Intra period must be a multiple of GOPSize, or -1" );
 #endif
@@ -1764,33 +1740,7 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-#if FINAL_RPL_CHANGE_N0082
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0)
-    {
-      memcpy( m_acLayerCfg[layer].m_GOPListLayer, m_GOPList, sizeof(GOPEntry)*MAX_GOP );
-    }
-    errorGOP = xconfirmExtraGOP( m_acLayerCfg[layer].m_GOPListLayer );
-    xConfirmPara(errorGOP,"Invalid GOP structure given");
-  }
-#if TEMP_SCALABILITY_FIX
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7  && 
-    m_acLayerCfg[1].m_GOPListLayer[5].m_temporalId == 0 && m_acLayerCfg[1].m_GOPListLayer[7].m_temporalId == 0)
-#else
-  //tentative for encoder
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 )
-#endif
-  {
-    //RA, POC5
-    m_acLayerCfg[1].m_GOPListLayer[5].m_usedByCurrPic[2] = 0;
-    m_acLayerCfg[1].m_GOPListLayer[5].m_refIdc[2] = 0;
-    //RA, POC7
-    m_acLayerCfg[1].m_GOPListLayer[7].m_usedByCurrPic[2] = 0;
-    m_acLayerCfg[1].m_GOPListLayer[7].m_refIdc[2] = 0;
-  }
-#endif
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
+
   m_extraRPSs=0;
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -1986,22 +1936,7 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
-#endif
-#if EXTERNAL_USEDBYCURR_N0082
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    for (Int i=0; i< m_iGOPSize; i++){
-      if (m_acLayerCfg[layer].m_GOPListLayer[i].m_UseExtusedByCurrPic == 1 )
-      {
-        for(Int j=0; j<m_acLayerCfg[layer].m_GOPListLayer[i].m_numRefPics; j++ )
-        {
-          m_acLayerCfg[layer].m_GOPListLayer[i].m_usedByCurrPic[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
-          m_acLayerCfg[layer].m_GOPListLayer[i].m_refIdc[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
-        }
-      }
-    }
-  }
-#endif
+
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
   {
@@ -2619,219 +2554,5 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
   }
 }
 
-#if FINAL_RPL_CHANGE_N0082
-Bool  TAppEncCfg::xconfirmExtraGOP (GOPEntry * ge)
-{
-  Bool verifiedGOP=false;
-  Bool errorGOP=false;
-  Int checkGOP=1;
-  Int numRefs = 1;
-  Int refList[MAX_NUM_REF_PICS+1];
-  refList[0]=0;
-  Bool isOK[MAX_GOP];
-  for(Int i=0; i<MAX_GOP; i++) 
-  {
-    isOK[i]=false;
-  }
-  Int numOK=0;
-
-  m_extraRPSs=0;
-  //start looping through frames in coding order until we can verify that the GOP structure is correct.
-  while(!verifiedGOP&&!errorGOP) 
-  {
-    Int curGOP = (checkGOP-1)%m_iGOPSize;
-    Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + ge[curGOP].m_POC;    
-    if(ge[curGOP].m_POC<0) 
-    {
-      printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
-      errorGOP=true;
-    }
-    else 
-    {
-      //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
-      Bool beforeI = false;
-      for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-      {
-        Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-        if(absPOC < 0)
-        {
-          beforeI=true;
-        }
-        else 
-        {
-          Bool found=false;
-          for(Int j=0; j<numRefs; j++) 
-          {
-            if(refList[j]==absPOC) 
-            {
-              found=true;
-              for(Int k=0; k<m_iGOPSize; k++)
-              {
-                if(absPOC%m_iGOPSize == ge[k].m_POC%m_iGOPSize)
-                {
-                  if(ge[k].m_temporalId==ge[curGOP].m_temporalId)
-                  {
-                    ge[k].m_refPic = true;
-                  }
-                  ge[curGOP].m_usedByCurrPic[i]=ge[k].m_temporalId<=ge[curGOP].m_temporalId;
-                }
-              }
-            }
-          }
-          if(!found)
-          {
-            printf("\nError: ref pic %d is not available for GOP frame %d\n",ge[curGOP].m_referencePics[i],curGOP+1);
-            errorGOP=true;
-          }
-        }
-      }
-      if(!beforeI&&!errorGOP)
-      {
-        //all ref frames were present
-        if(!isOK[curGOP]) 
-        {
-          numOK++;
-          isOK[curGOP]=true;
-          if(numOK==m_iGOPSize)
-          {
-            verifiedGOP=true;
-          }
-        }
-      }
-      else 
-      {
-        //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
-        ge[m_iGOPSize+m_extraRPSs]=ge[curGOP];
-        Int newRefs=0;
-        for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-        {
-          Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-          if(absPOC>=0)
-          {
-            ge[m_iGOPSize+m_extraRPSs].m_referencePics[newRefs]=ge[curGOP].m_referencePics[i];
-            ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[newRefs]=ge[curGOP].m_usedByCurrPic[i];
-            newRefs++;
-          }
-        }
-        Int numPrefRefs = ge[curGOP].m_numRefPicsActive;
-        
-        for(Int offset = -1; offset>-checkGOP; offset--)
-        {
-          //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
-          Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
-          Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + ge[offGOP].m_POC;
-          if(offPOC>=0&&ge[offGOP].m_temporalId<=ge[curGOP].m_temporalId)
-          {
-            Bool newRef=false;
-            for(Int i=0; i<numRefs; i++)
-            {
-              if(refList[i]==offPOC)
-              {
-                newRef=true;
-              }
-            }
-            for(Int i=0; i<newRefs; i++) 
-            {
-              if(ge[m_iGOPSize+m_extraRPSs].m_referencePics[i]==offPOC-curPOC)
-              {
-                newRef=false;
-              }
-            }
-            if(newRef) 
-            {
-              Int insertPoint=newRefs;
-              //this picture can be added, find appropriate place in list and insert it.
-              if(ge[offGOP].m_temporalId==ge[curGOP].m_temporalId)
-              {
-                ge[offGOP].m_refPic = true;
-              }
-              for(Int j=0; j<newRefs; j++)
-              {
-                if(ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]<offPOC-curPOC||ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]>0)
-                {
-                  insertPoint = j;
-                  break;
-                }
-              }
-              Int prev = offPOC-curPOC;
-              Int prevUsed = ge[offGOP].m_temporalId<=ge[curGOP].m_temporalId;
-              for(Int j=insertPoint; j<newRefs+1; j++)
-              {
-                Int newPrev = ge[m_iGOPSize+m_extraRPSs].m_referencePics[j];
-                Int newUsed = ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j];
-                ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]=prev;
-                ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j]=prevUsed;
-                prevUsed=newUsed;
-                prev=newPrev;
-              }
-              newRefs++;
-            }
-          }
-          if(newRefs>=numPrefRefs)
-          {
-            break;
-          }
-        }
-        ge[m_iGOPSize+m_extraRPSs].m_numRefPics=newRefs;
-        ge[m_iGOPSize+m_extraRPSs].m_POC = curPOC;
-        if (m_extraRPSs == 0)
-        {
-          ge[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 0;
-          ge[m_iGOPSize+m_extraRPSs].m_numRefIdc = 0;
-        }
-        else
-        {
-          Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
-          Int refPOC = ge[rIdx].m_POC;
-          Int refPics = ge[rIdx].m_numRefPics;
-          Int newIdc=0;
-          for(Int i = 0; i<= refPics; i++) 
-          {
-            Int deltaPOC = ((i != refPics)? ge[rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
-            Int absPOCref = refPOC+deltaPOC;
-            Int refIdc = 0;
-            for (Int j = 0; j < ge[m_iGOPSize+m_extraRPSs].m_numRefPics; j++)
-            {
-              if ( (absPOCref - curPOC) == ge[m_iGOPSize+m_extraRPSs].m_referencePics[j])
-              {
-                if (ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j])
-                {
-                  refIdc = 1;
-                }
-                else
-                {
-                  refIdc = 2;
-                }
-              }
-            }
-            ge[m_iGOPSize+m_extraRPSs].m_refIdc[newIdc]=refIdc;
-            newIdc++;
-          }
-          ge[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 1;  
-          ge[m_iGOPSize+m_extraRPSs].m_numRefIdc = newIdc;
-          ge[m_iGOPSize+m_extraRPSs].m_deltaRPS = refPOC - ge[m_iGOPSize+m_extraRPSs].m_POC; 
-        }
-        curGOP=m_iGOPSize+m_extraRPSs;
-        m_extraRPSs++;
-      }
-      numRefs=0;
-      for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-      {
-        Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-        if(absPOC >= 0) 
-        {
-          refList[numRefs]=absPOC;
-          numRefs++;
-        }
-      }
-      refList[numRefs]=curPOC;
-      numRefs++;
-    }
-    checkGOP++;
-  }
-
-  return errorGOP; //update
-}
-#endif
 #endif //SVC_EXTENSION
 //! \}

@@ -365,9 +365,6 @@ protected:
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
-#if FINAL_RPL_CHANGE_N0082
-  Bool  xconfirmExtraGOP (GOPEntry * ge);
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif

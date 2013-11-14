@@ -212,11 +212,8 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setIntraPeriod                  ( m_acLayerCfg[layer].m_iIntraPeriod );
     m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
     m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
-#if FINAL_RPL_CHANGE_N0082
-    m_acTEncTop[layer].setGopList                      ( m_acLayerCfg[layer].m_GOPListLayer );
-#else
     m_acTEncTop[layer].setGopList                      ( m_GOPList );
-#endif
+
     m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs );
     for(Int i = 0; i < MAX_TLAYER; i++)
     {
