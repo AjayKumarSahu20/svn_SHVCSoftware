@@ -55,11 +55,7 @@
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
 #define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< JCTVC-N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
-#define FINAL_RPL_CHANGE_N0082           1      ///< JCTVC-N0082: final ref picture list change (encoder)
-#if FINAL_RPL_CHANGE_N0082
-#define EXTERNAL_USEDBYCURR_N0082        1      ///< JCTVC-N0082: final ref picture list change (encoder) //dev ver.
-#define TEMP_SCALABILITY_FIX             1      ///< fix for temporal scalability
-#endif
+
 #define IL_SL_SIGNALLING_N0371           0      ///< JCTVC-N0371: inter-layer scaling list
 #define M0463_VUI_EXT_ILP_REF            0      ///< JCTVC-M0463: VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure

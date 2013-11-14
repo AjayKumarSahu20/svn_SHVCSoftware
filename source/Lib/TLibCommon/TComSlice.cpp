@@ -776,9 +776,6 @@ Void TComSlice::setRefPicListModificationSvc()
 #if N0147_IRAP_ALIGN_FLAG
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
 #endif
-#if FINAL_RPL_CHANGE_N0082
-  hasModification = false; //modification is not necessary
-#endif
   refPicListModification->setRefPicListModificationFlagL0(hasModification);
   if(hasModification)
   { 
