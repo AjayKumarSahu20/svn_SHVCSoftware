@@ -97,9 +97,6 @@ protected:
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#if FINAL_RPL_CHANGE_N0082
-  GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
   Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
@@ -173,9 +170,6 @@ public:
   Bool    getRCUseLCUSeparateModel()  {return m_RCUseLCUSeparateModel; }
   Int     getRCInitialQP()            {return m_RCInitialQP;           }
   Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
-#endif
-#if FINAL_RPL_CHANGE_N0082
-  GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
 #endif
 #if REPN_FORMAT_IN_VPS
   Int     getRepFormatIdx()           { return m_repFormatIdx;  }
