@@ -65,7 +65,7 @@
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #if ILP_SSH_SIG
-#define ILP_SSH_SIG_FIX                  1
+#define ILP_SSH_SIG_FIX                  1      ///< fix for SHM ticket #5
 #endif 
 #define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
 #define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1, JCTVC-N0081, JCTVC-N0154, JCTVC-N0217: a condition on signaling inter_layer_pred_layer_idc[ i ], to avoid sending when NumDirectRefLayers equals NumActiveRefLayerPics, and instead infer values
@@ -151,8 +151,10 @@
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
 
-#define O0215_PHASE_ALIGNMENT            1     // JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
-#define AUXILIARY_PICTURES               1
+#define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
+#define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
+
+#define SHM_FIX7                         1      ///< fix for SHVC WD ticket #7
 
 #else
 #define SYNTAX_OUTPUT                    0
