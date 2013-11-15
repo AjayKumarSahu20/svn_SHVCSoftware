@@ -78,6 +78,24 @@ Void TEncSlice::initCtxMem(  UInt i )
   CTXMem.resize(i);
 }
 
+#if AUXILIARY_PICTURES
+Void TEncSlice::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth )
+{
+  // create prediction picture
+  if ( m_apcPicYuvPred == NULL )
+  {
+    m_apcPicYuvPred  = new TComPicYuv;
+    m_apcPicYuvPred->create( iWidth, iHeight, chromaFormat, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
+  }
+
+  // create residual picture
+  if( m_apcPicYuvResi == NULL )
+  {
+    m_apcPicYuvResi  = new TComPicYuv;
+    m_apcPicYuvResi->create( iWidth, iHeight, chromaFormat, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
+  }
+}
+#else
 Void TEncSlice::create( Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth )
 {
   // create prediction picture
@@ -94,6 +112,7 @@ Void TEncSlice::create( Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHe
     m_apcPicYuvResi->create( iWidth, iHeight, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
   }
 }
+#endif
 
 Void TEncSlice::destroy()
 {

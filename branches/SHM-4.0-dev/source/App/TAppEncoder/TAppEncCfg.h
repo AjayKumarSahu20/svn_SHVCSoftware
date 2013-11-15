@@ -100,7 +100,9 @@ protected:
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
-
+#if AUXILIARY_PICTURES
+  ChromaFormat m_InputChromaFormatIDC;
+#endif
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
 
@@ -171,6 +173,9 @@ protected:
   Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
   Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
   Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
+#endif
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
 #endif
 
   // coding tools (PCM bit-depth)

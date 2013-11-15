@@ -435,7 +435,11 @@ public:
 #if REPN_FORMAT_IN_VPS
 class RepFormat
 {
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatVpsIdc;
+#else
   Int  m_chromaFormatVpsIdc;
+#endif
   Bool m_separateColourPlaneVpsFlag;
   Int  m_picWidthVpsInLumaSamples;
   Int  m_picHeightVpsInLumaSamples;
@@ -445,8 +449,13 @@ class RepFormat
 public:
   RepFormat();
 
+#if AUXILIARY_PICTURES
+  ChromaFormat getChromaFormatVpsIdc()        { return m_chromaFormatVpsIdc; }
+  Void setChromaFormatVpsIdc(ChromaFormat x)  { m_chromaFormatVpsIdc = x;    }
+#else
   Int  getChromaFormatVpsIdc()        { return m_chromaFormatVpsIdc; }
   Void setChromaFormatVpsIdc(Int x)   { m_chromaFormatVpsIdc = x;    }
+#endif
 
   Bool getSeparateColourPlaneVpsFlag()        { return m_separateColourPlaneVpsFlag; }
   Void setSeparateColourPlaneVpsFlag(Bool x)  { m_separateColourPlaneVpsFlag = x;    }
@@ -1071,7 +1080,11 @@ class TComSPS
 private:
   Int         m_SPSId;
   Int         m_VPSId;
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIdc;
+#else
   Int         m_chromaFormatIdc;
+#endif
 
   UInt        m_uiMaxTLayers;           // maximum number of temporal layers
 
@@ -1181,11 +1194,20 @@ public:
   Void setVPSId       (Int i)    { m_VPSId = i;             }
   Int  getSPSId       ()         { return m_SPSId;          }
   Void setSPSId       (Int i)    { m_SPSId = i;             }
+#if AUXILIARY_PICTURES
+  ChromaFormat getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
+#else
   Int  getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
-  Void setChromaFormatIdc (Int i)    { m_chromaFormatIdc = i;          }
+#endif
+  Void setChromaFormatIdc (ChromaFormat i)    { m_chromaFormatIdc = i;          }
 
+#if AUXILIARY_PICTURES
+  static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
+  static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
+#else
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
+#endif
   
   // structure
   Void setPicWidthInLumaSamples       ( UInt u ) { m_picWidthInLumaSamples = u;        }
@@ -2068,7 +2090,11 @@ public:
 #if REPN_FORMAT_IN_VPS
   UInt getPicWidthInLumaSamples();
   UInt getPicHeightInLumaSamples();
+#if AUXILIARY_PICTURES
+  ChromaFormat getChromaFormatIdc();
+#else
   UInt getChromaFormatIdc();
+#endif
   UInt getBitDepthY();
   UInt getBitDepthC();
   Int  getQpBDOffsetY();

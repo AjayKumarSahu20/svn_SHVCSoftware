@@ -152,6 +152,7 @@
 #define N0065_LAYER_POC_ALIGNMENT        1
 
 #define O0215_PHASE_ALIGNMENT            1     // JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
+#define AUXILIARY_PICTURES               1
 
 #else
 #define SYNTAX_OUTPUT                    0
@@ -463,6 +464,9 @@ enum ChromaFormat
   CHROMA_420  = 1,
   CHROMA_422  = 2,
   CHROMA_444  = 3
+#if AUXILIARY_PICTURES
+  ,NUM_CHROMA_FORMAT = 4
+#endif
 };
 
 /// supported partition shape

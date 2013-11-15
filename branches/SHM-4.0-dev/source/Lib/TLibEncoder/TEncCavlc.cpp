@@ -1220,12 +1220,14 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG( pcSlice->getPicOutputFlag() ? 1 : 0, "pic_output_flag" );
     }
 
+#if !AUXILIARY_PICTURES
 #if REPN_FORMAT_IN_VPS
     // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
     assert( pcSlice->getChromaFormatIdc() == 1 );
 #else
     // in the first version chroma_format_idc is equal to one, thus colour_plane_id will not be present
     assert (pcSlice->getSPS()->getChromaFormatIdc() == 1 );
+#endif
 #endif
     // if( separate_colour_plane_flag  ==  1 )
     //   colour_plane_id                                      u(2)
@@ -1427,8 +1429,15 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
          WRITE_FLAG( pcSlice->getSaoEnabledFlag(), "slice_sao_luma_flag" );
          {
+#if AUXILIARY_PICTURES
+           if (pcSlice->getChromaFormatIdc() != CHROMA_400)
+           {
+#endif
            SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
           WRITE_FLAG( saoParam->bSaoFlag[1], "slice_sao_chroma_flag" );
+#if AUXILIARY_PICTURES
+           }
+#endif
          }
       }
     }
@@ -1893,6 +1902,12 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
   Bool            bDenomCoded  = false;
   UInt            uiMode = 0;
   UInt            uiTotalSignalledWeightFlags = 0;
+#if AUXILIARY_PICTURES
+  if (pcSlice->getChromaFormatIdc() == CHROMA_400)
+  {
+    bChroma = false;
+  }
+#endif
   if ( (pcSlice->getSliceType()==P_SLICE && pcSlice->getPPS()->getUseWP()) || (pcSlice->getSliceType()==B_SLICE && pcSlice->getPPS()->getWPBiPred()) )
   {
     uiMode = 1; // explicit

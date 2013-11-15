@@ -3164,10 +3164,18 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgTop, TComPic* pcPicO
   bool isTff = pcPicOrgTop->isTopField();
   
   TComPicYuv* pcOrgInterlaced = new TComPicYuv;
+#if AUXILIARY_PICTURES
+  pcOrgInterlaced->create( iWidth, iHeight << 1, pcPicOrgTop->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   pcOrgInterlaced->create( iWidth, iHeight << 1, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   
   TComPicYuv* pcRecInterlaced = new TComPicYuv;
+#if AUXILIARY_PICTURES
+  pcRecInterlaced->create( iWidth, iHeight << 1, pcPicOrgTop->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   pcRecInterlaced->create( iWidth, iHeight << 1, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   
   Pel* pOrgInterlaced = pcOrgInterlaced->getLumaAddr();
   Pel* pRecInterlaced = pcRecInterlaced->getLumaAddr();

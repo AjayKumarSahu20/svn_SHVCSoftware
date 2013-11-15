@@ -223,6 +223,20 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
   return in;
 }
 
+#if AUXILIARY_PICTURES
+static inline ChromaFormat numberToChromaFormat(const Int val)
+{
+  switch (val)
+  {
+    case 400: return CHROMA_400; break;
+    case 420: return CHROMA_420; break;
+    case 422: return CHROMA_422; break;
+    case 444: return CHROMA_444; break;
+    default:  return NUM_CHROMA_FORMAT;
+  }
+}
+#endif
+
 #if SVC_EXTENSION
 void TAppEncCfg::getDirFilename(string& filename, string& dir, const string path)
 {
@@ -362,6 +376,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   UInt*      cfg_uiQuadtreeTUMaxDepthInter[MAX_LAYERS];
   UInt*      cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
 #endif
+#if AUXILIARY_PICTURES
+  Int      cfg_tmpChromaFormatIDC  [MAX_LAYERS];
+  Int      cfg_tmpInputChromaFormat[MAX_LAYERS];
+  Int*     cfg_auxId               [MAX_LAYERS];
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int*    cfg_numSamplePredRefLayers  [MAX_LAYERS];
@@ -476,6 +495,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0120_MAX_TID_REF_CFG
     cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
 #endif 
+#if AUXILIARY_PICTURES
+    cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
+#endif
   }
 #if AVC_BASE
   string  cfg_BLInputFile;
@@ -532,10 +554,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
+#if AUXILIARY_PICTURES
+  ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
+  ("ChromaFormatIDC%d,-cf",   cfg_tmpChromaFormatIDC,    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
+  ("AuxId%d",                 cfg_auxId,                 0,   MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
+#endif
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
 #if SCALABILITY_MASK_E0104
   ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
+#if AUXILIARY_PICTURES
+  ("ScalabilityMask3",        m_scalabilityMask[3], 0, "scalability_mask[3] (auxiliary pictures)" )
+#endif
 #else
   ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
   ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
@@ -596,6 +626,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
+#if AUXILIARY_PICTURES
+  ("InputChromaFormat",     tmpInputChromaFormat,                       420, "InputChromaFormatIDC")
+  ("ChromaFormatIDC,-cf",   tmpChromaFormat,                             0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
+#endif
   ("ConformanceMode",       m_conformanceMode,     0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
   ("HorizontalPadding,-pdx",m_aiPad[0],            0, "Horizontal source padding for conformance window mode 2")
   ("VerticalPadding,-pdy",  m_aiPad[1],            0, "Vertical source padding for conformance window mode 2")
@@ -1210,6 +1244,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_acLayerCfg[layer].m_refLayerIds = NULL;
     }
+  }
+#endif
+#if AUXILIARY_PICTURES
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    m_acLayerCfg[layer].m_InputChromaFormat =  numberToChromaFormat(cfg_tmpChromaFormatIDC[layer]);
+    m_acLayerCfg[layer].m_chromaFormatIDC = ((cfg_tmpChromaFormatIDC[layer] == 0) ? (m_acLayerCfg[layer].m_InputChromaFormat ) : (numberToChromaFormat(cfg_tmpChromaFormatIDC[layer])));
   }
 #endif
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
@@ -2250,6 +2291,13 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
 #endif 
+#if AUXILIARY_PICTURES
+  for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_auxId < 0 || m_acLayerCfg[layer].m_auxId > 4, "AuxId must be in range 0 to 4");
+    xConfirmPara(m_acLayerCfg[layer].m_auxId > 0 && m_acLayerCfg[layer].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
+  }
+#endif 
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2330,6 +2378,9 @@ Void TAppEncCfg::xPrintParameter()
 #if SCALABILITY_MASK_E0104
   printf("Multiview                     : %d\n", m_scalabilityMask[1] );
   printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#if AUXILIARY_PICTURES
+  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
+#endif
 #else
   printf("Multiview                     : %d\n", m_scalabilityMask[0] );
   printf("Scalable                      : %d\n", m_scalabilityMask[1] );

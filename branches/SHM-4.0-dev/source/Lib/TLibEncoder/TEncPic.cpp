@@ -125,6 +125,34 @@ TEncPic::~TEncPic()
  * \param bIsVirtual
  * \return Void
  */
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+Void TEncPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual )
+
+#else
+
+Void TEncPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual )
+#endif
+{
+#if SVC_UPSAMPLING
+  TComPic::create( iWidth, iHeight, chromaFormat, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSps, bIsVirtual );
+#else
+  TComPic::create( iWidth, iHeight, chromaFormat, uiMaxWidth, uiMaxHeight, uiMaxDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual );
+#endif
+  m_uiMaxAQDepth = uiMaxAQDepth;
+  if ( uiMaxAQDepth > 0 )
+  {
+    m_acAQLayer = new TEncPicQPAdaptationLayer[ m_uiMaxAQDepth ];
+    for (UInt d = 0; d < m_uiMaxAQDepth; d++)
+    {
+      m_acAQLayer[d].create( iWidth, iHeight, uiMaxWidth>>d, uiMaxHeight>>d );
+    }
+  }
+}
+#else
 #if SVC_UPSAMPLING
 Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
                       Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual )
@@ -151,6 +179,7 @@ Void TEncPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
     }
   }
 }
+#endif
 
 /** Clean up
  * \return Void

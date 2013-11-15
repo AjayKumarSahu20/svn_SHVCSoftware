@@ -355,12 +355,21 @@ Void TDecSbac::parseIPCMInfo ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
     uiWidth = pcCU->getWidth(uiAbsPartIdx)/2;
     uiHeight = pcCU->getHeight(uiAbsPartIdx)/2;
     uiSampleBits = pcCU->getSlice()->getSPS()->getPCMBitDepthChroma();
+#if AUXILIARY_PICTURES
+    ChromaFormat format = pcCU->getSlice()->getChromaFormatIdc();
+    UInt uiGrayVal = 1 << (uiSampleBits - 1);
+#endif
 
     for(uiY = 0; uiY < uiHeight; uiY++)
     {
       for(uiX = 0; uiX < uiWidth; uiX++)
       {
         UInt uiSample;
+#if AUXILIARY_PICTURES
+        if (format == CHROMA_400)
+          uiSample = uiGrayVal;
+        else
+#endif
         m_pcTDecBinIf->xReadPCMCode(uiSampleBits, uiSample);
         piPCMSample[uiX] = uiSample;
       }
@@ -377,6 +386,11 @@ Void TDecSbac::parseIPCMInfo ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
       for(uiX = 0; uiX < uiWidth; uiX++)
       {
         UInt uiSample;
+#if AUXILIARY_PICTURES
+        if (format == CHROMA_400)
+          uiSample = uiGrayVal;
+        else
+#endif
         m_pcTDecBinIf->xReadPCMCode(uiSampleBits, uiSample);
         piPCMSample[uiX] = uiSample;
       }
@@ -664,6 +678,14 @@ Void TDecSbac::parseIntraDirChroma( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt ui
 {
   UInt uiSymbol;
 
+#if AUXILIARY_PICTURES
+  if ( pcCU->getSlice()->getChromaFormatIdc() == CHROMA_400 )
+  {
+    uiSymbol = DC_IDX;
+  }
+  else
+  {
+#endif
   m_pcTDecBinIf->decodeBin( uiSymbol, m_cCUChromaPredSCModel.get( 0, 0, 0 ) );
 
   if( uiSymbol == 0 )
@@ -680,6 +702,9 @@ Void TDecSbac::parseIntraDirChroma( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt ui
       uiSymbol = uiAllowedChromaDir[ uiIPredMode ];
     }
   }
+#if AUXILIARY_PICTURES
+  }
+#endif
   pcCU->setChromIntraDirSubParts( uiSymbol, uiAbsPartIdx, uiDepth );
   return;
 }
@@ -884,7 +909,18 @@ Void TDecSbac::parseQtCbf( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, 
 {
   UInt uiSymbol;
   const UInt uiCtx = pcCU->getCtxQtCbf( eType, uiTrDepth );
+#if AUXILIARY_PICTURES
+  if (pcCU->getSlice()->getChromaFormatIdc() == CHROMA_400 && (eType == TEXT_CHROMA_U || eType == TEXT_CHROMA_V))
+  {
+    uiSymbol = 0;
+  }
+  else
+  {
+#endif
   m_pcTDecBinIf->decodeBin( uiSymbol , m_cCUQtCbfSCModel.get( 0, eType ? TEXT_CHROMA: eType, uiCtx ) );
+#if AUXILIARY_PICTURES
+  }
+#endif
   
   DTRACE_CABAC_VL( g_nSymbolCounter++ )
   DTRACE_CABAC_T( "\tparseQtCbf()" )

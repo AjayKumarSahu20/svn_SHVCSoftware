@@ -913,6 +913,10 @@ Void TEncSbac::codeIPCMInfo( TComDataCU* pcCU, UInt uiAbsPartIdx )
       piPCMSample += uiWidth;
     }
 
+#if AUXILIARY_PICTURES
+    if (pcCU->getSlice()->getChromaFormatIdc() != CHROMA_400)
+    {
+#endif
     piPCMSample = pcCU->getPCMSampleCb() + uiChromaOffset;
     uiWidth = pcCU->getWidth(uiAbsPartIdx)/2;
     uiHeight = pcCU->getHeight(uiAbsPartIdx)/2;
@@ -944,6 +948,9 @@ Void TEncSbac::codeIPCMInfo( TComDataCU* pcCU, UInt uiAbsPartIdx )
       }
       piPCMSample += uiWidth;
     }
+#if AUXILIARY_PICTURES
+    }
+#endif
     m_pcBinIf->resetBac();
   }
 }

@@ -1839,11 +1839,20 @@ UInt TComSlice::getPicHeightInLumaSamples()
   }
   return retVal;
 }
+#if AUXILIARY_PICTURES
+ChromaFormat TComSlice::getChromaFormatIdc()
+#else
 UInt TComSlice::getChromaFormatIdc()
+#endif
 {
   TComSPS *sps = getSPS();
   TComVPS *vps = getVPS();
+#if AUXILIARY_PICTURES
+  ChromaFormat retVal;
+  UInt layerId = getLayerId();
+#else
   UInt retVal, layerId = getLayerId();
+#endif
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
   {
     retVal = sps->getChromaFormatIdc();
@@ -1894,7 +1903,11 @@ Int TComSlice::getQpBDOffsetC()
 }
 
 RepFormat::RepFormat()
+#if AUXILIARY_PICTURES
+: m_chromaFormatVpsIdc          (CHROMA_420)
+#else
 : m_chromaFormatVpsIdc          (0)
+#endif
 , m_separateColourPlaneVpsFlag  (false)
 , m_picWidthVpsInLumaSamples    (0)
 , m_picHeightVpsInLumaSamples   (0)
