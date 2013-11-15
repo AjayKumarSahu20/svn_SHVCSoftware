@@ -1584,6 +1584,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       rpcSlice->setPOC              (iPOCmsb+iPOClsb);
 
 #if N0065_LAYER_POC_ALIGNMENT
+#if SHM_FIX7
+      }
+#endif
       if( !rpcSlice->getIdrPicFlag() )
       {
 #endif
@@ -1674,8 +1677,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
               deltaPocMSBCycleLT = uiCode + prevDeltaMSB;
             }
 
+#if SHM_FIX7
+            Int pocLTCurr = rpcSlice->getPOC() - deltaPocMSBCycleLT * maxPicOrderCntLSB - sps->getBitsForPOC() + pocLsbLt;
+#else
             Int pocLTCurr = rpcSlice->getPOC() - deltaPocMSBCycleLT * maxPicOrderCntLSB
                                         - iPOClsb + pocLsbLt;
+#endif
             rps->setPOC     (j, pocLTCurr);
             rps->setDeltaPOC(j, - rpcSlice->getPOC() + pocLTCurr);
             rps->setCheckLTMSBPresent(j,true);
@@ -1718,7 +1725,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       {
         rpcSlice->setEnableTMVPFlag(false);
       }
-#if N0065_LAYER_POC_ALIGNMENT
+#if N0065_LAYER_POC_ALIGNMENT && !SHM_FIX7
     }
 #endif
     }
