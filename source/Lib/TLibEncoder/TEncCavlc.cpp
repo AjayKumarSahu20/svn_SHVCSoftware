@@ -898,13 +898,33 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
    {
      for( i = 0; i < vps->getMaxLayers() - 1; i++)
      {
+#if O0225_MAX_TID_FOR_REF_LAYERS
+       for( j = i+1; j <= vps->getMaxLayers() - 1; j++)
+       {
+         if(vps->getDirectDependencyFlag(j, i))
+         {
+           WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i,j), 3, "max_tid_il_ref_pics_plus1[i][j]" );
+         }
+       }
+#else
        WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
+#endif 
      }
    }
 #else
   for( i = 0; i < vps->getMaxLayers() - 1; i++)
   {
+#if O0225_MAX_TID_FOR_REF_LAYERS
+       for( j = i+1; j <= vps->getMaxLayers() - 1; j++)
+       {
+         if(vps->getDirectDependencyFlag(j, i))
+         {
+           WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i,j), 3, "max_tid_il_ref_pics_plus1[i][j]" );
+         }
+       }
+#else
     WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
+#endif 
   }
 #endif
 #endif
