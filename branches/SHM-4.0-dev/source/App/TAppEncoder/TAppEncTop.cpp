@@ -1200,6 +1200,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #endif
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+    for(i = 1; i< vps->getMaxLayers(); i++)
+    {
+      if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
+      {
+        vps->setPocLsbNotPresentFlag(i, false);
+      }
+    }
+#endif
 #if N0147_IRAP_ALIGN_FLAG
     vps->setCrossLayerIrapAlignFlag(true);
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)

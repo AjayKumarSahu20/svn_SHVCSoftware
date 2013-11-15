@@ -1256,8 +1256,18 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
 #endif
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+  for(i = 1; i< vps->getMaxLayers(); i++)
+  {
+    if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
+    {
+      READ_FLAG(uiCode, "poc_lsb_not_present_flag[i]");
+      vps->setPocLsbNotPresentFlag(i, uiCode);
+    }
+  }
+#endif
 #if O0215_PHASE_ALIGNMENT
-  READ_FLAG( uiCode, "phase_align_flag"); vps->setPhaseAlignFlag( uiCode == 1 ? true : false );
+  READ_FLAG( uiCode, "cross_layer_phase_alignment_flag"); vps->setPhaseAlignFlag( uiCode == 1 ? true : false );
 #endif
 
 #if N0147_IRAP_ALIGN_FLAG
@@ -1553,7 +1563,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if SHM_FIX7
     Int iPOClsb = 0;
 #endif
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+    if( ( rpcSlice->getLayerId() > 0 && !rpcSlice->getVPS()->getPocLsbNotPresentFlag( rpcSlice->getVPS()->getLayerIdInVps(rpcSlice->getLayerId())) ) || !rpcSlice->getIdrPicFlag())
+#else
     if( rpcSlice->getLayerId() > 0 || !rpcSlice->getIdrPicFlag() )
+#endif
 #else
     else
 #endif

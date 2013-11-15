@@ -988,12 +988,21 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
       WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
-#endif 
+#endif
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+  for(i = 1; i< vps->getMaxLayers(); i++)
+  {
+    if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
+    {
+      WRITE_FLAG(vps->getPocLsbNotPresentFlag(i), "poc_lsb_not_present_flag[i]");
+    }
+  }
+#endif
 #if O0215_PHASE_ALIGNMENT
-  WRITE_FLAG(vps->getPhaseAlignFlag(), "phase_align_flag" );
+  WRITE_FLAG(vps->getPhaseAlignFlag(), "cross_layer_phase_alignment_flag" );
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+  WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
@@ -1233,7 +1242,11 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     //   colour_plane_id                                      u(2)
 
 #if N0065_LAYER_POC_ALIGNMENT
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+    if( (pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag())
+#else
     if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
+#endif
 #else
     if( !pcSlice->getIdrPicFlag() )
 #endif
