@@ -2440,7 +2440,11 @@ Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice )
   Bool            bChroma     = true; // color always present in HEVC ?
   SliceType       eSliceType  = pcSlice->getSliceType();
   Int             iNbRef       = (eSliceType == B_SLICE ) ? (2) : (1);
+#if SVC_EXTENSION
+  UInt            uiLog2WeightDenomLuma = 0, uiLog2WeightDenomChroma = 0;
+#else
   UInt            uiLog2WeightDenomLuma, uiLog2WeightDenomChroma;
+#endif
   UInt            uiTotalSignalledWeightFlags = 0;
 
   Int iDeltaDenom;
