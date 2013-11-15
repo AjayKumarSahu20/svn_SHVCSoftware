@@ -97,17 +97,18 @@ Void TAppEncTop::xInitLibCfg()
   {
     // Auto generation of the format index
     if( m_acLayerCfg[layer].getRepFormatIdx() == -1 )
-    {
-      // Currently only picture width and height are considred. It has to be updated if different chroma format and bit-depth will are used.
+    {      
       Bool found = false;
       for( UInt idx = 0; idx < layer; idx++ )
       {
+        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight()
 #if AUXILIARY_PICTURES
-        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() &&
-            m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC() )
-#else
-        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() )
+          && m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC()
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL_
+          && m_acLayerCfg[layer].m_internalBitDepthY == m_acLayerCfg[idx].m_internalBitDepthY && m_acLayerCfg[layer].m_internalBitDepthC == m_acLayerCfg[idx].m_internalBitDepthC
+#endif
+          )
         {
           found = true;
           break;
