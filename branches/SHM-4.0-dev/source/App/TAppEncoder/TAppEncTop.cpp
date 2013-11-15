@@ -1097,9 +1097,23 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
 #if N0120_MAX_TID_REF_CFG
+#if O0225_MAX_TID_FOR_REF_LAYERS
+      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      {
+        vps->setMaxTidIlRefPicsPlus1(i, j, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
+      }
+#else
       vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
+#endif 
+#else
+#if O0225_MAX_TID_FOR_REF_LAYERS
+      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      {
+        vps->setMaxTidIlRefPicsPlus1(i, j, vps->getMaxTLayers()+1);
+      }
 #else
       vps->setMaxTidIlRefPicsPlus1(i, vps->getMaxTLayers()+1);
+#endif
 #endif
     }
   }
@@ -1107,7 +1121,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
     {
+#if O0225_MAX_TID_FOR_REF_LAYERS
+      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      {
+        vps->setMaxTidIlRefPicsPlus1(i, j, 7);
+      }
+#else
       vps->setMaxTidIlRefPicsPlus1(i, 7);
+#endif 
     }
   }
 #endif
