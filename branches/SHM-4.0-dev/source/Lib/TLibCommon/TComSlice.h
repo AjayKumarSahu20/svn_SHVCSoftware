@@ -1201,17 +1201,17 @@ public:
   Void setVPSId       (Int i)    { m_VPSId = i;             }
   Int  getSPSId       ()         { return m_SPSId;          }
   Void setSPSId       (Int i)    { m_SPSId = i;             }
-#if AUXILIARY_PICTURES
-  ChromaFormat getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
-#else
-  Int  getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
-#endif
-  Void setChromaFormatIdc (ChromaFormat i)    { m_chromaFormatIdc = i;          }
 
 #if AUXILIARY_PICTURES
+  ChromaFormat getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
+  Void setChromaFormatIdc (ChromaFormat i)   { m_chromaFormatIdc = i;          }
+
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
 #else
+  Int  getChromaFormatIdc ()         { return m_chromaFormatIdc;       }
+  Void setChromaFormatIdc (Int i)    { m_chromaFormatIdc = i;          }
+
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
 #endif
