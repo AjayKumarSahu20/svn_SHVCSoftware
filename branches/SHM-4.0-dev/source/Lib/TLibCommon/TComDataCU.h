@@ -491,6 +491,9 @@ public:
   Bool          isIntra   ( UInt uiPartIdx )  { return m_pePredMode[ uiPartIdx ] == MODE_INTRA; }
   Bool          isSkipped ( UInt uiPartIdx );                                                     ///< SKIP (no residual)
   Bool          isBipredRestriction( UInt puIdx );
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
+#endif
 
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for symbol prediction (most probable / mode conversion)
