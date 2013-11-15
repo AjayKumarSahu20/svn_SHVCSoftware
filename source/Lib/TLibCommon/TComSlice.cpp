@@ -2000,6 +2000,9 @@ TComVPS::TComVPS()
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
 #endif
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+  ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
+#endif
 #if N0147_IRAP_ALIGN_FLAG
   m_crossLayerIrapAlignFlag = true;
 #endif 
