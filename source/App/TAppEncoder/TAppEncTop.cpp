@@ -105,7 +105,7 @@ Void TAppEncTop::xInitLibCfg()
 #if AUXILIARY_PICTURES
           && m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC()
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL_
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
           && m_acLayerCfg[layer].m_internalBitDepthY == m_acLayerCfg[idx].m_internalBitDepthY && m_acLayerCfg[layer].m_internalBitDepthC == m_acLayerCfg[idx].m_internalBitDepthC
 #endif
           )
