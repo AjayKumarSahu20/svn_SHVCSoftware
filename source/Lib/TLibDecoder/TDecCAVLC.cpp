@@ -601,7 +601,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() )
   {
 #endif
+#if AUXILIARY_PICTURES
+    READ_UVLC(     uiCode, "chroma_format_idc" );                  pcSPS->setChromaFormatIdc( ChromaFormat(uiCode) );
+#else
     READ_UVLC(     uiCode, "chroma_format_idc" );                  pcSPS->setChromaFormatIdc( uiCode );
+#endif
     assert(uiCode <= 3);
     // in the first version we only support chroma_format_idc equal to 1 (4:2:0), so separate_colour_plane_flag cannot appear in the bitstream
     assert (uiCode == 1);
@@ -1048,7 +1052,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     for(j = 0; j < numScalabilityTypes; j++)
     {
       READ_CODE( vps->getDimensionIdLen(j), uiCode, "dimension_id[i][j]" ); vps->setDimensionId(i, j, uiCode);
+#if !AUXILIARY_PICTURES
       assert( uiCode <= vps->getMaxLayerId() );
+#endif
     }
   }
   }
@@ -1305,8 +1311,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 Void  TDecCavlc::parseRepFormat      ( RepFormat *repFormat )
 {
   UInt uiCode;
+#if AUXILIARY_PICTURES
+  READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( ChromaFormat(uiCode) );
+#else
   READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( uiCode );
-
+#endif
+  
   if( repFormat->getChromaFormatVpsIdc() == 3 )
   {
     READ_FLAG( uiCode, "separate_colour_plane_flag");        repFormat->setSeparateColourPlaneVpsFlag(uiCode ? true : false);
@@ -1807,7 +1817,31 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     if(sps->getUseSAO())
     {
       READ_FLAG(uiCode, "slice_sao_luma_flag");  rpcSlice->setSaoEnabledFlag((Bool)uiCode);
+#if AUXILIARY_PICTURES
+      ChromaFormat format;
+#if REPN_FORMAT_IN_VPS
+      if( ( sps->getLayerId() == 0 ) || sps->getUpdateRepFormatFlag() )
+      {
+        format = sps->getChromaFormatIdc();
+      }
+      else
+      {
+        format = rpcSlice->getVPS()->getVpsRepFormat( rpcSlice->getVPS()->getVpsRepFormatIdx(sps->getLayerId()) )->getChromaFormatVpsIdc();
+      }
+#else
+      format = sps->getChromaFormatIdc();
+#endif
+      if (format != CHROMA_400)
+      {
+#endif
       READ_FLAG(uiCode, "slice_sao_chroma_flag");  rpcSlice->setSaoEnabledFlagChroma((Bool)uiCode);
+#if AUXILIARY_PICTURES
+      }
+      else
+      {
+        rpcSlice->setSaoEnabledFlagChroma(false);
+      }
+#endif
     }
 
     if (rpcSlice->getIdrPicFlag())
@@ -2410,6 +2444,12 @@ Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice )
   UInt            uiTotalSignalledWeightFlags = 0;
 
   Int iDeltaDenom;
+#if AUXILIARY_PICTURES
+  if (pcSlice->getChromaFormatIdc() == CHROMA_400)
+  {
+    bChroma = false;
+  }
+#endif
   // decode delta_luma_log2_weight_denom :
   READ_UVLC( uiLog2WeightDenomLuma, "luma_log2_weight_denom" );     // ue(v): luma_log2_weight_denom
   assert( uiLog2WeightDenomLuma <= 7 );
@@ -2429,8 +2469,20 @@ Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice )
       pcSlice->getWpScaling(eRefPicList, iRefIdx, wp);
 
       wp[0].uiLog2WeightDenom = uiLog2WeightDenomLuma;
+#if AUXILIARY_PICTURES
+      if (!bChroma)
+      {
+        wp[1].uiLog2WeightDenom = 0;
+        wp[2].uiLog2WeightDenom = 0;
+      }
+      else
+      {
+#endif
       wp[1].uiLog2WeightDenom = uiLog2WeightDenomChroma;
       wp[2].uiLog2WeightDenom = uiLog2WeightDenomChroma;
+#if AUXILIARY_PICTURES
+      }
+#endif
 
       UInt  uiCode;
       READ_FLAG( uiCode, "luma_weight_lX_flag" );           // u(1): luma_weight_l0_flag

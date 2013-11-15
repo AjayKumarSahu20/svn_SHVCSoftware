@@ -102,7 +102,12 @@ Void TAppEncTop::xInitLibCfg()
       Bool found = false;
       for( UInt idx = 0; idx < layer; idx++ )
       {
+#if AUXILIARY_PICTURES
+        if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() &&
+            m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC() )
+#else
         if( m_acLayerCfg[layer].getSourceWidth() == m_acLayerCfg[idx].getSourceWidth() && m_acLayerCfg[layer].getSourceHeight() == m_acLayerCfg[idx].getSourceHeight() )
+#endif
         {
           found = true;
           break;
@@ -143,7 +148,11 @@ Void TAppEncTop::xInitLibCfg()
     RepFormat *repFormat = vps->getVpsRepFormat( idx );
     repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
     repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
+#if AUXILIARY_PICTURES
+    repFormat->setChromaFormatVpsIdc        ( m_acLayerCfg[mapIdxToLayer[idx]].getChromaFormatIDC() );
+#else
     repFormat->setChromaFormatVpsIdc        ( 1                                             );  // Need modification to change for each layer - corresponds to 420
+#endif
     repFormat->setSeparateColourPlaneVpsFlag( 0                                             );  // Need modification to change for each layer
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY(mapIdxToLayer[idx])      );  // Need modification to change for each layer
@@ -594,6 +603,9 @@ Void TAppEncTop::xInitLibCfg()
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     m_acTEncTop[layer].setAdaptiveResolutionChange( m_adaptiveResolutionChange );
 #endif
+#if AUXILIARY_PICTURES
+    m_acTEncTop[layer].setChromaFormatIDC( m_acLayerCfg[layer].m_chromaFormatIDC );
+#endif
   }
 }
 #else //SVC_EXTENSION
@@ -1024,7 +1036,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setScalabilityMask(i, m_scalabilityMask[i]);
       scalabilityTypes += m_scalabilityMask[i];
     }
+#if AUXILIARY_PICTURES
+    assert( scalabilityTypes <= 2 );
+#else
     assert( scalabilityTypes == 1 );
+#endif
     vps->setNumScalabilityTypes(scalabilityTypes);
   }
   else
@@ -1045,6 +1061,29 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
     vps->setDimensionId(i, 0, i);
   }
+#if AUXILIARY_PICTURES
+  if (m_scalabilityMask[3])
+  {
+    UInt maxAuxId = 0;
+    UInt auxDimIdLen = 0;
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if (m_acLayerCfg[i].getAuxId() > maxAuxId)
+      {
+        maxAuxId = m_acLayerCfg[i].getAuxId();
+      }
+    }
+    while((1 << auxDimIdLen) < (maxAuxId + 1))
+    {
+      auxDimIdLen++;
+    }
+    vps->setDimensionIdLen(1, auxDimIdLen);
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      vps->setDimensionId(i, 1, m_acLayerCfg[i].getAuxId());
+    }
+  }
+#endif
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
 #if N0120_MAX_TID_REF_CFG
@@ -1254,9 +1293,17 @@ Void TAppEncTop::encode()
     {
 #if SVC_UPSAMPLING
 #if LAYER_CTB
+#if AUXILIARY_PICTURES
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#endif
+#else
+#if AUXILIARY_PICTURES
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #endif
 #else
       pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
@@ -1266,9 +1313,17 @@ Void TAppEncTop::encode()
     {
 #if SVC_UPSAMPLING
 #if LAYER_CTB
+#if AUXILIARY_PICTURES
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#endif
+#else
+#if AUXILIARY_PICTURES
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #else
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #endif
 #else
       pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
@@ -1324,6 +1379,13 @@ Void TAppEncTop::encode()
 
         // read input YUV file
         m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], m_acLayerCfg[layer].getPad() );
+
+#if AUXILIARY_PICTURES
+        if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
+        {
+          pcPicYuvOrg[layer]->convertToMonochrome();
+        }
+#endif
 
         if(layer == m_numLayers-1)
         {
@@ -1679,9 +1741,17 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
 
 #if SVC_UPSAMPLING
 #if LAYER_CTB
+#if AUXILIARY_PICTURES
+    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+#endif
+#else
+#if AUXILIARY_PICTURES
+    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
+#endif
 #endif
 #else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );

@@ -43,6 +43,11 @@ protected:
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
 #if SVC_EXTENSION
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+  ChromaFormat m_InputChromaFormat;
+  Int          m_auxId;
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int       *m_samplePredRefLayerIds;
@@ -140,6 +145,11 @@ public:
   Int     getConfRight()              {return m_confRight;        }
   Int     getConfTop()                {return m_confTop;          }
   Int     getConfBottom()             {return m_confBottom;       }
+#if AUXILIARY_PICTURES
+  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
+  ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }
+  Int          getAuxId()               {return m_auxId;            }
+#endif
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }

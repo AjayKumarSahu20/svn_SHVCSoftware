@@ -22,6 +22,20 @@ namespace po = df::program_options_lite;
 //! \{
 
 
+#if AUXILIARY_PICTURES
+static inline ChromaFormat numberToChromaFormat(const Int val)
+{
+  switch (val)
+  {
+    case 400: return CHROMA_400; break;
+    case 420: return CHROMA_420; break;
+    case 422: return CHROMA_422; break;
+    case 444: return CHROMA_444; break;
+    default:  return NUM_CHROMA_FORMAT;
+  }
+}
+#endif
+
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
@@ -74,6 +88,11 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   string cfg_InputFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
+#if AUXILIARY_PICTURES
+  Int tmpInputChromaFormat;
+  Int tmpChromaFormat;
+#endif
+
   po::Options opts;
   opts.addOptions()
     ("InputFile,i",           cfg_InputFile,  string(""), "original YUV input file name")
@@ -84,6 +103,10 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
     ("SourceWidth,-wdt",      m_iSourceWidth,  0, "Source picture width")
     ("SourceHeight,-hgt",     m_iSourceHeight, 0, "Source picture height")
     ("CroppingMode",          m_conformanceMode,  0, "Cropping mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+#if AUXILIARY_PICTURES
+    ("InputChromaFormat",     tmpInputChromaFormat,  420, "InputChromaFormatIDC")
+    ("ChromaFormatIDC",       tmpChromaFormat,    420, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
+#endif
     ("CropLeft",              m_confLeft,      0, "Left cropping/padding for cropping mode 3")
     ("CropRight",             m_confRight,     0, "Right cropping/padding for cropping mode 3")
     ("CropTop",               m_confTop,       0, "Top cropping/padding for cropping mode 3")
@@ -102,6 +125,10 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   m_cInputFile = cfg_InputFile;
   m_cReconFile = cfg_ReconFile;
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
+#if AUXILIARY_PICTURES
+  m_InputChromaFormat = numberToChromaFormat(tmpInputChromaFormat);
+  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormat) : (numberToChromaFormat(tmpChromaFormat)));
+#endif
 
   // reading external dQP description from file
   if ( m_pchdQPFile )

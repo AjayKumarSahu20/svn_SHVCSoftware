@@ -74,6 +74,9 @@ private:
   
   Int   m_iPicWidth;            ///< Width of picture
   Int   m_iPicHeight;           ///< Height of picture
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC; ////< Chroma Format
+#endif
   
   Int   m_iCuWidth;             ///< Width of Coding Unit (CU)
   Int   m_iCuHeight;            ///< Height of Coding Unit (CU)
@@ -107,11 +110,19 @@ public:
   // ------------------------------------------------------------------------------------------------
   //  Memory management
   // ------------------------------------------------------------------------------------------------
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
+#else
+  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
+#endif  
+#else
 #if SVC_UPSAMPLING
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
 #else
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
 #endif  
+#endif
   
   Void  destroy     ();
   
@@ -124,6 +135,9 @@ public:
   
   Int   getWidth    ()     { return  m_iPicWidth;    }
   Int   getHeight   ()     { return  m_iPicHeight;   }
+#if AUXILIARY_PICTURES
+  ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
+#endif
   
 #if SVC_EXTENSION
   Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
@@ -181,6 +195,10 @@ public:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void  setReconstructed(Bool x) { m_isReconstructed = x;    }
   Bool  isReconstructed()        { return m_isReconstructed; }
+#endif
+
+#if AUXILIARY_PICTURES
+  Void convertToMonochrome();
 #endif
 
   // Set border extension flag

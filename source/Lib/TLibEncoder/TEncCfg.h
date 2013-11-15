@@ -210,6 +210,9 @@ protected:
 
   Int       m_chromaCbQpOffset;                 //  Chroma Cb QP Offset (0:default)
   Int       m_chromaCrQpOffset;                 //  Chroma Cr Qp Offset (0:default)
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+#endif
 
 #if ADAPTIVE_QP_SELECTION
   Bool      m_bUseAdaptQpSelect;
@@ -929,6 +932,10 @@ public:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
+#if AUXILIARY_PICTURES
+  Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
+  ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
 #endif
 #endif
 };

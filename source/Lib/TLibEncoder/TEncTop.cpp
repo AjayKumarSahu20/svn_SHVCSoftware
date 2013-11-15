@@ -114,7 +114,11 @@ Void TEncTop::create ()
 #else
   m_cGOPEncoder.        create();
 #endif
+#if AUXILIARY_PICTURES
+  m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   m_cCuEncoder.         create( g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight );
   if (m_bUseSAO)
   {
@@ -605,7 +609,11 @@ Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicY
     }
     else
     {
+#if AUXILIARY_PICTURES
+      rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
       rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
     }
     rcListPicYuvRecOut.pushBack( rpcPicYuvRec );
   }
@@ -805,12 +813,22 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
+      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
+#else
 #if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
 #endif
       rpcPic = pcEPic;
     }
@@ -846,12 +864,22 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
+#else
 #if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
 #endif
     }
 
@@ -916,6 +944,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setMaxCUWidth    ( g_uiMaxCUWidth      );
   m_cSPS.setMaxCUHeight   ( g_uiMaxCUHeight     );
   m_cSPS.setMaxCUDepth    ( g_uiMaxCUDepth      );
+#if AUXILIARY_PICTURES
+  m_cSPS.setChromaFormatIdc( m_chromaFormatIDC);
+#endif
 
   Int minCUSize = m_cSPS.getMaxCUWidth() >> ( m_cSPS.getMaxCUDepth()-g_uiAddCUDepth );
   Int log2MinCUSize = 0;
@@ -1556,7 +1587,11 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#endif
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
@@ -1608,7 +1643,11 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+        m_cIlpPic[j]->create(picWidth, picHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#else
         m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#endif
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif

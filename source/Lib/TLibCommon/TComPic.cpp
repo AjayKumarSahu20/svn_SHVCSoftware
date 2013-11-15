@@ -78,22 +78,38 @@ TComPic::~TComPic()
 {
 }
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+                      Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
+#else
 Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
-
+#endif
 {
   m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
+#if AUXILIARY_PICTURES
+    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
     m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
   }
+#if AUXILIARY_PICTURES
+  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
     if( m_bSpatialEnhLayer[i] )
     {
+#if AUXILIARY_PICTURES
+      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
     }
   }
 
@@ -406,7 +422,12 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
   if( m_bIndependentSliceBoundaryForNDBFilter || m_bIndependentTileBoundaryForNDBFilter)
   {
     m_pNDBFilterYuvTmp = new TComPicYuv();
+#if AUXILIARY_PICTURES
+    m_pNDBFilterYuvTmp->create(picWidth, picHeight, getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+#else
     m_pNDBFilterYuvTmp->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+#endif
+
   }
 
 }

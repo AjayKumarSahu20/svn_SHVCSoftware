@@ -178,6 +178,21 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
 
         m_cIlpPic[j] = new  TComPic;
+#if AUXILIARY_PICTURES
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+        m_cIlpPic[j]->create(picWidth, picHeight, slice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
+#else
+        m_cIlpPic[j]->create(picWidth, picHeight, slice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), pcSPS->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
+#else
+        m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), pcSPS->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#endif
+#else
 #if REPN_FORMAT_IN_VPS
 #if SVC_UPSAMPLING
         m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
@@ -189,6 +204,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, pcSPS, true);
 #else
         m_cIlpPic[j]->create(pcSPS->getPicWidthInLumaSamples(), pcSPS->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
@@ -290,6 +306,25 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     }
 #endif
     
+#if AUXILIARY_PICTURES
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+    rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+#else
+    rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+    rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), pcSlice->getSPS()->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+#else
+    rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), pcSlice->getSPS()->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                     conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#endif
+#else
 #if REPN_FORMAT_IN_VPS
 #if SVC_UPSAMPLING
     rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
@@ -305,6 +340,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #else
     rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                      conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
 #endif
 
@@ -347,6 +383,27 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
   rpcPic->destroy();
 
+#if AUXILIARY_PICTURES
+#if REPN_FORMAT_IN_VPS
+#if SVC_UPSAMPLING
+  rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+
+#else
+  rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+  rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), pcSlice->getSPS()->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
+
+#else
+  rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), pcSlice->getSPS()->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
+                   conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#endif
+#else
 #if REPN_FORMAT_IN_VPS
 #if SVC_UPSAMPLING
   rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
@@ -364,6 +421,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #else
   rpcPic->create ( pcSlice->getSPS()->getPicWidthInLumaSamples(), pcSlice->getSPS()->getPicHeightInLumaSamples(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
                    conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
 #endif
   rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
@@ -1525,15 +1583,26 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
           Int  numReorderPics[MAX_TLAYER];
           Window &conformanceWindow = sps->getConformanceWindow();
           Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
+#if AUXILIARY_PICTURES
 #if SVC_UPSAMPLING
 #if AVC_SYNTAX
-
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
+#else
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
+          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+#if AVC_SYNTAX
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
 #else
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
 #endif
 #else
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
 #endif
         }
       }
