@@ -252,10 +252,10 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
 #if O0194_WEIGHTED_PREDICTION_CGS
         if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))
         {
-          refAC *= (double)currWeightACDCParam[comp].iSamples/refWeightACDCParam[comp].iSamples;
+          refAC = ( refAC * currWeightACDCParam[comp].iSamples ) /refWeightACDCParam[comp].iSamples;
 #if O0194_JOINT_US_BITSHIFT
-          refAC *= (1<<(g_bitDepthYLayer[1]-g_bitDepthYLayer[0]));
-          refDC *= (1<<(g_bitDepthYLayer[1]-g_bitDepthYLayer[0]));
+          refAC <<= (g_bitDepthYLayer[1]-g_bitDepthYLayer[0]);
+          refDC <<= (g_bitDepthYLayer[1]-g_bitDepthYLayer[0]);
 #endif
          }
 #endif
