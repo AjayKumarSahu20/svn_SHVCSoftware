@@ -1550,13 +1550,20 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       rpcSlice->setRPS(rps);
     }
 #if N0065_LAYER_POC_ALIGNMENT
+#if SHM_FIX7
+    Int iPOClsb = 0;
+#endif
     if( rpcSlice->getLayerId() > 0 || !rpcSlice->getIdrPicFlag() )
 #else
     else
 #endif
     {
       READ_CODE(sps->getBitsForPOC(), uiCode, "pic_order_cnt_lsb");
+#if SHM_FIX7
+      iPOClsb = uiCode;
+#else
       Int iPOClsb = uiCode;
+#endif
       Int iPrevPOC = rpcSlice->getPrevTid0POC();
       Int iMaxPOClsb = 1<< sps->getBitsForPOC();
       Int iPrevPOClsb = iPrevPOC & (iMaxPOClsb - 1);
@@ -1677,12 +1684,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
               deltaPocMSBCycleLT = uiCode + prevDeltaMSB;
             }
 
-#if SHM_FIX7
-            Int pocLTCurr = rpcSlice->getPOC() - deltaPocMSBCycleLT * maxPicOrderCntLSB - sps->getBitsForPOC() + pocLsbLt;
-#else
             Int pocLTCurr = rpcSlice->getPOC() - deltaPocMSBCycleLT * maxPicOrderCntLSB
                                         - iPOClsb + pocLsbLt;
-#endif
+
             rps->setPOC     (j, pocLTCurr);
             rps->setDeltaPOC(j, - rpcSlice->getPOC() + pocLTCurr);
             rps->setCheckLTMSBPresent(j,true);
