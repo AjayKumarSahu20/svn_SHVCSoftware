@@ -1871,6 +1871,26 @@ Bool TComDataCU::xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx)
 }
 #endif
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Bool TComDataCU::isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1)
+{
+  Bool checkILR = false;
+
+  if(uhInterDir&0x1)  //list0
+  {
+    Int refIdxL0 = cMvFieldL0.getRefIdx();
+    checkILR = getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->isILR(m_layerId);
+  }
+  if(uhInterDir&0x2)  //list1
+  {
+    Int refIdxL1  = cMvFieldL1.getRefIdx();
+    checkILR = checkILR || getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->isILR(m_layerId);
+  }
+
+  return checkILR;
+}
+#endif
+
 UInt TComDataCU::getCtxSkipFlag( UInt uiAbsPartIdx )
 {
   TComDataCU* pcTempCU;

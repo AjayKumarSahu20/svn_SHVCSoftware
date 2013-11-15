@@ -128,7 +128,11 @@ protected:
   // AMVP cost computation
   // UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS];
   UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS+1]; //th array bounds
-  
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool            m_disableILP;
+#endif
+
 public:
   TEncSearch();
   virtual ~TEncSearch();
@@ -219,6 +223,11 @@ public:
   
   Void xEncPCM    (TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Pel* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
   Void IPCMSearch (TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv );
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void setDisableILP(Bool a) {m_disableILP = a;}
+#endif
+
 protected:
   
   // -------------------------------------------------------------------------------------------------------------------

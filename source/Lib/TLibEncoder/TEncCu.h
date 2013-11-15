@@ -107,6 +107,9 @@ private:
   Int                     m_addSADDepth;
   Int                     m_temporalSAD;
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool                    m_disableILP;
+#endif
 public:
   /// copy parameters from encoder class
   Void  init                ( TEncTop* pcEncTop );
@@ -168,6 +171,11 @@ protected:
   // Adaptive reconstruction level (ARL) statistics collection functions
   Void xLcuCollectARLStats(TComDataCU* rpcCU);
   Int  xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffInCU, Double* cSum, UInt* numSamples );
+#endif
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool xCheckTileSetConstraint( TComDataCU*& rpcCU );
+  Void xVerifyTileSetConstraint( TComDataCU*& rpcCU );
 #endif
 
 #if AMP_ENC_SPEEDUP 
