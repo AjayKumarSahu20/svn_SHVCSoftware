@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -50,7 +50,7 @@ WeightPredAnalysis::WeightPredAnalysis()
   m_weighted_bipred_flag = false;
   for ( Int iList =0 ; iList<2 ; iList++ )
   {
-    for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ ) 
+    for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ )
     {
       for ( Int comp=0 ; comp<3 ;comp++ )
       {
@@ -73,6 +73,10 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
   //===== calculate AC/DC value =====
   TComPicYuv*   pPic = slice->getPic()->getPicYuvOrg();
   Int   iSample  = 0;
+#if O0194_WEIGHTED_PREDICTION_CGS
+  // Define here to assign the parameter of "iSample"
+  wpACDCParam weightACDCParam[3];
+#endif
 
   // calculate DC/AC value for Y
   Pel*  pOrg    = pPic->getLumaAddr();
@@ -80,6 +84,9 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
   Int64  iOrgNormDCY = ((iOrgDCY+(iSample>>1)) / iSample);
   pOrg = pPic->getLumaAddr();
   Int64  iOrgACY  = xCalcACValueSlice(slice, pOrg, iOrgNormDCY);
+#if O0194_WEIGHTED_PREDICTION_CGS
+  weightACDCParam[0].iSamples = iSample;
+#endif
 
   // calculate DC/AC value for Cb
   pOrg = pPic->getCbAddr();
@@ -87,6 +94,9 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
   Int64  iOrgNormDCCb = ((iOrgDCCb+(iSample>>1)) / (iSample));
   pOrg = pPic->getCbAddr();
   Int64  iOrgACCb  = xCalcACValueUVSlice(slice, pOrg, iOrgNormDCCb);
+#if O0194_WEIGHTED_PREDICTION_CGS
+  weightACDCParam[1].iSamples = iSample;
+#endif
 
   // calculate DC/AC value for Cr
   pOrg = pPic->getCrAddr();
@@ -94,8 +104,13 @@ Bool  WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *slice)
   Int64  iOrgNormDCCr = ((iOrgDCCr+(iSample>>1)) / (iSample));
   pOrg = pPic->getCrAddr();
   Int64  iOrgACCr  = xCalcACValueUVSlice(slice, pOrg, iOrgNormDCCr);
+#if O0194_WEIGHTED_PREDICTION_CGS
+  weightACDCParam[2].iSamples = iSample;
+#endif
 
+#if !O0194_WEIGHTED_PREDICTION_CGS
   wpACDCParam weightACDCParam[3];
+#endif
   weightACDCParam[0].iAC = iOrgACY;
   weightACDCParam[0].iDC = iOrgNormDCY;
   weightACDCParam[1].iAC = iOrgACCb;
@@ -137,9 +152,9 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
   Int iPresentCnt = 0;
   for ( Int iList=0 ; iList<2 ; iList++ )
   {
-    for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ ) 
+    for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ )
     {
-      for ( Int iComp=0 ; iComp<3 ;iComp++ ) 
+      for ( Int iComp=0 ; iComp<3 ;iComp++ )
       {
         wpScalingParam  *pwp = &(m_wp[iList][iRefIdx][iComp]);
         iPresentCnt += (Int)pwp->bPresentFlag;
@@ -153,9 +168,9 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *slice)
     slice->getPPS()->setWPBiPred(false);
     for ( Int iList=0 ; iList<2 ; iList++ )
     {
-      for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ ) 
+      for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ )
       {
-        for ( Int iComp=0 ; iComp<3 ;iComp++ ) 
+        for ( Int iComp=0 ; iComp<3 ;iComp++ )
         {
           wpScalingParam  *pwp = &(m_wp[iList][iRefIdx][iComp]);
           pwp->bPresentFlag      = false;
@@ -194,7 +209,7 @@ Bool  WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *slice)
 
   // selecting whether WP is used, or not
   xSelectWP(slice, m_wp, iDenom);
-  
+
   slice->setWpScaling( m_wp );
 
   return (true);
@@ -215,6 +230,16 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
       wpACDCParam *currWeightACDCParam, *refWeightACDCParam;
       slice->getWpAcDcParam(currWeightACDCParam);
       slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
+#if O0194_WEIGHTED_PREDICTION_CGS
+      UInt currLayerId = slice->getLayerId();
+      UInt refLayerId  = slice->getRefPic(eRefPicList, refIdxTemp)->getLayerId();
+      Bool validILRPic = slice->getRefPic(eRefPicList, refIdxTemp)->isILR( currLayerId ) && refLayerId == 0;
+
+      if( validILRPic )
+      {
+        refWeightACDCParam = (wpACDCParam *)g_refWeightACDCParam;
+      }
+#endif
 
       for ( Int comp = 0; comp < 3; comp++ )
       {
@@ -228,11 +253,29 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         // reference frame
         Int64 refDC = refWeightACDCParam[comp].iDC;
         Int64 refAC = refWeightACDCParam[comp].iAC;
+#if O0194_WEIGHTED_PREDICTION_CGS
+        if( validILRPic )
+        {
+          refAC = ( refAC * currWeightACDCParam[comp].iSamples ) /refWeightACDCParam[comp].iSamples;
+#if O0194_JOINT_US_BITSHIFT
+          refAC <<= (g_bitDepthYLayer[currLayerId]-g_bitDepthYLayer[refLayerId]);
+          refDC <<= (g_bitDepthYLayer[currLayerId]-g_bitDepthYLayer[refLayerId]);
+#endif
+        }
+#endif
 
         // calculating iWeight and iOffset params
         Double dWeight = (refAC==0) ? (Double)1.0 : Clip3( -16.0, 15.0, ((Double)currAC / (Double)refAC) );
         Int weight = (Int)( 0.5 + dWeight * (Double)(1<<log2Denom) );
         Int offset = (Int)( ((currDC<<log2Denom) - ((Int64)weight * refDC) + (Int64)realOffset) >> realLog2Denom );
+#if O0194_WEIGHTED_PREDICTION_CGS
+        if( !validILRPic )
+        {
+          dWeight = 1;
+          offset  = 0;
+        }
+        weight = (Int)( 0.5 + dWeight * (Double)(1<<log2Denom) );
+#endif
 
         // Chroma offset range limitation
         if(comp)
@@ -252,6 +295,14 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         Int deltaWeight = (defaultWeight - weight);
         if(deltaWeight > 127 || deltaWeight < -128)
           return (false);
+#if O0194_WEIGHTED_PREDICTION_CGS
+        // make sure the reference frames other than ILR are not using weighted prediction
+        else
+        if( !validILRPic )
+        {
+          continue;
+        }
+#endif
 
         m_wp[refList][refIdxTemp][comp].bPresentFlag = true;
         m_wp[refList][refIdxTemp][comp].iWeight = (Int)weight;
@@ -263,7 +314,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
   return (true);
 }
 
-/** select whether weighted pred enables or not. 
+/** select whether weighted pred enables or not.
  * \param TComSlice *slice
  * \param wpScalingParam
  * \param iDenom
@@ -324,7 +375,7 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *slice, wpScalingParam weightPredTa
   return (true);
 }
 
-/** calculate DC value of original image for luma. 
+/** calculate DC value of original image for luma.
  * \param TComSlice *slice
  * \param Pel *pPel
  * \param Int *iSample
@@ -344,7 +395,7 @@ Int64 WeightPredAnalysis::xCalcDCValueSlice(TComSlice *slice, Pel *pPel, Int *iS
   return (iDC);
 }
 
-/** calculate AC value of original image for luma. 
+/** calculate AC value of original image for luma.
  * \param TComSlice *slice
  * \param Pel *pPel
  * \param Int iDC
@@ -362,7 +413,7 @@ Int64 WeightPredAnalysis::xCalcACValueSlice(TComSlice *slice, Pel *pPel, Int64 i
   return (iAC);
 }
 
-/** calculate DC value of original image for chroma. 
+/** calculate DC value of original image for chroma.
  * \param TComSlice *slice
  * \param Pel *pPel
  * \param Int *iSample
@@ -382,7 +433,7 @@ Int64 WeightPredAnalysis::xCalcDCValueUVSlice(TComSlice *slice, Pel *pPel, Int *
   return (iDC);
 }
 
-/** calculate AC value of original image for chroma. 
+/** calculate AC value of original image for chroma.
  * \param TComSlice *slice
  * \param Pel *pPel
  * \param Int iDC
@@ -400,7 +451,7 @@ Int64 WeightPredAnalysis::xCalcACValueUVSlice(TComSlice *slice, Pel *pPel, Int64
   return (iAC);
 }
 
-/** calculate DC value. 
+/** calculate DC value.
  * \param Pel *pPel
  * \param Int iWidth
  * \param Int iHeight
@@ -422,7 +473,7 @@ Int64 WeightPredAnalysis::xCalcDCValue(Pel *pPel, Int iWidth, Int iHeight, Int i
   return (iDC);
 }
 
-/** calculate AC value. 
+/** calculate AC value.
  * \param Pel *pPel
  * \param Int iWidth
  * \param Int iHeight
@@ -445,7 +496,7 @@ Int64 WeightPredAnalysis::xCalcACValue(Pel *pPel, Int iWidth, Int iHeight, Int i
   return (iAC);
 }
 
-/** calculate SAD values for both WP version and non-WP version. 
+/** calculate SAD values for both WP version and non-WP version.
  * \param Pel *pOrgPel
  * \param Pel *pRefPel
  * \param Int iWidth

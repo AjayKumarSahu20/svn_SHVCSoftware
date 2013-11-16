@@ -100,7 +100,9 @@ protected:
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
-
+#if AUXILIARY_PICTURES
+  ChromaFormat m_InputChromaFormatIDC;
+#endif
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
 
@@ -149,6 +151,7 @@ protected:
   
   Int       m_maxTempLayer;                                  ///< Max temporal layer
 
+#if !LAYER_CTB
   // coding unit (CU) definition
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
@@ -160,14 +163,20 @@ protected:
   
   UInt      m_uiQuadtreeTUMaxDepthInter;
   UInt      m_uiQuadtreeTUMaxDepthIntra;
+#endif
   
   // coding tools (bit-depth)
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
   Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
   Int       m_outputBitDepthY;                              ///< bit-depth of output file (luma component)
   Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
   Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
   Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
+#endif
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+#endif
 
   // coding tools (PCM bit-depth)
   Bool      m_bPCMInputBitDepthFlag;                          ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
@@ -353,13 +362,14 @@ protected:
   Int       m_elRapSliceBEnabled;
 #endif
   // internal member functions
+#if LAYER_CTB
+  Void  xSetGlobal      (UInt layerId);                       ///< set global variables
+#else
   Void  xSetGlobal      ();                                   ///< set global variables
+#endif
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
-#if FINAL_RPL_CHANGE_N0082
-  Bool  xconfirmExtraGOP (GOPEntry * ge);
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
@@ -374,6 +384,9 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
+#if O0215_PHASE_ALIGNMENT
+  bool m_phaseAlignFlag;
+#endif
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();
@@ -387,22 +400,32 @@ public:
   Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
   Int  getNumLayer()               {return m_numLayers;        }
   Int  getGOPSize()                {return m_iGOPSize;          }
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  UInt getInternalBitDepthY(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthY; }
+  UInt getInternalBitDepthC(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthC; }
+  Bool getPCMInputBitDepthFlag()             {return m_bPCMInputBitDepthFlag;                  }
+#else
   UInt getInternalBitDepthY()      {return m_internalBitDepthY; }
   UInt getInternalBitDepthC()      {return m_internalBitDepthC; }
+#endif
+#if !LAYER_CTB
   UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
   UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
+#endif
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
   Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
 #if AVC_SYNTAX
   Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
-#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
+#endif
+#if LAYER_CTB
+  Bool getUsePCM()                  { return m_usePCM;               }
+  UInt getPCMLog2MinSize  ()        { return  m_uiPCMLog2MinSize;    }
 #endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg

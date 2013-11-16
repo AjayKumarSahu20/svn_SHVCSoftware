@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2013, ITU/ISO/IEC
  * All rights reserved.
@@ -79,7 +79,7 @@ Void TAppDecTop::destroy()
     free (m_pchBitstreamFile);
     m_pchBitstreamFile = NULL;
   }
-#if SVC_EXTENSION   
+#if SVC_EXTENSION
   for( Int i = 0; i < m_tgtLayerId; i++ )
   {
     if( m_pchReconFile[i] )
@@ -87,7 +87,7 @@ Void TAppDecTop::destroy()
       free ( m_pchReconFile[i] );
       m_pchReconFile[i] = NULL;
     }
-  }  
+  }
 #if AVC_BASE
   if( m_pchBLReconFile )
   {
@@ -224,6 +224,11 @@ Void TAppDecTop::decode()
     }
     if (bNewPicture || !bitstreamFile)
     {
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+      //Bug fix: The bit depth was not set correctly for each layer when doing DBF
+      g_bitDepthY = g_bitDepthYLayer[curLayerId];
+      g_bitDepthC = g_bitDepthCLayer[curLayerId];
+#endif
       m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
 #if EARLY_REF_PIC_MARKING
       m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
@@ -234,14 +239,14 @@ Void TAppDecTop::decode()
     {
       if ( m_pchReconFile[curLayerId] && !openedReconFile[curLayerId] )
       {
-        if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }        
+        if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
         if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
         m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
 
         openedReconFile[curLayerId] = true;
       }
-      if ( bNewPicture && bNewPOC && 
+      if ( bNewPicture && bNewPOC &&
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -275,7 +280,7 @@ Void TAppDecTop::decode()
     streamSyntaxFile.close();
   }
 #endif
-  pcBLPic.destroy();  
+  pcBLPic.destroy();
 
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
 #else
@@ -284,7 +289,7 @@ Void TAppDecTop::decode()
   {
     m_acTDecTop[layer].deletePicBuffer();
   }
-  
+
   // destroy internal classes
   xDestroyDecLib();
 }
@@ -393,7 +398,7 @@ Void TAppDecTop::decode()
         m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
         openedReconFile = true;
       }
-      if ( bNewPicture && 
+      if ( bNewPicture &&
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -409,18 +414,18 @@ Void TAppDecTop::decode()
       }
     }
   }
-  
+
 #if SYNTAX_OUTPUT
   if( streamSyntaxFile.is_open() )
   {
     streamSyntaxFile.close();
   }
 #endif
-  
+
   xFlushOutput( pcListPic );
   // delete buffers
   m_cTDecTop.deletePicBuffer();
-  
+
   // destroy internal classes
   xDestroyDecLib();
 }
@@ -434,7 +439,7 @@ Void TAppDecTop::xCreateDecLib()
 {
 #if SVC_EXTENSION
   // initialize global variables
-  initROM();  
+  initROM();
 
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
   {
@@ -444,7 +449,7 @@ Void TAppDecTop::xCreateDecLib()
     // create decoder class
     m_acTDecTop[layer].create();
 
-    m_acTDecTop[layer].setLayerDec(m_apcTDecTop);   
+    m_acTDecTop[layer].setLayerDec(m_apcTDecTop);
   }
 #else
   // create decoder class
@@ -473,7 +478,7 @@ Void TAppDecTop::xDestroyDecLib()
   {
     m_cTVideoIOYuvReconFile. close();
   }
-  
+
   // destroy decoder class
   m_cTDecTop.destroy();
 #endif
@@ -565,7 +570,12 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
             conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+          // Compile time bug-fix
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#else
           m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -722,7 +732,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
   if(!pcListPic)
   {
     return;
-  } 
+  }
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
 
   iterPic   = pcListPic->begin();
@@ -758,7 +768,12 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
 
 #else
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+          // Compile time bug-fix
+          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#else
           m_cTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+#endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -912,7 +927,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         delete pcPic;
         pcPic = NULL;
       }
-#endif    
+#endif
 #endif
       iterPic++;
     }

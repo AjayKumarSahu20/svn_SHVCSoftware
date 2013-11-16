@@ -101,12 +101,22 @@ public:
   TComPic();
   virtual ~TComPic();
   
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
+                        Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
+#else
+  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
+                        Int *numReorderPics, Bool bIsVirtual = false );                        
+#endif
+#else
 #if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
 #else
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, Bool bIsVirtual = false );                        
+#endif
 #endif
   virtual Void  destroy();
   
@@ -127,6 +137,9 @@ public:
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
+#endif
+#if MFM_ENCCONSTRAINT
+  Bool          checkSameRefInfo();
 #endif
 
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
@@ -162,6 +175,9 @@ public:
   UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
   
   Int           getStride()           { return m_apcPicYuv[1]->getStride(); }
+#if AUXILIARY_PICTURES
+  ChromaFormat  getChromaFormat() const { return m_apcPicYuv[1]->getChromaFormat(); }
+#endif
   Int           getCStride()          { return m_apcPicYuv[1]->getCStride(); }
   
   Void          setReconMark (Bool b) { m_bReconstructed = b;     }

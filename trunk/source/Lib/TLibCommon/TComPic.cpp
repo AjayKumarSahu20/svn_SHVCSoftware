@@ -78,22 +78,38 @@ TComPic::~TComPic()
 {
 }
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+                      Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
+#else
 Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
-
+#endif
 {
   m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
+#if AUXILIARY_PICTURES
+    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
     m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
   }
+#if AUXILIARY_PICTURES
+  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
     if( m_bSpatialEnhLayer[i] )
     {
+#if AUXILIARY_PICTURES
+      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#else
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
     }
   }
 
@@ -406,7 +422,12 @@ Void TComPic::createNonDBFilterInfo(std::vector<Int> sliceStartAddress, Int slic
   if( m_bIndependentSliceBoundaryForNDBFilter || m_bIndependentTileBoundaryForNDBFilter)
   {
     m_pNDBFilterYuvTmp = new TComPicYuv();
+#if AUXILIARY_PICTURES
+    m_pNDBFilterYuvTmp->create(picWidth, picHeight, getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+#else
     m_pNDBFilterYuvTmp->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+#endif
+
   }
 
 }
@@ -800,5 +821,46 @@ Void TComPic::wrireBLSyntax( fstream* filestream, UInt numBytes )
 }
 #endif
 
+#if MFM_ENCCONSTRAINT
+Bool TComPic::checkSameRefInfo()
+{
+  Bool bSameRefInfo = true;
+  TComSlice * pSlice0 = getSlice( 0 );
+  for( UInt uSliceID = getNumAllocatedSlice() - 1 ; bSameRefInfo && uSliceID > 0 ; uSliceID-- )
+  {
+    TComSlice * pSliceN = getSlice( uSliceID );
+    if( pSlice0->getSliceType() != pSliceN->getSliceType() )
+    {
+      bSameRefInfo = false;
+    }
+    else if( pSlice0->getSliceType() != I_SLICE )
+    {
+      Int nListNum = pSlice0->getSliceType() == B_SLICE ? 2 : 1;
+      for( Int nList = 0 ; nList < nListNum ; nList++ )
+      {
+        RefPicList eRefList = ( RefPicList )nList;
+        if( pSlice0->getNumRefIdx( eRefList ) == pSliceN->getNumRefIdx( eRefList ) )
+        {
+          for( Int refIdx = pSlice0->getNumRefIdx( eRefList ) - 1 ; refIdx >= 0 ; refIdx-- )
+          {
+            if( pSlice0->getRefPic( eRefList , refIdx ) != pSliceN->getRefPic( eRefList , refIdx ) )
+            {
+              bSameRefInfo = false;
+              break;
+            }
+          }
+        }
+        else
+        {
+          bSameRefInfo = false;
+          break;
+        }
+      }
+    }
+  }
+
+  return( bSameRefInfo );  
+}
+#endif
 
 //! \}

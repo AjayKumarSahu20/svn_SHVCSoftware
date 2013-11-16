@@ -5,14 +5,13 @@
 #ifndef __TAPPENCLAYERCFG__
 #define __TAPPENCLAYERCFG__
 
+#if SVC_EXTENSION
 #include "TLibCommon/CommonDef.h"
 #include "TLibEncoder/TEncCfg.h"
 #include <sstream>
 
 using namespace std;
-#if SVC_EXTENSION
 class TAppEncCfg;
-#endif
 //! \ingroup TAppEncoder
 //! \{
 
@@ -42,6 +41,11 @@ protected:
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+  ChromaFormat m_InputChromaFormat;
+  Int          m_auxId;
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int       *m_samplePredRefLayerIds;
@@ -54,6 +58,20 @@ protected:
 #endif
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
+#endif
+
+#if LAYER_CTB
+  // coding unit (CU) definition
+  UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
+  UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
+  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth
+  
+  // transfom unit (TU) definition
+  UInt      m_uiQuadtreeTULog2MaxSize;
+  UInt      m_uiQuadtreeTULog2MinSize;
+  
+  UInt      m_uiQuadtreeTUMaxDepthInter;
+  UInt      m_uiQuadtreeTUMaxDepthIntra;
 #endif
 
 #if RC_SHVC_HARMONIZATION
@@ -69,23 +87,24 @@ protected:
 #if N0120_MAX_TID_REF_CFG
   Int       m_maxTidIlRefPicsPlus1;
 #endif 
-#if SVC_EXTENSION
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
-#endif
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
-#if SCALED_REF_LAYER_OFFSETS
   Int       m_numScaledRefLayerOffsets  ;
   Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#endif  
-#if FINAL_RPL_CHANGE_N0082
-  GOPEntry  m_GOPListLayer[MAX_GOP];                            ///< for layer
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
+  Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
+  Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
+  Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
+  Int       m_outputBitDepthY;                              ///< bit-depth of output file (luma component)
+  Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
 #endif
 #if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
@@ -121,6 +140,11 @@ public:
   Int     getConfRight()              {return m_confRight;        }
   Int     getConfTop()                {return m_confTop;          }
   Int     getConfBottom()             {return m_confBottom;       }
+#if AUXILIARY_PICTURES
+  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
+  ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }
+  Int          getAuxId()               {return m_auxId;            }
+#endif
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
@@ -151,9 +175,6 @@ public:
   Int     getRCInitialQP()            {return m_RCInitialQP;           }
   Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
 #endif
-#if FINAL_RPL_CHANGE_N0082
-  GOPEntry getGOPEntry(Int i )        {return m_GOPListLayer[i];  }
-#endif
 #if REPN_FORMAT_IN_VPS
   Int     getRepFormatIdx()           { return m_repFormatIdx;  }
   Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
@@ -163,7 +184,14 @@ public:
 #if N0120_MAX_TID_REF_CFG
   Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
 #endif 
+#if LAYER_CTB
+  UInt    getMaxCUWidth()             {return m_uiMaxCUWidth;      }
+  UInt    getMaxCUHeight()            {return m_uiMaxCUHeight;     }
+  UInt    getMaxCUDepth()             {return m_uiMaxCUDepth;      }
+#endif
 }; // END CLASS DEFINITION TAppEncLayerCfg
+
+#endif //SVC_EXTENSION
 
 //! \}
 

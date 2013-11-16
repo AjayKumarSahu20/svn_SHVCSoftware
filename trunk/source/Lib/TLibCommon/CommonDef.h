@@ -129,7 +129,16 @@
 // ====================================================================================================================
 extern Int g_bitDepthY;
 extern Int g_bitDepthC;
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+extern Int  g_bitDepthYLayer[MAX_LAYERS];
+extern Int  g_bitDepthCLayer[MAX_LAYERS];
 
+extern UInt g_uiPCMBitDepthLumaDec[MAX_LAYERS];    // PCM bit-depth
+extern UInt g_uiPCMBitDepthChromaDec[MAX_LAYERS];    // PCM bit-depth
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+extern void* g_refWeightACDCParam; //type:wpACDCParam
+#endif
 /** clip x, such that 0 <= x <= #g_maxLumaVal */
 template <typename T> inline T ClipY(T x) { return std::min<T>(T((1 << g_bitDepthY)-1), std::max<T>( T(0), x)); }
 template <typename T> inline T ClipC(T x) { return std::min<T>(T((1 << g_bitDepthC)-1), std::max<T>( T(0), x)); }

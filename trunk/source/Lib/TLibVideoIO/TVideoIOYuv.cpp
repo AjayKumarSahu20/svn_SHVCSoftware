@@ -472,7 +472,11 @@ Bool TVideoIOYuv::write( TComPicYuv* pPicYuv, Int confLeft, Int confRight, Int c
   if (m_bitDepthShiftY != 0 || m_bitDepthShiftC != 0)
   {
     dstPicYuv = new TComPicYuv;
+#if AUXILIARY_PICTURES
+    dstPicYuv->create( pPicYuv->getWidth(), pPicYuv->getHeight(), pPicYuv->getChromaFormat(), 1, 1, 0 );
+#else
     dstPicYuv->create( pPicYuv->getWidth(), pPicYuv->getHeight(), 1, 1, 0 );
+#endif
     pPicYuv->copyToPic(dstPicYuv);
 
     Pel minvalY = 0;
@@ -566,11 +570,19 @@ Bool TVideoIOYuv::write( TComPicYuv* pPicTop, TComPicYuv* pPicBottom, Int cropLe
   if (m_bitDepthShiftY != 0 || m_bitDepthShiftC != 0)
   {
     dstPicTop = new TComPicYuv;
+#if AUXILIARY_PICTURES
+    dstPicTop->create( pPicTop->getWidth(), pPicTop->getHeight(), pPicTop->getChromaFormat(), 1, 1, 0 );
+#else
     dstPicTop->create( pPicTop->getWidth(), pPicTop->getHeight(), 1, 1, 0 );
+#endif
     pPicTop->copyToPic(dstPicTop);
     
     dstPicBottom = new TComPicYuv;
+#if AUXILIARY_PICTURES
+    dstPicBottom->create( pPicBottom->getWidth(), pPicBottom->getHeight(), pPicBottom->getChromaFormat(), 1, 1, 0 );
+#else
     dstPicBottom->create( pPicBottom->getWidth(), pPicBottom->getHeight(), 1, 1, 0 );
+#endif
     pPicBottom->copyToPic(dstPicBottom);
     
     Pel minvalY = 0;

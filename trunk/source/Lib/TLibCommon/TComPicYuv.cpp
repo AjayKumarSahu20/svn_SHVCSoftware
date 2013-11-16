@@ -66,10 +66,18 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {
 }
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
+#else
+Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
+#endif
+#else
 #if SVC_UPSAMPLING
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
 #else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
+#endif
 #endif
 {
   m_iPicWidth       = iPicWidth;
@@ -85,12 +93,20 @@ Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt 
   // --> After config finished!
   m_iCuWidth        = uiMaxCUWidth;
   m_iCuHeight       = uiMaxCUHeight;
+#if AUXILIARY_PICTURES
+  m_chromaFormatIDC = chromaFormatIDC;
+#endif
 
   Int numCuInWidth  = m_iPicWidth  / m_iCuWidth  + (m_iPicWidth  % m_iCuWidth  != 0);
   Int numCuInHeight = m_iPicHeight / m_iCuHeight + (m_iPicHeight % m_iCuHeight != 0);
   
+#if LAYER_CTB
+  m_iLumaMarginX    = uiMaxCUWidth  + 16; // for 16-byte alignment
+  m_iLumaMarginY    = uiMaxCUHeight + 16;  // margin for 8-tap filter and infinite padding
+#else
   m_iLumaMarginX    = g_uiMaxCUWidth  + 16; // for 16-byte alignment
   m_iLumaMarginY    = g_uiMaxCUHeight + 16;  // margin for 8-tap filter and infinite padding
+#endif
   
   m_iChromaMarginX  = m_iLumaMarginX>>1;
   m_iChromaMarginY  = m_iLumaMarginY>>1;
@@ -232,6 +248,20 @@ Void  TComPicYuv::copyToPicCr (TComPicYuv*  pcPicYuvDst)
   ::memcpy ( pcPicYuvDst->getBufV(), m_apiPicBufV, sizeof (Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1)) );
   return;
 }
+
+#if AUXILIARY_PICTURES
+Void TComPicYuv::convertToMonochrome()
+{
+  Int numPix = ((m_iPicWidth >> 1) + (m_iChromaMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY << 1));
+  Pel grayVal = (1 << (g_bitDepthC - 1));
+
+  for (UInt i = 0; i < numPix; i++)
+  {
+    m_apiPicBufU[i] = grayVal;
+    m_apiPicBufV[i] = grayVal;
+  }
+}
+#endif
 
 Void TComPicYuv::extendPicBorder ()
 {
