@@ -1621,6 +1621,12 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
           pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
 #endif
+
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+          // set AVC BL bit depth, can be an input parameter from the command line
+          g_bitDepthYLayer[0] = 8;
+          g_bitDepthCLayer[0] = 8;
+#endif
         }
       }
 #endif
