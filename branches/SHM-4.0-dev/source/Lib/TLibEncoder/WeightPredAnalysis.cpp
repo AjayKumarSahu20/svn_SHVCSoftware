@@ -233,7 +233,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
 #if O0194_WEIGHTED_PREDICTION_CGS
       UInt currLayerId = slice->getLayerId();
       UInt refLayerId  = slice->getRefPic(eRefPicList, refIdxTemp)->getLayerId();
-      Bool validILRPic = slice->getRefPic(eRefPicList, refIdxTemp)->isILR( currLayerId ) && !( refLayerId == 0 && slice->getVPS()->getAvcBaseLayerFlag() );
+      Bool validILRPic = slice->getRefPic(eRefPicList, refIdxTemp)->isILR( currLayerId ) && refLayerId == 0;
 
       if( validILRPic )
       {
