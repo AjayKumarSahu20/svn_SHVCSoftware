@@ -97,9 +97,17 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 }
 
 #if O0215_PHASE_ALIGNMENT
+#if O0194_JOINT_US_BITSHIFT
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+#else
 Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+#endif
+#else
+#if O0194_JOINT_US_BITSHIFT
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
 #else
 Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
+#endif
 #endif
 {
   assert ( NTAPS_US_LUMA == 8 );
@@ -140,6 +148,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
   Int scaleX = g_posScalingFactor[refLayerIdc][0];
   Int scaleY = g_posScalingFactor[refLayerIdc][1];
+
+#if O0194_JOINT_US_BITSHIFT
+  UInt currLayerId = currSlice->getLayerId();
+  UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
+  currLayerId = 1;
+  refLayerId = 0;
+#endif
 
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
@@ -240,7 +255,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
-    Int shift1 = g_bitDepthYLayer[0] - 8;
+    Int shift1 = g_bitDepthYLayer[refLayerId] - 8;
 #else
     Int shift1 = g_bitDepthY - 8;
 #endif
@@ -278,7 +293,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
-    Int nShift = 20 - g_bitDepthYLayer[1];
+    Int nShift = 20 - g_bitDepthYLayer[currLayerId];
 #else
     Int nShift = US_FILTER_PREC*2 - shift1;
 #endif
@@ -390,7 +405,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
-    shift1 = g_bitDepthCLayer[0] - 8;
+    shift1 = g_bitDepthCLayer[refLayerId] - 8;
 #else
     shift1 = g_bitDepthC - 8;
 #endif
@@ -435,7 +450,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
-    nShift = 20 - g_bitDepthCLayer[1];
+    nShift = 20 - g_bitDepthCLayer[refLayerId];
 #else
     nShift = US_FILTER_PREC*2 - shift1;
 #endif

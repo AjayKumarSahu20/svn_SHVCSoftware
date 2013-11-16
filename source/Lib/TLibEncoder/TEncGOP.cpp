@@ -800,9 +800,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
         {
 #if O0215_PHASE_ALIGNMENT
+#if O0194_JOINT_US_BITSHIFT
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#else
           m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+#if O0194_JOINT_US_BITSHIFT
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
 #else
           m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
+#endif
 #endif
         }
         else

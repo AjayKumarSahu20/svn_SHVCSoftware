@@ -120,9 +120,17 @@ public:
 #if SVC_EXTENSION
 #if SVC_UPSAMPLING
 #if O0215_PHASE_ALIGNMENT
+#if O0194_JOINT_US_BITSHIFT
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag );
+#else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag );
+#endif
+#else
+#if O0194_JOINT_US_BITSHIFT
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
 #else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
+#endif
 #endif
 #endif
 #endif //SVC_EXTENSION
