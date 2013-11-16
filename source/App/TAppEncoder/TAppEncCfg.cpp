@@ -2447,15 +2447,10 @@ Void TAppEncCfg::xPrintParameter()
 
   printf("QP adaptation                : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0) );
   printf("GOP size                     : %d\n", m_iGOPSize );
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("Input bit depth Layer0       : (Y:%d, C:%d)\n", m_acLayerCfg[0].m_inputBitDepthY   , m_acLayerCfg[0].m_inputBitDepthC    );
-  printf("Input bit depth Layer1       : (Y:%d, C:%d)\n", m_acLayerCfg[1].m_internalBitDepthY, m_acLayerCfg[1].m_internalBitDepthC );
-  printf("Internal bit depth Layer0    : (Y:%d, C:%d)\n", m_acLayerCfg[0].m_internalBitDepthY, m_acLayerCfg[0].m_internalBitDepthC );
-  printf("Internal bit depth Layer1    : (Y:%d, C:%d)\n", m_acLayerCfg[1].m_internalBitDepthY, m_acLayerCfg[1].m_internalBitDepthC );
-#else
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
-#endif
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
+#endif
 #if O0215_PHASE_ALIGNMENT
   printf("cross-layer sample alignment : %d\n", m_phaseAlignFlag);
 #endif
@@ -2484,10 +2479,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
   
   printf("TOOL CFG: ");
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("IBD0:%d ", g_bitDepthY > m_acLayerCfg[0].m_inputBitDepthY || g_bitDepthC > m_acLayerCfg[0].m_inputBitDepthC);
-  printf("IBD1:%d ", g_bitDepthY > m_acLayerCfg[1].m_inputBitDepthY || g_bitDepthC > m_acLayerCfg[1].m_inputBitDepthC);
-#else
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("IBD:%d ", g_bitDepthY > m_inputBitDepthY || g_bitDepthC > m_inputBitDepthC);
 #endif
   printf("HAD:%d ", m_bUseHADME           );

@@ -403,6 +403,7 @@ public:
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   UInt getInternalBitDepthY(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthY; }
   UInt getInternalBitDepthC(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthC; }
+  Bool getPCMInputBitDepthFlag()             {return m_bPCMInputBitDepthFlag;                  }
 #else
   UInt getInternalBitDepthY()      {return m_internalBitDepthY; }
   UInt getInternalBitDepthC()      {return m_internalBitDepthC; }

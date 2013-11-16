@@ -166,6 +166,11 @@ Void TAppEncLayerCfg::xPrintParameter()
 #endif
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepthY   , m_inputBitDepthC    );
+  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
+  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthY : m_internalBitDepthY, m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthC : m_internalBitDepthC );
+#endif
 #if LAYER_CTB
   printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
