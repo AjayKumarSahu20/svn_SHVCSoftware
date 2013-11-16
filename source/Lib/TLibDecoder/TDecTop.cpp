@@ -787,7 +787,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   // actual decoding starts here
   xActivateParameterSets();
-#if 0 // N0147_IRAP_ALIGN_FLAG Disabled for now!
+#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS
+  //Note setting O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS to 0 may cause decoder to crash.
   //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
   if(!m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
   {

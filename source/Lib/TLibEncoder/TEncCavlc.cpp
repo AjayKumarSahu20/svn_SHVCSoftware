@@ -1021,7 +1021,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if O0215_PHASE_ALIGNMENT
   WRITE_FLAG(vps->getPhaseAlignFlag(), "cross_layer_phase_alignment_flag" );
 #endif
-#if N0147_IRAP_ALIGN_FLAG
+#if N0147_IRAP_ALIGN_FLAG && !IRAP_ALIGN_FLAG_IN_VPS_VUI
   WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
@@ -1091,6 +1091,9 @@ Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
+#if IRAP_ALIGN_FLAG_IN_VPS_VUI
+      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+#endif 
 #if VPS_VUI_BITRATE_PICRATE
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
