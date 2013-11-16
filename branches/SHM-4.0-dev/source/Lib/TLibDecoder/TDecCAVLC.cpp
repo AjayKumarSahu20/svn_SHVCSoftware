@@ -1299,7 +1299,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG( uiCode, "cross_layer_phase_alignment_flag"); vps->setPhaseAlignFlag( uiCode == 1 ? true : false );
 #endif
 
-#if N0147_IRAP_ALIGN_FLAG
+#if N0147_IRAP_ALIGN_FLAG && !IRAP_ALIGN_FLAG_IN_VPS_VUI
   READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
   vps->setCrossLayerIrapAlignFlag(uiCode);
 #endif
@@ -1374,6 +1374,10 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
   UInt i,j;
   UInt uiCode;
+#if IRAP_ALIGN_FLAG_IN_VPS_VUI
+  READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
+  vps->setCrossLayerIrapAlignFlag(uiCode);
+#endif
 #if VPS_VUI_BITRATE_PICRATE
   READ_FLAG( uiCode,        "bit_rate_present_vps_flag" );  vps->setBitRatePresentVpsFlag( uiCode ? true : false );
   READ_FLAG( uiCode,        "pic_rate_present_vps_flag" );  vps->setPicRatePresentVpsFlag( uiCode ? true : false );
