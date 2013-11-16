@@ -1572,6 +1572,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId == 0 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() )
     {
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
+#if O0194_WEIGHTED_PREDICTION_CGS
+      // Calculate for the base layer to be used in EL as Inter layer reference
+      m_pcSliceEncoder->estimateILWpParam( pcSlice );
+#endif
 #if AVC_SYNTAX
       pcPic->readBLSyntax( m_ppcTEncTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
 #endif

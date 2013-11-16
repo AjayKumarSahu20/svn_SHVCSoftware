@@ -122,6 +122,9 @@ public:
 #if SVC_EXTENSION
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField );
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Void    estimateILWpParam   ( TComSlice* pcSlice );
+#endif
 #else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField );
