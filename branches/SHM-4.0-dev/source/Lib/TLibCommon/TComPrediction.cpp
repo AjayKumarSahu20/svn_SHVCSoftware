@@ -765,15 +765,29 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
 
 #if SVC_UPSAMPLING
 #if O0215_PHASE_ALIGNMENT
+#if O0194_JOINT_US_BITSHIFT
+Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+{
+  m_cUsf.upsampleBasePic( currSlice, refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window, phaseAlignFlag );
+}
+#else
 Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
 {
   m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window, phaseAlignFlag );
+}
+#endif
+#else
+#if O0194_JOINT_US_BITSHIFT
+Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
+{
+  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
 }
 #else
 Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
 {
   m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
 }
+#endif
 #endif
 #endif
 //! \}
