@@ -104,12 +104,23 @@ public:
   TEncPic();
   virtual ~TEncPic();
 
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
+                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual=false );
+#else
+  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
+                          Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
+
+#endif
+#else
 #if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,   
                         Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual = false );
 #else
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,   
                         Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
+#endif
 #endif
   virtual Void  destroy();
 

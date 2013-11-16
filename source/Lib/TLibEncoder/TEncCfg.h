@@ -68,10 +68,6 @@ struct GOPEntry
   Int m_deltaRPS;
   Int m_numRefIdc;
   Int m_refIdc[MAX_NUM_REF_PICS+1];
-#if EXTERNAL_USEDBYCURR_N0082
-  Int m_UseExtusedByCurrPic;
-  Int m_ExtusedByCurrPic[MAX_NUM_REF_PICS];
-#endif
   GOPEntry()
   : m_POC(-1)
   , m_QPOffset(0)
@@ -86,16 +82,10 @@ struct GOPEntry
   , m_interRPSPrediction(false)
   , m_deltaRPS(0)
   , m_numRefIdc(0)
-#if EXTERNAL_USEDBYCURR_N0082
-  , m_UseExtusedByCurrPic(0)
-#endif
   {
     ::memset( m_referencePics, 0, sizeof(m_referencePics) );
     ::memset( m_usedByCurrPic, 0, sizeof(m_usedByCurrPic) );
     ::memset( m_refIdc,        0, sizeof(m_refIdc) );
-#if EXTERNAL_USEDBYCURR_N0082
-    ::memset( m_usedByCurrPic, 0, sizeof(m_ExtusedByCurrPic) );
-#endif
   }
 };
 
@@ -220,6 +210,9 @@ protected:
 
   Int       m_chromaCbQpOffset;                 //  Chroma Cb QP Offset (0:default)
   Int       m_chromaCrQpOffset;                 //  Chroma Cr Qp Offset (0:default)
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+#endif
 
 #if ADAPTIVE_QP_SELECTION
   Bool      m_bUseAdaptQpSelect;
@@ -939,6 +932,10 @@ public:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
+#if AUXILIARY_PICTURES
+  Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
+  ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
 #endif
 #endif
 };

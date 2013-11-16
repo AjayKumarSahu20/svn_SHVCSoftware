@@ -81,7 +81,11 @@ int main(int argc, const char** argv)
   input.skipFrames(num_frames_skip, width, height);
 
   TComPicYuv frame;
+#if AUXILIARY_PICTURES
+frame.create( width, height, CHROMA_420, 1, 1, 0 );
+#else
   frame.create( width, height, 1, 1, 0 );
+#endif
 
   int pad[2] = {0, 0};
 

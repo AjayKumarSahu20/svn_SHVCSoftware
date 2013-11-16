@@ -752,12 +752,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR));
 #if SVC_EXTENSION
-#if ILR_RESTR && ILR_RESTR_FIX
-    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
-    Int activeNumILRRefIdxTmp = 0;
-#endif
     if (m_layerId > 0)
     {
+    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+    Int activeNumILRRefIdxTmp = 0;
+
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
@@ -768,9 +767,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
-#if ILR_RESTR && ILR_RESTR_FIX
         // Apply temporal layer restriction to inter-layer prediction
+#if O0225_MAX_TID_FOR_REF_LAYERS
+        Int maxTidIlRefPicsPlus1 = m_pcEncTop->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId(),m_layerId);
+#else
         Int maxTidIlRefPicsPlus1 = m_pcEncTop->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getLayerId());
+#endif 
         if( ((Int)(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getRapPicFlag()) )
         {
           interLayerPredLayerIdcTmp[activeNumILRRefIdxTmp++] = refLayerIdc; // add picture to the list of valid inter-layer pictures
@@ -779,9 +781,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           continue; // ILP is not valid due to temporal layer restriction
         }
-#endif
 
-#if SCALED_REF_LAYER_OFFSETS
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
@@ -789,16 +789,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
-#else
-        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getConformanceWindow();
-        const Window &confEL = pcPic->getPicYuvRec()->getConformanceWindow();
 
-        Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth () - confBL.getWindowLeftOffset() - confBL.getWindowRightOffset();
-        Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight() - confBL.getWindowTopOffset() - confBL.getWindowBottomOffset();
-
-        Int widthEL   = pcPic->getPicYuvRec()->getWidth() - confEL.getWindowLeftOffset() - confEL.getWindowRightOffset();
-        Int heightEL  = pcPic->getPicYuvRec()->getHeight() - confEL.getWindowTopOffset() - confEL.getWindowBottomOffset();
-#endif
         g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
         g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
 
@@ -808,10 +799,18 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
         {
-#if SCALED_REF_LAYER_OFFSETS
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
+#if O0215_PHASE_ALIGNMENT
+#if O0194_JOINT_US_BITSHIFT
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec() );
+          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+#if O0194_JOINT_US_BITSHIFT
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
+#else
+          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc) );
+#endif
 #endif
         }
         else
@@ -822,7 +821,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       }
 
-#if ILR_RESTR && ILR_RESTR_FIX
       // Update the list of active inter-layer pictures
       for ( Int i = 0; i < activeNumILRRefIdxTmp; i++)
       {
@@ -834,7 +832,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // No valid inter-layer pictures -> disable inter-layer prediction
         pcSlice->setInterLayerPredEnabledFlag(false);
       }
-#endif
       
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
@@ -1166,7 +1163,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
-      m_pcEncTop->setILRPic(pcPic);
+      pcSlice->setILRPic( m_pcEncTop->getIlpList() );
 #if REF_IDX_MFM
 #if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
@@ -1200,9 +1197,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         Bool found         = false;
         UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
         UInt ColRefIdx     = pcSlice->getColRefIdx();
+
         for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
         { 
-          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) ) 
+          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
+#if MFM_ENCCONSTRAINT
+            && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+#endif
+            ) 
           { 
             ColRefIdx = colIdx; 
             found = true;
@@ -1215,7 +1217,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           ColFromL0Flag = 1 - ColFromL0Flag;
           for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
           { 
-            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) ) 
+            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
+#if MFM_ENCCONSTRAINT
+              && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+#endif
+              ) 
             { 
               ColRefIdx = colIdx; 
               found = true; 
@@ -1566,6 +1572,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId == 0 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() )
     {
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
+#if O0194_WEIGHTED_PREDICTION_CGS
+      // Calculate for the base layer to be used in EL as Inter layer reference
+      m_pcSliceEncoder->estimateILWpParam( pcSlice );
+#endif
 #if AVC_SYNTAX
       pcPic->readBLSyntax( m_ppcTEncTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
 #endif
@@ -1606,6 +1616,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pcSlice->setSliceCurStartCUAddr         ( startCUAddrSlice      );
           pcSlice->setSliceSegmentCurStartCUAddr  ( startCUAddrSlice      );
           pcSlice->setSliceBits(0);
+#if SVC_EXTENSION
+          // copy reference list modification info from the first slice, assuming that this information is the same across all slices in the picture
+          memcpy( pcSlice->getRefPicListModification(), pcPic->getSlice(0)->getRefPicListModification(), sizeof(TComRefPicListModification) );
+#endif
           uiNumSlices ++;
         }
       }
@@ -1688,6 +1702,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
 #else
       OutputNALUnit nalu(NAL_UNIT_VPS);
+#endif
+#if VPS_EXTN_OFFSET_CALC
+      OutputNALUnit tempNalu(NAL_UNIT_VPS, 0, 0        ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
+      m_pcEntropyCoder->setBitstream(&tempNalu.m_Bitstream);
+      m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());  // Use to calculate the VPS extension offset
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
       m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());
@@ -3161,10 +3180,18 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgTop, TComPic* pcPicO
   bool isTff = pcPicOrgTop->isTopField();
   
   TComPicYuv* pcOrgInterlaced = new TComPicYuv;
+#if AUXILIARY_PICTURES
+  pcOrgInterlaced->create( iWidth, iHeight << 1, pcPicOrgTop->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   pcOrgInterlaced->create( iWidth, iHeight << 1, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   
   TComPicYuv* pcRecInterlaced = new TComPicYuv;
+#if AUXILIARY_PICTURES
+  pcRecInterlaced->create( iWidth, iHeight << 1, pcPicOrgTop->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   pcRecInterlaced->create( iWidth, iHeight << 1, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   
   Pel* pOrgInterlaced = pcOrgInterlaced->getLumaAddr();
   Pel* pRecInterlaced = pcRecInterlaced->getLumaAddr();

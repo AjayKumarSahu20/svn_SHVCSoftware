@@ -110,7 +110,11 @@ public:
   TEncSlice();
   virtual ~TEncSlice();
   
+#if AUXILIARY_PICTURES
+  Void    create              ( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth );
+#else
   Void    create              ( Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth );
+#endif
   Void    destroy             ();
   Void    init                ( TEncTop* pcEncTop );
   
@@ -118,6 +122,9 @@ public:
 #if SVC_EXTENSION
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField );
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Void    estimateILWpParam   ( TComSlice* pcSlice );
+#endif
 #else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
                                 Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField );

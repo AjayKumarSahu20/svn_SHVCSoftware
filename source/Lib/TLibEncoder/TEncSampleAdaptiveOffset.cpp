@@ -1870,7 +1870,11 @@ Void TEncSampleAdaptiveOffset::rdoSaoUnitAll(SAOParam *saoParam, Double lambda, 
   Double compDistortion[3];
 
   saoParam->bSaoFlag[0] = true;
+#if AUXILIARY_PICTURES
+  saoParam->bSaoFlag[1] = m_pcPic->getChromaFormat() == CHROMA_400 ? false : true;
+#else
   saoParam->bSaoFlag[1] = true;
+#endif
   saoParam->oneUnitFlag[0] = false;
   saoParam->oneUnitFlag[1] = false;
   saoParam->oneUnitFlag[2] = false;

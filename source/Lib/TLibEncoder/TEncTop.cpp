@@ -87,13 +87,11 @@ TEncTop::TEncTop()
 #if REF_IDX_MFM
   m_bMFMEnabledFlag = false;
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   m_numScaledRefLayerOffsets = 0;
-#endif
-#endif
 #if POC_RESET_FLAG
   m_pocAdjustmentValue     = 0;
 #endif
+#endif //SVC_EXTENSION
 }
 
 TEncTop::~TEncTop()
@@ -116,7 +114,11 @@ Void TEncTop::create ()
 #else
   m_cGOPEncoder.        create();
 #endif
+#if AUXILIARY_PICTURES
+  m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
   m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
   m_cCuEncoder.         create( g_uiMaxCUDepth, g_uiMaxCUWidth, g_uiMaxCUHeight );
   if (m_bUseSAO)
   {
@@ -174,6 +176,13 @@ Void TEncTop::create ()
       }
     }
   }
+
+#if LAYER_CTB
+  memcpy(g_auiLayerZscanToRaster[m_layerId], g_auiZscanToRaster, sizeof( g_auiZscanToRaster ) );
+  memcpy(g_auiLayerRasterToZscan[m_layerId], g_auiRasterToZscan, sizeof( g_auiRasterToZscan ) );
+  memcpy(g_auiLayerRasterToPelX[m_layerId],  g_auiRasterToPelX,  sizeof( g_auiRasterToPelX ) );
+  memcpy(g_auiLayerRasterToPelY[m_layerId],  g_auiRasterToPelY,  sizeof( g_auiRasterToPelY ) );
+#endif
 }
 
 /**
@@ -600,7 +609,11 @@ Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicY
     }
     else
     {
+#if AUXILIARY_PICTURES
+      rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
       rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
     }
     rcListPicYuvRecOut.pushBack( rpcPicYuvRec );
   }
@@ -800,12 +813,22 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
+      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
+#else
 #if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
 #endif
       rpcPic = pcEPic;
     }
@@ -841,12 +864,22 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
+#else
+      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
+                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
+#else
 #if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
+#endif
 #endif
     }
 
@@ -870,19 +903,17 @@ Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
   m_cSPS.setLayerId(m_layerId);
-#endif
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
   m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
 #endif
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
     m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
   }
-#endif
+#endif //SVC_EXTENSION
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
   profileTierLevel.setTierFlag(m_levelTier);
@@ -913,6 +944,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setMaxCUWidth    ( g_uiMaxCUWidth      );
   m_cSPS.setMaxCUHeight   ( g_uiMaxCUHeight     );
   m_cSPS.setMaxCUDepth    ( g_uiMaxCUDepth      );
+#if AUXILIARY_PICTURES
+  m_cSPS.setChromaFormatIdc( m_chromaFormatIDC);
+#endif
 
   Int minCUSize = m_cSPS.getMaxCUWidth() >> ( m_cSPS.getMaxCUDepth()-g_uiAddCUDepth );
   Int log2MinCUSize = 0;
@@ -1187,11 +1221,7 @@ Void TEncTop::xInitRPS(Bool isFieldCoding)
 
   for( Int i = 0; i < getGOPSize()+m_extraRPSs; i++) 
   {
-#if FINAL_RPL_CHANGE_N0082
-    GOPEntry ge = m_ppcTEncTop[m_cSPS.getLayerId()]->getGOPEntry(i);
-#else
     GOPEntry ge = getGOPEntry(i);
-#endif
     rps = rpsList->getReferencePictureSet(i);
     rps->setNumberOfPictures(ge.m_numRefPics);
     rps->setNumRefIdc(ge.m_numRefIdc);
@@ -1535,7 +1565,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
 }
 #endif
 
-#if SVC_EXTENSION
 #if !REPN_FORMAT_IN_VPS
 Void TEncTop::xInitILRP()
 {
@@ -1558,7 +1587,11 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#endif
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
@@ -1610,7 +1643,11 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
+#if AUXILIARY_PICTURES
+        m_cIlpPic[j]->create(picWidth, picHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#else
         m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
+#endif
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
@@ -1623,26 +1660,5 @@ Void TEncTop::xInitILRP()
   }
 }
 #endif
-Void TEncTop::setILRPic(TComPic *pcPic)
-{
-  for( Int i = 0; i < pcPic->getSlice(0)->getActiveNumILRRefIdx(); i++ )
-  {
-    Int refLayerIdc = pcPic->getSlice(0)->getInterLayerPredLayerIdc(i);
-
-    if(m_cIlpPic[refLayerIdc])
-    {
-      m_cIlpPic[refLayerIdc]->copyUpsampledPictureYuv(pcPic->getFullPelBaseRec(refLayerIdc), m_cIlpPic[refLayerIdc]->getPicYuvRec());
-      m_cIlpPic[refLayerIdc]->getSlice(0)->setPOC(pcPic->getPOC());
-      m_cIlpPic[refLayerIdc]->setLayerId(pcPic->getSlice(0)->getBaseColPic(refLayerIdc)->getLayerId()); //set reference layerId
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension(false);
-      m_cIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
-      for (Int j=0; j<m_cIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)    // set reference CU layerId
-      {
-        m_cIlpPic[refLayerIdc]->getPicSym()->getCU(j)->setLayerId(m_cIlpPic[refLayerIdc]->getLayerId());
-      }
-    }
-  }
-}
-#endif
-#endif
+#endif //SVC_EXTENSION
 //! \}

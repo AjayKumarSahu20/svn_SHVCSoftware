@@ -279,6 +279,10 @@ Void TEncEntropy::xEncodeTransform( TComDataCU* pcCU,UInt offsetLuma, UInt offse
 
   const UInt uiTrDepthCurr = uiDepth - pcCU->getDepth( uiAbsPartIdx );
   const Bool bFirstCbfOfCU = uiTrDepthCurr == 0;
+#if AUXILIARY_PICTURES
+  if (pcCU->getSlice()->getChromaFormatIdc() != CHROMA_400)
+  {
+#endif
   if( bFirstCbfOfCU || uiLog2TrafoSize > 2 )
   {
     if( bFirstCbfOfCU || pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, uiTrDepthCurr - 1 ) )
@@ -295,6 +299,14 @@ Void TEncEntropy::xEncodeTransform( TComDataCU* pcCU,UInt offsetLuma, UInt offse
     assert( pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, uiTrDepthCurr ) == pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, uiTrDepthCurr - 1 ) );
     assert( pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, uiTrDepthCurr ) == pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, uiTrDepthCurr - 1 ) );
   }
+#if AUXILIARY_PICTURES
+  }
+  else
+  {
+    assert( pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_U, uiTrDepthCurr ) == 0 );
+    assert( pcCU->getCbf( uiAbsPartIdx, TEXT_CHROMA_V, uiTrDepthCurr ) == 0 );
+  }
+#endif
   
   if( uiSubdiv )
   {
@@ -401,6 +413,12 @@ Void TEncEntropy::encodeIntraDirModeLuma  ( TComDataCU* pcCU, UInt absPartIdx, B
 // Intra direction for Chroma
 Void TEncEntropy::encodeIntraDirModeChroma( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD )
 {
+#if AUXILIARY_PICTURES
+  if ( pcCU->getSlice()->getChromaFormatIdc() == CHROMA_400 )
+  {
+    return;
+  }
+#endif
   if( bRD )
   {
     uiAbsPartIdx = 0;

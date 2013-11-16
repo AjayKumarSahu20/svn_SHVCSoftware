@@ -249,6 +249,11 @@ Void TEncCu::compressCU( TComDataCU*& rpcCU )
   m_temporalSAD      = 0;
 #endif
 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  m_disableILP = xCheckTileSetConstraint(rpcCU);
+  m_pcPredSearch->setDisableILP(m_disableILP);
+#endif
+
   // analysis of CU
   xCompressCU( m_ppcBestCU[0], m_ppcTempCU[0], 0 );
 
@@ -260,6 +265,10 @@ Void TEncCu::compressCU( TComDataCU*& rpcCU )
       xLcuCollectARLStats( rpcCU);
     }
   }
+#endif
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  xVerifyTileSetConstraint(rpcCU);
 #endif
 }
 /** \param  pcCU  pointer of CU data class
@@ -730,7 +739,11 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           }
         }
 #if (ENCODER_FAST_MODE)
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+      if(pcPic->getLayerId() > 0 && !m_disableILP)
+#else
       if(pcPic->getLayerId() > 0)
+#endif
       {
         for(Int refLayer = 0; refLayer < pcSlice->getActiveNumILRRefIdx(); refLayer++)
         {  
@@ -1382,6 +1395,10 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
       if(bZeroMVILR)
       {
 #endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+      if (!(rpcTempCU->isInterLayerReference(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]) && m_disableILP))
+      {
+#endif
       if(!(uiNoResidual==1 && mergeCandBuffer[uiMergeCand]==1))
       {
         if( !(bestIsSkip && uiNoResidual == 0) )
@@ -1425,10 +1442,13 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
             bestIsSkip = rpcBestCU->getQtRootCbf(0) == 0;
           }
         }
-#if REF_IDX_ME_ZEROMV 
-        }
-#endif
       }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+      }
+#endif
+#if REF_IDX_ME_ZEROMV 
+      }
+#endif
   }
 
   if(uiNoResidual == 0 && m_pcEncCfg->getUseEarlySkipDetection())
@@ -1806,6 +1826,72 @@ Int TEncCu::xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffI
 
   return 0;
 }
+
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Bool TEncCu::xCheckTileSetConstraint( TComDataCU*& rpcCU )
+{
+  Bool disableILP = false;
+
+  if (rpcCU->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getAddr()) >= 0)
+  {
+    if (rpcCU->getPic()->getPicSym()->getTileSetType(rpcCU->getAddr()) == 2)
+    {
+      disableILP = true;
+    }
+    if (rpcCU->getPic()->getPicSym()->getTileSetType(rpcCU->getAddr()) == 1)
+    {
+      Int currCUaddr = rpcCU->getAddr();
+      Int frameWitdhInCU  = rpcCU->getPic()->getPicSym()->getFrameWidthInCU();
+      Int frameHeightInCU = rpcCU->getPic()->getPicSym()->getFrameHeightInCU();
+      Bool leftCUExists   = (currCUaddr % frameWitdhInCU) > 0;
+      Bool aboveCUExists  = (currCUaddr / frameWitdhInCU) > 0;
+      Bool rightCUExists  = (currCUaddr % frameWitdhInCU) < (frameWitdhInCU - 1);
+      Bool belowCUExists  = (currCUaddr / frameWitdhInCU) < (frameHeightInCU - 1);
+      Int currTileSetIdx  = rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr);
+      // Check if CU is at tile set boundary
+      if ( (leftCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr-1) != currTileSetIdx) ||
+           (leftCUExists && aboveCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr-frameWitdhInCU-1) != currTileSetIdx) ||
+           (aboveCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr-frameWitdhInCU) != currTileSetIdx) ||
+           (aboveCUExists && rightCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr-frameWitdhInCU+1) != currTileSetIdx) ||
+           (rightCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr+1) != currTileSetIdx) ||
+           (rightCUExists && belowCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr+frameWitdhInCU+1) != currTileSetIdx) ||
+           (belowCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr+frameWitdhInCU) != currTileSetIdx) ||
+           (belowCUExists && leftCUExists && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(currCUaddr+frameWitdhInCU-1) != currTileSetIdx) )
+      {
+        disableILP = true;  // Disable ILP in tile set boundary CU
+      }
+    }
+  }
+
+  return disableILP;
+}
+
+Void TEncCu::xVerifyTileSetConstraint( TComDataCU*& rpcCU )
+{
+  if (rpcCU->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getAddr()) >= 0 &&
+      m_disableILP)
+  {
+    UInt numPartitions = rpcCU->getPic()->getNumPartInCU();
+    for (UInt i = 0; i < numPartitions; i++)
+    {
+      if (!rpcCU->isIntra(i))
+      {
+        for (UInt refList = 0; refList < 2; refList++)
+        {
+          if (rpcCU->getInterDir(i) & (1<<refList))
+          {
+            TComCUMvField *mvField = rpcCU->getCUMvField(RefPicList(refList));
+            if (mvField->getRefIdx(i) >= 0)
+            {
+              assert(!(rpcCU->getSlice()->getRefPic(RefPicList(refList), mvField->getRefIdx(i))->isILR(rpcCU->getLayerId())));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+#endif
 
 /** Collect ARL statistics from one LCU
  * \param pcCU

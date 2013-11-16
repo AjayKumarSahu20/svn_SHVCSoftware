@@ -220,20 +220,22 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
     }
   }
 #endif
-#if EXTERNAL_USEDBYCURR_N0082
-  if(entry.m_numRefPics>0){
-    in>>entry.m_UseExtusedByCurrPic;
-    if(entry.m_UseExtusedByCurrPic)
-    {
-      for ( Int i = 0; i < entry.m_numRefPics; i++ )
-      {
-        in>>entry.m_ExtusedByCurrPic[i];
-      }
-    }
-  }
-#endif
   return in;
 }
+
+#if AUXILIARY_PICTURES
+static inline ChromaFormat numberToChromaFormat(const Int val)
+{
+  switch (val)
+  {
+    case 400: return CHROMA_400; break;
+    case 420: return CHROMA_420; break;
+    case 422: return CHROMA_422; break;
+    case 444: return CHROMA_444; break;
+    default:  return NUM_CHROMA_FORMAT;
+  }
+}
+#endif
 
 #if SVC_EXTENSION
 void TAppEncCfg::getDirFilename(string& filename, string& dir, const string path)
@@ -361,6 +363,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_FrameRate     [MAX_LAYERS];
   Int*    cfg_IntraPeriod   [MAX_LAYERS];
   Int*    cfg_conformanceMode  [MAX_LAYERS];
+#if LAYER_CTB
+  // coding unit (CU) definition
+  UInt*      cfg_uiMaxCUWidth[MAX_LAYERS];                                   ///< max. CU width in pixel
+  UInt*      cfg_uiMaxCUHeight[MAX_LAYERS];                                  ///< max. CU height in pixel
+  UInt*      cfg_uiMaxCUDepth[MAX_LAYERS];                                   ///< max. CU depth
+  
+  // transfom unit (TU) definition
+  UInt*      cfg_uiQuadtreeTULog2MaxSize[MAX_LAYERS];
+  UInt*      cfg_uiQuadtreeTULog2MinSize[MAX_LAYERS];
+  
+  UInt*      cfg_uiQuadtreeTUMaxDepthInter[MAX_LAYERS];
+  UInt*      cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
+#endif
+#if AUXILIARY_PICTURES
+  Int      cfg_tmpChromaFormatIDC  [MAX_LAYERS];
+  Int      cfg_tmpInputChromaFormat[MAX_LAYERS];
+  Int*     cfg_auxId               [MAX_LAYERS];
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   Int*    cfg_numSamplePredRefLayers  [MAX_LAYERS];
@@ -378,7 +398,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
-#if SCALED_REF_LAYER_OFFSETS
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
@@ -389,7 +408,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
-#endif
 #if RC_SHVC_HARMONIZATION
   Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
   Int*    cfg_RCTargetBitRate      [MAX_LAYERS];
@@ -398,6 +416,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Bool*   cfg_RCUseLCUSeparateModel[MAX_LAYERS];
   Int*    cfg_RCInitialQP          [MAX_LAYERS];
   Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
+#endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  Int*    cfg_InputBitDepthY    [MAX_LAYERS];
+  Int*    cfg_InternalBitDepthY [MAX_LAYERS];
+  Int*    cfg_InputBitDepthC    [MAX_LAYERS];
+  Int*    cfg_InternalBitDepthC [MAX_LAYERS];
+  Int*    cfg_OutputBitDepthY   [MAX_LAYERS];
+  Int*    cfg_OutputBitDepthC   [MAX_LAYERS];
 #endif
 #if N0120_MAX_TID_REF_CFG
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
@@ -415,6 +441,19 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+#if LAYER_CTB
+    // coding unit (CU) definition
+    cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
+    cfg_uiMaxCUHeight[layer] = &m_acLayerCfg[layer].m_uiMaxCUHeight;
+    cfg_uiMaxCUDepth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUDepth;
+
+    // transfom unit (TU) definition.
+    cfg_uiQuadtreeTULog2MaxSize[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize;
+    cfg_uiQuadtreeTULog2MinSize[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize;
+
+    cfg_uiQuadtreeTUMaxDepthInter[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter;
+    cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra;
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
     cfg_numSamplePredRefLayers  [layer] = &m_acLayerCfg[layer].m_numSamplePredRefLayers;
@@ -428,7 +467,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
-#if SCALED_REF_LAYER_OFFSETS
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
@@ -437,7 +475,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
     }
-#endif
 #if RC_SHVC_HARMONIZATION
     cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
     cfg_RCTargetBitRate[layer]       = &m_acLayerCfg[layer].m_RCTargetBitrate;
@@ -447,9 +484,20 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
     cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  cfg_InputBitDepthY   [layer] = &m_acLayerCfg[layer].m_inputBitDepthY;
+  cfg_InternalBitDepthY[layer] = &m_acLayerCfg[layer].m_internalBitDepthY;
+  cfg_InputBitDepthC   [layer] = &m_acLayerCfg[layer].m_inputBitDepthC;
+  cfg_InternalBitDepthC[layer] = &m_acLayerCfg[layer].m_internalBitDepthC;
+  cfg_OutputBitDepthY  [layer] = &m_acLayerCfg[layer].m_outputBitDepthY;
+  cfg_OutputBitDepthC  [layer] = &m_acLayerCfg[layer].m_outputBitDepthC;
+#endif
 #if N0120_MAX_TID_REF_CFG
     cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
 #endif 
+#if AUXILIARY_PICTURES
+    cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
+#endif
   }
 #if AVC_BASE
   string  cfg_BLInputFile;
@@ -460,12 +508,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   string  cfg_tileSets;
 #endif
-#else
+#else //SVC_EXTENSION
   string cfg_InputFile;
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
-#endif
+#endif //SVC_EXTENSION
   string cfg_ColumnWidth;
   string cfg_RowHeight;
   string cfg_ScalingListFile;
@@ -486,6 +534,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",   cfg_SourceHeight, 0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",       cfg_FrameRate,  0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",  m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+#if O0215_PHASE_ALIGNMENT
+  ("PhaseAlignment",          m_phaseAlignFlag, false, "indicate the sample location alignment between layers (0: zero position aligned, 1: central position aligned)")
+#endif
 #if REPN_FORMAT_IN_VPS
   ("RepFormatIdx%d",          cfg_repFormatIdx, -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
 #endif
@@ -503,15 +554,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
+#if AUXILIARY_PICTURES
+  ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
+  ("ChromaFormatIDC%d,-cf",   cfg_tmpChromaFormatIDC,    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
+  ("AuxId%d",                 cfg_auxId,                 0,   MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
+#endif
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
 #if SCALABILITY_MASK_E0104
   ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
+#if AUXILIARY_PICTURES
+  ("ScalabilityMask3",        m_scalabilityMask[3], 0, "scalability_mask[3] (auxiliary pictures)" )
+#endif
 #else
   ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
   ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
 #endif
   ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   ("InputBitDepth",           m_inputBitDepthY,    8, "Bit-depth of input file")
   ("OutputBitDepth",          m_outputBitDepthY,   0, "Bit-depth of output file (default:InternalBitDepth)")
   ("InternalBitDepth",        m_internalBitDepthY, 0, "Bit-depth the codec operates at. (default:InputBitDepth)"
@@ -519,7 +579,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",          m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",         m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-#if SCALED_REF_LAYER_OFFSETS
+#endif
   ("NumScaledRefLayerOffsets%d",    cfg_numScaledRefLayerOffsets,     0, MAX_LAYERS,  "Number of scaled offset layer sets ")
   ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
@@ -529,6 +589,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  ("InputBitDepth%d",       cfg_InputBitDepthY,    8, MAX_LAYERS, "Bit-depth of input file for layer %d")
+  ("InternalBitDepth%d",    cfg_InternalBitDepthY, 0, MAX_LAYERS, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d ")
+//                                                       "If different to InputBitDepth, source data will be converted")
+  ("InputBitDepthC%d",      cfg_InputBitDepthC,    0, MAX_LAYERS, "As per InputBitDepth but for chroma component. (default:InputBitDepth) for layer %d")
+  ("InternalBitDepthC%d",   cfg_InternalBitDepthC, 0, MAX_LAYERS, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
+  ("OutputBitDepth%d",      cfg_OutputBitDepthY,   0, MAX_LAYERS, "Bit-depth of output file (default:InternalBitDepth)")
+  ("OutputBitDepthC%d",     cfg_OutputBitDepthC,   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 #endif
 #if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
@@ -545,7 +613,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
 #endif
-#else
+#else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
   ("ReconFile,o",           cfg_ReconFile,     string(""), "Reconstructed YUV output file name")
@@ -558,6 +626,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC",        m_inputBitDepthC,    0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
   ("OutputBitDepthC",       m_outputBitDepthC,   0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",     m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
+#if AUXILIARY_PICTURES
+  ("InputChromaFormat",     tmpInputChromaFormat,                       420, "InputChromaFormatIDC")
+  ("ChromaFormatIDC,-cf",   tmpChromaFormat,                             0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
+#endif
   ("ConformanceMode",       m_conformanceMode,     0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
   ("HorizontalPadding,-pdx",m_aiPad[0],            0, "Horizontal source padding for conformance window mode 2")
   ("VerticalPadding,-pdy",  m_aiPad[1],            0, "Vertical source padding for conformance window mode 2")
@@ -566,14 +638,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfTop",               m_confTop,             0, "Top offset for window conformance mode 3")
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
-#endif
+#endif //SVC_EXTENSION
 
   //Field coding parameters
   ("FieldCoding", m_isField, false, "Signals if it's a field based coding")
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
-  
   // Profile and level
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
@@ -584,6 +655,36 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
   ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
 
+#if LAYER_CTB
+  // Unit definition parameters
+  ("MaxCUWidth%d",              cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU width")
+  ("MaxCUHeight%d",             cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU height")
+  // todo: remove defaults from MaxCUSize
+  ("MaxCUSize%d,s%d",           cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxCUSize%d,s%d",           cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxPartitionDepth%d,h%d",   cfg_uiMaxCUDepth,              4u, MAX_LAYERS, "CU depth")
+  
+  ("QuadtreeTULog2MaxSize%d",   cfg_uiQuadtreeTULog2MaxSize,   6u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
+  ("QuadtreeTULog2MinSize%d",   cfg_uiQuadtreeTULog2MinSize,   2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
+  
+  ("QuadtreeTUMaxDepthIntra%d", cfg_uiQuadtreeTUMaxDepthIntra, 1u, MAX_LAYERS, "Depth of TU tree for intra CUs")
+  ("QuadtreeTUMaxDepthInter%d", cfg_uiQuadtreeTUMaxDepthInter, 2u, MAX_LAYERS, "Depth of TU tree for inter CUs")
+
+
+  // set the same CU realted settings across all the layers if config file parameters are not layer specific
+  ("MaxCUWidth",              cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU width")
+  ("MaxCUHeight",             cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU height")
+  // todo: remove defaults from MaxCUSize
+  ("MaxCUSize,s",             cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxCUSize,s",             cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxPartitionDepth,h",     cfg_uiMaxCUDepth,              4u, MAX_LAYERS, "CU depth")
+  
+  ("QuadtreeTULog2MaxSize",   cfg_uiQuadtreeTULog2MaxSize,   6u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
+  ("QuadtreeTULog2MinSize",   cfg_uiQuadtreeTULog2MinSize,   2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
+  
+  ("QuadtreeTUMaxDepthIntra", cfg_uiQuadtreeTUMaxDepthIntra, 1u, MAX_LAYERS, "Depth of TU tree for intra CUs")
+  ("QuadtreeTUMaxDepthInter", cfg_uiQuadtreeTUMaxDepthInter, 2u, MAX_LAYERS, "Depth of TU tree for inter CUs")
+#else
   // Unit definition parameters
   ("MaxCUWidth",              m_uiMaxCUWidth,             64u)
   ("MaxCUHeight",             m_uiMaxCUHeight,            64u)
@@ -597,6 +698,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   
   ("QuadtreeTUMaxDepthIntra", m_uiQuadtreeTUMaxDepthIntra, 1u, "Depth of TU tree for intra CUs")
   ("QuadtreeTUMaxDepthInter", m_uiQuadtreeTUMaxDepthInter, 2u, "Depth of TU tree for inter CUs")
+#endif
   
   // Coding structure paramters
 #if SVC_EXTENSION
@@ -863,13 +965,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cOSS<<"Frame"<<i;
     opts.addOptions()(cOSS.str(), m_GOPList[i-1], GOPEntry());
   }
-#if FINAL_RPL_CHANGE_N0082
-  for(Int i=1; i<MAX_GOP+1; i++) {
-    std::ostringstream cOSS;
-    cOSS<<"FrameEL"<<i;
-    opts.addOptions()(cOSS.str(), m_acLayerCfg[1].m_GOPListLayer[i-1], GOPEntry());
-  }
-#endif
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
@@ -920,12 +1015,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_SYNTAX
   m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
 #endif
-#else
+#else //SVC_EXTENSION
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
-#endif  
+#endif //SVC_EXTENSION 
 
   Char* pColumnWidth = cfg_ColumnWidth.empty() ? NULL: strdup(cfg_ColumnWidth.c_str());
   Char* pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
@@ -984,7 +1079,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_pRowHeight = NULL;
   }
-#if SCALED_REF_LAYER_OFFSETS
+#if SVC_EXTENSION
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
@@ -1054,7 +1149,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
   }
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
 #if M0457_PREDICTION_INDICATIONS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
@@ -1152,6 +1246,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #endif
+#if AUXILIARY_PICTURES
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    m_acLayerCfg[layer].m_InputChromaFormat =  numberToChromaFormat(cfg_tmpChromaFormatIDC[layer]);
+    m_acLayerCfg[layer].m_chromaFormatIDC = ((cfg_tmpChromaFormatIDC[layer] == 0) ? (m_acLayerCfg[layer].m_InputChromaFormat ) : (numberToChromaFormat(cfg_tmpChromaFormatIDC[layer])));
+  }
+#endif
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
@@ -1184,21 +1285,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #endif
+#endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
-#if REPN_FORMAT_IN_VPS_123
+  /* rules for input, output and internal bitdepths as per help text */
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
-    m_acLayerCfg[layer].setSourceHeight( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picHeightInLumaSamples);
-    m_acLayerCfg[layer].setSourceWidth ( m_repFormatCfg[ m_acLayerCfg[layer].getRepFormatIdx() ].m_picWidthInLumaSamples );
+    if (!m_acLayerCfg[layer].m_internalBitDepthY) { m_acLayerCfg[layer].m_internalBitDepthY = m_acLayerCfg[layer].m_inputBitDepthY; }
+    if (!m_acLayerCfg[layer].m_internalBitDepthC) { m_acLayerCfg[layer].m_internalBitDepthC = m_acLayerCfg[layer].m_internalBitDepthY; }
+    if (!m_acLayerCfg[layer].m_inputBitDepthC) { m_acLayerCfg[layer].m_inputBitDepthC = m_acLayerCfg[layer].m_inputBitDepthY; }
+    if (!m_acLayerCfg[layer].m_outputBitDepthY) { m_acLayerCfg[layer].m_outputBitDepthY = m_acLayerCfg[layer].m_internalBitDepthY; }
+    if (!m_acLayerCfg[layer].m_outputBitDepthC) { m_acLayerCfg[layer].m_outputBitDepthC = m_acLayerCfg[layer].m_internalBitDepthC; }
   }
-#endif
-  /* rules for input, output and internal bitdepths as per help text */
+#else
   if (!m_internalBitDepthY) { m_internalBitDepthY = m_inputBitDepthY; }
   if (!m_internalBitDepthC) { m_internalBitDepthC = m_internalBitDepthY; }
   if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
   if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
   if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
+#endif
 
 #if !SVC_EXTENSION
   // TODO:ChromaFmt assumes 4:2:0 below
@@ -1410,7 +1516,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   xCheckParameter();
   
   // set global varibles
+#if LAYER_CTB
+  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    xSetGlobal(layer);
+  }
+#else
   xSetGlobal();
+#endif
   
   // print-out parameters
   xPrintParameter();
@@ -1449,8 +1562,16 @@ Void TAppEncCfg::xCheckParameter()
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
   // check range of parameters
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  for(UInt layer=0; layer<m_numLayers; layer++)
+  {
+    xConfirmPara( m_acLayerCfg[layer].m_inputBitDepthY < 8,                                                     "InputBitDepth must be at least 8" );
+    xConfirmPara( m_acLayerCfg[layer].m_inputBitDepthC < 8,                                                     "InputBitDepthC must be at least 8" );
+  }
+#else
   xConfirmPara( m_inputBitDepthY < 8,                                                     "InputBitDepth must be at least 8" );
   xConfirmPara( m_inputBitDepthC < 8,                                                     "InputBitDepthC must be at least 8" );
+#endif
 #if !SVC_EXTENSION  
   xConfirmPara( m_iFrameRate <= 0,                                                          "Frame rate must be more than 1" );
 #endif
@@ -1470,7 +1591,14 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_iSearchRange < 0 ,                                                        "Search Range must be more than 0" );
   xConfirmPara( m_bipredSearchRange < 0 ,                                                   "Search Range must be more than 0" );
   xConfirmPara( m_iMaxDeltaQP > 7,                                                          "Absolute Delta QP exceeds supported range (0 to 7)" );
+#if LAYER_CTB
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    xConfirmPara( m_iMaxCuDQPDepth > m_acLayerCfg[layer].m_uiMaxCUDepth - 1,                "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
+  }
+#else
   xConfirmPara( m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                          "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
+#endif
 
   xConfirmPara( m_cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12" );
   xConfirmPara( m_cbQpOffset >  12,   "Max. Chroma Cb QP Offset is  12" );
@@ -1484,15 +1612,18 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
 #endif
+#if !LAYER_CTB
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
   xConfirmPara( m_uiMaxCUHeight < 16,                                                       "Maximum partition height size should be larger than or equal to 16");
+#endif
 #if !SVC_EXTENSION
   xConfirmPara( (m_iSourceWidth  % (m_uiMaxCUWidth  >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame width must be a multiple of the minimum CU size");
   xConfirmPara( (m_iSourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame height must be a multiple of the minimum CU size");
 #endif
   
+#if !LAYER_CTB
   xConfirmPara( m_uiQuadtreeTULog2MinSize < 2,                                        "QuadtreeTULog2MinSize must be 2 or greater.");
   xConfirmPara( m_uiQuadtreeTULog2MaxSize > 5,                                        "QuadtreeTULog2MaxSize must be 5 or smaller.");
   xConfirmPara( (1<<m_uiQuadtreeTULog2MaxSize) > m_uiMaxCUWidth,                                        "QuadtreeTULog2MaxSize must be log2(maxCUSize) or smaller.");
@@ -1506,6 +1637,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthInter - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
   xConfirmPara( m_uiQuadtreeTUMaxDepthIntra < 1,                                                         "QuadtreeTUMaxDepthIntra must be greater than or equal to 1" );
   xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthIntra - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
+#endif
   
   xConfirmPara(  m_maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
   xConfirmPara(  m_maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
@@ -1553,6 +1685,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
 #endif
 
+#if !LAYER_CTB
   // max CU width and height should be power of 2
   UInt ui = m_uiMaxCUWidth;
   while(ui)
@@ -1568,7 +1701,7 @@ Void TAppEncCfg::xCheckParameter()
     if( (ui & 1) == 1)
       xConfirmPara( ui != 1 , "Height should be 2^n");
   }
-
+#endif
 
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
@@ -1589,14 +1722,11 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
   
-#if EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
+
   Bool verifiedGOP=false;
-#endif
   Bool errorGOP=false;
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int checkGOP=1;
   Int numRefs = m_isField ? 2 : 1;
-#endif
   Int refList[MAX_NUM_REF_PICS+1];
   refList[0]=0;
   if(m_isField)
@@ -1608,9 +1738,7 @@ Void TAppEncCfg::xCheckParameter()
   {
     isOK[i]=false;
   }
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
   Int numOK=0;
-#endif
 #if !SVC_EXTENSION
   xConfirmPara( m_iIntraPeriod >=0&&(m_iIntraPeriod%m_iGOPSize!=0), "Intra period must be a multiple of GOPSize, or -1" );
 #endif
@@ -1653,33 +1781,7 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-#if FINAL_RPL_CHANGE_N0082
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    if (m_acLayerCfg[layer].m_GOPListLayer[0].m_POC<0)
-    {
-      memcpy( m_acLayerCfg[layer].m_GOPListLayer, m_GOPList, sizeof(GOPEntry)*MAX_GOP );
-    }
-    errorGOP = xconfirmExtraGOP( m_acLayerCfg[layer].m_GOPListLayer );
-    xConfirmPara(errorGOP,"Invalid GOP structure given");
-  }
-#if TEMP_SCALABILITY_FIX
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7  && 
-    m_acLayerCfg[1].m_GOPListLayer[5].m_temporalId == 0 && m_acLayerCfg[1].m_GOPListLayer[7].m_temporalId == 0)
-#else
-  //tentative for encoder
-  if( m_acLayerCfg[1].m_GOPListLayer[5].m_POC == 6  && m_acLayerCfg[1].m_GOPListLayer[7].m_POC == 7 )
-#endif
-  {
-    //RA, POC5
-    m_acLayerCfg[1].m_GOPListLayer[5].m_usedByCurrPic[2] = 0;
-    m_acLayerCfg[1].m_GOPListLayer[5].m_refIdc[2] = 0;
-    //RA, POC7
-    m_acLayerCfg[1].m_GOPListLayer[7].m_usedByCurrPic[2] = 0;
-    m_acLayerCfg[1].m_GOPListLayer[7].m_refIdc[2] = 0;
-  }
-#endif
-#if  EXTERNAL_USEDBYCURR_N0082|| !FINAL_RPL_CHANGE_N0082
+
   m_extraRPSs=0;
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -1875,22 +1977,7 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
-#endif
-#if EXTERNAL_USEDBYCURR_N0082
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    for (Int i=0; i< m_iGOPSize; i++){
-      if (m_acLayerCfg[layer].m_GOPListLayer[i].m_UseExtusedByCurrPic == 1 )
-      {
-        for(Int j=0; j<m_acLayerCfg[layer].m_GOPListLayer[i].m_numRefPics; j++ )
-        {
-          m_acLayerCfg[layer].m_GOPListLayer[i].m_usedByCurrPic[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
-          m_acLayerCfg[layer].m_GOPListLayer[i].m_refIdc[j] = m_acLayerCfg[layer].m_GOPListLayer[i].m_ExtusedByCurrPic[j];
-        }
-      }
-    }
-  }
-#endif
+
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
   {
@@ -1965,6 +2052,10 @@ Void TAppEncCfg::xCheckParameter()
   {
     Int m_iSourceWidth = m_acLayerCfg[layer].m_iSourceWidth;
     Int m_iSourceHeight = m_acLayerCfg[layer].m_iSourceHeight;
+#if LAYER_CTB
+    Int m_uiMaxCUWidth = m_acLayerCfg[layer].m_uiMaxCUWidth;
+    Int m_uiMaxCUHeight = m_acLayerCfg[layer].m_uiMaxCUHeight;
+#endif
 #endif
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   { 
@@ -2200,6 +2291,13 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
 #endif 
+#if AUXILIARY_PICTURES
+  for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
+  {
+    xConfirmPara(m_acLayerCfg[layer].m_auxId < 0 || m_acLayerCfg[layer].m_auxId > 4, "AuxId must be in range 0 to 4");
+    xConfirmPara(m_acLayerCfg[layer].m_auxId > 0 && m_acLayerCfg[layer].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
+  }
+#endif 
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2209,6 +2307,38 @@ Void TAppEncCfg::xCheckParameter()
 
 /** \todo use of global variables should be removed later
  */
+#if LAYER_CTB
+Void TAppEncCfg::xSetGlobal(UInt layerId)
+{
+  // set max CU width & height
+  g_auiLayerMaxCUWidth[layerId]  = m_acLayerCfg[layerId].m_uiMaxCUWidth;
+  g_auiLayerMaxCUHeight[layerId] = m_acLayerCfg[layerId].m_uiMaxCUHeight;
+  
+  // compute actual CU depth with respect to config depth and max transform size
+  g_auiLayerAddCUDepth[layerId]  = 0;
+  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_auiLayerAddCUDepth[layerId] )  ) ) g_auiLayerAddCUDepth[layerId]++;
+  
+  m_acLayerCfg[layerId].m_uiMaxCUDepth += g_auiLayerAddCUDepth[layerId];
+  g_auiLayerAddCUDepth[layerId]++;
+  g_auiLayerMaxCUDepth[layerId] = m_acLayerCfg[layerId].m_uiMaxCUDepth;
+  
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  // set internal bit-depth to constant value to make sure to be updated later
+  g_bitDepthY = -1;
+  g_bitDepthC = -1;
+  
+  g_uiPCMBitDepthLuma = -1;
+  g_uiPCMBitDepthChroma = -1;
+#else
+  // set internal bit-depth and constants
+  g_bitDepthY = m_internalBitDepthY;
+  g_bitDepthC = m_internalBitDepthC;
+  
+  g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepthY : m_internalBitDepthY;
+  g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepthC : m_internalBitDepthC;
+#endif
+}
+#else
 Void TAppEncCfg::xSetGlobal()
 {
   // set max CU width & height
@@ -2223,13 +2353,22 @@ Void TAppEncCfg::xSetGlobal()
   g_uiAddCUDepth++;
   g_uiMaxCUDepth = m_uiMaxCUDepth;
   
-  // set internal bit-depth and constants
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+  // set internal bit-depth to constant value to make sure to be updated later
+  g_bitDepthY = -1;
+  g_bitDepthC = -1;
+  
+  g_uiPCMBitDepthLuma = -1;
+  g_uiPCMBitDepthChroma = -1;
+#else
   g_bitDepthY = m_internalBitDepthY;
   g_bitDepthC = m_internalBitDepthC;
   
   g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepthY : m_internalBitDepthY;
   g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepthC : m_internalBitDepthC;
+#endif
 }
+#endif
 
 Void TAppEncCfg::xPrintParameter()
 {
@@ -2239,6 +2378,9 @@ Void TAppEncCfg::xPrintParameter()
 #if SCALABILITY_MASK_E0104
   printf("Multiview                     : %d\n", m_scalabilityMask[1] );
   printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#if AUXILIARY_PICTURES
+  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
+#endif
 #else
   printf("Multiview                     : %d\n", m_scalabilityMask[0] );
   printf("Scalable                      : %d\n", m_scalabilityMask[1] );
@@ -2283,10 +2425,12 @@ Void TAppEncCfg::xPrintParameter()
     printf("Frame/Field                  : Frame based coding\n");
     printf("Frame index                  : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
   }
+#if !LAYER_CTB
   printf("CU size / depth              : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)  : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter          : %d\n", m_uiQuadtreeTUMaxDepthInter);
   printf("Max RQT depth intra          : %d\n", m_uiQuadtreeTUMaxDepthIntra);
+#endif
   printf("Min PCM size                 : %d\n", 1 << m_uiPCMLog2MinSize);
   printf("Motion search range          : %d\n", m_iSearchRange );
 #if !SVC_EXTENSION
@@ -2303,8 +2447,13 @@ Void TAppEncCfg::xPrintParameter()
 
   printf("QP adaptation                : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0) );
   printf("GOP size                     : %d\n", m_iGOPSize );
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("Internal bit depth           : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
+#endif
+#if O0215_PHASE_ALIGNMENT
+  printf("cross-layer sample alignment : %d\n", m_phaseAlignFlag);
+#endif
 #if RATE_CONTROL_LAMBDA_DOMAIN
 #if !RC_SHVC_HARMONIZATION
   printf("RateControl                  : %d\n", m_RCEnableRateControl );
@@ -2330,7 +2479,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
   
   printf("TOOL CFG: ");
+#if !O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("IBD:%d ", g_bitDepthY > m_inputBitDepthY || g_bitDepthC > m_inputBitDepthC);
+#endif
   printf("HAD:%d ", m_bUseHADME           );
   printf("SRD:%d ", m_bUseSBACRD          );
   printf("RDQ:%d ", m_useRDOQ            );
@@ -2361,7 +2512,9 @@ Void TAppEncCfg::xPrintParameter()
   }
   printf("CIP:%d ", m_bUseConstrainedIntraPred);
   printf("SAO:%d ", (m_bUseSAO)?(1):(0));
+#if !LAYER_CTB
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
+#endif
   printf("SAOLcuBasedOptimization:%d ", (m_saoLcuBasedOptimization)?(1):(0));
 
   printf("LosslessCuEnabled:%d ", (m_useLossless)? 1:0 );
@@ -2393,6 +2546,9 @@ Void TAppEncCfg::xPrintParameter()
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
+  printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
+  printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
+  printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
   printf("\n\n");
   
   fflush(stdout);
@@ -2407,7 +2563,7 @@ Bool confirmPara(Bool bflag, const Char* message)
   return true;
 }
 
-#if SCALED_REF_LAYER_OFFSETS
+#if SVC_EXTENSION
 Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
@@ -2440,220 +2596,6 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     *arr = NULL;
   }
 }
-#endif
 
-#if FINAL_RPL_CHANGE_N0082
-Bool  TAppEncCfg::xconfirmExtraGOP (GOPEntry * ge)
-{
-  Bool verifiedGOP=false;
-  Bool errorGOP=false;
-  Int checkGOP=1;
-  Int numRefs = 1;
-  Int refList[MAX_NUM_REF_PICS+1];
-  refList[0]=0;
-  Bool isOK[MAX_GOP];
-  for(Int i=0; i<MAX_GOP; i++) 
-  {
-    isOK[i]=false;
-  }
-  Int numOK=0;
-
-  m_extraRPSs=0;
-  //start looping through frames in coding order until we can verify that the GOP structure is correct.
-  while(!verifiedGOP&&!errorGOP) 
-  {
-    Int curGOP = (checkGOP-1)%m_iGOPSize;
-    Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + ge[curGOP].m_POC;    
-    if(ge[curGOP].m_POC<0) 
-    {
-      printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
-      errorGOP=true;
-    }
-    else 
-    {
-      //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
-      Bool beforeI = false;
-      for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-      {
-        Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-        if(absPOC < 0)
-        {
-          beforeI=true;
-        }
-        else 
-        {
-          Bool found=false;
-          for(Int j=0; j<numRefs; j++) 
-          {
-            if(refList[j]==absPOC) 
-            {
-              found=true;
-              for(Int k=0; k<m_iGOPSize; k++)
-              {
-                if(absPOC%m_iGOPSize == ge[k].m_POC%m_iGOPSize)
-                {
-                  if(ge[k].m_temporalId==ge[curGOP].m_temporalId)
-                  {
-                    ge[k].m_refPic = true;
-                  }
-                  ge[curGOP].m_usedByCurrPic[i]=ge[k].m_temporalId<=ge[curGOP].m_temporalId;
-                }
-              }
-            }
-          }
-          if(!found)
-          {
-            printf("\nError: ref pic %d is not available for GOP frame %d\n",ge[curGOP].m_referencePics[i],curGOP+1);
-            errorGOP=true;
-          }
-        }
-      }
-      if(!beforeI&&!errorGOP)
-      {
-        //all ref frames were present
-        if(!isOK[curGOP]) 
-        {
-          numOK++;
-          isOK[curGOP]=true;
-          if(numOK==m_iGOPSize)
-          {
-            verifiedGOP=true;
-          }
-        }
-      }
-      else 
-      {
-        //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
-        ge[m_iGOPSize+m_extraRPSs]=ge[curGOP];
-        Int newRefs=0;
-        for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-        {
-          Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-          if(absPOC>=0)
-          {
-            ge[m_iGOPSize+m_extraRPSs].m_referencePics[newRefs]=ge[curGOP].m_referencePics[i];
-            ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[newRefs]=ge[curGOP].m_usedByCurrPic[i];
-            newRefs++;
-          }
-        }
-        Int numPrefRefs = ge[curGOP].m_numRefPicsActive;
-        
-        for(Int offset = -1; offset>-checkGOP; offset--)
-        {
-          //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
-          Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
-          Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + ge[offGOP].m_POC;
-          if(offPOC>=0&&ge[offGOP].m_temporalId<=ge[curGOP].m_temporalId)
-          {
-            Bool newRef=false;
-            for(Int i=0; i<numRefs; i++)
-            {
-              if(refList[i]==offPOC)
-              {
-                newRef=true;
-              }
-            }
-            for(Int i=0; i<newRefs; i++) 
-            {
-              if(ge[m_iGOPSize+m_extraRPSs].m_referencePics[i]==offPOC-curPOC)
-              {
-                newRef=false;
-              }
-            }
-            if(newRef) 
-            {
-              Int insertPoint=newRefs;
-              //this picture can be added, find appropriate place in list and insert it.
-              if(ge[offGOP].m_temporalId==ge[curGOP].m_temporalId)
-              {
-                ge[offGOP].m_refPic = true;
-              }
-              for(Int j=0; j<newRefs; j++)
-              {
-                if(ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]<offPOC-curPOC||ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]>0)
-                {
-                  insertPoint = j;
-                  break;
-                }
-              }
-              Int prev = offPOC-curPOC;
-              Int prevUsed = ge[offGOP].m_temporalId<=ge[curGOP].m_temporalId;
-              for(Int j=insertPoint; j<newRefs+1; j++)
-              {
-                Int newPrev = ge[m_iGOPSize+m_extraRPSs].m_referencePics[j];
-                Int newUsed = ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j];
-                ge[m_iGOPSize+m_extraRPSs].m_referencePics[j]=prev;
-                ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j]=prevUsed;
-                prevUsed=newUsed;
-                prev=newPrev;
-              }
-              newRefs++;
-            }
-          }
-          if(newRefs>=numPrefRefs)
-          {
-            break;
-          }
-        }
-        ge[m_iGOPSize+m_extraRPSs].m_numRefPics=newRefs;
-        ge[m_iGOPSize+m_extraRPSs].m_POC = curPOC;
-        if (m_extraRPSs == 0)
-        {
-          ge[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 0;
-          ge[m_iGOPSize+m_extraRPSs].m_numRefIdc = 0;
-        }
-        else
-        {
-          Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
-          Int refPOC = ge[rIdx].m_POC;
-          Int refPics = ge[rIdx].m_numRefPics;
-          Int newIdc=0;
-          for(Int i = 0; i<= refPics; i++) 
-          {
-            Int deltaPOC = ((i != refPics)? ge[rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
-            Int absPOCref = refPOC+deltaPOC;
-            Int refIdc = 0;
-            for (Int j = 0; j < ge[m_iGOPSize+m_extraRPSs].m_numRefPics; j++)
-            {
-              if ( (absPOCref - curPOC) == ge[m_iGOPSize+m_extraRPSs].m_referencePics[j])
-              {
-                if (ge[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j])
-                {
-                  refIdc = 1;
-                }
-                else
-                {
-                  refIdc = 2;
-                }
-              }
-            }
-            ge[m_iGOPSize+m_extraRPSs].m_refIdc[newIdc]=refIdc;
-            newIdc++;
-          }
-          ge[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 1;  
-          ge[m_iGOPSize+m_extraRPSs].m_numRefIdc = newIdc;
-          ge[m_iGOPSize+m_extraRPSs].m_deltaRPS = refPOC - ge[m_iGOPSize+m_extraRPSs].m_POC; 
-        }
-        curGOP=m_iGOPSize+m_extraRPSs;
-        m_extraRPSs++;
-      }
-      numRefs=0;
-      for(Int i = 0; i< ge[curGOP].m_numRefPics; i++) 
-      {
-        Int absPOC = curPOC+ge[curGOP].m_referencePics[i];
-        if(absPOC >= 0) 
-        {
-          refList[numRefs]=absPOC;
-          numRefs++;
-        }
-      }
-      refList[numRefs]=curPOC;
-      numRefs++;
-    }
-    checkGOP++;
-  }
-
-  return errorGOP; //update
-}
-#endif
+#endif //SVC_EXTENSION
 //! \}

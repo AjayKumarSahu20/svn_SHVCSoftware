@@ -212,7 +212,6 @@ public:
 #else
   Void      xInitILRP(TComSPS *pcSPS);
 #endif
-  Void      setILRPic(TComPic *pcPic);
 #endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
