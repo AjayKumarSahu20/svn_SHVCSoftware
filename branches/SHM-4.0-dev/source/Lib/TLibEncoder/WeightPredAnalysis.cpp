@@ -257,7 +257,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
           refAC <<= (g_bitDepthYLayer[1]-g_bitDepthYLayer[0]);
           refDC <<= (g_bitDepthYLayer[1]-g_bitDepthYLayer[0]);
 #endif
-         }
+        }
 #endif
 
         // calculating iWeight and iOffset params
@@ -265,9 +265,11 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
         Int weight = (Int)( 0.5 + dWeight * (Double)(1<<log2Denom) );
         Int offset = (Int)( ((currDC<<log2Denom) - ((Int64)weight * refDC) + (Int64)realOffset) >> realLog2Denom );
 #if O0194_WEIGHTED_PREDICTION_CGS
-        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId())){
+        if (slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))
+        {
         }
-        else{
+        else
+        {
           dWeight = 1;
           offset  = 0;
         }
@@ -294,7 +296,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *slice, wpScalingParam 
           return (false);
 #if O0194_WEIGHTED_PREDICTION_CGS
         // make sure the reference frames other than ILR are not using weighted prediction
-        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId()))){
+        if (!(slice->getRefPic(eRefPicList, refIdxTemp)->isILR(slice->getLayerId())))
+        {
           continue;
         }
 #endif
