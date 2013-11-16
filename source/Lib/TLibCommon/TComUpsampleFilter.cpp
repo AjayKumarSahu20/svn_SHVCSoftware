@@ -152,8 +152,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0194_JOINT_US_BITSHIFT
   UInt currLayerId = currSlice->getLayerId();
   UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
-  currLayerId = 1;
-  refLayerId = 0;
 #endif
 
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
