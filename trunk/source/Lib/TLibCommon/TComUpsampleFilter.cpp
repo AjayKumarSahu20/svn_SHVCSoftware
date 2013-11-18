@@ -448,7 +448,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if  N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
-    nShift = 20 - g_bitDepthCLayer[refLayerId];
+    nShift = 20 - g_bitDepthCLayer[currLayerId];
 #else
     nShift = US_FILTER_PREC*2 - shift1;
 #endif

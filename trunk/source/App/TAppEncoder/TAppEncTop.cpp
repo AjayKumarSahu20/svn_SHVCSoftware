@@ -1066,7 +1066,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   if (m_scalabilityMask[3])
   {
     UInt maxAuxId = 0;
-    UInt auxDimIdLen = 0;
+    UInt auxDimIdLen = 1;
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       if (m_acLayerCfg[i].getAuxId() > maxAuxId)
