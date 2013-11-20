@@ -147,6 +147,13 @@ Void TAppEncTop::xInitLibCfg()
   for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
   {
     RepFormat *repFormat = vps->getVpsRepFormat( idx );
+#if REPN_FORMAT_CONTROL_FLAG
+    repFormat->setChromaAndBitDepthVpsPresentFlag( true ); 
+    if (idx==0)
+    {
+      assert(repFormat->getChromaAndBitDepthVpsPresentFlag() == true); 
+    }
+#endif 
     repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
     repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
 #if AUXILIARY_PICTURES
