@@ -1070,6 +1070,27 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if REPN_FORMAT_IN_VPS
 Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
 {
+#if REPN_FORMAT_CONTROL_FLAG
+   WRITE_FLAG ( repFormat->getChromaAndBitDepthVpsPresentFlag(), "chroma_and_bit_depth_vps_presenet_flag"); 
+
+   WRITE_CODE ( repFormat->getPicWidthVpsInLumaSamples (), 16, "pic_width_in_luma_samples" );    
+   WRITE_CODE ( repFormat->getPicHeightVpsInLumaSamples(), 16, "pic_height_in_luma_samples" );  
+
+   if ( repFormat->getChromaAndBitDepthVpsPresentFlag() )
+   {
+     WRITE_CODE( repFormat->getChromaFormatVpsIdc(), 2, "chroma_format_idc" );   
+
+     if( repFormat->getChromaFormatVpsIdc() == 3 )
+     {
+       WRITE_FLAG( repFormat->getSeparateColourPlaneVpsFlag(), "separate_colour_plane_flag");      
+     }
+
+     assert( repFormat->getBitDepthVpsLuma() >= 8 );
+     assert( repFormat->getBitDepthVpsChroma() >= 8 );
+     WRITE_CODE( repFormat->getBitDepthVpsLuma() - 8,   4, "bit_depth_luma_minus8" );           
+     WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );
+   }
+#else 
   WRITE_CODE( repFormat->getChromaFormatVpsIdc(), 2, "chroma_format_idc" );    
   
   if( repFormat->getChromaFormatVpsIdc() == 3 )
@@ -1083,7 +1104,8 @@ Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
   assert( repFormat->getBitDepthVpsLuma() >= 8 );
   assert( repFormat->getBitDepthVpsChroma() >= 8 );
   WRITE_CODE( repFormat->getBitDepthVpsLuma() - 8,   4, "bit_depth_luma_minus8" );           
-  WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );         
+  WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );
+#endif 
 
 }
 #endif

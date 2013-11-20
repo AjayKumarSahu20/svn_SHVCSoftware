@@ -56,6 +56,9 @@
 #define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define ALIGN_TSA_STSA_PICS              1      ///< JCTVC-N0084: Alignment of TSA and STSA pictures across AU.
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
+#if REPN_FORMAT_IN_VPS
+#define REPN_FORMAT_CONTROL_FLAG         1      ///< JCTVC-O0179: Add control flag in representation format to control sending of chroma and bitdepth parameters
+#endif 
 #define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< JCTVC-N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
