@@ -598,7 +598,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   {
     pcSPS->setUpdateRepFormatFlag( true );
   }
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 )
+#else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() )
+#endif
   {
 #endif
 #if AUXILIARY_PICTURES
@@ -618,6 +622,13 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     READ_UVLC (    uiCode, "pic_height_in_luma_samples" );         pcSPS->setPicHeightInLumaSamples( uiCode    );
 #if REPN_FORMAT_IN_VPS
   }
+#if O0096_REP_FORMAT_INDEX
+  else if ( pcSPS->getUpdateRepFormatFlag() )
+  {
+    READ_CODE(8, uiCode, "update_rep_format_index");
+    pcSPS->setUpdateRepFormatIndex(uiCode);
+  }
+#endif
 #endif
   READ_FLAG(     uiCode, "conformance_window_flag");
   if (uiCode != 0)
@@ -636,7 +647,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #endif
   }
 #if REPN_FORMAT_IN_VPS
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 )
+#else
   if(  pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() )
+#endif
   {
 #endif
     READ_UVLC(     uiCode, "bit_depth_luma_minus8" );
@@ -1239,7 +1254,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   if( vps->getRepFormatIdxPresentFlag() )
   {
+#if O0096_REP_FORMAT_INDEX
+    READ_CODE( 8, uiCode, "vps_num_rep_formats_minus1" );
+#else
     READ_CODE( 4, uiCode, "vps_num_rep_formats_minus1" );
+#endif
     vps->setVpsNumRepFormats( uiCode + 1 );
   }
   else
@@ -1262,7 +1281,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
+#if O0096_REP_FORMAT_INDEX
+        READ_CODE( 8, uiCode, "vps_rep_format_idx[i]" );
+#else
         READ_CODE( 4, uiCode, "vps_rep_format_idx[i]" );
+#endif
         vps->setVpsRepFormatIdx( i, uiCode );
       }
       else
@@ -1306,17 +1329,38 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  READ_FLAG(uiCode, "default_direct_dependency_type_flag"); 
+  vps->setDefaultDirectDependecyTypeFlag(uiCode == 1? true : false);
+  if (vps->getDefaultDirectDependencyTypeFlag())
+  {
+    READ_CODE( vps->getDirectDepTypeLen(), uiCode, "default_direct_dependency_type" ); 
+    vps->setDefaultDirectDependecyType(uiCode);
+  }
+#endif
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
     for(j = 0; j < i; j++)
     {
       if (vps->getDirectDependencyFlag(i, j))
       {
-        READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); vps->setDirectDependencyType(i, j, uiCode);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+        if (vps->getDefaultDirectDependencyTypeFlag())
+        {
+          vps->setDirectDependencyType(i, j, vps->getDefaultDirectDependencyType());
+        }
+        else
+        {
+          READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); 
+          vps->setDirectDependencyType(i, j, uiCode);
+        }
+#else
+        READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); 
+        vps->setDirectDependencyType(i, j, uiCode);
+#endif
       }
     }
   }
-
 #endif
 
 #if IL_SL_SIGNALLING_N0371
@@ -1901,6 +1945,16 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if AUXILIARY_PICTURES
       ChromaFormat format;
 #if REPN_FORMAT_IN_VPS
+#if O0096_REP_FORMAT_INDEX
+      if( sps->getLayerId() == 0 )
+      {
+        format = sps->getChromaFormatIdc();
+      }
+      else
+      {
+        format = rpcSlice->getVPS()->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getVPS()->getVpsRepFormatIdx(sps->getLayerId()) )->getChromaFormatVpsIdc();
+      }
+#else
       if( ( sps->getLayerId() == 0 ) || sps->getUpdateRepFormatFlag() )
       {
         format = sps->getChromaFormatIdc();
@@ -1909,6 +1963,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       {
         format = rpcSlice->getVPS()->getVpsRepFormat( rpcSlice->getVPS()->getVpsRepFormatIdx(sps->getLayerId()) )->getChromaFormatVpsIdc();
       }
+#endif
 #else
       format = sps->getChromaFormatIdc();
 #endif
