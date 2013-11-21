@@ -562,6 +562,10 @@ private:
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #if M0457_PREDICTION_INDICATIONS
   UInt       m_directDepTypeLen;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool       m_defaultDirectDependencyTypeFlag;
+  UInt       m_defaultDirectDependencyType;
+#endif
   UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
 #endif
@@ -624,6 +628,11 @@ private:
 
 #if O0215_PHASE_ALIGNMENT
   Bool       m_phaseAlignFlag;
+#endif
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
+  Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -697,6 +706,13 @@ public:
   Void    setScalingListLayerDependency  ( UInt layerId, UInt refLayerId, Bool val  ) { m_scalingListLayerDependency[layerId][refLayerId] = val;  }
 #endif
 
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  Void    setRefLayersFlags(Int currLayerId);
+  Bool    getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId)              { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
+  Void    setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)      { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
+  Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
+  Void    setNumRefLayers(Int currLayerId);
+#endif
 #if VPS_RENAME
   UInt    getMaxLayerId()                                       { return m_maxLayerId; }
   Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
@@ -771,7 +787,12 @@ public:
 #if M0457_PREDICTION_INDICATIONS
   UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
   Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
-
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool   getDefaultDirectDependencyTypeFlag()                                   { return m_defaultDirectDependencyTypeFlag;               }
+  Void   setDefaultDirectDependecyTypeFlag(Bool x)                              { m_defaultDirectDependencyTypeFlag = x;                  }
+  UInt   getDefaultDirectDependencyType()                                       { return m_defaultDirectDependencyType;                   }
+  Void   setDefaultDirectDependecyType(UInt x)                                  { m_defaultDirectDependencyType = x;                      }
+#endif
   UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
 #endif
@@ -1208,6 +1229,9 @@ private:
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #if REPN_FORMAT_IN_VPS
   Bool m_updateRepFormatFlag;
+#if O0096_REP_FORMAT_INDEX
+  UInt m_updateRepFormatIndex;
+#endif
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -1391,6 +1415,10 @@ public:
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
+#if O0096_REP_FORMAT_INDEX
+  Int      getUpdateRepFormatIndex()      { return m_updateRepFormatIndex; }
+  Void     setUpdateRepFormatIndex(UInt index)  { m_updateRepFormatIndex = index; }
+#endif
 #endif
 #endif //SVC_EXTENSION
 };
