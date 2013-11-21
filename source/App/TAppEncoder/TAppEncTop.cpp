@@ -1180,6 +1180,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool isDefaultDirectDependencyTypeSet = false;
+#endif
   for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
     vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
@@ -1208,6 +1211,18 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
         vps->setDirectDependencyType( layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
                                                               (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+        if (!isDefaultDirectDependencyTypeSet)
+        {
+          vps->setDefaultDirectDependecyTypeFlag(1);
+          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
+          isDefaultDirectDependencyTypeSet = true;
+        }
+        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
+        {
+          vps->setDefaultDirectDependecyTypeFlag(0);
+        }
+#endif
       }
       else
       {
@@ -1216,6 +1231,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
 #endif
   }
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    vps->setNumRefLayers(vps->getLayerIdInNuh(layerCtr));   // identify the number of direct and indirect reference layers of current layer and set recursiveRefLayersFlags
+  }
+  if(vps->getMaxLayers() > MAX_REF_LAYERS)
+  {
+    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    {
+      assert( vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
+    }
+  }
+#endif
 #if IL_SL_SIGNALLING_N0371
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
