@@ -168,6 +168,13 @@
 #define O0062_POC_LSB_NOT_PRESENT_FLAG   1      ///< JCTVC-O0062: signal poc_lsb_not_present_flag for each layer in VPS extension
 #define SHM_FIX7                         1      ///< fix for SHVC WD ticket #7
 
+#define O0092_0094_DEPENDENCY_CONSTRAINT 1      ///< JCTVC-O0092: constraint on the layer_id of SPS/PPS
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+#define MAX_REF_LAYERS                   7
+#endif
+#define O0096_REP_FORMAT_INDEX           1      ///< JCTVC-O0096: identify SPS rep_format() with an index into the lists of formats in VPS extension.
+#define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
+
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
