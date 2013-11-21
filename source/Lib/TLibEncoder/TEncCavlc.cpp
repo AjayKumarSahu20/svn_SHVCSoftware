@@ -470,7 +470,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
     WRITE_FLAG( pcSPS->getUpdateRepFormatFlag(), "update_rep_format_flag" );
   }
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 ) 
+#else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+#endif
   {
 #endif
     WRITE_UVLC( pcSPS->getChromaFormatIdc (),         "chroma_format_idc" );
@@ -485,6 +489,12 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
 #if REPN_FORMAT_IN_VPS
   }
+#if O0096_REP_FORMAT_INDEX
+  else if (pcSPS->getUpdateRepFormatFlag())
+  {
+    WRITE_CODE( pcSPS->getUpdateRepFormatIndex(), 8,   "update_rep_format_index");
+  }
+#endif
 #endif
   Window conf = pcSPS->getConformanceWindow();
 
@@ -498,7 +508,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 
 #if REPN_FORMAT_IN_VPS
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 ) 
+#else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+#endif  
   {
     assert( pcSPS->getBitDepthY() >= 8 );
     assert( pcSPS->getBitDepthC() >= 8 );
@@ -986,7 +1000,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   if( vps->getRepFormatIdxPresentFlag() )
   {
+#if O0096_REP_FORMAT_INDEX
+    WRITE_CODE( vps->getVpsNumRepFormats() - 1, 8, "vps_num_rep_formats_minus1" );
+#else
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
+#endif
   }
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
@@ -1000,7 +1018,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
+#if O0096_REP_FORMAT_INDEX
+        WRITE_CODE( vps->getVpsRepFormatIdx(i), 8, "vps_rep_format_idx[i]" );
+#else
         WRITE_CODE( vps->getVpsRepFormatIdx(i), 4, "vps_rep_format_idx[i]" );
+#endif
       }
     }
   }
@@ -1026,6 +1048,26 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif 
 #if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "default_direct_dependency_flag");
+  if (vps->getDefaultDirectDependencyTypeFlag())
+  {
+    WRITE_CODE( vps->getDefaultDirectDependencyType(), vps->getDirectDepTypeLen(), "default_direct_dependency_type" );
+  }
+  else
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      for(j = 0; j < i; j++)
+      {
+        if (vps->getDirectDependencyFlag(i, j))
+        {
+          WRITE_CODE( vps->getDirectDependencyType(i, j), vps->getDirectDepTypeLen(), "direct_dependency_type[i][j]" );
+        }
+      }
+    }
+  }
+#else
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
     for(j = 0; j < i; j++)
@@ -1036,6 +1078,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+#endif
 
 #if IL_SL_SIGNALLING_N0371
   for(i = 1; i < vps->getMaxLayers(); i++)

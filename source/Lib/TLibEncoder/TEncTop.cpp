@@ -1071,6 +1071,16 @@ Void TEncTop::xInitPPS()
 
 #if REPN_FORMAT_IN_VPS
   Int lowestQP;
+#if O0096_REP_FORMAT_INDEX
+  if( m_layerId == 0 )
+  {
+    lowestQP = - m_cSPS.getQpBDOffsetY();
+  }
+  else
+  {
+    lowestQP = - (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_layerId ) )->getBitDepthVpsLuma() - 8) * 6;
+  }
+#else
   if( m_layerId == 0 || m_cSPS.getUpdateRepFormatFlag() )
   {
     lowestQP = - m_cSPS.getQpBDOffsetY();
@@ -1079,6 +1089,7 @@ Void TEncTop::xInitPPS()
   {
     lowestQP = - (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma() - 8) * 6;
   }
+#endif
 #else
   Int lowestQP = - m_cSPS.getQpBDOffsetY();
 #endif
@@ -1606,9 +1617,19 @@ Void TEncTop::xInitILRP()
 #else
 Void TEncTop::xInitILRP()
 {
+#if O0096_REP_FORMAT_INDEX
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_layerId ) );
+#else
   RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) );
+#endif
   Int bitDepthY,bitDepthC,picWidth,picHeight;
 
+#if O0096_REP_FORMAT_INDEX
+  bitDepthY   = repFormat->getBitDepthVpsLuma();
+  bitDepthC   = repFormat->getBitDepthVpsChroma();
+  picWidth    = repFormat->getPicWidthVpsInLumaSamples();
+  picHeight   = repFormat->getPicHeightVpsInLumaSamples();
+#else
   if( m_cSPS.getUpdateRepFormatFlag() )
   {
     bitDepthY   = m_cSPS.getBitDepthY();
@@ -1623,6 +1644,7 @@ Void TEncTop::xInitILRP()
     picWidth    = repFormat->getPicWidthVpsInLumaSamples();
     picHeight   = repFormat->getPicHeightVpsInLumaSamples();
   }
+#endif
   
   if(m_layerId > 0)
   {
