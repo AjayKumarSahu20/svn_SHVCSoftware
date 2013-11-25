@@ -398,12 +398,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
+#if O0098_SCALED_REF_LAYER_ID
+  string    cfg_scaledRefLayerId [MAX_LAYERS];
+#endif
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
   Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
 
+#if O0098_SCALED_REF_LAYER_ID
+  string*    cfg_scaledRefLayerIdPtr           [MAX_LAYERS];
+#endif
   string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
@@ -470,6 +476,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
+#if O0098_SCALED_REF_LAYER_ID
+      cfg_scaledRefLayerIdPtr          [layer] = &cfg_scaledRefLayerId[layer]          ;
+#endif
       cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer]  ;
       cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer]   ;
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
@@ -581,6 +590,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #endif
   ("NumScaledRefLayerOffsets%d",    cfg_numScaledRefLayerOffsets,     0, MAX_LAYERS,  "Number of scaled offset layer sets ")
+#if O0098_SCALED_REF_LAYER_ID
+  ("ScaledRefLayerId%d",           cfg_scaledRefLayerIdPtr,          string(""), MAX_LAYERS, "Layer ID of scaled base layer picture")
+#endif
   ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffsetPtr,   string(""), MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
@@ -1085,6 +1097,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
     if(m_acLayerCfg[layer].m_numScaledRefLayerOffsets)
     {
+#if O0098_SCALED_REF_LAYER_ID
+      assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
+#endif
       assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
               strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
@@ -1093,6 +1108,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 
     Int *tempArray = NULL;   // Contain the value 
+
+#if O0098_SCALED_REF_LAYER_ID
+    // ID //
+    if(strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerId[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerId");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerId[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+
     // Left offset //
     if(strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  ""))
     {

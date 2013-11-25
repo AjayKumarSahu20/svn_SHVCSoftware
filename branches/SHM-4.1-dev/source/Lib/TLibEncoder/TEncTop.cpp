@@ -790,7 +790,11 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
+#if O0098_SCALED_REF_LAYER_ID
+          const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+#else
           const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
+#endif
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -841,7 +845,11 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
+#if O0098_SCALED_REF_LAYER_ID
+          const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+#else
           const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
+#endif
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -911,6 +919,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
+#if O0098_SCALED_REF_LAYER_ID
+    m_cSPS.setScaledRefLayerId(i, m_scaledRefLayerId[i]);
+#endif
     m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
   }
 #endif //SVC_EXTENSION
@@ -1682,5 +1693,24 @@ Void TEncTop::xInitILRP()
   }
 }
 #endif
+
+#if O0098_SCALED_REF_LAYER_ID
+Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
+{
+  static Window win;
+
+  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  {
+    if (layerId == m_scaledRefLayerId[i])
+    {
+      return m_scaledRefLayerWindow[i];
+    }
+  }
+
+  win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
+  return win;
+}
+#endif
+
 #endif //SVC_EXTENSION
 //! \}

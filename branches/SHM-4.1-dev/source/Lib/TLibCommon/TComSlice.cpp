@@ -521,16 +521,30 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic )
       Int refResamplingLayer[MAX_LAYERS];
       memset( refResamplingLayer, 0, sizeof( refResamplingLayer ) );
 #endif
+#if !RESAMPLING_CONSTRAINT_BUG_FIX
       const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
       Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
                            (scalEL.getWindowRightOffset()  == 0 ) && 
                            (scalEL.getWindowTopOffset()    == 0 ) && 
                            (scalEL.getWindowBottomOffset() == 0 ) 
                           );
+#endif
 
       for( i=0; i < m_activeNumILRRefIdx; i++ )
       {
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
+#if RESAMPLING_CONSTRAINT_BUG_FIX
+#if O0098_SCALED_REF_LAYER_ID
+        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_pcVPS->getRefLayerId( m_layerId, m_interLayerPredLayerIdc[i] ));
+#else
+        const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
+#endif
+        Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
+                             (scalEL.getWindowRightOffset()  == 0 ) && 
+                             (scalEL.getWindowTopOffset()    == 0 ) && 
+                             (scalEL.getWindowBottomOffset() == 0 ) 
+                            );
+#endif
         if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
         {
 #if MOTION_RESAMPLING_CONSTRAINT
@@ -2468,6 +2482,24 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
 }
 const Int TComSPS::m_winUnitX[]={1,2,2,1};
 const Int TComSPS::m_winUnitY[]={1,2,1,1};
+
+#if O0098_SCALED_REF_LAYER_ID
+Window& TComSPS::getScaledRefLayerWindowForLayer(Int layerId)
+{
+  static Window win;
+
+  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  {
+    if (layerId == m_scaledRefLayerId[i])
+    {
+      return m_scaledRefLayerWindow[i];
+    }
+  }
+
+  win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
+  return win;
+}
+#endif
 
 TComPPS::TComPPS()
 : m_PPSId                       (0)

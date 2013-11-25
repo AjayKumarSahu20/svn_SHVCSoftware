@@ -860,6 +860,9 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
     for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
     {
       Window& scaledWindow = pcSPS->getScaledRefLayerWindow(i);
+#if O0098_SCALED_REF_LAYER_ID
+      READ_CODE( 6,  uiCode,  "scaled_ref_layer_left_id" );  pcSPS->setScaledRefLayerId( i, uiCode );
+#endif
       READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
       READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
       READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
