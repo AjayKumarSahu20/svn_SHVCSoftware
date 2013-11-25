@@ -52,6 +52,9 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
   m_numScaledRefLayerOffsets = 0;
+#if O0098_SCALED_REF_LAYER_ID
+  ::memset(m_scaledRefLayerId,           0, sizeof(m_scaledRefLayerId));
+#endif
   ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));

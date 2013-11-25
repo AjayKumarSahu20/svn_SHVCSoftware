@@ -604,6 +604,9 @@ Void TAppEncTop::xInitLibCfg()
       m_acTEncTop[layer].setNumScaledRefLayerOffsets( m_acLayerCfg[layer].m_numScaledRefLayerOffsets );
       for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
       {
+#if O0098_SCALED_REF_LAYER_ID
+        m_acTEncTop[layer].setScaledRefLayerId(i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
+#endif
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                   2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
       }

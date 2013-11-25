@@ -1226,6 +1226,9 @@ private:
 #endif
 #endif
   UInt        m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt        m_scaledRefLayerId[MAX_LAYERS];
+#endif
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #if REPN_FORMAT_IN_VPS
   Bool m_updateRepFormatFlag;
@@ -1411,6 +1414,11 @@ public:
 #endif
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id; }
+  Window&  getScaledRefLayerWindowForLayer( Int layerId );
+#endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }

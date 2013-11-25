@@ -140,6 +140,9 @@ private:
   Int                     m_ilSampleOnlyPred;
 #endif
   UInt                    m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt                    m_scaledRefLayerId[MAX_LAYERS];
+#endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
@@ -208,6 +211,11 @@ public:
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
   Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
   UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
+#if O0098_SCALED_REF_LAYER_ID
+  Void                    setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
+  UInt                    getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Window&  getScaledRefLayerWindowForLayer(Int layerId);
+#endif
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
 #endif //SVC_EXTENSION
 

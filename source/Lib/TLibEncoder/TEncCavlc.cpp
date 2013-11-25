@@ -683,6 +683,9 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
     for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
     {
       Window scaledWindow = pcSPS->getScaledRefLayerWindow(i);
+#if O0098_SCALED_REF_LAYER_ID
+      WRITE_CODE( pcSPS->getScaledRefLayerId(i), 6,          "scaled_ref_layer_id" );
+#endif
       WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
       WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
       WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );

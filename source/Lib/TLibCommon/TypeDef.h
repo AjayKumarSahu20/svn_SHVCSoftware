@@ -175,6 +175,9 @@
 #define O0096_REP_FORMAT_INDEX           1      ///< JCTVC-O0096: identify SPS rep_format() with an index into the lists of formats in VPS extension.
 #define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
+#define RESAMPLING_CONSTRAINT_BUG_FIX    1
+#define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
+
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
