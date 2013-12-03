@@ -429,7 +429,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
 
 #if SVC_EXTENSION
-  if(m_pcCfg->getLayerId() > 0)
+  if( m_pcCfg->getLayerId() > 0 && m_pcCfg->getNumActiveRefLayers() > 0 )
   {
     eSliceType=B_SLICE;
   }
