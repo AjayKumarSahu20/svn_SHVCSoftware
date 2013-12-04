@@ -1765,7 +1765,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->getSPS()->getVuiParameters()->setHrdParametersPresentFlag( true );
       }
 #if O0092_0094_DEPENDENCY_CONSTRAINT
-      assert( pcSlice->getSPS()->getSPSId() == 0 || pcSlice->getSPS()->getSPSId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getSPS()->getSPSId()) );
+      assert( pcSlice->getSPS()->getSPSId() == 0 || pcSlice->getSPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getSPS()->getLayerId()) );
 #endif
       m_pcEntropyCoder->encodeSPS(pcSlice->getSPS());
       writeRBSPTrailingBits(nalu.m_Bitstream);
