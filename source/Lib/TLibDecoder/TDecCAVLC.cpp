@@ -1906,24 +1906,50 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         }
         else
         {
+#if O0225_TID_BASED_IL_RPS_DERIV
+          if(rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(0,rpcSlice->getLayerId()) >  rpcSlice->getTLayer())
+        {
+#endif
           rpcSlice->setActiveNumILRRefIdx(1);
           rpcSlice->setInterLayerPredLayerIdc(0,0);
+#if O0225_TID_BASED_IL_RPS_DERIV
+        }
+#endif
         }
       }
     }
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
-    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == true )
+    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == true &&  (rpcSlice->getLayerId() > 0 ))
 #else
     else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == false )
 #endif
     {
       rpcSlice->setInterLayerPredEnabledFlag(true);
+
+#if O0225_TID_BASED_IL_RPS_DERIV      
+      Int   numRefLayerPics = 0;
+      Int   i = 0;
+      Int   refLayerPicIdc  [MAX_VPS_LAYER_ID_PLUS1];
+      for(i = 0, numRefLayerPics = 0;  i < rpcSlice->getNumILRRefIdx(); i++ ) 
+      {
+        if(rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer())
+        {          
+          refLayerPicIdc[ numRefLayerPics++ ] = i;
+        }
+      }
+      rpcSlice->setActiveNumILRRefIdx(numRefLayerPics);
+      for( i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+      {
+        rpcSlice->setInterLayerPredLayerIdc(refLayerPicIdc[i],i);
+      }      
+#else
       rpcSlice->setActiveNumILRRefIdx(rpcSlice->getNumILRRefIdx());
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
         rpcSlice->setInterLayerPredLayerIdc(i,i);
       }
+#endif 
     }
 #endif
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
