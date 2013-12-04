@@ -835,7 +835,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         pcSlice->setInterLayerPredLayerIdc( interLayerPredLayerIdcTmp[i], i );
       }
+
+#if !O0225_TID_BASED_IL_RPS_DERIV
       pcSlice->setActiveNumILRRefIdx( activeNumILRRefIdxTmp );
+#endif 
       if ( pcSlice->getActiveNumILRRefIdx() == 0 )
       {
         // No valid inter-layer pictures -> disable inter-layer prediction
