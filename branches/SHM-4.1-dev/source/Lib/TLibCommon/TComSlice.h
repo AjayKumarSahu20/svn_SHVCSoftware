@@ -615,6 +615,9 @@ private:
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 #endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool       m_altOutputLayerFlag;
+#endif
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
   Int        m_vpsNumRepFormats;            // coded as minus1
@@ -878,7 +881,10 @@ public:
   Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
 #endif
-
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool   getAltOuputLayerFlag()             { return m_altOutputLayerFlag; }
+  Void   setAltOuputLayerFlag(Bool x)       { m_altOutputLayerFlag = x;    }
+#endif
 #if REPN_FORMAT_IN_VPS
   Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
   Void   setRepFormatIdxPresentFlag(Bool x) { m_repFormatIdxPresentFlag = x;    }

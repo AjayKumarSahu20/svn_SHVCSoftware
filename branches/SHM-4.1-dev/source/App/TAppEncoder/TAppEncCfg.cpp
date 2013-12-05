@@ -970,6 +970,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
   ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
