@@ -1251,6 +1251,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
   }
 
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  if( vps->getMaxLayers() > 1 )
+  {
+    READ_FLAG( uiCode, "alt_output_layer_flag");
+    vps->setAltOuputLayerFlag( uiCode ? true : false );
+  }
+#endif
+
 #if REPN_FORMAT_IN_VPS
   READ_FLAG( uiCode, "rep_format_idx_present_flag");
   vps->setRepFormatIdxPresentFlag( uiCode ? true : false );

@@ -392,6 +392,9 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;
 #endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool      m_altOutputLayerFlag;
+#endif
 #endif
 
 public:
@@ -936,6 +939,10 @@ public:
 #if AUXILIARY_PICTURES
   Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
   ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
+#endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool      getAltOuputLayerFlag() const { return m_altOutputLayerFlag; }
+  Void      setAltOuputLayerFlag(Bool b) { m_altOutputLayerFlag = b;    }
 #endif
 #endif
 };

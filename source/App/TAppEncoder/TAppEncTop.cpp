@@ -617,6 +617,9 @@ Void TAppEncTop::xInitLibCfg()
 #if AUXILIARY_PICTURES
     m_acTEncTop[layer].setChromaFormatIDC( m_acLayerCfg[layer].m_chromaFormatIDC );
 #endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+    m_acTEncTop[layer].setAltOuputLayerFlag( m_altOutputLayerFlag );
+#endif
   }
 }
 #else //SVC_EXTENSION
@@ -1304,6 +1307,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
 #if O0215_PHASE_ALIGNMENT
   vps->setPhaseAlignFlag( m_phaseAlignFlag );
+#endif
+
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
 #endif
 
 #else //SVC_EXTENSION

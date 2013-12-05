@@ -998,6 +998,13 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
   }
 
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  if( vps->getMaxLayers() > 1 )
+  {
+    WRITE_FLAG( vps->getAltOuputLayerFlag(), "alt_output_layer_flag" );   
+  }
+#endif
+
 #if REPN_FORMAT_IN_VPS
   WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
 
