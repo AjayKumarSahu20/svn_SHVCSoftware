@@ -130,6 +130,9 @@
 #define N0120_MAX_TID_REF_CFG            1      ///< set max_tid_il_ref_pics_plus1 and max_tid_ref_present_flag in the config. file (configuration setting)
 #define O0225_MAX_TID_FOR_REF_LAYERS     1
 #define O0225_TID_BASED_IL_RPS_DERIV     1
+
+#define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
+#define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #endif
 #if REF_IDX_MFM
 #define REMOVE_COL_PICTURE_SIGNALING     1      ///< JCTVC-N0107: remove alternative collocated picture signalling

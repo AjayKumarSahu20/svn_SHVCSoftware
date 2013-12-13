@@ -803,11 +803,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
         {
-#if O0098_SCALED_REF_LAYER_ID
+/*#if O0098_SCALED_REF_LAYER_ID
           Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
 #else
           Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif
+#endif*/
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
           m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
