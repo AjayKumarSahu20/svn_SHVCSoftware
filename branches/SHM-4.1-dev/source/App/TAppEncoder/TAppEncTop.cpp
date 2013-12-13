@@ -1099,6 +1099,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
+#if VPS_TSLAYERS
+    vps->setMaxTSLayersPresentFlag(true);
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    {
+        vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
+    }
+#endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
 #if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);

@@ -593,6 +593,10 @@ private:
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool       m_maxTidRefPresentFlag;
 #endif 
+#if VPS_TSLAYERS
+  Bool       m_maxTSLayersPresentFlag;
+  UInt       m_maxTSLayerMinus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
@@ -839,6 +843,12 @@ public:
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
   Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
 #endif 
+#if VPS_TSLAYERS
+    Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
+    Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
+    UInt   getMaxTSLayersMinus1(Int layerId)                            { return m_maxTSLayerMinus1[layerId];}
+    Void   setMaxTSLayersMinus1(Int layerId, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerId] = maxTSublayer;}
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
