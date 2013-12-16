@@ -661,8 +661,20 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( 1, "sps_extension_flag" );
   if( 1 )   // if( sps_extension_flag )
   {
+#if O0142_CONDITIONAL_SPS_EXTENSION
+    UInt spsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
+    for (UInt i = 0; i < 8; i++)
+    {
+      WRITE_FLAG( spsExtensionTypeFlag[i], "sps_extension_type_flag" );
+    }
+    if (spsExtensionTypeFlag[1])
+    {
+      codeSPSExtension( pcSPS );
+    }
+#else
     codeSPSExtension( pcSPS );
     WRITE_FLAG( 0, "sps_extension2_flag" );
+#endif
   }
 #else
   WRITE_FLAG( 0, "sps_extension_flag" );

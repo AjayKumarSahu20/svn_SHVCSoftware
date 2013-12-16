@@ -65,6 +65,9 @@
 #define IL_SL_SIGNALLING_N0371           0      ///< JCTVC-N0371: inter-layer scaling list
 #define M0463_VUI_EXT_ILP_REF            0      ///< JCTVC-M0463: VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
+#if SPS_EXTENSION
+#define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
+#endif
 #define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
 #define LAYER_CTB                        0      ///< enable layer-specific CTB structure
