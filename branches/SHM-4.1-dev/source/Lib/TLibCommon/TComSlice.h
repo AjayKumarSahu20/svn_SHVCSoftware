@@ -641,6 +641,14 @@ private:
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
+#if VPS_DPB_SIZE_TABLE
+  Bool    m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
+  Bool    m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
+  Int     m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
+#endif
 #endif //SVC_EXTENSION
 public:
   TComVPS();
@@ -706,7 +714,9 @@ public:
 
   Void    deriveLayerIdListVariables();
 #endif
-
+#if VPS_DPB_SIZE_TABLE
+Void      deriveNumberOfSubDpbs();
+#endif
 #if IL_SL_SIGNALLING_N0371
   Bool    checkLayerDependency(UInt i, UInt j);
   Bool    getScalingListLayerDependency  ( UInt layerId, UInt refLayerId )            { return m_scalingListLayerDependency[layerId][refLayerId]; }
@@ -927,6 +937,25 @@ public:
 #if O0215_PHASE_ALIGNMENT
   Bool   getPhaseAlignFlag()                             { return m_phaseAlignFlag; }
   Void   setPhaseAlignFlag(Bool x)                       { m_phaseAlignFlag = x;    }
+#endif
+#if VPS_DPB_SIZE_TABLE
+  Bool    getSubLayerFlagInfoPresentFlag(Int i)         {return m_subLayerFlagInfoPresentFlag[i]; }
+  Void    setSubLayerFlagInfoPresentFlag(Int i, Bool x) {m_subLayerFlagInfoPresentFlag[i] = x;    }
+
+  Bool    getSubLayerDpbInfoPresentFlag(Int i, Int j)         {return m_subLayerDpbInfoPresentFlag[i][j]; }
+  Void    setSubLayerDpbInfoPresentFlag(Int i, Int j, Bool x) {m_subLayerDpbInfoPresentFlag[i][j] = x;    }
+
+  Int     getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
+  Void    setMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j, Int x) { m_maxVpsDecPicBufferingMinus1[i][k][j] = x;    }
+
+  Int     getMaxVpsNumReorderPics(Int i, Int j)         { return m_maxVpsNumReorderPics[i][j]; }
+  Void    setMaxVpsNumReorderPics(Int i, Int j, Int x) { m_maxVpsNumReorderPics[i][j] = x;    }
+
+  Int     getMaxVpsLatencyIncreasePlus1(Int i, Int j)         { return m_maxVpsLatencyIncreasePlus1[i][j]; }
+  Void    setMaxVpsLatencyIncreasePlus1(Int i, Int j, Int x) { m_maxVpsLatencyIncreasePlus1[i][j] = x;    }
+
+  Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
+  Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
 #endif
 #endif //SVC_EXTENSION
 };

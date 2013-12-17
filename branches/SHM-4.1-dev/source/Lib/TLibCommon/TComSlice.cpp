@@ -945,7 +945,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #else
     numRpsCurrTempList += getNumILRRefIdx();
 #endif
-  }
+}
 #endif
 
   return numRpsCurrTempList;
@@ -2143,6 +2143,14 @@ TComVPS::TComVPS()
     }
   }
 #endif
+#if VPS_DPB_SIZE_TABLE
+  ::memset( m_subLayerFlagInfoPresentFlag,  0, sizeof(m_subLayerFlagInfoPresentFlag ) );
+  ::memset( m_subLayerDpbInfoPresentFlag,   0, sizeof(m_subLayerDpbInfoPresentFlag )  );
+  ::memset( m_maxVpsDecPicBufferingMinus1,  0, sizeof(m_maxVpsDecPicBufferingMinus1 ) );
+  ::memset( m_maxVpsNumReorderPics,         0, sizeof(m_maxVpsNumReorderPics )        );
+  ::memset( m_maxVpsLatencyIncreasePlus1,   0, sizeof(m_maxVpsLatencyIncreasePlus1 )  );
+  ::memset( m_numSubDpbs                ,   0, sizeof(m_numSubDpbs)                   );
+#endif
 }
 #else
 TComVPS::TComVPS()
@@ -2192,6 +2200,19 @@ Void TComVPS::deriveLayerIdListVariables()
       }
     }
     setNumLayersInIdList(i, n);
+  }
+}
+#endif
+#if VPS_DPB_SIZE_TABLE
+Void TComVPS::deriveNumberOfSubDpbs()
+{
+  // Derive number of sub-DPBs
+  // For output layer set 0
+  setNumSubDpbs(0, 1);
+  // For other output layer sets
+  for( Int i = 1; i < getNumOutputLayerSets(); i++)
+  {
+    setNumSubDpbs( i, getNumLayersInIdList( getOutputLayerSetIdx(i)) );
   }
 }
 #endif

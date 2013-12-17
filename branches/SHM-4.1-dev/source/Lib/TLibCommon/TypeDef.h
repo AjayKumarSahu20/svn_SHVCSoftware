@@ -187,6 +187,7 @@
 
 #define O0153_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-O0153: alt output layer flag
 
+#define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
@@ -205,6 +206,7 @@
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES             16
 #endif
+#define MAX_VPS_OP_LAYER_SETS_PLUS1               3
 #if VPS_RENAME
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
 #define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
