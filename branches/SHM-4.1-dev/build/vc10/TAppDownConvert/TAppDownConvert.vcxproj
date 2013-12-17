@@ -122,7 +122,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\source\App\TAppDownConvert\DownConvert.cpp" />
     <ClCompile Include="..\..\..\source\App\TAppDownConvert\TAppDownConvert.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\source\App\TAppDownConvert\DownConvert.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

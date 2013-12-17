@@ -26,6 +26,8 @@ DEFS				= -DMSYS_LINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DMSYS_UNIX_
 # set objects
 OBJS          		= 	\
 					$(OBJ_DIR)/TAppDownConvert.o \
+					$(OBJ_DIR)/DownConvert.o \
+					
 
 # set libs to link with
 LIBS				= -ldl
