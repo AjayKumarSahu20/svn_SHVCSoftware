@@ -791,7 +791,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   // actual decoding starts here
   xActivateParameterSets();
-#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS
+#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS && N0147_IRAP_ALIGN_FLAG
   //Note setting O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS to 0 may cause decoder to crash.
   //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
   if(!m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
@@ -1157,6 +1157,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Other slices might choose which reference pictures to be used for inter-layer prediction
     if( m_layerId > 0 && m_uiSliceIdx == 0 )
     {      
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+      if( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || ( pcSlice->getVPS()->getSingleLayerForNonIrapFlag() && pcSlice->isIRAP() ) )
+#endif
       for( i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = i;
@@ -1327,8 +1330,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     
 #if N0147_IRAP_ALIGN_FLAG
-    if(  m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
+    if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() )
     {
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+      if( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || ( pcSlice->getVPS()->getSingleLayerForNonIrapFlag() && pcSlice->isIRAP() ) )
+#endif
       for(Int dependentLayerIdx = 0; dependentLayerIdx < pcSlice->getVPS()->getNumDirectRefLayers(m_layerId); dependentLayerIdx++)
       {
         TComList<TComPic*> *cListPic = getRefLayerDec( dependentLayerIdx )->getListPic();
