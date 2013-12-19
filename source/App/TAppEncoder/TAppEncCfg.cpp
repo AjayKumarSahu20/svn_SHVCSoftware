@@ -613,7 +613,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
-#endif 
+#endif
+#if N0147_IRAP_ALIGN_FLAG
+  ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+#endif
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
@@ -2423,6 +2426,9 @@ Void TAppEncCfg::xPrintParameter()
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
 #endif
+#if N0147_IRAP_ALIGN_FLAG
+  printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
+#endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
@@ -2487,7 +2493,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
 #endif
 #if O0215_PHASE_ALIGNMENT
-  printf("cross-layer sample alignment : %d\n", m_phaseAlignFlag);
+  printf("Cross-layer sample alignment : %d\n", m_phaseAlignFlag);
 #endif
 #if RATE_CONTROL_LAMBDA_DOMAIN
 #if !RC_SHVC_HARMONIZATION
