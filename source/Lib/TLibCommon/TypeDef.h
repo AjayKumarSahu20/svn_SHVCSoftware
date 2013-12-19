@@ -71,6 +71,10 @@
 #define VERT_MV_CONSTRAINT               1      ///< Vertical MV component constraint flag
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
 #define LAYER_CTB                        0      ///< enable layer-specific CTB structure
+#if POC_RESET_FLAG
+#define PREVTID0_POC_RESET               1      ///< JCTVC-O0117 Modification of the PicOrderCntVal of prevTid0Pic
+#define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
+#endif
 
 #define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
 #if ILP_SSH_SIG

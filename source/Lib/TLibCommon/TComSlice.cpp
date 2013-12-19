@@ -307,7 +307,11 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
         picPoc = picPoc & (pocCycle - 1);
       }
       
+#if POC_RESET_RPS
+      if( ((!pocHasMsb) && ((poc & (pocCycle-1)) == picPoc)) || ( pocHasMsb && (poc == picPoc)) )
+#else
       if (poc == picPoc)
+#endif
       {
        if (pcPic->getIsLongTerm())
       {
