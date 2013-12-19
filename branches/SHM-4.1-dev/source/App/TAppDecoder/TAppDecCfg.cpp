@@ -68,6 +68,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   string cfg_ReconFile [MAX_LAYERS];
   Int nLayerNum;
+#if OUTPUT_LAYER_SET_INDEX
+  Int olsIdx;
+#endif
 #if AVC_BASE
   string cfg_BLReconFile;
 #endif
@@ -109,6 +112,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepthC,d", m_outputBitDepthC, 0, "bit depth of YUV output chroma component (default: use 0 for native depth)")
 #if SVC_EXTENSION
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
+#if OUTPUT_LAYER_SET_INDEX
+  ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
+#endif
 #endif 
   ("MaxTemporalLayer,t", m_iMaxTemporalLayer, -1, "Maximum Temporal Layer to be decoded. -1 to decode all layers")
   ("SEIDecodedPictureHash", m_decodedPictureHashSEIEnabled, 1, "Control handling of decoded picture hash SEI messages\n"
@@ -137,6 +143,10 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   m_tgtLayerId = nLayerNum - 1;
   assert( m_tgtLayerId >= 0 );
+#if OUTPUT_LAYER_SET_INDEX  
+  this->getCommonDecoderParams()->setOutputLayerSetIdx( olsIdx       );
+  this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
+#endif
   for(UInt layer=0; layer<= m_tgtLayerId; layer++)
   {
     m_pchReconFile[layer] = cfg_ReconFile[layer].empty() ? NULL : strdup(cfg_ReconFile[layer].c_str());
@@ -200,6 +210,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     {
       fprintf(stderr, "File %s could not be opened. Using all LayerIds as default.\n", cfg_TargetDecLayerIdSetFile.c_str() );
     }
+#if OUTPUT_LAYER_SET_INDEX  
+    this->getCommonDecoderParams()->setTargetDecLayerIdSet( &m_targetDecLayerIdSet );
+#endif
   }
 
   return true;

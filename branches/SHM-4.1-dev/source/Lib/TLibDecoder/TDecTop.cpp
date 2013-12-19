@@ -693,6 +693,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder[m_layerId].getPrefetchedVPS(0) );
+#if OUTPUT_LAYER_SET_INDEX
+  // Following check should go wherever the VPS is activated
+  checkValueOfOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+#endif
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else
   m_apcSlicePilot->initSlice();
@@ -804,7 +808,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     assert( m_apcSlicePilot->getPocResetFlag() == 0);
   }
 #endif 
-
 #if REPN_FORMAT_IN_VPS
   // Initialize ILRP if needed, only for the current layer  
   // ILRP intialization should go along with activation of parameters sets, 
@@ -1859,5 +1862,101 @@ TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
   return ilpPic;
 }
 #endif
+#if OUTPUT_LAYER_SET_INDEX
+Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
+{
+  CommonDecoderParams* params = this->getCommonDecoderParams();
+  if( params->getValueCheckedFlag() )
+  {
+    return; // Already checked
+  }
+  if( params->getOutputLayerSetIdx() == -1 )  // Output layer set index not specified
+  {
+    Bool layerSetMatchFound = false;
+    // Output layer set index not assigned.
+    // Based on the value of targetLayerId, check if any of the output layer matches
+    // Currently, the target layer ID in the encoder assumes that all the layers are decoded    
+    // Check if any of the output layer sets match this description
+    for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+    {
+      Bool layerSetMatchFlag = true;
+      Int layerSetIdx = vps->getOutputLayerSetIdx( i );
+      if( vps->getNumLayersInIdList( layerSetIdx ) == params->getTargetLayerId() + 1 )
+      {
+        for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+        {
+          if( vps->getLayerSetLayerIdList( layerSetIdx, j ) != j )
+          {
+            layerSetMatchFlag = false;
+            break;
+          }
+        }
+      }
+      else
+      {
+        layerSetMatchFlag = false;
+      }
+      
+      if( layerSetMatchFlag ) // Potential output layer set candidate found
+      {
+        // If target dec layer ID list is also included - check if they match
+        if( params->getTargetDecLayerIdSet() )
+        {
+          if( params->getTargetDecLayerIdSet()->size() )  
+          {
+            for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+            {
+              if( *(params->getTargetDecLayerIdSet()->begin() + j) != vps->getLayerIdInNuh(vps->getLayerSetLayerIdList( layerSetIdx, j )))
+              {
+                layerSetMatchFlag = false;
+              }
+            }
+          }
+        }
+        if( layerSetMatchFlag ) // The target dec layer ID list also matches, if present
+        {
+          // Match found
+          layerSetMatchFound = true;
+          params->setOutputLayerSetIdx( i );
+          params->setValueCheckedFlag( true );
+          break;
+        }
+      }
+    }
+    assert( layerSetMatchFound ); // No output layer set matched the value of either targetLayerId or targetdeclayerIdlist
+  }   
+  else // Output layer set index is assigned - check if the values match
+  {
+    // Check if the target decoded layer is the highest layer in the list
+    Int layerSetIdx = vps->getOutputLayerSetIdx( params->getOutputLayerSetIdx() );  // Index to the layer set
+    assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
 
+    Bool layerSetMatchFlag = true;
+    for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+    {
+      if( vps->getLayerSetLayerIdList( layerSetIdx, j ) != j )
+      {
+        layerSetMatchFlag = false;
+        break;
+      }
+    }
+
+    assert(layerSetMatchFlag);    // Signaled output layer set index does not match targetOutputLayerId.
+    
+    // Check if the targetdeclayerIdlist matches the output layer set
+    if( params->getTargetDecLayerIdSet() )
+    {
+      if( params->getTargetDecLayerIdSet()->size() )  
+      {
+        for(Int i = 0; i < vps->getNumLayersInIdList( layerSetIdx ); i++)
+        {
+          assert( *(params->getTargetDecLayerIdSet()->begin() + i) == vps->getLayerIdInNuh(vps->getLayerSetLayerIdList( layerSetIdx, i )));
+        }
+      }
+    }
+    params->setValueCheckedFlag( true );
+
+  }
+}
+#endif
 //! \}

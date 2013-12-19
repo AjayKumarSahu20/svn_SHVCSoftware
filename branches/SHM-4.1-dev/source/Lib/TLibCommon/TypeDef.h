@@ -192,6 +192,9 @@
 #define O0153_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-O0153: alt output layer flag
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
+#if VPS_DPB_SIZE_TABLE 
+#define OUTPUT_LAYER_SET_INDEX           1      ///< JCTVC-O0217: DPB operations: Inference/input of output layer set index
+#endif
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION

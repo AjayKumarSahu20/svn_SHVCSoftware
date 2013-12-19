@@ -133,6 +133,9 @@ private:
 #endif
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #endif 
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams*    m_commonDecoderParams;
+#endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   fstream*               m_pBLSyntaxFile;
 #endif
@@ -239,7 +242,12 @@ protected:
 #if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
   TComPic*  getMotionPredIlp(TComSlice* pcSlice);
 #endif
-
+public:
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
+  Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
+  Void      checkValueOfOutputLayerSetIdx(TComVPS *vps);
+#endif
 };// END CLASS DEFINITION TDecTop
 
 
