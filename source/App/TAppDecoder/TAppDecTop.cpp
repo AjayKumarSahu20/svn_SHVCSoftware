@@ -493,6 +493,9 @@ Void TAppDecTop::xInitDecLib()
     m_acTDecTop[layer].init();
     m_acTDecTop[layer].setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
     m_acTDecTop[layer].setNumLayer( m_tgtLayerId + 1 );
+#if OUTPUT_LAYER_SET_INDEX
+    m_acTDecTop[layer].setCommonDecoderParams( this->getCommonDecoderParams() );
+#endif
   }
 
 #else

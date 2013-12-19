@@ -39,7 +39,7 @@
 #define __COMMONDEF__
 
 #include <algorithm>
-
+#include <vector>
 #if _MSC_VER > 1000
 // disable "signed and unsigned mismatch"
 #pragma warning( disable : 4018 )
@@ -279,6 +279,35 @@ enum NalUnitType
   NAL_UNIT_INVALID,
 };
 
+#if OUTPUT_LAYER_SET_INDEX
+class CommonDecoderParams
+{
+  Int m_targetLayerId;
+  Int m_outputLayerSetIdx;
+  std::vector<Int> *m_targetDecLayerIdSet; 
+  Bool m_valueCheckedFlag;
+public:
+  CommonDecoderParams(): 
+    m_targetLayerId(0)
+    , m_outputLayerSetIdx(-1)
+    , m_targetDecLayerIdSet(NULL)
+    , m_valueCheckedFlag(false)
+ {}
+
+  Void setTargetLayerId(const Int x) { m_targetLayerId = x;   }
+  Int  getTargetLayerId()            { return m_targetLayerId;}
+  
+  Void setOutputLayerSetIdx(const Int x) { m_outputLayerSetIdx = x;   }
+  Int  getOutputLayerSetIdx()            { return m_outputLayerSetIdx;}
+
+  Void               setTargetDecLayerIdSet(std::vector<Int> *x) { m_targetDecLayerIdSet = x;   }
+  std::vector<Int>*  getTargetDecLayerIdSet()                    { return m_targetDecLayerIdSet;}
+  
+  Void setValueCheckedFlag(const Bool x) { m_valueCheckedFlag = x;   }
+  Bool getValueCheckedFlag()            { return m_valueCheckedFlag;}
+  
+};
+#endif
 //! \}
 
 #endif // end of #ifndef  __COMMONDEF__
