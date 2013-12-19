@@ -2123,6 +2123,20 @@ TComVPS::TComVPS()
    ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
    ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
 #endif
+#if VPS_VUI_VIDEO_SIGNAL
+    m_vidSigPresentVpsFlag=true;
+    m_vpsVidSigInfo=1;
+    ::memset( m_vpsVidSigIdx, 0, sizeof(m_vpsVidSigIdx) );
+    m_vpsVidSigIdx[0]=0;
+    for (Int i=0; i < 16; i++)
+    {
+      m_vpsVidFormat[i] = 5;
+      m_vpsFullRangeFlag[i] = false;
+      m_vpsColorPrimaries[i] = 2;
+      m_vpsTransChar[i] = 2;
+      m_vpsMatCoeff[i] = 2;
+    }
+#endif
 #if VPS_VUI_BITRATE_PICRATE  
   ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));
   ::memset(m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag));

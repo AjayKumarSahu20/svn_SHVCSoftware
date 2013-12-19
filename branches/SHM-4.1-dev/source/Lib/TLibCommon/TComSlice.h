@@ -612,6 +612,16 @@ private:
   Bool        m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif 
+#if VPS_VUI_VIDEO_SIGNAL
+    Bool        m_vidSigPresentVpsFlag;
+    Int         m_vpsVidSigInfo;
+    Int         m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
+    Int         m_vpsVidFormat[16];
+    Bool        m_vpsFullRangeFlag[16];
+    Int         m_vpsColorPrimaries[16];
+    Int         m_vpsTransChar[16];
+    Int         m_vpsMatCoeff[16];
+#endif 
 #if VPS_VUI_BITRATE_PICRATE
   Bool        m_bitRatePresentVpsFlag;
   Bool        m_picRatePresentVpsFlag;
@@ -886,6 +896,24 @@ Void      deriveNumberOfSubDpbs();
   
   Int  getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
   Void setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
+#endif
+#if VPS_VUI_VIDEO_SIGNAL
+    Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
+    Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
+    Int    getNumVideoSignalInfo()               { return m_vpsVidSigInfo;        }
+    Void   setNumVideoSignalInfo(Int x)          { m_vpsVidSigInfo = x;           }
+    Int    getVideoSignalInfoIdx(Int idx)        { return m_vpsVidSigIdx[idx];    }
+    Void   setVideoSignalInfoIdx(Int idx, Int x) { m_vpsVidSigIdx[idx] = x;       }
+    Int    getVideoVPSFormat(Int idx)            { return m_vpsVidFormat[idx];    }
+    Void   setVideoVPSFormat(Int idx, Int x)     { m_vpsVidFormat[idx] = x;       }
+    Bool   getVideoFullRangeVpsFlag(Int idx)     { return m_vpsFullRangeFlag[idx];}
+    Void   setVideoFullRangeVpsFlag(Int idx, Bool x) { m_vpsFullRangeFlag[idx] = x;   }
+    Int    getColorPrimaries(Int idx)            { return m_vpsColorPrimaries[idx];   }
+    Void   setColorPrimaries(Int idx, Int x)     { m_vpsColorPrimaries[idx] = x;      }
+    Int    getTransCharacter(Int idx)            { return m_vpsTransChar[idx];    }
+    Void   setTransCharacter(Int idx, Int x)     { m_vpsTransChar[idx] = x;       }
+    Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
+    Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
 #endif
 #if VPS_VUI_BITRATE_PICRATE
   Bool getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
