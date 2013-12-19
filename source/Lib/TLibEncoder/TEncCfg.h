@@ -395,6 +395,9 @@ protected:
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      m_altOutputLayerFlag;
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Int       m_skipPictureAtArcSwitch;
+#endif
 #endif
 
 public:
@@ -935,6 +938,10 @@ public:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Void      setSkipPictureAtArcSwitch(Int x) { m_skipPictureAtArcSwitch = x;    }
+  Int       getSkipPictureAtArcSwitch()      { return m_skipPictureAtArcSwitch; }
 #endif
 #if AUXILIARY_PICTURES
   Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }

@@ -968,6 +968,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
   ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
@@ -2323,6 +2326,16 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  if (m_adaptiveResolutionChange > 0)
+  {
+    xConfirmPara(m_crossLayerIrapAlignFlag != 0, "Cross layer IRAP alignment must be disabled when using adaptive resolution change.");
+  }
+  if (m_skipPictureAtArcSwitch)
+  {
+    xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
+  }
+#endif
 #if N0120_MAX_TID_REF_CFG
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
@@ -2425,6 +2438,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  printf("Skip picture at ARC switch    : %d\n", m_skipPictureAtArcSwitch );
 #endif
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );

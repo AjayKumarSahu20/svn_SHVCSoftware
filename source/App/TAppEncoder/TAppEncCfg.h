@@ -376,6 +376,9 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
+#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
 #endif

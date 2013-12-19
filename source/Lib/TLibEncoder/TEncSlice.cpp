@@ -516,6 +516,12 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceSegmentMode     ( m_pcCfg->getSliceSegmentMode()     );
   rpcSlice->setSliceSegmentArgument ( m_pcCfg->getSliceSegmentArgument() );
   rpcSlice->setMaxNumMergeCand        ( m_pcCfg->getMaxNumMergeCand()        );
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  if (m_pcCfg->getSkipPictureAtArcSwitch() && m_pcCfg->getAdaptiveResolutionChange() > 0 && rpcSlice->getLayerId() == 1 && rpcSlice->getPOC() == m_pcCfg->getAdaptiveResolutionChange())
+  {
+    rpcSlice->setMaxNumMergeCand        ( 1 );
+  }
+#endif
   xStoreWPparam( pPPS->getUseWP(), pPPS->getWPBiPred() );
 
 #if SVC_EXTENSION

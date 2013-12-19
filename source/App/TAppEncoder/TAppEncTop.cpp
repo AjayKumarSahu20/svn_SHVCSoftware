@@ -170,6 +170,9 @@ Void TAppEncTop::xInitLibCfg()
     repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
     repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+    m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch( m_skipPictureAtArcSwitch );
+#endif
   }
   delete [] mapIdxToLayer;
 #endif
@@ -1360,6 +1363,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
+#endif 
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 #endif
 #if !VPS_EXTN_OFFSET_CALC
 #if VPS_EXTN_OFFSET

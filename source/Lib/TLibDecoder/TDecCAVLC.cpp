@@ -1470,6 +1470,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
+#endif
 
   READ_FLAG( uiCode,  "vps_vui_present_flag" );
   if (uiCode)

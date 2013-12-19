@@ -459,6 +459,16 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
   // We need to split, so don't try these modes.
   if(!bSliceEnd && !bSliceStart && bInsidePicture )
   {
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+    if (m_pcEncCfg->getSkipPictureAtArcSwitch() && m_pcEncCfg->getAdaptiveResolutionChange() > 0 && pcSlice->getLayerId() == 1 && pcSlice->getPOC() == m_pcEncCfg->getAdaptiveResolutionChange())
+    {
+      rpcTempCU->initEstData( uiDepth, iBaseQP );
+      
+      xCheckRDCostMerge2Nx2N( rpcBestCU, rpcTempCU, &earlyDetectionSkipMode, true );
+    }
+    else
+    {
+#endif
 #if (ENCODER_FAST_MODE)
     Bool testInter = true;
     if (rpcBestCU->getLayerId() > 0)
@@ -778,6 +788,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     {
       bSubBranch = true;
     }
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+    }
+#endif
   }
   else if(!(bSliceEnd && bInsidePicture))
   {
@@ -1142,6 +1155,12 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight>>uiDepth) - 1;
   
   TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  if (m_pcEncCfg->getSkipPictureAtArcSwitch() && m_pcEncCfg->getAdaptiveResolutionChange() > 0 && pcSlice->getLayerId() == 1 && pcSlice->getPOC() == m_pcEncCfg->getAdaptiveResolutionChange())
+  {
+    pcCU->setSkipFlagSubParts(true, uiAbsPartIdx, uiDepth);
+  }
+#endif
   // If slice start is within this cu...
   Bool bSliceStart = pcSlice->getSliceSegmentCurStartCUAddr() > pcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr())*pcCU->getPic()->getNumPartInCU()+uiAbsPartIdx && 
     pcSlice->getSliceSegmentCurStartCUAddr() < pcPic->getPicSym()->getInverseCUOrderMap(pcCU->getAddr())*pcCU->getPic()->getNumPartInCU()+uiAbsPartIdx+( pcPic->getNumPartInCU() >> (uiDepth<<1) );
@@ -1352,7 +1371,11 @@ Int  TEncCu::updateLCUDataISlice(TComDataCU* pcCU, Int LCUIdx, Int width, Int he
  * \param rpcTempCU
  * \returns Void
  */
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode, Bool bUseSkip )
+#else
 Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, Bool *earlyDetectionSkipMode )
+#endif
 {
   assert( rpcTempCU->getSlice()->getSliceType() != I_SLICE );
   TComMvField  cMvFieldNeighbours[ 2 * MRG_MAX_NUM_CANDS ]; // double length for mv of both lists
@@ -1386,7 +1409,11 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
     iteration = 2;
   }
 
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  for( UInt uiNoResidual = bUseSkip?1:0; uiNoResidual < iteration; ++uiNoResidual )
+#else
   for( UInt uiNoResidual = 0; uiNoResidual < iteration; ++uiNoResidual )
+#endif
   {
     for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
     {
