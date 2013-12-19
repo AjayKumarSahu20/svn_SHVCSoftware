@@ -832,6 +832,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       Int pocAdjustValue = m_apcSlicePilot->getPOC();
 
+#if PREVTID0_POC_RESET
+      m_apcSlicePilot->adjustPrevTid0POC(pocAdjustValue);
+#endif
       // If poc reset flag is set to 1, reset all POC for DPB -> basically do it for each slice in the picutre
       TComList<TComPic*>::iterator  iterPic = m_cListPic.begin();  
 

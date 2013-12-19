@@ -1907,6 +1907,9 @@ public:
   Void      setRPSidx          ( Int iBDidx ) { m_iBDidx = iBDidx; }
   Int       getRPSidx          () { return m_iBDidx; }
   Int       getPrevTid0POC      ()                        { return  m_prevTid0POC;       }
+#if PREVTID0_POC_RESET
+    Void     adjustPrevTid0POC      (Int adj)             { m_prevTid0POC=m_prevTid0POC-adj; }
+#endif
   TComRefPicListModification* getRefPicListModification() { return &m_RefPicListModification; }
   Void      setLastIDR(Int iIDRPOC)                       { m_iLastIDR = iIDRPOC; }
   Int       getLastIDR()                                  { return m_iLastIDR; }
