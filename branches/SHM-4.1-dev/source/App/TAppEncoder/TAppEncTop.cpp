@@ -1337,7 +1337,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-    vps->setCrossLayerIrapAlignFlag(true);
+    vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
       for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
