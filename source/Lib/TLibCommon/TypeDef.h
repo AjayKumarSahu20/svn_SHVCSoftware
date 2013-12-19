@@ -101,6 +101,7 @@
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
 #define HIGHER_LAYER_IRAP_SKIP_FLAG      1      ///< JCTVC-O0199: Indication that higher layer IRAP picture uses skip blocks only
 #endif
+#define VPS_VUI_VIDEO_SIGNAL             1      ///< JCTVC-O0118 video signal information
 #endif //VPS_VUI
 
 #endif
