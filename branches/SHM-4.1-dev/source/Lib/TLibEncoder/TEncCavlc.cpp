@@ -1148,6 +1148,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
+#endif
 
 #if !VPS_VUI
   WRITE_FLAG( 0,                     "vps_vui_present_flag" );

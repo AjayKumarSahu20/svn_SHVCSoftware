@@ -2279,7 +2279,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           {
             // set entropy coder for RD
             m_pcEntropyCoder->setEntropyCoder ( m_pcSbacCoder, pcSlice );
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+            if ( pcSlice->getSPS()->getUseSAO() && !( m_pcEncTop->getSkipPictureAtArcSwitch() && m_pcEncTop->getAdaptiveResolutionChange() > 0 && pcSlice->getLayerId() == 1 && pcSlice->getPOC() == m_pcEncTop->getAdaptiveResolutionChange()) )
+#else
             if ( pcSlice->getSPS()->getUseSAO() )
+#endif
             {
               m_pcEntropyCoder->resetEntropy();
               m_pcEntropyCoder->setBitstream( m_pcBitCounter );
@@ -2302,7 +2306,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             m_pcEntropyCoder->setEntropyCoder ( m_pcCavlcCoder, pcSlice );
 #endif
             processingState = ENCODE_SLICE;
-
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+            if ( ( m_pcEncTop->getSkipPictureAtArcSwitch() && m_pcEncTop->getAdaptiveResolutionChange() > 0 && pcSlice->getLayerId() == 1 && pcSlice->getPOC() == m_pcEncTop->getAdaptiveResolutionChange()) )
+            {
+              pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[0]=0;
+              pcSlice->getPic()->getPicSym()->getSaoParam()->bSaoFlag[1]=0;
+            }
+#endif
             for(Int s=0; s< uiNumSlices; s++)
             {
               if (pcSlice->getSPS()->getUseSAO())

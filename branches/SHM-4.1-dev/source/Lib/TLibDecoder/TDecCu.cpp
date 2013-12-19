@@ -316,6 +316,24 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt&
     m_pcEntropyDecoder->decodeSkipFlag( pcCU, uiAbsPartIdx, uiDepth );
   }
  
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  if (pcCU->getSlice()->getVPS()->getHigherLayerIrapSkipFlag() && pcCU->getSlice()->getVPS()->getSingleLayerForNonIrapFlag() && pcCU->getLayerId() > 0)
+  {
+    Bool lowerLayerExist = false;
+    for(int i=0;i<pcCU->getLayerId();i++)
+    {
+      if(pcCU->getSlice()->getBaseColPic(pcCU->getSlice()->getInterLayerPredLayerIdc(i)))
+      {
+        lowerLayerExist = true;
+      }
+    }
+    if(lowerLayerExist)
+    {
+      assert(pcCU->isSkipped(uiAbsPartIdx));
+    }
+  }
+#endif
+ 
   if( pcCU->isSkipped(uiAbsPartIdx) )
   {
     m_ppcCU[uiDepth]->copyInterPredInfoFrom( pcCU, uiAbsPartIdx, REF_PIC_LIST_0 );

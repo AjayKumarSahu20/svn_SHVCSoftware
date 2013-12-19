@@ -600,6 +600,9 @@ private:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool       m_higherLayerIrapSkipFlag;
+#endif
 #if TILE_BOUNDARY_ALIGNED_FLAG
   Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif 
@@ -862,6 +865,10 @@ Void      deriveNumberOfSubDpbs();
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
+  Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
 #endif
 #if TILE_BOUNDARY_ALIGNED_FLAG  
   Bool   getTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId)           { return m_tileBoundariesAlignedFlag[currLayerId][refLayerId]; }
