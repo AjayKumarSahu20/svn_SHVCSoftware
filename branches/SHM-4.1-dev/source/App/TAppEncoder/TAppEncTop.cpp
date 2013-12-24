@@ -1216,7 +1216,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
       {
         Int layerId = vps->getLayerSetLayerIdList(layerSetId, k); // k-th layer in the output layer set
-        vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) );
+        vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
         maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
       }
       vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
