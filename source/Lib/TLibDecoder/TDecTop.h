@@ -71,11 +71,7 @@ private:
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
-#if SVC_EXTENSION
-  ParameterSetManagerDecoder m_parameterSetManagerDecoder[MAX_LAYERS];  // storage for parameter sets 
-#else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
-#endif
 
   TComSlice*              m_apcSlicePilot;
 
@@ -247,6 +243,9 @@ public:
   CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
   Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
   Void      checkValueOfOutputLayerSetIdx(TComVPS *vps);
+#endif
+#if SCALINGLIST_INFERRING
+  ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
 #endif
 };// END CLASS DEFINITION TDecTop
 

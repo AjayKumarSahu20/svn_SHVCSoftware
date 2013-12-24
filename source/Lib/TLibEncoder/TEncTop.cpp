@@ -1073,8 +1073,8 @@ Void TEncTop::xInitSPS()
 
 Void TEncTop::xInitPPS()
 {
-#if IL_SL_SIGNALLING_N0371
-  m_cPPS.setLayerId(m_layerId);
+#if SCALINGLIST_INFERRING ||  IL_SL_SIGNALLING_N0371
+  m_cPPS.setLayerId( m_layerId );
 #endif
 
   m_cPPS.setConstrainedIntraPred( m_bUseConstrainedIntraPred );

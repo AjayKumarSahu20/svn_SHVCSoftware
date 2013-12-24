@@ -550,26 +550,22 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 {
   printf("\ninserting lost poc : %d\n",iLostPoc);
   TComSlice cFillSlice;
-#if SVC_EXTENSION
-  cFillSlice.setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
-  cFillSlice.setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
-  cFillSlice.setVPS( m_parameterSetManagerDecoder[m_layerId].getFirstVPS() );
-  cFillSlice.initSlice( m_layerId );
-#else
   cFillSlice.setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillSlice.setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
+#if SVC_EXTENSION
+  cFillSlice.setVPS( m_parameterSetManagerDecoder.getFirstVPS() );
+  cFillSlice.initSlice( m_layerId );
+#else
   cFillSlice.initSlice();
 #endif
   TComPic *cFillPic;
   xGetNewPicBuffer(&cFillSlice,cFillPic);
-#if SVC_EXTENSION
-  cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder[m_layerId].getFirstSPS() );
-  cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder[m_layerId].getFirstPPS() );
-  cFillPic->getSlice(0)->setVPS( m_parameterSetManagerDecoder[m_layerId].getFirstVPS() );
-  cFillPic->getSlice(0)->initSlice( m_layerId );
-#else
   cFillPic->getSlice(0)->setSPS( m_parameterSetManagerDecoder.getFirstSPS() );
   cFillPic->getSlice(0)->setPPS( m_parameterSetManagerDecoder.getFirstPPS() );
+#if SVC_EXTENSION
+  cFillPic->getSlice(0)->setVPS( m_parameterSetManagerDecoder.getFirstVPS() );
+  cFillPic->getSlice(0)->initSlice( m_layerId );
+#else
   cFillPic->getSlice(0)->initSlice();
 #endif
   
@@ -612,17 +608,6 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
 
 Void TDecTop::xActivateParameterSets()
 {
-#if SVC_EXTENSION
-  m_parameterSetManagerDecoder[m_layerId].applyPrefetchedPS();
-  
-  TComPPS *pps = m_parameterSetManagerDecoder[m_layerId].getPPS(m_apcSlicePilot->getPPSId());
-  assert (pps != 0);
-
-  TComSPS *sps = m_parameterSetManagerDecoder[m_layerId].getSPS(pps->getSPSId());
-  assert (sps != 0);
-
-  if( false == m_parameterSetManagerDecoder[m_layerId].activatePPS(m_apcSlicePilot->getPPSId(), m_apcSlicePilot->isIRAP()) )
-#else
   m_parameterSetManagerDecoder.applyPrefetchedPS();
   
   TComPPS *pps = m_parameterSetManagerDecoder.getPPS(m_apcSlicePilot->getPPSId());
@@ -632,11 +617,76 @@ Void TDecTop::xActivateParameterSets()
   assert (sps != 0);
 
   if (false == m_parameterSetManagerDecoder.activatePPS(m_apcSlicePilot->getPPSId(),m_apcSlicePilot->isIRAP()))
-#endif
   {
     printf ("Parameter set activation failed!");
     assert (0);
   }
+
+#if SCALINGLIST_INFERRING
+  // scaling list settings and checks
+  TComVPS *activeVPS = m_parameterSetManagerDecoder.getActiveVPS();
+  TComSPS *activeSPS = m_parameterSetManagerDecoder.getActiveSPS();
+  TComPPS *activePPS = m_parameterSetManagerDecoder.getActivePPS();
+
+  if( activeSPS->getInferScalingListFlag() )
+  {
+    UInt refLayerId = activeSPS->getScalingListRefLayerId();
+    TComSPS *refSps = m_ppcTDecTop[refLayerId]->getParameterSetManager()->getActiveSPS(); assert( refSps != NULL );
+
+    // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
+    if( activeVPS->getAvcBaseLayerFlag() )
+    {
+      assert( refLayerId > 0 );
+    }
+
+    // It is a requirement of bitstream conformance that, when an SPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB and
+    // sps_infer_scaling_list_flag in the SPS is equal to 1, sps_infer_scaling_list_flag shall be equal to 0 for the SPS that is active for the layer with nuh_layer_id equal to sps_scaling_list_ref_layer_id
+    assert( refSps->getInferScalingListFlag() == false );
+
+    // It is a requirement of bitstream conformance that, when an SPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB,
+    // the layer with nuh_layer_id equal to sps_scaling_list_ref_layer_id shall be a direct or indirect reference layer of the layer with nuh_layer_id equal to nuhLayerIdB
+    assert( activeVPS->getRecursiveRefLayerFlag( activeSPS->getLayerId(), refLayerId ) == true );
+    
+    if( activeSPS->getScalingList() != refSps->getScalingList() )
+    {
+      // delete created instance of scaling list since it will be inferred
+      delete activeSPS->getScalingList();
+
+      // infer scaling list
+      activeSPS->setScalingList( refSps->getScalingList() );
+    }
+  }
+
+  if( activePPS->getInferScalingListFlag() )
+  {
+    UInt refLayerId = activePPS->getScalingListRefLayerId();
+    TComPPS *refPps = m_ppcTDecTop[refLayerId]->getParameterSetManager()->getActivePPS(); assert( refPps != NULL );
+
+    // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
+    if( activeVPS->getAvcBaseLayerFlag() )
+    {
+      assert( refLayerId > 0 );
+    }
+
+    // It is a requirement of bitstream conformance that, when an PPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB and
+    // pps_infer_scaling_list_flag in the PPS is equal to 1, pps_infer_scaling_list_flag shall be equal to 0 for the PPS that is active for the layer with nuh_layer_id equal to pps_scaling_list_ref_layer_id
+    assert( refPps->getInferScalingListFlag() == false );
+
+    // It is a requirement of bitstream conformance that, when an PPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB,
+    // the layer with nuh_layer_id equal to pps_scaling_list_ref_layer_id shall be a direct or indirect reference layer of the layer with nuh_layer_id equal to nuhLayerIdB
+    assert( activeVPS->getRecursiveRefLayerFlag( activePPS->getLayerId(), refLayerId ) == true );
+    
+    if( activePPS->getScalingList() != refPps->getScalingList() )
+    {
+      // delete created instance of scaling list since it will be inferred
+      delete activePPS->getScalingList();
+
+      // infer scaling list
+      activePPS->setScalingList( refPps->getScalingList() );
+    }
+
+  }
+#endif
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
   {
@@ -708,7 +758,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
-  m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder[m_layerId].getPrefetchedVPS(0) );
+  m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
   checkValueOfOutputLayerSetIdx( m_apcSlicePilot->getVPS());
@@ -750,10 +800,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if M0457_IL_SAMPLE_PRED_ONLY_FLAG
   m_apcSlicePilot->setNumSamplePredRefLayers( getNumSamplePredRefLayers() );
 #endif
-  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder[m_layerId]);
-#else
-  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 #endif
+  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 
   // set POC for dependent slices in skipped pictures
   if(m_apcSlicePilot->getDependentSliceSegmentFlag() && m_prevSliceSkipped) 
@@ -949,7 +997,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (m_bFirstSliceInPicture)
   {
 #if AVC_BASE
-    if( m_layerId == 1 && m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+    if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
     {
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
       fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
@@ -1186,7 +1234,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         UInt refLayerIdc = i;
 #if AVC_BASE
-        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder[0].getActiveVPS()->getAvcBaseLayerFlag() )
+        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
         {
           pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
 #if AVC_SYNTAX
@@ -1277,7 +1325,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
 #if AVC_BASE
-        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder[0].getActiveVPS()->getAvcBaseLayerFlag() )
+        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
         {
           pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
 #if AVC_SYNTAX
@@ -1430,6 +1478,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
+#if SCALINGLIST_INFERRING
+    if( m_layerId == 0 || ( m_layerId > 0 && !pcSlice->getPPS()->getInferScalingListFlag() && !pcSlice->getSPS()->getInferScalingListFlag() ) )
+#endif
     if(!pcSlice->getPPS()->getScalingListPresentFlag() && !pcSlice->getSPS()->getScalingListPresentFlag())
     {
 #if IL_SL_SIGNALLING_N0371
@@ -1465,11 +1516,7 @@ Void TDecTop::xDecodeVPS()
   TComVPS* vps = new TComVPS();
   
   m_cEntropyDecoder.decodeVPS( vps );
-#if SVC_EXTENSION
-  m_parameterSetManagerDecoder[0].storePrefetchedVPS(vps);
-#else
   m_parameterSetManagerDecoder.storePrefetchedVPS(vps);  
-#endif
 }
 
 Void TDecTop::xDecodeSPS()
@@ -1477,8 +1524,8 @@ Void TDecTop::xDecodeSPS()
   TComSPS* sps = new TComSPS();
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
-  m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder[0] );
-  m_parameterSetManagerDecoder[m_layerId].storePrefetchedSPS(sps);
+  m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder );
+  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 #if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
   if(m_numLayer>0)
   {
@@ -1495,16 +1542,12 @@ Void TDecTop::xDecodePPS()
 {
   TComPPS* pps = new TComPPS();
 
-#if IL_SL_SIGNALLING_N0371
-  pps->setLayerId(m_layerId);
+#if SCALINGLIST_INFERRING || IL_SL_SIGNALLING_N0371
+  pps->setLayerId( m_layerId );
 #endif
 
   m_cEntropyDecoder.decodePPS( pps );
-#if SVC_EXTENSION
-  m_parameterSetManagerDecoder[m_layerId].storePrefetchedPPS( pps );
-#else
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
-#endif
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
   {
@@ -1532,25 +1575,25 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     }
 #endif
 #if M0043_LAYERS_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveVPS(), m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
 #endif
   }
   else
   {
 #if M0043_LAYERS_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveVPS(), m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder[m_layerId].getActiveSPS() );
+    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
 #endif
     SEIMessages activeParamSets = getSeisByType(m_SEIs, SEI::ACTIVE_PARAMETER_SETS);
     if (activeParamSets.size()>0)
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
-      m_parameterSetManagerDecoder[m_layerId].applyPrefetchedPS();
+      m_parameterSetManagerDecoder.applyPrefetchedPS();
       assert(seiAps->activeSeqParamSetId.size()>0);
-      if (! m_parameterSetManagerDecoder[m_layerId].activateSPSWithSEI(seiAps->activeSeqParamSetId[0] ))
+      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParamSetId[0] ) )
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
@@ -1605,7 +1648,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
       xDecodeVPS();
 #if AVC_BASE
-      if( m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+      if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
       {
         if( !m_ppcTDecTop[0]->getBLReconFile()->good() )
         {
@@ -1631,13 +1674,13 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_SPS:
       xDecodeSPS();
 #if AVC_BASE
-      if( m_parameterSetManagerDecoder[0].getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+      if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
       {
         TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
         if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
         {
           // using EL SPS with spsId = 1
-          TComSPS* sps = m_parameterSetManagerDecoder[nalu.m_layerId].getPrefetchedSPS(1);
+          TComSPS* sps = m_parameterSetManagerDecoder.getPrefetchedSPS(1);
           Int  numReorderPics[MAX_TLAYER];
           Window &conformanceWindow = sps->getConformanceWindow();
           Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
@@ -1786,7 +1829,7 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
 #if VPS_EXTN_DIRECT_REF_LAYERS
 TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 {
-  TComVPS* vps = m_parameterSetManagerDecoder[0].getActiveVPS();
+  TComVPS* vps = m_parameterSetManagerDecoder.getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
   {
     return (TDecTop *)getLayerDec( 0 );

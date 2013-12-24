@@ -682,6 +682,23 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     else if(m_pcEncTop->getUseScalingListId() == SCALING_LIST_DEFAULT)
     {
+#if SCALINGLIST_INFERRING
+      // inferring of the scaling list can be moved to the config file
+      UInt refLayerId = 0;
+      if( m_layerId > 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+      {
+        m_pcEncTop->getSPS()->setInferScalingListFlag( true );
+        m_pcEncTop->getSPS()->setScalingListRefLayerId( refLayerId );
+        m_pcEncTop->getSPS()->setScalingListPresentFlag( false );
+        m_pcEncTop->getPPS()->setInferScalingListFlag( false );
+        m_pcEncTop->getPPS()->setScalingListPresentFlag( false );
+
+        // infer the scaling list from the reference layer
+        pcSlice->setScalingList ( m_ppcTEncTop[refLayerId]->getScalingList() );
+      }
+      else
+      {
+#endif
 #if IL_SL_SIGNALLING_N0371
       pcSlice->getScalingList()->setLayerId( m_layerId );
 #endif
@@ -694,6 +711,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
+
+#if SCALINGLIST_INFERRING
+      }
+#endif
+
       m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
       m_pcEncTop->getTrQuant()->setUseScalingList(true);
     }
@@ -701,6 +723,24 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
 #if IL_SL_SIGNALLING_N0371
       pcSlice->getScalingList()->setLayerId( m_layerId );
+#endif
+
+#if SCALINGLIST_INFERRING
+      // inferring of the scaling list can be moved to the config file
+      UInt refLayerId = 0;
+      if( m_layerId > 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+      {
+        m_pcEncTop->getSPS()->setInferScalingListFlag( true );
+        m_pcEncTop->getSPS()->setScalingListRefLayerId( refLayerId );
+        m_pcEncTop->getSPS()->setScalingListPresentFlag( false );
+        m_pcEncTop->getPPS()->setInferScalingListFlag( false );
+        m_pcEncTop->getPPS()->setScalingListPresentFlag( false );
+
+        // infer the scaling list from the reference layer
+        pcSlice->setScalingList ( m_ppcTEncTop[refLayerId]->getScalingList() );
+      }
+      else
+      {
 #endif
 
       if(pcSlice->getScalingList()->xParseScalingList(m_pcCfg->getScalingListFile()))
@@ -734,6 +774,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         m_pcEncTop->getPPS()->setPredScalingListFlag  (false); 
         m_pcEncTop->getPPS()->setScalingListRefLayerId( 0   ); 
       }
+#endif
+
+#if SCALINGLIST_INFERRING
+    }
 #endif
 
       m_pcEncTop->getTrQuant()->setScalingList(pcSlice->getScalingList());
