@@ -198,6 +198,9 @@
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
 #define OUTPUT_LAYER_SET_INDEX           1      ///< JCTVC-O0217: DPB operations: Inference/input of output layer set index
+#if OUTPUT_LAYER_SET_INDEX
+#define USE_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: Use signaled DPB-size table parameters in the decoder
+#endif
 #endif
 #else
 #define SYNTAX_OUTPUT                    0
