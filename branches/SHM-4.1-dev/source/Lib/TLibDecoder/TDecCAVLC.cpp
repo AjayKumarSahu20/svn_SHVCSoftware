@@ -289,6 +289,27 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
       READ_SVLC ( iCode, "pps_tc_offset_div2" );                       pcPPS->setDeblockingFilterTcOffsetDiv2( iCode );
     }
   }
+
+#if SCALINGLIST_INFERRING
+  if( pcPPS->getLayerId() > 0 )
+  {
+    READ_FLAG( uiCode, "pps_infer_scaling_list_flag" );
+    pcPPS->setInferScalingListFlag( uiCode );
+  }
+
+  if( pcPPS->getInferScalingListFlag() )
+  {
+    READ_UVLC( uiCode, "pps_scaling_list_ref_layer_id" ); pcPPS->setScalingListRefLayerId( uiCode );
+
+    // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+    assert( pcPPS->getScalingListRefLayerId() <= 62 );
+
+    pcPPS->setScalingListPresentFlag( false );
+  }
+  else
+  {
+#endif
+
   READ_FLAG( uiCode, "pps_scaling_list_data_present_flag" );           pcPPS->setScalingListPresentFlag( uiCode ? true : false );
 
 #if IL_SL_SIGNALLING_N0371
@@ -342,6 +363,10 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
     parseScalingList( pcPPS->getScalingList() );
 #endif
   }
+
+#if SCALINGLIST_INFERRING
+  }
+#endif
 
   READ_FLAG( uiCode, "lists_modification_present_flag");
   pcPPS->setListsModificationPresentFlag(uiCode);
@@ -715,6 +740,24 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   if(pcSPS->getScalingListFlag())
   {
+#if SCALINGLIST_INFERRING
+    if( pcSPS->getLayerId() > 0 )
+    {
+      READ_FLAG( uiCode, "sps_infer_scaling_list_flag" ); pcSPS->setInferScalingListFlag( uiCode );
+    }
+
+    if( pcSPS->getInferScalingListFlag() )
+    {
+      READ_UVLC( uiCode, "sps_scaling_list_ref_layer_id" ); pcSPS->setScalingListRefLayerId( uiCode );
+
+      // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+      assert( pcSPS->getScalingListRefLayerId() <= 62 );
+
+      pcSPS->setScalingListPresentFlag( false );
+    }
+    else
+    {
+#endif
     READ_FLAG( uiCode, "sps_scaling_list_data_present_flag" );                 pcSPS->setScalingListPresentFlag ( uiCode );
     if(pcSPS->getScalingListPresentFlag ())
     {
@@ -765,6 +808,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #endif
 
     }
+#if SCALINGLIST_INFERRING
+    }
+#endif
   }
   READ_FLAG( uiCode, "amp_enabled_flag" );                          pcSPS->setUseAMP( uiCode );
   READ_FLAG( uiCode, "sample_adaptive_offset_enabled_flag" );       pcSPS->setUseSAO ( uiCode ? true : false );

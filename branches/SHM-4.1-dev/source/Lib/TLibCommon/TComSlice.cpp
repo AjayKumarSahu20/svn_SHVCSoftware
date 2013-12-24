@@ -2373,6 +2373,10 @@ TComSPS::TComSPS()
 , m_updateRepFormatIndex      (0)
 #endif
 #endif
+#if SCALINGLIST_INFERRING
+, m_inferScalingListFlag ( false )
+, m_scalingListRefLayerId ( 0 )
+#endif
 #endif //SVC_EXTENSION
 {
   for ( Int i = 0; i < MAX_TLAYER; i++ )
@@ -2396,6 +2400,9 @@ TComSPS::TComSPS()
 
 TComSPS::~TComSPS()
 {
+#if SCALINGLIST_INFERRING
+  if( !m_inferScalingListFlag )
+#endif
   delete m_scalingList;
   m_RPSList.destroy();
 }
@@ -2573,6 +2580,10 @@ TComPPS::TComPPS()
 , m_loopFilterAcrossSlicesEnabledFlag (false)
 , m_listsModificationPresentFlag(  0)
 , m_numExtraSliceHeaderBits(0)
+#if SCALINGLIST_INFERRING
+, m_inferScalingListFlag ( false )
+, m_scalingListRefLayerId ( 0 )
+#endif
 {
   m_scalingList = new TComScalingList;
 }
@@ -2589,6 +2600,10 @@ TComPPS::~TComPPS()
     if (m_puiRowHeight) delete [] m_puiRowHeight;
     m_puiRowHeight = NULL;
   }
+
+#if SCALINGLIST_INFERRING
+  if( !m_inferScalingListFlag )
+#endif
   delete m_scalingList;
 }
 

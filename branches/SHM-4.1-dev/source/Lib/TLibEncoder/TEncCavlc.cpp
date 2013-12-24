@@ -219,6 +219,24 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
       WRITE_SVLC( pcPPS->getDeblockingFilterTcOffsetDiv2(),               "pps_tc_offset_div2" );
     }
   }
+
+#if SCALINGLIST_INFERRING
+  if( pcPPS->getLayerId() > 0 )
+  {
+    WRITE_FLAG( pcPPS->getInferScalingListFlag() ? 1 : 0, "pps_infer_scaling_list_flag" );
+  }
+
+  if( pcPPS->getInferScalingListFlag() )
+  {
+    // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+    assert( pcPPS->getScalingListRefLayerId() <= 62 );
+
+    WRITE_UVLC( pcPPS->getScalingListRefLayerId(), "pps_scaling_list_ref_layer_id" );
+  }
+  else
+  {
+#endif
+
   WRITE_FLAG( pcPPS->getScalingListPresentFlag() ? 1 : 0,                          "pps_scaling_list_data_present_flag" ); 
 
 #if IL_SL_SIGNALLING_N0371
@@ -274,8 +292,12 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
 #else
     codeScalingList( m_pcSlice->getScalingList() );
 #endif
-
   }
+
+#if SCALINGLIST_INFERRING
+  }
+#endif
+
   WRITE_FLAG( pcPPS->getListsModificationPresentFlag(), "lists_modification_present_flag");
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
   WRITE_FLAG( pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
@@ -552,6 +574,22 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 
   if(pcSPS->getScalingListFlag())
   {
+#if SCALINGLIST_INFERRING
+    if( pcSPS->getLayerId() > 0 )
+    {
+      WRITE_FLAG( pcSPS->getInferScalingListFlag() ? 1 : 0, "sps_infer_scaling_list_flag" );
+    }
+
+    if( pcSPS->getInferScalingListFlag() )
+    {
+      // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+      assert( pcSPS->getScalingListRefLayerId() <= 62 );
+
+      WRITE_UVLC( pcSPS->getScalingListRefLayerId(), "sps_scaling_list_ref_layer_id" );
+    }
+    else
+    {
+#endif
     WRITE_FLAG( pcSPS->getScalingListPresentFlag() ? 1 : 0,                          "sps_scaling_list_data_present_flag" ); 
     if(pcSPS->getScalingListPresentFlag())
     {
@@ -605,6 +643,9 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #endif
 
     }
+#if SCALINGLIST_INFERRING
+    }
+#endif
   }
   WRITE_FLAG( pcSPS->getUseAMP() ? 1 : 0,                                            "amp_enabled_flag" );
   WRITE_FLAG( pcSPS->getUseSAO() ? 1 : 0,                                            "sample_adaptive_offset_enabled_flag");

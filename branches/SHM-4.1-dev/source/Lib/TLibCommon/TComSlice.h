@@ -1316,6 +1316,10 @@ private:
   UInt m_updateRepFormatIndex;
 #endif
 #endif
+#if SCALINGLIST_INFERRING
+  Bool       m_inferScalingListFlag;
+  UInt       m_scalingListRefLayerId;
+#endif
 #endif //SVC_EXTENSION
 public:
   TComSPS();
@@ -1448,7 +1452,11 @@ public:
   static   Void     setSPS(UInt layerId, TComSPS* sps) { m_pcSPS[layerId] = sps;  }
 #endif
 
+#if SCALINGLIST_INFERRING
+  Void setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
+#else
   Void setScalingList      ( TComScalingList *scalingList);
+#endif
   TComScalingList* getScalingList ()       { return m_scalingList; }               //!< get ScalingList class pointer in SPS
 
   UInt getMaxDecPicBuffering  (UInt tlayer)            { return m_uiMaxDecPicBuffering[tlayer]; }
@@ -1507,6 +1515,12 @@ public:
   Int      getUpdateRepFormatIndex()      { return m_updateRepFormatIndex; }
   Void     setUpdateRepFormatIndex(UInt index)  { m_updateRepFormatIndex = index; }
 #endif
+#endif
+#if SCALINGLIST_INFERRING
+  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
 #endif
 #endif //SVC_EXTENSION
 };
@@ -1608,6 +1622,11 @@ private:
   Bool m_listsModificationPresentFlag;
   UInt m_log2ParallelMergeLevelMinus2;
   Int m_numExtraSliceHeaderBits;
+
+#if SCALINGLIST_INFERRING
+  Bool     m_inferScalingListFlag;
+  UInt     m_scalingListRefLayerId;
+#endif
 
 public:
   TComPPS();
@@ -1719,6 +1738,14 @@ public:
   Bool     getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void     setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
+#if SCALINGLIST_INFERRING
+  UInt     getLayerId() { return m_layerId; }
+  Void     setLayerId( UInt layerId ) { m_layerId = layerId;            }
+  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
+#endif
 #if IL_SL_SIGNALLING_N0371
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
@@ -1732,7 +1759,11 @@ public:
   static   Void     setPPS(UInt layerId, TComPPS* pps) { m_pcPPS[layerId] = pps;  }
 #endif
 
+#if SCALINGLIST_INFERRING
+  Void     setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
+#else
   Void     setScalingList      ( TComScalingList *scalingList);
+#endif
   TComScalingList* getScalingList ()          { return m_scalingList; }         //!< get ScalingList class pointer in PPS
   Bool getListsModificationPresentFlag ()          { return m_listsModificationPresentFlag; }
   Void setListsModificationPresentFlag ( Bool b )  { m_listsModificationPresentFlag = b;    }
