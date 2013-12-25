@@ -2493,11 +2493,7 @@ Void TComTrQuant::xSetScalingListDec(TComScalingList *scalingList, UInt listId, 
 
 /** set flat matrix value to quantized coefficient
  */
-#if IL_SL_SIGNALLING_N0371
-Void TComTrQuant::setFlatScalingList( UInt m_layerId )
-#else
 Void TComTrQuant::setFlatScalingList()
-#endif
 {
   UInt size,list;
   UInt qp;
@@ -2506,14 +2502,6 @@ Void TComTrQuant::setFlatScalingList()
   {
     for(list = 0; list <  g_scalingListNum[size]; list++)
     {
-#if IL_SL_SIGNALLING_N0371
-      ref_scalingListDC[m_layerId][size][list] = SCALING_LIST_DC;
-      for(UInt i=0; i<MAX_MATRIX_COEF_NUM; i++)
-      {
-        ref_scalingListCoef[m_layerId][size][list][i] = SCALING_LIST_DC;
-      }
-#endif
-
       for(qp=0;qp<SCALING_LIST_REM_NUM;qp++)
       {
         xsetFlatScalingList(list,size,qp);
