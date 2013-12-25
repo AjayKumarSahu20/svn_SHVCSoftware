@@ -62,7 +62,6 @@
 #define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< JCTVC-N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
-#define IL_SL_SIGNALLING_N0371           0      ///< JCTVC-N0371: inter-layer scaling list
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
 #define M0463_VUI_EXT_ILP_REF            0      ///< JCTVC-M0463: VUI extension inter-layer dependency offset signalling
 #define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure

@@ -540,13 +540,6 @@ Int  g_eTTable[4] = {0,3,1,2};
 #if SVC_EXTENSION
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
-
-#if IL_SL_SIGNALLING_N0371
-Int ref_scalingListDC         [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
-Int ref_scalingListCoef       [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][MAX_MATRIX_COEF_NUM];
-Int activeRefPPSId            [MAX_LAYERS];
-Int activeRefSPSId            [MAX_LAYERS];
-#endif 
 #endif
 
 //! \}

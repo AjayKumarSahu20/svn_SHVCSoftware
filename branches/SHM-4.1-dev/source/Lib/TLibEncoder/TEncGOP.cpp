@@ -660,10 +660,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #endif
 
-#if IL_SL_SIGNALLING_N0371
-    m_pcEncTop->getScalingList()->setLayerId( m_layerId );
-#endif
-
     pcSlice->setLastIDR(m_iLastIDR);
     pcSlice->setSliceIdx(0);
     //set default slice level flag to the same as SPS level flag
@@ -671,11 +667,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->setScalingList ( m_pcEncTop->getScalingList()  );
     if(m_pcEncTop->getUseScalingListId() == SCALING_LIST_OFF)
     {
-#if IL_SL_SIGNALLING_N0371
-      m_pcEncTop->getTrQuant()->setFlatScalingList( m_layerId );
-#else
       m_pcEncTop->getTrQuant()->setFlatScalingList();
-#endif
       m_pcEncTop->getTrQuant()->setUseScalingList(false);
       m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
@@ -699,16 +691,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       else
       {
 #endif
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->getScalingList()->setLayerId( m_layerId );
-#endif
-
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->setDefaultScalingList ( m_layerId );
-#else
       pcSlice->setDefaultScalingList ();
-#endif
-
       m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
 
@@ -721,10 +704,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     else if(m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
     {
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->getScalingList()->setLayerId( m_layerId );
-#endif
-
 #if SCALINGLIST_INFERRING
       // inferring of the scaling list can be moved to the config file
       UInt refLayerId = 0;
@@ -745,36 +724,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       if(pcSlice->getScalingList()->xParseScalingList(m_pcCfg->getScalingListFile()))
       {
-#if IL_SL_SIGNALLING_N0371
-        pcSlice->setDefaultScalingList ( m_layerId );
-#else
         pcSlice->setDefaultScalingList ();
-#endif
       }
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->getScalingList()->checkDcOfMatrix( m_layerId );
-#else
+
       pcSlice->getScalingList()->checkDcOfMatrix();
-#endif
       m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
-
-#if IL_SL_SIGNALLING_N0371
-      if( m_layerId > 0 )
-      {
-        m_pcEncTop->getSPS()->setPredScalingListFlag  (true); 
-        m_pcEncTop->getSPS()->setScalingListRefLayerId( 0 ); 
-      }
-#endif
-
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
-
-#if IL_SL_SIGNALLING_N0371
-      if( m_layerId > 0 )
-      {
-        m_pcEncTop->getPPS()->setPredScalingListFlag  (false); 
-        m_pcEncTop->getPPS()->setScalingListRefLayerId( 0   ); 
-      }
-#endif
 
 #if SCALINGLIST_INFERRING
     }
@@ -1777,9 +1732,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if SVC_EXTENSION
       nalu = NALUnit(NAL_UNIT_SPS, 0, m_layerId);
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->getSPS()->setVPS( pcSlice->getVPS() );
-#endif
 #else
       nalu = NALUnit(NAL_UNIT_SPS);
 #endif

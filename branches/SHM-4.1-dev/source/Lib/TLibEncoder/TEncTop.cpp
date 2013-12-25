@@ -1073,7 +1073,7 @@ Void TEncTop::xInitSPS()
 
 Void TEncTop::xInitPPS()
 {
-#if SCALINGLIST_INFERRING ||  IL_SL_SIGNALLING_N0371
+#if SCALINGLIST_INFERRING
   m_cPPS.setLayerId( m_layerId );
 #endif
 

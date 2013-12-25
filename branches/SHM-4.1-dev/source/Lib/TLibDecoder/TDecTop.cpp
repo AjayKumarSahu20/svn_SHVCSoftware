@@ -1464,18 +1464,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   pcPic->setCurrSliceIdx(m_uiSliceIdx);
   if(pcSlice->getSPS()->getScalingListFlag())
   {
-#if IL_SL_SIGNALLING_N0371
-    pcSlice->getSPS()->getScalingList()->setLayerId( m_layerId );
-#endif
-
     pcSlice->setScalingList ( pcSlice->getSPS()->getScalingList()  );
 
     if(pcSlice->getPPS()->getScalingListPresentFlag())
     {
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->getPPS()->getScalingList()->setLayerId( m_layerId );
-#endif
-
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
 #if SCALINGLIST_INFERRING
@@ -1483,22 +1475,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     if(!pcSlice->getPPS()->getScalingListPresentFlag() && !pcSlice->getSPS()->getScalingListPresentFlag())
     {
-#if IL_SL_SIGNALLING_N0371
-      pcSlice->setDefaultScalingList( m_layerId );
-#else
       pcSlice->setDefaultScalingList();
-#endif
     }
     m_cTrQuant.setScalingListDec(pcSlice->getScalingList());
     m_cTrQuant.setUseScalingList(true);
   }
   else
   {
-#if IL_SL_SIGNALLING_N0371
-    m_cTrQuant.setFlatScalingList( m_layerId );
-#else
     m_cTrQuant.setFlatScalingList();
-#endif
     m_cTrQuant.setUseScalingList(false);
   }
 
@@ -1542,7 +1526,7 @@ Void TDecTop::xDecodePPS()
 {
   TComPPS* pps = new TComPPS();
 
-#if SCALINGLIST_INFERRING || IL_SL_SIGNALLING_N0371
+#if SCALINGLIST_INFERRING
   pps->setLayerId( m_layerId );
 #endif
 
