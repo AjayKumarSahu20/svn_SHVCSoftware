@@ -393,6 +393,9 @@ protected:
 #if O0215_PHASE_ALIGNMENT
   Bool m_phaseAlignFlag;
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool m_crossLayerPictureTypeAlignFlag;
+#endif
 #if N0147_IRAP_ALIGN_FLAG
   Bool m_crossLayerIrapAlignFlag;
 #endif

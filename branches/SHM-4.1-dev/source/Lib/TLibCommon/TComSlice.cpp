@@ -2091,6 +2091,9 @@ TComVPS::TComVPS()
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  m_crossLayerPictureTypeAlignFlag = true;
+#endif 
 #if N0147_IRAP_ALIGN_FLAG
   m_crossLayerIrapAlignFlag = true;
 #endif 
@@ -2110,9 +2113,18 @@ TComVPS::TComVPS()
 #endif 
   }
 #endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+   m_tilesNotInUseFlag = true;
+   ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
+   ::memset(m_loopFilterNotAcrossTilesFlag,  0, sizeof(m_loopFilterNotAcrossTilesFlag));
+#endif
 #if TILE_BOUNDARY_ALIGNED_FLAG
    ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
 #endif 
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+   m_wppNotInUseFlag = true;
+   ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
+#endif
 #if N0160_VUI_EXT_ILP_REF
    m_numIlpRestrictedRefLayers = false;
    ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
@@ -2230,7 +2242,44 @@ Void TComVPS::deriveNumberOfSubDpbs()
   }
 }
 #endif
-
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+Void TComVPS::setTilesNotInUseFlag(Bool x)
+{
+  m_tilesNotInUseFlag = x;
+  if (m_tilesNotInUseFlag)
+  {
+    for (int i = 0; i < getMaxLayers(); i++)
+    {
+      m_tilesInUseFlag[i] = m_loopFilterNotAcrossTilesFlag[i] = m_tilesNotInUseFlag;
+    }
+  }
+#if TILE_BOUNDARY_ALIGNED_FLAG  
+  if (m_tilesNotInUseFlag)
+  {
+    for (int i = 1; i < getMaxLayers(); i++)
+    {
+      for(int j = 0; j < getNumDirectRefLayers(getLayerIdInNuh(i)); j++)
+      {
+        setTileBoundariesAlignedFlag(i, j, m_tilesNotInUseFlag);
+      }
+    }
+  }
+#endif
+}
+#endif
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+Void TComVPS::setWppNotInUseFlag(Bool x)
+{
+  m_wppNotInUseFlag = x;
+  if (m_wppNotInUseFlag)
+  {
+    for (int i = 0; i < getMaxLayers(); i++)
+    {
+      m_wppInUseFlag[i] = m_wppNotInUseFlag;
+    }
+  }
+}
+#endif
 #if O0092_0094_DEPENDENCY_CONSTRAINT
 Void TComVPS::setRefLayersFlags(Int currLayerId)
 {

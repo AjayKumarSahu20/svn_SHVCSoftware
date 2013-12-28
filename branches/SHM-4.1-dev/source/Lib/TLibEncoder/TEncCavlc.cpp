@@ -1147,9 +1147,17 @@ Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
-#if IRAP_ALIGN_FLAG_IN_VPS_VUI
-      WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  WRITE_FLAG(vps->getCrossLayerPictureTypeAlignFlag(), "cross_layer_pic_type_aligned_flag");
+  if (!vps->getCrossLayerPictureTypeAlignFlag())
+  {
 #endif 
+#if IRAP_ALIGN_FLAG_IN_VPS_VUI
+    WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+#endif 
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  }
+#endif
 #if VPS_VUI_BITRATE_PICRATE
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
@@ -1182,15 +1190,49 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
   }
 #endif
-#if TILE_BOUNDARY_ALIGNED_FLAG
-  for(i = 1; i < vps->getMaxLayers(); i++)
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+  UInt layerIdx;
+  WRITE_FLAG( vps->getTilesNotInUseFlag() ? 1 : 0 , "tiles_not_in_use_flag" );
+  if (!vps->getTilesNotInUseFlag())
   {
-    for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+    for(i = 0; i < vps->getMaxLayers(); i++)
     {
-      WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
+      WRITE_FLAG( vps->getTilesInUseFlag(i) ? 1 : 0 , "tiles_in_use_flag[ i ]" );
+      if (vps->getTilesInUseFlag(i))
+      {
+        WRITE_FLAG( vps->getLoopFilterNotAcrossTilesFlag(i) ? 1 : 0 , "loop_filter_not_across_tiles_flag[ i ]" );
+      }
     }
-  }  
-#endif 
+#endif
+#if TILE_BOUNDARY_ALIGNED_FLAG
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+      {
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+        layerIdx = vps->getLayerIdInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
+        if (vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx)) {
+          WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
+        }
+#else
+        WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
+#endif
+      }
+    }  
+#endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+  }
+#endif
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+  WRITE_FLAG( vps->getWppNotInUseFlag() ? 1 : 0 , "wpp_not_in_use_flag" );
+  if (!vps->getWppNotInUseFlag())
+  {
+    for(i = 0; i < vps->getMaxLayers(); i++)
+    {
+      WRITE_FLAG( vps->getWppInUseFlag(i) ? 1 : 0 , "wpp_in_use_flag[ i ]" );
+    }
+  }
+#endif
 #if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getNumIlpRestrictedRefLayers() ? 1 : 0 , "num_ilp_restricted_ref_layers" );    
   if( vps->getNumIlpRestrictedRefLayers())
