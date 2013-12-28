@@ -547,6 +547,9 @@ private:
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool       m_crossLayerPictureTypeAlignFlag;
+#endif
 #if N0147_IRAP_ALIGN_FLAG
   Bool       m_crossLayerIrapAlignFlag;
 #endif
@@ -570,8 +573,17 @@ private:
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   Bool       m_higherLayerIrapSkipFlag;
 #endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+  Bool       m_tilesNotInUseFlag;
+  Bool       m_tilesInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_ID_PLUS1];
+#endif 
 #if TILE_BOUNDARY_ALIGNED_FLAG
   Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif 
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+  Bool       m_wppNotInUseFlag;
+  Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if N0160_VUI_EXT_ILP_REF    
   Bool        m_numIlpRestrictedRefLayers;
@@ -811,6 +823,10 @@ Void      deriveNumberOfSubDpbs();
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
+  Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;                         }
+#endif 
 #if N0147_IRAP_ALIGN_FLAG
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
@@ -842,9 +858,23 @@ Void      deriveNumberOfSubDpbs();
   Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
   Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
 #endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG  
+  Bool   getTilesNotInUseFlag()         { return m_tilesNotInUseFlag; }
+  Void   setTilesNotInUseFlag(Bool x); 
+  Bool   getTilesInUseFlag(Int currLayerId)    { return m_tilesInUseFlag[currLayerId]; }
+  Void   setTilesInUseFlag(Int currLayerId, Bool x)    { m_tilesInUseFlag[currLayerId] = x; } 
+  Bool   getLoopFilterNotAcrossTilesFlag(Int currLayerId)    { return m_loopFilterNotAcrossTilesFlag[currLayerId]; }
+  Void   setLoopFilterNotAcrossTilesFlag(Int currLayerId, Bool x)    { m_loopFilterNotAcrossTilesFlag[currLayerId] = x; } 
+#endif 
 #if TILE_BOUNDARY_ALIGNED_FLAG  
   Bool   getTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId)           { return m_tileBoundariesAlignedFlag[currLayerId][refLayerId]; }
   Void   setTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId, Bool x)   { m_tileBoundariesAlignedFlag[currLayerId][refLayerId] = x; } 
+#endif 
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG  
+  Bool   getWppNotInUseFlag()         { return m_wppNotInUseFlag; }
+  Void   setWppNotInUseFlag(Bool x); 
+  Bool   getWppInUseFlag(Int currLayerId)    { return m_wppInUseFlag[currLayerId]; }
+  Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
 #endif 
 #if N0160_VUI_EXT_ILP_REF  
   Bool  getNumIlpRestrictedRefLayers   ( )                                         { return m_numIlpRestrictedRefLayers        ;}

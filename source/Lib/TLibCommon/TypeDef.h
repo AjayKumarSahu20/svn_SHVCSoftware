@@ -95,6 +95,8 @@
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI
 
 #if VPS_VUI
+#define VPS_VUI_TILES_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
+#define VPS_VUI_WPP_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
@@ -156,6 +158,8 @@
 #else
 #define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
 #endif
+
+#define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
 
 #define N0147_IRAP_ALIGN_FLAG            1      ///< a flag to indicatate whether IRAPs are aligned across layers
 #if N0147_IRAP_ALIGN_FLAG

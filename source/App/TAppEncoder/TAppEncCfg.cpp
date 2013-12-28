@@ -614,8 +614,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
+#endif
 #if N0147_IRAP_ALIGN_FLAG
-  ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+    ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
 #endif
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
@@ -2441,6 +2444,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   printf("Skip picture at ARC switch    : %d\n", m_skipPictureAtArcSwitch );
+#endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  printf("Cross layer picture type alignment    : %d\n", m_crossLayerPictureTypeAlignFlag );
 #endif
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
