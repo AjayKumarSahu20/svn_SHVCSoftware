@@ -113,6 +113,9 @@ TComSlice::TComSlice()
 , m_bPocResetFlag                 ( false )
 #endif
 , m_bDiscardableFlag              ( false )
+#if O0149_CROSS_LAYER_BLA_FLAG
+, m_bCrossLayerBLAFlag            ( false )
+#endif
 #endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
@@ -1051,7 +1054,11 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
  * Note that the current picture is already placed in the reference list and its marking is not changed.
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
+#if NO_CLRAS_OUTPUT_FLAG
+Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag)
+#else
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic)
+#endif
 {
   TComPic*                 rpcPic;
   setAssociatedIRAPPOC(pocCRA);
@@ -1069,7 +1076,18 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
     {
       rpcPic = *(iterPic);
       rpcPic->setCurrSliceIdx(0);
+#if NO_CLRAS_OUTPUT_FLAG
+      if (noClrasOutputFlag)
+      {
+        if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);  // all layers
+      }
+      else
+      {
+        if (rpcPic->getPOC() != pocCurr && rpcPic->getLayerId() == m_layerId) rpcPic->getSlice(0)->setReferenced(false);  // only current layer
+      }
+#else
       if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);
+#endif
       iterPic++;
     }
     if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP

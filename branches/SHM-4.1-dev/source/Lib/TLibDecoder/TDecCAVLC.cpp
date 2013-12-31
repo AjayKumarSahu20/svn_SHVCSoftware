@@ -1744,6 +1744,13 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       READ_FLAG(uiCode, "discardable_flag"); // ignored
       iBits++;
     }
+#if O0149_CROSS_LAYER_BLA_FLAG
+    if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
+    {
+      READ_FLAG(uiCode, "cross_layer_bla_flag");  rpcSlice->setCrossLayerBLAFlag( uiCode ? true : false );
+      iBits++;
+    }
+#endif
     for (; iBits < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored

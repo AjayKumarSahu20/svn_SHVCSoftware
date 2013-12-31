@@ -136,6 +136,15 @@ private:
   fstream*               m_pBLSyntaxFile;
 #endif
 
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool                    m_noClrasOutputFlag;
+  Bool                    m_layerInitializedFlag;
+  Bool                    m_firstPicInLayerDecodedFlag;
+  Bool                    m_noOutputOfPriorPicsFlags;
+
+  Bool                   m_bRefreshPending;
+#endif
+
 public:
   TDecTop();
   virtual ~TDecTop();
@@ -237,6 +246,17 @@ protected:
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 #if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
   TComPic*  getMotionPredIlp(TComSlice* pcSlice);
+#endif
+
+#if NO_CLRAS_OUTPUT_FLAG
+  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
 public:
 #if OUTPUT_LAYER_SET_INDEX

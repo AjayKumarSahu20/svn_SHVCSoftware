@@ -513,6 +513,11 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt layerId, UInt
 Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 #endif
 {
+  if (pcListPic->empty())
+  {
+    return;
+  }
+
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
   Int numPicsNotYetDisplayed = 0;
 
@@ -732,7 +737,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic, UInt layerId )
 Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
 #endif
 {
-  if(!pcListPic)
+  if(!pcListPic || pcListPic->empty())
   {
     return;
   }

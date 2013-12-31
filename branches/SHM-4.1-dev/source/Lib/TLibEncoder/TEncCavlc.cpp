@@ -1340,6 +1340,14 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
       iBits++;
     }
+#if O0149_CROSS_LAYER_BLA_FLAG
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
+    {
+      assert(!!"cross_layer_bla_flag");
+      WRITE_FLAG(pcSlice->getCrossLayerBLAFlag(), "cross_layer_bla_flag");
+      iBits++;
+    }
+#endif
     for ( ; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
     {
       assert(!!"slice_reserved_undetermined_flag[]");

@@ -147,6 +147,12 @@ private:
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
 #endif
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool                    m_noClrasOutputFlag;
+  Bool                    m_layerInitializedFlag;
+  Bool                    m_firstPicInLayerDecodedFlag;
+  Bool                    m_noOutputOfPriorPicsFlags;
+#endif
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -248,6 +254,16 @@ public:
 #if POC_RESET_FLAG
   Int  getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
+#endif
+#if NO_CLRAS_OUTPUT_FLAG
+  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,

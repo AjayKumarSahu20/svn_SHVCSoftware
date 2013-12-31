@@ -398,6 +398,9 @@ protected:
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   Int       m_skipPictureAtArcSwitch;
 #endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool      m_crossLayerBLAFlag;
+#endif
 #endif
 
 public:
@@ -950,6 +953,10 @@ public:
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      getAltOuputLayerFlag() const { return m_altOutputLayerFlag; }
   Void      setAltOuputLayerFlag(Bool b) { m_altOutputLayerFlag = b;    }
+#endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool      getCrossLayerBLAFlag() const { return m_crossLayerBLAFlag; }
+  Void      setCrossLayerBLAFlag(Bool b) { m_crossLayerBLAFlag = b;    }
 #endif
 #endif
 };

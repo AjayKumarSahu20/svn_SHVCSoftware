@@ -78,6 +78,13 @@ TDecTop::TDecTop()
 #endif
   m_prevSliceSkipped = false;
   m_skippedPOC = 0;
+#if NO_CLRAS_OUTPUT_FLAG
+  m_noClrasOutputFlag          = false;
+  m_layerInitializedFlag       = false;
+  m_firstPicInLayerDecodedFlag = false;
+  m_noOutputOfPriorPicsFlags   = false;
+  m_bRefreshPending            = false;
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -757,6 +764,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 {
   TComPic*&   pcPic         = m_pcPic;
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool bFirstSliceInSeq;
+#endif
 #if SVC_EXTENSION
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
@@ -886,6 +896,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_uiPrevLayerId = m_layerId;
 #endif
   }
+#if NO_CLRAS_OUTPUT_FLAG
+  bFirstSliceInSeq = m_bFirstSliceInSequence;
+#endif
   m_bFirstSliceInSequence = false;
 #if POC_RESET_FLAG
   // This operation would do the following:
@@ -1044,6 +1057,51 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
+#endif
+
+#if NO_CLRAS_OUTPUT_FLAG
+    if (m_layerId == 0 &&
+        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
+      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
+      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA))
+    {
+      if (bFirstSliceInSeq)
+      {
+        setNoClrasOutputFlag(true);
+      }
+      else if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
+      {
+        setNoClrasOutputFlag(true);
+      }
+#if O0149_CROSS_LAYER_BLA_FLAG
+      else if ((m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) &&
+               m_apcSlicePilot->getCrossLayerBLAFlag())
+      {
+        setNoClrasOutputFlag(true);
+      }
+#endif
+      else
+      {
+        setNoClrasOutputFlag(false);
+      }
+      if (getNoClrasOutputFlag())
+      {
+        for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
+        {
+          m_ppcTDecTop[i]->setLayerInitializedFlag(false);
+          m_ppcTDecTop[i]->setFirstPicInLayerDecodedFlag(false);
+        }
+      }
+    }
+#endif
+
+#if NO_CLRAS_OUTPUT_FLAG
+    m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
 #endif
 
     // Buffer initialize for prediction.
