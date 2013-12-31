@@ -624,6 +624,9 @@ Void TAppEncTop::xInitLibCfg()
 #if O0153_ALT_OUTPUT_LAYER_FLAG
     m_acTEncTop[layer].setAltOuputLayerFlag( m_altOutputLayerFlag );
 #endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+    m_acTEncTop[layer].setCrossLayerBLAFlag( m_crossLayerBLAFlag );
+#endif
   }
 }
 #else //SVC_EXTENSION

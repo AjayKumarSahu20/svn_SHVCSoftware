@@ -91,6 +91,12 @@ TEncTop::TEncTop()
 #if POC_RESET_FLAG
   m_pocAdjustmentValue     = 0;
 #endif
+#if NO_CLRAS_OUTPUT_FLAG
+  m_noClrasOutputFlag          = false;
+  m_layerInitializedFlag       = false;
+  m_firstPicInLayerDecodedFlag = false;
+  m_noOutputOfPriorPicsFlags   = false;
+#endif
 #endif //SVC_EXTENSION
 }
 
@@ -1230,6 +1236,12 @@ Void TEncTop::xInitPPS()
 #endif
 #if POC_RESET_FLAG
   m_cPPS.setNumExtraSliceHeaderBits( 2 );
+#endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  if (m_crossLayerBLAFlag)
+  {
+    m_cPPS.setNumExtraSliceHeaderBits( 3 );
+  }
 #endif
 }
 

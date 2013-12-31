@@ -1887,6 +1887,9 @@ private:
   Int         m_pocValueBeforeReset;
 #endif  
   Bool        m_bDiscardableFlag;
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool        m_bCrossLayerBLAFlag;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -1976,7 +1979,11 @@ public:
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
+#if NO_CLRAS_OUTPUT_FLAG
+  Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
+#else
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
+#endif
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
   Void      setSliceQp          ( Int i )                       { m_iSliceQp          = i;      }
 #if ADAPTIVE_QP_SELECTION
@@ -2203,6 +2210,10 @@ public:
 #endif
   Bool      getDiscardableFlag  ()                           { return m_bDiscardableFlag;    }
   Void      setDiscardableFlag  (Bool b)                     { m_bDiscardableFlag = b;       }
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool      getCrossLayerBLAFlag  ()                         { return m_bCrossLayerBLAFlag;  }
+  Void      setCrossLayerBLAFlag  (Bool b)                   { m_bCrossLayerBLAFlag = b;     }
+#endif
 
 #if RPL_INIT_N0316_N0082
   Int       getNumNegativeRpsCurrTempList();

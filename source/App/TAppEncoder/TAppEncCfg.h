@@ -399,6 +399,9 @@ protected:
 #if N0147_IRAP_ALIGN_FLAG
   Bool m_crossLayerIrapAlignFlag;
 #endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  bool      m_crossLayerBLAFlag;
+#endif
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

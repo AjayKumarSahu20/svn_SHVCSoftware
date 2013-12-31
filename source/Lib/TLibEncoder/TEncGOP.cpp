@@ -634,6 +634,56 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setPOC( 0 );
     }
 #endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+    if( m_layerId == 0 && (getNalUnitType(pocCurr, m_iLastIDR) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_iLastIDR) == NAL_UNIT_CODED_SLICE_IDR_N_LP) )
+    {
+      pcSlice->setCrossLayerBLAFlag(m_pcEncTop->getCrossLayerBLAFlag());
+    }
+    else
+    {
+      pcSlice->setCrossLayerBLAFlag(false);
+    }
+#endif
+#if NO_CLRAS_OUTPUT_FLAG
+    if (m_layerId == 0 &&
+        (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+      || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+      || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
+      || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+      || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
+      || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA))
+    {
+      if (m_bFirst)
+      {
+        m_pcEncTop->setNoClrasOutputFlag(true);
+      }
+      else if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
+            || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+            || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
+      {
+        m_pcEncTop->setNoClrasOutputFlag(true);
+      }
+#if O0149_CROSS_LAYER_BLA_FLAG
+      else if ((pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) &&
+               pcSlice->getCrossLayerBLAFlag())
+      {
+        m_pcEncTop->setNoClrasOutputFlag(true);
+      }
+#endif
+      else
+      {
+        m_pcEncTop->setNoClrasOutputFlag(false);
+      }
+      if (m_pcEncTop->getNoClrasOutputFlag())
+      {
+        for (UInt i = 0; i < m_pcCfg->getNumLayer(); i++)
+        {
+          m_ppcTEncTop[i]->setLayerInitializedFlag(false);
+          m_ppcTEncTop[i]->setFirstPicInLayerDecodedFlag(false);
+        }
+      }
+    }
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId == 1 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
     {
@@ -912,7 +962,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 
     // Do decoding refresh marking if any 
+#if NO_CLRAS_OUTPUT_FLAG
+    pcSlice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, rcListPic, m_pcEncTop->getNoClrasOutputFlag());
+#else
     pcSlice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, rcListPic);
+#endif
     m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
     pcSlice->getRPS()->setNumberOfLongtermPictures(0);
 

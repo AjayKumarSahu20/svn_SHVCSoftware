@@ -206,6 +206,10 @@
 #define USE_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: Use signaled DPB-size table parameters in the decoder
 #endif
 #endif
+
+#define NO_CLRAS_OUTPUT_FLAG             1
+#define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header
+
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION

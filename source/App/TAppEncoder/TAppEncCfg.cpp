@@ -982,6 +982,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
 #endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
