@@ -102,11 +102,7 @@ private:
   TEncSbac*               m_pcRDGoOnSbacCoder;
   Bool                    m_bUseSBACRD;
   TEncRateCtrl*           m_pcRateCtrl;
-#if RATE_CONTROL_LAMBDA_DOMAIN && !M0036_RC_IMPROVEMENT
-  UInt                    m_LCUPredictionSAD;
-  Int                     m_addSADDepth;
-  Int                     m_temporalSAD;
-#endif
+
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool                    m_disableILP;
 #endif
@@ -127,13 +123,7 @@ public:
   Void  encodeCU            ( TComDataCU*    pcCU );
   
   Void setBitCounter        ( TComBitCounter* pcBitCounter ) { m_pcBitCounter = pcBitCounter; }
-#if RATE_CONTROL_LAMBDA_DOMAIN && !M0036_RC_IMPROVEMENT
-  UInt getLCUPredictionSAD() { return m_LCUPredictionSAD; }
-#endif
-#if RATE_CONTROL_INTRA
   Int   updateLCUDataISlice ( TComDataCU* pcCU, Int LCUIdx, Int width, Int height );
-#endif
-
 protected:
   Void  finishCU            ( TComDataCU*  pcCU, UInt uiAbsPartIdx,           UInt uiDepth        );
 #if AMP_ENC_SPEEDUP
