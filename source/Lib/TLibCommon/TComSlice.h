@@ -2112,7 +2112,7 @@ public:
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
 #if SVC_EXTENSION
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
+  Bool      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
   Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)     { m_pcBaseColPic[refLayerIdc] = p; }
   TComPic*  getBaseColPic       (UInt refLayerIdc)                { return m_pcBaseColPic[refLayerIdc]; }
   TComPic** getBaseColPic       ()                { return &m_pcBaseColPic[0]; }

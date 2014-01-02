@@ -276,6 +276,13 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
       break;
     }
     iterPic++;
+#if SVC_EXTENSION
+    // return NULL, if picture with requested POC is not in the list, otherwise iterator goes outside of the list
+    if( iterPic == rcListPic.end() )
+    {
+      return NULL;
+    }
+#endif
     pcPic = *(iterPic);
   }
 #if POC_RESET_FLAG
@@ -3236,7 +3243,7 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
   if(m_layerId == 0)
   {
     memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
-    return;
+    return false;
   }        
 #if POC_RESET_FLAG
   TComPic* pic = xGetRefPic( rcListPic, m_bPocResetFlag ? 0 : m_iPOC );

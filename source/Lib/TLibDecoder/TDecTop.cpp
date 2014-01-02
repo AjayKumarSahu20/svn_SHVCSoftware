@@ -1308,8 +1308,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         UInt refLayerIdc = i;
 #if AVC_BASE
         if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
-        {
-          pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
+        {          
+          TComPic* pic = *m_ppcTDecTop[0]->getListPic()->begin();
+
+          if( pic )
+          {
+            pcSlice->setBaseColPic ( refLayerIdc, pic );
+          }
+          else
+          {
+            continue;
+          }
 #if AVC_SYNTAX
           TComPic* pBLPic = pcSlice->getBaseColPic(refLayerIdc);
           if( pcSlice->getPOC() == 0 )
@@ -1331,7 +1340,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
 #endif
           TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
-          pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
+          if( !pcSlice->setBaseColPic ( *cListPic, refLayerIdc ) )
+          {
+            continue;
+          }
         }
 #else
 #if VPS_EXTN_DIRECT_REF_LAYERS
