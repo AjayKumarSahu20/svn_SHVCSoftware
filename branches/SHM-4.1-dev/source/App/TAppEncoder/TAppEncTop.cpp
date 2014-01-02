@@ -469,7 +469,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
     m_acTEncTop[layer].setSaoLcuBoundary (m_saoLcuBoundary);
+#if !HM_CLEANUP_SAO
     m_acTEncTop[layer].setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
+#endif
     m_acTEncTop[layer].setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
     m_acTEncTop[layer].setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -545,7 +547,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseScalingListId           ( m_useScalingListId  );
     m_acTEncTop[layer].setScalingListFile            ( m_scalingListFile   );
     m_acTEncTop[layer].setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if RC_SHVC_HARMONIZATION
     m_acTEncTop[layer].setUseRateCtrl     (m_acLayerCfg[layer].getRCEnableRateControl());
     m_acTEncTop[layer].setTargetBitrate   (m_acLayerCfg[layer].getRCTargetBitrate());
@@ -562,11 +563,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
     m_acTEncTop[layer].setInitialQP           ( m_RCInitialQP );
     m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
-#endif
-#else
-    m_acTEncTop[layer].setUseRateCtrl     ( m_enableRateCtrl);
-    m_acTEncTop[layer].setTargetBitrate   ( m_targetBitrate);
-    m_acTEncTop[layer].setNumLCUInUnit    ( m_numLCUInUnit);
 #endif
     m_acTEncTop[layer].setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     m_acTEncTop[layer].setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
@@ -787,7 +783,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
   m_cTEncTop.setSaoLcuBoundary (m_saoLcuBoundary);
+#if !HM_CLEANUP_SAO
   m_cTEncTop.setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
+#endif
   m_cTEncTop.setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
   m_cTEncTop.setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -855,7 +853,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseScalingListId           ( m_useScalingListId  );
   m_cTEncTop.setScalingListFile            ( m_scalingListFile   );
   m_cTEncTop.setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
   m_cTEncTop.setUseRateCtrl         ( m_RCEnableRateControl );
   m_cTEncTop.setTargetBitrate       ( m_RCTargetBitrate );
   m_cTEncTop.setKeepHierBit         ( m_RCKeepHierarchicalBit );
@@ -863,11 +860,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
   m_cTEncTop.setInitialQP           ( m_RCInitialQP );
   m_cTEncTop.setForceIntraQP        ( m_RCForceIntraQP );
-#else
-  m_cTEncTop.setUseRateCtrl     ( m_enableRateCtrl);
-  m_cTEncTop.setTargetBitrate   ( m_targetBitrate);
-  m_cTEncTop.setNumLCUInUnit    ( m_numLCUInUnit);
-#endif
   m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
   m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
   m_cTEncTop.setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
@@ -2130,7 +2122,7 @@ void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
     {
     case NAL_UNIT_CODED_SLICE_TRAIL_R:
     case NAL_UNIT_CODED_SLICE_TRAIL_N:
-    case NAL_UNIT_CODED_SLICE_TLA_R:
+    case NAL_UNIT_CODED_SLICE_TSA_R:
     case NAL_UNIT_CODED_SLICE_TSA_N:
     case NAL_UNIT_CODED_SLICE_STSA_R:
     case NAL_UNIT_CODED_SLICE_STSA_N:

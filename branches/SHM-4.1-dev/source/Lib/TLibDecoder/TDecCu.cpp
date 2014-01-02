@@ -962,4 +962,5 @@ Void TDecCu::xFillPCMBuffer(TComDataCU* pCU, UInt depth)
   }
 
 }
+
 //! \}

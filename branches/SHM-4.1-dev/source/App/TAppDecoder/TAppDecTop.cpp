@@ -144,6 +144,9 @@ Void TAppDecTop::decode()
 
   // main decoder loop
   Bool openedReconFile[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool loopFiltered[MAX_LAYERS];
+  memset( loopFiltered, false, sizeof( loopFiltered ) );
+
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
   {
     openedReconFile[layer] = false;
@@ -222,14 +225,19 @@ Void TAppDecTop::decode()
         }
       }
     }
-    if (bNewPicture || !bitstreamFile)
+
+    if (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS)
     {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
       //Bug fix: The bit depth was not set correctly for each layer when doing DBF
       g_bitDepthY = g_bitDepthYLayer[curLayerId];
       g_bitDepthC = g_bitDepthCLayer[curLayerId];
 #endif
-      m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
+      if (!loopFiltered[curLayerId] || bitstreamFile)
+      {
+        m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
+      }
+      loopFiltered[curLayerId] = (nalu.m_nalUnitType == NAL_UNIT_EOS);
 #if EARLY_REF_PIC_MARKING
       m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
 #endif
@@ -254,6 +262,10 @@ Void TAppDecTop::decode()
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP ) )
       {
         xFlushOutput( pcListPic, curLayerId );
+      }
+      if (nalu.m_nalUnitType == NAL_UNIT_EOS)
+      {
+        xFlushOutput( pcListPic, curLayerId );        
       }
       // write reconstruction to file
       if(bNewPicture)
@@ -315,6 +327,7 @@ Void TAppDecTop::decode()
 
   // main decoder loop
   Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
+  Bool loopFiltered = false;
 
 #if SYNTAX_OUTPUT
   if( !m_pchBLSyntaxFile )
@@ -383,9 +396,13 @@ Void TAppDecTop::decode()
         }
       }
     }
-    if (bNewPicture || !bitstreamFile)
+    if (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS)
     {
-      m_cTDecTop.executeLoopFilters(poc, pcListPic);
+      if (!loopFiltered || bitstreamFile)
+      {
+        m_cTDecTop.executeLoopFilters(poc, pcListPic);
+      }
+      loopFiltered = (nalu.m_nalUnitType == NAL_UNIT_EOS);
     }
 
     if( pcListPic )
@@ -406,6 +423,10 @@ Void TAppDecTop::decode()
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP ) )
       {
         xFlushOutput( pcListPic );
+      }
+      if (nalu.m_nalUnitType == NAL_UNIT_EOS)
+      {
+        xFlushOutput( pcListPic );        
       }
       // write reconstruction to file
       if(bNewPicture)
@@ -505,8 +526,8 @@ Void TAppDecTop::xInitDecLib()
 }
 
 /** \param pcListPic list of pictures to be written to file
-\todo            DYN_REF_FREE should be revised
-*/
+    \todo            DYN_REF_FREE should be revised
+ */
 #if SVC_EXTENSION
 Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt layerId, UInt tId )
 #else

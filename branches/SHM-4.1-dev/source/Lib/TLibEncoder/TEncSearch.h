@@ -193,6 +193,7 @@ public:
                                   TComYuv*    pcRecoYuv,
                                   UInt        uiPreCalcDistC );
   
+  
   /// encoder estimation - inter prediction (non-skip)
   Void predInterSearch          ( TComDataCU* pcCU,
                                   TComYuv*    pcOrgYuv,

@@ -238,12 +238,8 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
 #endif
 
   WRITE_FLAG( pcPPS->getScalingListPresentFlag() ? 1 : 0,                          "pps_scaling_list_data_present_flag" ); 
-
   if( pcPPS->getScalingListPresentFlag() )
   {
-#if SCALING_LIST_OUTPUT_RESULT
-    printf("PPS\n");
-#endif
     codeScalingList( m_pcSlice->getScalingList() );
   }
 
@@ -520,7 +516,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthInter() - 1,                               "max_transform_hierarchy_depth_inter" );
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthIntra() - 1,                               "max_transform_hierarchy_depth_intra" );
   WRITE_FLAG( pcSPS->getScalingListFlag() ? 1 : 0,                                   "scaling_list_enabled_flag" ); 
-
   if(pcSPS->getScalingListFlag())
   {
 #if SCALINGLIST_INFERRING
@@ -542,9 +537,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_FLAG( pcSPS->getScalingListPresentFlag() ? 1 : 0,                          "sps_scaling_list_data_present_flag" ); 
     if(pcSPS->getScalingListPresentFlag())
     {
-#if SCALING_LIST_OUTPUT_RESULT
-    printf("SPS\n");
-#endif
       codeScalingList( m_pcSlice->getScalingList() );
     }
 #if SCALINGLIST_INFERRING
@@ -1426,7 +1418,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #endif
       TComReferencePictureSet* rps = pcSlice->getRPS();
       
-#if FIX1071
       // check for bitstream restriction stating that:
       // If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
       // Ideally this process should not be repeated for each slice in a picture
@@ -1440,7 +1431,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           assert (!rps->getUsed(picIdx));
         }
       }
-#endif
 
       if(pcSlice->getRPSidx() < 0)
       {
@@ -1594,20 +1584,24 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     {
       if (pcSlice->getSPS()->getUseSAO())
       {
-         WRITE_FLAG( pcSlice->getSaoEnabledFlag(), "slice_sao_luma_flag" );
+         WRITE_FLAG( pcSlice->getSaoEnabledFlag(), "slice_sao_luma_flag" );         
+#if AUXILIARY_PICTURES
+         if (pcSlice->getChromaFormatIdc() != CHROMA_400)
          {
-#if AUXILIARY_PICTURES
-           if (pcSlice->getChromaFormatIdc() != CHROMA_400)
-           {
 #endif
+#if HM_CLEANUP_SAO
+         WRITE_FLAG( pcSlice->getSaoEnabledFlagChroma(), "slice_sao_chroma_flag" );
+#else
+         {
            SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
-          WRITE_FLAG( saoParam->bSaoFlag[1], "slice_sao_chroma_flag" );
-#if AUXILIARY_PICTURES
-           }
-#endif
+           WRITE_FLAG( saoParam->bSaoFlag[1], "slice_sao_chroma_flag" );
          }
+#endif
+#if AUXILIARY_PICTURES
+         }
+#endif
       }
-    }
+    }   
 
     //check if numrefidxes match the defaults. If not, override
 
@@ -2153,21 +2147,11 @@ Void TEncCavlc::codeScalingList( TComScalingList* scalingList )
   UInt listId,sizeId;
   Bool scalingListPredModeFlag;
 
-#if SCALING_LIST_OUTPUT_RESULT
-  Int startBit;
-  Int startTotalBit;
-  startBit = m_pcBitIf->getNumberOfWrittenBits();
-  startTotalBit = m_pcBitIf->getNumberOfWrittenBits();
-#endif
-
     //for each size
     for(sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
     {
       for(listId = 0; listId < g_scalingListNum[sizeId]; listId++)
       {
-#if SCALING_LIST_OUTPUT_RESULT
-        startBit = m_pcBitIf->getNumberOfWrittenBits();
-#endif
         scalingListPredModeFlag = scalingList->checkPredMode( sizeId, listId );
         WRITE_FLAG( scalingListPredModeFlag, "scaling_list_pred_mode_flag" );
         if(!scalingListPredModeFlag)// Copy Mode
@@ -2178,16 +2162,8 @@ Void TEncCavlc::codeScalingList( TComScalingList* scalingList )
         {
           xCodeScalingList(scalingList, sizeId, listId);
         }
-
-#if SCALING_LIST_OUTPUT_RESULT
-        printf("Matrix [%d][%d] Bit %d\n",sizeId,listId,m_pcBitIf->getNumberOfWrittenBits() - startBit);
-#endif
-
       }
     }
-#if SCALING_LIST_OUTPUT_RESULT
-  printf("Total Bit %d\n",m_pcBitIf->getNumberOfWrittenBits()-startTotalBit);
-#endif
   return;
 }
 /** code DPCM
@@ -2202,7 +2178,6 @@ Void TEncCavlc::xCodeScalingList(TComScalingList* scalingList, UInt sizeId, UInt
   Int nextCoef = SCALING_LIST_START_VALUE;
   Int data;
   Int *src = scalingList->getScalingListAddress(sizeId, listId);
-
   if( sizeId > SCALING_LIST_8x8 )
   {
     WRITE_SVLC( scalingList->getScalingListDC(sizeId,listId) - 8, "scaling_list_dc_coef_minus8");
