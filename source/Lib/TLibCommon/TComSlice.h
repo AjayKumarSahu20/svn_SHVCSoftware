@@ -972,13 +972,14 @@ Void      deriveNumberOfSubDpbs();
   Bool    getSubLayerDpbInfoPresentFlag(Int i, Int j)         {return m_subLayerDpbInfoPresentFlag[i][j]; }
   Void    setSubLayerDpbInfoPresentFlag(Int i, Int j, Bool x) {m_subLayerDpbInfoPresentFlag[i][j] = x;    }
 
-  Int     getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
+  // For the 0-th output layer set, use the date from the active SPS for base layer.
+  Int     getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { assert(i != 0); return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
   Void    setMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j, Int x) { m_maxVpsDecPicBufferingMinus1[i][k][j] = x;    }
 
-  Int     getMaxVpsNumReorderPics(Int i, Int j)         { return m_maxVpsNumReorderPics[i][j]; }
+  Int     getMaxVpsNumReorderPics(Int i, Int j)         { assert(i != 0); return m_maxVpsNumReorderPics[i][j]; }
   Void    setMaxVpsNumReorderPics(Int i, Int j, Int x) { m_maxVpsNumReorderPics[i][j] = x;    }
 
-  Int     getMaxVpsLatencyIncreasePlus1(Int i, Int j)         { return m_maxVpsLatencyIncreasePlus1[i][j]; }
+  Int     getMaxVpsLatencyIncreasePlus1(Int i, Int j)         { assert(i != 0); return m_maxVpsLatencyIncreasePlus1[i][j]; }
   Void    setMaxVpsLatencyIncreasePlus1(Int i, Int j, Int x) { m_maxVpsLatencyIncreasePlus1[i][j] = x;    }
 
   Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
