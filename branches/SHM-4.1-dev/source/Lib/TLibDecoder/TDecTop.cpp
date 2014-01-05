@@ -177,9 +177,17 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
     {
 #if USE_DPB_SIZE_TABLE
-      TComVPS *vps = slice->getVPS();
-      // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+      if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+      {
+        assert( this->getLayerId() == 0 );
+        numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
+      }
+      else
+      {
+        TComVPS *vps = slice->getVPS();
+        // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
+        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+      }
 #else
       numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
 #endif
@@ -273,16 +281,32 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
   {
 #if USE_DPB_SIZE_TABLE
-    TComVPS *vps = pcSlice->getVPS();
-    // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-    numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+    if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+    {
+      assert( this->getLayerId() == 0 );
+      numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
+    }
+    else
+    {
+      TComVPS *vps = pcSlice->getVPS();
+      // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
+      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+    }
 #else
     numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
 #endif
   }
 
 #if USE_DPB_SIZE_TABLE
-  m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+  if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+  {
+    assert( this->getLayerId() == 0 );
+    m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+  }
+  else
+  {
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+  }
 #else
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
