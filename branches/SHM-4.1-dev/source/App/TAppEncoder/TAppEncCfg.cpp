@@ -2413,6 +2413,9 @@ Void TAppEncCfg::xPrintParameter()
 #if SCALABILITY_MASK_E0104
   printf("Multiview                     : %d\n", m_scalabilityMask[1] );
   printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#if AVC_BASE
+  printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
+#endif
 #if AUXILIARY_PICTURES
   printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
 #endif
@@ -2571,11 +2574,6 @@ Void TAppEncCfg::xPrintParameter()
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
 #if SVC_EXTENSION
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
-#if AVC_BASE
-  printf("AvcBase:%d ", m_avcBaseLayerFlag ? 1 : 0);
-#else
-  printf("AvcBase:%d ", 0);
-#endif
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
