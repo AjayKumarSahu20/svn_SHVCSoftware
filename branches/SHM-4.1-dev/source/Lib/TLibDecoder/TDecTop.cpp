@@ -1056,6 +1056,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
     {
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
+      pBLPic->getSlice(0)->setReferenced(true);
       fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
       UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
       UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();

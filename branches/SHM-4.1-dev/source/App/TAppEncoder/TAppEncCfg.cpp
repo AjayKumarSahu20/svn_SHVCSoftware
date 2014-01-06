@@ -2427,7 +2427,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Skip picture at ARC switch    : %d\n", m_skipPictureAtArcSwitch );
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
-  printf("Cross layer picture type alignment    : %d\n", m_crossLayerPictureTypeAlignFlag );
+  printf("Align picture type            : %d\n", m_crossLayerPictureTypeAlignFlag );
 #endif
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
