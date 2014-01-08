@@ -395,6 +395,19 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   weight[1] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
   m_pcRdCost->setCrDistortionWeight(weight[1]);
 
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
+  {
+    dLambda *= 1.1;
+    weight[1] *= 1.15;
+    weight[0] *= 1.15;
+
+    m_pcRdCost ->setLambda( dLambda );
+    m_pcRdCost->setCbDistortionWeight(weight[0]);
+    m_pcRdCost->setCrDistortionWeight(weight[1]);
+  }
+#endif
+
   const Double lambdaArray[3] = {dLambda, (dLambda / weight[0]), (dLambda / weight[1])};
  
 #if RDOQ_CHROMA_LAMBDA
