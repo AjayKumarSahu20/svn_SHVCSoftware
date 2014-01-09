@@ -186,7 +186,9 @@ protected:
   Bool      m_bUseSAO; 
   Int       m_maxNumOffsetsPerPic;                            ///< SAO maximun number of offset per picture
   Bool      m_saoLcuBoundary;                                 ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+#if !HM_CLEANUP_SAO
   Bool      m_saoLcuBasedOptimization;                        ///< SAO LCU-based optimization
+#endif
   // coding tools (loop filter)
   Bool      m_bLoopFilterDisable;                             ///< flag for using deblocking filter
   Bool      m_loopFilterOffsetInPPS;                         ///< offset for deblocking filter in 0 = slice header, 1 = PPS
@@ -294,24 +296,14 @@ protected:
 
   Int       m_TMVPModeId;
   Int       m_signHideFlag;
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if !RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
-#if M0036_RC_IMPROVEMENT
   Int       m_RCKeepHierarchicalBit;              ///< 0: equal bit allocation; 1: fixed ratio bit allocation; 2: adaptive ratio bit allocation
-#else
-  Bool      m_RCKeepHierarchicalBit;              ///< whether keeping hierarchical bit allocation structure or not
-#endif
   Bool      m_RCLCULevelRC;                       ///< true: LCU level rate control; false: picture level rate control
   Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
-#endif
-#else
-  Bool      m_enableRateCtrl;                                   ///< Flag for using rate control algorithm
-  Int       m_targetBitrate;                                 ///< target bitrate
-  Int       m_numLCUInUnit;                                  ///< Total number of LCUs in a frame should be completely divided by the NumLCUInUnit
 #endif
   Int       m_useScalingListId;                               ///< using quantization matrix
   Char*     m_scalingListFile;                                ///< quantization matrix file name
@@ -357,6 +349,9 @@ protected:
   Int       m_maxBitsPerMinCuDenom;                           ///< Indicates an upper bound for the number of bits of coding_unit() data
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
+#endif
 
 #if SVC_EXTENSION
   Int       m_elRapSliceBEnabled;
@@ -373,6 +368,9 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
+#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
 #endif
@@ -385,7 +383,16 @@ protected:
   UInt      m_ilcIdc[1024];
 #endif
 #if O0215_PHASE_ALIGNMENT
-  bool m_phaseAlignFlag;
+  Bool m_phaseAlignFlag;
+#endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool m_crossLayerPictureTypeAlignFlag;
+#endif
+#if N0147_IRAP_ALIGN_FLAG
+  Bool m_crossLayerIrapAlignFlag;
+#endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  bool      m_crossLayerBLAFlag;
 #endif
 public:
   TAppEncCfg();

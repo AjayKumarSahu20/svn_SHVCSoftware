@@ -89,6 +89,7 @@ Void TAppEncTop::xInitLibCfg()
     vps->setNumReorderPics                 ( m_numReorderPics[i], i );
     vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
   }
+
 #if REPN_FORMAT_IN_VPS
   vps->setRepFormatIdxPresentFlag( true );   // Could be disabled to optimize in some cases.
   Int maxRepFormatIdx = -1;
@@ -147,6 +148,13 @@ Void TAppEncTop::xInitLibCfg()
   for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
   {
     RepFormat *repFormat = vps->getVpsRepFormat( idx );
+#if REPN_FORMAT_CONTROL_FLAG
+    repFormat->setChromaAndBitDepthVpsPresentFlag( true ); 
+    if (idx==0)
+    {
+      assert(repFormat->getChromaAndBitDepthVpsPresentFlag() == true); 
+    }
+#endif 
     repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
     repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
 #if AUXILIARY_PICTURES
@@ -161,6 +169,9 @@ Void TAppEncTop::xInitLibCfg()
 #else
     repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
     repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+    m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch( m_skipPictureAtArcSwitch );
 #endif
   }
   delete [] mapIdxToLayer;
@@ -458,7 +469,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
     m_acTEncTop[layer].setSaoLcuBoundary (m_saoLcuBoundary);
+#if !HM_CLEANUP_SAO
     m_acTEncTop[layer].setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
+#endif
     m_acTEncTop[layer].setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
     m_acTEncTop[layer].setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -534,7 +547,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseScalingListId           ( m_useScalingListId  );
     m_acTEncTop[layer].setScalingListFile            ( m_scalingListFile   );
     m_acTEncTop[layer].setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if RC_SHVC_HARMONIZATION
     m_acTEncTop[layer].setUseRateCtrl     (m_acLayerCfg[layer].getRCEnableRateControl());
     m_acTEncTop[layer].setTargetBitrate   (m_acLayerCfg[layer].getRCTargetBitrate());
@@ -551,11 +563,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
     m_acTEncTop[layer].setInitialQP           ( m_RCInitialQP );
     m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
-#endif
-#else
-    m_acTEncTop[layer].setUseRateCtrl     ( m_enableRateCtrl);
-    m_acTEncTop[layer].setTargetBitrate   ( m_targetBitrate);
-    m_acTEncTop[layer].setNumLCUInUnit    ( m_numLCUInUnit);
 #endif
     m_acTEncTop[layer].setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
     m_acTEncTop[layer].setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
@@ -597,6 +604,9 @@ Void TAppEncTop::xInitLibCfg()
       m_acTEncTop[layer].setNumScaledRefLayerOffsets( m_acLayerCfg[layer].m_numScaledRefLayerOffsets );
       for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
       {
+#if O0098_SCALED_REF_LAYER_ID
+        m_acTEncTop[layer].setScaledRefLayerId(i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
+#endif
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                   2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
       }
@@ -606,6 +616,12 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 #if AUXILIARY_PICTURES
     m_acTEncTop[layer].setChromaFormatIDC( m_acLayerCfg[layer].m_chromaFormatIDC );
+#endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+    m_acTEncTop[layer].setAltOuputLayerFlag( m_altOutputLayerFlag );
+#endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+    m_acTEncTop[layer].setCrossLayerBLAFlag( m_crossLayerBLAFlag );
 #endif
   }
 }
@@ -767,7 +783,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
   m_cTEncTop.setSaoLcuBoundary (m_saoLcuBoundary);
+#if !HM_CLEANUP_SAO
   m_cTEncTop.setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
+#endif
   m_cTEncTop.setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
   m_cTEncTop.setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -835,7 +853,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseScalingListId           ( m_useScalingListId  );
   m_cTEncTop.setScalingListFile            ( m_scalingListFile   );
   m_cTEncTop.setSignHideFlag(m_signHideFlag);
-#if RATE_CONTROL_LAMBDA_DOMAIN
   m_cTEncTop.setUseRateCtrl         ( m_RCEnableRateControl );
   m_cTEncTop.setTargetBitrate       ( m_RCTargetBitrate );
   m_cTEncTop.setKeepHierBit         ( m_RCKeepHierarchicalBit );
@@ -843,11 +860,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
   m_cTEncTop.setInitialQP           ( m_RCInitialQP );
   m_cTEncTop.setForceIntraQP        ( m_RCForceIntraQP );
-#else
-  m_cTEncTop.setUseRateCtrl     ( m_enableRateCtrl);
-  m_cTEncTop.setTargetBitrate   ( m_targetBitrate);
-  m_cTEncTop.setNumLCUInUnit    ( m_numLCUInUnit);
-#endif
   m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
   m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
   m_cTEncTop.setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
@@ -1086,6 +1098,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
+#if VPS_TSLAYERS
+    vps->setMaxTSLayersPresentFlag(true);
+    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    {
+        vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
+    }
+#endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
 #if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
@@ -1170,9 +1189,67 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+ #if VPS_DPB_SIZE_TABLE
+  // The Layer ID List variables can be derived here.  
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  vps->deriveLayerIdListVariables();
+#endif
+  vps->deriveNumberOfSubDpbs();
+  // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
+  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
+  {
+    Int layerSetId = vps->getOutputLayerSetIdx(i);
+
+    // For each output layer set, set the DPB size for each layer and the reorder/latency value the maximum for all layers
+    Bool checkFlagOuter = false;      // Used to calculate sub_layer_flag_info_present_flag
+    Bool checkFlagInner[MAX_TLAYER];  // Used to calculate sub_layer_dpb_info_present_flag
+
+    for(Int j = 0; j < vps->getMaxTLayers(); j++)
+    {
+
+      Int maxNumReorderPics = -1;
+      for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+      {
+        Int layerId = vps->getLayerSetLayerIdList(layerSetId, k); // k-th layer in the output layer set
+        vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
+        maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
+      }
+      vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
+      
+      if( j == 0 )  // checkFlagInner[0] is always 1
+      {
+        checkFlagInner[j] = true;     // Always signal sub-layer DPB information for the first sub-layer
+      }
+      else
+      {
+        checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
+                                      // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
+        checkFlagInner[j] |= ( maxNumReorderPics != vps->getMaxVpsNumReorderPics(i, j - 1) );
+        for(Int k = 0; k < vps->getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+        {
+          checkFlagInner[j] |= ( vps->getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != vps->getMaxVpsDecPicBufferingMinus1(i, k, j) );
+        }
+      }
+      // If checkFlagInner[j] = true, then some value needs to be signalled for the j-th sub-layer
+      vps->setSubLayerDpbInfoPresentFlag( i, j, checkFlagInner[j] );
+    }
+    for(Int j = 1; j < vps->getMaxTLayers(); j++) // Check if DPB info of any of non-zero sub-layers is signaled. If so set flag to one
+    {
+      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
+      {
+        checkFlagOuter = true;
+        break;
+      }
+    }
+    vps->setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
+  }
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool isDefaultDirectDependencyTypeSet = false;
+#endif
   for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
     vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
@@ -1201,6 +1278,18 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
         vps->setDirectDependencyType( layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
                                                               (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+        if (!isDefaultDirectDependencyTypeSet)
+        {
+          vps->setDefaultDirectDependecyTypeFlag(1);
+          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
+          isDefaultDirectDependencyTypeSet = true;
+        }
+        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
+        {
+          vps->setDefaultDirectDependecyTypeFlag(0);
+        }
+#endif
       }
       else
       {
@@ -1209,12 +1298,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
 #endif
   }
-#if IL_SL_SIGNALLING_N0371
-  for(i = 1; i < vps->getMaxLayers(); i++)
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
-    for(Int j = 0; j < i; j++)
+    vps->setNumRefLayers(vps->getLayerIdInNuh(layerCtr));   // identify the number of direct and indirect reference layers of current layer and set recursiveRefLayersFlags
+  }
+  if(vps->getMaxLayers() > MAX_REF_LAYERS)
+  {
+    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
-      vps->setScalingListLayerDependency( i, j, vps->checkLayerDependency( i,j ) );
+      assert( vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
     }
   }
 #endif
@@ -1231,8 +1325,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+    vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
+#endif
 #if N0147_IRAP_ALIGN_FLAG
-    vps->setCrossLayerIrapAlignFlag(true);
+    vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
       for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
@@ -1255,6 +1352,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
+#endif 
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 #endif
 #if !VPS_EXTN_OFFSET_CALC
 #if VPS_EXTN_OFFSET
@@ -1265,6 +1365,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
 #if O0215_PHASE_ALIGNMENT
   vps->setPhaseAlignFlag( m_phaseAlignFlag );
+#endif
+
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
 #endif
 
 #else //SVC_EXTENSION
@@ -2021,7 +2125,7 @@ void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
     {
     case NAL_UNIT_CODED_SLICE_TRAIL_R:
     case NAL_UNIT_CODED_SLICE_TRAIL_N:
-    case NAL_UNIT_CODED_SLICE_TLA_R:
+    case NAL_UNIT_CODED_SLICE_TSA_R:
     case NAL_UNIT_CODED_SLICE_TSA_N:
     case NAL_UNIT_CODED_SLICE_STSA_R:
     case NAL_UNIT_CODED_SLICE_STSA_N:

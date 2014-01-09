@@ -398,12 +398,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
+#if O0098_SCALED_REF_LAYER_ID
+  string    cfg_scaledRefLayerId [MAX_LAYERS];
+#endif
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
   Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
 
+#if O0098_SCALED_REF_LAYER_ID
+  string*    cfg_scaledRefLayerIdPtr           [MAX_LAYERS];
+#endif
   string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
@@ -470,6 +476,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
+#if O0098_SCALED_REF_LAYER_ID
+      cfg_scaledRefLayerIdPtr          [layer] = &cfg_scaledRefLayerId[layer]          ;
+#endif
       cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer]  ;
       cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer]   ;
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
@@ -581,6 +590,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InternalBitDepthC",       m_internalBitDepthC, 0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #endif
   ("NumScaledRefLayerOffsets%d",    cfg_numScaledRefLayerOffsets,     0, MAX_LAYERS,  "Number of scaled offset layer sets ")
+#if O0098_SCALED_REF_LAYER_ID
+  ("ScaledRefLayerId%d",           cfg_scaledRefLayerIdPtr,          string(""), MAX_LAYERS, "Layer ID of scaled base layer picture")
+#endif
   ("ScaledRefLayerLeftOffset%d",   cfg_scaledRefLayerLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                  " top-left luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerTopOffset%d",    cfg_scaledRefLayerTopOffsetPtr,   string(""), MAX_LAYERS,   "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
@@ -601,7 +613,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
-#endif 
+#endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
+#endif
+#if N0147_IRAP_ALIGN_FLAG
+    ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+#endif
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
@@ -772,7 +790,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SAO",                      m_bUseSAO,                   true,  "Enable Sample Adaptive Offset")
   ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,       2048,  "Max number of SAO offset per picture (Default: 2048)")   
   ("SAOLcuBoundary",           m_saoLcuBoundary,            false, "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
+#if !HM_CLEANUP_SAO
   ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   true,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
+#endif  
   ("SliceMode",                m_sliceMode,                0,     "0: Disable all Recon slice limits, 1: Enforce max # of LCUs, 2: Enforce max # of bytes, 3:specify tiles per dependent slice")
   ("SliceArgument",            m_sliceArgument,            0,     "Depending on SliceMode being:"
                                                                    "\t1: max number of CTUs per slice"
@@ -826,7 +846,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if FAST_INTRA_SHVC
   ("FIS", m_useFastIntraScalable, false, "Fast Intra Decision for Scalable HEVC")
 #endif
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if RC_SHVC_HARMONIZATION
   ("RateControl%d", cfg_RCEnableRateControl, false, MAX_LAYERS, "Rate control: enable rate control for layer %d")
   ("TargetBitrate%d", cfg_RCTargetBitRate, 0, MAX_LAYERS, "Rate control: target bitrate for layer %d")
@@ -838,20 +857,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   ( "RateControl",         m_RCEnableRateControl,   false, "Rate control: enable rate control" )
   ( "TargetBitrate",       m_RCTargetBitrate,           0, "Rate control: target bitrate" )
-#if M0036_RC_IMPROVEMENT
   ( "KeepHierarchicalBit", m_RCKeepHierarchicalBit,     0, "Rate control: 0: equal bit allocation; 1: fixed ratio bit allocation; 2: adaptive ratio bit allocation" )
-#else
-  ( "KeepHierarchicalBit", m_RCKeepHierarchicalBit, false, "Rate control: keep hierarchical bit allocation in rate control algorithm" )
-#endif
   ( "LCULevelRateControl", m_RCLCULevelRC,           true, "Rate control: true: LCU level RC; false: picture level RC" )
   ( "RCLCUSeparateModel",  m_RCUseLCUSeparateModel,  true, "Rate control: use LCU level separate R-lambda model" )
   ( "InitialQP",           m_RCInitialQP,               0, "Rate control: initial QP" )
   ( "RCForceIntraQP",      m_RCForceIntraQP,        false, "Rate control: force intra QP to be equal to initial QP" )
-#endif
-#else
-  ("RateCtrl,-rc", m_enableRateCtrl, false, "Rate control on/off")
-  ("TargetBitrate,-tbr", m_targetBitrate, 0, "Input target bitrate")
-  ("NumLCUInUnit,-nu", m_numLCUInUnit, 0, "Number of LCUs in an Unit")
 #endif
 
   ("TransquantBypassEnableFlag", m_TransquantBypassEnableFlag, false, "transquant_bypass_enable_flag indicator in PPS")
@@ -953,10 +963,19 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
   ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
   ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
+#endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
+#endif
+#if O0149_CROSS_LAYER_BLA_FLAG
+  ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
 #endif
   ;
   
@@ -1085,6 +1104,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
     if(m_acLayerCfg[layer].m_numScaledRefLayerOffsets)
     {
+#if O0098_SCALED_REF_LAYER_ID
+      assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
+#endif
       assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
               strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
@@ -1093,6 +1115,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 
     Int *tempArray = NULL;   // Contain the value 
+
+#if O0098_SCALED_REF_LAYER_ID
+    // ID //
+    if(strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerId[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerId");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerId[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+
     // Left offset //
     if(strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  ""))
     {
@@ -2152,7 +2191,6 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
   }
 
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if RC_SHVC_HARMONIZATION
   for ( Int layer=0; layer<m_numLayers; layer++ )
   {
@@ -2181,19 +2219,6 @@ Void TAppEncCfg::xCheckParameter()
       }
     }
     xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
-  }
-#endif
-#else
-  if(m_enableRateCtrl)
-  {
-    Int numLCUInWidth  = (m_iSourceWidth  / m_uiMaxCUWidth) + (( m_iSourceWidth  %  m_uiMaxCUWidth ) ? 1 : 0);
-    Int numLCUInHeight = (m_iSourceHeight / m_uiMaxCUHeight)+ (( m_iSourceHeight %  m_uiMaxCUHeight) ? 1 : 0);
-    Int numLCUInPic    =  numLCUInWidth * numLCUInHeight;
-
-    xConfirmPara( (numLCUInPic % m_numLCUInUnit) != 0, "total number of LCUs in a frame should be completely divided by NumLCUInUnit" );
-
-    m_iMaxDeltaQP       = MAX_DELTA_QP;
-    m_iMaxCuDQPDepth    = MAX_CUDQP_DEPTH;
   }
 #endif
 
@@ -2283,6 +2308,16 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara(m_numLayers != 2, "Adaptive resolution change works with 2 layers only");
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
+  }
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  if (m_adaptiveResolutionChange > 0)
+  {
+    xConfirmPara(m_crossLayerIrapAlignFlag != 0, "Cross layer IRAP alignment must be disabled when using adaptive resolution change.");
+  }
+  if (m_skipPictureAtArcSwitch)
+  {
+    xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
 #endif
 #if N0120_MAX_TID_REF_CFG
@@ -2378,6 +2413,9 @@ Void TAppEncCfg::xPrintParameter()
 #if SCALABILITY_MASK_E0104
   printf("Multiview                     : %d\n", m_scalabilityMask[1] );
   printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+#if AVC_BASE
+  printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
+#endif
 #if AUXILIARY_PICTURES
   printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
 #endif
@@ -2387,6 +2425,15 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  printf("Skip picture at ARC switch    : %d\n", m_skipPictureAtArcSwitch );
+#endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  printf("Align picture type            : %d\n", m_crossLayerPictureTypeAlignFlag );
+#endif
+#if N0147_IRAP_ALIGN_FLAG
+  printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
 #endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
@@ -2452,9 +2499,8 @@ Void TAppEncCfg::xPrintParameter()
   printf("PCM sample bit depth         : (Y:%d, C:%d)\n", g_uiPCMBitDepthLuma, g_uiPCMBitDepthChroma );
 #endif
 #if O0215_PHASE_ALIGNMENT
-  printf("cross-layer sample alignment : %d\n", m_phaseAlignFlag);
+  printf("Cross-layer sample alignment : %d\n", m_phaseAlignFlag);
 #endif
-#if RATE_CONTROL_LAMBDA_DOMAIN
 #if !RC_SHVC_HARMONIZATION
   printf("RateControl                  : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
@@ -2467,14 +2513,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("ForceIntraQP                 : %d\n", m_RCForceIntraQP );
   }
 #endif
-#else
-  printf("RateControl                  : %d\n", m_enableRateCtrl);
-  if(m_enableRateCtrl)
-  {
-    printf("TargetBitrate                : %d\n", m_targetBitrate);
-    printf("NumLCUInUnit                 : %d\n", m_numLCUInUnit);
-  }
-#endif
+
   printf("Max Num Merge Candidates     : %d\n", m_maxNumMergeCand);
   printf("\n");
   
@@ -2515,8 +2554,9 @@ Void TAppEncCfg::xPrintParameter()
 #if !LAYER_CTB
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
+#if !HM_CLEANUP_SAO
   printf("SAOLcuBasedOptimization:%d ", (m_saoLcuBasedOptimization)?(1):(0));
-
+#endif
   printf("LosslessCuEnabled:%d ", (m_useLossless)? 1:0 );
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
@@ -2534,11 +2574,6 @@ Void TAppEncCfg::xPrintParameter()
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
 #if SVC_EXTENSION
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
-#if AVC_BASE
-  printf("AvcBase:%d ", m_avcBaseLayerFlag ? 1 : 0);
-#else
-  printf("AvcBase:%d ", 0);
-#endif
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);

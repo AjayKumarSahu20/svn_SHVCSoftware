@@ -155,40 +155,16 @@ public:
   virtual ~TComScalingList();
   Void     setScalingListPresentFlag    (Bool b)                               { m_scalingListPresentFlag = b;    }
   Bool     getScalingListPresentFlag    ()                                     { return m_scalingListPresentFlag; }
-
-#if IL_SL_SIGNALLING_N0371
-  UInt     m_layerId;
-
-  Void     setPredScalingListFlag    (Bool b)                               { m_predScalingListFlag = b;    }
-  Bool     getPredScalingListFlag    ()                                     { return m_predScalingListFlag; }
-  Void     setScalingListRefLayerId  (UInt b)                               { m_scalingListRefLayerId = b;  }
-  UInt     getScalingListRefLayerId  ()                                     { return m_scalingListRefLayerId; }
-#endif
-
   Int*     getScalingListAddress          (UInt sizeId, UInt listId)           { return m_scalingListCoef[sizeId][listId]; } //!< get matrix coefficient
   Bool     checkPredMode                  (UInt sizeId, UInt listId);
   Void     setRefMatrixId                 (UInt sizeId, UInt listId, UInt u)   { m_refMatrixId[sizeId][listId] = u;    }     //!< set reference matrix ID
   UInt     getRefMatrixId                 (UInt sizeId, UInt listId)           { return m_refMatrixId[sizeId][listId]; }     //!< get reference matrix ID
   Int*     getScalingListDefaultAddress   (UInt sizeId, UInt listId);                                                        //!< get default matrix coefficient
-
-#if IL_SL_SIGNALLING_N0371
-  Void     processDefaultMarix            (UInt sizeId, UInt listId, UInt layerId );
-#else
-  Void     processDefaultMarix            (UInt sizeId, UInt listId);
-#endif
-
+  Void     processDefaultMatrix            (UInt sizeId, UInt listId);
   Void     setScalingListDC               (UInt sizeId, UInt listId, UInt u)   { m_scalingListDC[sizeId][listId] = u; }      //!< set DC value
 
   Int      getScalingListDC               (UInt sizeId, UInt listId)           { return m_scalingListDC[sizeId][listId]; }   //!< get DC value
-
-#if IL_SL_SIGNALLING_N0371
-  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
-  UInt     getLayerId() { return m_layerId; }
-  Void     checkDcOfMatrix                ( UInt m_layerId );
-#else
   Void     checkDcOfMatrix                ();
-#endif
-
   Void     processRefMatrix               (UInt sizeId, UInt listId , UInt refListId );
   Bool     xParseScalingList              (Char* pchFile);
 
@@ -199,12 +175,6 @@ private:
   Bool     m_useDefaultScalingMatrixFlag [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< UseDefaultScalingMatrixFlag
   UInt     m_refMatrixId                 [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< RefMatrixID
   Bool     m_scalingListPresentFlag;                                                //!< flag for using default matrix
-
-#if IL_SL_SIGNALLING_N0371
-  Bool     m_predScalingListFlag;                                                   //!< flag for inter-layer scaling-list prediction
-  UInt     m_scalingListRefLayerId;                                                 //!< scaling_list_ref_layer_id  
-#endif
-
   UInt     m_predMatrixId                [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< reference list index
   Int      *m_scalingListCoef            [SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM]; //!< quantization matrix                                            
 };
@@ -435,6 +405,9 @@ public:
 #if REPN_FORMAT_IN_VPS
 class RepFormat
 {
+#if REPN_FORMAT_CONTROL_FLAG
+  Bool m_chromaAndBitDepthVpsPresentFlag;
+#endif 
 #if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatVpsIdc;
 #else
@@ -448,6 +421,11 @@ class RepFormat
 
 public:
   RepFormat();
+
+#if REPN_FORMAT_CONTROL_FLAG
+  Bool getChromaAndBitDepthVpsPresentFlag() { return m_chromaAndBitDepthVpsPresentFlag; }
+  void setChromaAndBitDepthVpsPresentFlag(Bool x) { m_chromaAndBitDepthVpsPresentFlag = x; }
+#endif 
 
 #if AUXILIARY_PICTURES
   ChromaFormat getChromaFormatVpsIdc()        { return m_chromaFormatVpsIdc; }
@@ -504,9 +482,6 @@ private:
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
-#if IL_SL_SIGNALLING_N0371
-  Bool        m_scalingListLayerDependency[MAX_LAYERS][MAX_LAYERS];  // layer dependency for scaling list
-#endif
 #if VPS_EXTN_OFFSET
   UInt        m_extensionOffset;
 #endif
@@ -554,6 +529,10 @@ private:
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #if M0457_PREDICTION_INDICATIONS
   UInt       m_directDepTypeLen;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool       m_defaultDirectDependencyTypeFlag;
+  UInt       m_defaultDirectDependencyType;
+#endif
   UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
 #endif
@@ -568,6 +547,9 @@ private:
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool       m_crossLayerPictureTypeAlignFlag;
+#endif
 #if N0147_IRAP_ALIGN_FLAG
   Bool       m_crossLayerIrapAlignFlag;
 #endif
@@ -581,17 +563,43 @@ private:
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool       m_maxTidRefPresentFlag;
 #endif 
+#if VPS_TSLAYERS
+  Bool       m_maxTSLayersPresentFlag;
+  UInt       m_maxTSLayerMinus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool       m_higherLayerIrapSkipFlag;
+#endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+  Bool       m_tilesNotInUseFlag;
+  Bool       m_tilesInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_ID_PLUS1];
+#endif 
 #if TILE_BOUNDARY_ALIGNED_FLAG
   Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif 
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+  Bool       m_wppNotInUseFlag;
+  Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if N0160_VUI_EXT_ILP_REF    
   Bool        m_numIlpRestrictedRefLayers;
   Int         m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Bool        m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif 
+#if VPS_VUI_VIDEO_SIGNAL
+    Bool        m_vidSigPresentVpsFlag;
+    Int         m_vpsVidSigInfo;
+    Int         m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
+    Int         m_vpsVidFormat[16];
+    Bool        m_vpsFullRangeFlag[16];
+    Int         m_vpsColorPrimaries[16];
+    Int         m_vpsTransChar[16];
+    Int         m_vpsMatCoeff[16];
 #endif 
 #if VPS_VUI_BITRATE_PICRATE
   Bool        m_bitRatePresentVpsFlag;
@@ -602,6 +610,9 @@ private:
   Int         m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+#endif
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool       m_altOutputLayerFlag;
 #endif
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
@@ -616,6 +627,19 @@ private:
 
 #if O0215_PHASE_ALIGNMENT
   Bool       m_phaseAlignFlag;
+#endif
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
+  Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
+#endif
+#if VPS_DPB_SIZE_TABLE
+  Bool    m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
+  Bool    m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
+  Int     m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int     m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -682,13 +706,17 @@ public:
 
   Void    deriveLayerIdListVariables();
 #endif
-
-#if IL_SL_SIGNALLING_N0371
-  Bool    checkLayerDependency(UInt i, UInt j);
-  Bool    getScalingListLayerDependency  ( UInt layerId, UInt refLayerId )            { return m_scalingListLayerDependency[layerId][refLayerId]; }
-  Void    setScalingListLayerDependency  ( UInt layerId, UInt refLayerId, Bool val  ) { m_scalingListLayerDependency[layerId][refLayerId] = val;  }
+#if VPS_DPB_SIZE_TABLE
+Void      deriveNumberOfSubDpbs();
 #endif
 
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  Void    setRefLayersFlags(Int currLayerId);
+  Bool    getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId)              { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
+  Void    setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)      { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
+  Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
+  Void    setNumRefLayers(Int currLayerId);
+#endif
 #if VPS_RENAME
   UInt    getMaxLayerId()                                       { return m_maxLayerId; }
   Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
@@ -763,7 +791,12 @@ public:
 #if M0457_PREDICTION_INDICATIONS
   UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
   Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
-
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool   getDefaultDirectDependencyTypeFlag()                                   { return m_defaultDirectDependencyTypeFlag;               }
+  Void   setDefaultDirectDependecyTypeFlag(Bool x)                              { m_defaultDirectDependencyTypeFlag = x;                  }
+  UInt   getDefaultDirectDependencyType()                                       { return m_defaultDirectDependencyType;                   }
+  Void   setDefaultDirectDependecyType(UInt x)                                  { m_defaultDirectDependencyType = x;                      }
+#endif
   UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
 #endif
@@ -790,6 +823,10 @@ public:
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
 #endif
+#if O0223_PICTURE_TYPES_ALIGN_FLAG
+  Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
+  Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;                         }
+#endif 
 #if N0147_IRAP_ALIGN_FLAG
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
@@ -807,13 +844,37 @@ public:
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
   Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
 #endif 
+#if VPS_TSLAYERS
+    Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
+    Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
+    UInt   getMaxTSLayersMinus1(Int layerId)                            { return m_maxTSLayerMinus1[layerId];}
+    Void   setMaxTSLayersMinus1(Int layerId, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerId] = maxTSublayer;}
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
 #endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
+  Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
+#endif
+#if VPS_VUI_TILES_NOT_IN_USE__FLAG  
+  Bool   getTilesNotInUseFlag()         { return m_tilesNotInUseFlag; }
+  Void   setTilesNotInUseFlag(Bool x); 
+  Bool   getTilesInUseFlag(Int currLayerId)    { return m_tilesInUseFlag[currLayerId]; }
+  Void   setTilesInUseFlag(Int currLayerId, Bool x)    { m_tilesInUseFlag[currLayerId] = x; } 
+  Bool   getLoopFilterNotAcrossTilesFlag(Int currLayerId)    { return m_loopFilterNotAcrossTilesFlag[currLayerId]; }
+  Void   setLoopFilterNotAcrossTilesFlag(Int currLayerId, Bool x)    { m_loopFilterNotAcrossTilesFlag[currLayerId] = x; } 
+#endif 
 #if TILE_BOUNDARY_ALIGNED_FLAG  
   Bool   getTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId)           { return m_tileBoundariesAlignedFlag[currLayerId][refLayerId]; }
   Void   setTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId, Bool x)   { m_tileBoundariesAlignedFlag[currLayerId][refLayerId] = x; } 
+#endif 
+#if VPS_VUI_WPP_NOT_IN_USE__FLAG  
+  Bool   getWppNotInUseFlag()         { return m_wppNotInUseFlag; }
+  Void   setWppNotInUseFlag(Bool x); 
+  Bool   getWppInUseFlag(Int currLayerId)    { return m_wppInUseFlag[currLayerId]; }
+  Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
 #endif 
 #if N0160_VUI_EXT_ILP_REF  
   Bool  getNumIlpRestrictedRefLayers   ( )                                         { return m_numIlpRestrictedRefLayers        ;}
@@ -827,6 +888,24 @@ public:
   
   Int  getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
   Void setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
+#endif
+#if VPS_VUI_VIDEO_SIGNAL
+    Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
+    Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
+    Int    getNumVideoSignalInfo()               { return m_vpsVidSigInfo;        }
+    Void   setNumVideoSignalInfo(Int x)          { m_vpsVidSigInfo = x;           }
+    Int    getVideoSignalInfoIdx(Int idx)        { return m_vpsVidSigIdx[idx];    }
+    Void   setVideoSignalInfoIdx(Int idx, Int x) { m_vpsVidSigIdx[idx] = x;       }
+    Int    getVideoVPSFormat(Int idx)            { return m_vpsVidFormat[idx];    }
+    Void   setVideoVPSFormat(Int idx, Int x)     { m_vpsVidFormat[idx] = x;       }
+    Bool   getVideoFullRangeVpsFlag(Int idx)     { return m_vpsFullRangeFlag[idx];}
+    Void   setVideoFullRangeVpsFlag(Int idx, Bool x) { m_vpsFullRangeFlag[idx] = x;   }
+    Int    getColorPrimaries(Int idx)            { return m_vpsColorPrimaries[idx];   }
+    Void   setColorPrimaries(Int idx, Int x)     { m_vpsColorPrimaries[idx] = x;      }
+    Int    getTransCharacter(Int idx)            { return m_vpsTransChar[idx];    }
+    Void   setTransCharacter(Int idx, Int x)     { m_vpsTransChar[idx] = x;       }
+    Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
+    Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
 #endif
 #if VPS_VUI_BITRATE_PICRATE
   Bool getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
@@ -849,7 +928,10 @@ public:
   Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
 #endif
-
+#if O0153_ALT_OUTPUT_LAYER_FLAG
+  Bool   getAltOuputLayerFlag()             { return m_altOutputLayerFlag; }
+  Void   setAltOuputLayerFlag(Bool x)       { m_altOutputLayerFlag = x;    }
+#endif
 #if REPN_FORMAT_IN_VPS
   Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
   Void   setRepFormatIdxPresentFlag(Bool x) { m_repFormatIdxPresentFlag = x;    }
@@ -882,6 +964,26 @@ public:
 #if O0215_PHASE_ALIGNMENT
   Bool   getPhaseAlignFlag()                             { return m_phaseAlignFlag; }
   Void   setPhaseAlignFlag(Bool x)                       { m_phaseAlignFlag = x;    }
+#endif
+#if VPS_DPB_SIZE_TABLE
+  Bool    getSubLayerFlagInfoPresentFlag(Int i)         {return m_subLayerFlagInfoPresentFlag[i]; }
+  Void    setSubLayerFlagInfoPresentFlag(Int i, Bool x) {m_subLayerFlagInfoPresentFlag[i] = x;    }
+
+  Bool    getSubLayerDpbInfoPresentFlag(Int i, Int j)         {return m_subLayerDpbInfoPresentFlag[i][j]; }
+  Void    setSubLayerDpbInfoPresentFlag(Int i, Int j, Bool x) {m_subLayerDpbInfoPresentFlag[i][j] = x;    }
+
+  // For the 0-th output layer set, use the date from the active SPS for base layer.
+  Int     getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { assert(i != 0); return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
+  Void    setMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j, Int x) { m_maxVpsDecPicBufferingMinus1[i][k][j] = x;    }
+
+  Int     getMaxVpsNumReorderPics(Int i, Int j)         { assert(i != 0); return m_maxVpsNumReorderPics[i][j]; }
+  Void    setMaxVpsNumReorderPics(Int i, Int j, Int x) { m_maxVpsNumReorderPics[i][j] = x;    }
+
+  Int     getMaxVpsLatencyIncreasePlus1(Int i, Int j)         { assert(i != 0); return m_maxVpsLatencyIncreasePlus1[i][j]; }
+  Void    setMaxVpsLatencyIncreasePlus1(Int i, Int j, Int x) { m_maxVpsLatencyIncreasePlus1[i][j] = x;    }
+
+  Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
+  Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
 #endif
 #endif //SVC_EXTENSION
 };
@@ -1184,22 +1286,25 @@ private:
 
   UInt m_layerId;
 
-#if IL_SL_SIGNALLING_N0371
-  TComVPS*    m_pVPS;
-  static TComSPS* m_pcSPS[MAX_LAYERS];
-  Bool        m_predScalingListFlag;
-  UInt        m_scalingListRefLayerId;
-#endif
-
 #if REF_IDX_MFM
 #if !M0457_COL_PICTURE_SIGNALING
   Bool m_bMFMEnabledFlag;
 #endif
 #endif
   UInt        m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt        m_scaledRefLayerId[MAX_LAYERS];
+#endif
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #if REPN_FORMAT_IN_VPS
   Bool m_updateRepFormatFlag;
+#if O0096_REP_FORMAT_INDEX
+  UInt m_updateRepFormatIndex;
+#endif
+#endif
+#if SCALINGLIST_INFERRING
+  Bool       m_inferScalingListFlag;
+  UInt       m_scalingListRefLayerId;
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -1321,19 +1426,11 @@ public:
   Bool getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
-#if IL_SL_SIGNALLING_N0371
-  Bool getPredScalingListFlag()         { return m_predScalingListFlag;     }
-  Void setPredScalingListFlag( Bool b ) { m_predScalingListFlag  = b;       }
-  UInt getScalingListRefLayerId()         { return m_scalingListRefLayerId;   }
-  Void setScalingListRefLayerId( UInt b ) { m_scalingListRefLayerId  = b;       }
-
-  TComVPS*  getVPS()                      { return  m_pVPS; }
-  Void      setVPS( TComVPS* vps )        { m_pVPS = vps;   }
-  static   TComSPS* getSPS(UInt layerId)               { return m_pcSPS[layerId]; }
-  static   Void     setSPS(UInt layerId, TComSPS* sps) { m_pcSPS[layerId] = sps;  }
-#endif
-
+#if SCALINGLIST_INFERRING
+  Void setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
+#else
   Void setScalingList      ( TComScalingList *scalingList);
+#endif
   TComScalingList* getScalingList ()       { return m_scalingList; }               //!< get ScalingList class pointer in SPS
 
   UInt getMaxDecPicBuffering  (UInt tlayer)            { return m_uiMaxDecPicBuffering[tlayer]; }
@@ -1379,10 +1476,25 @@ public:
 #endif
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id; }
+  Window&  getScaledRefLayerWindowForLayer( Int layerId );
+#endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
+#if O0096_REP_FORMAT_INDEX
+  Int      getUpdateRepFormatIndex()      { return m_updateRepFormatIndex; }
+  Void     setUpdateRepFormatIndex(UInt index)  { m_updateRepFormatIndex = index; }
+#endif
+#endif
+#if SCALINGLIST_INFERRING
+  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
 #endif
 #endif //SVC_EXTENSION
 };
@@ -1467,23 +1579,18 @@ private:
   Int      m_deblockingFilterBetaOffsetDiv2;    //< beta offset for deblocking filter
   Int      m_deblockingFilterTcOffsetDiv2;      //< tc offset for deblocking filter
   Bool     m_scalingListPresentFlag;
-
-#if SVC_EXTENSION
-  UInt m_layerId;
-
-#if IL_SL_SIGNALLING_N0371
-  static TComPPS* m_pcPPS[MAX_LAYERS];
-  Bool     m_predScalingListFlag;
-  UInt     m_scalingListRefLayerId;
-#endif
-
-#endif
-
   TComScalingList*     m_scalingList;   //!< ScalingList class pointer
-
   Bool m_listsModificationPresentFlag;
   UInt m_log2ParallelMergeLevelMinus2;
   Int m_numExtraSliceHeaderBits;
+
+#if SVC_EXTENSION
+#if SCALINGLIST_INFERRING
+  UInt     m_layerId;
+  Bool     m_inferScalingListFlag;
+  UInt     m_scalingListRefLayerId;
+#endif
+#endif
 
 public:
   TComPPS();
@@ -1595,20 +1702,20 @@ public:
   Bool     getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void     setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
-#if IL_SL_SIGNALLING_N0371
-  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
+#if SCALINGLIST_INFERRING
   UInt     getLayerId() { return m_layerId; }
-
-  Bool     getPredScalingListFlag()         { return m_predScalingListFlag;     }
-  Void     setPredScalingListFlag( Bool b ) { m_predScalingListFlag  = b;       }
-  UInt     getScalingListRefLayerId()         { return m_scalingListRefLayerId;     }
-  Void     setScalingListRefLayerId( UInt b ) { m_scalingListRefLayerId  = b;       }
-
-  static   TComPPS* getPPS(UInt layerId)               { return m_pcPPS[layerId]; }
-  static   Void     setPPS(UInt layerId, TComPPS* pps) { m_pcPPS[layerId] = pps;  }
+  Void     setLayerId( UInt layerId ) { m_layerId = layerId;            }
+  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
 #endif
 
+#if SCALINGLIST_INFERRING
+  Void     setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
+#else
   Void     setScalingList      ( TComScalingList *scalingList);
+#endif
   TComScalingList* getScalingList ()          { return m_scalingList; }         //!< get ScalingList class pointer in PPS
   Bool getListsModificationPresentFlag ()          { return m_listsModificationPresentFlag; }
   Void setListsModificationPresentFlag ( Bool b )  { m_listsModificationPresentFlag = b;    }
@@ -1704,12 +1811,7 @@ private:
   UInt        m_colRefIdx;
   UInt        m_maxNumMergeCand;
 
-#if SAO_CHROMA_LAMBDA
-  Double      m_dLambdaLuma;
-  Double      m_dLambdaChroma;
-#else
-  Double      m_dLambda;
-#endif
+  Double      m_lambdas[3];
 
   Bool        m_abEqualRef  [2][MAX_NUM_REF][MAX_NUM_REF];
   UInt        m_uiTLayer;
@@ -1779,6 +1881,9 @@ private:
   Int         m_pocValueBeforeReset;
 #endif  
   Bool        m_bDiscardableFlag;
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool        m_bCrossLayerBLAFlag;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -1818,6 +1923,9 @@ public:
   Void      setRPSidx          ( Int iBDidx ) { m_iBDidx = iBDidx; }
   Int       getRPSidx          () { return m_iBDidx; }
   Int       getPrevTid0POC      ()                        { return  m_prevTid0POC;       }
+#if PREVTID0_POC_RESET
+    Void     adjustPrevTid0POC      (Int adj)             { m_prevTid0POC=m_prevTid0POC-adj; }
+#endif
   TComRefPicListModification* getRefPicListModification() { return &m_RefPicListModification; }
   Void      setLastIDR(Int iIDRPOC)                       { m_iLastIDR = iIDRPOC; }
   Int       getLastIDR()                                  { return m_iLastIDR; }
@@ -1865,7 +1973,11 @@ public:
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
+#if NO_CLRAS_OUTPUT_FLAG
+  Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
+#else
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
+#endif
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
   Void      setSliceQp          ( Int i )                       { m_iSliceQp          = i;      }
 #if ADAPTIVE_QP_SELECTION
@@ -1885,14 +1997,10 @@ public:
   Void      setPic              ( TComPic* p )                  { m_pcPic             = p;      }
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
 
-#if FIX1071
 #if SVC_EXTENSION
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
 #else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false );
-#endif
-#else
-  Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
 #endif
   Void      setRefPOCList       ();
   Void      setColFromL0Flag    ( UInt colFromL0 ) { m_colFromL0Flag = colFromL0; }
@@ -1904,14 +2012,8 @@ public:
   Bool      isInterB        ()                          { return  m_eSliceType == B_SLICE;  }
   Bool      isInterP        ()                          { return  m_eSliceType == P_SLICE;  }
   
-#if SAO_CHROMA_LAMBDA  
-  Void      setLambda( Double d, Double e ) { m_dLambdaLuma = d; m_dLambdaChroma = e;}
-  Double    getLambdaLuma() { return m_dLambdaLuma;        }
-  Double    getLambdaChroma() { return m_dLambdaChroma;        }
-#else
-  Void      setLambda( Double d ) { m_dLambda = d; }
-  Double    getLambda() { return m_dLambda;        }
-#endif
+  Void      setLambdas ( const Double lambdas[3] ) { for (Int component = 0; component < 3; component++) m_lambdas[component] = lambdas[component]; }
+  const Double* getLambdas() const { return m_lambdas; }
   
   Void      initEqualRef();
   Bool      isEqualRef  ( RefPicList e, Int iRefIdx1, Int iRefIdx2 )
@@ -1938,11 +2040,7 @@ public:
   Bool isTemporalLayerSwitchingPoint( TComList<TComPic*>& rcListPic );
   Bool isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic*>& rcListPic );
   Int       checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
-#if FIX1071
   Void      createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
-#else
-  Void      createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet);
-#endif
 
   Void setMaxNumMergeCand               (UInt val )         { m_maxNumMergeCand = val;                    }
   UInt getMaxNumMergeCand               ()                  { return m_maxNumMergeCand;                   }
@@ -2000,13 +2098,7 @@ public:
   UInt* getSubstreamSizes               ()                  { return m_puiSubstreamSizes; }
   Void  setScalingList              ( TComScalingList* scalingList ) { m_scalingList = scalingList; }
   TComScalingList*   getScalingList ()                               { return m_scalingList; }
-
-#if IL_SL_SIGNALLING_N0371
-  Void  setDefaultScalingList       ( UInt m_layerId );
-#else
   Void  setDefaultScalingList       ();
-#endif
-
   Bool  checkDefaultScalingList     ();
   Void      setCabacInitFlag  ( Bool val ) { m_cabacInitFlag = val;      }  //!< set CABAC initial flag 
   Bool      getCabacInitFlag  ()           { return m_cabacInitFlag;     }  //!< get CABAC initial flag 
@@ -2021,7 +2113,7 @@ public:
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
 #if SVC_EXTENSION
-  Void      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
+  Bool      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
   Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)     { m_pcBaseColPic[refLayerIdc] = p; }
   TComPic*  getBaseColPic       (UInt refLayerIdc)                { return m_pcBaseColPic[refLayerIdc]; }
   TComPic** getBaseColPic       ()                { return &m_pcBaseColPic[0]; }
@@ -2098,6 +2190,10 @@ public:
 #endif
   Bool      getDiscardableFlag  ()                           { return m_bDiscardableFlag;    }
   Void      setDiscardableFlag  (Bool b)                     { m_bDiscardableFlag = b;       }
+#if O0149_CROSS_LAYER_BLA_FLAG
+  Bool      getCrossLayerBLAFlag  ()                         { return m_bCrossLayerBLAFlag;  }
+  Void      setCrossLayerBLAFlag  (Bool b)                   { m_bCrossLayerBLAFlag = b;     }
+#endif
 
 #if RPL_INIT_N0316_N0082
   Int       getNumNegativeRpsCurrTempList();

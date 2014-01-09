@@ -130,9 +130,6 @@ extern       UInt*  g_auiSigLastScan[ 3 ][ MAX_CU_DEPTH ];  // raster index from
 extern const UInt   g_uiGroupIdx[ 32 ];
 extern const UInt   g_uiMinInGroup[ 10 ];
 
-extern const UInt   g_auiGoRiceRange[5];                  //!< maximum value coded with Rice codes
-extern const UInt   g_auiGoRicePrefixLen[5];              //!< prefix length for each maximum value
-  
 extern const UInt   g_sigLastScan8x8[ 3 ][ 4 ];           //!< coefficient group scan order for 8x8 TUs
 extern       UInt   g_sigLastScanCG32x32[ 64 ];
 
@@ -290,14 +287,7 @@ extern Int  g_eTTable[4];
 
 #if SVC_EXTENSION
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
-extern Int g_posScalingFactor [MAX_LAYERS][2];
-
-#if IL_SL_SIGNALLING_N0371
-extern Int ref_scalingListDC         [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
-extern Int ref_scalingListCoef       [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][MAX_MATRIX_COEF_NUM];
-extern Int activeRefPPSId            [MAX_LAYERS];
-extern Int activeRefSPSId            [MAX_LAYERS];  
-#endif   
+extern Int g_posScalingFactor [MAX_LAYERS][2]; 
 #endif
 
 //! \}

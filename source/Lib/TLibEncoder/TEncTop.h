@@ -82,7 +82,7 @@ private:
   
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
-  TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder 
+  //TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder
   TEncCavlc*              m_pcCavlcCoder;                       ///< CAVLC encoder  
   // coding tool
   TComTrQuant             m_cTrQuant;                     ///< transform & quantization class
@@ -140,9 +140,18 @@ private:
   Int                     m_ilSampleOnlyPred;
 #endif
   UInt                    m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt                    m_scaledRefLayerId[MAX_LAYERS];
+#endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
+#endif
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool                    m_noClrasOutputFlag;
+  Bool                    m_layerInitializedFlag;
+  Bool                    m_firstPicInLayerDecodedFlag;
+  Bool                    m_noOutputOfPriorPicsFlags;
 #endif
 #endif //SVC_EXTENSION
 protected:
@@ -208,6 +217,11 @@ public:
   Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
   Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
   UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
+#if O0098_SCALED_REF_LAYER_ID
+  Void                    setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
+  UInt                    getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Window&  getScaledRefLayerWindowForLayer(Int layerId);
+#endif
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
 #endif //SVC_EXTENSION
 
@@ -240,6 +254,16 @@ public:
 #if POC_RESET_FLAG
   Int  getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
+#endif
+#if NO_CLRAS_OUTPUT_FLAG
+  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
