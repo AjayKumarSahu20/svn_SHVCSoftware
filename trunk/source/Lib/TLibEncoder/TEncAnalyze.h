@@ -159,6 +159,7 @@ public:
     fclose(pFile);
   }
   
+  
   Void    printSummary(Char ch)
   {
     FILE* pFile = NULL;
@@ -206,6 +207,7 @@ extern TEncAnalyze             m_gcAnalyzeB;
 #endif
 
 extern TEncAnalyze             m_gcAnalyzeAll_in;
+
 //! \}
 
 #endif // !defined(AFX_TENCANALYZE_H__C79BCAA2_6AC8_4175_A0FE_CF02F5829233__INCLUDED_)

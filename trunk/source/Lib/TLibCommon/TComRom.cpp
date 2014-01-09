@@ -362,17 +362,6 @@ UInt g_sigLastScanCG32x32[ 64 ];
 const UInt g_uiMinInGroup[ 10 ] = {0,1,2,3,4,6,8,12,16,24};
 const UInt g_uiGroupIdx[ 32 ]   = {0,1,2,3,4,4,5,5,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9};
 
-// Rice parameters for absolute transform levels
-const UInt g_auiGoRiceRange[5] =
-{
-  7, 14, 26, 46, 78
-};
-
-const UInt g_auiGoRicePrefixLen[5] =
-{
-  8, 7, 6, 5, 4
-};
-
 Void initSigLastScan(UInt* pBuffD, UInt* pBuffH, UInt* pBuffV, Int iWidth, Int iHeight)
 {
   const UInt  uiNumScanPos  = UInt( iWidth * iWidth );
@@ -540,13 +529,6 @@ Int  g_eTTable[4] = {0,3,1,2};
 #if SVC_EXTENSION
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
-
-#if IL_SL_SIGNALLING_N0371
-Int ref_scalingListDC         [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
-Int ref_scalingListCoef       [MAX_LAYERS][SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM][MAX_MATRIX_COEF_NUM];
-Int activeRefPPSId            [MAX_LAYERS];
-Int activeRefSPSId            [MAX_LAYERS];
-#endif 
 #endif
 
 //! \}

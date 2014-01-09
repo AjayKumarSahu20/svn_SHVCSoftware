@@ -90,6 +90,9 @@ protected:
 
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
   Int           m_respectDefDispWindow;               ///< Only output content inside the default display window 
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams             m_commonDecoderParams;
+#endif
 
 public:
   TAppDecCfg()
@@ -119,6 +122,9 @@ public:
   virtual ~TAppDecCfg() {}
   
   Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
+#endif
 };
 
 //! \}

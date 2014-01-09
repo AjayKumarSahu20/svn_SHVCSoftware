@@ -71,12 +71,7 @@ private:
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
-#if SVC_EXTENSION
-  ParameterSetManagerDecoder m_parameterSetManagerDecoder[MAX_LAYERS];  // storage for parameter sets 
-#else
   ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
-#endif
-
   TComSlice*              m_apcSlicePilot;
 
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
@@ -133,8 +128,20 @@ private:
 #endif
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #endif 
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams*    m_commonDecoderParams;
+#endif
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   fstream*               m_pBLSyntaxFile;
+#endif
+
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool                    m_noClrasOutputFlag;
+  Bool                    m_layerInitializedFlag;
+  Bool                    m_firstPicInLayerDecodedFlag;
+  Bool                    m_noOutputOfPriorPicsFlags;
+
+  Bool                   m_bRefreshPending;
 #endif
 
 public:
@@ -240,6 +247,25 @@ protected:
   TComPic*  getMotionPredIlp(TComSlice* pcSlice);
 #endif
 
+#if NO_CLRAS_OUTPUT_FLAG
+  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+#endif
+public:
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
+  Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
+  Void      checkValueOfOutputLayerSetIdx(TComVPS *vps);
+#endif
+#if SCALINGLIST_INFERRING
+  ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
+#endif
 };// END CLASS DEFINITION TDecTop
 
 

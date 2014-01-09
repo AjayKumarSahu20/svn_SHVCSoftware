@@ -57,4 +57,5 @@ TEncAnalyze             m_gcAnalyzeB;
 #endif
 
 TEncAnalyze             m_gcAnalyzeAll_in;
+
 //! \}

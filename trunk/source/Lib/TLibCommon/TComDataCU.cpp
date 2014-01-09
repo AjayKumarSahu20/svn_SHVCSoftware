@@ -308,7 +308,7 @@ Void TComDataCU::destroy()
     m_sliceSegmentStartCU=NULL;
   }
 }
-
+#if !HM_CLEANUP_SAO
 const NDBFBlockInfo& NDBFBlockInfo::operator= (const NDBFBlockInfo& src)
 {
   this->tileID = src.tileID;
@@ -327,7 +327,7 @@ const NDBFBlockInfo& NDBFBlockInfo::operator= (const NDBFBlockInfo& src)
   return *this;
 }
 
-
+#endif
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -3637,7 +3637,7 @@ UInt TComDataCU::getSCUAddr()
 { 
   return getPic()->getPicSym()->getInverseCUOrderMap(m_uiCUAddr)*(1<<(m_pcSlice->getSPS()->getMaxCUDepth()<<1))+m_uiAbsIdxInLCU; 
 }
-
+#if !HM_CLEANUP_SAO
 /** Set neighboring blocks availabilities for non-deblocked filtering 
  * \param numLCUInPicWidth number of LCUs in picture width
  * \param numLCUInPicHeight number of LCUs in picture height
@@ -4007,6 +4007,8 @@ Void TComDataCU::setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt
   }
 }
 
+#endif
+
 #if SVC_EXTENSION
 TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
 {
@@ -4027,8 +4029,13 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 #endif
 
+#if O0098_SCALED_REF_LAYER_ID
+  Int leftStartL = getSlice()->getSPS()->getScaledRefLayerWindowForLayer(getSlice()->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
+  Int topStartL  = getSlice()->getSPS()->getScaledRefLayerWindowForLayer(getSlice()->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
+#else
   Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
   Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
+#endif
   Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 

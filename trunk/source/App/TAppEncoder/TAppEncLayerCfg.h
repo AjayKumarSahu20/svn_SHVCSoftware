@@ -94,6 +94,9 @@ protected:
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
   Int       m_numScaledRefLayerOffsets  ;
+#if O0098_SCALED_REF_LAYER_ID
+  Int       m_scaledRefLayerId          [MAX_LAYERS];
+#endif
   Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
