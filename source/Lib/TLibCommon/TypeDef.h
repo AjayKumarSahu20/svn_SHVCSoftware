@@ -97,8 +97,8 @@
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI
 
 #if VPS_VUI
-#define VPS_VUI_TILES_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
-#define VPS_VUI_WPP_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
+#define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
+#define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
