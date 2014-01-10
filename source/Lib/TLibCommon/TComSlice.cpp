@@ -2049,6 +2049,9 @@ TComVPS::TComVPS()
 #if VIEW_ID_RELATED_SIGNALING 
 , m_viewIdLenMinus1           (0)
 #endif
+#if VPS_VUI_OFFSET
+, m_vpsVuiOffset (0)
+#endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
   {

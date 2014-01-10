@@ -642,6 +642,9 @@ private:
   Int     m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
 #endif //SVC_EXTENSION
+#if VPS_VUI_OFFSET
+  Int     m_vpsVuiOffset;
+#endif
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -984,6 +987,10 @@ Void      deriveNumberOfSubDpbs();
 
   Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
   Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
+#endif
+#if VPS_VUI_OFFSET
+  Int     getVpsVuiOffset()         { return m_vpsVuiOffset; }
+  Void    setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
 #endif
 #endif //SVC_EXTENSION
 };
