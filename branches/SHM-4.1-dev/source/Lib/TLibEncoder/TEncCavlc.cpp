@@ -668,6 +668,9 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if VPS_EXTN_OFFSET_CALC
   UInt numBytesInVps = this->m_pcBitIf->getNumberOfWrittenBits();
 #endif
+#if VPS_VUI_OFFSET
+   m_vpsVuiCounter = this->m_pcBitIf->getNumberOfWrittenBits();
+#endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
 #if VPS_RENAME
@@ -794,6 +797,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   UInt i = 0, j = 0;
 
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
+#if VPS_VUI_OFFSET
+  WRITE_CODE( vps->getVpsVuiOffset(  ), 16,             "vps_vui_offset" );  
+#endif
   WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
@@ -1088,6 +1094,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
     }
+#if VPS_VUI_OFFSET
+    Int vpsVuiOffsetValeInBits = this->m_pcBitIf->getNumberOfWrittenBits() - m_vpsVuiCounter + 16; // 2 bytes for NUH
+    assert( vpsVuiOffsetValeInBits % 8 == 0 );
+    vps->setVpsVuiOffset( vpsVuiOffsetValeInBits >> 3 );
+#endif
     codeVPSVUI(vps);  
   }
 #endif 

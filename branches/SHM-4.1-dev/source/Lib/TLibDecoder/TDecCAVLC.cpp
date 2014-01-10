@@ -989,6 +989,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   UInt numScalabilityTypes = 0, i = 0, j = 0;
 
   READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
+#if VPS_VUI_OFFSET
+  READ_CODE( 16, uiCode, "vps_vui_offset" );  vps->setVpsVuiOffset( uiCode );
+#endif
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
