@@ -54,6 +54,8 @@
 #define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
 #define O0109_MOVE_VPS_VUI_FLAG          1      ///< JCTVC-O0109: move vps_vui_present_flag before vps_vui_offset
 
+#define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
+
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
 #define O0194_JOINT_US_BITSHIFT          1      ///< JCTVC-O0194: Joint Upsampling and bit-shift

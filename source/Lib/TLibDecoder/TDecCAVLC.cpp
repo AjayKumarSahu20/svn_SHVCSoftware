@@ -1252,7 +1252,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
         {
+#if O0135_DEFAULT_ONE_OUT_SEMANTIC
+          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) && (vps->getDimensionId(j,1)==0) );
+#else
           vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)));
+#endif
         }
       }
       else if ( vps->getDefaultOneTargetOutputLayerIdc() == 0 )
