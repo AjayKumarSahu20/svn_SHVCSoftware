@@ -539,7 +539,11 @@ private:
   UInt       m_numProfileTierLevel;
   Bool       m_moreOutputLayerSetsThanDefaultFlag;
   Int        m_numAddOutputLayerSets;
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+  UInt       m_defaultOneTargetOutputLayerIdc;
+#else
   Bool       m_defaultOneTargetOutputLayerFlag;
+#endif
   Int        m_profileLevelTierIdx[64];     
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
@@ -621,7 +625,11 @@ private:
   Int        m_vpsRepFormatIdx[16];
 #endif
 #if VIEW_ID_RELATED_SIGNALING 
+#if O0109_VIEW_ID_LEN
+  Int         m_viewIdLen;
+#else
   Int         m_viewIdLenMinus1;
+#endif
   Int         m_viewIdVal                [MAX_LAYERS];
 #endif
 
@@ -641,6 +649,11 @@ private:
   Int     m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int     m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
+
+#if O0109_MOVE_VPS_VUI_FLAG
+  Bool       m_vpsVuiPresentFlag;
+#endif
+
 #endif //SVC_EXTENSION
 #if VPS_VUI_OFFSET
   Int     m_vpsVuiOffset;
@@ -813,9 +826,13 @@ Void      deriveNumberOfSubDpbs();
   Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
   Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
 
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+  UInt   getDefaultOneTargetOutputLayerIdc()                 { return m_defaultOneTargetOutputLayerIdc;}
+  Void   setDefaultOneTargetOutputLayerIdc(UInt x)           { m_defaultOneTargetOutputLayerIdc= x    ;}
+#else
   Bool   getDefaultOneTargetOutputLayerFlag()                 { return m_defaultOneTargetOutputLayerFlag;}
   Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
-
+#endif
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -948,8 +965,13 @@ Void      deriveNumberOfSubDpbs();
   Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;      }         
 #endif
 #if VIEW_ID_RELATED_SIGNALING
+#if O0109_VIEW_ID_LEN
+  Void    setViewIdLen( Int  val )                                   { m_viewIdLen = val; } 
+  Int     getViewIdLen(  )                                           { return m_viewIdLen; } 
+#else
   Void    setViewIdLenMinus1( Int  val )                                   { m_viewIdLenMinus1 = val; } 
   Int     getViewIdLenMinus1(  )                                           { return m_viewIdLenMinus1; } 
+#endif
 
   Void    setViewIdVal( Int viewOrderIndex, Int  val )                     { m_viewIdVal[viewOrderIndex] = val; } 
   Int     getViewIdVal( Int viewOrderIndex )                               { return m_viewIdVal[viewOrderIndex]; } 
@@ -988,6 +1010,12 @@ Void      deriveNumberOfSubDpbs();
   Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
   Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
 #endif
+
+#if O0109_MOVE_VPS_VUI_FLAG
+  Bool   getVpsVuiPresentFlag()                                 { return m_vpsVuiPresentFlag; }
+  Void   setVpsVuiPresentFlag(Bool x)                           { m_vpsVuiPresentFlag = x; }
+#endif
+
 #if VPS_VUI_OFFSET
   Int     getVpsVuiOffset()         { return m_vpsVuiOffset; }
   Void    setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
