@@ -48,6 +48,12 @@
 #if SVC_EXTENSION
 #define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
 
+#define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
+#define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
+#define O0109_PROF_REF_MINUS1            1      ///< JCTVC-O0109: constraint that profile_ref_minus1[i] shall be less than or equal to i
+#define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
+#define O0109_MOVE_VPS_VUI_FLAG          1      ///< JCTVC-O0109: move vps_vui_present_flag before vps_vui_offset
+
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
 #define O0194_JOINT_US_BITSHIFT          1      ///< JCTVC-O0194: Joint Upsampling and bit-shift
@@ -178,7 +184,7 @@
 
 #define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
 
-#define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id_len_minus1 and view_id_val
+#define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define M0043_LAYERS_PRESENT_SEI         0      ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
