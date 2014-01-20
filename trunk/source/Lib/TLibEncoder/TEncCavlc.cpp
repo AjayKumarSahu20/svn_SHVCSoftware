@@ -668,6 +668,9 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if VPS_EXTN_OFFSET_CALC
   UInt numBytesInVps = this->m_pcBitIf->getNumberOfWrittenBits();
 #endif
+#if VPS_VUI_OFFSET
+   m_vpsVuiCounter = this->m_pcBitIf->getNumberOfWrittenBits();
+#endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
 #if VPS_RENAME
@@ -794,7 +797,27 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   UInt i = 0, j = 0;
 
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
+#if O0109_MOVE_VPS_VUI_FLAG
+#if !VPS_VUI
+  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
+  vps->setVpsVuiPresentFlag(false);
+#else
+  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
+  vps->setVpsVuiPresentFlag(true);
+#endif
+  if ( vps->getVpsVuiPresentFlag() ) 
+  {
+#if VPS_VUI_OFFSET
+    WRITE_CODE( vps->getVpsVuiOffset(  ), 16,             "vps_vui_offset" );
+#endif
+    WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
+  }
+#else
+#if VPS_VUI_OFFSET
+  WRITE_CODE( vps->getVpsVuiOffset(  ), 16,             "vps_vui_offset" );  
+#endif
   WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
+#endif // O0109_MOVE_VPS_VUI_FLAG
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
   {
@@ -840,14 +863,31 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   // if ( pcVPS->getNumViews() > 1 )  
   //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val. 
   {
+#if O0109_VIEW_ID_LEN
+    WRITE_CODE( vps->getViewIdLen( ), 4, "view_id_len" );
+    assert ( vps->getNumViews() >= (1<<vps->getViewIdLen()) );
+#else
     WRITE_CODE( vps->getViewIdLenMinus1( ), 4, "view_id_len_minus1" );
+#endif
   }
 
+#if O0109_VIEW_ID_LEN
+  if ( vps->getViewIdLen() > 0 )
+  {
+#endif
   for(  i = 0; i < vps->getNumViews(); i++ )
   {
+#if O0109_VIEW_ID_LEN
+    WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLen( ), "view_id_val[i]" );
+#else
     WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
+#endif
+  }
+#if O0109_VIEW_ID_LEN
   }
 #endif
+#endif // VIEW_ID_RELATED_SIGNALING
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
@@ -930,7 +970,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
   if( numOutputLayerSets > 1 )
   {
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+    WRITE_CODE( vps->getDefaultOneTargetOutputLayerIdc(), 2, "default_one_target_output_layer_idc" );   
+#else
     WRITE_FLAG( vps->getDefaultOneTargetOutputLayerFlag(), "default_one_target_output_layer_flag" );   
+#endif
   }
 
   for(i = 1; i < numOutputLayerSets; i++)
@@ -1071,13 +1115,17 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 #endif
+
+#if !O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
 #endif
+#endif
 
+#if !O0109_MOVE_VPS_VUI_FLAG
 #if !VPS_VUI
   WRITE_FLAG( 0,                     "vps_vui_present_flag" );
 #else
@@ -1088,9 +1136,29 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
     }
+#if VPS_VUI_OFFSET
+    Int vpsVuiOffsetValeInBits = this->m_pcBitIf->getNumberOfWrittenBits() - m_vpsVuiCounter + 16; // 2 bytes for NUH
+    assert( vpsVuiOffsetValeInBits % 8 == 0 );
+    vps->setVpsVuiOffset( vpsVuiOffsetValeInBits >> 3 );
+#endif
     codeVPSVUI(vps);  
   }
 #endif 
+#else
+  if(vps->getVpsVuiPresentFlag())   // Should be conditioned on the value of vps_vui_present_flag
+  {
+    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
+    }
+#if VPS_VUI_OFFSET
+    Int vpsVuiOffsetValeInBits = this->m_pcBitIf->getNumberOfWrittenBits() - m_vpsVuiCounter + 16; // 2 bytes for NUH
+    assert( vpsVuiOffsetValeInBits % 8 == 0 );
+    vps->setVpsVuiOffset( vpsVuiOffsetValeInBits >> 3 );
+#endif
+    codeVPSVUI(vps);  
+  }
+#endif // 0109_MOVE_VPS_FLAG
 }
 #endif
 #if REPN_FORMAT_IN_VPS
@@ -1224,6 +1292,15 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       WRITE_FLAG( vps->getWppInUseFlag(i) ? 1 : 0 , "wpp_in_use_flag[ i ]" );
     }
   }
+#endif
+
+#if O0109_O0199_FLAGS_TO_VUI
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
+#endif
 #endif
 #if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getNumIlpRestrictedRefLayers() ? 1 : 0 , "num_ilp_restricted_ref_layers" );    
