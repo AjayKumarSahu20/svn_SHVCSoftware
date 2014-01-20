@@ -2037,7 +2037,11 @@ TComVPS::TComVPS()
 , m_numProfileTierLevel       (0)
 , m_moreOutputLayerSetsThanDefaultFlag (false)
 , m_numAddOutputLayerSets     (0)
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+, m_defaultOneTargetOutputLayerIdc     (0)
+#else
 , m_defaultOneTargetOutputLayerFlag    (false)
+#endif
 #if VPS_VUI_BITRATE_PICRATE
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
@@ -2047,7 +2051,14 @@ TComVPS::TComVPS()
 , m_vpsNumRepFormats          (1)
 #endif
 #if VIEW_ID_RELATED_SIGNALING 
+#if O0109_VIEW_ID_LEN
+, m_viewIdLen                (0)
+#else
 , m_viewIdLenMinus1           (0)
+#endif
+#endif
+#if VPS_VUI_OFFSET
+, m_vpsVuiOffset (0)
 #endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
