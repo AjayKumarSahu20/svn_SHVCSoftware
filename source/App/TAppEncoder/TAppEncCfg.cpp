@@ -2578,12 +2578,12 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
-  printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
-  printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
-  printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
+  printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
+  printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
+  printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
   printf("\n\n");
   
   fflush(stdout);

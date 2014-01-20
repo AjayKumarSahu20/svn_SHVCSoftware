@@ -1170,11 +1170,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   // Target output layer
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-  vps->setDefaultOneTargetOutputLayerIdc(1);
-#else
   vps->setDefaultOneTargetOutputLayerFlag(true);
-#endif
   for(i = 1; i < vps->getNumLayerSets(); i++)
   {
     vps->setProfileLevelTierIdx(i, i);
