@@ -1303,8 +1303,8 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #endif
 #endif
 #if N0160_VUI_EXT_ILP_REF
-  WRITE_FLAG( vps->getNumIlpRestrictedRefLayers() ? 1 : 0 , "num_ilp_restricted_ref_layers" );    
-  if( vps->getNumIlpRestrictedRefLayers())
+  WRITE_FLAG( vps->getIlpRestrictedRefLayersFlag() ? 1 : 0 , "ilp_restricted_ref_layers_flag" );    
+  if( vps->getIlpRestrictedRefLayersFlag())
   {
     for(i = 1; i < vps->getMaxLayers(); i++)
     {

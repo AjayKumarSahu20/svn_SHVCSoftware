@@ -2122,46 +2122,46 @@ TComVPS::TComVPS()
   for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
   {
 #if O0225_MAX_TID_FOR_REF_LAYERS
-  for( Int j = 0; j < MAX_VPS_LAYER_ID_PLUS1; j++)
-  {
-    m_maxTidIlRefPicsPlus1[i][j] = m_uiMaxTLayers + 1;
-  }
+    for( Int j = 0; j < MAX_VPS_LAYER_ID_PLUS1; j++)
+    {
+      m_maxTidIlRefPicsPlus1[i][j] = m_uiMaxTLayers + 1;
+    }
 #else
     m_maxTidIlRefPicsPlus1[i] = m_uiMaxTLayers + 1;
 #endif 
   }
 #endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
-   m_tilesNotInUseFlag = true;
-   ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
-   ::memset(m_loopFilterNotAcrossTilesFlag,  0, sizeof(m_loopFilterNotAcrossTilesFlag));
+  m_tilesNotInUseFlag = true;
+  ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
+  ::memset(m_loopFilterNotAcrossTilesFlag,  0, sizeof(m_loopFilterNotAcrossTilesFlag));
 #endif
 #if TILE_BOUNDARY_ALIGNED_FLAG
-   ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
+  ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
 #endif 
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
-   m_wppNotInUseFlag = true;
-   ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
+  m_wppNotInUseFlag = true;
+  ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
 #endif
 #if N0160_VUI_EXT_ILP_REF
-   m_numIlpRestrictedRefLayers = false;
-   ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
-   ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
-   ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
+  m_ilpRestrictedRefLayersFlag = false;
+  ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
+  ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
+  ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
 #endif
 #if VPS_VUI_VIDEO_SIGNAL
-    m_vidSigPresentVpsFlag=true;
-    m_vpsVidSigInfo=1;
-    ::memset( m_vpsVidSigIdx, 0, sizeof(m_vpsVidSigIdx) );
-    m_vpsVidSigIdx[0]=0;
-    for (Int i=0; i < 16; i++)
-    {
-      m_vpsVidFormat[i] = 5;
-      m_vpsFullRangeFlag[i] = false;
-      m_vpsColorPrimaries[i] = 2;
-      m_vpsTransChar[i] = 2;
-      m_vpsMatCoeff[i] = 2;
-    }
+  m_vidSigPresentVpsFlag=true;
+  m_vpsVidSigInfo=1;
+  ::memset( m_vpsVidSigIdx, 0, sizeof(m_vpsVidSigIdx) );
+  m_vpsVidSigIdx[0]=0;
+  for (Int i=0; i < 16; i++)
+  {
+    m_vpsVidFormat[i] = 5;
+    m_vpsFullRangeFlag[i] = false;
+    m_vpsColorPrimaries[i] = 2;
+    m_vpsTransChar[i] = 2;
+    m_vpsMatCoeff[i] = 2;
+  }
 #endif
 #if VPS_VUI_BITRATE_PICRATE  
   ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));

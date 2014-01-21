@@ -590,20 +590,20 @@ private:
   Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if N0160_VUI_EXT_ILP_REF    
-  Bool        m_numIlpRestrictedRefLayers;
+  Bool        m_ilpRestrictedRefLayersFlag;
   Int         m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Bool        m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if VPS_VUI_VIDEO_SIGNAL
-    Bool        m_vidSigPresentVpsFlag;
-    Int         m_vpsVidSigInfo;
-    Int         m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
-    Int         m_vpsVidFormat[16];
-    Bool        m_vpsFullRangeFlag[16];
-    Int         m_vpsColorPrimaries[16];
-    Int         m_vpsTransChar[16];
-    Int         m_vpsMatCoeff[16];
+  Bool        m_vidSigPresentVpsFlag;
+  Int         m_vpsVidSigInfo;
+  Int         m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_vpsVidFormat[16];
+  Bool        m_vpsFullRangeFlag[16];
+  Int         m_vpsColorPrimaries[16];
+  Int         m_vpsTransChar[16];
+  Int         m_vpsMatCoeff[16];
 #endif 
 #if VPS_VUI_BITRATE_PICRATE
   Bool        m_bitRatePresentVpsFlag;
@@ -897,8 +897,8 @@ Void      deriveNumberOfSubDpbs();
   Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
 #endif 
 #if N0160_VUI_EXT_ILP_REF  
-  Bool  getNumIlpRestrictedRefLayers   ( )                                         { return m_numIlpRestrictedRefLayers        ;}
-  Void  setNumIlpRestrictedRefLayers   ( Int val )                                 { m_numIlpRestrictedRefLayers         = val;}
+  Bool  getIlpRestrictedRefLayersFlag   ( )                                        { return m_ilpRestrictedRefLayersFlag        ;}
+  Void  setIlpRestrictedRefLayersFlag   ( Int val )                                { m_ilpRestrictedRefLayersFlag         = val;}
   
   Int  getMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId )          { return m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId];}
   Void setMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId, Int val ) { m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId] = val;}
