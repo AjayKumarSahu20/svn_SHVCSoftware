@@ -1631,7 +1631,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numLayer; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
@@ -1698,7 +1698,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
