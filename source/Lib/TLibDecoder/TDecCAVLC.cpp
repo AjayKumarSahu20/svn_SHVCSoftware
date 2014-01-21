@@ -1671,8 +1671,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #endif
 
 #if N0160_VUI_EXT_ILP_REF
-    READ_FLAG( uiCode, "num_ilp_restricted_ref_layers" ); vps->setNumIlpRestrictedRefLayers( uiCode == 1 );
-  if( vps->getNumIlpRestrictedRefLayers())
+  READ_FLAG( uiCode, "ilp_restricted_ref_layers_flag" ); vps->setIlpRestrictedRefLayersFlag( uiCode == 1 );
+  if( vps->getIlpRestrictedRefLayersFlag())
   {
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
