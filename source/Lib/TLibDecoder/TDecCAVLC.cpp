@@ -865,7 +865,11 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   READ_CODE( 4,  uiCode,  "vps_video_parameter_set_id" );         pcVPS->setVPSId( uiCode );
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
 #if VPS_RENAME
-  READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( uiCode + 1);
+#if O0137_MAX_LAYERID
+  READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( min( 62u, uiCode) + 1 );
+#else
+  READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( uiCode + 1 );
+#endif
 #else
   READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
 #endif
@@ -989,6 +993,18 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   UInt numScalabilityTypes = 0, i = 0, j = 0;
 
   READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
+
+#if O0109_MOVE_VPS_VUI_FLAG
+  READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
+  if ( uiCode )
+  {
+#endif
+#if VPS_VUI_OFFSET
+  READ_CODE( 16, uiCode, "vps_vui_offset" );  vps->setVpsVuiOffset( uiCode );
+#endif
+#if O0109_MOVE_VPS_VUI_FLAG
+  }
+#endif
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
@@ -1047,14 +1063,28 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   // if ( pcVPS->getNumViews() > 1 )
   //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val.
   {
+#if O0109_VIEW_ID_LEN
+    READ_CODE( 4, uiCode, "view_id_len" ); vps->setViewIdLen( uiCode );
+#else
     READ_CODE( 4, uiCode, "view_id_len_minus1" ); vps->setViewIdLenMinus1( uiCode );
+#endif
   }
 
+#if O0109_VIEW_ID_LEN
+  if ( vps->getViewIdLen() > 0 )
+  {
+    for(  i = 0; i < vps->getNumViews(); i++ )
+    {
+      READ_CODE( vps->getViewIdLen( ), uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
+    }
+  }
+#else
   for(  i = 0; i < vps->getNumViews(); i++ )
   {
     READ_CODE( vps->getViewIdLenMinus1( ) + 1, uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
   }
 #endif
+#endif // view id related signaling
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
@@ -1164,8 +1194,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     if( !vps->getProfilePresentFlag(idx) )
     {
       READ_CODE( 6, uiCode, "profile_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
+#if O0109_PROF_REF_MINUS1
+      assert( vps->getProfileLayerSetRef(idx) <= idx );
+#else
       assert( vps->getProfileLayerSetRef(idx) < idx );
-
+#endif
       // Copy profile information as indicated
       vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
     }
@@ -1186,7 +1219,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   if( numOutputLayerSets > 1 )
   {
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+    READ_CODE( 2, uiCode, "default_one_target_output_layer_idc" );   vps->setDefaultOneTargetOutputLayerIdc( uiCode );
+#else
     READ_FLAG( uiCode, "default_one_target_output_layer_flag" );   vps->setDefaultOneTargetOutputLayerFlag( uiCode ? true : false );
+#endif
   }
   vps->setNumOutputLayerSets( numOutputLayerSets );
 
@@ -1214,6 +1251,30 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       // i <= (vps->getNumLayerSets() - 1)
       // Assign OutputLayerFlag depending on default_one_target_output_layer_flag
       Int lsIdx = i;
+#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
+      if( vps->getDefaultOneTargetOutputLayerIdc() == 1 )
+      {
+        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
+        {
+#if O0135_DEFAULT_ONE_OUT_SEMANTIC
+          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) && (vps->getDimensionId(j,1)==0) );
+#else
+          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)));
+#endif
+        }
+      }
+      else if ( vps->getDefaultOneTargetOutputLayerIdc() == 0 )
+      {
+        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
+        {
+          vps->setOutputLayerFlag(i, j, 1);
+        }
+      }
+      else
+      {
+        // Other values of default_one_target_output_layer_idc than 0 and 1 are reserved for future use.
+      }
+#else
       if( vps->getDefaultOneTargetOutputLayerFlag() )
       {
         for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
@@ -1228,6 +1289,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
           vps->setOutputLayerFlag(i, j, 1);
         }
       }
+#endif
     }
     Int numBits = 1;
     while ((1 << numBits) < (vps->getNumProfileTierLevel()))
@@ -1407,15 +1469,21 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
+#if !O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
 #endif
+#endif
 
+#if O0109_MOVE_VPS_VUI_FLAG
+  if ( vps->getVpsVuiPresentFlag() )
+#else
   READ_FLAG( uiCode,  "vps_vui_present_flag" );
   if (uiCode)
+#endif
   {
 #if VPS_VUI
     while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
@@ -1592,6 +1660,16 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
   }
 #endif
+
+#if O0109_O0199_FLAGS_TO_VUI
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
+#endif
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
+#endif
+#endif
+
 #if N0160_VUI_EXT_ILP_REF
     READ_FLAG( uiCode, "num_ilp_restricted_ref_layers" ); vps->setNumIlpRestrictedRefLayers( uiCode == 1 );
   if( vps->getNumIlpRestrictedRefLayers())

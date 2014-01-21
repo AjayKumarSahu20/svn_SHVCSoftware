@@ -42,9 +42,21 @@
 
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 
+#define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
+
 #define RANDOM_ACCESS_SEI_FIX            1
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
+
+#define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
+
+#define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
+#define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
+#define O0109_PROF_REF_MINUS1            1      ///< JCTVC-O0109: constraint that profile_ref_minus1[i] shall be less than or equal to i
+#define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
+#define O0109_MOVE_VPS_VUI_FLAG          1      ///< JCTVC-O0109: move vps_vui_present_flag before vps_vui_offset
+
+#define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
 
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -95,8 +107,8 @@
 #define VPS_VUI                          1      ///< Include function structure for VPS VUI
 
 #if VPS_VUI
-#define VPS_VUI_TILES_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
-#define VPS_VUI_WPP_NOT_IN_USE__FLAG    1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
+#define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
+#define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 #define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
@@ -176,7 +188,7 @@
 
 #define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
 
-#define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id_len_minus1 and view_id_val
+#define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define M0043_LAYERS_PRESENT_SEI         0      ///< JCTVC-M0043: add layers present SEI. Macro shall be equal to 0 according to the JCTVC-N0174 discussion. The code is to be removed.
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
@@ -242,8 +254,11 @@
 #endif
 
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
+#if O0137_MAX_LAYERID
+#define MAX_NUM_LAYER_IDS                63
+#else
 #define MAX_NUM_LAYER_IDS                64
-
+#endif
 #define COEF_REMAIN_BIN_REDUCTION        3 ///< indicates the level at which the VLC 
                                            ///< transitions from Golomb-Rice to TU+EG(k)
 
