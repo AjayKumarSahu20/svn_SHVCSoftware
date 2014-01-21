@@ -80,7 +80,7 @@ Void TAppDecTop::destroy()
     m_pchBitstreamFile = NULL;
   }
 #if SVC_EXTENSION
-  for( Int i = 0; i < m_tgtLayerId; i++ )
+  for( Int i = 0; i <= m_tgtLayerId; i++ )
   {
     if( m_pchReconFile[i] )
     {

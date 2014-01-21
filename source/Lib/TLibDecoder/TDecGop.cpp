@@ -233,10 +233,11 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
 
   //-- For time output for each slice
 #if SVC_EXTENSION
-  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
+  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP%3d ) ", pcSlice->getPOC(),
                                                     rpcPic->getLayerId(),
                                                     pcSlice->getTLayer(),
                                                     c,
+                                                    NaluToStr( pcSlice->getNalUnitType() ).data(),
                                                     pcSlice->getSliceQp() );
 #else
   printf("\nPOC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),

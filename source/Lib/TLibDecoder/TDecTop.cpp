@@ -195,7 +195,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++)  // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numDirectRefLayers; j++)
       {
 
         m_cIlpPic[j] = new  TComPic;
@@ -2037,6 +2037,9 @@ TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
 Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
+
+  assert( params->getTargetLayerId() < vps->getMaxLayers() );
+
   if( params->getValueCheckedFlag() )
   {
     return; // Already checked

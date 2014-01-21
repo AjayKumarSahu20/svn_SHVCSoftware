@@ -44,7 +44,7 @@
 
 #define RANDOM_ACCESS_SEI_FIX            1
 #if SVC_EXTENSION
-#define MAX_LAYERS                       2      ///< max number of layers the codec is supposed to handle
+#define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL

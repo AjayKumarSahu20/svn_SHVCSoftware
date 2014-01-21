@@ -3107,21 +3107,23 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   if (!pcSlice->isReferenced()) c += 32;
 
 #if SVC_EXTENSION
-#if ADAPTIVE_QP_SELECTION
-  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE, nQP %d QP %d ) %10d bits",
+#if ADAPTIVE_QP_SELECTION  
+  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE %s, nQP %d QP %d ) %10d bits",
          pcSlice->getPOC(),
          pcSlice->getLayerId(),
          pcSlice->getTLayer(),
          c,
+         NaluToStr( pcSlice->getNalUnitType() ).data(),
          pcSlice->getSliceQpBase(),
          pcSlice->getSliceQp(),
          uibits );
 #else
-  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE, QP %d ) %10d bits",
+  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP %d ) %10d bits",
          pcSlice->getPOC()-pcSlice->getLastIDR(),
          pcSlice->getLayerId(),
          pcSlice->getTLayer(),
          c,
+         NaluToStr( pcSlice->getNalUnitType() ).data().
          pcSlice->getSliceQp(),
          uibits );
 #endif
