@@ -513,7 +513,9 @@ private:
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
+#if !P0048_REMOVE_PROFILE_REF
   UInt       m_profileLayerSetRef[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
+#endif
   std::vector<TComPTL>    m_pcPTLForExtn;  
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
@@ -776,8 +778,10 @@ Void      deriveNumberOfSubDpbs();
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }
 
+#if !P0048_REMOVE_PROFILE_REF
   UInt   getProfileLayerSetRef(Int id)                          { return m_profileLayerSetRef[id]; }
   Void   setProfileLayerSetRef(Int id, Bool x)                  { m_profileLayerSetRef[id] = x;    }
+#endif
 
   std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
   TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
