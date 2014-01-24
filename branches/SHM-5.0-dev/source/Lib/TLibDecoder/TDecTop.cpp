@@ -1864,6 +1864,13 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
       
     case NAL_UNIT_EOB:
+#if P0130_EOB
+      //Check layer id of the nalu. if it is not 0, give a warning message.
+      if (nalu.m_layerId > 0)
+      {
+        printf( "\n\nThis bitstream is ended with EOB NALU that has layer id greater than 0\n" );
+      }
+#endif
       return false;
       
     default:
