@@ -1652,6 +1652,17 @@ Void TAppEncTop::encode()
     // write bitstream out
     if(iTotalNumEncoded)
     {
+#if P0130_EOB
+      if( bEos )
+      {
+        OutputNALUnit nalu(NAL_UNIT_EOB);
+        nalu.m_layerId = 0;
+        writeRBSPTrailingBits(nalu.m_Bitstream);
+
+        AccessUnit& accessUnit = outputAccessUnits.back();
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+      }
+#endif
       xWriteStream(bitstreamFile, iTotalNumEncoded, outputAccessUnits);
       outputAccessUnits.clear();
     }
