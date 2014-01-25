@@ -994,6 +994,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
 
+#if !P0307_REMOVE_VPS_VUI_OFFSET
 #if O0109_MOVE_VPS_VUI_FLAG
   READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
   if ( uiCode )
@@ -1004,6 +1005,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if O0109_MOVE_VPS_VUI_FLAG
   }
+#endif
 #endif
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
 
@@ -1474,6 +1476,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
+#if P0307_VPS_NON_VUI_EXTENSION
+  READ_UVLC( uiCode,           "vps_non_vui_extension_length"); vps->setVpsNonVuiExtLength((Int)uiCode);
+  if ( vps->getVpsNonVuiExtLength() > 0 )
+  {
+    printf("\n\nUp to the current spec, the value of vps_non_vui_extension_length is supposed to be 0\n");
+  }
+#endif
+
 #if !O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
@@ -1481,6 +1491,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
 #endif
+#endif
+
+#if P0307_REMOVE_VPS_VUI_OFFSET
+  READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
 #endif
 
 #if O0109_MOVE_VPS_VUI_FLAG
