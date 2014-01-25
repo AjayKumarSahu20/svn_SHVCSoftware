@@ -657,8 +657,13 @@ private:
 #endif
 
 #endif //SVC_EXTENSION
+#if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
   Int     m_vpsVuiOffset;
+#endif
+#endif
+#if P0307_VPS_NON_VUI_EXTENSION
+  Int     m_vpsNonVuiExtLength;
 #endif
 public:
   TComVPS();
@@ -1020,9 +1025,15 @@ Void      deriveNumberOfSubDpbs();
   Void   setVpsVuiPresentFlag(Bool x)                           { m_vpsVuiPresentFlag = x; }
 #endif
 
+#if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
   Int     getVpsVuiOffset()         { return m_vpsVuiOffset; }
   Void    setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
+#endif
+#endif
+#if P0307_VPS_NON_VUI_EXTENSION
+  Int     getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
+  Void    setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
 #endif
 #endif //SVC_EXTENSION
 };

@@ -2057,8 +2057,13 @@ TComVPS::TComVPS()
 , m_viewIdLenMinus1           (0)
 #endif
 #endif
+#if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
 , m_vpsVuiOffset (0)
+#endif
+#endif
+#if P0307_VPS_NON_VUI_EXTENSION
+, m_vpsNonVuiExtLength (0)
 #endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
