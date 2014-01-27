@@ -142,7 +142,6 @@
 
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
 #define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
-#define ILP_RAP                          1      ///< JCTVC-M0208 proposal 3
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
