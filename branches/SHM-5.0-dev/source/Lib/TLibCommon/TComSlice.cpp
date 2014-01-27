@@ -123,10 +123,6 @@ TComSlice::TComSlice()
 #else
   m_numILRRefIdx = 0;
 #endif 
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-  m_altColIndicationFlag = false;
-  m_colRefLayerIdx       = 0;
-#endif
 #endif //SVC_EXTENSION
 
   initEqualRef();
@@ -452,11 +448,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
     {
 #if REF_IDX_MFM
-#if M0457_COL_PICTURE_SIGNALING
       if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && getMFMEnabledFlag())
-#else
-      if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && m_pcSPS->getMFMEnabledFlag())
-#endif
       { 
         ilpPic[refLayerIdc]->copyUpsampledMvField( refLayerIdc, m_pcBaseColPic[refLayerIdc] );
       }

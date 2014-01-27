@@ -209,9 +209,6 @@ protected:
   Void xBuildTileSetsMap(TComPicSym* picSym);
 #endif
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-  TComPic* getMotionPredIlp(TComSlice* pcSlice);
-#endif
 };// END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================

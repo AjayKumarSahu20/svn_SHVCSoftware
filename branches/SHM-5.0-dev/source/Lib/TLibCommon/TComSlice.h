@@ -1323,12 +1323,6 @@ private:
 
 #if SVC_EXTENSION
   UInt m_layerId;
-
-#if REF_IDX_MFM
-#if !M0457_COL_PICTURE_SIGNALING
-  Bool m_bMFMEnabledFlag;
-#endif
-#endif
   UInt        m_numScaledRefLayerOffsets;
 #if O0098_SCALED_REF_LAYER_ID
   UInt        m_scaledRefLayerId[MAX_LAYERS];
@@ -1489,12 +1483,6 @@ public:
 #if SVC_EXTENSION
   Void     setLayerId(UInt layerId) { m_layerId = layerId; }
   UInt     getLayerId() { return m_layerId; }
-#if REF_IDX_MFM
-#if !M0457_COL_PICTURE_SIGNALING
-  Void     setMFMEnabledFlag(Bool flag) {m_bMFMEnabledFlag = flag;}
-  Bool     getMFMEnabledFlag()          {return m_bMFMEnabledFlag;}
-#endif
-#endif
   UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
 #if O0098_SCALED_REF_LAYER_ID
@@ -1874,14 +1862,12 @@ private:
   UInt        m_layerId;
   TComPic*    m_pcBaseColPic[MAX_LAYERS];
   TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
-#if M0457_COL_PICTURE_SIGNALING
   Int         m_numMotionPredRefLayers;
 #if REF_IDX_MFM
   Bool        m_bMFMEnabledFlag;
   Int         m_colRefLayerIdx;
   Bool        m_altColIndicationFlag;
   TComPic*    m_pcIlpPic;
-#endif
 #endif
 
 #if JCTVC_M0458_INTERLAYER_RPS_SIG
@@ -2168,7 +2154,6 @@ public:
   Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
 #endif 
 
-#if M0457_COL_PICTURE_SIGNALING
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
   Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }
 #if REF_IDX_MFM
@@ -2181,7 +2166,6 @@ public:
   Bool      getAltColIndicationFlag()                   { return m_altColIndicationFlag; }
   Void      setMotionPredIlp(TComPic *ilpPic)           { m_pcIlpPic = ilpPic; }
   TComPic*  getMotionPredIlp()                          { return m_pcIlpPic; }
-#endif
 #endif
 #endif
 

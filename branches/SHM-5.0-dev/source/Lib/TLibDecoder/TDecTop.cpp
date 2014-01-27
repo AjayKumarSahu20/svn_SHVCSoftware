@@ -847,9 +847,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if VPS_EXTN_DIRECT_REF_LAYERS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
-#if M0457_COL_PICTURE_SIGNALING
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
-#endif
 #endif
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 
@@ -1474,16 +1472,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       pcSlice->setILRPic( m_cIlpPic );
 
 #if REF_IDX_MFM
-#if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
-#else
-      if( pcSlice->getSPS()->getMFMEnabledFlag() )
-#endif
       {
         pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-        pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
-#endif
       }
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
@@ -2016,34 +2007,6 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
 
 #endif
 
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
-{
-  TComPic* ilpPic = NULL;
-  Int activeMotionPredReflayerIdx = 0;
-
-  for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-  {
-    UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-    if( getMotionPredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) ) )
-    {
-      if (activeMotionPredReflayerIdx == pcSlice->getColRefLayerIdx())
-      {
-        ilpPic = m_cIlpPic[refLayerIdc];
-        break;
-      }
-      else
-      {
-        activeMotionPredReflayerIdx++;
-      }
-    }
-  }
-
-  assert(ilpPic != NULL);
-
-  return ilpPic;
-}
-#endif
 #if OUTPUT_LAYER_SET_INDEX
 Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
 {

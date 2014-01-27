@@ -166,7 +166,6 @@
 #endif
 #if REF_IDX_MFM
 #define REMOVE_COL_PICTURE_SIGNALING     1      ///< JCTVC-N0107: remove alternative collocated picture signalling
-#define M0457_COL_PICTURE_SIGNALING      1
 #define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
 #endif
 

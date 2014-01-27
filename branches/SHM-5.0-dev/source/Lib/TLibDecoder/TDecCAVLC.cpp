@@ -755,15 +755,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     }
   }
   READ_FLAG( uiCode, "sps_temporal_mvp_enable_flag" );            pcSPS->setTMVPFlagsPresent(uiCode);
-#if REF_IDX_MFM
-#if !M0457_COL_PICTURE_SIGNALING
-  if(pcSPS->getLayerId() > 0)
-  {
-    READ_FLAG( uiCode, "sps_enh_mfm_enable_flag" );
-    pcSPS->setMFMEnabledFlag( uiCode ? true : false );
-  }
-#endif
-#endif
   READ_FLAG( uiCode, "sps_strong_intra_smoothing_enable_flag" );  pcSPS->setUseStrongIntraSmoothing(uiCode);
 
   READ_FLAG( uiCode, "vui_parameters_present_flag" );             pcSPS->setVuiParametersPresentFlag(uiCode);
@@ -2347,7 +2338,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
     if ( rpcSlice->getEnableTMVPFlag() )
     {
-#if M0457_COL_PICTURE_SIGNALING
 #if REMOVE_COL_PICTURE_SIGNALING
       rpcSlice->setMFMEnabledFlag( ( rpcSlice->getNumMotionPredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() ) ? true : false );
 #else
@@ -2368,7 +2358,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       else
       {
 #endif //REMOVE_COL_PICTURE_SIGNALING
-#endif
       if ( rpcSlice->getSliceType() == B_SLICE )
       {
         READ_FLAG( uiCode, "collocated_from_l0_flag" );
@@ -2390,9 +2379,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       {
         rpcSlice->setColRefIdx(0);
       }
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-      }
-#endif
     }
     if ( (pps->getUseWP() && rpcSlice->getSliceType()==P_SLICE) || (pps->getWPBiPred() && rpcSlice->getSliceType()==B_SLICE) )
     {

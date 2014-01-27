@@ -689,11 +689,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       pcSlice->setActiveNumILRRefIdx(0);
       pcSlice->setInterLayerPredEnabledFlag(false);
-#if M0457_COL_PICTURE_SIGNALING
       pcSlice->setMFMEnabledFlag(false);
 #if !REMOVE_COL_PICTURE_SIGNALING
       pcSlice->setAltColIndicationFlag(false);
-#endif
 #endif
     }
 #endif
@@ -1190,11 +1188,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif      
 
 #if SVC_EXTENSION
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-    if ( pcSlice->getSliceType() == B_SLICE && !(pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0) )
-#else
     if( pcSlice->getSliceType() == B_SLICE )
-#endif
     {
       pcSlice->setColFromL0Flag(1-uiColDir);
     }
@@ -1209,16 +1203,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       pcSlice->setILRPic( m_pcEncTop->getIlpList() );
 #if REF_IDX_MFM
-#if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
-#else
-      if( pcSlice->getSPS()->getMFMEnabledFlag() )
-#endif
       {
         pcSlice->setRefPOCListILP(m_pcEncTop->getIlpList(), pcSlice->getBaseColPic());
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-        pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
-#endif
       }
 #else
       //  Set reference list
@@ -1228,14 +1215,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
 #if REF_IDX_MFM
-#if M0457_COL_PICTURE_SIGNALING
 #if REMOVE_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
 #else
       if( pcSlice->getMFMEnabledFlag() && !(pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0) )
-#endif
-#else
-      if( pcSlice->getSPS()->getMFMEnabledFlag() )
 #endif
       {
         Bool found         = false;
@@ -2049,7 +2032,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
             startCUAddrSliceSegmentIdx++;
           }
-#if SVC_EXTENSION && M0457_COL_PICTURE_SIGNALING
+#if SVC_EXTENSION
           pcSlice->setNumMotionPredRefLayers(m_pcEncTop->getNumMotionPredRefLayers());
 #endif
           pcSlice->setRPS(pcPic->getSlice(0)->getRPS());
@@ -3733,34 +3716,4 @@ Void TEncGOP::dblMetric( TComPic* pcPic, UInt uiNumSlices )
   free(colSAD);
   free(rowSAD);
 }
-
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-TComPic* TEncGOP::getMotionPredIlp(TComSlice* pcSlice)
-{
-  TComPic* ilpPic = NULL;
-  Int activeMotionPredReflayerIdx = 0;
-
-  for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-  {
-    UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-    if( m_pcEncTop->getMotionPredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) ) )
-    {
-      if (activeMotionPredReflayerIdx == pcSlice->getColRefLayerIdx())
-      {
-        ilpPic = m_pcEncTop->getIlpList()[refLayerIdc];
-        break;
-      }
-      else
-      {
-        activeMotionPredReflayerIdx++;
-      }
-    }
-  }
-
-  assert(ilpPic != NULL);
-
-  return ilpPic;
-}
-#endif
-
 //! \}
