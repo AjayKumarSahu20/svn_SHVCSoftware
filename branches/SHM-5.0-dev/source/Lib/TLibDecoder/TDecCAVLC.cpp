@@ -2338,26 +2338,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
     if ( rpcSlice->getEnableTMVPFlag() )
     {
-#if REMOVE_COL_PICTURE_SIGNALING
+#if SVC_EXTENSION && REF_IDX_MFM
+      // set motion mapping flag
       rpcSlice->setMFMEnabledFlag( ( rpcSlice->getNumMotionPredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() ) ? true : false );
-#else
-      rpcSlice->setMFMEnabledFlag( false );
-      rpcSlice->setColRefLayerIdx( 0 );
-      rpcSlice->setAltColIndicationFlag( false );
-      if ( sps->getLayerId() > 0 && rpcSlice->getActiveNumILRRefIdx() > 0 && rpcSlice->getNumMotionPredRefLayers() > 0 )
-      {
-        READ_FLAG( uiCode, "alt_collocated_indication_flag" );
-        rpcSlice->setAltColIndicationFlag( uiCode == 1 ? true : false );
-        rpcSlice->setMFMEnabledFlag( uiCode == 1 ? true : false );
-        if ( rpcSlice->getNumMotionPredRefLayers() > 1 )
-        {
-          READ_UVLC( uiCode, "collocated_ref_layer_idx" );
-          rpcSlice->setColRefLayerIdx( uiCode );
-        }
-      }
-      else
-      {
-#endif //REMOVE_COL_PICTURE_SIGNALING
+#endif
       if ( rpcSlice->getSliceType() == B_SLICE )
       {
         READ_FLAG( uiCode, "collocated_from_l0_flag" );
