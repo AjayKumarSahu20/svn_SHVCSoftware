@@ -1696,10 +1696,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if VPS_VUI_OFFSET
       // The following code also calculates the VPS VUI offset
 #endif
+#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if VPS_EXTN_OFFSET_CALC
       OutputNALUnit tempNalu(NAL_UNIT_VPS, 0, 0        ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
       m_pcEntropyCoder->setBitstream(&tempNalu.m_Bitstream);
       m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());  // Use to calculate the VPS extension offset
+#endif
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
       m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());
