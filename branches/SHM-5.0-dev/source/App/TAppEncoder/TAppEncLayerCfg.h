@@ -47,15 +47,10 @@ protected:
   Int          m_auxId;
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   Int       *m_samplePredRefLayerIds;
   Int       m_numSamplePredRefLayers;
   Int       *m_motionPredRefLayerIds;
   Int       m_numMotionPredRefLayers;
-#else
-  Int       *m_refLayerIds;
-  Int       m_numDirectRefLayers;
-#endif
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
 #endif
@@ -152,18 +147,12 @@ public:
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
   Int*    getSamplePredRefLayerIds()     {return m_samplePredRefLayerIds;    }
   Int     getSamplePredRefLayerId(Int i) {return m_samplePredRefLayerIds[i]; }
   Int     getNumMotionPredRefLayers()    {return m_numMotionPredRefLayers;   }
   Int*    getMotionPredRefLayerIds()     {return m_motionPredRefLayerIds;    }
   Int     getMotionPredRefLayerId(Int i) {return m_motionPredRefLayerIds[i]; }
-#else
-  Int     getNumDirectRefLayers()     {return m_numDirectRefLayers;}
-  Int*    getRefLayerIds()            {return m_refLayerIds;      }
-  Int     getRefLayerId(Int i)        {return m_refLayerIds[i];   }
-#endif
 
   Int     getNumActiveRefLayers()     {return m_numActiveRefLayers;}
   Int*    getPredLayerIds()           {return m_predLayerIds;     }

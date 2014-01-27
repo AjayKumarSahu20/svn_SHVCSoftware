@@ -208,17 +208,9 @@ Void TAppEncTop::xInitLibCfg()
 
 #if REF_IDX_MFM
 #if AVC_BASE
-#if M0457_PREDICTION_INDICATIONS
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ));
-#endif
-#else
-#if M0457_PREDICTION_INDICATIONS
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
-#else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
-#endif
 #endif
 #endif
     // set layer ID
@@ -257,7 +249,6 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
-#if M0457_PREDICTION_INDICATIONS
       for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
       {
         m_acTEncTop[layer].setSamplePredEnabledFlag(i, false);
@@ -305,29 +296,10 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
       m_acTEncTop[layer].setNumDirectRefLayers(numDirectRefLayers);
-#else
-      if(m_acLayerCfg[layer].getNumDirectRefLayers() == -1)
-      {
-        // Not included in the configuration file; assume that each layer depends on previous layer
-        m_acTEncTop[layer].setNumDirectRefLayers       (1);      // One ref. layer
-        m_acTEncTop[layer].setRefLayerId               (0, layer - 1);   // Previous layer
-      }
-      else
-      {
-        m_acTEncTop[layer].setNumDirectRefLayers       ( m_acLayerCfg[layer].getNumDirectRefLayers() );
-        for(Int i = 0; i < m_acTEncTop[layer].getNumDirectRefLayers(); i++)
-        {
-          m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
-        }
-      }
-#endif
+
       if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
       {
-#if M0457_PREDICTION_INDICATIONS
         m_acTEncTop[layer].setNumActiveRefLayers( m_acTEncTop[layer].getNumDirectRefLayers() );
-#else
-        m_acTEncTop[layer].setNumActiveRefLayers( m_acLayerCfg[layer].getNumDirectRefLayers() );
-#endif
         for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
         {
           m_acTEncTop[layer].setPredLayerId(i, i);
@@ -342,7 +314,7 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
     }
-#endif
+#endif //VPS_EXTN_DIRECT_REF_LAYERS
     //===== Slice ========
 
     //====== Loop/Deblock Filter ========
@@ -1270,7 +1242,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
-#if M0457_PREDICTION_INDICATIONS
+#if SVC_EXTENSION
+    // prediction indications
     vps->setDirectDepTypeLen(2); // sample and motion types are encoded
     for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
     {

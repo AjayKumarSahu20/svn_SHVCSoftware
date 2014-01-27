@@ -529,14 +529,12 @@ private:
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#if M0457_PREDICTION_INDICATIONS
   UInt       m_directDepTypeLen;
 #if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool       m_defaultDirectDependencyTypeFlag;
   UInt       m_defaultDirectDependencyType;
 #endif
   UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#endif
 #endif
   UInt       m_numProfileTierLevel;
   Bool       m_moreOutputLayerSetsThanDefaultFlag;
@@ -813,7 +811,6 @@ Void      deriveNumberOfSubDpbs();
   UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
   Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
 
-#if M0457_PREDICTION_INDICATIONS
   UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
   Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
 #if O0096_DEFAULT_DEPENDENCY_TYPE
@@ -824,7 +821,6 @@ Void      deriveNumberOfSubDpbs();
 #endif
   UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
-#endif
 #endif
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }

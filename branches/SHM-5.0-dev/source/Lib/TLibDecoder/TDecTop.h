@@ -116,7 +116,7 @@ private:
   Int                     m_iBLSourceWidth;
   Int                     m_iBLSourceHeight;  
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
   Int                     m_numDirectRefLayers;
   Int                     m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
   Int                     m_numSamplePredRefLayers;
@@ -176,7 +176,6 @@ public:
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec(UInt refLayerIdc);
-#if M0457_PREDICTION_INDICATIONS
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
   Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
 
@@ -205,7 +204,6 @@ public:
   TDecTop*  getMotionPredRefLayerDec        ( UInt layerId );
 
   Void      setRefLayerParams( TComVPS* vps );
-#endif
 #endif
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }

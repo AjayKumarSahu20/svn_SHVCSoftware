@@ -844,7 +844,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if SVC_EXTENSION
   m_apcSlicePilot->setSliceIdx( m_uiSliceIdx ); // it should be removed if HM will reflect it in above
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
 #if M0457_COL_PICTURE_SIGNALING
@@ -1962,7 +1962,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 }
 #endif
 
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
 
 Void TDecTop::setRefLayerParams( TComVPS* vps )
 {
