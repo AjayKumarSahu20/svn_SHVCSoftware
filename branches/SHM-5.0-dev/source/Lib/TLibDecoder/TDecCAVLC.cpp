@@ -1094,7 +1094,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         }
     }
 #endif
-#if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   READ_FLAG( uiCode, "max_tid_ref_present_flag"); vps->setMaxTidRefPresentFlag(uiCode ? true : false);
   if (vps->getMaxTidRefPresentFlag())
@@ -1151,7 +1150,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     assert( uiCode <= vps->getMaxTLayers() );
 #endif   
   }
-#endif
 #endif
 #if ILP_SSH_SIG
     READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);

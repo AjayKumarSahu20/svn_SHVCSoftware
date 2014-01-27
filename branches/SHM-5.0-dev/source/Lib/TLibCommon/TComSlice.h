@@ -555,12 +555,10 @@ private:
 #if N0147_IRAP_ALIGN_FLAG
   Bool       m_crossLayerIrapAlignFlag;
 #endif
-#if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if O0225_MAX_TID_FOR_REF_LAYERS
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1][MAX_VPS_LAYER_ID_PLUS1];
 #else
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
-#endif
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool       m_maxTidRefPresentFlag;
@@ -852,14 +850,12 @@ Void      deriveNumberOfSubDpbs();
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
 #endif 
-#if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if O0225_MAX_TID_FOR_REF_LAYERS
   UInt   getMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId)                     { return m_maxTidIlRefPicsPlus1[layerId][refLayerId];           }
   Void   setMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId][refLayerId] = maxSublayer;    }
 #else
   UInt   getMaxTidIlRefPicsPlus1(Int layerId)                     { return m_maxTidIlRefPicsPlus1[layerId];                   }
   Void   setMaxTidIlRefPicsPlus1(Int layerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId] = maxSublayer;            }
-#endif
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}

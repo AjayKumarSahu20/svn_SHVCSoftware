@@ -884,7 +884,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         }
     }
 #endif
-#if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
    WRITE_FLAG( vps->getMaxTidRefPresentFlag(), "max_tid_ref_present_flag");
    if (vps->getMaxTidRefPresentFlag())
@@ -919,7 +918,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
 #endif 
   }
-#endif
 #endif
 #if ILP_SSH_SIG
     WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
