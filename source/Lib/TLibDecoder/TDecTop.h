@@ -241,9 +241,6 @@ protected:
   Void      xDecodeSPS();
   Void      xDecodePPS();
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-  TComPic*  getMotionPredIlp(TComSlice* pcSlice);
-#endif
 
 #if NO_CLRAS_OUTPUT_FLAG
   Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}

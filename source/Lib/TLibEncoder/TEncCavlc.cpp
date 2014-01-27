@@ -578,14 +578,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     }
   }
   WRITE_FLAG( pcSPS->getTMVPFlagsPresent()  ? 1 : 0,           "sps_temporal_mvp_enable_flag" );
-#if REF_IDX_MFM
-#if !M0457_COL_PICTURE_SIGNALING
-  if( pcSPS->getLayerId() > 0 )
-  {
-    WRITE_FLAG( pcSPS->getMFMEnabledFlag() ? 1 : 0,          "sps_enh_mfm_enable_flag" );
-  }
-#endif
-#endif
   WRITE_FLAG( pcSPS->getUseStrongIntraSmoothing(),             "sps_strong_intra_smoothing_enable_flag" );
 
   WRITE_FLAG( pcSPS->getVuiParametersPresentFlag(),             "vui_parameters_present_flag" );
@@ -1766,18 +1758,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 
     if ( pcSlice->getEnableTMVPFlag() )
     {
-#if SVC_EXTENSION && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-      if ( !pcSlice->getIdrPicFlag() && pcSlice->getLayerId() > 0 && pcSlice->getActiveNumILRRefIdx() > 0 && pcSlice->getNumMotionPredRefLayers() > 0 )
-      {
-        WRITE_FLAG( pcSlice->getAltColIndicationFlag() ? 1 : 0, "alt_collocated_indication_flag" );
-        if (pcSlice->getAltColIndicationFlag() && pcSlice->getNumMotionPredRefLayers() > 1)
-        {
-          WRITE_UVLC(0, "collocated_ref_layer_idx");
-        }
-      }
-      else
-      {
-#endif
       if ( pcSlice->getSliceType() == B_SLICE )
       {
         WRITE_FLAG( pcSlice->getColFromL0Flag(), "collocated_from_l0_flag" );
@@ -1789,9 +1769,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
         WRITE_UVLC( pcSlice->getColRefIdx(), "collocated_ref_idx" );
       }
-#if SVC_EXTENSION && M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-      }
-#endif
     }
     if ( (pcSlice->getPPS()->getUseWP() && pcSlice->getSliceType()==P_SLICE) || (pcSlice->getPPS()->getWPBiPred() && pcSlice->getSliceType()==B_SLICE) )
     {

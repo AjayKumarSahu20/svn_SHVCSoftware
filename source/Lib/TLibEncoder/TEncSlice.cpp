@@ -535,11 +535,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #else
     rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( layerId ) );
 #endif
-#if M0457_COL_PICTURE_SIGNALING
     rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
 #if !REMOVE_COL_PICTURE_SIGNALING
     rpcSlice->setAltColIndicationFlag(rpcSlice->getMFMEnabledFlag());
-#endif
 #endif
   }
 
