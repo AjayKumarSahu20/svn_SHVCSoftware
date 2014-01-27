@@ -2036,7 +2036,6 @@ TComVPS::TComVPS()
 #if N0147_IRAP_ALIGN_FLAG
   m_crossLayerIrapAlignFlag = true;
 #endif 
-#if JCTVC_M0203_INTERLAYER_PRED_IDC
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   m_maxTidRefPresentFlag = true;
 #endif 
@@ -2051,7 +2050,6 @@ TComVPS::TComVPS()
     m_maxTidIlRefPicsPlus1[i] = m_uiMaxTLayers + 1;
 #endif 
   }
-#endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   m_tilesNotInUseFlag = true;
   ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
