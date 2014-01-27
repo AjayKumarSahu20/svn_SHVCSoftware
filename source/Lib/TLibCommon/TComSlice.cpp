@@ -474,6 +474,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       if( ((Int)(ilpPic[i]->getSlice(0)->getTLayer())<= maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[i]->getSlice(0)->getRapPicFlag() ) )
       {
         numInterLayerRPSPics++;
+#if DISCARDABLE_PIC_RPS
+        assert( ilpPic[i]->getSlice(0)->getDiscardableFlag() == 0 );    // Inter-layer RPS shall not contain picture with discardable_flag = 1.
+#endif
       }
     }
     if (numInterLayerRPSPics < m_activeNumILRRefIdx)
@@ -1425,6 +1428,12 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
       }
 
     }
+#if DISCARDABLE_PIC_RPS
+    if( isReference ) // Current picture is in the temporal RPS
+    {
+      assert( rpcPic->getSlice(0)->getDiscardableFlag() == 0 ); // Temporal RPS shall not contain picture with discardable_flag equal to 1
+    }
+#endif
     // mark the picture as "unused for reference" if it is not in
     // the Reference Picture Set
     if(rpcPic->getPicSym()->getSlice(0)->getPOC() != this->getPOC() && isReference == 0)    

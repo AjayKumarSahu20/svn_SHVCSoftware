@@ -1808,7 +1808,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     }
     if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
+#if DISCARDABLE_PIC_RPS
+      READ_FLAG(uiCode, "discardable_flag"); rpcSlice->setDiscardableFlag( uiCode ? true : false );
+#else
       READ_FLAG(uiCode, "discardable_flag"); // ignored
+#endif
       iBits++;
     }
 #if O0149_CROSS_LAYER_BLA_FLAG
