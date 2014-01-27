@@ -1088,7 +1088,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
 #if O0096_DEFAULT_DEPENDENCY_TYPE
   WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "default_direct_dependency_flag");
