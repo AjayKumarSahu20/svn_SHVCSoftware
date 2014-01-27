@@ -79,9 +79,6 @@ TAppEncCfg::TAppEncCfg()
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
     m_acLayerCfg[layer].setAppEncCfg(this);
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    m_ilSampleOnlyPred[layer] = 0;
-#endif
   }
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
 }
@@ -628,9 +625,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
-#endif
 #else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")

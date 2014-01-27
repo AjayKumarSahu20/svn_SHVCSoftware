@@ -698,18 +698,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #endif
 
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    pcSlice->setNumSamplePredRefLayers( m_pcEncTop->getNumSamplePredRefLayers() );
-    pcSlice->setInterLayerSamplePredOnlyFlag( 0 );
-    if( pcSlice->getNumSamplePredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() > 0 )
-    {
-      if( m_pcEncTop->getIlSampleOnlyPred() > 0 )
-      {
-        pcSlice->setInterLayerSamplePredOnlyFlag( true );
-      }
-    }
-#endif
-
     pcSlice->setLastIDR(m_iLastIDR);
     pcSlice->setSliceIdx(0);
     //set default slice level flag to the same as SPS level flag
@@ -1305,11 +1293,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setSliceType ( P_SLICE );
     }
 
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    if (pcSlice->getSliceType() == B_SLICE && m_pcEncTop->getIlSampleOnlyPred() == 0)
-#else
     if (pcSlice->getSliceType() == B_SLICE)
-#endif
     {
 #if !SVC_EXTENSION
       pcSlice->setColFromL0Flag(1-uiColDir);

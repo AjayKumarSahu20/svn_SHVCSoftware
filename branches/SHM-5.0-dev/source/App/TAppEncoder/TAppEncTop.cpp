@@ -220,9 +220,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
 #endif
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    m_acTEncTop[layer].setIlSampleOnlyPred( layer == 0 ? 0 : m_ilSampleOnlyPred[layer] );
-#endif
 #endif
     // set layer ID
     m_acTEncTop[layer].setLayerId ( layer );

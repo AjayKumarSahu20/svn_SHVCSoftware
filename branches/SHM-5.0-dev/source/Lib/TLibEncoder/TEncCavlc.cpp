@@ -1670,12 +1670,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         }
       }
     }     
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    if( pcSlice->getNumSamplePredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() > 0 )
-    {
-      WRITE_FLAG( pcSlice->getInterLayerSamplePredOnlyFlag(), "inter_layer_sample_pred_only_flag" );
-    }
-#endif
 #endif 
 
     if(pcSlice->getSPS()->getUseSAO())

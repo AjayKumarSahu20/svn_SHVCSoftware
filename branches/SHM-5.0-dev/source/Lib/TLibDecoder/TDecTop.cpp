@@ -850,9 +850,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if M0457_COL_PICTURE_SIGNALING
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  m_apcSlicePilot->setNumSamplePredRefLayers( getNumSamplePredRefLayers() );
-#endif
 #endif
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 
