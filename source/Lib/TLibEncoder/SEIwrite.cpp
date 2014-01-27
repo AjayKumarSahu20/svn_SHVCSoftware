@@ -86,8 +86,8 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
     break;
-#if M0043_LAYERS_PRESENT_SEI
-  case SEI::LAYERS_PRESENT:
+#if LAYERS_NOT_PRESENT_SEI
+  case SEI::LAYERS_NOT_PRESENT:
     fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
     break;
 #endif
@@ -149,9 +149,9 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::TONE_MAPPING_INFO:
     xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
     break;
-#if M0043_LAYERS_PRESENT_SEI
-  case SEI::LAYERS_PRESENT:
-    xWriteSEILayersPresent(*static_cast<const SEILayersPresent*>(&sei));
+#if LAYERS_NOT_PRESENT_SEI
+  case SEI::LAYERS_NOT_PRESENT:
+    xWriteSEILayersNotPresent(*static_cast<const SEILayersNotPresent*>(&sei));
     break;
 #endif
   case SEI::SOP_DESCRIPTION:
@@ -535,13 +535,13 @@ Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefr
   xWriteByteAlign();
 }
 
-#if M0043_LAYERS_PRESENT_SEI
-Void SEIWriter::xWriteSEILayersPresent(const SEILayersPresent& sei)
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIWriter::xWriteSEILayersNotPresent(const SEILayersNotPresent& sei)
 {
   WRITE_UVLC( sei.m_activeVpsId,           "lp_sei_active_vps_id" );
   for (UInt i = 0; i < sei.m_vpsMaxLayers; i++)
   {
-    WRITE_FLAG( sei.m_layerPresentFlag[i], "layer_present_flag"   );
+    WRITE_FLAG( sei.m_layerNotPresentFlag[i], "layer_not_present_flag"   );
   }
   xWriteByteAlign();
 }

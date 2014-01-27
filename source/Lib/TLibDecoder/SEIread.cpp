@@ -92,8 +92,8 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
-#if M0043_LAYERS_PRESENT_SEI
-  case SEI::LAYERS_PRESENT:
+#if LAYERS_NOT_PRESENT_SEI
+  case SEI::LAYERS_NOT_PRESENT:
     fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
     break;
 #endif
@@ -118,7 +118,7 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 /**
  * unmarshal a single SEI message from bitstream bs
  */
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
 void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
 #else
 void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps)
@@ -129,7 +129,7 @@ void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
   assert(!m_pcBitstream->getNumBitsUntilByteAligned());
   do
   {
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     xReadSEImessage(seis, nalUnitType, vps, sps);
 #else
     xReadSEImessage(seis, nalUnitType, sps);
@@ -144,7 +144,7 @@ void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
   assert(rbspTrailingBits == 0x80);
 }
 
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
 #else
 Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps)
@@ -253,16 +253,16 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
-#if M0043_LAYERS_PRESENT_SEI
-    case SEI::LAYERS_PRESENT:
+#if LAYERS_NOT_PRESENT_SEI
+    case SEI::LAYERS_NOT_PRESENT:
       if (!vps)
       {
-        printf ("Warning: Found Layers present SEI message, but no active VPS is available. Ignoring.");
+        printf ("Warning: Found Layers not present SEI message, but no active VPS is available. Ignoring.");
       }
       else
       {
-        sei = new SEILayersPresent;
-        xParseSEILayersPresent((SEILayersPresent&) *sei, payloadSize, vps);
+        sei = new SEILayersNotPresent;
+        xParseSEILayersNotPresent((SEILayersNotPresent&) *sei, payloadSize, vps);
       }
       break;
 #endif
@@ -278,7 +278,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
 #endif
     case SEI::SCALABLE_NESTING:
       sei = new SEIScalableNesting;
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
       xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, vps, sps);
 #else
       xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
@@ -740,8 +740,8 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
   xParseByteAlign();
 }
 
-#if M0043_LAYERS_PRESENT_SEI
-Void SEIReader::xParseSEILayersPresent(SEILayersPresent &sei, UInt payloadSize, TComVPS *vps)
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xParseSEILayersNotPresent(SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps)
 {
   UInt uiCode;
   UInt i = 0;
@@ -751,11 +751,11 @@ Void SEIReader::xParseSEILayersPresent(SEILayersPresent &sei, UInt payloadSize, 
   sei.m_vpsMaxLayers = vps->getMaxLayers();
   for (; i < sei.m_vpsMaxLayers; i++)
   {
-    READ_FLAG( uiCode,         "layer_present_flag"   ); sei.m_layerPresentFlag[i] = uiCode ? true : false;
+    READ_FLAG( uiCode,         "layer_not_present_flag"   ); sei.m_layerNotPresentFlag[i] = uiCode ? true : false;
   }
   for (; i < MAX_LAYERS; i++)
   {
-    sei.m_layerPresentFlag[i] = false;
+    sei.m_layerNotPresentFlag[i] = false;
   }
   xParseByteAlign();
 }
@@ -829,7 +829,7 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
 }
 #endif
 
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
 #else
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps)
@@ -875,7 +875,7 @@ Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitT
 
   // read nested SEI messages
   do {
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
 #else
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);

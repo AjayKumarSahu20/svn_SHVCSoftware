@@ -482,8 +482,8 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
     m_acTEncTop[layer].setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
     m_acTEncTop[layer].setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
-#if M0043_LAYERS_PRESENT_SEI
-    m_acTEncTop[layer].setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#if LAYERS_NOT_PRESENT_SEI
+    m_acTEncTop[layer].setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
@@ -796,8 +796,8 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
   m_cTEncTop.setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
   m_cTEncTop.setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
-#if M0043_LAYERS_PRESENT_SEI
-  m_cTEncTop.setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#if LAYERS_NOT_PRESENT_SEI
+  m_cTEncTop.setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
 #endif
   m_cTEncTop.setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
   m_cTEncTop.setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
