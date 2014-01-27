@@ -805,11 +805,10 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   UInt uiCode;
   // more syntax elements to be parsed here
 
-#if VERT_MV_CONSTRAINT
   READ_FLAG( uiCode, "inter_view_mv_vert_constraint_flag" );
   // Vertical MV component restriction is not used in SHVC CTC
   assert( uiCode == 0 );
-#endif
+
   if( pcSPS->getLayerId() > 0 )
   {
     Int iCode;
