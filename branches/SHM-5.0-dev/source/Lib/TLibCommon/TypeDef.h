@@ -148,11 +148,8 @@
 #define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
 #define ENCODER_FAST_MODE                1      ///< JCTVC-L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
-#define JCTVC_M0458_INTERLAYER_RPS_SIG   1      ///< implementation of JCTVC-L0178
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
-#endif
 #define JCTVC_M0203_INTERLAYER_PRED_IDC  1      ///< JCTVC-M0203: implementation of Inter-layer Prediction Indication
 #if JCTVC_M0203_INTERLAYER_PRED_IDC
 #define EARLY_REF_PIC_MARKING            1      ///< Decoded picture marking of sub-layer non-reference pictures
@@ -160,7 +157,6 @@
 #define N0120_MAX_TID_REF_CFG            1      ///< set max_tid_il_ref_pics_plus1 and max_tid_ref_present_flag in the config. file (configuration setting)
 #define O0225_MAX_TID_FOR_REF_LAYERS     1
 #define O0225_TID_BASED_IL_RPS_DERIV     1
-
 #define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #endif

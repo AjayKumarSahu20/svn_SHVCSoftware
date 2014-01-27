@@ -1147,14 +1147,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if (pcSlice->getPOC()>0  && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #endif
       {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
         pcSlice->setActiveNumILRRefIdx(0);
         pcSlice->setInterLayerPredEnabledFlag(0);
-#else
-        pcSlice->setNumILRRefIdx(0);
-#endif
       }
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getActiveNumILRRefIdx());
@@ -1165,18 +1160,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+pcSlice->getActiveNumILRRefIdx());
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+pcSlice->getActiveNumILRRefIdx());
       }
-#else
-      if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
-      {
-        pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumILRRefIdx());
-        pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumILRRefIdx());
-      }
-      else
-      {
-        pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+pcSlice->getNumILRRefIdx());
-        pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+pcSlice->getNumILRRefIdx());
-      }
-#endif
     }
 #endif //SVC_EXTENSION
 

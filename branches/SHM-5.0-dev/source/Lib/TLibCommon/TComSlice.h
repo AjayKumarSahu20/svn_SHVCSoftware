@@ -545,9 +545,7 @@ private:
   Bool       m_defaultOneTargetOutputLayerFlag;
 #endif
   Int        m_profileLevelTierIdx[64];     
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool       m_maxOneActiveRefLayerFlag;
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
@@ -654,7 +652,6 @@ private:
   Bool       m_vpsVuiPresentFlag;
 #endif
 
-#endif //SVC_EXTENSION
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
   Int     m_vpsVuiOffset;
@@ -663,6 +660,7 @@ private:
 #if P0307_VPS_NON_VUI_EXTENSION
   Int     m_vpsNonVuiExtLength;
 #endif
+#endif //SVC_EXTENSION
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -840,10 +838,8 @@ Void      deriveNumberOfSubDpbs();
 #endif
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
@@ -1870,15 +1866,9 @@ private:
   TComPic*    m_pcIlpPic;
 #endif
 
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Bool        m_interLayerPredEnabledFlag;
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
-#else
-#if SVC_EXTENSION
-  Int         m_numILRRefIdx;       //< for inter-layer reference picture ser
-#endif
-#endif 
 #if POC_RESET_FLAG
   Bool        m_bPocResetFlag;
   Int         m_pocValueBeforeReset;
@@ -2141,7 +2131,6 @@ public:
   Void      setRefPOCListILP(TComPic** ilpPic, TComPic** pcRefPicRL);
 #endif
 
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 
@@ -2150,9 +2139,6 @@ public:
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
-#else
-  Void      setNumILRRefIdx     ( Int i )               { m_numILRRefIdx = i;     }
-#endif 
 
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
   Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }

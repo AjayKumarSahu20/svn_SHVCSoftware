@@ -1242,7 +1242,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
-#if SVC_EXTENSION
     // prediction indications
     vps->setDirectDepTypeLen(2); // sample and motion types are encoded
     for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
@@ -1270,7 +1269,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setDirectDependencyType( layerCtr, refLayerCtr, 0 );
       }
     }
-#endif
   }
 
 #if O0092_0094_DEPENDENCY_CONSTRAINT
@@ -1287,9 +1285,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     for(i = 1; i< vps->getMaxLayers(); i++)
     {
