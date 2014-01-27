@@ -141,7 +141,6 @@
 #define ARBITRARY_SPATIAL_RATIO          1      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
 
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
-#define RESTR_CHK                        1      ///< JCTVC-M0208 proposal 1
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
