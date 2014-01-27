@@ -172,12 +172,6 @@
 #define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
 #endif
 
-#if !VPS_EXTN_DIRECT_REF_LAYERS || !M0457_PREDICTION_INDICATIONS || !JCTVC_M0458_INTERLAYER_RPS_SIG
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
-#else
-#define M0457_IL_SAMPLE_PRED_ONLY_FLAG   0      ///< shall be 0, JCTVC-N0107
-#endif
-
 #define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
 
 #define N0147_IRAP_ALIGN_FLAG            1      ///< a flag to indicatate whether IRAPs are aligned across layers

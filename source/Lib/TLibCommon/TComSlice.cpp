@@ -127,10 +127,6 @@ TComSlice::TComSlice()
   m_altColIndicationFlag = false;
   m_colRefLayerIdx       = 0;
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  m_numSamplePredRefLayers       = 0;
-  m_interLayerSamplePredOnlyFlag = false;
-#endif
 #endif //SVC_EXTENSION
 
   initEqualRef();
@@ -179,10 +175,6 @@ Void TComSlice::initSlice()
   m_interLayerPredEnabledFlag = 0;
 #else
   m_numILRRefIdx              = 0;
-#endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  m_numSamplePredRefLayers       = 0;
-  m_interLayerSamplePredOnlyFlag = false;
 #endif
 #endif
   m_aiNumRefIdx[0]      = 0;
@@ -409,9 +401,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr0[NumPocStCurr0] = pcRefPic;
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
-#endif
       NumPocStCurr0++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -425,9 +414,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       pcRefPic->setIsLongTerm(0);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetStCurr1[NumPocStCurr1] = pcRefPic;
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
-#endif
       NumPocStCurr1++;
       pcRefPic->setCheckLTMSBPresent(false);  
     }
@@ -441,9 +427,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       pcRefPic->setIsLongTerm(1);
       pcRefPic->getPicYuvRec()->extendPicBorder();
       RefPicSetLtCurr[NumPocLtCurr] = pcRefPic;
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-      if( !m_interLayerSamplePredOnlyFlag || pcRefPic->getLayerId() < getLayerId()) 
-#endif
       NumPocLtCurr++;
     }
     if(pcRefPic==NULL) 
@@ -622,27 +605,19 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     }
 
     if (m_eSliceType == I_SLICE)
-  {
+    {
       ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
       ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
-      
+
       return;
     }
-    
+
     assert(numPocTotalCurr > 0);
-    
+
     m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
     m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
   }
 
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    if( m_interLayerSamplePredOnlyFlag && getLayerId() ) 
-    {
-      m_aiNumRefIdx[0] = m_aiNumRefIdx[0] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[0];
-      m_aiNumRefIdx[1] = m_aiNumRefIdx[1] > m_activeNumILRRefIdx ? m_activeNumILRRefIdx : m_aiNumRefIdx[1];
-    }
-#endif
- 
     Int cIdx = 0;
     for ( i=0; i<NumPocStCurr0; i++, cIdx++)
     {

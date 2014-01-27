@@ -2184,14 +2184,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #endif 
     }
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    rpcSlice->setInterLayerSamplePredOnlyFlag( false );
-    if( rpcSlice->getNumSamplePredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() > 0 )
-    {
-      READ_FLAG( uiCode, "inter_layer_sample_pred_only_flag" );
-      rpcSlice->setInterLayerSamplePredOnlyFlag( uiCode > 0 );
-    }
-#endif
 #else
     if( rpcSlice->getLayerId() > 0 )
     {

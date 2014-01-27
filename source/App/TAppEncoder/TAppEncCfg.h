@@ -72,9 +72,6 @@ protected:
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  Int       m_ilSampleOnlyPred[ MAX_LAYERS ];
-#endif
 #if N0120_MAX_TID_REF_CFG
   Bool      m_maxTidRefPresentFlag; 
 #endif 
