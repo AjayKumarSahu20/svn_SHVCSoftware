@@ -71,8 +71,8 @@ public:
     DECODED_PICTURE_HASH                 = 132,
     SCALABLE_NESTING                     = 133,
     REGION_REFRESH_INFO                  = 134,
-#if M0043_LAYERS_PRESENT_SEI
-    LAYERS_PRESENT                       = 137,
+#if LAYERS_NOT_PRESENT_SEI
+    LAYERS_NOT_PRESENT                   = 137,
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     INTER_LAYER_CONSTRAINED_TILE_SETS    = 138
@@ -318,18 +318,18 @@ public:
   Bool m_gdrForegroundFlag;
 };
 
-#if M0043_LAYERS_PRESENT_SEI
-class SEILayersPresent : public SEI
+#if LAYERS_NOT_PRESENT_SEI
+class SEILayersNotPresent : public SEI
 {
 public:
-  PayloadType payloadType() const { return LAYERS_PRESENT; }
+  PayloadType payloadType() const { return LAYERS_NOT_PRESENT; }
 
-  SEILayersPresent() {}
-  virtual ~SEILayersPresent() {}
+  SEILayersNotPresent() {}
+  virtual ~SEILayersNotPresent() {}
 
   UInt m_activeVpsId;
   UInt m_vpsMaxLayers;
-  Bool m_layerPresentFlag[MAX_LAYERS];
+  Bool m_layerNotPresentFlag[MAX_LAYERS];
 };
 #endif
 

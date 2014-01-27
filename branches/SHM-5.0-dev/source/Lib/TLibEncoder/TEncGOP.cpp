@@ -166,22 +166,22 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (TComSPS *sps)
   return seiActiveParameterSets;
 }
 
-#if M0043_LAYERS_PRESENT_SEI
-SEILayersPresent* TEncGOP::xCreateSEILayersPresent ()
+#if LAYERS_NOT_PRESENT_SEI
+SEILayersNotPresent* TEncGOP::xCreateSEILayersNotPresent ()
 {
   UInt i = 0;
-  SEILayersPresent *seiLayersPresent = new SEILayersPresent(); 
-  seiLayersPresent->m_activeVpsId = m_pcCfg->getVPS()->getVPSId(); 
-  seiLayersPresent->m_vpsMaxLayers = m_pcCfg->getVPS()->getMaxLayers();
-  for ( ; i < seiLayersPresent->m_vpsMaxLayers; i++)
+  SEILayersNotPresent *seiLayersNotPresent = new SEILayersNotPresent(); 
+  seiLayersNotPresent->m_activeVpsId = m_pcCfg->getVPS()->getVPSId(); 
+  seiLayersNotPresent->m_vpsMaxLayers = m_pcCfg->getVPS()->getMaxLayers();
+  for ( ; i < seiLayersNotPresent->m_vpsMaxLayers; i++)
   {
-    seiLayersPresent->m_layerPresentFlag[i] = true; 
+    seiLayersNotPresent->m_layerNotPresentFlag[i] = true; 
   }
   for ( ; i < MAX_LAYERS; i++)
   {
-    seiLayersPresent->m_layerPresentFlag[i] = false; 
+    seiLayersNotPresent->m_layerNotPresentFlag[i] = false; 
   }
-  return seiLayersPresent;
+  return seiLayersNotPresent;
 }
 #endif
 
@@ -362,10 +362,10 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     m_activeParameterSetSEIPresentInAU = true;
   }
 
-#if M0043_LAYERS_PRESENT_SEI
-  if(m_pcCfg->getLayersPresentSEIEnabled())
+#if LAYERS_NOT_PRESENT_SEI
+  if(m_pcCfg->getLayersNotPresentSEIEnabled())
   {
-    SEILayersPresent *sei = xCreateSEILayersPresent ();
+    SEILayersNotPresent *sei = xCreateSEILayersNotPresent ();
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
     writeRBSPTrailingBits(nalu.m_Bitstream);

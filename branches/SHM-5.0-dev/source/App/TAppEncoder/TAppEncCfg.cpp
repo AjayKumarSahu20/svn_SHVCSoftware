@@ -920,8 +920,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEITemporalLevel0Index",         m_temporalLevel0IndexSEIEnabled,          0, "Control generation of temporal level 0 index SEI messages")
   ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
   ("SEIDecodingUnitInfo",             m_decodingUnitInfoSEIEnabled,                       0, "Control generation of decoding unit information SEI message.")
-#if M0043_LAYERS_PRESENT_SEI
-  ("SEILayersPresent",               m_layersPresentSEIEnabled,                0, "Control generation of layers present SEI message")
+#if LAYERS_NOT_PRESENT_SEI
+  ("SEILayersNotPresent",            m_layersNotPresentSEIEnabled,             0, "Control generation of layers not present SEI message")
 #endif
   ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,              0, "Control generation of SOP description SEI messages")
   ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
