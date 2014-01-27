@@ -641,26 +641,6 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
       WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
     }
   }
-#if M0463_VUI_EXT_ILP_REF
-  ////   sps_extension_vui_parameters( )
-  if( pcSPS->getVuiParameters()->getBitstreamRestrictionFlag() )
-  {  
-    WRITE_UVLC( pcSPS->getNumIlpRestrictedRefLayers( ),           "num_ilp_restricted_ref_layers" ); 
-    for( Int i = 0; i < pcSPS->getNumIlpRestrictedRefLayers( ); i++ ) 
-    {  
-      WRITE_UVLC( pcSPS->getMinSpatialSegmentOffsetPlus1( i ),    "min_spatial_segment_offset_plus1" ); 
-      if( pcSPS->getMinSpatialSegmentOffsetPlus1( i ) > 0 ) 
-      {  
-        WRITE_FLAG( pcSPS->getCtuBasedOffsetEnabledFlag( i ),      "ctu_based_offset_enabled_flag[ i ]"); 
-        if( pcSPS->getCtuBasedOffsetEnabledFlag( i ) )  
-        {
-          WRITE_UVLC( pcSPS->getMinHorizontalCtuOffsetPlus1( i ), "min_horizontal_ctu_offset_plus1[ i ]"); 
-        }
-      }  
-    }  
-  }  
-  ////   sps_extension_vui_parameters( ) END
-#endif
 }
 #endif
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
