@@ -482,8 +482,10 @@ private:
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
+#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if VPS_EXTN_OFFSET
   UInt        m_extensionOffset;
+#endif
 #endif
 #if VPS_RENAME
   UInt        m_maxLayerId;
@@ -979,9 +981,11 @@ Void      deriveNumberOfSubDpbs();
   Int     getNumViews();
   Int     scalTypeToScalIdx( ScalabilityType scalType );
 #endif
+#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if VPS_EXTN_OFFSET
   Int     getExtensionOffset()                 { return m_extensionOffset;   }
   Void    setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
+#endif
 #endif
 #if O0215_PHASE_ALIGNMENT
   Bool   getPhaseAlignFlag()                             { return m_phaseAlignFlag; }
