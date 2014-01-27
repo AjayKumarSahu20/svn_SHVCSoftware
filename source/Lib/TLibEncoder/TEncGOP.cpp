@@ -690,9 +690,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setActiveNumILRRefIdx(0);
       pcSlice->setInterLayerPredEnabledFlag(false);
       pcSlice->setMFMEnabledFlag(false);
-#if !REMOVE_COL_PICTURE_SIGNALING
-      pcSlice->setAltColIndicationFlag(false);
-#endif
     }
 #endif
 
@@ -1215,11 +1212,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
 #if REF_IDX_MFM
-#if REMOVE_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
-#else
-      if( pcSlice->getMFMEnabledFlag() && !(pcSlice->getActiveNumILRRefIdx() > 0 && m_pcEncTop->getNumMotionPredRefLayers() > 0) )
-#endif
       {
         Bool found         = false;
         UInt ColFromL0Flag = pcSlice->getColFromL0Flag();
