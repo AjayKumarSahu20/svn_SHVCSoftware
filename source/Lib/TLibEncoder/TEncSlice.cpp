@@ -522,7 +522,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if SVC_EXTENSION
   if( layerId > 0 )
   {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
       rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
@@ -532,9 +531,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
-#else
-    rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( layerId ) );
-#endif
     rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
   }
 

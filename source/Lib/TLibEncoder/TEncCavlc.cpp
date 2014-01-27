@@ -1020,9 +1020,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
-      WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
-#endif
+  WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   for(i = 1; i< vps->getMaxLayers(); i++)
   {
@@ -1603,7 +1601,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #endif
     }
 
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
+#if SVC_EXTENSION
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
     if((pcSlice->getSPS()->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
@@ -1642,7 +1640,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         }
       }
     }     
-#endif 
+#endif //SVC_EXTENSION
 
     if(pcSlice->getSPS()->getUseSAO())
     {

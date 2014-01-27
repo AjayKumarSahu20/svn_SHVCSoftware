@@ -1341,10 +1341,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 #endif
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   for(i = 1; i< vps->getMaxLayers(); i++)
   {
@@ -2053,7 +2051,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     }
 
 #if SVC_EXTENSION
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     rpcSlice->setActiveNumILRRefIdx(0);
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
@@ -2153,12 +2150,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         rpcSlice->setInterLayerPredLayerIdc(i,i);
       }
 #endif 
-    }
-#endif
-#else
-    if( rpcSlice->getLayerId() > 0 )
-    {
-      rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( rpcSlice->getLayerId() ) );
     }
 #endif
 #endif

@@ -116,13 +116,9 @@ TComSlice::TComSlice()
 
 #if SVC_EXTENSION
   memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0; 
   m_interLayerPredEnabledFlag = 0;
   ::memset( m_interLayerPredLayerIdc, 0, sizeof(m_interLayerPredLayerIdc) );
-#else
-  m_numILRRefIdx = 0;
-#endif 
 #endif //SVC_EXTENSION
 
   initEqualRef();
@@ -166,12 +162,8 @@ Void TComSlice::initSlice()
 {
 #if SVC_EXTENSION
   m_layerId = layerId;
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx        = 0;
   m_interLayerPredEnabledFlag = 0;
-#else
-  m_numILRRefIdx              = 0;
-#endif
 #endif
   m_aiNumRefIdx[0]      = 0;
   m_aiNumRefIdx[1]      = 0;
@@ -484,7 +476,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         numInterLayerRPSPics++;
       }
     }
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     if (numInterLayerRPSPics < m_activeNumILRRefIdx)
     {
       m_activeNumILRRefIdx = numInterLayerRPSPics;
@@ -563,19 +554,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       assert( numMotionResamplers <= 1  && "Up to 1 motion resampling is allowed" );
 #endif
     }
-#endif 
-#else
-    if (numInterLayerRPSPics < m_numILRRefIdx)
-    {
-      m_numILRRefIdx = numInterLayerRPSPics;
-    }
 #endif
   }
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_activeNumILRRefIdx;
-#else
-  Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_numILRRefIdx;
-#endif 
 #else //SVC_EXTENSION
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr;
 #endif //SVC_EXTENSION
@@ -619,11 +600,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 #if RPL_INIT_N0316_N0082
     if( m_layerId > 0 )
     {      
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
-#else
-      for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
-#endif 
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if O0225_MAX_TID_FOR_REF_LAYERS
@@ -651,11 +628,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 #if SVC_EXTENSION
     if( m_layerId > 0 )
     {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
-#else
-      for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
-#endif 
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if O0225_MAX_TID_FOR_REF_LAYERS
@@ -692,11 +665,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 #if SVC_EXTENSION
     if( m_layerId > 0 )
     {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
-#else
-      for( i = 0; i < m_numILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)
-#endif 
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
 #if O0225_MAX_TID_FOR_REF_LAYERS
@@ -798,11 +767,7 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
-#else
-      for(Int i = m_numILRRefIdx; i > 0; i-- )
-#endif 
       {
 #if RPL_INIT_N0316_N0082
         if((numberOfPocBeforeCurr) >= m_aiNumRefIdx[REF_PIC_LIST_0])
@@ -847,11 +812,7 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
       for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
-#else
-      for(Int i = m_numILRRefIdx; i > 0; i-- )
-#endif 
       {
         refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
       }
@@ -893,11 +854,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #endif 
   {
 #if SVC_EXTENSION
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     return m_activeNumILRRefIdx;
-#else
-    return getNumILRRefIdx();
-#endif 
 #else
     return 0;
 #endif
@@ -912,11 +869,7 @@ Int TComSlice::getNumRpsCurrTempList()
 #if SVC_EXTENSION
   if( m_layerId > 0 )
   {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     numRpsCurrTempList += m_activeNumILRRefIdx;
-#else
-    numRpsCurrTempList += getNumILRRefIdx();
-#endif
 }
 #endif
 
@@ -1145,11 +1098,9 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 #if SVC_EXTENSION
   m_pcVPS                = pSrc->m_pcVPS;
   m_layerId              = pSrc->m_layerId;
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
-#endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;
   m_pcPPS                = pSrc->m_pcPPS;
@@ -2075,9 +2026,7 @@ TComVPS::TComVPS()
   ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
 #endif
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
   m_maxOneActiveRefLayerFlag = true;
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
 #endif
