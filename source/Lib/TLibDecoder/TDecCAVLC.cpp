@@ -1602,6 +1602,48 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
   }
 #endif
+#if VPS_VUI_VIDEO_SIGNAL_MOVE
+  READ_FLAG( uiCode, "video_signal_info_idx_present_flag" ); vps->setVideoSigPresentVpsFlag( uiCode == 1 );
+  if (vps->getVideoSigPresentVpsFlag())
+  {
+    READ_CODE(4, uiCode, "vps_num_video_signal_info_minus1" ); vps->setNumVideoSignalInfo(uiCode + 1);
+  }
+  else
+  {
+    vps->setNumVideoSignalInfo(vps->getMaxLayers());
+  }
+
+
+  for(i = 0; i < vps->getNumVideoSignalInfo(); i++)
+  {
+    READ_CODE(3, uiCode, "video_vps_format" ); vps->setVideoVPSFormat(i,uiCode);
+    READ_FLAG(uiCode, "video_full_range_vps_flag" ); vps->setVideoFullRangeVpsFlag(i,uiCode);
+    READ_CODE(8, uiCode, "color_primaries_vps" ); vps->setColorPrimaries(i,uiCode);
+    READ_CODE(8, uiCode, "transfer_characteristics_vps" ); vps->setTransCharacter(i,uiCode);
+    READ_CODE(8, uiCode, "matrix_coeffs_vps" );vps->setMaxtrixCoeff(i,uiCode);
+  }
+  if(!vps->getVideoSigPresentVpsFlag())
+  {
+    for (i=0; i < vps->getMaxLayers(); i++)
+    {
+      vps->setVideoSignalInfoIdx(i,i);
+    }
+  }
+  else {
+    vps->setVideoSignalInfoIdx(0,0);
+    if (vps->getNumVideoSignalInfo() > 1 )
+    {
+      for (i=1; i < vps->getMaxLayers(); i++)
+        READ_CODE(4, uiCode, "vps_video_signal_info_idx" ); vps->setVideoSignalInfoIdx(i, uiCode);
+    }
+    else {
+      for (i=1; i < vps->getMaxLayers(); i++)
+      {
+        vps->setVideoSignalInfoIdx(i,0);
+      }
+    }
+  }
+#endif 
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   UInt layerIdx;
   READ_FLAG( uiCode, "tiles_not_in_use_flag" ); vps->setTilesNotInUseFlag(uiCode == 1);
@@ -1681,6 +1723,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif
 #if VPS_VUI_VIDEO_SIGNAL
+#if VPS_VUI_VIDEO_SIGNAL_MOVE
+#else
     READ_FLAG( uiCode, "video_signal_info_idx_present_flag" ); vps->setVideoSigPresentVpsFlag( uiCode == 1 );
     if (vps->getVideoSigPresentVpsFlag())
     {
@@ -1721,6 +1765,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
           }
         }
     }
+#endif 
 #endif
 }
 #endif

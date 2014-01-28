@@ -1246,6 +1246,28 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
   }
 #endif
+#if VPS_VUI_VIDEO_SIGNAL_MOVE
+  WRITE_FLAG( vps->getVideoSigPresentVpsFlag(), "video_signal_info_idx_present_flag" );
+  if (vps->getVideoSigPresentVpsFlag())
+  {
+    WRITE_CODE(vps->getNumVideoSignalInfo()-1, 4, "vps_num_video_signal_info_minus1" );
+  }
+
+  for(i = 0; i < vps->getNumVideoSignalInfo(); i++)
+  {
+    WRITE_CODE(vps->getVideoVPSFormat(i), 3, "video_vps_format" );
+    WRITE_FLAG(vps->getVideoFullRangeVpsFlag(i), "video_full_range_vps_flag" );
+    WRITE_CODE(vps->getColorPrimaries(i), 8, "color_primaries_vps" );
+    WRITE_CODE(vps->getTransCharacter(i), 8, "transfer_characteristics_vps" );
+    WRITE_CODE(vps->getMaxtrixCoeff(i), 8, "matrix_coeffs_vps" );
+  }
+
+  if (vps->getVideoSigPresentVpsFlag() && vps->getNumVideoSignalInfo() > 1 )
+  {
+    for (i=1; i < vps->getMaxLayers(); i++)
+      WRITE_CODE(vps->getVideoSignalInfoIdx(i), 4, "vps_video_signal_info_idx" );
+  }
+#endif 
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   UInt layerIdx;
   WRITE_FLAG( vps->getTilesNotInUseFlag() ? 1 : 0 , "tiles_not_in_use_flag" );
@@ -1322,6 +1344,8 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 #endif 
 #if VPS_VUI_VIDEO_SIGNAL
+#if VPS_VUI_VIDEO_SIGNAL_MOVE
+#else 
     WRITE_FLAG( vps->getVideoSigPresentVpsFlag(), "video_signal_info_idx_present_flag" );
     if (vps->getVideoSigPresentVpsFlag())
     {
@@ -1342,6 +1366,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         for (i=1; i < vps->getMaxLayers(); i++)
             WRITE_CODE(vps->getVideoSignalInfoIdx(i), 4, "vps_video_signal_info_idx" );
     }
+#endif 
 #endif
 }
 #endif
