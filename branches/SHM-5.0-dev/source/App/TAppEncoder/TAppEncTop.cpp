@@ -177,18 +177,6 @@ Void TAppEncTop::xInitLibCfg()
   delete [] mapIdxToLayer;
 #endif
 
-#if O0194_WEIGHTED_PREDICTION_CGS
-  Bool bitDepthScalabilityFlag = false;
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    if( m_acLayerCfg[0].m_internalBitDepthY != m_acLayerCfg[layer].m_internalBitDepthY )
-    {
-      bitDepthScalabilityFlag = true;
-      break;
-    }
-  }
-#endif
-
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -204,7 +192,7 @@ Void TAppEncTop::xInitLibCfg()
     g_bitDepthCLayer[layer] = g_bitDepthC;
 
 #if O0194_WEIGHTED_PREDICTION_CGS
-    m_acTEncTop[layer].setBitDepthScalabilityFlag( bitDepthScalabilityFlag );
+    m_acTEncTop[layer].setInterLayerWeightedPredFlag( m_useInterLayerWeightedPred );
 #endif
 #endif
     //m_acTEncTop[layer].setVPS(&vps);

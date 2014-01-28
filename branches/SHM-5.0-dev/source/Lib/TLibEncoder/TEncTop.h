@@ -151,7 +151,7 @@ private:
   Bool                    m_noOutputOfPriorPicsFlags;
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
-  Bool                    m_bitDepthScalabilityFlag;
+  Bool                    m_interLayerWeightedPredFlag;
 #endif
 #endif //SVC_EXTENSION
 protected:
@@ -237,8 +237,8 @@ public:
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
-  Void      setBitDepthScalabilityFlag(Bool flag)   { m_bitDepthScalabilityFlag = flag; }
-  Bool      getBitDepthScalabilityFlag()            { return m_bitDepthScalabilityFlag; }
+  Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
+  Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
