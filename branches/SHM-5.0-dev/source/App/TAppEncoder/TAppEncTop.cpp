@@ -399,7 +399,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseWP                   ( m_useWeightedPred      );
     m_acTEncTop[layer].setWPBiPred                ( m_useWeightedBiPred   );
 #if O0194_WEIGHTED_PREDICTION_CGS
-    if (layer!=0)
+    if( layer != 0 && m_useInterLayerWeightedPred )
     {
       // Enable weighted prediction for enhancement layer
       m_acTEncTop[layer].setUseWP                 ( true   );
