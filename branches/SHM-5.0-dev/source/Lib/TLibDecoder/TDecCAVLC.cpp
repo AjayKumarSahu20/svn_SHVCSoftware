@@ -2130,7 +2130,23 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
           }
           else
           {
+#if P0079_DERIVE_NUMACTIVE_REF_PICS
+            Int   numRefLayerPics = 0;
+            Int   i = 0;
+            Int   refLayerPicIdc  [MAX_VPS_LAYER_ID_PLUS1];
+            for(i = 0, numRefLayerPics = 0;  i < rpcSlice->getNumILRRefIdx(); i++ ) 
+            {
+              if(rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer() &&
+                (rpcSlice->getVPS()->getMaxTSLayersMinus1(rpcSlice->getVPS()->getLayerIdInVps(i)) >=  rpcSlice->getTLayer()) )
+              {          
+                refLayerPicIdc[ numRefLayerPics++ ] = i;
+              }
+            }
+            if (numRefLayerPics)
+              rpcSlice->setActiveNumILRRefIdx(1);
+#else
             rpcSlice->setActiveNumILRRefIdx(1);
+#endif 
           }
 #if ILP_NUM_REF_CHK
           if( rpcSlice->getActiveNumILRRefIdx() == rpcSlice->getNumILRRefIdx() )
