@@ -150,6 +150,9 @@ private:
   Bool                    m_firstPicInLayerDecodedFlag;
   Bool                    m_noOutputOfPriorPicsFlags;
 #endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Bool                    m_bitDepthScalabilityFlag;
+#endif
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -232,6 +235,10 @@ public:
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Void      setBitDepthScalabilityFlag(Bool flag)   { m_bitDepthScalabilityFlag = flag; }
+  Bool      getBitDepthScalabilityFlag()            { return m_bitDepthScalabilityFlag; }
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
