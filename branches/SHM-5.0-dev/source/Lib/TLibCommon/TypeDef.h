@@ -123,6 +123,9 @@
 #define HIGHER_LAYER_IRAP_SKIP_FLAG      1      ///< JCTVC-O0199: Indication that higher layer IRAP picture uses skip blocks only
 #endif
 #define VPS_VUI_VIDEO_SIGNAL             1      ///< JCTVC-O0118 video signal information
+#if VPS_VUI_VIDEO_SIGNAL
+#define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
+#endif 
 #endif //VPS_VUI
 
 #endif
