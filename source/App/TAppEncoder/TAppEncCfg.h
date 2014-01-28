@@ -380,16 +380,19 @@ protected:
   UInt      m_ilcIdc[1024];
 #endif
 #if O0215_PHASE_ALIGNMENT
-  Bool m_phaseAlignFlag;
+  Bool      m_phaseAlignFlag;
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
-  Bool m_crossLayerPictureTypeAlignFlag;
+  Bool      m_crossLayerPictureTypeAlignFlag;
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-  Bool m_crossLayerIrapAlignFlag;
+  Bool      m_crossLayerIrapAlignFlag;
 #endif
 #if O0149_CROSS_LAYER_BLA_FLAG
-  bool      m_crossLayerBLAFlag;
+  Bool      m_crossLayerBLAFlag;
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Bool      m_useInterLayerWeightedPred;
 #endif
 public:
   TAppEncCfg();

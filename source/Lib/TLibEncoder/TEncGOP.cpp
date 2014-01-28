@@ -1557,7 +1557,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
 #if O0194_WEIGHTED_PREDICTION_CGS
       // Calculate for the base layer to be used in EL as Inter layer reference
-      if( m_pcEncTop->getBitDepthScalabilityFlag() )
+      if( m_pcEncTop->getInterLayerWeightedPredFlag() )
       {
         m_pcSliceEncoder->estimateILWpParam( pcSlice );
       }

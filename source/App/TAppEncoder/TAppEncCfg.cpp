@@ -586,7 +586,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-    ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+  ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  ("InterLayerWeightedPred", m_useInterLayerWeightedPred, false, "enable IL WP parameters estimation at encoder" )  
 #endif
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
@@ -2346,6 +2349,9 @@ Void TAppEncCfg::xPrintParameter()
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
 #endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  printf("InterLayerWeightedPred        : %d\n", m_useInterLayerWeightedPred );
+#endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
@@ -2491,7 +2497,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
   printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
-  printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
