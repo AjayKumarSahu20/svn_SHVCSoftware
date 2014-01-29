@@ -1217,6 +1217,9 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
+#if CHANGE_NUMSUBDPB_IDX
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+#endif
     WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");  
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
     {
@@ -1226,7 +1229,11 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       }
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
+#if CHANGE_NUMSUBDPB_IDX
+        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#else
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+#endif
         {
           WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j), "max_vps_dec_pic_buffering_minus1[i][k][j]" ); 
         }

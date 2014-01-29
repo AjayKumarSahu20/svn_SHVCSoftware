@@ -1589,6 +1589,9 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
   vps->deriveNumberOfSubDpbs();
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
+#if CHANGE_NUMSUBDPB_IDX
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+#endif
     READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
     {
@@ -1609,7 +1612,11 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
       }
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is present
       {
+#if CHANGE_NUMSUBDPB_IDX
+        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#else
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+#endif
         {
           READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
         }
