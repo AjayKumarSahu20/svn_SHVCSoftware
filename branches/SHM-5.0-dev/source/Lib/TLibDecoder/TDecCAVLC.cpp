@@ -1159,8 +1159,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
+#if !VPS_EXTN_UEV_CODING
   READ_CODE( 10, uiCode, "vps_number_layer_sets_minus1" );     assert( uiCode == (vps->getNumLayerSets() - 1) );
   READ_CODE(  6, uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
+#else
+  READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
+#endif
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
   {
@@ -1185,6 +1189,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
+#if !VPS_EXTN_UEV_CODING
   READ_FLAG( uiCode, "more_output_layer_sets_than_default_flag" ); vps->setMoreOutputLayerSetsThanDefaultFlag( uiCode ? true : false );
   Int numOutputLayerSets = 0;
   if(! vps->getMoreOutputLayerSetsThanDefaultFlag() )
@@ -1196,6 +1201,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( 10, uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
     numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
   }
+#else
+  READ_UVLC( uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
+  Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
+#endif
   if( numOutputLayerSets > 1 )
   {
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
@@ -1293,7 +1302,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if( vps->getRepFormatIdxPresentFlag() )
   {
 #if O0096_REP_FORMAT_INDEX
+#if !VPS_EXTN_UEV_CODING
     READ_CODE( 8, uiCode, "vps_num_rep_formats_minus1" );
+#else
+    READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
+#endif
 #else
     READ_CODE( 4, uiCode, "vps_num_rep_formats_minus1" );
 #endif
@@ -1320,7 +1333,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       if( vps->getVpsNumRepFormats() > 1 )
       {
 #if O0096_REP_FORMAT_INDEX
+#if !VPS_EXTN_UEV_CODING
         READ_CODE( 8, uiCode, "vps_rep_format_idx[i]" );
+#else
+        Int numBits = 1;
+        while ((1 << numBits) < (vps->getVpsNumRepFormats()))
+        {
+          numBits++;
+        }
+        READ_CODE( numBits, uiCode, "vps_rep_format_idx[i]" );
+#endif
 #else
         READ_CODE( 4, uiCode, "vps_rep_format_idx[i]" );
 #endif

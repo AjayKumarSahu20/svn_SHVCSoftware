@@ -931,8 +931,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
+#if !VPS_EXTN_UEV_CODING
   WRITE_CODE( vps->getNumLayerSets() - 1   , 10, "vps_number_layer_sets_minus1" );     
   WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
+#else
+  WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
+#endif
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
   {
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
@@ -946,12 +950,18 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
+#if !VPS_EXTN_UEV_CODING
   Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
   WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 
   if(numOutputLayerSets > vps->getNumLayerSets())
   {
     WRITE_CODE( numOutputLayerSets - vps->getNumLayerSets(), 10, "num_add_output_layer_sets" );
   }
+#else
+  Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
+  assert( numOutputLayerSets - vps->getNumLayerSets() >= 0 );
+  WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
+#endif
   if( numOutputLayerSets > 1 )
   {
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
@@ -998,7 +1008,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   if( vps->getRepFormatIdxPresentFlag() )
   {
 #if O0096_REP_FORMAT_INDEX
+#if !VPS_EXTN_UEV_CODING
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 8, "vps_num_rep_formats_minus1" );
+#else
+    WRITE_UVLC( vps->getVpsNumRepFormats() - 1, "vps_num_rep_formats_minus1" );
+#endif
 #else
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
 #endif
@@ -1016,7 +1030,16 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       if( vps->getVpsNumRepFormats() > 1 )
       {
 #if O0096_REP_FORMAT_INDEX
+#if !VPS_EXTN_UEV_CODING
         WRITE_CODE( vps->getVpsRepFormatIdx(i), 8, "vps_rep_format_idx[i]" );
+#else
+        Int numBits = 1;
+        while ((1 << numBits) < (vps->getVpsNumRepFormats()))
+        {
+          numBits++;
+        }
+        WRITE_CODE( vps->getVpsRepFormatIdx(i), numBits, "vps_rep_format_idx[i]" );
+#endif
 #else
         WRITE_CODE( vps->getVpsRepFormatIdx(i), 4, "vps_rep_format_idx[i]" );
 #endif
