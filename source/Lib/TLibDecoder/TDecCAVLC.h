@@ -82,6 +82,9 @@ public:
 #if REPN_FORMAT_IN_VPS
   Void  parseRepFormat      ( RepFormat *repFormat );
 #endif
+#if VPS_DPB_SIZE_TABLE
+  Void  parseVpsDpbSizeTable( TComVPS *vps );
+#endif
   Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager );
   Void  parseSPSExtension    ( TComSPS* pcSPS );
 #else //SVC_EXTENSION

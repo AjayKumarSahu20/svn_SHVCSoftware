@@ -1074,26 +1074,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if VPS_DPB_SIZE_TABLE
-  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
-  {
-    WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");  
-    for(j = 0; j < vps->getMaxTLayers(); j++)
-    {
-      if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
-      {
-        WRITE_FLAG( vps->getSubLayerDpbInfoPresentFlag( i, j), "sub_layer_dpb_info_present_flag[i]");  
-      }
-      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
-      {
-        for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
-        {
-          WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j), "max_vps_dec_pic_buffering_minus1[i][k][j]" ); 
-        }
-        WRITE_UVLC( vps->getMaxVpsNumReorderPics( i, j), "max_vps_num_reorder_pics[i][j]" );              
-        WRITE_UVLC( vps->getMaxVpsLatencyIncreasePlus1( i, j), "max_vps_latency_increase_plus1[i][j]" );        
-      }
-    }
-  }
+  codeVpsDpbSizeTable(vps);
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
@@ -1229,6 +1210,31 @@ Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
   WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );
 #endif 
 
+}
+#endif
+#if VPS_DPB_SIZE_TABLE
+Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
+{
+  for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+  {
+    WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");  
+    for(Int j = 0; j < vps->getMaxTLayers(); j++)
+    {
+      if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
+      {
+        WRITE_FLAG( vps->getSubLayerDpbInfoPresentFlag( i, j), "sub_layer_dpb_info_present_flag[i]");  
+      }
+      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
+      {
+        for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+        {
+          WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j), "max_vps_dec_pic_buffering_minus1[i][k][j]" ); 
+        }
+        WRITE_UVLC( vps->getMaxVpsNumReorderPics( i, j), "max_vps_num_reorder_pics[i][j]" );              
+        WRITE_UVLC( vps->getMaxVpsLatencyIncreasePlus1( i, j), "max_vps_latency_increase_plus1[i][j]" );        
+      }
+    }
+  }
 }
 #endif
 #if VPS_VUI
