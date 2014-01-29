@@ -1446,39 +1446,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 
 #if VPS_DPB_SIZE_TABLE
-  vps->deriveNumberOfSubDpbs();
-  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
-  {
-    READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
-    for(j = 0; j < vps->getMaxTLayers(); j++)
-    {
-      if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
-      {
-        READ_FLAG( uiCode, "sub_layer_dpb_info_present_flag[i]");  vps->setSubLayerDpbInfoPresentFlag( i, j, uiCode ? true : false);
-      }
-      else
-      {
-        if( j == 0 )  // Always signal for the first sub-layer
-        {
-          vps->setSubLayerDpbInfoPresentFlag( i, j, true );
-        }
-        else // if (j != 0) && !vps->getSubLayerFlagInfoPresentFlag(i)
-        {
-          vps->setSubLayerDpbInfoPresentFlag( i, j, false );
-        }
-      }
-      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is present
-      {
-        for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
-        {
-          READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
-        }
-        READ_UVLC( uiCode, "max_vps_num_reorder_pics[i][j]" );              vps->setMaxVpsNumReorderPics( i, j, uiCode);
-        READ_UVLC( uiCode, "max_vps_latency_increase_plus1[i][j]" );        vps->setMaxVpsLatencyIncreasePlus1( i, j, uiCode);
-      }
-    }
-  }
+  parseVpsDpbSizeTable(vps);
 #endif
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
 #if O0096_DEFAULT_DEPENDENCY_TYPE
@@ -1610,6 +1580,44 @@ Void  TDecCavlc::parseRepFormat      ( RepFormat *repFormat )
   READ_CODE( 4, uiCode, "bit_depth_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
   READ_CODE( 4, uiCode, "bit_depth_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
 #endif 
+}
+#endif
+#if VPS_DPB_SIZE_TABLE
+Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
+{
+  UInt uiCode;
+  vps->deriveNumberOfSubDpbs();
+  for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+  {
+    READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
+    for(Int j = 0; j < vps->getMaxTLayers(); j++)
+    {
+      if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
+      {
+        READ_FLAG( uiCode, "sub_layer_dpb_info_present_flag[i]");  vps->setSubLayerDpbInfoPresentFlag( i, j, uiCode ? true : false);
+      }
+      else
+      {
+        if( j == 0 )  // Always signal for the first sub-layer
+        {
+          vps->setSubLayerDpbInfoPresentFlag( i, j, true );
+        }
+        else // if (j != 0) && !vps->getSubLayerFlagInfoPresentFlag(i)
+        {
+          vps->setSubLayerDpbInfoPresentFlag( i, j, false );
+        }
+      }
+      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is present
+      {
+        for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+        {
+          READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
+        }
+        READ_UVLC( uiCode, "max_vps_num_reorder_pics[i][j]" );              vps->setMaxVpsNumReorderPics( i, j, uiCode);
+        READ_UVLC( uiCode, "max_vps_latency_increase_plus1[i][j]" );        vps->setMaxVpsLatencyIncreasePlus1( i, j, uiCode);
+      }
+    }
+  }
 }
 #endif
 #if VPS_VUI

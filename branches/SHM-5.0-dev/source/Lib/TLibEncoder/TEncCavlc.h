@@ -97,6 +97,9 @@ public:
 #if REPN_FORMAT_IN_VPS
   Void  codeRepFormat           ( RepFormat *repFormat );
 #endif
+#if VPS_DPB_SIZE_TABLE
+  Void  codeVpsDpbSizeTable      (TComVPS *vps);
+#endif
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
 #if SPS_EXTENSION
