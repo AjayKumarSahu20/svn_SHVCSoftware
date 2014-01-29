@@ -1962,7 +1962,9 @@ TComVPS::TComVPS()
 , m_numOutputLayerSets        (0)  
 #endif
 , m_numProfileTierLevel       (0)
+#if !VPS_EXTN_UEV_CODING
 , m_moreOutputLayerSetsThanDefaultFlag (false)
+#endif
 , m_numAddOutputLayerSets     (0)
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
 , m_defaultOneTargetOutputLayerIdc     (0)
