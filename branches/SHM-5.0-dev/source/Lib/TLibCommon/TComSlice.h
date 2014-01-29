@@ -543,10 +543,14 @@ private:
   Bool       m_moreOutputLayerSetsThanDefaultFlag;
 #endif
   Int        m_numAddOutputLayerSets;
+#if P0295_DEFAULT_OUT_LAYER_IDC
+  UInt       m_defaultTargetOutputLayerIdc;
+#else
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
   UInt       m_defaultOneTargetOutputLayerIdc;
 #else
   Bool       m_defaultOneTargetOutputLayerFlag;
+#endif
 #endif
   Int        m_profileLevelTierIdx[64];     
   Bool       m_maxOneActiveRefLayerFlag;
@@ -833,12 +837,17 @@ Void      deriveNumberOfSubDpbs();
   Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
   Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
 
+#if P0295_DEFAULT_OUT_LAYER_IDC
+  UInt   getDefaultTargetOutputLayerIdc()                 { return m_defaultTargetOutputLayerIdc;}
+  Void   setDefaultTargetOutputLayerIdc(UInt x)           { m_defaultTargetOutputLayerIdc = x    ;}
+#else
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
   UInt   getDefaultOneTargetOutputLayerIdc()                 { return m_defaultOneTargetOutputLayerIdc;}
   Void   setDefaultOneTargetOutputLayerIdc(UInt x)           { m_defaultOneTargetOutputLayerIdc= x    ;}
 #else
   Bool   getDefaultOneTargetOutputLayerFlag()                 { return m_defaultOneTargetOutputLayerFlag;}
   Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
+#endif
 #endif
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }

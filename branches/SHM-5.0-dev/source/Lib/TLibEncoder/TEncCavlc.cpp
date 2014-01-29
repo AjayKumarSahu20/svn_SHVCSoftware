@@ -964,10 +964,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
   if( numOutputLayerSets > 1 )
   {
+#if P0295_DEFAULT_OUT_LAYER_IDC
+    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_target_output_layer_idc" );   
+#else
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
     WRITE_CODE( vps->getDefaultOneTargetOutputLayerIdc(), 2, "default_one_target_output_layer_idc" );   
 #else
     WRITE_FLAG( vps->getDefaultOneTargetOutputLayerFlag(), "default_one_target_output_layer_flag" );   
+#endif
 #endif
   }
 
@@ -980,7 +984,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       {
         numBits++;
       }
-      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1");  
+      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1"); 
+#if P0295_DEFAULT_OUT_LAYER_IDC
+    }
+    if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
+    {
+#endif
       Int lsIdx = vps->getOutputLayerSetIdx(i);
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
       {
