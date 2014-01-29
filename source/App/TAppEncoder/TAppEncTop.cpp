@@ -1180,6 +1180,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
+#if CHANGE_NUMSUBDPB_IDX
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+#endif
     Int layerSetId = vps->getOutputLayerSetIdx(i);
 
     // For each output layer set, set the DPB size for each layer and the reorder/latency value the maximum for all layers
@@ -1190,7 +1193,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
 
       Int maxNumReorderPics = -1;
+#if CHANGE_NUMSUBDPB_IDX
+      for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#else
       for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+#endif
       {
         Int layerId = vps->getLayerSetLayerIdList(layerSetId, k); // k-th layer in the output layer set
         vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
@@ -1207,7 +1214,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
                                       // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
         checkFlagInner[j] |= ( maxNumReorderPics != vps->getMaxVpsNumReorderPics(i, j - 1) );
+#if CHANGE_NUMSUBDPB_IDX
+        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+#else
         for(Int k = 0; k < vps->getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+#endif
         {
           checkFlagInner[j] |= ( vps->getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != vps->getMaxVpsDecPicBufferingMinus1(i, k, j) );
         }

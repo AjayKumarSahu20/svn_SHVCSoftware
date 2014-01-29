@@ -2185,6 +2185,15 @@ Void TComVPS::deriveLayerIdListVariables()
 Void TComVPS::deriveNumberOfSubDpbs()
 {
   // Derive number of sub-DPBs
+#if CHANGE_NUMSUBDPB_IDX
+  // For layer set 0
+  setNumSubDpbs(0, 1);
+  // For other layer sets
+  for( Int i = 1; i < getNumLayerSets(); i++)
+  {
+    setNumSubDpbs( i, getNumLayersInIdList( i ) );
+  }
+#else
   // For output layer set 0
   setNumSubDpbs(0, 1);
   // For other output layer sets
@@ -2192,6 +2201,7 @@ Void TComVPS::deriveNumberOfSubDpbs()
   {
     setNumSubDpbs( i, getNumLayersInIdList( getOutputLayerSetIdx(i)) );
   }
+#endif
 }
 #endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
