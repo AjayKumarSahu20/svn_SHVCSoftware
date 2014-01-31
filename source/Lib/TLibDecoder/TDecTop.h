@@ -259,7 +259,7 @@ public:
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
   Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
-  Void      checkValueOfOutputLayerSetIdx(TComVPS *vps);
+  Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
 #endif
 #if SCALINGLIST_INFERRING
   ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }

@@ -180,7 +180,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
     {
 #if USE_DPB_SIZE_TABLE
-      if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+      if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
       {
         assert( this->getLayerId() == 0 );
         numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
@@ -189,7 +189,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
         TComVPS *vps = slice->getVPS();
         // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
       }
 #else
       numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
@@ -284,7 +284,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
   {
 #if USE_DPB_SIZE_TABLE
-    if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+    if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
     {
       assert( this->getLayerId() == 0 );
       numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
@@ -293,7 +293,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     {
       TComVPS *vps = pcSlice->getVPS();
       // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
     }
 #else
     numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
@@ -301,7 +301,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
 
 #if USE_DPB_SIZE_TABLE
-  if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+  if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
   {
     assert( this->getLayerId() == 0 );
     m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
@@ -309,11 +309,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   else
   {
 #if RESOLUTION_BASED_DPB
-    Int layerSetIdxForOutputLayerSet = pcSlice->getVPS()->getOutputLayerSetIdx( getCommonDecoderParams()->getOutputLayerSetIdx() );
+    Int layerSetIdxForOutputLayerSet = pcSlice->getVPS()->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
     Int layerIdx = pcSlice->getVPS()->findLayerIdxInLayerSet( layerSetIdxForOutputLayerSet, pcSlice->getLayerId() );  assert( layerIdx != -1 );
-    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #else
-    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
   }
 #else
@@ -823,7 +823,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
-  checkValueOfOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+  checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
 #endif
 #if RESOLUTION_BASED_DPB
   // Following assignment should go wherever a new VPS is activated
@@ -2021,7 +2021,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
 #endif
 
 #if OUTPUT_LAYER_SET_INDEX
-Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
+Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
 
@@ -2031,7 +2031,7 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
   {
     return; // Already checked
   }
-  if( params->getOutputLayerSetIdx() == -1 )  // Output layer set index not specified
+  if( params->getTargetOutputLayerSetIdx() == -1 )  // Output layer set index not specified
   {
     Bool layerSetMatchFound = false;
     // Output layer set index not assigned.
@@ -2078,7 +2078,7 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
         {
           // Match found
           layerSetMatchFound = true;
-          params->setOutputLayerSetIdx( i );
+          params->setTargetOutputLayerSetIdx( i );
           params->setValueCheckedFlag( true );
           break;
         }
@@ -2089,7 +2089,8 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
-    Int layerSetIdx = vps->getOutputLayerSetIdx( params->getOutputLayerSetIdx() );  // Index to the layer set
+    assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
+    Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
 
     Bool layerSetMatchFlag = true;
@@ -2125,7 +2126,7 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
 {
   if( m_subDpbIdx == -1 ) // Sub-DPB index is not already assigned
   {
-    Int lsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getOutputLayerSetIdx() );
+    Int lsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
 
     Int layerIdx = vps->findLayerIdxInLayerSet( lsIdx, getLayerId() );
     assert( layerIdx != -1 ); // Current layer should be found in the layer set.
