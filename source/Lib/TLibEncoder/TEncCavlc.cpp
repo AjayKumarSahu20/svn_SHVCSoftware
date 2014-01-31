@@ -959,7 +959,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #else
   Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
-  assert( numOutputLayerSets - vps->getNumLayerSets() >= 0 );
+  assert( numOutputLayerSets - (Int)vps->getNumLayerSets() >= 0 );
   WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
 #endif
   if( numOutputLayerSets > 1 )
