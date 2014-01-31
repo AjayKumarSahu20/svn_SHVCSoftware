@@ -143,7 +143,10 @@ private:
 
   Bool                   m_bRefreshPending;
 #endif
-
+#if RESOLUTION_BASED_DPB
+  Int                    m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
+                                          // When new VPS is activated, this should be re-initialized to -1
+#endif
 public:
   TDecTop();
   virtual ~TDecTop();
@@ -260,6 +263,11 @@ public:
 #endif
 #if SCALINGLIST_INFERRING
   ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
+#endif
+#if RESOLUTION_BASED_DPB
+  Void setSubDpbIdx(Int idx)    { m_subDpbIdx = idx; }
+  Int  getSubDpbIdx()           { return m_subDpbIdx; }
+  Void assignSubDpbs(TComVPS *vps);
 #endif
 };// END CLASS DEFINITION TDecTop
 
