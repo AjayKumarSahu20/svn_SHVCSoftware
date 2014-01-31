@@ -147,7 +147,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
 #endif
 #if OUTPUT_LAYER_SET_INDEX  
-  this->getCommonDecoderParams()->setOutputLayerSetIdx( olsIdx       );
+  this->getCommonDecoderParams()->setTargetOutputLayerSetIdx( olsIdx       );
   this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
 #endif
   for(UInt layer=0; layer<= m_tgtLayerId; layer++)

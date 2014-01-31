@@ -283,13 +283,13 @@ enum NalUnitType
 class CommonDecoderParams
 {
   Int m_targetLayerId;
-  Int m_outputLayerSetIdx;
+  Int m_targetOutputLayerSetIdx;
   std::vector<Int> *m_targetDecLayerIdSet; 
   Bool m_valueCheckedFlag;
 public:
   CommonDecoderParams(): 
     m_targetLayerId(0)
-    , m_outputLayerSetIdx(-1)
+    , m_targetOutputLayerSetIdx(-1)
     , m_targetDecLayerIdSet(NULL)
     , m_valueCheckedFlag(false)
  {}
@@ -297,8 +297,8 @@ public:
   Void setTargetLayerId(const Int x) { m_targetLayerId = x;   }
   Int  getTargetLayerId()            { return m_targetLayerId;}
   
-  Void setOutputLayerSetIdx(const Int x) { m_outputLayerSetIdx = x;   }
-  Int  getOutputLayerSetIdx()            { return m_outputLayerSetIdx;}
+  Void setTargetOutputLayerSetIdx(const Int x) { m_targetOutputLayerSetIdx = x;   }
+  Int  getTargetOutputLayerSetIdx()            { return m_targetOutputLayerSetIdx;}
 
   Void               setTargetDecLayerIdSet(std::vector<Int> *x) { m_targetDecLayerIdSet = x;   }
   std::vector<Int>*  getTargetDecLayerIdSet()                    { return m_targetDecLayerIdSet;}
