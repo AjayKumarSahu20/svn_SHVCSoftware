@@ -70,6 +70,9 @@ protected:
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstrainedTileSets& sei);
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+  Void xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei);
+#endif
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
   Void xWriteByteAlign();
 };

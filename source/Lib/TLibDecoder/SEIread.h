@@ -82,6 +82,9 @@ protected:
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
+#endif
 #if LAYERS_NOT_PRESENT_SEI
   Void xParseSEILayersNotPresent      (SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps);
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
