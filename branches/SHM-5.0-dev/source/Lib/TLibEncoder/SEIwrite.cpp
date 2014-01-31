@@ -99,6 +99,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
     break;
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+    case SEI::SUB_BITSTREAM_PROPERTY:
+      fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
+      break;
+#endif
   case SEI::SCALABLE_NESTING:
     fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
     break;
@@ -161,6 +166,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
     xWriteSEIInterLayerConstrainedTileSets(*static_cast<const SEIInterLayerConstrainedTileSets*>(&sei));
     break;
+#endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+   case SEI::SUB_BITSTREAM_PROPERTY:
+     xWriteSEISubBitstreamProperty(*static_cast<const SEISubBitstreamProperty*>(&sei));
+     break;
 #endif
   case SEI::SCALABLE_NESTING:
     xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
@@ -605,7 +615,24 @@ Void SEIWriter::xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstr
   xWriteByteAlign();
 }
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+Void SEIWriter::xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei)
+{
+  WRITE_CODE( sei.m_activeVpsId, 4, "active_vps_id" );
+  assert( sei.m_numAdditionalSubStreams >= 1 );
+  WRITE_UVLC( sei.m_numAdditionalSubStreams - 1, "num_additional_sub_streams_minus1" );
 
+  for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
+  {
+    WRITE_CODE( sei.m_subBitstreamMode[i],       2, "sub_bitstream_mode[i]"           );
+    WRITE_UVLC( sei.m_outputLayerSetIdxToVps[i],    "output_layer_set_idx_to_vps[i]"  );
+    WRITE_CODE( sei.m_highestSublayerId[i],      3, "highest_sub_layer_id[i]"         );
+    WRITE_CODE( sei.m_avgBitRate[i],            16, "avg_bit_rate[i]"                 );
+    WRITE_CODE( sei.m_maxBitRate[i],            16, "max_bit_rate[i]"                 );
+  }
+  xWriteByteAlign();
+}
+#endif
 Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
 {
   WRITE_FLAG( sei.m_bitStreamSubsetFlag,             "bitstream_subset_flag"         );

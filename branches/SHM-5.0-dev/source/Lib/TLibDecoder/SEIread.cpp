@@ -105,6 +105,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
     break;
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+    case SEI::SUB_BITSTREAM_PROPERTY:
+      fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
+      break;
+#endif
   case SEI::SCALABLE_NESTING:
     fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
     break;
@@ -275,6 +280,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIInterLayerConstrainedTileSets;
       xParseSEIInterLayerConstrainedTileSets((SEIInterLayerConstrainedTileSets&) *sei, payloadSize);
       break;
+#endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+   case SEI::SUB_BITSTREAM_PROPERTY:
+     sei = new SEISubBitstreamProperty;
+     xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei);
+     break;
 #endif
     case SEI::SCALABLE_NESTING:
       sei = new SEIScalableNesting;
@@ -828,7 +839,24 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
   xParseByteAlign();
 }
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
+{
+  UInt uiCode;
+  READ_CODE( 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
+  READ_UVLC(    uiCode, "num_additional_sub_streams_minus1" );  sei.m_numAdditionalSubStreams = uiCode + 1;
 
+  for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
+  {
+    READ_CODE(  2, uiCode, "sub_bitstream_mode[i]"           ); sei.m_subBitstreamMode[i] = uiCode;
+    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  ); sei.m_outputLayerSetIdxToVps[i] = uiCode;
+    READ_CODE(  3, uiCode, "highest_sub_layer_id[i]"         ); sei.m_highestSublayerId[i] = uiCode;
+    READ_CODE( 16, uiCode, "avg_bit_rate[i]"                 ); sei.m_avgBitRate[i] = uiCode;
+    READ_CODE( 16, uiCode, "max_bit_rate[i]"                 ); sei.m_maxBitRate[i] = uiCode;
+  }
+  xParseByteAlign();
+}
+#endif
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
 #else

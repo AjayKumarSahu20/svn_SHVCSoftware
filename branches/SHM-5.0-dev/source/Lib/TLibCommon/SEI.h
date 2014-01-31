@@ -77,6 +77,9 @@ public:
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     INTER_LAYER_CONSTRAINED_TILE_SETS    = 138
 #endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+   ,SUB_BITSTREAM_PROPERTY               = 139    // Final PayloadType to be defined after finalization
+#endif
   };
   
   SEI() {}
@@ -406,6 +409,24 @@ public:
 };
 #endif
 
+#if SUB_BITSTREAM_PROPERTY_SEI
+class SEISubBitstreamProperty : public SEI
+{
+public:
+  PayloadType payloadType() const { return SUB_BITSTREAM_PROPERTY; }
+
+  SEISubBitstreamProperty();
+  virtual ~SEISubBitstreamProperty() {}
+
+  Int  m_activeVpsId;
+  Int  m_numAdditionalSubStreams;
+  Int  m_subBitstreamMode       [MAX_SUB_STREAMS];
+  Int  m_outputLayerSetIdxToVps [MAX_SUB_STREAMS];
+  Int  m_highestSublayerId      [MAX_SUB_STREAMS];
+  Int  m_avgBitRate             [MAX_SUB_STREAMS];
+  Int  m_maxBitRate             [MAX_SUB_STREAMS];
+};
+#endif
 
 typedef std::list<SEI*> SEIMessages;
 
