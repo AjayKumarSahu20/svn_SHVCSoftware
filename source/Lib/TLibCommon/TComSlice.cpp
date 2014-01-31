@@ -1936,6 +1936,17 @@ RepFormat::RepFormat()
 , m_bitDepthVpsLuma             (0)
 , m_bitDepthVpsChroma           (0)
 {}
+#if RESOLUTION_BASED_DPB
+Void RepFormat::init()
+{
+  m_chromaFormatVpsIdc          = CHROMA_420;
+  m_separateColourPlaneVpsFlag  = false;
+  m_picWidthVpsInLumaSamples    = 0;
+  m_picHeightVpsInLumaSamples   = 0;
+  m_bitDepthVpsLuma             = 0;
+  m_bitDepthVpsChroma           = 0;
+}
+#endif
 #endif
 
 // ------------------------------------------------------------------------------------------------
@@ -2125,6 +2136,9 @@ TComVPS::TComVPS()
   ::memset( m_subLayerFlagInfoPresentFlag,  0, sizeof(m_subLayerFlagInfoPresentFlag ) );
   ::memset( m_subLayerDpbInfoPresentFlag,   0, sizeof(m_subLayerDpbInfoPresentFlag )  );
   ::memset( m_maxVpsDecPicBufferingMinus1,  0, sizeof(m_maxVpsDecPicBufferingMinus1 ) );
+#if RESOLUTION_BASED_DPB
+  ::memset( m_maxVpsLayerDecPicBuffMinus1,  0, sizeof(m_maxVpsLayerDecPicBuffMinus1 ) );
+#endif
   ::memset( m_maxVpsNumReorderPics,         0, sizeof(m_maxVpsNumReorderPics )        );
   ::memset( m_maxVpsLatencyIncreasePlus1,   0, sizeof(m_maxVpsLatencyIncreasePlus1 )  );
   ::memset( m_numSubDpbs                ,   0, sizeof(m_numSubDpbs)                   );
@@ -2181,6 +2195,7 @@ Void TComVPS::deriveLayerIdListVariables()
   }
 }
 #endif
+#if !RESOLUTION_BASED_DPB
 #if VPS_DPB_SIZE_TABLE
 Void TComVPS::deriveNumberOfSubDpbs()
 {
@@ -2203,6 +2218,7 @@ Void TComVPS::deriveNumberOfSubDpbs()
   }
 #endif
 }
+#endif
 #endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
 Void TComVPS::setTilesNotInUseFlag(Bool x)
@@ -2328,13 +2344,19 @@ Void TComVPS::determineSubDpbInfoFlags()
                                       // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
         checkFlagInner[j] |= ( getMaxVpsNumReorderPics(i, j) != getMaxVpsNumReorderPics(i, j - 1) );
 #if CHANGE_NUMSUBDPB_IDX
-        for(Int k = 0; k < getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+        for(Int subDpbIdx = 0; subDpbIdx < getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; subDpbIdx++)  // If checkFlagInner[j] is true, break and signal the values
 #else
         for(Int k = 0; k < getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
 #endif
         {
-          checkFlagInner[j] |= ( getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != getMaxVpsDecPicBufferingMinus1(i, k, j) );
+          checkFlagInner[j] |= ( getMaxVpsDecPicBufferingMinus1(i, subDpbIdx, j - 1) != getMaxVpsDecPicBufferingMinus1(i, subDpbIdx, j) );
         }
+#if RESOLUTION_BASED_DPB
+        for(Int layerIdx = 0; layerIdx < this->getNumLayersInIdList(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; layerIdx++)  // If checkFlagInner[j] is true, break and signal the values
+        {
+          checkFlagInner[j] |= ( getMaxVpsLayerDecPicBuffMinus1(i, layerIdx, j - 1) != getMaxVpsLayerDecPicBuffMinus1(i, layerIdx, j) );
+        }
+#endif
       }
       // If checkFlagInner[j] = true, then some value needs to be signalled for the j-th sub-layer
       setSubLayerDpbInfoPresentFlag( i, j, checkFlagInner[j] );
@@ -2354,6 +2376,102 @@ Void TComVPS::determineSubDpbInfoFlags()
     }
     setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
   }
+}
+#endif
+#if RESOLUTION_BASED_DPB
+Void TComVPS::assignSubDpbIndices()
+{
+  RepFormat layerRepFormat  [MAX_LAYERS];
+  RepFormat subDpbRepFormat [MAX_LAYERS];
+
+  for(Int lsIdx = 0; lsIdx < this->getNumLayerSets(); lsIdx++)
+  {
+    for(Int j = 0; j < MAX_LAYERS; j++)
+    {
+      layerRepFormat [j].init();
+      subDpbRepFormat[j].init();
+    }
+
+    // Assign resolution, bit-depth, colour format for each layer in the layer set
+    for(Int i = 0; i < this->getNumLayersInIdList( lsIdx ); i++)
+    {
+      Int layerIdxInVps = this->getLayerIdInVps( this->getLayerSetLayerIdList(lsIdx, i) );
+      Int repFormatIdx  = this->getVpsRepFormatIdx( layerIdxInVps );
+      RepFormat* repFormat = this->getVpsRepFormat( repFormatIdx );
+
+      // Assign the rep_format() to the layer
+      layerRepFormat[i] = *repFormat;
+    }
+
+    // ----------------------------------------
+    // Sub-DPB assignment
+    // ----------------------------------------
+    // For the base layer 
+    m_subDpbAssigned[lsIdx][0] = 0;
+    subDpbRepFormat[0] = layerRepFormat[0];
+
+    // Sub-DPB counter
+    Int subDpbCtr = 1;
+
+    for(Int i = 1; i < this->getNumLayersInIdList( lsIdx ); i++)
+    {
+      Bool newSubDpbFlag = true;
+      for(Int j = 0; (j < subDpbCtr) && (newSubDpbFlag); j++)
+      {
+        if( RepFormat::checkSameSubDpb( layerRepFormat[i], subDpbRepFormat[j] ) )
+        {
+          // Belong to i-th sub-DPB
+          m_subDpbAssigned[lsIdx][i] = j;
+          newSubDpbFlag = false;
+        }
+      }
+      if( newSubDpbFlag )
+      {
+        // New sub-DPB
+        subDpbRepFormat[subDpbCtr] = layerRepFormat[i];
+        m_subDpbAssigned[lsIdx][i] = subDpbCtr;
+        subDpbCtr++;                                    // Increment # subDpbs
+      }
+    }
+    m_numSubDpbs[lsIdx] = subDpbCtr;
+  }
+}
+Int  TComVPS::findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId )
+{
+  for(Int i = 0; i < this->getNumLayersInIdList(lsIdx); i++)
+  {
+    if( this->getLayerSetLayerIdList( lsIdx, i) == nuhLayerId )
+    {
+      return i;
+    }
+  }
+  return -1;  // Layer not found
+}
+// RepFormat Assignment operator
+RepFormat& RepFormat::operator= (const RepFormat &other)
+{
+  if( this != &other)
+  {
+    m_chromaAndBitDepthVpsPresentFlag = other.m_chromaAndBitDepthVpsPresentFlag;
+    m_chromaFormatVpsIdc              = other.m_chromaFormatVpsIdc;
+    m_separateColourPlaneVpsFlag      = other.m_separateColourPlaneVpsFlag;
+    m_picWidthVpsInLumaSamples        = other.m_picWidthVpsInLumaSamples;
+    m_picHeightVpsInLumaSamples       = other.m_picHeightVpsInLumaSamples;
+    m_bitDepthVpsLuma                 = other.m_bitDepthVpsLuma;
+    m_bitDepthVpsChroma               = other.m_bitDepthVpsChroma;
+  }
+  return *this;
+}
+
+// Check whether x and y share the same resolution, chroma format and bit-depth.
+Bool RepFormat::checkSameSubDpb(const RepFormat &x, const RepFormat &y)
+{
+  return (    (x.m_chromaFormatVpsIdc              == y.m_chromaFormatVpsIdc)
+          &&  (x.m_picWidthVpsInLumaSamples        == y.m_picWidthVpsInLumaSamples)
+          &&  (x.m_picHeightVpsInLumaSamples       == y.m_picHeightVpsInLumaSamples)
+          &&  (x.m_bitDepthVpsLuma                 == y.m_bitDepthVpsLuma)
+          &&  (x.m_bitDepthVpsChroma               == y.m_bitDepthVpsChroma)
+          );
 }
 #endif
 // ------------------------------------------------------------------------------------------------
