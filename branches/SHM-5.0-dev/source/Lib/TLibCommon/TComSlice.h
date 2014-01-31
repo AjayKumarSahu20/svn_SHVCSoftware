@@ -1027,6 +1027,7 @@ Void      deriveNumberOfSubDpbs();
 
   Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
   Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
+  Void    determineSubDpbInfoFlags();
 #endif
 
 #if O0109_MOVE_VPS_VUI_FLAG
