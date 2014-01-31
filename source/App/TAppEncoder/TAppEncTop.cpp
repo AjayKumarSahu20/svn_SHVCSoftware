@@ -1185,10 +1185,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
     Int layerSetId = vps->getOutputLayerSetIdx(i);
 
-    // For each output layer set, set the DPB size for each layer and the reorder/latency value the maximum for all layers
-    Bool checkFlagOuter = false;      // Used to calculate sub_layer_flag_info_present_flag
-    Bool checkFlagInner[MAX_TLAYER];  // Used to calculate sub_layer_dpb_info_present_flag
-
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
     {
 
@@ -1204,37 +1200,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
       }
       vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
-      
-      if( j == 0 )  // checkFlagInner[0] is always 1
-      {
-        checkFlagInner[j] = true;     // Always signal sub-layer DPB information for the first sub-layer
-      }
-      else
-      {
-        checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
-                                      // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
-        checkFlagInner[j] |= ( maxNumReorderPics != vps->getMaxVpsNumReorderPics(i, j - 1) );
-#if CHANGE_NUMSUBDPB_IDX
-        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
-#else
-        for(Int k = 0; k < vps->getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
-#endif
-        {
-          checkFlagInner[j] |= ( vps->getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != vps->getMaxVpsDecPicBufferingMinus1(i, k, j) );
-        }
-      }
-      // If checkFlagInner[j] = true, then some value needs to be signalled for the j-th sub-layer
-      vps->setSubLayerDpbInfoPresentFlag( i, j, checkFlagInner[j] );
+      vps->determineSubDpbInfoFlags();
     }
-    for(Int j = 1; j < vps->getMaxTLayers(); j++) // Check if DPB info of any of non-zero sub-layers is signaled. If so set flag to one
-    {
-      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
-      {
-        checkFlagOuter = true;
-        break;
-      }
-    }
-    vps->setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
   }
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS

@@ -2303,6 +2303,59 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
   return scalIdx; 
 }
 #endif
+#if VPS_DPB_SIZE_TABLE
+Void TComVPS::determineSubDpbInfoFlags()
+{
+  for(Int i = 1; i < getNumOutputLayerSets(); i++)
+  {
+    Int layerSetIdxForOutputLayerSet = getOutputLayerSetIdx( i );
+    // For each output layer set, set the DPB size for each layer and the reorder/latency value the maximum for all layers
+    Bool checkFlagOuter = false;      // Used to calculate sub_layer_flag_info_present_flag
+    Bool checkFlagInner[MAX_TLAYER];  // Used to calculate sub_layer_dpb_info_present_flag
+
+    for(Int j = 0; j < getMaxTLayers(); j++)
+    {
+      // --------------------------------------------------------
+      // To determine value of m_subLayerDpbInfoPresentFlag
+      // --------------------------------------------------------
+      if( j == 0 )  // checkFlagInner[0] is always 1
+      {
+        checkFlagInner[j] = true;     // Always signal sub-layer DPB information for the first sub-layer
+      }
+      else
+      {
+        checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
+                                      // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
+        checkFlagInner[j] |= ( getMaxVpsNumReorderPics(i, j) != getMaxVpsNumReorderPics(i, j - 1) );
+#if CHANGE_NUMSUBDPB_IDX
+        for(Int k = 0; k < getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+#else
+        for(Int k = 0; k < getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
+#endif
+        {
+          checkFlagInner[j] |= ( getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != getMaxVpsDecPicBufferingMinus1(i, k, j) );
+        }
+      }
+      // If checkFlagInner[j] = true, then some value needs to be signalled for the j-th sub-layer
+      setSubLayerDpbInfoPresentFlag( i, j, checkFlagInner[j] );
+    }
+
+    // --------------------------------------------------------
+    // To determine value of m_subLayerFlagInfoPresentFlag
+    // --------------------------------------------------------
+
+    for(Int j = 1; j < getMaxTLayers(); j++) // Check if DPB info of any of non-zero sub-layers is signaled. If so set flag to one
+    {
+      if( getSubLayerDpbInfoPresentFlag(i, j) )
+      {
+        checkFlagOuter = true;
+        break;
+      }
+    }
+    setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
+  }
+}
+#endif
 // ------------------------------------------------------------------------------------------------
 // Sequence parameter set (SPS)
 // ------------------------------------------------------------------------------------------------
