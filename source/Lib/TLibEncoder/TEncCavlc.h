@@ -67,8 +67,10 @@ public:
 protected:
   TComSlice*    m_pcSlice;
   UInt          m_uiCoeffCost;
+#if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
   Int m_vpsVuiCounter;
+#endif
 #endif
   Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
   Bool findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag );
@@ -94,6 +96,9 @@ public:
 #endif
 #if REPN_FORMAT_IN_VPS
   Void  codeRepFormat           ( RepFormat *repFormat );
+#endif
+#if VPS_DPB_SIZE_TABLE
+  Void  codeVpsDpbSizeTable      (TComVPS *vps);
 #endif
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );

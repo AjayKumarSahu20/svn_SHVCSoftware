@@ -933,11 +933,6 @@ Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
   m_cSPS.setLayerId(m_layerId);
-#if REF_IDX_MFM
-#if !M0457_COL_PICTURE_SIGNALING
-  m_cSPS.setMFMEnabledFlag(m_bMFMEnabledFlag);
-#endif
-#endif
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
@@ -1631,7 +1626,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numLayer; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING
@@ -1698,7 +1693,7 @@ Void TEncTop::xInitILRP()
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new  TComPic;
 #if SVC_UPSAMPLING

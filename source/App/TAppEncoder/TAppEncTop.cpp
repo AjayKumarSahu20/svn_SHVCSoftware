@@ -176,6 +176,7 @@ Void TAppEncTop::xInitLibCfg()
   }
   delete [] mapIdxToLayer;
 #endif
+
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -189,6 +190,10 @@ Void TAppEncTop::xInitLibCfg()
     // Set this to be used in Upsampling filter in function "TComUpsampleFilter::upsampleBasePic"
     g_bitDepthYLayer[layer] = g_bitDepthY;
     g_bitDepthCLayer[layer] = g_bitDepthC;
+
+#if O0194_WEIGHTED_PREDICTION_CGS
+    m_acTEncTop[layer].setInterLayerWeightedPredFlag( m_useInterLayerWeightedPred );
+#endif
 #endif
     //m_acTEncTop[layer].setVPS(&vps);
     m_acTEncTop[layer].setFrameRate                    ( m_acLayerCfg[layer].getFrameRate() );
@@ -208,20 +213,9 @@ Void TAppEncTop::xInitLibCfg()
 
 #if REF_IDX_MFM
 #if AVC_BASE
-#if M0457_PREDICTION_INDICATIONS
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ));
-#endif
-#else
-#if M0457_PREDICTION_INDICATIONS
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
-#else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : true);
-#endif
-#endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    m_acTEncTop[layer].setIlSampleOnlyPred( layer == 0 ? 0 : m_ilSampleOnlyPred[layer] );
 #endif
 #endif
     // set layer ID
@@ -260,7 +254,6 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
-#if M0457_PREDICTION_INDICATIONS
       for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
       {
         m_acTEncTop[layer].setSamplePredEnabledFlag(i, false);
@@ -308,29 +301,10 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
       m_acTEncTop[layer].setNumDirectRefLayers(numDirectRefLayers);
-#else
-      if(m_acLayerCfg[layer].getNumDirectRefLayers() == -1)
-      {
-        // Not included in the configuration file; assume that each layer depends on previous layer
-        m_acTEncTop[layer].setNumDirectRefLayers       (1);      // One ref. layer
-        m_acTEncTop[layer].setRefLayerId               (0, layer - 1);   // Previous layer
-      }
-      else
-      {
-        m_acTEncTop[layer].setNumDirectRefLayers       ( m_acLayerCfg[layer].getNumDirectRefLayers() );
-        for(Int i = 0; i < m_acTEncTop[layer].getNumDirectRefLayers(); i++)
-        {
-          m_acTEncTop[layer].setRefLayerId             ( i, m_acLayerCfg[layer].getRefLayerId(i));
-        }
-      }
-#endif
+
       if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
       {
-#if M0457_PREDICTION_INDICATIONS
         m_acTEncTop[layer].setNumActiveRefLayers( m_acTEncTop[layer].getNumDirectRefLayers() );
-#else
-        m_acTEncTop[layer].setNumActiveRefLayers( m_acLayerCfg[layer].getNumDirectRefLayers() );
-#endif
         for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
         {
           m_acTEncTop[layer].setPredLayerId(i, i);
@@ -345,7 +319,7 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
     }
-#endif
+#endif //VPS_EXTN_DIRECT_REF_LAYERS
     //===== Slice ========
 
     //====== Loop/Deblock Filter ========
@@ -425,7 +399,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseWP                   ( m_useWeightedPred      );
     m_acTEncTop[layer].setWPBiPred                ( m_useWeightedBiPred   );
 #if O0194_WEIGHTED_PREDICTION_CGS
-    if (layer!=0)
+    if( layer != 0 && m_useInterLayerWeightedPred )
     {
       // Enable weighted prediction for enhancement layer
       m_acTEncTop[layer].setUseWP                 ( true   );
@@ -513,8 +487,8 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
     m_acTEncTop[layer].setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
     m_acTEncTop[layer].setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
-#if M0043_LAYERS_PRESENT_SEI
-    m_acTEncTop[layer].setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#if LAYERS_NOT_PRESENT_SEI
+    m_acTEncTop[layer].setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
@@ -827,8 +801,8 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
   m_cTEncTop.setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
   m_cTEncTop.setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
-#if M0043_LAYERS_PRESENT_SEI
-  m_cTEncTop.setLayersPresentSEIEnabled( m_layersPresentSEIEnabled );
+#if LAYERS_NOT_PRESENT_SEI
+  m_cTEncTop.setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
 #endif
   m_cTEncTop.setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
   m_cTEncTop.setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
@@ -1170,10 +1144,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   // Target output layer
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
+#if P0295_DEFAULT_OUT_LAYER_IDC
+  vps->setDefaultTargetOutputLayerIdc(1);
+#else
 #if O0109_DEFAULT_ONE_OUT_LAYER_IDC
   vps->setDefaultOneTargetOutputLayerIdc(1);
 #else
   vps->setDefaultOneTargetOutputLayerFlag(true);
+#endif
 #endif
   for(i = 1; i < vps->getNumLayerSets(); i++)
   {
@@ -1198,54 +1176,49 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   vps->deriveLayerIdListVariables();
 #endif
+#if RESOLUTION_BASED_DPB
+  vps->assignSubDpbIndices();
+#else
   vps->deriveNumberOfSubDpbs();
+#endif
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
+#if CHANGE_NUMSUBDPB_IDX
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+#endif
     Int layerSetId = vps->getOutputLayerSetIdx(i);
-
-    // For each output layer set, set the DPB size for each layer and the reorder/latency value the maximum for all layers
-    Bool checkFlagOuter = false;      // Used to calculate sub_layer_flag_info_present_flag
-    Bool checkFlagInner[MAX_TLAYER];  // Used to calculate sub_layer_dpb_info_present_flag
 
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
     {
 
       Int maxNumReorderPics = -1;
+#if CHANGE_NUMSUBDPB_IDX
+#if RESOLUTION_BASED_DPB
+      for(Int k = 0; k < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); k++)
+#else
+      for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#endif
+#else
       for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+#endif
       {
         Int layerId = vps->getLayerSetLayerIdList(layerSetId, k); // k-th layer in the output layer set
+#if RESOLUTION_BASED_DPB
+        vps->setMaxVpsLayerDecPicBuffMinus1( i, k, j, m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
+        // Add sub-DPB sizes of layers belonging to a sub-DPB. If a different sub-DPB size is calculated
+        // at the encoder, modify below
+        Int oldValue = vps->getMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j );
+        oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j );
+        vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue );
+#else
         vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
+#endif
         maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
       }
       vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
-      
-      if( j == 0 )  // checkFlagInner[0] is always 1
-      {
-        checkFlagInner[j] = true;     // Always signal sub-layer DPB information for the first sub-layer
-      }
-      else
-      {
-        checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
-                                      // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
-        checkFlagInner[j] |= ( maxNumReorderPics != vps->getMaxVpsNumReorderPics(i, j - 1) );
-        for(Int k = 0; k < vps->getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
-        {
-          checkFlagInner[j] |= ( vps->getMaxVpsDecPicBufferingMinus1(i, k, j - 1) != vps->getMaxVpsDecPicBufferingMinus1(i, k, j) );
-        }
-      }
-      // If checkFlagInner[j] = true, then some value needs to be signalled for the j-th sub-layer
-      vps->setSubLayerDpbInfoPresentFlag( i, j, checkFlagInner[j] );
+      vps->determineSubDpbInfoFlags();
     }
-    for(Int j = 1; j < vps->getMaxTLayers(); j++) // Check if DPB info of any of non-zero sub-layers is signaled. If so set flag to one
-    {
-      if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
-      {
-        checkFlagOuter = true;
-        break;
-      }
-    }
-    vps->setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
   }
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -1273,7 +1246,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
-#if M0457_PREDICTION_INDICATIONS
+    // prediction indications
     vps->setDirectDepTypeLen(2); // sample and motion types are encoded
     for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
     {
@@ -1300,7 +1273,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setDirectDependencyType( layerCtr, refLayerCtr, 0 );
       }
     }
-#endif
   }
 
 #if O0092_0094_DEPENDENCY_CONSTRAINT
@@ -1317,9 +1289,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
-#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     for(i = 1; i< vps->getMaxLayers(); i++)
     {
@@ -1360,10 +1330,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 #endif
+#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if !VPS_EXTN_OFFSET_CALC
 #if VPS_EXTN_OFFSET
   // to be updated according to the current semantics
   vps->setExtensionOffset( 0xffff );
+#endif
 #endif
 #endif
 
@@ -1652,6 +1624,17 @@ Void TAppEncTop::encode()
     // write bitstream out
     if(iTotalNumEncoded)
     {
+#if P0130_EOB
+      if( bEos )
+      {
+        OutputNALUnit nalu(NAL_UNIT_EOB);
+        nalu.m_layerId = 0;
+
+        AccessUnit& accessUnit = outputAccessUnits.back();
+        nalu.m_temporalId = accessUnit.front()->m_temporalId;
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+      }
+#endif
       xWriteStream(bitstreamFile, iTotalNumEncoded, outputAccessUnits);
       outputAccessUnits.clear();
     }

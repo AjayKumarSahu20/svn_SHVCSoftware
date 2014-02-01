@@ -522,7 +522,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if SVC_EXTENSION
   if( layerId > 0 )
   {
-#if JCTVC_M0458_INTERLAYER_RPS_SIG
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
       rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
@@ -532,15 +531,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
-#else
-    rpcSlice->setNumILRRefIdx( rpcSlice->getVPS()->getNumDirectRefLayers( layerId ) );
-#endif
-#if M0457_COL_PICTURE_SIGNALING
     rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
-#if !REMOVE_COL_PICTURE_SIGNALING
-    rpcSlice->setAltColIndicationFlag(rpcSlice->getMFMEnabledFlag());
-#endif
-#endif
   }
 
 #endif
@@ -819,7 +810,7 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     xCalcACDCParamSlice(pcSlice);
   }
 #if O0194_WEIGHTED_PREDICTION_CGS
-  else
+  else if( m_ppcTEncTop[pcSlice->getLayerId()]->getInterLayerWeightedPredFlag() )
   {
     // Calculate for the base layer to be used in EL as Inter layer reference
     estimateILWpParam( pcSlice );    

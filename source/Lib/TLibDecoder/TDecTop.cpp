@@ -85,6 +85,9 @@ TDecTop::TDecTop()
   m_noOutputOfPriorPicsFlags   = false;
   m_bRefreshPending            = false;
 #endif
+#if RESOLUTION_BASED_DPB
+  m_subDpbIdx = -1;
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -177,7 +180,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
     {
 #if USE_DPB_SIZE_TABLE
-      if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+      if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
       {
         assert( this->getLayerId() == 0 );
         numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
@@ -186,7 +189,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
         TComVPS *vps = slice->getVPS();
         // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
       }
 #else
       numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
@@ -195,7 +198,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
 
     if (m_cIlpPic[0] == NULL)
     {
-      for (Int j=0; j < MAX_LAYERS /*MAX_NUM_REF*/; j++)  // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
+      for (Int j=0; j < m_numDirectRefLayers; j++)
       {
 
         m_cIlpPic[j] = new  TComPic;
@@ -281,7 +284,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
   {
 #if USE_DPB_SIZE_TABLE
-    if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+    if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
     {
       assert( this->getLayerId() == 0 );
       numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
@@ -290,7 +293,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     {
       TComVPS *vps = pcSlice->getVPS();
       // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getOutputLayerSetIdx() , temporalLayer);
+      numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
     }
 #else
     numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
@@ -298,14 +301,20 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
 
 #if USE_DPB_SIZE_TABLE
-  if( getCommonDecoderParams()->getOutputLayerSetIdx() == 0 )
+  if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
   {
     assert( this->getLayerId() == 0 );
     m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
   }
   else
   {
-    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+#if RESOLUTION_BASED_DPB
+    Int layerSetIdxForOutputLayerSet = pcSlice->getVPS()->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
+    Int layerIdx = pcSlice->getVPS()->findLayerIdxInLayerSet( layerSetIdxForOutputLayerSet, pcSlice->getLayerId() );  assert( layerIdx != -1 );
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+#else
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+#endif
   }
 #else
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
@@ -814,7 +823,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
-  checkValueOfOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+  checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+#endif
+#if RESOLUTION_BASED_DPB
+  // Following assignment should go wherever a new VPS is activated
+  assignSubDpbs(m_apcSlicePilot->getVPS());
 #endif
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else
@@ -844,15 +857,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if SVC_EXTENSION
   m_apcSlicePilot->setSliceIdx( m_uiSliceIdx ); // it should be removed if HM will reflect it in above
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
-#if M0457_COL_PICTURE_SIGNALING
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
-#endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  m_apcSlicePilot->setNumSamplePredRefLayers( getNumSamplePredRefLayers() );
-#endif
 #endif
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
 
@@ -1477,16 +1485,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       pcSlice->setILRPic( m_cIlpPic );
 
 #if REF_IDX_MFM
-#if M0457_COL_PICTURE_SIGNALING
       if( pcSlice->getMFMEnabledFlag() )
-#else
-      if( pcSlice->getSPS()->getMFMEnabledFlag() )
-#endif
       {
         pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-        pcSlice->setMotionPredIlp(getMotionPredIlp(pcSlice));
-#endif
       }
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
@@ -1667,7 +1668,7 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
       return;
     }
 #endif
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
@@ -1675,7 +1676,7 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
   }
   else
   {
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
     m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
@@ -1695,7 +1696,7 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
 #else
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
   {
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
@@ -1703,7 +1704,7 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
   }
   else
   {
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
     m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS() );
@@ -1864,6 +1865,13 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
       
     case NAL_UNIT_EOB:
+#if P0130_EOB
+      //Check layer id of the nalu. if it is not 0, give a warning message.
+      if (nalu.m_layerId > 0)
+      {
+        printf( "\n\nThis bitstream is ended with EOB NALU that has layer id greater than 0\n" );
+      }
+#endif
       return false;
       
     default:
@@ -1958,7 +1966,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 }
 #endif
 
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
 
 Void TDecTop::setRefLayerParams( TComVPS* vps )
 {
@@ -2012,43 +2020,18 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
 
 #endif
 
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-TComPic* TDecTop::getMotionPredIlp(TComSlice* pcSlice)
-{
-  TComPic* ilpPic = NULL;
-  Int activeMotionPredReflayerIdx = 0;
-
-  for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-  {
-    UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-    if( getMotionPredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) ) )
-    {
-      if (activeMotionPredReflayerIdx == pcSlice->getColRefLayerIdx())
-      {
-        ilpPic = m_cIlpPic[refLayerIdc];
-        break;
-      }
-      else
-      {
-        activeMotionPredReflayerIdx++;
-      }
-    }
-  }
-
-  assert(ilpPic != NULL);
-
-  return ilpPic;
-}
-#endif
 #if OUTPUT_LAYER_SET_INDEX
-Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
+Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
+
+  assert( params->getTargetLayerId() < vps->getMaxLayers() );
+
   if( params->getValueCheckedFlag() )
   {
     return; // Already checked
   }
-  if( params->getOutputLayerSetIdx() == -1 )  // Output layer set index not specified
+  if( params->getTargetOutputLayerSetIdx() == -1 )  // Output layer set index not specified
   {
     Bool layerSetMatchFound = false;
     // Output layer set index not assigned.
@@ -2095,7 +2078,7 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
         {
           // Match found
           layerSetMatchFound = true;
-          params->setOutputLayerSetIdx( i );
+          params->setTargetOutputLayerSetIdx( i );
           params->setValueCheckedFlag( true );
           break;
         }
@@ -2106,7 +2089,8 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
-    Int layerSetIdx = vps->getOutputLayerSetIdx( params->getOutputLayerSetIdx() );  // Index to the layer set
+    assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
+    Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
 
     Bool layerSetMatchFlag = true;
@@ -2134,6 +2118,21 @@ Void TDecTop::checkValueOfOutputLayerSetIdx(TComVPS *vps)
     }
     params->setValueCheckedFlag( true );
 
+  }
+}
+#endif
+#if RESOLUTION_BASED_DPB
+Void TDecTop::assignSubDpbs(TComVPS *vps)
+{
+  if( m_subDpbIdx == -1 ) // Sub-DPB index is not already assigned
+  {
+    Int lsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
+
+    Int layerIdx = vps->findLayerIdxInLayerSet( lsIdx, getLayerId() );
+    assert( layerIdx != -1 ); // Current layer should be found in the layer set.
+
+    // Copy from the active VPS based on the layer ID.
+    m_subDpbIdx = vps->getSubDpbAssigned( lsIdx, layerIdx );
   }
 }
 #endif

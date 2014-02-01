@@ -116,7 +116,7 @@ private:
   Int                     m_iBLSourceWidth;
   Int                     m_iBLSourceHeight;  
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS && M0457_PREDICTION_INDICATIONS
+#if VPS_EXTN_DIRECT_REF_LAYERS
   Int                     m_numDirectRefLayers;
   Int                     m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
   Int                     m_numSamplePredRefLayers;
@@ -143,7 +143,10 @@ private:
 
   Bool                   m_bRefreshPending;
 #endif
-
+#if RESOLUTION_BASED_DPB
+  Int                    m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
+                                          // When new VPS is activated, this should be re-initialized to -1
+#endif
 public:
   TDecTop();
   virtual ~TDecTop();
@@ -176,7 +179,6 @@ public:
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec(UInt refLayerIdc);
-#if M0457_PREDICTION_INDICATIONS
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
   Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
 
@@ -205,7 +207,6 @@ public:
   TDecTop*  getMotionPredRefLayerDec        ( UInt layerId );
 
   Void      setRefLayerParams( TComVPS* vps );
-#endif
 #endif
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
@@ -243,9 +244,6 @@ protected:
   Void      xDecodeSPS();
   Void      xDecodePPS();
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
-#if M0457_COL_PICTURE_SIGNALING && !REMOVE_COL_PICTURE_SIGNALING
-  TComPic*  getMotionPredIlp(TComSlice* pcSlice);
-#endif
 
 #if NO_CLRAS_OUTPUT_FLAG
   Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
@@ -261,10 +259,15 @@ public:
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
   Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
-  Void      checkValueOfOutputLayerSetIdx(TComVPS *vps);
+  Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
 #endif
 #if SCALINGLIST_INFERRING
   ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
+#endif
+#if RESOLUTION_BASED_DPB
+  Void setSubDpbIdx(Int idx)    { m_subDpbIdx = idx; }
+  Int  getSubDpbIdx()           { return m_subDpbIdx; }
+  Void assignSubDpbs(TComVPS *vps);
 #endif
 };// END CLASS DEFINITION TDecTop
 
