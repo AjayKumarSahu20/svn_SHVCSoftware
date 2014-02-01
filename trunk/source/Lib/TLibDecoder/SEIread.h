@@ -55,13 +55,13 @@ class SEIReader: public SyntaxElementParser
 public:
   SEIReader() {};
   virtual ~SEIReader() {};
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
   Void parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
 #else
   Void parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
 #endif
 protected:
-#if M0043_LAYERS_PRESENT_SEI
+#if LAYERS_NOT_PRESENT_SEI
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
 #else
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
@@ -82,8 +82,11 @@ protected:
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);
 #endif
-#if M0043_LAYERS_PRESENT_SEI
-  Void xParseSEILayersPresent         (SEILayersPresent &sei, UInt payloadSize, TComVPS *vps);
+#if SUB_BITSTREAM_PROPERTY_SEI
+Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
+#endif
+#if LAYERS_NOT_PRESENT_SEI
+  Void xParseSEILayersNotPresent      (SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps);
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
 #else
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps);

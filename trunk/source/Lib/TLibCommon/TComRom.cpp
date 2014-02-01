@@ -529,6 +529,47 @@ Int  g_eTTable[4] = {0,3,1,2};
 #if SVC_EXTENSION
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
+
+std::string NaluToStr( NalUnitType nalu )
+{
+  switch( nalu )
+  {
+  case NAL_UNIT_CODED_SLICE_TRAIL_N:
+  case NAL_UNIT_CODED_SLICE_TRAIL_R:
+    return "TRAIL";
+  
+  case NAL_UNIT_CODED_SLICE_TSA_N:
+  case NAL_UNIT_CODED_SLICE_TSA_R:
+    return "  TSA";
+  
+  case NAL_UNIT_CODED_SLICE_STSA_N:
+  case NAL_UNIT_CODED_SLICE_STSA_R:
+    return " STSA";
+
+  case NAL_UNIT_CODED_SLICE_RADL_N:
+  case NAL_UNIT_CODED_SLICE_RADL_R:
+    return " RADL";
+  
+  case NAL_UNIT_CODED_SLICE_RASL_N:
+  case NAL_UNIT_CODED_SLICE_RASL_R:
+    return " RASL";
+
+  case NAL_UNIT_CODED_SLICE_BLA_W_LP:
+  case NAL_UNIT_CODED_SLICE_BLA_W_RADL:
+  case NAL_UNIT_CODED_SLICE_BLA_N_LP:
+    return "  BLA";
+
+  case NAL_UNIT_CODED_SLICE_IDR_W_RADL:
+  case NAL_UNIT_CODED_SLICE_IDR_N_LP:
+    return "  IDR";
+  
+  case NAL_UNIT_CODED_SLICE_CRA:
+    return "  CRA";
+
+  default:
+    return "     ";
+  };
+}
 #endif
 
 //! \}

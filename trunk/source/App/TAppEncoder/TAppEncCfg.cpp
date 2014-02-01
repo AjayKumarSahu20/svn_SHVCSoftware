@@ -79,9 +79,6 @@ TAppEncCfg::TAppEncCfg()
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
     m_acLayerCfg[layer].setAppEncCfg(this);
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-    m_ilSampleOnlyPred[layer] = 0;
-#endif
   }
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
 }
@@ -145,35 +142,22 @@ Void TAppEncCfg::create()
 Void TAppEncCfg::destroy()
 {
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     if( m_acLayerCfg[layer].m_numSamplePredRefLayers > 0 )
     {
       delete [] m_acLayerCfg[layer].m_samplePredRefLayerIds;
+      m_acLayerCfg[layer].m_samplePredRefLayerIds = NULL;
     }
-  }
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
     if( m_acLayerCfg[layer].m_numMotionPredRefLayers > 0 )
     {
       delete [] m_acLayerCfg[layer].m_motionPredRefLayerIds;
+      m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
     }
-  }
-#else
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    if( m_acLayerCfg[layer].m_numDirectRefLayers > 0 )
-    {
-      delete [] m_acLayerCfg[layer].m_refLayerIds;
-    }
-  }
-#endif
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
     if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
     {
       delete [] m_acLayerCfg[layer].m_predLayerIds;
+      m_acLayerCfg[layer].m_predLayerIds = NULL;
     }
   }
 #endif
@@ -382,18 +366,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*     cfg_auxId               [MAX_LAYERS];
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   Int*    cfg_numSamplePredRefLayers  [MAX_LAYERS];
   string  cfg_samplePredRefLayerIds   [MAX_LAYERS];
   string* cfg_samplePredRefLayerIdsPtr[MAX_LAYERS];
   Int*    cfg_numMotionPredRefLayers  [MAX_LAYERS];
   string  cfg_motionPredRefLayerIds   [MAX_LAYERS];
   string* cfg_motionPredRefLayerIdsPtr[MAX_LAYERS];
-#else
-  Int*    cfg_numDirectRefLayers [MAX_LAYERS];
-  string  cfg_refLayerIds        [MAX_LAYERS];
-  string* cfg_refLayerIdsPtr     [MAX_LAYERS];
-#endif
   Int*    cfg_numActiveRefLayers [MAX_LAYERS];
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
@@ -461,15 +439,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra;
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
     cfg_numSamplePredRefLayers  [layer] = &m_acLayerCfg[layer].m_numSamplePredRefLayers;
     cfg_samplePredRefLayerIdsPtr[layer] = &cfg_samplePredRefLayerIds[layer];
     cfg_numMotionPredRefLayers  [layer] = &m_acLayerCfg[layer].m_numMotionPredRefLayers;
     cfg_motionPredRefLayerIdsPtr[layer] = &cfg_motionPredRefLayerIds[layer];
-#else
-    cfg_numDirectRefLayers  [layer] = &m_acLayerCfg[layer].m_numDirectRefLayers;
-    cfg_refLayerIdsPtr      [layer]  = &cfg_refLayerIds[layer];
-#endif
     cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
@@ -550,15 +523,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("RepFormatIdx%d",          cfg_repFormatIdx, -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   ("NumSamplePredRefLayers%d",cfg_numSamplePredRefLayers, -1, MAX_LAYERS, "Number of sample prediction reference layers")
   ("SamplePredRefLayerIds%d", cfg_samplePredRefLayerIdsPtr, string(""), MAX_LAYERS, "sample pred reference layer IDs")
   ("NumMotionPredRefLayers%d",cfg_numMotionPredRefLayers, -1, MAX_LAYERS, "Number of motion prediction reference layers")
   ("MotionPredRefLayerIds%d", cfg_motionPredRefLayerIdsPtr, string(""), MAX_LAYERS, "motion pred reference layer IDs")
-#else
-  ("NumDirectRefLayers%d",    cfg_numDirectRefLayers, -1, MAX_LAYERS, "Number of direct reference layers")
-  ("RefLayerIds%d",           cfg_refLayerIdsPtr, string(""), MAX_LAYERS, "direct reference layer IDs")
-#endif
   ("NumActiveRefLayers%d",    cfg_numActiveRefLayers, -1, MAX_LAYERS, "Number of active reference layers")
   ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
@@ -618,7 +586,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-    ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+  ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  ("InterLayerWeightedPred", m_useInterLayerWeightedPred, false, "enable IL WP parameters estimation at encoder" )  
 #endif
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
@@ -628,9 +599,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  ("IlSampleOnlyPred%d",       m_ilSampleOnlyPred, 0, MAX_LAYERS, "Set inter_layer_sample_pred_only_flag for all slices")
-#endif
 #else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
@@ -955,8 +923,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEITemporalLevel0Index",         m_temporalLevel0IndexSEIEnabled,          0, "Control generation of temporal level 0 index SEI messages")
   ("SEIGradualDecodingRefreshInfo",  m_gradualDecodingRefreshInfoEnabled,      0, "Control generation of gradual decoding refresh information SEI message")
   ("SEIDecodingUnitInfo",             m_decodingUnitInfoSEIEnabled,                       0, "Control generation of decoding unit information SEI message.")
-#if M0043_LAYERS_PRESENT_SEI
-  ("SEILayersPresent",               m_layersPresentSEIEnabled,                0, "Control generation of layers present SEI message")
+#if LAYERS_NOT_PRESENT_SEI
+  ("SEILayersNotPresent",            m_layersNotPresentSEIEnabled,             0, "Control generation of layers not present SEI message")
 #endif
   ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,              0, "Control generation of SOP description SEI messages")
   ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
@@ -1189,7 +1157,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     Char* pSamplePredRefLayerIds = cfg_samplePredRefLayerIds[layer].empty() ? NULL: strdup(cfg_samplePredRefLayerIds[layer].c_str());
@@ -1252,39 +1219,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
     }
   }
-#else
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    Char* pRefLayerIds = cfg_refLayerIds[layer].empty() ? NULL: strdup(cfg_refLayerIds[layer].c_str());
-    if( m_acLayerCfg[layer].m_numDirectRefLayers > 0 )
-    {
-      char *refLayerId;
-      int  i=0;
-      m_acLayerCfg[layer].m_refLayerIds = new Int[m_acLayerCfg[layer].m_numDirectRefLayers];
-      refLayerId = strtok(pRefLayerIds, " ,-");
-      while(refLayerId != NULL)
-      {
-        if( i >= m_acLayerCfg[layer].m_numDirectRefLayers )
-        {
-          printf( "NumDirectRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
-          exit( EXIT_FAILURE );
-        }
-        *( m_acLayerCfg[layer].m_refLayerIds + i ) = atoi( refLayerId );
-        refLayerId = strtok(NULL, " ,-");
-        i++;
-      }
-      if( i < m_acLayerCfg[layer].m_numDirectRefLayers )
-      {
-        printf( "NumDirectRefLayers: The width of some columns is not defined.\n" );
-        exit( EXIT_FAILURE );
-      }
-    }
-    else
-    {
-      m_acLayerCfg[layer].m_refLayerIds = NULL;
-    }
-  }
-#endif
+
 #if AUXILIARY_PICTURES
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -2230,7 +2165,6 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5 , "SEIFramePackingType must be in rage 3 to 5");
   }
 #if VPS_EXTN_DIRECT_REF_LAYERS
-#if M0457_PREDICTION_INDICATIONS
   xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   for(Int layer = 1; layer < MAX_LAYERS; layer++)
@@ -2253,24 +2187,11 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara(m_acLayerCfg[layer].m_motionPredRefLayerIds[i] == layer, "Cannot reference the current layer itself");
     }
   }
-#else
-  xConfirmPara( (m_acLayerCfg[0].m_numDirectRefLayers != 0) && (m_acLayerCfg[0].m_numDirectRefLayers != -1), "Layer 0 cannot have any reference layers" );
-  // NOTE: m_numDirectRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
-  for(Int layer = 1; layer < MAX_LAYERS; layer++)
-  {
-    xConfirmPara(m_acLayerCfg[layer].m_numDirectRefLayers > layer, "Cannot reference more layers than before current layer");
-    for(Int i = 0; i < m_acLayerCfg[layer].m_numDirectRefLayers; i++)
-    {
-      xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] > layer, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layer].m_refLayerIds[i] == layer, "Cannot reference the current layer itself");
-    }
-  }
-#endif
+
   xConfirmPara( (m_acLayerCfg[0].m_numActiveRefLayers != 0) && (m_acLayerCfg[0].m_numActiveRefLayers != -1), "Layer 0 cannot have any active reference layers" );
   // NOTE: m_numActiveRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   for(Int layer = 1; layer < MAX_LAYERS; layer++)
   {
-#if M0457_PREDICTION_INDICATIONS
     Bool predEnabledFlag[MAX_LAYERS];
     for (Int refLayer = 0; refLayer < layer; refLayer++)
     {
@@ -2294,15 +2215,8 @@ Void TAppEncCfg::xCheckParameter()
     {
       xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
     }
-#else
-    xConfirmPara(m_acLayerCfg[layer].m_numActiveRefLayers > m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
-    for(Int i = 0; i < m_acLayerCfg[layer].m_numActiveRefLayers; i++)
-    {
-      xConfirmPara(m_acLayerCfg[layer].m_predLayerIds[i] >= m_acLayerCfg[layer].m_numDirectRefLayers, "Cannot reference higher layers");
-    }
-#endif
   }
-#endif
+#endif //VPS_EXTN_DIRECT_REF_LAYERS
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   if (m_adaptiveResolutionChange > 0)
   {
@@ -2434,6 +2348,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  printf("InterLayerWeightedPred        : %d\n", m_useInterLayerWeightedPred );
 #endif
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
@@ -2580,7 +2497,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
   printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
-  printf("O0194_WEIGHTED_PREDICTION_CGS: %d ",O0194_WEIGHTED_PREDICTION_CGS);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif

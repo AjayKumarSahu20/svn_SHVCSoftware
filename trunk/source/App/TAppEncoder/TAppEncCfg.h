@@ -72,9 +72,6 @@ protected:
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  Int       m_ilSampleOnlyPred[ MAX_LAYERS ];
-#endif
 #if N0120_MAX_TID_REF_CFG
   Bool      m_maxTidRefPresentFlag; 
 #endif 
@@ -282,8 +279,8 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
-#if M0043_LAYERS_PRESENT_SEI
-  Int       m_layersPresentSEIEnabled;
+#if LAYERS_NOT_PRESENT_SEI
+  Int       m_layersNotPresentSEIEnabled;
 #endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
@@ -383,16 +380,19 @@ protected:
   UInt      m_ilcIdc[1024];
 #endif
 #if O0215_PHASE_ALIGNMENT
-  Bool m_phaseAlignFlag;
+  Bool      m_phaseAlignFlag;
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
-  Bool m_crossLayerPictureTypeAlignFlag;
+  Bool      m_crossLayerPictureTypeAlignFlag;
 #endif
 #if N0147_IRAP_ALIGN_FLAG
-  Bool m_crossLayerIrapAlignFlag;
+  Bool      m_crossLayerIrapAlignFlag;
 #endif
 #if O0149_CROSS_LAYER_BLA_FLAG
-  bool      m_crossLayerBLAFlag;
+  Bool      m_crossLayerBLAFlag;
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Bool      m_useInterLayerWeightedPred;
 #endif
 public:
   TAppEncCfg();

@@ -461,12 +461,6 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
       {
         testInter = false;
       }
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-      if( pcSlice->getInterLayerSamplePredOnlyFlag() )
-      {
-        testInter = false;
-      }
-#endif
     }
 #endif
     for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)

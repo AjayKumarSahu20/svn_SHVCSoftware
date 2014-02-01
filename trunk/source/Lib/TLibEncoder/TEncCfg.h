@@ -167,14 +167,12 @@ protected:
 
   Int       m_numActiveRefLayers;
   Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
-#if M0457_PREDICTION_INDICATIONS
   Int       m_numSamplePredRefLayers;
   Int       m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
   Int       m_numMotionPredRefLayers;
   Int       m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
   Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
-#endif
 #endif
 #if N0120_MAX_TID_REF_CFG
   Int       m_maxTidIlRefPicsPlus1;
@@ -306,8 +304,8 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
-#if M0043_LAYERS_PRESENT_SEI
-  Int       m_layersPresentSEIEnabled;
+#if LAYERS_NOT_PRESENT_SEI
+  Int       m_layersNotPresentSEIEnabled;
 #endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
@@ -451,7 +449,6 @@ public:
   Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
   Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
 
-#if M0457_PREDICTION_INDICATIONS
   Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
   Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
 
@@ -469,7 +466,6 @@ public:
 
   Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
   Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
-#endif
 #endif
 #if N0120_MAX_TID_REF_CFG
   Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
@@ -751,9 +747,9 @@ public:
   Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
   Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b;    }
   Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
-#if M0043_LAYERS_PRESENT_SEI
-  Void  setLayersPresentSEIEnabled(Int b)                { m_layersPresentSEIEnabled = b; }
-  Int   getLayersPresentSEIEnabled()                     { return m_layersPresentSEIEnabled; }
+#if LAYERS_NOT_PRESENT_SEI
+  Void  setLayersNotPresentSEIEnabled(Int b)             { m_layersNotPresentSEIEnabled = b; }
+  Int   getLayersNotPresentSEIEnabled()                  { return m_layersNotPresentSEIEnabled; }
 #endif
   Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }

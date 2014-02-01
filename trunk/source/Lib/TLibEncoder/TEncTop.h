@@ -136,9 +136,6 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  Int                     m_ilSampleOnlyPred;
-#endif
   UInt                    m_numScaledRefLayerOffsets;
 #if O0098_SCALED_REF_LAYER_ID
   UInt                    m_scaledRefLayerId[MAX_LAYERS];
@@ -152,6 +149,9 @@ private:
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
   Bool                    m_noOutputOfPriorPicsFlags;
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Bool                    m_interLayerWeightedPredFlag;
 #endif
 #endif //SVC_EXTENSION
 protected:
@@ -236,9 +236,9 @@ public:
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
   Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
 #endif
-#if M0457_IL_SAMPLE_PRED_ONLY_FLAG
-  Void      setIlSampleOnlyPred( Int i )          { m_ilSampleOnlyPred = i;    }
-  Int       getIlSampleOnlyPred()                 { return m_ilSampleOnlyPred; }
+#if O0194_WEIGHTED_PREDICTION_CGS
+  Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
+  Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
 #endif
 #if AVC_SYNTAX
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
