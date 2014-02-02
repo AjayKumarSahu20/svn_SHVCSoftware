@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,14 +72,7 @@ private:
   Int                     m_iNumPicRcvd;                  ///< number of received pictures
   UInt                    m_uiNumAllPicCoded;             ///< number of coded pictures
   TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures
-#if SVC_EXTENSION 
-  static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
-  static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
-#if AVC_SYNTAX
-  fstream*                m_pBLSyntaxFile;
-#endif
-#endif
-  
+ 
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
   //TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder
@@ -129,7 +122,11 @@ private:
   TEncRateCtrl            m_cRateCtrl;                    ///< Rate control class
   
 #if SVC_EXTENSION
-
+  static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
+  static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
+#if AVC_SYNTAX
+  fstream*                m_pBLSyntaxFile;
+#endif
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
@@ -162,7 +159,7 @@ protected:
   Void  xInitPPSforTiles  ();
   Void  xInitRPS          (Bool isFieldCoding);           ///< initialize PPS from encoder options
 #if SVC_EXTENSION
-  Void xInitILRP();
+  Void  xInitILRP();
 #endif
 public:
   TEncTop();
@@ -209,6 +206,11 @@ public:
   Void selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid );
   Int getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid );
   TComScalingList*        getScalingList        () { return  &m_scalingList;         }
+  // -------------------------------------------------------------------------------------------------------------------
+  // encoder function
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
   Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
   TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
@@ -223,14 +225,6 @@ public:
   Window&  getScaledRefLayerWindowForLayer(Int layerId);
 #endif
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
-#endif //SVC_EXTENSION
-
-  // -------------------------------------------------------------------------------------------------------------------
-  // encoder function
-  // -------------------------------------------------------------------------------------------------------------------
-
-  /// encode several number of pictures until end-of-sequence
-#if SVC_EXTENSION
   TComPic** getIlpList() { return m_cIlpPic; }
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
@@ -280,3 +274,4 @@ public:
 //! \}
 
 #endif // __TENCTOP__
+

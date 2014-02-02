@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,16 +80,6 @@ extern       UInt   g_auiRasterToPelY[ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 Void         initRasterToPelXY ( UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth );
 
 // global variable (LCU width/height, max. CU depth)
-#if LAYER_CTB
-extern       UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
-extern       UInt g_auiLayerAddCUDepth[MAX_LAYERS];
-extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-extern       UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-#endif
 extern       UInt g_uiMaxCUWidth;
 extern       UInt g_uiMaxCUHeight;
 extern       UInt g_uiMaxCUDepth;
@@ -138,11 +128,6 @@ extern       UInt   g_sigLastScanCG32x32[ 64 ];
 // ====================================================================================================================
 
 extern const UChar  g_aucIntraModeNumFast[ MAX_CU_DEPTH ];
-
-#if FAST_INTRA_SHVC
-extern       UInt  g_reducedSetIntraModes[NUM_INTRA_MODE-1];
-extern       UInt  g_predefSetIntraModes[NUM_INTRA_MODE-1];
-#endif
 
 // ====================================================================================================================
 // Bit-depth
@@ -286,10 +271,24 @@ extern UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
 extern Int  g_eTTable[4];
 
 #if SVC_EXTENSION
+#if FAST_INTRA_SHVC
+extern       UInt  g_reducedSetIntraModes[NUM_INTRA_MODE-1];
+extern       UInt  g_predefSetIntraModes[NUM_INTRA_MODE-1];
+#endif
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
 std::string NaluToStr( NalUnitType nalu );
+#if LAYER_CTB
+extern       UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
+extern       UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
+extern       UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
+extern       UInt g_auiLayerAddCUDepth[MAX_LAYERS];
+extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+extern       UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+extern       UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 #endif
+#endif //SVC_EXTENSION
 
 //! \}
 

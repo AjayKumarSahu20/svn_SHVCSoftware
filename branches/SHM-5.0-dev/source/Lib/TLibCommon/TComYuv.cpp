@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -603,9 +603,9 @@ Void TComYuv::removeHighFreq( TComYuv* pcYuvSrc, UInt uiPartIdx, UInt uiWidht, U
     for ( x = uiWidht-1; x >= 0; x-- )
     {
 #if DISABLING_CLIP_FOR_BIPREDME
-      pDst[x ] = (pDst[x ]<<1) - pSrc[x ] ;
+      pDst[x ] = 2 * pDst[x] - pSrc[x];
 #else
-      pDst[x ] = Clip( (pDst[x ]<<1) - pSrc[x ] );
+      pDst[x ] = ClipY(2 * pDst[x] - pSrc[x]);
 #endif
     }
     pSrc += iSrcStride;
@@ -623,11 +623,11 @@ Void TComYuv::removeHighFreq( TComYuv* pcYuvSrc, UInt uiPartIdx, UInt uiWidht, U
     for ( x = uiWidht-1; x >= 0; x-- )
     {
 #if DISABLING_CLIP_FOR_BIPREDME
-      pDstU[x ] = (pDstU[x ]<<1) - pSrcU[x ] ;
-      pDstV[x ] = (pDstV[x ]<<1) - pSrcV[x ] ;
+      pDstU[x ] = 2 * pDstU[x] - pSrcU[x];
+      pDstV[x ] = 2 * pDstV[x] - pSrcV[x];
 #else
-      pDstU[x ] = Clip( (pDstU[x ]<<1) - pSrcU[x ] );
-      pDstV[x ] = Clip( (pDstV[x ]<<1) - pSrcV[x ] );
+      pDstU[x ] = ClipC(2 * pDstU[x] - pSrcU[x]);
+      pDstV[x ] = ClipC(2 * pDstV[x] - pSrcV[x]);
 #endif
     }
     pSrcU += iSrcStride;

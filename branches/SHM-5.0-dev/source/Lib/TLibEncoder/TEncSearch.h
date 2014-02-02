@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,10 +96,6 @@ protected:
   // interface to option
   TEncCfg*        m_pcEncCfg;
   
-#if SVC_EXTENSION
-  TEncTop**       m_ppcTEncTop;
-#endif
-  
   // interface to classes
   TComTrQuant*    m_pcTrQuant;
   TComRdCost*     m_pcRdCost;
@@ -117,7 +113,6 @@ protected:
   // RD computation
   TEncSbac***     m_pppcRDSbacCoder;
   TEncSbac*       m_pcRDGoOnSbacCoder;
-  Bool            m_bUseSBACRD;
   DistParam       m_cDistParam;
   
   // Misc.
@@ -129,9 +124,12 @@ protected:
   // UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS];
   UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS+1]; //th array bounds
 
+#if SVC_EXTENSION
+  TEncTop**       m_ppcTEncTop;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool            m_disableILP;
 #endif
+#endif //SVC_EXTENAION
 
 public:
   TEncSearch();
@@ -206,10 +204,6 @@ public:
 #endif
                                 );
   
-#if (ENCODER_FAST_MODE)
-  Bool predInterSearchILRUni    ( TComDataCU* pcCU, TComYuv*    pcOrgYuv, TComYuv*&   rpcPredYuv, TComYuv*&   rpcResiYuv, TComYuv*&   rpcRecoYuv, UInt        refLayerId );
-#endif
-  
   /// encode residual and compute rd-cost for inter mode
   Void encodeResAndCalcRdInterCU( TComDataCU* pcCU,
                                   TComYuv*    pcYuvOrg,
@@ -225,9 +219,14 @@ public:
   Void xEncPCM    (TComDataCU* pcCU, UInt uiAbsPartIdx, Pel* piOrg, Pel* piPCM, Pel* piPred, Pel* piResi, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType eText);
   Void IPCMSearch (TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv );
 
+#if SVC_EXTENSION
+#if (ENCODER_FAST_MODE)
+  Bool predInterSearchILRUni    ( TComDataCU* pcCU, TComYuv*    pcOrgYuv, TComYuv*&   rpcPredYuv, TComYuv*&   rpcResiYuv, TComYuv*&   rpcRecoYuv, UInt        refLayerId );
+#endif  
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void setDisableILP(Bool a) {m_disableILP = a;}
 #endif
+#endif //SVC_EXTENSION
 
 protected:
   
@@ -452,17 +451,7 @@ protected:
                                     UInt&         ruiCost 
                                    ,Bool biPred
                                    );
-#if REF_IDX_ME_ZEROMV
-  Void xPatternSearchFracDIFMv0  ( TComDataCU*   pcCU,
-                                   TComPattern*  pcPatternKey,
-                                   Pel*          piRefY,
-                                   Int           iRefStride,
-                                   TComMv*       pcMvInt,
-                                   TComMv&       rcMvHalf,
-                                   TComMv&       rcMvQter,
-                                   UInt&         ruiCost,
-                                   Bool          biPred );
-#endif
+  
   Void xExtDIFUpSamplingH( TComPattern* pcPattern, Bool biPred  );
   Void xExtDIFUpSamplingQ( TComPattern* pcPatternKey, TComMv halfPelRef, Bool biPred );
   
@@ -491,7 +480,21 @@ protected:
   
   Void  setWpScalingDistParam( TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur );
   inline  Void  setDistParamComp( UInt uiComp )  { m_cDistParam.uiComp = uiComp; }
-  
+
+#if SVC_EXTENSION
+#if REF_IDX_ME_ZEROMV
+  Void xPatternSearchFracDIFMv0  ( TComDataCU*   pcCU,
+                                   TComPattern*  pcPatternKey,
+                                   Pel*          piRefY,
+                                   Int           iRefStride,
+                                   TComMv*       pcMvInt,
+                                   TComMv&       rcMvHalf,
+                                   TComMv&       rcMvQter,
+                                   UInt&         ruiCost,
+                                   Bool          biPred );
+#endif
+#endif //SVC_EXTENSION  
+
 };// END CLASS DEFINITION TEncSearch
 
 //! \}

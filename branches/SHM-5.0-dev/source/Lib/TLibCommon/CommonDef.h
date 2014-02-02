@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #define __COMMONDEF__
 
 #include <algorithm>
+
 #if _MSC_VER > 1000
 // disable "signed and unsigned mismatch"
 #pragma warning( disable : 4018 )
@@ -56,9 +57,9 @@
 
 #if SVC_EXTENSION
 #include <vector>
-#define NV_VERSION        "5.0 (HM-12.1)"                 ///< Current software version
+#define NV_VERSION        "5.0 (HM-13.0)"                 ///< Current software version
 #else
-#define NV_VERSION        "12.1"                ///< Current software version
+#define NV_VERSION        "13.0"                ///< Current software version
 #endif
 
 // ====================================================================================================================

@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,14 +86,18 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
     break;
+  case SEI::SOP_DESCRIPTION:
+    fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
+    break;
+  case SEI::SCALABLE_NESTING:
+    fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
+    break;
+#if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   case SEI::LAYERS_NOT_PRESENT:
     fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
     break;
 #endif
-  case SEI::SOP_DESCRIPTION:
-    fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
-    break;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
     fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
@@ -104,9 +108,7 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
       fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
       break;
 #endif
-  case SEI::SCALABLE_NESTING:
-    fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
-    break;
+#endif //SVC_EXTENSION
   default:
     fprintf( g_hTrace, "=========== Unknown SEI message ===========\n");
     break;
@@ -154,14 +156,18 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::TONE_MAPPING_INFO:
     xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
     break;
+  case SEI::SOP_DESCRIPTION:
+    xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
+    break;
+  case SEI::SCALABLE_NESTING:
+    xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
+    break;
+#if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   case SEI::LAYERS_NOT_PRESENT:
     xWriteSEILayersNotPresent(*static_cast<const SEILayersNotPresent*>(&sei));
     break;
 #endif
-  case SEI::SOP_DESCRIPTION:
-    xWriteSEISOPDescription(*static_cast<const SEISOPDescription*>(&sei));
-    break;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
     xWriteSEIInterLayerConstrainedTileSets(*static_cast<const SEIInterLayerConstrainedTileSets*>(&sei));
@@ -172,9 +178,7 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      xWriteSEISubBitstreamProperty(*static_cast<const SEISubBitstreamProperty*>(&sei));
      break;
 #endif
-  case SEI::SCALABLE_NESTING:
-    xWriteSEIScalableNesting(bs, *static_cast<const SEIScalableNesting*>(&sei), sps);
-    break;
+#endif //SVC_EXTENSION
   default:
     assert(!"Unhandled SEI message");
   }
@@ -336,15 +340,15 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
   WRITE_UVLC( sei.m_bpSeqParameterSetId, "bp_seq_parameter_set_id" );
   if( !hrd->getSubPicCpbParamsPresentFlag() )
   {
-    WRITE_FLAG( sei.m_rapCpbParamsPresentFlag, "rap_cpb_params_present_flag" );
+    WRITE_FLAG( sei.m_rapCpbParamsPresentFlag, "irap_cpb_params_present_flag" );
   }
-  WRITE_FLAG( sei.m_concatenationFlag, "concatenation_flag");
-  WRITE_CODE( sei.m_auCpbRemovalDelayDelta - 1, ( hrd->getCpbRemovalDelayLengthMinus1() + 1 ), "au_cpb_removal_delay_delta_minus1" );
   if( sei.m_rapCpbParamsPresentFlag )
   {
     WRITE_CODE( sei.m_cpbDelayOffset, hrd->getCpbRemovalDelayLengthMinus1() + 1, "cpb_delay_offset" );
     WRITE_CODE( sei.m_dpbDelayOffset, hrd->getDpbOutputDelayLengthMinus1()  + 1, "dpb_delay_offset" );
   }
+  WRITE_FLAG( sei.m_concatenationFlag, "concatenation_flag");
+  WRITE_CODE( sei.m_auCpbRemovalDelayDelta - 1, ( hrd->getCpbRemovalDelayLengthMinus1() + 1 ), "au_cpb_removal_delay_delta_minus1" );
   for( nalOrVcl = 0; nalOrVcl < 2; nalOrVcl ++ )
   {
     if( ( ( nalOrVcl == 0 ) && ( hrd->getNalHrdParametersPresentFlag() ) ) ||
@@ -545,18 +549,6 @@ Void SEIWriter::xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefr
   xWriteByteAlign();
 }
 
-#if LAYERS_NOT_PRESENT_SEI
-Void SEIWriter::xWriteSEILayersNotPresent(const SEILayersNotPresent& sei)
-{
-  WRITE_UVLC( sei.m_activeVpsId,           "lp_sei_active_vps_id" );
-  for (UInt i = 0; i < sei.m_vpsMaxLayers; i++)
-  {
-    WRITE_FLAG( sei.m_layerNotPresentFlag[i], "layer_not_present_flag"   );
-  }
-  xWriteByteAlign();
-}
-#endif
-
 Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 {
   WRITE_UVLC( sei.m_sopSeqParameterSetId,           "sop_seq_parameter_set_id"               );
@@ -577,6 +569,73 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 
   xWriteByteAlign();
 }
+
+Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
+{
+  WRITE_FLAG( sei.m_bitStreamSubsetFlag,             "bitstream_subset_flag"         );
+  WRITE_FLAG( sei.m_nestingOpFlag,                   "nesting_op_flag      "         );
+  if (sei.m_nestingOpFlag)
+  {
+    WRITE_FLAG( sei.m_defaultOpFlag,                 "default_op_flag"               );
+    WRITE_UVLC( sei.m_nestingNumOpsMinus1,           "nesting_num_ops"               );
+    for (UInt i = (sei.m_defaultOpFlag ? 1 : 0); i <= sei.m_nestingNumOpsMinus1; i++)
+    {
+      WRITE_CODE( sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id" );
+      WRITE_CODE( sei.m_nestingMaxTemporalIdPlus1[i], 3,  "nesting_max_temporal_id"       );
+      WRITE_UVLC( sei.m_nestingOpIdx[i],                  "nesting_op_idx"                );
+    }
+  }
+  else
+  {
+    WRITE_FLAG( sei.m_allLayersFlag,                      "all_layers_flag"               );
+    if (!sei.m_allLayersFlag)
+    {
+      WRITE_CODE( sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id" );
+      WRITE_UVLC( sei.m_nestingNumLayersMinus1,           "nesting_num_layers"            );
+      for (UInt i = 0; i <= sei.m_nestingNumLayersMinus1; i++)
+      {
+        WRITE_CODE( sei.m_nestingLayerId[i], 6,           "nesting_layer_id"              );
+      }
+    }
+  }
+ 
+  // byte alignment
+  while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+  {
+    WRITE_FLAG( 0, "nesting_zero_bit" );
+  }
+
+  // write nested SEI messages
+  for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
+  {
+    writeSEImessage(bs, *(*it), sps);
+  }
+}
+
+Void SEIWriter::xWriteByteAlign()
+{
+  if( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+  {
+    WRITE_FLAG( 1, "bit_equal_to_one" );
+    while( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
+    {
+      WRITE_FLAG( 0, "bit_equal_to_zero" );
+    }
+  }
+};
+
+#if SVC_EXTENSION
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIWriter::xWriteSEILayersNotPresent(const SEILayersNotPresent& sei)
+{
+  WRITE_UVLC( sei.m_activeVpsId,           "lp_sei_active_vps_id" );
+  for (UInt i = 0; i < sei.m_vpsMaxLayers; i++)
+  {
+    WRITE_FLAG( sei.m_layerNotPresentFlag[i], "layer_not_present_flag"   );
+  }
+  xWriteByteAlign();
+}
+#endif
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
 Void SEIWriter::xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstrainedTileSets& sei)
@@ -633,58 +692,6 @@ Void SEIWriter::xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei
   xWriteByteAlign();
 }
 #endif
-Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
-{
-  WRITE_FLAG( sei.m_bitStreamSubsetFlag,             "bitstream_subset_flag"         );
-  WRITE_FLAG( sei.m_nestingOpFlag,                   "nesting_op_flag      "         );
-  if (sei.m_nestingOpFlag)
-  {
-    WRITE_FLAG( sei.m_defaultOpFlag,                 "default_op_flag"               );
-    WRITE_UVLC( sei.m_nestingNumOpsMinus1,           "nesting_num_ops"               );
-    for (UInt i = (sei.m_defaultOpFlag ? 1 : 0); i <= sei.m_nestingNumOpsMinus1; i++)
-    {
-      WRITE_CODE( sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id" );
-      WRITE_CODE( sei.m_nestingMaxTemporalIdPlus1[i], 3,  "nesting_max_temporal_id"       );
-      WRITE_UVLC( sei.m_nestingOpIdx[i],                  "nesting_op_idx"                );
-    }
-  }
-  else
-  {
-    WRITE_FLAG( sei.m_allLayersFlag,                      "all_layers_flag"               );
-    if (!sei.m_allLayersFlag)
-    {
-      WRITE_CODE( sei.m_nestingNoOpMaxTemporalIdPlus1, 3, "nesting_no_op_max_temporal_id" );
-      WRITE_UVLC( sei.m_nestingNumLayersMinus1,           "nesting_num_layers"            );
-      for (UInt i = 0; i <= sei.m_nestingNumLayersMinus1; i++)
-      {
-        WRITE_CODE( sei.m_nestingLayerId[i], 6,           "nesting_layer_id"              );
-      }
-    }
-  }
- 
-  // byte alignment
-  while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
-  {
-    WRITE_FLAG( 0, "nesting_zero_bit" );
-  }
-
-  // write nested SEI messages
-  for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
-  {
-    writeSEImessage(bs, *(*it), sps);
-  }
-}
-
-Void SEIWriter::xWriteByteAlign()
-{
-  if( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
-  {
-    WRITE_FLAG( 1, "bit_equal_to_one" );
-    while( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
-    {
-      WRITE_FLAG( 0, "bit_equal_to_zero" );
-    }
-  }
-};
+#endif //SVC_EXTENSION
 
 //! \}

@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,18 +63,20 @@ protected:
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+  Void xWriteSEISOPDescription(const SEISOPDescription& sei);
+  Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
+  Void xWriteByteAlign();
+#if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   Void xWriteSEILayersNotPresent(const SEILayersNotPresent& sei);
 #endif
-  Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xWriteSEIInterLayerConstrainedTileSets(const SEIInterLayerConstrainedTileSets& sei);
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
   Void xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei);
 #endif
-  Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
-  Void xWriteByteAlign();
+#endif //SVC_EXTENSION
 };
 
 //! \}

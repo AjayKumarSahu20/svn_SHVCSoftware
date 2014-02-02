@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,22 +82,11 @@ private:
   Int                     m_iNumPicCoded;
   Bool                    m_bFirst;
   
-#if SVC_EXTENSION
-  UInt                    m_layerId;      
-#endif
-
   //  Access channel
   TEncTop*                m_pcEncTop;
   TEncCfg*                m_pcCfg;
   TEncSlice*              m_pcSliceEncoder;
   TComList<TComPic*>*     m_pcListPic;
-  
-#if SVC_EXTENSION
-  TEncTop**               m_ppcTEncTop;
-#if SVC_UPSAMPLING
-  TEncSearch*             m_pcPredSearch;                       ///< encoder search class
-#endif  
-#endif
   
   TEncEntropy*            m_pcEntropyCoder;
   TEncCavlc*              m_pcCavlcCoder;
@@ -119,6 +108,10 @@ private:
   Int                     m_pocCRA;
   std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
   std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
+#if FIX1172
+  NalUnitType             m_associatedIRAPType;
+  Int                     m_associatedIRAPPOC;
+#endif
 
   std::vector<Int> m_vRVM_RP;
   UInt                    m_lastBPSEI;
@@ -131,6 +124,15 @@ private:
   Bool                    m_pictureTimingSEIPresentInAU;
   Bool                    m_nestedBufferingPeriodSEIPresentInAU;
   Bool                    m_nestedPictureTimingSEIPresentInAU;
+
+#if SVC_EXTENSION
+  UInt                    m_layerId;      
+  TEncTop**               m_ppcTEncTop;
+#if SVC_UPSAMPLING
+  TEncSearch*             m_pcPredSearch;                       ///< encoder search class
+#endif  
+#endif
+  
 public:
   TEncGOP();
   virtual ~TEncGOP();
@@ -161,7 +163,7 @@ public:
   Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits );
   
   TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
-  NalUnitType getNalUnitType( Int pocCurr, Int lastIdr );
+  NalUnitType getNalUnitType( Int pocCurr, Int lastIdr, Bool isField );
   Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>& );
 protected:
   TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
@@ -180,17 +182,10 @@ protected:
   Double xCalculateRVM();
 
   SEIActiveParameterSets* xCreateSEIActiveParameterSets (TComSPS *sps);
-#if LAYERS_NOT_PRESENT_SEI
-  SEILayersNotPresent*    xCreateSEILayersNotPresent ();
-#endif
   SEIFramePacking*        xCreateSEIFramePacking();
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
-
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
-#endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
@@ -205,10 +200,17 @@ protected:
     m_nestedBufferingPeriodSEIPresentInAU    = false;
     m_nestedPictureTimingSEIPresentInAU      = false;
   }
+  Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
+
+#if SVC_EXTENSION
+#if LAYERS_NOT_PRESENT_SEI
+  SEILayersNotPresent*    xCreateSEILayersNotPresent ();
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xBuildTileSetsMap(TComPicSym* picSym);
+  SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
 #endif
-  Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
+#endif //SVC_EXTENSION
 };// END CLASS DEFINITION TEncGOP
 
 // ====================================================================================================================

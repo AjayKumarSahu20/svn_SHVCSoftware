@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,9 +74,6 @@ private:
   
   Int   m_iPicWidth;            ///< Width of picture
   Int   m_iPicHeight;           ///< Height of picture
-#if AUXILIARY_PICTURES
-  ChromaFormat m_chromaFormatIDC; ////< Chroma Format
-#endif
   
   Int   m_iCuWidth;             ///< Width of Coding Unit (CU)
   Int   m_iCuHeight;            ///< Height of Coding Unit (CU)
@@ -90,15 +87,19 @@ private:
   Int   m_iChromaMarginX;
   Int   m_iChromaMarginY;
   
+  Bool  m_bIsBorderExtended;
+
+#if SVC_EXTENSION
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC; ////< Chroma Format
+#endif
 #if SVC_UPSAMPLING
   Window  m_conformanceWindow;
 #endif
-
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool    m_isReconstructed;
 #endif
-
-  Bool  m_bIsBorderExtended;
+#endif //SVC_EXTENSION
   
 protected:
   Void  xExtendPicCompBorder (Pel* piTxt, Int iStride, Int iWidth, Int iHeight, Int iMarginX, Int iMarginY);
@@ -135,13 +136,6 @@ public:
   
   Int   getWidth    ()     { return  m_iPicWidth;    }
   Int   getHeight   ()     { return  m_iPicHeight;   }
-#if AUXILIARY_PICTURES
-  ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
-#endif
-  
-#if SVC_EXTENSION
-  Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
-#endif
 
   Int   getStride   ()     { return (m_iPicWidth     ) + (m_iLumaMarginX  <<1); }
   Int   getCStride  ()     { return (m_iPicWidth >> 1) + (m_iChromaMarginX<<1); }
@@ -171,11 +165,6 @@ public:
   Pel*  getCbAddr   ( Int iCuAddr, Int uiAbsZorderIdx ) { return m_piPicOrgU + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
   Pel*  getCrAddr   ( Int iCuAddr, Int uiAbsZorderIdx ) { return m_piPicOrgV + m_cuOffsetC[iCuAddr] + m_buOffsetC[g_auiZscanToRaster[uiAbsZorderIdx]]; }
   
-#if SVC_UPSAMPLING
-  Window& getConformanceWindow()                           { return  m_conformanceWindow;             }
-  Void    setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-#endif
-
   // ------------------------------------------------------------------------------------------------
   //  Miscellaneous
   // ------------------------------------------------------------------------------------------------
@@ -192,17 +181,25 @@ public:
   //  Dump picture
   Void  dump (Char* pFileName, Bool bAdd = false);
 
+  // Set border extension flag
+  Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
+  
+#if SVC_EXTENSION
+  Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
+#if SVC_UPSAMPLING
+  Window& getConformanceWindow()                           { return  m_conformanceWindow;             }
+  Void    setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void  setReconstructed(Bool x) { m_isReconstructed = x;    }
   Bool  isReconstructed()        { return m_isReconstructed; }
 #endif
-
 #if AUXILIARY_PICTURES
+  ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
   Void convertToMonochrome();
 #endif
+#endif //SVC_EXTENSION
 
-  // Set border extension flag
-  Void  setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
 };// END CLASS DEFINITION TComPicYuv
 
 void calcChecksum(TComPicYuv& pic, UChar digest[3][16]);

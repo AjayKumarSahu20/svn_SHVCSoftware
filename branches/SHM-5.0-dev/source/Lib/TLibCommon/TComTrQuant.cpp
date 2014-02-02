@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1081,7 +1081,7 @@ Void TComTrQuant::xQuant( TComDataCU* pcCU,
 
     UInt uiLog2TrSize = g_aucConvertToBit[ iWidth ] + 2;
     Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
-    assert(scalingListType < 6);
+    assert(scalingListType < SCALING_LIST_NUM);
     Int *piQuantCoeff = 0;
     piQuantCoeff = getQuantCoeff(scalingListType,m_cQP.m_iRem,uiLog2TrSize-2);
 
@@ -1320,7 +1320,7 @@ Void TComTrQuant::invRecurTransformNxN( TComDataCU* pcCU, UInt uiAbsPartIdx, Tex
     }
     Pel* pResi = rpcResidual + uiAddr;
     Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTxt];
-    assert(scalingListType < 6);
+    assert(scalingListType < SCALING_LIST_NUM);
     invtransformNxN( pcCU->getCUTransquantBypass(uiAbsPartIdx), eTxt, REG_DCT, pResi, uiStride, rpcCoeff, uiWidth, uiHeight, scalingListType, pcCU->getTransformSkip(uiAbsPartIdx, eTxt) );
   }
   else
@@ -1521,7 +1521,7 @@ Void TComTrQuant::xRateDistOptQuant                 ( TComDataCU*               
   const UInt uiLog2BlkSize       = g_aucConvertToBit[ uiWidth ] + 2;
   const UInt uiMaxNumCoeff       = uiWidth * uiHeight;
   Int scalingListType = (pcCU->isIntra(uiAbsPartIdx) ? 0 : 3) + g_eTTable[(Int)eTType];
-  assert(scalingListType < 6);
+  assert(scalingListType < SCALING_LIST_NUM);
   
   Int iQBits = QUANT_SHIFT + m_cQP.m_iPer + iTransformShift;                   // Right shift of non-RDOQ quantizer;  level = (coeff*uiQ + offset)>>q_bits
   Double *pdErrScaleOrg = getErrScaleCoeff(scalingListType,uiLog2TrSize-2,m_cQP.m_iRem);
