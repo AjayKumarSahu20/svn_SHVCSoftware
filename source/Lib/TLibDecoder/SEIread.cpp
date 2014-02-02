@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,14 +92,18 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
+  case SEI::SOP_DESCRIPTION:
+    fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
+    break;
+  case SEI::SCALABLE_NESTING:
+    fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
+    break;
+#if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   case SEI::LAYERS_NOT_PRESENT:
     fprintf( g_hTrace, "=========== Layers Present SEI message ===========\n");
     break;
 #endif
-  case SEI::SOP_DESCRIPTION:
-    fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
-    break;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
     fprintf( g_hTrace, "=========== Inter Layer Constrained Tile Sets SEI message ===========\n");
@@ -110,9 +114,7 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
       fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
       break;
 #endif
-  case SEI::SCALABLE_NESTING:
-    fprintf( g_hTrace, "=========== Scalable Nesting SEI message ===========\n");
-    break;
+#endif //SVC_EXTENSION
   default:
     fprintf( g_hTrace, "=========== Unknown SEI message ===========\n");
     break;
@@ -258,6 +260,18 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
+    case SEI::SOP_DESCRIPTION:
+      sei = new SEISOPDescription;
+      xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
+      break;
+    case SEI::SCALABLE_NESTING:
+      sei = new SEIScalableNesting;
+#if LAYERS_NOT_PRESENT_SEI
+      xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, vps, sps);
+#else
+      xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
+#endif
+#if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
     case SEI::LAYERS_NOT_PRESENT:
       if (!vps)
@@ -271,10 +285,6 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       }
       break;
 #endif
-    case SEI::SOP_DESCRIPTION:
-      sei = new SEISOPDescription;
-      xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
-      break;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     case SEI::INTER_LAYER_CONSTRAINED_TILE_SETS:
       sei = new SEIInterLayerConstrainedTileSets;
@@ -287,13 +297,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei);
      break;
 #endif
-    case SEI::SCALABLE_NESTING:
-      sei = new SEIScalableNesting;
-#if LAYERS_NOT_PRESENT_SEI
-      xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, vps, sps);
-#else
-      xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
-#endif
+#endif //SVC_EXTENSION
       break;
     default:
       for (UInt i = 0; i < payloadSize; i++)
@@ -498,18 +502,18 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payload
   READ_UVLC( code, "bp_seq_parameter_set_id" );                         sei.m_bpSeqParameterSetId     = code;
   if( !pHRD->getSubPicCpbParamsPresentFlag() )
   {
-    READ_FLAG( code, "rap_cpb_params_present_flag" );                   sei.m_rapCpbParamsPresentFlag = code;
+    READ_FLAG( code, "irap_cpb_params_present_flag" );                   sei.m_rapCpbParamsPresentFlag = code;
+  }
+  if( sei.m_rapCpbParamsPresentFlag )
+  {
+    READ_CODE( pHRD->getCpbRemovalDelayLengthMinus1() + 1, code, "cpb_delay_offset" );      sei.m_cpbDelayOffset = code;
+    READ_CODE( pHRD->getDpbOutputDelayLengthMinus1()  + 1, code, "dpb_delay_offset" );      sei.m_dpbDelayOffset = code;
   }
   //read splicing flag and cpb_removal_delay_delta
   READ_FLAG( code, "concatenation_flag"); 
   sei.m_concatenationFlag = code;
   READ_CODE( ( pHRD->getCpbRemovalDelayLengthMinus1() + 1 ), code, "au_cpb_removal_delay_delta_minus1" );
   sei.m_auCpbRemovalDelayDelta = code + 1;
-  if( sei.m_rapCpbParamsPresentFlag )
-  {
-    READ_CODE( pHRD->getCpbRemovalDelayLengthMinus1() + 1, code, "cpb_delay_offset" );      sei.m_cpbDelayOffset = code;
-    READ_CODE( pHRD->getDpbOutputDelayLengthMinus1()  + 1, code, "dpb_delay_offset" );      sei.m_dpbDelayOffset = code;
-  }
   for( nalOrVcl = 0; nalOrVcl < 2; nalOrVcl ++ )
   {
     if( ( ( nalOrVcl == 0 ) && ( pHRD->getNalHrdParametersPresentFlag() ) ) ||
@@ -751,27 +755,6 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
   xParseByteAlign();
 }
 
-#if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xParseSEILayersNotPresent(SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps)
-{
-  UInt uiCode;
-  UInt i = 0;
-
-  READ_UVLC( uiCode,           "lp_sei_active_vps_id" ); sei.m_activeVpsId = uiCode;
-  assert(vps->getVPSId() == sei.m_activeVpsId);
-  sei.m_vpsMaxLayers = vps->getMaxLayers();
-  for (; i < sei.m_vpsMaxLayers; i++)
-  {
-    READ_FLAG( uiCode,         "layer_not_present_flag"   ); sei.m_layerNotPresentFlag[i] = uiCode ? true : false;
-  }
-  for (; i < MAX_LAYERS; i++)
-  {
-    sei.m_layerNotPresentFlag[i] = false;
-  }
-  xParseByteAlign();
-}
-#endif
-
 Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize)
 {
   Int iCode;
@@ -796,67 +779,6 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
   xParseByteAlign();
 }
 
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize)
-{
-  UInt uiCode;
-
-  READ_FLAG( uiCode, "il_all_tiles_exact_sample_value_match_flag"   ); sei.m_ilAllTilesExactSampleValueMatchFlag = uiCode;
-  READ_FLAG( uiCode, "il_one_tile_per_tile_set_flag"                ); sei.m_ilOneTilePerTileSetFlag = uiCode;
-  if( !sei.m_ilOneTilePerTileSetFlag )
-  {
-    READ_UVLC( uiCode, "il_num_sets_in_message_minus1"                ); sei.m_ilNumSetsInMessageMinus1 = uiCode;
-    if( sei.m_ilNumSetsInMessageMinus1 )
-    {
-      READ_FLAG( uiCode, "skipped_tile_set_present_flag"                ); sei.m_skippedTileSetPresentFlag = uiCode;
-    }
-    else
-    {
-      sei.m_skippedTileSetPresentFlag = false;
-    }
-    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 - (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
-    for( UInt i = 0; i < numSignificantSets; i++ )
-    {
-      READ_UVLC( uiCode, "ilcts_id"                                     ); sei.m_ilctsId[i] = uiCode;
-      READ_UVLC( uiCode, "il_num_tile_rects_in_set_minus1"              ) ;sei.m_ilNumTileRectsInSetMinus1[i] = uiCode;
-      for( UInt j = 0; j <= sei.m_ilNumTileRectsInSetMinus1[i]; j++ )
-      {
-        READ_UVLC( uiCode, "il_top_left_tile_index"                       ); sei.m_ilTopLeftTileIndex[i][j] = uiCode;
-        READ_UVLC( uiCode, "il_bottom_right_tile_index"                   ); sei.m_ilBottomRightTileIndex[i][j] = uiCode;
-      }
-      READ_CODE( 2, uiCode, "ilc_idc"                                   ); sei.m_ilcIdc[i] = uiCode;
-      if( sei.m_ilAllTilesExactSampleValueMatchFlag )
-      {
-        READ_FLAG( uiCode, "il_exact_sample_value_match_flag"             ); sei.m_ilExactSampleValueMatchFlag[i] = uiCode;
-      }
-    }
-  }
-  else
-  {
-    READ_CODE( 2, uiCode, "all_tiles_ilc_idc"                         ); sei.m_allTilesIlcIdc = uiCode;
-  }
-
-  xParseByteAlign();
-}
-#endif
-#if SUB_BITSTREAM_PROPERTY_SEI
-Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
-{
-  UInt uiCode;
-  READ_CODE( 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
-  READ_UVLC(    uiCode, "num_additional_sub_streams_minus1" );  sei.m_numAdditionalSubStreams = uiCode + 1;
-
-  for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
-  {
-    READ_CODE(  2, uiCode, "sub_bitstream_mode[i]"           ); sei.m_subBitstreamMode[i] = uiCode;
-    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  ); sei.m_outputLayerSetIdxToVps[i] = uiCode;
-    READ_CODE(  3, uiCode, "highest_sub_layer_id[i]"         ); sei.m_highestSublayerId[i] = uiCode;
-    READ_CODE( 16, uiCode, "avg_bit_rate[i]"                 ); sei.m_avgBitRate[i] = uiCode;
-    READ_CODE( 16, uiCode, "max_bit_rate[i]"                 ); sei.m_maxBitRate[i] = uiCode;
-  }
-  xParseByteAlign();
-}
-#endif
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
 #else
@@ -924,4 +846,89 @@ Void SEIReader::xParseByteAlign()
     READ_FLAG( code, "bit_equal_to_zero" );         assert( code == 0 );
   }
 }
+
+#if SVC_EXTENSION
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xParseSEILayersNotPresent(SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps)
+{
+  UInt uiCode;
+  UInt i = 0;
+
+  READ_UVLC( uiCode,           "lp_sei_active_vps_id" ); sei.m_activeVpsId = uiCode;
+  assert(vps->getVPSId() == sei.m_activeVpsId);
+  sei.m_vpsMaxLayers = vps->getMaxLayers();
+  for (; i < sei.m_vpsMaxLayers; i++)
+  {
+    READ_FLAG( uiCode,         "layer_not_present_flag"   ); sei.m_layerNotPresentFlag[i] = uiCode ? true : false;
+  }
+  for (; i < MAX_LAYERS; i++)
+  {
+    sei.m_layerNotPresentFlag[i] = false;
+  }
+  xParseByteAlign();
+}
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize)
+{
+  UInt uiCode;
+
+  READ_FLAG( uiCode, "il_all_tiles_exact_sample_value_match_flag"   ); sei.m_ilAllTilesExactSampleValueMatchFlag = uiCode;
+  READ_FLAG( uiCode, "il_one_tile_per_tile_set_flag"                ); sei.m_ilOneTilePerTileSetFlag = uiCode;
+  if( !sei.m_ilOneTilePerTileSetFlag )
+  {
+    READ_UVLC( uiCode, "il_num_sets_in_message_minus1"                ); sei.m_ilNumSetsInMessageMinus1 = uiCode;
+    if( sei.m_ilNumSetsInMessageMinus1 )
+    {
+      READ_FLAG( uiCode, "skipped_tile_set_present_flag"                ); sei.m_skippedTileSetPresentFlag = uiCode;
+    }
+    else
+    {
+      sei.m_skippedTileSetPresentFlag = false;
+    }
+    UInt numSignificantSets = sei.m_ilNumSetsInMessageMinus1 - (sei.m_skippedTileSetPresentFlag ? 1 : 0) + 1;
+    for( UInt i = 0; i < numSignificantSets; i++ )
+    {
+      READ_UVLC( uiCode, "ilcts_id"                                     ); sei.m_ilctsId[i] = uiCode;
+      READ_UVLC( uiCode, "il_num_tile_rects_in_set_minus1"              ) ;sei.m_ilNumTileRectsInSetMinus1[i] = uiCode;
+      for( UInt j = 0; j <= sei.m_ilNumTileRectsInSetMinus1[i]; j++ )
+      {
+        READ_UVLC( uiCode, "il_top_left_tile_index"                       ); sei.m_ilTopLeftTileIndex[i][j] = uiCode;
+        READ_UVLC( uiCode, "il_bottom_right_tile_index"                   ); sei.m_ilBottomRightTileIndex[i][j] = uiCode;
+      }
+      READ_CODE( 2, uiCode, "ilc_idc"                                   ); sei.m_ilcIdc[i] = uiCode;
+      if( sei.m_ilAllTilesExactSampleValueMatchFlag )
+      {
+        READ_FLAG( uiCode, "il_exact_sample_value_match_flag"             ); sei.m_ilExactSampleValueMatchFlag[i] = uiCode;
+      }
+    }
+  }
+  else
+  {
+    READ_CODE( 2, uiCode, "all_tiles_ilc_idc"                         ); sei.m_allTilesIlcIdc = uiCode;
+  }
+
+  xParseByteAlign();
+}
+#endif
+#if SUB_BITSTREAM_PROPERTY_SEI
+Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
+{
+  UInt uiCode;
+  READ_CODE( 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
+  READ_UVLC(    uiCode, "num_additional_sub_streams_minus1" );  sei.m_numAdditionalSubStreams = uiCode + 1;
+
+  for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
+  {
+    READ_CODE(  2, uiCode, "sub_bitstream_mode[i]"           ); sei.m_subBitstreamMode[i] = uiCode;
+    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  ); sei.m_outputLayerSetIdxToVps[i] = uiCode;
+    READ_CODE(  3, uiCode, "highest_sub_layer_id[i]"         ); sei.m_highestSublayerId[i] = uiCode;
+    READ_CODE( 16, uiCode, "avg_bit_rate[i]"                 ); sei.m_avgBitRate[i] = uiCode;
+    READ_CODE( 16, uiCode, "max_bit_rate[i]"                 ); sei.m_maxBitRate[i] = uiCode;
+  }
+  xParseByteAlign();
+}
+#endif
+#endif //SVC_EXTENSION
+
 //! \}

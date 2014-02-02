@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -85,16 +85,7 @@ Void destroyROM()
 // ====================================================================================================================
 // Data structure related table & variable
 // ====================================================================================================================
-#if LAYER_CTB
-UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
-UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
-UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
-UInt g_auiLayerAddCUDepth[MAX_LAYERS];
-UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
-#endif
+
 UInt g_uiMaxCUWidth  = MAX_CU_SIZE;
 UInt g_uiMaxCUHeight = MAX_CU_SIZE;
 UInt g_uiMaxCUDepth  = MAX_CU_DEPTH;
@@ -105,11 +96,6 @@ UInt g_auiRasterToPelX  [ MAX_NUM_SPU_W*MAX_NUM_SPU_W ] = { 0, };
 UInt g_auiRasterToPelY  [ MAX_NUM_SPU_W*MAX_NUM_SPU_W ] = { 0, };
 
 UInt g_auiPUOffset[8] = { 0, 8, 4, 4, 2, 10, 1, 5};
-
-#if FAST_INTRA_SHVC
-UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; 
-UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
-#endif
 
 Void initZscanToRaster ( Int iMaxDepth, Int iDepth, UInt uiStartVal, UInt*& rpuiCurrIdx )
 {
@@ -320,16 +306,7 @@ Int  g_bitDepthC = 8;
 
 UInt g_uiPCMBitDepthLuma     = 8;    // PCM bit-depth
 UInt g_uiPCMBitDepthChroma   = 8;    // PCM bit-depth
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-Int  g_bitDepthYLayer[MAX_LAYERS];
-Int  g_bitDepthCLayer[MAX_LAYERS];
 
-UInt g_uiPCMBitDepthLumaDec[MAX_LAYERS];    // PCM bit-depth
-UInt g_uiPCMBitDepthChromaDec[MAX_LAYERS];    // PCM bit-depth
-#endif
-#if O0194_WEIGHTED_PREDICTION_CGS
-void * g_refWeightACDCParam; // type=wpACDCParam
-#endif
 // ====================================================================================================================
 // Misc.
 // ====================================================================================================================
@@ -527,6 +504,20 @@ UInt g_scalingListNum[SCALING_LIST_SIZE_NUM]={6,6,6,2};
 Int  g_eTTable[4] = {0,3,1,2};
 
 #if SVC_EXTENSION
+#if FAST_INTRA_SHVC
+UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; 
+UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
+#endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+Int  g_bitDepthYLayer[MAX_LAYERS];
+Int  g_bitDepthCLayer[MAX_LAYERS];
+
+UInt g_uiPCMBitDepthLumaDec[MAX_LAYERS];    // PCM bit-depth
+UInt g_uiPCMBitDepthChromaDec[MAX_LAYERS];    // PCM bit-depth
+#endif
+#if O0194_WEIGHTED_PREDICTION_CGS
+void * g_refWeightACDCParam; // type=wpACDCParam
+#endif
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
 
@@ -570,6 +561,16 @@ std::string NaluToStr( NalUnitType nalu )
     return "     ";
   };
 }
+#if LAYER_CTB
+UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
+UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
+UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
+UInt g_auiLayerAddCUDepth[MAX_LAYERS];
+UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
+UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 #endif
+#endif //SVC_EXTENSION
 
 //! \}

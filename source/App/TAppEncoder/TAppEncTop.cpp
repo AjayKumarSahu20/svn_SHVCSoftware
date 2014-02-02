@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -345,23 +345,14 @@ Void TAppEncTop::xInitLibCfg()
 #if ADAPTIVE_QP_SELECTION
     m_acTEncTop[layer].setUseAdaptQpSelect             ( m_bUseAdaptQpSelect   );
 #endif
-
-    Int lowestQP;
-    lowestQP =  - 6*(g_bitDepthY - 8); // XXX: check
-
-    if ((m_iMaxDeltaQP == 0 ) && (m_acLayerCfg[layer].getIntQP() == lowestQP) && (m_useLossless == true))
-    {
-      m_bUseAdaptiveQP = false;
-    }
+    
     m_acTEncTop[layer].setUseAdaptiveQP                ( m_bUseAdaptiveQP  );
     m_acTEncTop[layer].setQPAdaptationRange            ( m_iQPAdaptationRange );
 
-    //====== Tool list ========
-    m_acTEncTop[layer].setUseSBACRD                    ( m_bUseSBACRD   );
+    //====== Tool list ========    
     m_acTEncTop[layer].setDeltaQpRD                    ( m_uiDeltaQpRD  );
     m_acTEncTop[layer].setUseASR                       ( m_bUseASR      );
-    m_acTEncTop[layer].setUseHADME                     ( m_bUseHADME    );
-    m_acTEncTop[layer].setUseLossless                  ( m_useLossless );
+    m_acTEncTop[layer].setUseHADME                     ( m_bUseHADME    );    
     m_acTEncTop[layer].setdQPs                         ( m_acLayerCfg[layer].getdQPs() );
     m_acTEncTop[layer].setUseRDOQ                      ( m_useRDOQ     );
     m_acTEncTop[layer].setUseRDOQTS                    ( m_useRDOQTS   );
@@ -443,9 +434,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
     m_acTEncTop[layer].setSaoLcuBoundary (m_saoLcuBoundary);
-#if !HM_CLEANUP_SAO
-    m_acTEncTop[layer].setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
-#endif
     m_acTEncTop[layer].setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
     m_acTEncTop[layer].setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -539,7 +527,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
 #endif
     m_acTEncTop[layer].setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
-    m_acTEncTop[layer].setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
+    m_acTEncTop[layer].setCUTransquantBypassFlagForceValue(m_CUTransquantBypassFlagForce);
     m_acTEncTop[layer].setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
     m_acTEncTop[layer].setUseStrongIntraSmoothing( m_useStrongIntraSmoothing );
     m_acTEncTop[layer].setActiveParameterSetsSEIEnabled ( m_activeParameterSetsSEIEnabled );
@@ -679,22 +667,13 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseAdaptQpSelect             ( m_bUseAdaptQpSelect   );
 #endif
 
-  Int lowestQP;
-  lowestQP =  - 6*(g_bitDepthY - 8); // XXX: check
-
-  if ((m_iMaxDeltaQP == 0 ) && (m_iQP == lowestQP) && (m_useLossless == true))
-  {
-    m_bUseAdaptiveQP = false;
-  }
   m_cTEncTop.setUseAdaptiveQP                ( m_bUseAdaptiveQP  );
   m_cTEncTop.setQPAdaptationRange            ( m_iQPAdaptationRange );
 
   //====== Tool list ========
-  m_cTEncTop.setUseSBACRD                    ( m_bUseSBACRD   );
   m_cTEncTop.setDeltaQpRD                    ( m_uiDeltaQpRD  );
   m_cTEncTop.setUseASR                       ( m_bUseASR      );
   m_cTEncTop.setUseHADME                     ( m_bUseHADME    );
-  m_cTEncTop.setUseLossless                  ( m_useLossless );
   m_cTEncTop.setdQPs                         ( m_aidQP        );
   m_cTEncTop.setUseRDOQ                      ( m_useRDOQ     );
   m_cTEncTop.setUseRDOQTS                    ( m_useRDOQTS   );
@@ -757,9 +736,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
   m_cTEncTop.setSaoLcuBoundary (m_saoLcuBoundary);
-#if !HM_CLEANUP_SAO
-  m_cTEncTop.setSaoLcuBasedOptimization (m_saoLcuBasedOptimization);
-#endif
   m_cTEncTop.setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
   m_cTEncTop.setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
 
@@ -835,7 +811,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setInitialQP           ( m_RCInitialQP );
   m_cTEncTop.setForceIntraQP        ( m_RCForceIntraQP );
   m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
-  m_cTEncTop.setCUTransquantBypassFlagValue(m_CUTransquantBypassFlagValue);
+  m_cTEncTop.setCUTransquantBypassFlagForceValue(m_CUTransquantBypassFlagForce);
   m_cTEncTop.setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
   m_cTEncTop.setUseStrongIntraSmoothing( m_useStrongIntraSmoothing );
   m_cTEncTop.setActiveParameterSetsSEIEnabled ( m_activeParameterSetsSEIEnabled );

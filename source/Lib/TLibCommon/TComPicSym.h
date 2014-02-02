@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,17 +104,16 @@ private:
   TComTile**    m_apcTComTile;
   UInt*         m_puiCUOrderMap;       //the map of LCU raster scan address relative to LCU encoding order 
   UInt*         m_puiTileIdxMap;       //the map of the tile index relative to LCU raster scan address 
+  UInt*         m_puiInverseCUOrderMap;
+
+  SAOBlkParam *m_saoBlkParams;
+
+#if SVC_EXTENSION
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Int*          m_piTileSetIdxMap;     //the map of the tile set index relative to LCU raster scan address
   UChar*        m_pucTileSetType;
   Bool*         m_pbSkippedTileSetFlag;
 #endif
-  UInt*         m_puiInverseCUOrderMap;
-
-#if HM_CLEANUP_SAO
-  SAOBlkParam *m_saoBlkParams;
-#else
-  SAOParam *m_saoParam;
 #endif
 
 public:
@@ -129,17 +128,6 @@ public:
   UInt        getMinCUHeight()          { return m_uiMinCUHeight;               }
   UInt        getNumberOfCUsInFrame()   { return m_uiNumCUsInFrame;  }
   TComDataCU*&  getCU( UInt uiCUAddr )  { return m_apcTComDataCU[uiCUAddr];     }
-  
-#if LAYER_CTB
-  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
-  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
-#endif
-
-#if AVC_SYNTAX
-  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
-  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
-  UInt        getMaxDepth()             { return m_uhTotalDepth;               }
-#endif
   
   Void        setSlice(TComSlice* p, UInt i) { m_apcTComSlice[i] = p;           }
   UInt        getNumAllocatedSlice()    { return m_uiNumAllocatedSlice;         }
@@ -157,6 +145,26 @@ public:
   Void         setCUOrderMap( Int encCUOrder, Int cuAddr )           { *(m_puiCUOrderMap + encCUOrder) = cuAddr; }
   UInt         getCUOrderMap( Int encCUOrder )                       { return *(m_puiCUOrderMap + (encCUOrder>=m_uiNumCUsInFrame ? m_uiNumCUsInFrame : encCUOrder)); }
   UInt         getTileIdxMap( Int i )                                { return *(m_puiTileIdxMap + i); }
+  Void         setInverseCUOrderMap( Int cuAddr, Int encCUOrder )    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
+  UInt         getInverseCUOrderMap( Int cuAddr )                    { return *(m_puiInverseCUOrderMap + (cuAddr>=m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
+  UInt         getPicSCUEncOrder( UInt SCUAddr );
+  UInt         getPicSCUAddr( UInt SCUEncOrder );
+  Void         xCreateTComTileArray();
+  Void         xInitTiles();
+  UInt         xCalculateNxtCUAddr( UInt uiCurrCUAddr );
+  SAOBlkParam* getSAOBlkParam() { return m_saoBlkParams;}
+  Void deriveLoopFilterBoundaryAvailibility(Int ctu, Bool& isLeftAvail,Bool& isRightAvail,Bool& isAboveAvail,Bool& isBelowAvail,Bool& isAboveLeftAvail,Bool& isAboveRightAvail,Bool& isBelowLeftAvail,Bool& isBelowRightAvail);
+
+#if SVC_EXTENSION
+#if LAYER_CTB
+  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
+  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
+#endif
+#if AVC_SYNTAX
+  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
+  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
+  UInt        getMaxDepth()             { return m_uhTotalDepth;               }
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void         setTileSetIdxMap( Int i, Int tileSetIdx, UChar setType, Bool skipFlag )
   {
@@ -168,22 +176,7 @@ public:
   UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i); }
   Bool         getSkippedTileSetFlag( Int i )                        { return *(m_pbSkippedTileSetFlag + i); }
 #endif
-  Void         setInverseCUOrderMap( Int cuAddr, Int encCUOrder )    { *(m_puiInverseCUOrderMap + cuAddr) = encCUOrder; }
-  UInt         getInverseCUOrderMap( Int cuAddr )                    { return *(m_puiInverseCUOrderMap + (cuAddr>=m_uiNumCUsInFrame ? m_uiNumCUsInFrame : cuAddr)); }
-  UInt         getPicSCUEncOrder( UInt SCUAddr );
-  UInt         getPicSCUAddr( UInt SCUEncOrder );
-  Void         xCreateTComTileArray();
-  Void         xInitTiles();
-  UInt         xCalculateNxtCUAddr( UInt uiCurrCUAddr );
-#if HM_CLEANUP_SAO
-  SAOBlkParam* getSAOBlkParam() { return m_saoBlkParams;}
-  Void deriveLoopFilterBoundaryAvailibility(Int ctu, Bool& isLeftAvail,Bool& isRightAvail,Bool& isAboveAvail,Bool& isBelowAvail,Bool& isAboveLeftAvail,Bool& isAboveRightAvail,Bool& isBelowLeftAvail,Bool& isBelowRightAvail);
-#else
-  Void allocSaoParam(TComSampleAdaptiveOffset *sao);
-  SAOParam *getSaoParam() { return m_saoParam; }
-#endif
-
-
+#endif //SVC_EXTENSION
 };// END CLASS DEFINITION TComPicSym
 
 //! \}

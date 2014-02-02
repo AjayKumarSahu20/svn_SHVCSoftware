@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -578,6 +578,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     }
   }
   WRITE_FLAG( pcSPS->getTMVPFlagsPresent()  ? 1 : 0,           "sps_temporal_mvp_enable_flag" );
+
   WRITE_FLAG( pcSPS->getUseStrongIntraSmoothing(),             "sps_strong_intra_smoothing_enable_flag" );
 
   WRITE_FLAG( pcSPS->getVuiParametersPresentFlag(),             "vui_parameters_present_flag" );
@@ -1732,20 +1733,9 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       {
          WRITE_FLAG( pcSlice->getSaoEnabledFlag(), "slice_sao_luma_flag" );         
 #if AUXILIARY_PICTURES
-         if (pcSlice->getChromaFormatIdc() != CHROMA_400)
-         {
+         if (pcSlice->getChromaFormatIdc() != CHROMA_400)         
 #endif
-#if HM_CLEANUP_SAO
          WRITE_FLAG( pcSlice->getSaoEnabledFlagChroma(), "slice_sao_chroma_flag" );
-#else
-         {
-           SAOParam *saoParam = pcSlice->getPic()->getPicSym()->getSaoParam();
-           WRITE_FLAG( saoParam->bSaoFlag[1], "slice_sao_chroma_flag" );
-         }
-#endif
-#if AUXILIARY_PICTURES
-         }
-#endif
       }
     }   
 
