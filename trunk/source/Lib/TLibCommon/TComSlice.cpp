@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -142,9 +142,7 @@ TComSlice::TComSlice()
   resetWpScaling();
   initWpAcDcParam();
   m_saoEnabledFlag = false;
-#if HM_CLEANUP_SAO
   m_saoEnabledFlagChroma = false;
-#endif
 }
 
 TComSlice::~TComSlice()
@@ -986,7 +984,9 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
 #endif
 {
   TComPic*                 rpcPic;
+#if !FIX1172
   setAssociatedIRAPPOC(pocCRA);
+#endif
   Int pocCurr = getPOC(); 
 
   if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -1276,6 +1276,12 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
   while ( iterPic != rcListPic.end())
   {
     rpcPic = *(iterPic++);
+#if BUGFIX_INTRAPERIOD
+    if(!rpcPic->getReconMark())
+    {
+      continue;
+    }
+#endif
     if (rpcPic->getPOC() == this->getPOC())
     {
       continue;
@@ -1372,6 +1378,8 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
     }
   }
 }
+
+
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
@@ -2175,23 +2183,23 @@ TComVPS::~TComVPS()
 Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
-  setNumLayersInIdList(0, 1);
-  setLayerSetLayerIdList(0, 0, 0);
-
+  m_numLayerInIdList[0] = 1;
+  m_layerSetLayerIdList[0][0] = 0;
+  
   // For other layers
   Int i, m, n;
-  for( i = 1; i <= getNumLayerSets() - 1; i++ )
+  for( i = 1; i <= m_numLayerSets - 1; i++ )
   {
     n = 0;
-    for( m = 0; m <= this->getMaxLayerId(); m++)
+    for( m = 0; m <= m_maxLayerId; m++)
     {
-      if(this->getLayerIdIncludedFlag(i, m))
+      if( m_layerIdIncludedFlag[i][m] )
       {
-        setLayerSetLayerIdList(i, n, m);
+        m_layerSetLayerIdList[i][n] = m;
         n++;
       }
     }
-    setNumLayersInIdList(i, n);
+    m_numLayerInIdList[i] = n;
   }
 }
 #endif
@@ -2504,7 +2512,6 @@ TComSPS::TComSPS()
 , m_bitDepthC                 (  8)
 , m_qpBDOffsetY               (  0)
 , m_qpBDOffsetC               (  0)
-, m_useLossless               (false)
 , m_uiPCMBitDepthLuma         (  8)
 , m_uiPCMBitDepthChroma       (  8)
 , m_bPCMFilterDisableFlag     (false)

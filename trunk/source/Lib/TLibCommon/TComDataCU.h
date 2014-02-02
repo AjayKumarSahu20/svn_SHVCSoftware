@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,47 +53,6 @@
 
 //! \ingroup TLibCommon
 //! \{
-
-#if !HM_CLEANUP_SAO
-// ====================================================================================================================
-// Non-deblocking in-loop filter processing block data structure
-// ====================================================================================================================
-
-/// Non-deblocking filter processing block border tag
-enum NDBFBlockBorderTag
-{
-  SGU_L = 0,
-  SGU_R,
-  SGU_T,
-  SGU_B,
-  SGU_TL,
-  SGU_TR,
-  SGU_BL,
-  SGU_BR,
-  NUM_SGU_BORDER
-};
-
-/// Non-deblocking filter processing block information
-struct NDBFBlockInfo
-{
-  Int   tileID;   //!< tile ID
-  Int   sliceID;  //!< slice ID
-  UInt  startSU;  //!< starting SU z-scan address in LCU
-  UInt  endSU;    //!< ending SU z-scan address in LCU
-  UInt  widthSU;  //!< number of SUs in width
-  UInt  heightSU; //!< number of SUs in height
-  UInt  posX;     //!< top-left X coordinate in picture
-  UInt  posY;     //!< top-left Y coordinate in picture
-  UInt  width;    //!< number of pixels in width
-  UInt  height;   //!< number of pixels in height
-  Bool  isBorderAvailable[NUM_SGU_BORDER];  //!< the border availabilities
-  Bool  allBordersAvailable;
-
-  NDBFBlockInfo():tileID(0), sliceID(0), startSU(0), endSU(0) {} //!< constructor
-  const NDBFBlockInfo& operator= (const NDBFBlockInfo& src);  //!< "=" operator
-};
-#endif
-
 
 // ====================================================================================================================
 // Class definition
@@ -160,10 +119,6 @@ private:
   Pel*          m_pcIPCMSampleCb;     ///< PCM sample buffer (Cb)
   Pel*          m_pcIPCMSampleCr;     ///< PCM sample buffer (Cr)
 
-#if !HM_CLEANUP_SAO
-  Int*          m_piSliceSUMap;       ///< pointer of slice ID map
-  std::vector<NDBFBlockInfo> m_vNDFBlock;
-#endif
   // -------------------------------------------------------------------------------------------------------------------
   // neighbour access variables
   // -------------------------------------------------------------------------------------------------------------------
@@ -240,7 +195,7 @@ public:
   Void          destroy               ();
   
   Void          initCU                ( TComPic* pcPic, UInt uiCUAddr );
-  Void          initEstData           ( UInt uiDepth, Int qp );
+  Void          initEstData           ( UInt uiDepth, Int qp, Bool bTransquantBypass );
   Void          initSubCU             ( TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, Int qp );
   Void          setOutsideCUPart      ( UInt uiAbsPartIdx, UInt uiDepth );
 
@@ -391,22 +346,6 @@ public:
   Void          setIPCMFlag           (UInt uiIdx, Bool b )     { m_pbIPCMFlag[uiIdx] = b;           }
   Void          setIPCMFlagSubParts   (Bool bIpcmFlag, UInt uiAbsPartIdx, UInt uiDepth);
 
-#if !HM_CLEANUP_SAO
-  /// get slice ID for SU
-  Int           getSUSliceID          (UInt uiIdx)              {return m_piSliceSUMap[uiIdx];      } 
-
-  /// get the pointer of slice ID map
-  Int*          getSliceSUMap         ()                        {return m_piSliceSUMap;             }
-
-  /// set the pointer of slice ID map
-  Void          setSliceSUMap         (Int *pi)                 {m_piSliceSUMap = pi;               }
-
-  std::vector<NDBFBlockInfo>* getNDBFilterBlocks()      {return &m_vNDFBlock;}
-  Void setNDBFilterBlockBorderAvailability(UInt numLCUInPicWidth, UInt numLCUInPicHeight, UInt numSUInLCUWidth, UInt numSUInLCUHeight, UInt picWidth, UInt picHeight
-                                          ,std::vector<Bool>& LFCrossSliceBoundary
-                                          ,Bool bTopTileBoundary, Bool bDownTileBoundary, Bool bLeftTileBoundary, Bool bRightTileBoundary
-                                          ,Bool bIndependentTileBoundaryEnabled );
-#endif
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for accessing partition information
   // -------------------------------------------------------------------------------------------------------------------
@@ -441,11 +380,6 @@ public:
   Void          getMvPredAboveRight   ( TComMv&     rcMvPred )   { rcMvPred = m_cMvFieldC.getMv(); }
   
   Void          compressMV            ();
-  
-#if SVC_EXTENSION
-  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
-  UInt          getLayerId ()               { return m_layerId; }
-#endif
   
   // -------------------------------------------------------------------------------------------------------------------
   // utility functions for neighbouring information
@@ -489,6 +423,7 @@ public:
   Void          deriveLeftRightTopIdxGeneral  ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLT, UInt& ruiPartIdxRT );
   Void          deriveLeftBottomIdxGeneral    ( UInt uiAbsPartIdx, UInt uiPartIdx, UInt& ruiPartIdxLB );
   
+  
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for modes
   // -------------------------------------------------------------------------------------------------------------------
@@ -496,9 +431,6 @@ public:
   Bool          isIntra   ( UInt uiPartIdx )  { return m_pePredMode[ uiPartIdx ] == MODE_INTRA; }
   Bool          isSkipped ( UInt uiPartIdx );                                                     ///< SKIP (no residual)
   Bool          isBipredRestriction( UInt puIdx );
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
-#endif
 
   // -------------------------------------------------------------------------------------------------------------------
   // member functions for symbol prediction (most probable / mode conversion)
@@ -524,14 +456,21 @@ public:
   UInt&         getTotalBins            ()                            { return m_uiTotalBins;                                                                                                  }
 
 #if SVC_EXTENSION
+  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
+  UInt          getLayerId ()               { return m_layerId; }
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
+#endif
 #if FAST_INTRA_SHVC
   Int           reduceSetOfIntraModes              (  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
 #endif
-
 #if REF_IDX_ME_ZEROMV
   Bool xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
   Bool xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx);
 #endif
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
+  Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -545,11 +484,6 @@ public:
 
   UInt          getCoefScanIdx(UInt uiAbsPartIdx, UInt uiWidth, Bool bIsLuma, Bool bIsIntra);
 
-#if SVC_EXTENSION
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping = 0 );
-  Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
-#endif
 };
 
 namespace RasterAddress

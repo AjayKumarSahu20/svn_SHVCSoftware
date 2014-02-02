@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -220,7 +220,20 @@ public:
 #else
   Void      xInitILRP(TComSPS *pcSPS);
 #endif
+#if OUTPUT_LAYER_SET_INDEX
+  CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
+  Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
+  Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
 #endif
+#if SCALINGLIST_INFERRING
+  ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
+#endif
+#if RESOLUTION_BASED_DPB
+  Void setSubDpbIdx(Int idx)    { m_subDpbIdx = idx; }
+  Int  getSubDpbIdx()           { return m_subDpbIdx; }
+  Void assignSubDpbs(TComVPS *vps);
+#endif
+#endif //SVC_EXTENSION
 #if AVC_SYNTAX || SYNTAX_OUTPUT
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
@@ -254,20 +267,6 @@ protected:
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
   Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
   Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
-#endif
-public:
-#if OUTPUT_LAYER_SET_INDEX
-  CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
-  Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
-  Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
-#endif
-#if SCALINGLIST_INFERRING
-  ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
-#endif
-#if RESOLUTION_BASED_DPB
-  Void setSubDpbIdx(Int idx)    { m_subDpbIdx = idx; }
-  Int  getSubDpbIdx()           { return m_subDpbIdx; }
-  Void assignSubDpbs(TComVPS *vps);
 #endif
 };// END CLASS DEFINITION TDecTop
 
