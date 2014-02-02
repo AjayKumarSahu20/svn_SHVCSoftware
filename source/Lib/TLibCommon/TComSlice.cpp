@@ -2188,15 +2188,14 @@ Void TComVPS::deriveLayerIdListVariables()
   
   // For other layers
   Int i, m, n;
-  for( i = 1; i <= m_numLayerSets - 1; i++ )
+  for( i = 1; i < m_numLayerSets; i++ )
   {
     n = 0;
     for( m = 0; m <= m_maxLayerId; m++)
     {
       if( m_layerIdIncludedFlag[i][m] )
       {
-        m_layerSetLayerIdList[i][n] = m;
-        n++;
+        m_layerSetLayerIdList[i][n++] = m;
       }
     }
     m_numLayerInIdList[i] = n;

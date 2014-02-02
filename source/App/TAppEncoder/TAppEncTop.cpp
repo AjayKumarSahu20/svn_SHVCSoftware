@@ -976,7 +976,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
       g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
 #endif
-      vps->setLayerIdIncludedFlag(true, setId, layerId);
+      if( layerId <= setId )
+      {
+        vps->setLayerIdIncludedFlag(true, setId, layerId);
+      }
+      else
+      {
+        vps->setLayerIdIncludedFlag(false, setId, layerId);
+      }
     }
   }
 #if VPS_EXTN_MASK_AND_DIM_INFO
