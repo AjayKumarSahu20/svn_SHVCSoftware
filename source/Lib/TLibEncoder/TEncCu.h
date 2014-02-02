@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,10 +88,6 @@ private:
   TComBitCounter*         m_pcBitCounter;
   TComRdCost*             m_pcRdCost;
   
-#if SVC_EXTENSION
-  TEncTop**               m_ppcTEncTop;
-#endif
-  
   TEncEntropy*            m_pcEntropyCoder;
   TEncCavlc*              m_pcCavlcCoder;
   TEncSbac*               m_pcSbacCoder;
@@ -100,12 +96,14 @@ private:
   // SBAC RD
   TEncSbac***             m_pppcRDSbacCoder;
   TEncSbac*               m_pcRDGoOnSbacCoder;
-  Bool                    m_bUseSBACRD;
   TEncRateCtrl*           m_pcRateCtrl;
 
+#if SVC_EXTENSION
+  TEncTop**               m_ppcTEncTop;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool                    m_disableILP;
 #endif
+#endif //SVC_EXTENSION
 public:
   /// copy parameters from encoder class
   Void  init                ( TEncTop* pcEncTop );
@@ -147,9 +145,6 @@ protected:
   Void  xCheckRDCostInter   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
 #endif
   Void  xCheckRDCostIntra   ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, PartSize ePartSize  );
-#if ENCODER_FAST_MODE
-  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
-#endif
   Void  xCheckDQP           ( TComDataCU*  pcCU );
   
   Void  xCheckIntraPCM      ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU                      );
@@ -166,11 +161,6 @@ protected:
   Int  xTuCollectARLStats(TCoeff* rpcCoeff, Int* rpcArlCoeff, Int NumCoeffInCU, Double* cSum, UInt* numSamples );
 #endif
 
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  Bool xCheckTileSetConstraint( TComDataCU*& rpcCU );
-  Void xVerifyTileSetConstraint( TComDataCU*& rpcCU );
-#endif
-
 #if AMP_ENC_SPEEDUP 
 #if AMP_MRG
   Void deriveTestModeAMP (TComDataCU *&rpcBestCU, PartSize eParentPartSize, Bool &bTestAMP_Hor, Bool &bTestAMP_Ver, Bool &bTestMergeAMP_Hor, Bool &bTestMergeAMP_Ver);
@@ -179,11 +169,18 @@ protected:
 #endif
 #endif
 
+  Void  xFillPCMBuffer     ( TComDataCU*& pCU, TComYuv* pOrgYuv ); 
+
 #if SVC_EXTENSION
   TEncTop*   getLayerEnc(UInt LayerId)  {return m_ppcTEncTop[LayerId]; }
-#endif 
-
-  Void  xFillPCMBuffer     ( TComDataCU*& pCU, TComYuv* pOrgYuv ); 
+#if ENCODER_FAST_MODE
+  Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool xCheckTileSetConstraint( TComDataCU*& rpcCU );
+  Void xVerifyTileSetConstraint( TComDataCU*& rpcCU );
+#endif
+#endif //SVC_EXTENSION
 };
 
 //! \}

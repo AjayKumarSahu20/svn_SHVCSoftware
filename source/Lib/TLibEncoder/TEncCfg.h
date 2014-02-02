@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,28 +90,6 @@ struct GOPEntry
 };
 
 std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry);     //input
-
-#if REPN_FORMAT_IN_VPS
-struct RepFormatCfg
-{
-  Int   m_chromaFormatIdc;
-  Bool  m_separateColourPlaneFlag;
-  Int   m_picWidthInLumaSamples;
-  Int   m_picHeightInLumaSamples;
-  Int   m_bitDepthLuma;
-  Int   m_bitDepthChroma;
-  RepFormatCfg()
-    : m_chromaFormatIdc         (CHROMA_420)
-    , m_separateColourPlaneFlag (0)
-    , m_picWidthInLumaSamples   (352)
-    , m_picHeightInLumaSamples  (288)
-    , m_bitDepthLuma            (8)
-    , m_bitDepthChroma          (8)
-  {}
-};
-std::istringstream &operator>>(std::istringstream &in, RepFormatCfg &repFormatCfg);
-#endif
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -161,22 +139,6 @@ protected:
 
   Int       m_maxTempLayer;                      ///< Max temporal layer
   Bool m_useAMP;
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  Int       m_numDirectRefLayers;
-  Int       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
-
-  Int       m_numActiveRefLayers;
-  Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
-  Int       m_numSamplePredRefLayers;
-  Int       m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
-  Int       m_numMotionPredRefLayers;
-  Int       m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
-  Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
-  Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
-#endif
-#if N0120_MAX_TID_REF_CFG
-  Int       m_maxTidIlRefPicsPlus1;
-#endif 
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
@@ -193,11 +155,6 @@ protected:
   Bool      m_bUseSAO;
   Int       m_maxNumOffsetsPerPic;
   Bool      m_saoLcuBoundary;
-#if !HM_CLEANUP_SAO
-  Bool      m_saoLcuBasedOptimization;
-#endif
-  //====== Lossless ========
-  Bool      m_useLossless;
   //====== Motion search ========
   Int       m_iFastSearch;                      //  0:Full search  1:Diamond  2:PMVFAST
   Int       m_iSearchRange;                     //  0:Full frame
@@ -209,9 +166,6 @@ protected:
 
   Int       m_chromaCbQpOffset;                 //  Chroma Cb QP Offset (0:default)
   Int       m_chromaCrQpOffset;                 //  Chroma Cr Qp Offset (0:default)
-#if AUXILIARY_PICTURES
-  ChromaFormat m_chromaFormatIDC;
-#endif
 
 #if ADAPTIVE_QP_SELECTION
   Bool      m_bUseAdaptQpSelect;
@@ -221,7 +175,6 @@ protected:
   Int       m_iQPAdaptationRange;
   
   //====== Tool list ========
-  Bool      m_bUseSBACRD;
   Bool      m_bUseASR;
   Bool      m_bUseHADME;
   Bool      m_useRDOQ;
@@ -232,9 +185,6 @@ protected:
   Bool      m_useFastDecisionForMerge;
   Bool      m_bUseCbfFastMode;
   Bool      m_useEarlySkipDetection;
-#if FAST_INTRA_SHVC
-  Bool      m_useFastIntraScalable;
-#endif
   Bool      m_useTransformSkip;
   Bool      m_useTransformSkipFast;
   Int*      m_aidQP;
@@ -304,19 +254,8 @@ protected:
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
   Int       m_decodingUnitInfoSEIEnabled;
-#if LAYERS_NOT_PRESENT_SEI
-  Int       m_layersNotPresentSEIEnabled;
-#endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
-  UInt      m_ilNumSetsInMessage;
-  Bool      m_skippedTileSetPresentFlag;
-  UInt      m_topLeftTileIndex[1024];
-  UInt      m_bottomRightTileIndex[1024];
-  UInt      m_ilcIdc[1024];
-#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -334,9 +273,9 @@ protected:
   Int       m_RCInitialQP;
   Bool      m_RCForceIntraQP;
   Bool      m_TransquantBypassEnableFlag;                     ///< transquant_bypass_enable_flag setting in PPS.
-  Bool      m_CUTransquantBypassFlagValue;                    ///< if transquant_bypass_enable_flag, the fixed value to use for the per-CU cu_transquant_bypass_flag.
+  Bool      m_CUTransquantBypassFlagForce;                    ///< if transquant_bypass_enable_flag, then, if true, all CU transquant bypass flags will be set to true.
 #if SVC_EXTENSION
-  static TComVPS                    m_cVPS;
+  static TComVPS             m_cVPS;
 #else
   TComVPS                    m_cVPS;
 #endif
@@ -390,7 +329,40 @@ protected:
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       m_numDirectRefLayers;
+  Int       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
+
+  Int       m_numActiveRefLayers;
+  Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_numSamplePredRefLayers;
+  Int       m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_numMotionPredRefLayers;
+  Int       m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+#if N0120_MAX_TID_REF_CFG
+  Int       m_maxTidIlRefPicsPlus1;
+#endif 
+#if AUXILIARY_PICTURES
+  ChromaFormat m_chromaFormatIDC;
+#endif
+#if FAST_INTRA_SHVC
+  Bool      m_useFastIntraScalable;
+#endif
+#if LAYERS_NOT_PRESENT_SEI
+  Int       m_layersNotPresentSEIEnabled;
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Bool      m_interLayerConstrainedTileSetsSEIEnabled;
+  UInt      m_ilNumSetsInMessage;
+  Bool      m_skippedTileSetPresentFlag;
+  UInt      m_topLeftTileIndex[1024];
+  UInt      m_bottomRightTileIndex[1024];
+  UInt      m_ilcIdc[1024];
+#endif
+#endif //SVC_EXTENSION
 
 public:
   TEncCfg()
@@ -436,41 +408,6 @@ public:
 
   Bool      getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
   Void      setMaxTempLayer                 ( Int maxTempLayer )            { m_maxTempLayer = maxTempLayer;      }
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
-  Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
-
-  Int       getRefLayerId                   (Int i)                         { return m_refLayerId[i];           }
-  Void      setRefLayerId                   (Int i, Int refLayerId)         { m_refLayerId[i] = refLayerId;     }
-
-  Int       getNumActiveRefLayers           ()                              { return m_numActiveRefLayers;      }
-  Void      setNumActiveRefLayers           (Int num)                       { m_numActiveRefLayers = num;       }
-
-  Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
-  Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
-
-  Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
-  Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
-
-  Int       getSamplePredRefLayerId         (Int i)                         { return m_samplePredRefLayerId[i];       }
-  Void      setSamplePredRefLayerId         (Int i, Int refLayerId)         { m_samplePredRefLayerId[i] = refLayerId; }
-
-  Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
-  Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
-
-  Int       getMotionPredRefLayerId         (Int i)                         { return m_motionPredRefLayerId[i];       }
-  Void      setMotionPredRefLayerId         (Int i, Int refLayerId)         { m_motionPredRefLayerId[i] = refLayerId; }
-
-  Bool      getSamplePredEnabledFlag        (Int i)                         { return m_samplePredEnabledFlag[i];  }
-  Void      setSamplePredEnabledFlag        (Int i,Bool flag)               { m_samplePredEnabledFlag[i] = flag;  }
-
-  Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
-  Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
-#endif
-#if N0120_MAX_TID_REF_CFG
-  Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
-  Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
-#endif 
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
   Void      setQuadtreeTULog2MinSize        ( UInt  u )      { m_uiQuadtreeTULog2MinSize = u; }
@@ -507,8 +444,6 @@ public:
   Void      setUseAdaptiveQP                ( Bool  b )      { m_bUseAdaptiveQP = b; }
   Void      setQPAdaptationRange            ( Int   i )      { m_iQPAdaptationRange = i; }
   
-  //====== Lossless ========
-  Void      setUseLossless                  (Bool    b  )        { m_useLossless = b;  }
   //====== Sequence ========
   Int       getFrameRate                    ()      { return  m_iFrameRate; }
   UInt      getFrameSkip                    ()      { return  m_FrameSkip; }
@@ -551,11 +486,8 @@ public:
   Int       getMaxCuDQPDepth                ()      { return  m_iMaxCuDQPDepth; }
   Bool      getUseAdaptiveQP                ()      { return  m_bUseAdaptiveQP; }
   Int       getQPAdaptationRange            ()      { return  m_iQPAdaptationRange; }
-  //====== Lossless ========
-  Bool      getUseLossless                  ()      { return  m_useLossless;  }
   
   //==== Tool list ========
-  Void      setUseSBACRD                    ( Bool  b )     { m_bUseSBACRD  = b; }
   Void      setUseASR                       ( Bool  b )     { m_bUseASR     = b; }
   Void      setUseHADME                     ( Bool  b )     { m_bUseHADME   = b; }
   Void      setUseRDOQ                      ( Bool  b )     { m_useRDOQ    = b; }
@@ -566,9 +498,6 @@ public:
   Void      setUseFastDecisionForMerge      ( Bool  b )     { m_useFastDecisionForMerge = b; }
   Void      setUseCbfFastMode            ( Bool  b )     { m_bUseCbfFastMode = b; }
   Void      setUseEarlySkipDetection        ( Bool  b )     { m_useEarlySkipDetection = b; }
-#if FAST_INTRA_SHVC
-  Void      setUseFastIntraScalable         ( Bool  b )     { m_useFastIntraScalable = b; }
-#endif
   Void      setUseConstrainedIntraPred      ( Bool  b )     { m_bUseConstrainedIntraPred = b; }
   Void      setPCMInputBitDepthFlag         ( Bool  b )     { m_bPCMInputBitDepthFlag = b; }
   Void      setPCMFilterDisableFlag         ( Bool  b )     {  m_bPCMFilterDisableFlag = b; }
@@ -577,7 +506,6 @@ public:
   Void      setPCMLog2MinSize               ( UInt u )     { m_uiPCMLog2MinSize = u;      }
   Void      setdQPs                         ( Int*  p )     { m_aidQP       = p; }
   Void      setDeltaQpRD                    ( UInt  u )     {m_uiDeltaQpRD  = u; }
-  Bool      getUseSBACRD                    ()      { return m_bUseSBACRD;  }
   Bool      getUseASR                       ()      { return m_bUseASR;     }
   Bool      getUseHADME                     ()      { return m_bUseHADME;   }
   Bool      getUseRDOQ                      ()      { return m_useRDOQ;    }
@@ -588,9 +516,6 @@ public:
   Bool      getUseFastDecisionForMerge      ()      { return m_useFastDecisionForMerge; }
   Bool      getUseCbfFastMode           ()      { return m_bUseCbfFastMode; }
   Bool      getUseEarlySkipDetection        ()      { return m_useEarlySkipDetection; }
-#if FAST_INTRA_SHVC
-  Bool      getUseFastIntraScalable         ()      { return m_useFastIntraScalable; }
-#endif
   Bool      getUseConstrainedIntraPred      ()      { return m_bUseConstrainedIntraPred; }
   Bool      getPCMInputBitDepthFlag         ()      { return m_bPCMInputBitDepthFlag;   }
   Bool      getPCMFilterDisableFlag         ()      { return m_bPCMFilterDisableFlag;   } 
@@ -624,10 +549,6 @@ public:
   Int   getMaxNumOffsetsPerPic                   ()                    { return m_maxNumOffsetsPerPic; }
   Void  setSaoLcuBoundary              (Bool val)      { m_saoLcuBoundary = val; }
   Bool  getSaoLcuBoundary              ()              { return m_saoLcuBoundary; }
-#if !HM_CLEANUP_SAO
-  Void  setSaoLcuBasedOptimization               (Bool val)            { m_saoLcuBasedOptimization = val; }
-  Bool  getSaoLcuBasedOptimization               ()                    { return m_saoLcuBasedOptimization; }
-#endif
   Void  setLFCrossTileBoundaryFlag               ( Bool   val  )       { m_loopFilterAcrossTilesEnabledFlag = val; }
   Bool  getLFCrossTileBoundaryFlag               ()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
   Void  setUniformSpacingIdr           ( Int i )           { m_iUniformSpacingIdr = i; }
@@ -747,46 +668,10 @@ public:
   Int   getGradualDecodingRefreshInfoEnabled()           { return m_gradualDecodingRefreshInfoEnabled; }
   Void  setDecodingUnitInfoSEIEnabled(Int b)                { m_decodingUnitInfoSEIEnabled = b;    }
   Int   getDecodingUnitInfoSEIEnabled()                     { return m_decodingUnitInfoSEIEnabled; }
-#if LAYERS_NOT_PRESENT_SEI
-  Void  setLayersNotPresentSEIEnabled(Int b)             { m_layersNotPresentSEIEnabled = b; }
-  Int   getLayersNotPresentSEIEnabled()                  { return m_layersNotPresentSEIEnabled; }
-#endif
   Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
   Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  Void  setInterLayerConstrainedTileSetsSEIEnabled(Bool b) { m_interLayerConstrainedTileSetsSEIEnabled = b; }
-  Bool  getInterLayerConstrainedTileSetsSEIEnabled()       { return m_interLayerConstrainedTileSetsSEIEnabled; }
-  Void  setIlNumSetsInMessage(UInt b)                      { m_ilNumSetsInMessage = b; }
-  Int   getIlNumSetsInMessage()                            { return m_ilNumSetsInMessage; }
-  Void  setSkippedTileSetPresentFlag(Bool b)               { m_skippedTileSetPresentFlag = b; }
-  Bool  getSkippedTileSetPresentFlag()                     { return m_skippedTileSetPresentFlag; }
-  Void  setTopLeftTileIndex(UInt *b)
-  {
-    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
-    {
-      m_topLeftTileIndex[i] = b[i];
-    }
-  }
-  UInt  getTopLeftTileIndex(UInt b)                        { return m_topLeftTileIndex[b]; }
-  Void  setBottomRightTileIndex(UInt *b)
-  {
-    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
-    {
-      m_bottomRightTileIndex[i] = b[i];
-    }
-  }
-  UInt  getBottomRightTileIndex(UInt b)                    { return m_bottomRightTileIndex[b]; }
-  Void  setIlcIdc(UInt *b)
-  {
-    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
-    {
-      m_ilcIdc[i] = b[i];
-    }
-  }
-  UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
-#endif
   Void      setUseWP               ( Bool b )    { m_useWeightedPred   = b;    }
   Void      setWPBiPred            ( Bool b )    { m_useWeightedBiPred = b;    }
   Bool      getUseWP               ()            { return m_useWeightedPred;   }
@@ -819,8 +704,8 @@ public:
   Void      setForceIntraQP        ( Bool b )      { m_RCForceIntraQP = b;           }
   Bool      getTransquantBypassEnableFlag()           { return m_TransquantBypassEnableFlag; }
   Void      setTransquantBypassEnableFlag(Bool flag)  { m_TransquantBypassEnableFlag = flag; }
-  Bool      getCUTransquantBypassFlagValue()          { return m_CUTransquantBypassFlagValue; }
-  Void      setCUTransquantBypassFlagValue(Bool flag) { m_CUTransquantBypassFlagValue = flag; }
+  Bool      getCUTransquantBypassFlagForceValue()          { return m_CUTransquantBypassFlagForce; }
+  Void      setCUTransquantBypassFlagForceValue(Bool flag) { m_CUTransquantBypassFlagForce = flag; }
   Void setVPS(TComVPS *p) { m_cVPS = *p; }
   TComVPS *getVPS() { return &m_cVPS; }
   Void      setUseRecalculateQPAccordingToLambda ( Bool b ) { m_recalculateQPAccordingToLambda = b;    }
@@ -933,8 +818,106 @@ public:
   Bool      getCrossLayerBLAFlag() const { return m_crossLayerBLAFlag; }
   Void      setCrossLayerBLAFlag(Bool b) { m_crossLayerBLAFlag = b;    }
 #endif
+#if FAST_INTRA_SHVC
+  Bool      getUseFastIntraScalable         ()      { return m_useFastIntraScalable; }
+  Void      setUseFastIntraScalable         ( Bool  b )     { m_useFastIntraScalable = b; }
+#endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
+  Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
+
+  Int       getRefLayerId                   (Int i)                         { return m_refLayerId[i];           }
+  Void      setRefLayerId                   (Int i, Int refLayerId)         { m_refLayerId[i] = refLayerId;     }
+
+  Int       getNumActiveRefLayers           ()                              { return m_numActiveRefLayers;      }
+  Void      setNumActiveRefLayers           (Int num)                       { m_numActiveRefLayers = num;       }
+
+  Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
+  Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
+
+  Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
+  Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
+
+  Int       getSamplePredRefLayerId         (Int i)                         { return m_samplePredRefLayerId[i];       }
+  Void      setSamplePredRefLayerId         (Int i, Int refLayerId)         { m_samplePredRefLayerId[i] = refLayerId; }
+
+  Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
+  Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
+
+  Int       getMotionPredRefLayerId         (Int i)                         { return m_motionPredRefLayerId[i];       }
+  Void      setMotionPredRefLayerId         (Int i, Int refLayerId)         { m_motionPredRefLayerId[i] = refLayerId; }
+
+  Bool      getSamplePredEnabledFlag        (Int i)                         { return m_samplePredEnabledFlag[i];  }
+  Void      setSamplePredEnabledFlag        (Int i,Bool flag)               { m_samplePredEnabledFlag[i] = flag;  }
+
+  Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
+  Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
+#endif
+#if N0120_MAX_TID_REF_CFG
+  Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
+  Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
+#endif 
+#if LAYERS_NOT_PRESENT_SEI
+  Void  setLayersNotPresentSEIEnabled(Int b)             { m_layersNotPresentSEIEnabled = b; }
+  Int   getLayersNotPresentSEIEnabled()                  { return m_layersNotPresentSEIEnabled; }
+#endif
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+  Void  setInterLayerConstrainedTileSetsSEIEnabled(Bool b) { m_interLayerConstrainedTileSetsSEIEnabled = b; }
+  Bool  getInterLayerConstrainedTileSetsSEIEnabled()       { return m_interLayerConstrainedTileSetsSEIEnabled; }
+  Void  setIlNumSetsInMessage(UInt b)                      { m_ilNumSetsInMessage = b; }
+  Int   getIlNumSetsInMessage()                            { return m_ilNumSetsInMessage; }
+  Void  setSkippedTileSetPresentFlag(Bool b)               { m_skippedTileSetPresentFlag = b; }
+  Bool  getSkippedTileSetPresentFlag()                     { return m_skippedTileSetPresentFlag; }
+  Void  setTopLeftTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_topLeftTileIndex[i] = b[i];
+    }
+  }
+  UInt  getTopLeftTileIndex(UInt b)                        { return m_topLeftTileIndex[b]; }
+  Void  setBottomRightTileIndex(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_bottomRightTileIndex[i] = b[i];
+    }
+  }
+  UInt  getBottomRightTileIndex(UInt b)                    { return m_bottomRightTileIndex[b]; }
+  Void  setIlcIdc(UInt *b)
+  {
+    for (UInt i = 0; i < m_ilNumSetsInMessage; i++)
+    {
+      m_ilcIdc[i] = b[i];
+    }
+  }
+  UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
 #endif
 };
+
+#if SVC_EXTENSION
+#if REPN_FORMAT_IN_VPS
+struct RepFormatCfg
+{
+  Int   m_chromaFormatIdc;
+  Bool  m_separateColourPlaneFlag;
+  Int   m_picWidthInLumaSamples;
+  Int   m_picHeightInLumaSamples;
+  Int   m_bitDepthLuma;
+  Int   m_bitDepthChroma;
+  RepFormatCfg()
+    : m_chromaFormatIdc         (CHROMA_420)
+    , m_separateColourPlaneFlag (0)
+    , m_picWidthInLumaSamples   (352)
+    , m_picHeightInLumaSamples  (288)
+    , m_bitDepthLuma            (8)
+    , m_bitDepthChroma          (8)
+  {}
+};
+std::istringstream &operator>>(std::istringstream &in, RepFormatCfg &repFormatCfg);
+#endif
+#endif //SVC_EXTENSION
 
 //! \}
 

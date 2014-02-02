@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,9 @@
 #define CHANGE_NUMSUBDPB_IDX             1      ///< Change index of NumSubDpb from output layer set to layer set, to be more aligned with the Spec
 #define RESOLUTION_BASED_DPB             1      ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
 #define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
+#if SUB_BITSTREAM_PROPERTY_SEI
+#define MAX_SUB_STREAMS                  1024
+#endif
 #define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
@@ -111,6 +114,9 @@
 #define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
 #if VPS_EXTNS
 #define VPS_EXTN_MASK_AND_DIM_INFO       1      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
+#if VPS_EXTN_MASK_AND_DIM_INFO
+#define MAX_VPS_NUM_SCALABILITY_TYPES    16
+#endif
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
@@ -221,6 +227,15 @@
 #define NO_CLRAS_OUTPUT_FLAG             1
 #define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header
 
+#if VIEW_ID_RELATED_SIGNALING
+/// scalability types
+enum ScalabilityType
+{
+  VIEW_ORDER_INDEX  = 1,
+  SCALABILITY_ID = 2,
+};
+#endif
+
 #else
 #define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
@@ -228,32 +243,24 @@
 
 //! \ingroup TLibCommon
 //! \{
-
-#define HM_CLEANUP_SAO                  1  ///< JCTVC-N0230, 1) three SAO encoder-only software bugfixes. 2) new SAO implementation without picture quadtree, fine-grained slice legacies, and other redundancies.
-#if HM_CLEANUP_SAO  
+#define BUGFIX_INTRAPERIOD 1
 #define SAO_ENCODE_ALLOW_USE_PREDEBLOCK 1
-#endif
+
+#define FIX1172 1 ///< fix ticket #1172
 
 #define MAX_NUM_PICS_IN_SOP           1024
 
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#if VPS_EXTN_MASK_AND_DIM_INFO
-#define MAX_VPS_NUM_SCALABILITY_TYPES             16
-#endif
-#define MAX_VPS_OP_LAYER_SETS_PLUS1               3
 #if VPS_RENAME
+#define MAX_VPS_OP_LAYER_SETS_PLUS1               3
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
 #define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                1
 #define MAX_VPS_OP_SETS_PLUS1                     1024
 #define MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1  1
-#endif
-
-#if SUB_BITSTREAM_PROPERTY_SEI
-#define MAX_SUB_STREAMS                           1024
 #endif
 
 #define MAX_CPB_CNT                     32  ///< Upper bound of (cpb_cnt_minus1 + 1)
@@ -276,9 +283,6 @@
   
 #define C1FLAG_NUMBER               8 // maximum number of largerThan1 flag coded in one chunk :  16 in HM5
 #define C2FLAG_NUMBER               1 // maximum number of largerThan2 flag coded in one chunk:  16 in HM5 
-#if !HM_CLEANUP_SAO
-#define REMOVE_SAO_LCU_ENC_CONSTRAINTS_3 1  ///< disable the encoder constraint that conditionally disable SAO for chroma for entire slice in interleaved mode
-#endif
 #define SAO_ENCODING_CHOICE              1  ///< I0184: picture early termination
 #if SAO_ENCODING_CHOICE
 #define SAO_ENCODING_RATE                0.75
@@ -382,7 +386,11 @@
 typedef       void                Void;
 typedef       bool                Bool;
 
+#ifdef __arm__
+typedef       signed char         Char;
+#else
 typedef       char                Char;
+#endif
 typedef       unsigned char       UChar;
 typedef       short               Short;
 typedef       unsigned short      UShort;
@@ -431,7 +439,6 @@ enum SliceConstraint
   FIXED_NUMBER_OF_TILES  = 3,          ///< slices / slice segments span an integer number of tiles
 };
 
-#if HM_CLEANUP_SAO
 enum SAOComponentIdx
 {
   SAO_Y =0,
@@ -522,80 +529,6 @@ private:
 
 };
 
-
-#else
-#define NUM_DOWN_PART 4
-
-enum SAOTypeLen
-{
-  SAO_EO_LEN    = 4, 
-  SAO_BO_LEN    = 4,
-  SAO_MAX_BO_CLASSES = 32
-};
-
-enum SAOType
-{
-  SAO_EO_0 = 0, 
-  SAO_EO_1,
-  SAO_EO_2, 
-  SAO_EO_3,
-  SAO_BO,
-  MAX_NUM_SAO_TYPE
-};
-
-typedef struct _SaoQTPart
-{
-  Int         iBestType;
-  Int         iLength;
-  Int         subTypeIdx ;                 ///< indicates EO class or BO band position
-  Int         iOffset[4];
-  Int         StartCUX;
-  Int         StartCUY;
-  Int         EndCUX;
-  Int         EndCUY;
-
-  Int         PartIdx;
-  Int         PartLevel;
-  Int         PartCol;
-  Int         PartRow;
-
-  Int         DownPartsIdx[NUM_DOWN_PART];
-  Int         UpPartIdx;
-
-  Bool        bSplit;
-
-  //---- encoder only start -----//
-  Bool        bProcessed;
-  Double      dMinCost;
-  Int64       iMinDist;
-  Int         iMinRate;
-  //---- encoder only end -----//
-} SAOQTPart;
-
-typedef struct _SaoLcuParam
-{
-  Bool       mergeUpFlag;
-  Bool       mergeLeftFlag;
-  Int        typeIdx;
-  Int        subTypeIdx;                  ///< indicates EO class or BO band position
-  Int        offset[4];
-  Int        partIdx;
-  Int        partIdxTmp;
-  Int        length;
-} SaoLcuParam;
-
-struct SAOParam
-{
-  Bool       bSaoFlag[2];
-  SAOQTPart* psSaoPart[3];
-  Int        iMaxSplitLevel;
-  Bool         oneUnitFlag[3];
-  SaoLcuParam* saoLcuParam[3];
-  Int          numCuInHeight;
-  Int          numCuInWidth;
-  ~SAOParam();
-};
-#endif
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {
@@ -787,14 +720,6 @@ namespace Level
     LEVEL6_2 = 186,
   };
 }
-#if VIEW_ID_RELATED_SIGNALING
-/// scalability types
-  enum ScalabilityType
-  {
-    VIEW_ORDER_INDEX  = 1,
-    SCALABILITY_ID = 2,
-  };
-#endif
 //! \}
 
 #endif

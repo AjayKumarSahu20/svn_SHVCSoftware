@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -403,9 +403,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
 #endif
 #endif
-#if !HM_CLEANUP_SAO
-    rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
-#endif
     m_cListPic.pushBack( rpcPic );
     
     return;
@@ -484,9 +481,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
                    conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
 #endif
-#endif
-#if !HM_CLEANUP_SAO
-  rpcPic->getPicSym()->allocSaoParam(&m_cSAO);
 #endif
 }
 
@@ -783,24 +777,12 @@ Void TDecTop::xActivateParameterSets()
   m_cSAO.destroy();
 #if REPN_FORMAT_IN_VPS
 #if AUXILIARY_PICTURES
-#if HM_CLEANUP_SAO
   m_cSAO.create( m_apcSlicePilot->getPicWidthInLumaSamples(), m_apcSlicePilot->getPicHeightInLumaSamples(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth() );
 #else
-  m_cSAO.create( m_apcSlicePilot->getPicWidthInLumaSamples(), m_apcSlicePilot->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight() );
-#endif
-#else
-#if HM_CLEANUP_SAO
   m_cSAO.create( m_apcSlicePilot->getPicWidthInLumaSamples(), m_apcSlicePilot->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth() );
-#else
-  m_cSAO.create( m_apcSlicePilot->getPicWidthInLumaSamples(), m_apcSlicePilot->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight() );
-#endif
 #endif
 #else
-#if HM_CLEANUP_SAO
   m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth() );
-#else
-  m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getMaxCUWidth(), sps->getMaxCUHeight() );
-#endif
 #endif
   m_cLoopFilter.create( sps->getMaxCUDepth() );
 }
@@ -816,10 +798,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 {
   TComPic*&   pcPic         = m_pcPic;
+#if SVC_EXTENSION
 #if NO_CLRAS_OUTPUT_FLAG
   Bool bFirstSliceInSeq;
 #endif
-#if SVC_EXTENSION
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
@@ -830,7 +812,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   assignSubDpbs(m_apcSlicePilot->getVPS());
 #endif
   m_apcSlicePilot->initSlice( nalu.m_layerId );
-#else
+#else //SVC_EXTENSION
   m_apcSlicePilot->initSlice();
 #endif
 
@@ -838,11 +820,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     m_uiSliceIdx     = 0;
   }
-  m_apcSlicePilot->setSliceIdx(m_uiSliceIdx);
-  if (!m_bFirstSliceInPicture)
+  else
   {
     m_apcSlicePilot->copySliceInfo( pcPic->getPicSym()->getSlice(m_uiSliceIdx-1) );
   }
+  m_apcSlicePilot->setSliceIdx(m_uiSliceIdx);
 
   m_apcSlicePilot->setNalUnitType(nalu.m_nalUnitType);
   Bool nonReferenceFlag = (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_N ||
@@ -856,7 +838,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setTLayerInfo(nalu.m_temporalId);
 
 #if SVC_EXTENSION
-  m_apcSlicePilot->setSliceIdx( m_uiSliceIdx ); // it should be removed if HM will reflect it in above
 #if VPS_EXTN_DIRECT_REF_LAYERS
   setRefLayerParams(m_apcSlicePilot->getVPS());
 #endif
@@ -1874,6 +1855,51 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
       return false;
       
+      
+    case NAL_UNIT_RESERVED_VCL_N10:
+    case NAL_UNIT_RESERVED_VCL_R11:
+    case NAL_UNIT_RESERVED_VCL_N12:
+    case NAL_UNIT_RESERVED_VCL_R13:
+    case NAL_UNIT_RESERVED_VCL_N14:
+    case NAL_UNIT_RESERVED_VCL_R15:
+      
+    case NAL_UNIT_RESERVED_IRAP_VCL22:
+    case NAL_UNIT_RESERVED_IRAP_VCL23:
+      
+    case NAL_UNIT_RESERVED_VCL24:
+    case NAL_UNIT_RESERVED_VCL25:
+    case NAL_UNIT_RESERVED_VCL26:
+    case NAL_UNIT_RESERVED_VCL27:
+    case NAL_UNIT_RESERVED_VCL28:
+    case NAL_UNIT_RESERVED_VCL29:
+    case NAL_UNIT_RESERVED_VCL30:
+    case NAL_UNIT_RESERVED_VCL31:
+      
+    case NAL_UNIT_FILLER_DATA:
+    case NAL_UNIT_RESERVED_NVCL41:
+    case NAL_UNIT_RESERVED_NVCL42:
+    case NAL_UNIT_RESERVED_NVCL43:
+    case NAL_UNIT_RESERVED_NVCL44:
+    case NAL_UNIT_RESERVED_NVCL45:
+    case NAL_UNIT_RESERVED_NVCL46:
+    case NAL_UNIT_RESERVED_NVCL47:
+    case NAL_UNIT_UNSPECIFIED_48:
+    case NAL_UNIT_UNSPECIFIED_49:
+    case NAL_UNIT_UNSPECIFIED_50:
+    case NAL_UNIT_UNSPECIFIED_51:
+    case NAL_UNIT_UNSPECIFIED_52:
+    case NAL_UNIT_UNSPECIFIED_53:
+    case NAL_UNIT_UNSPECIFIED_54:
+    case NAL_UNIT_UNSPECIFIED_55:
+    case NAL_UNIT_UNSPECIFIED_56:
+    case NAL_UNIT_UNSPECIFIED_57:
+    case NAL_UNIT_UNSPECIFIED_58:
+    case NAL_UNIT_UNSPECIFIED_59:
+    case NAL_UNIT_UNSPECIFIED_60:
+    case NAL_UNIT_UNSPECIFIED_61:
+    case NAL_UNIT_UNSPECIFIED_62:
+    case NAL_UNIT_UNSPECIFIED_63:
+
     default:
       assert (0);
   }
@@ -1953,6 +1979,7 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
   return false; 
 }
 
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
 TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 {
@@ -1967,7 +1994,6 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
 #endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
-
 Void TDecTop::setRefLayerParams( TComVPS* vps )
 {
   for(UInt layer = 0; layer < m_numLayer; layer++)
@@ -2136,4 +2162,5 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
   }
 }
 #endif
+#endif //SVC_EXTENSION
 //! \}

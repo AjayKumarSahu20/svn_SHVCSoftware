@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,8 +103,7 @@ TAppEncCfg::~TAppEncCfg()
 {
 #if SVC_EXTENSION
   free(m_pBitstreamFile);
-#else
-  free(m_pchBitstreamFile);
+#else  
   if ( m_aidQP )
   {
     delete[] m_aidQP;
@@ -125,6 +124,7 @@ TAppEncCfg::~TAppEncCfg()
     m_targetPivotValue = NULL;
   }
   free(m_pchInputFile);
+  free(m_pchBitstreamFile);
 #endif
 #if !SVC_EXTENSION  
   free(m_pchReconFile);
@@ -625,12 +625,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
 #endif //SVC_EXTENSION
+  ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
+  ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
 
   //Field coding parameters
   ("FieldCoding", m_isField, false, "Signals if it's a field based coding")
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
-  ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
-  ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
+  
   // Profile and level
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
@@ -740,8 +741,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("RDOQ",                          m_useRDOQ,                  true )
   ("RDOQTS",                        m_useRDOQTS,                true )
   ("RDpenalty",                     m_rdPenalty,                0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disbaled  1:RD-penalty  2:maximum RD-penalty")
-  // Entropy coding parameters
-  ("SBACRD",                         m_bUseSBACRD,                      true, "SBAC based RD estimation")
   
   // Deblocking filter parameters
   ("LoopFilterDisable",              m_bLoopFilterDisable,             false )
@@ -758,9 +757,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SAO",                      m_bUseSAO,                   true,  "Enable Sample Adaptive Offset")
   ("MaxNumOffsetsPerPic",      m_maxNumOffsetsPerPic,       2048,  "Max number of SAO offset per picture (Default: 2048)")   
   ("SAOLcuBoundary",           m_saoLcuBoundary,            false, "0: right/bottom LCU boundary areas skipped from SAO parameter estimation, 1: non-deblocked pixels are used for those areas")
-#if !HM_CLEANUP_SAO
-  ("SAOLcuBasedOptimization",  m_saoLcuBasedOptimization,   true,  "0: SAO picture-based optimization, 1: SAO LCU-based optimization ")
-#endif  
   ("SliceMode",                m_sliceMode,                0,     "0: Disable all Recon slice limits, 1: Enforce max # of LCUs, 2: Enforce max # of bytes, 3:specify tiles per dependent slice")
   ("SliceArgument",            m_sliceArgument,            0,     "Depending on SliceMode being:"
                                                                    "\t1: max number of CTUs per slice"
@@ -780,8 +776,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PCMLog2MinSize",           m_uiPCMLog2MinSize,          3u)
   ("PCMInputBitDepthFlag",     m_bPCMInputBitDepthFlag,     true)
   ("PCMFilterDisableFlag",     m_bPCMFilterDisableFlag,    false)
-
-  ("LosslessCuEnabled",        m_useLossless, false)
 
   ("WeightedPredP,-wpP",          m_useWeightedPred,               false,      "Use weighted prediction in P slices")
   ("WeightedPredB,-wpB",          m_useWeightedBiPred,             false,      "Use weighted (bidirectional) prediction in B slices")
@@ -833,7 +827,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 
   ("TransquantBypassEnableFlag", m_TransquantBypassEnableFlag, false, "transquant_bypass_enable_flag indicator in PPS")
-  ("CUTransquantBypassFlagValue", m_CUTransquantBypassFlagValue, false, "Fixed cu_transquant_bypass_flag value, when transquant_bypass_enable_flag is enabled")
+  ("CUTransquantBypassFlagForce", m_CUTransquantBypassFlagForce, false, "Force transquant bypass mode, when transquant_bypass_enable_flag is enabled")
   ("RecalculateQPAccordingToLambda", m_recalculateQPAccordingToLambda, false, "Recalculate QP values according to lambda values. Do not suggest to be enabled in all intra case")
   ("StrongIntraSmoothing,-sis",      m_useStrongIntraSmoothing,           true, "Enable strong intra smoothing for 32x32 blocks")
   ("SEIActiveParameterSets",         m_activeParameterSetsSEIEnabled,          0, "Enable generation of active parameter sets SEI messages")
@@ -1951,7 +1945,6 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
-
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
   {
@@ -1959,7 +1952,7 @@ Void TAppEncCfg::xCheckParameter()
     {
       m_maxTempLayer = m_GOPList[i].m_temporalId+1;
     }
-    xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P', "Slice type must be equal to B or P");
+    xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
   }
   for(Int i=0; i<MAX_TLAYER; i++)
   {
@@ -1972,7 +1965,6 @@ Void TAppEncCfg::xCheckParameter()
     {
       m_maxDecPicBuffering[m_GOPList[i].m_temporalId] = m_GOPList[i].m_numRefPics + 1;
     }
-
     Int highestDecodingNumberWithLowerPOC = 0; 
     for(Int j=0; j<m_iGOPSize; j++)
     {
@@ -2157,7 +2149,7 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
 
-  xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagValue, "CUTransquantBypassFlagValue cannot be 1 when TransquantBypassEnableFlag is 0");
+  xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
 
   xConfirmPara(m_log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
   if (m_framePackingSEIEnabled)
@@ -2439,7 +2431,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("IBD:%d ", g_bitDepthY > m_inputBitDepthY || g_bitDepthC > m_inputBitDepthC);
 #endif
   printf("HAD:%d ", m_bUseHADME           );
-  printf("SRD:%d ", m_bUseSBACRD          );
   printf("RDQ:%d ", m_useRDOQ            );
   printf("RDQTS:%d ", m_useRDOQTS        );
   printf("RDpenalty:%d ", m_rdPenalty  );
@@ -2471,10 +2462,14 @@ Void TAppEncCfg::xPrintParameter()
 #if !LAYER_CTB
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
-#if !HM_CLEANUP_SAO
-  printf("SAOLcuBasedOptimization:%d ", (m_saoLcuBasedOptimization)?(1):(0));
-#endif
-  printf("LosslessCuEnabled:%d ", (m_useLossless)? 1:0 );
+  if (m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce)
+  {
+    printf("TransQuantBypassEnabled: =1 ");
+  }
+  else
+  {
+    printf("TransQuantBypassEnabled:%d ", (m_TransquantBypassEnableFlag)? 1:0 );
+  }
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);

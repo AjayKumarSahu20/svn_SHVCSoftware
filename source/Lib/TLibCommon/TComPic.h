@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,9 +60,6 @@ class TComPic
 {
 private:
   UInt                  m_uiTLayer;               //  Temporal layer
-#if SVC_EXTENSION
-  UInt                  m_layerId;              //  Layer ID
-#endif
   Bool                  m_bUsedByCurr;            //  Used by current picture
   Bool                  m_bIsLongTerm;            //  IS long term picture
   TComPicSym*           m_apcPicSym;              //  Symbol
@@ -74,14 +71,6 @@ private:
   Bool                  m_bReconstructed;
   Bool                  m_bNeededForOutput;
   UInt                  m_uiCurrSliceIdx;         // Index of current slice
-#if !HM_CLEANUP_SAO
-  Int*                  m_pSliceSUMap;
-  Bool*                 m_pbValidSlice;
-  Int                   m_sliceGranularityForNDBFilter;
-  Bool                  m_bIndependentSliceBoundaryForNDBFilter;
-  Bool                  m_bIndependentTileBoundaryForNDBFilter;
-  TComPicYuv*           m_pNDBFilterYuvTmp;    //!< temporary picture buffer when non-cross slice/tile boundary in-loop filtering is enabled
-#endif
   Bool                  m_bCheckLTMSB;
   
   Int                   m_numReorderPics[MAX_TLAYER];
@@ -95,6 +84,7 @@ private:
 
   SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 #if SVC_EXTENSION
+  UInt                  m_layerId;              //  Layer ID
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
 #endif
@@ -124,26 +114,6 @@ public:
   
   UInt          getTLayer()                { return m_uiTLayer;   }
   Void          setTLayer( UInt uiTLayer ) { m_uiTLayer = uiTLayer; }
-#if SVC_EXTENSION
-  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
-  UInt          getLayerId ()               { return m_layerId; }
-  Bool          isSpatialEnhLayer(UInt refLayerIdc)             { return m_bSpatialEnhLayer[refLayerIdc]; }
-  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b) { m_bSpatialEnhLayer[refLayerIdc] = b; }
-  Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
-  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
-#endif
-#if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-  Bool          isILR( UInt currLayerId )   { return ( getIsLongTerm() && m_layerId < currLayerId ); }
-#endif
-
-#if REF_IDX_MFM
-  Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
-  Void          initUpsampledMvField  ();
-#endif
-#if MFM_ENCCONSTRAINT
-  Bool          checkSameRefInfo();
-#endif
-
   Bool          getUsedByCurr()             { return m_bUsedByCurr; }
   Void          setUsedByCurr( Bool bUsed ) { m_bUsedByCurr = bUsed; }
   Bool          getIsLongTerm()             { return m_bIsLongTerm; }
@@ -177,9 +147,6 @@ public:
   UInt          getParPelY(UChar uhPartIdx) { return getParPelX(uhPartIdx); }
   
   Int           getStride()           { return m_apcPicYuv[1]->getStride(); }
-#if AUXILIARY_PICTURES
-  ChromaFormat  getChromaFormat() const { return m_apcPicYuv[1]->getChromaFormat(); }
-#endif
   Int           getCStride()          { return m_apcPicYuv[1]->getCStride(); }
   
   Void          setReconMark (Bool b) { m_bReconstructed = b;     }
@@ -200,22 +167,7 @@ public:
   Window&       getConformanceWindow()  { return m_conformanceWindow; }
   Window&       getDefDisplayWindow()   { return m_defaultDisplayWindow; }
 
-#if HM_CLEANUP_SAO
   Bool          getSAOMergeAvailability(Int currAddr, Int mergeAddr);
-#else
-  Void          createNonDBFilterInfo   (std::vector<Int> sliceStartAddress, Int sliceGranularityDepth
-                                        ,std::vector<Bool>* LFCrossSliceBoundary
-                                        ,Int  numTiles = 1
-                                        ,Bool bNDBFilterCrossTileBoundary = true);
-  Void          createNonDBFilterInfoLCU(Int tileID, Int sliceID, TComDataCU* pcCU, UInt startSU, UInt endSU, Int sliceGranularyDepth, UInt picWidth, UInt picHeight);
-  Void          destroyNonDBFilterInfo();
-
-  Bool          getValidSlice                                  (Int sliceID)  {return m_pbValidSlice[sliceID];}
-  Bool          getIndependentSliceBoundaryForNDBFilter        ()             {return m_bIndependentSliceBoundaryForNDBFilter;}
-  Bool          getIndependentTileBoundaryForNDBFilter         ()             {return m_bIndependentTileBoundaryForNDBFilter; }
-  TComPicYuv*   getYuvPicBufferForIndependentBoundaryProcessing()             {return m_pNDBFilterYuvTmp;}
-  std::vector<TComDataCU*>& getOneSliceCUDataForNDBFilter      (Int sliceID) { return m_vSliceCUDataLink[sliceID];}
-#endif
 
   /* field coding parameters*/
 
@@ -238,6 +190,25 @@ public:
   const SEIMessages& getSEIs() const { return m_SEIs; }
 
 #if SVC_EXTENSION
+  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
+  UInt          getLayerId ()               { return m_layerId; }
+  Bool          isSpatialEnhLayer(UInt refLayerIdc)             { return m_bSpatialEnhLayer[refLayerIdc]; }
+  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b) { m_bSpatialEnhLayer[refLayerIdc] = b; }
+  Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
+  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
+#if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
+  Bool          isILR( UInt currLayerId )   { return ( getIsLongTerm() && m_layerId < currLayerId ); }
+#endif
+#if REF_IDX_MFM
+  Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
+  Void          initUpsampledMvField  ();
+#endif
+#if MFM_ENCCONSTRAINT
+  Bool          checkSameRefInfo();
+#endif
+#if AUXILIARY_PICTURES
+  ChromaFormat  getChromaFormat() const { return m_apcPicYuv[1]->getChromaFormat(); }
+#endif
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
 #if AVC_SYNTAX
   Void readBLSyntax( fstream* filestream, UInt numBytes );

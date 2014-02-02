@@ -3,7 +3,7 @@
  * and contributor rights, including patent rights, and no such rights are
  * granted under this license.  
  *
- * Copyright (c) 2010-2013, ITU/ISO/IEC
+ * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,24 +87,8 @@ public:
   UInt  getNumberOfWrittenBits()                { return  m_pcBitIf->getNumberOfWrittenBits();  }
   UInt  getCoeffCost          ()                { return  m_uiCoeffCost;  }
   Void  codeVPS                 ( TComVPS* pcVPS );
-#if VPS_EXTNS
-  Void  codeVPSExtension        ( TComVPS* pcVPS );
-#endif
-
-#if VPS_VUI
-  Void codeVPSVUI               (TComVPS *vps);
-#endif
-#if REPN_FORMAT_IN_VPS
-  Void  codeRepFormat           ( RepFormat *repFormat );
-#endif
-#if VPS_DPB_SIZE_TABLE
-  Void  codeVpsDpbSizeTable      (TComVPS *vps);
-#endif
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
-#if SPS_EXTENSION
-  Void codeSPSExtension         ( TComSPS* pcSPS );
-#endif
   Void  codePPS                 ( TComPPS* pcPPS );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codePTL                 ( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
@@ -115,15 +99,7 @@ public:
   Void  codeSliceFinish         ();
   
   Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
-#if HM_CLEANUP_SAO
   Void codeSAOBlkParam(SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false){printf("only supported in CABAC"); assert(0); exit(-1);}
-#else
-  Void codeSAOSign       ( UInt code   ) { printf("Not supported\n"); assert (0); }
-  Void codeSaoMaxUvlc    ( UInt   code, UInt maxSymbol ){printf("Not supported\n"); assert (0);}
-  Void codeSaoMerge  ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-  Void codeSaoTypeIdx    ( UInt uiCode ){printf("Not supported\n"); assert (0);}
-  Void codeSaoUflc       ( UInt uiLength, UInt   uiCode ){ assert(uiCode < 32); printf("Not supported\n"); assert (0);}
-#endif
   Void codeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeMergeFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx );
@@ -163,6 +139,22 @@ public:
   Void xCodeScalingList ( TComScalingList* scalingList, UInt sizeId, UInt listId);
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
+
+#if SPS_EXTENSION
+  Void codeSPSExtension         ( TComSPS* pcSPS );
+#if VPS_EXTNS
+  Void  codeVPSExtension        ( TComVPS* pcVPS );
+#endif
+#if VPS_VUI
+  Void codeVPSVUI               (TComVPS *vps);
+#endif
+#if REPN_FORMAT_IN_VPS
+  Void  codeRepFormat           ( RepFormat *repFormat );
+#endif
+#if VPS_DPB_SIZE_TABLE
+  Void  codeVpsDpbSizeTable      (TComVPS *vps);
+#endif
+#endif //SVC_EXTENSION
 
 };
 
