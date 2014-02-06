@@ -1591,7 +1591,11 @@ Void  TEncSbac::loadContexts ( TEncSbac* pScr)
   this->xCopyContextsFrom(pScr);
 }
 
+#if SVC_EXTENSION
+Void TEncSbac::codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal)
+#else
 Void TEncSbac::codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEnabled)
+#endif
 {
   UInt uiSymbol;
   if(!sliceEnabled)
@@ -1638,7 +1642,11 @@ Void TEncSbac::codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEn
 
     for(Int i=0; i< 4; i++)
     {
+#if SVC_EXTENSION
+      codeSaoMaxUvlc((offset[i]<0)?(-offset[i]):(offset[i]),  saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
+#else
       codeSaoMaxUvlc((offset[i]<0)?(-offset[i]):(offset[i]),  g_saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
+#endif
     }
 
 
@@ -1668,6 +1676,9 @@ Void TEncSbac::codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEn
 
 
 Void TEncSbac::codeSAOBlkParam(SAOBlkParam& saoBlkParam
+#if SVC_EXTENSION
+                              , UInt* saoMaxOffsetQVal
+#endif
                               , Bool* sliceEnabled
                               , Bool leftMergeAvail
                               , Bool aboveMergeAvail
@@ -1699,7 +1710,11 @@ Void TEncSbac::codeSAOBlkParam(SAOBlkParam& saoBlkParam
   {
     for(Int compIdx=0; compIdx < NUM_SAO_COMPONENTS; compIdx++)
     {
+#if SVC_EXTENSION
+      codeSAOOffsetParam(compIdx, saoBlkParam[compIdx], sliceEnabled[compIdx], saoMaxOffsetQVal);
+#else
       codeSAOOffsetParam(compIdx, saoBlkParam[compIdx], sliceEnabled[compIdx]);
+#endif
     }
   }
 }

@@ -104,11 +104,11 @@ Void TDecSlice::destroy()
 }
 
 #if SVC_EXTENSION
-Void TDecSlice::init(TDecTop** ppcDecTop,TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
+Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder, UInt* saoMaxOffsetQVal)
 {
   m_pcEntropyDecoder  = pcEntropyDecoder;
   m_pcCuDecoder       = pcCuDecoder;
-  m_ppcTDecTop        = ppcDecTop;
+  m_saoMaxOffsetQVal  = saoMaxOffsetQVal;
 }
 #else
 Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
@@ -346,8 +346,11 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
         {
           aboveMergeAvail = rpcPic->getSAOMergeAvailability(iCUAddr, iCUAddr-uiWidthInLCUs);
         }
-
+#if SVC_EXTENSION
+        pcSbacDecoder->parseSAOBlkParam( saoblkParam, m_saoMaxOffsetQVal, sliceEnabled, leftMergeAvail, aboveMergeAvail);
+#else
         pcSbacDecoder->parseSAOBlkParam( saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail);
+#endif
       }
       else 
       {

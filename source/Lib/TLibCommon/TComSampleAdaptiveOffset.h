@@ -52,7 +52,9 @@
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
+#if !SVC_EXTENSION
 extern UInt g_saoMaxOffsetQVal[NUM_SAO_COMPONENTS]; 
+#endif
 
 class TComSampleAdaptiveOffset
 {
@@ -68,6 +70,9 @@ public:
   Void destroy();
   Void reconstructBlkSAOParams(TComPic* pic, SAOBlkParam* saoBlkParams);
   Void PCMLFDisableProcess (TComPic* pcPic);
+#if SVC_EXTENSION
+  UInt* getSaoMaxOffsetQVal() { return m_saoMaxOffsetQVal; } 
+#endif
 protected:
   Void offsetBlock(Int compIdx, Int typeIdx, Int* offset, Pel* srcBlk, Pel* resBlk, Int srcStride, Int resStride,  Int width, Int height
                   , Bool isLeftAvail, Bool isRightAvail, Bool isAboveAvail, Bool isBelowAvail, Bool isAboveLeftAvail, Bool isAboveRightAvail, Bool isBelowLeftAvail, Bool isBelowRightAvail);
@@ -100,7 +105,9 @@ private:
   Bool m_picSAOEnabled[NUM_SAO_COMPONENTS];
   Int*   m_offsetClipTable[NUM_SAO_COMPONENTS];
   Short* m_signTable;
-
+#if SVC_EXTENSION
+  UInt m_saoMaxOffsetQVal[NUM_SAO_COMPONENTS]; 
+#endif
 };
 
 //! \}
