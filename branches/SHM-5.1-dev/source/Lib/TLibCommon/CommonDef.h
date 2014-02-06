@@ -287,12 +287,14 @@ class CommonDecoderParams
   Int m_targetOutputLayerSetIdx;
   std::vector<Int> *m_targetDecLayerIdSet; 
   Bool m_valueCheckedFlag;
+  Int m_highestTId;
 public:
   CommonDecoderParams(): 
     m_targetLayerId(0)
     , m_targetOutputLayerSetIdx(-1)
     , m_targetDecLayerIdSet(NULL)
     , m_valueCheckedFlag(false)
+    , m_highestTId(6)
  {}
 
   Void setTargetLayerId(const Int x) { m_targetLayerId = x;   }
@@ -307,6 +309,8 @@ public:
   Void setValueCheckedFlag(const Bool x) { m_valueCheckedFlag = x;   }
   Bool getValueCheckedFlag()            { return m_valueCheckedFlag;}
   
+  Void setHighestTId(const Int x) { m_highestTId = x; }
+  Int  getHighestTId()            { return m_highestTId; }
 };
 #endif
 //! \}
