@@ -462,7 +462,11 @@ Void TEncSampleAdaptiveOffset::deriveOffsets(Int ctu, Int compIdx, Int typeIdc, 
 {
   Int bitDepth = (compIdx== SAO_Y) ? g_bitDepthY : g_bitDepthC;
   Int shift = 2 * DISTORTION_PRECISION_ADJUSTMENT(bitDepth-8);
+#if SVC_EXTENSION
+  Int offsetTh = getSaoMaxOffsetQVal()[compIdx];  //inclusive
+#else
   Int offsetTh = g_saoMaxOffsetQVal[compIdx];  //inclusive
+#endif
 
   ::memset(quantOffsets, 0, sizeof(Int)*MAX_NUM_SAO_CLASSES);
 
@@ -581,7 +585,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
   //pre-encode merge flags
   modeParam[SAO_Y ].modeIdc = SAO_MODE_OFF;
   m_pcRDGoOnSbacCoder->load(cabacCoderRDO[inCabacLabel]);
+#if SVC_EXTENSION
+  m_pcRDGoOnSbacCoder->codeSAOBlkParam(modeParam, getSaoMaxOffsetQVal(), sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), true);
+#else
   m_pcRDGoOnSbacCoder->codeSAOBlkParam(modeParam, sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), true);
+#endif
   m_pcRDGoOnSbacCoder->store(cabacCoderRDO[SAO_CABACSTATE_BLK_MID]);
 
   //------ luma --------//
@@ -589,7 +597,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
   //"off" case as initial cost
   modeParam[compIdx].modeIdc = SAO_MODE_OFF;
   m_pcRDGoOnSbacCoder->resetBits();
+#if SVC_EXTENSION
+  m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, modeParam[compIdx], sliceEnabled[compIdx], getSaoMaxOffsetQVal());
+#else
   m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, modeParam[compIdx], sliceEnabled[compIdx]);
+#endif
   modeDist[compIdx] = 0;
   minCost= m_lambda[compIdx]*((Double)m_pcRDGoOnSbacCoder->getNumberOfWrittenBits());
   m_pcRDGoOnSbacCoder->store(cabacCoderRDO[SAO_CABACSTATE_BLK_TEMP]);
@@ -612,7 +624,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
       //get rate
       m_pcRDGoOnSbacCoder->load(cabacCoderRDO[SAO_CABACSTATE_BLK_MID]);
       m_pcRDGoOnSbacCoder->resetBits();
+#if SVC_EXTENSION
+      m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, testOffset[compIdx], sliceEnabled[compIdx], getSaoMaxOffsetQVal());
+#else
       m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, testOffset[compIdx], sliceEnabled[compIdx]);
+#endif
       rate = m_pcRDGoOnSbacCoder->getNumberOfWrittenBits();
       cost = (Double)dist[compIdx] + m_lambda[compIdx]*((Double)rate);
       if(cost < minCost)
@@ -637,7 +653,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
     modeParam[component].modeIdc = SAO_MODE_OFF; 
     modeDist [component] = 0;
 
+#if SVC_EXTENSION
+    m_pcRDGoOnSbacCoder->codeSAOOffsetParam(component, modeParam[component], sliceEnabled[component], getSaoMaxOffsetQVal());
+#else
     m_pcRDGoOnSbacCoder->codeSAOOffsetParam(component, modeParam[component], sliceEnabled[component]);
+#endif
 
     const UInt currentWrittenBits = m_pcRDGoOnSbacCoder->getNumberOfWrittenBits();
     cost += m_lambda[component] * (currentWrittenBits - previousWrittenBits);
@@ -671,7 +691,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
       invertQuantOffsets(compIdx, typeIdc, testOffset[compIdx].typeAuxInfo, invQuantOffset, testOffset[compIdx].offset);
       dist[compIdx]= getDistortion(ctu, compIdx, typeIdc, testOffset[compIdx].typeAuxInfo, invQuantOffset, blkStats[ctu][compIdx][typeIdc]);
 
+#if SVC_EXTENSION
+      m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, testOffset[compIdx], sliceEnabled[compIdx], getSaoMaxOffsetQVal());
+#else
       m_pcRDGoOnSbacCoder->codeSAOOffsetParam(compIdx, testOffset[compIdx], sliceEnabled[compIdx]);
+#endif
 
       const UInt currentWrittenBits = m_pcRDGoOnSbacCoder->getNumberOfWrittenBits();
       cost += dist[compIdx] + (m_lambda[compIdx] * (currentWrittenBits - previousWrittenBits));
@@ -698,7 +722,11 @@ Void TEncSampleAdaptiveOffset::deriveModeNewRDO(Int ctu, std::vector<SAOBlkParam
   }
   m_pcRDGoOnSbacCoder->load(cabacCoderRDO[inCabacLabel]);
   m_pcRDGoOnSbacCoder->resetBits();
+#if SVC_EXTENSION
+  m_pcRDGoOnSbacCoder->codeSAOBlkParam(modeParam, getSaoMaxOffsetQVal(), sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), false);
+#else
   m_pcRDGoOnSbacCoder->codeSAOBlkParam(modeParam, sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), false);
+#endif
   modeNormCost += (Double)m_pcRDGoOnSbacCoder->getNumberOfWrittenBits();
 
 }
@@ -741,7 +769,11 @@ Void TEncSampleAdaptiveOffset::deriveModeMergeRDO(Int ctu, std::vector<SAOBlkPar
     //rate
     m_pcRDGoOnSbacCoder->load(cabacCoderRDO[inCabacLabel]);
     m_pcRDGoOnSbacCoder->resetBits();
+#if SVC_EXTENSION
+    m_pcRDGoOnSbacCoder->codeSAOBlkParam(testBlkParam, getSaoMaxOffsetQVal(), sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), false);
+#else
     m_pcRDGoOnSbacCoder->codeSAOBlkParam(testBlkParam, sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), false);
+#endif
     Int rate = m_pcRDGoOnSbacCoder->getNumberOfWrittenBits();
 
     cost = normDist+(Double)rate;

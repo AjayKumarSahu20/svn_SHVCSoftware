@@ -103,6 +103,16 @@ public:
   Void  codeSAOSign       ( UInt  uiCode);  //<! code SAO offset sign
   Void  codeScalingList      ( TComScalingList* /*scalingList*/     ){ assert (0);  return;};
 
+#if SVC_EXTENSION
+  Void codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal);
+  Void codeSAOBlkParam(SAOBlkParam& saoBlkParam
+                    , UInt* saoMaxOffsetQVal
+                    , Bool* sliceEnabled
+                    , Bool leftMergeAvail
+                    , Bool aboveMergeAvail
+                    , Bool onlyEstMergeInfo = false
+                    );
+#else
   Void codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEnabled);
   Void codeSAOBlkParam(SAOBlkParam& saoBlkParam
                     , Bool* sliceEnabled
@@ -110,6 +120,7 @@ public:
                     , Bool aboveMergeAvail
                     , Bool onlyEstMergeInfo = false
                     );
+#endif  
 
 private:
   Void  xWriteUnarySymbol    ( UInt uiSymbol, ContextModel* pcSCModel, Int iOffset );
