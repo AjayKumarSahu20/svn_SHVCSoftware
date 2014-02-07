@@ -969,6 +969,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {
   UInt uiCode;
   // ... More syntax elements to be parsed here
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
+  Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt numScalabilityTypes = 0, i = 0, j = 0;
 
@@ -1268,6 +1272,23 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       numBits++;
     }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+    NumOutputLayersInOutputLayerSet[i] = 0;
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
+    for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+    {
+      NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);
+      if (vps->getOutputLayerFlag(i, j))
+      {
+        OlsHighestOutputLayerId[i] = vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j);
+      }
+    }
+    if (NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0)
+    {
+      READ_FLAG(uiCode, "alt_output_layer_flag[i]");
+      vps->setAltOuputLayerFlag(i, uiCode ? true : false);
+    }
+#endif
   }
 #else
   if( numOutputLayerSets > 1 )
@@ -1353,12 +1374,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
+#if !P0300_ALT_OUTPUT_LAYER_FLAG
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   if( vps->getMaxLayers() > 1 )
   {
     READ_FLAG( uiCode, "alt_output_layer_flag");
     vps->setAltOuputLayerFlag( uiCode ? true : false );
   }
+#endif
 #endif
 
 #if REPN_FORMAT_IN_VPS

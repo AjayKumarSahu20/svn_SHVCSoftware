@@ -1326,8 +1326,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setPhaseAlignFlag( m_phaseAlignFlag );
 #endif
 
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
+  {
+    vps->setAltOuputLayerFlag( k, m_altOutputLayerFlag );
+  }
+#else
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
+#endif
 #endif
 
 #else //SVC_EXTENSION

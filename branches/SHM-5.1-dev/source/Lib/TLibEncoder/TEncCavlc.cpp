@@ -775,6 +775,10 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
+  Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, j = 0;
 
@@ -1003,13 +1007,31 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       numBits++;
     }
     WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+    NumOutputLayersInOutputLayerSet[i] = 0;
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
+    for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+    {
+      NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);
+      if (vps->getOutputLayerFlag(i, j))
+      {
+        OlsHighestOutputLayerId[i] = vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j);
+      }
+    }
+    if (NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0)
+    {
+      WRITE_FLAG(vps->getAltOuputLayerFlag(i), "alt_output_layer_flag[i]");
+    }
+#endif
   }
 
+#if !P0300_ALT_OUTPUT_LAYER_FLAG
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   if( vps->getMaxLayers() > 1 )
   {
     WRITE_FLAG( vps->getAltOuputLayerFlag(), "alt_output_layer_flag" );   
   }
+#endif
 #endif
 
 #if REPN_FORMAT_IN_VPS
