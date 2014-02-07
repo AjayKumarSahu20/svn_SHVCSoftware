@@ -1445,6 +1445,22 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
 #endif 
 #endif
+#if P0182_VPS_VUI_PS_FLAG
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if(vps->getNumRefLayers(vps->getLayerIdInNuh(i)) == 0) 
+      {
+        if ((vps->getSPSId(i) == 0) && (vps->getPPSId(i) == 0))
+        {
+          vps->setBaseLayerPSCompatibilityFlag(i, 1);
+        }
+        else
+        {
+          vps->setBaseLayerPSCompatibilityFlag(i, 0);
+        }
+      }
+    }
+#endif
 }
 #endif
 #endif //SVC_EXTENSION
