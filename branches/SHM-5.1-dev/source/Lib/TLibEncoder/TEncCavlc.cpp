@@ -1453,6 +1453,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         if ((vps->getSPSId(i) == 0) && (vps->getPPSId(i) == 0))
         {
           vps->setBaseLayerPSCompatibilityFlag(i, 1);
+          WRITE_FLAG(vps->getBaseLayerPSCompatibilityFlag(i), "base_layer_parameter_set_compatibility_flag" );
         }
         else
         {
