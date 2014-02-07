@@ -623,8 +623,12 @@ private:
   Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 #endif
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1];
+#else
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool       m_altOutputLayerFlag;
+#endif
 #endif
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
@@ -974,9 +978,14 @@ Void      deriveNumberOfSubDpbs();
   Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
 #endif
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
+  Void   setAltOuputLayerFlag(Int idx, Bool x) { m_altOutputLayerFlag[idx] = x;    }
+#else
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool   getAltOuputLayerFlag()             { return m_altOutputLayerFlag; }
   Void   setAltOuputLayerFlag(Bool x)       { m_altOutputLayerFlag = x;    }
+#endif
 #endif
 #if REPN_FORMAT_IN_VPS
   Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
