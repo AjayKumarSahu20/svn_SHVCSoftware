@@ -673,6 +673,12 @@ private:
   Bool       m_vpsVuiPresentFlag;
 #endif
 
+#if P0182_VPS_VUI_PS_FLAG
+  UInt        m_SPSId[MAX_LAYERS];
+  UInt        m_PPSId[MAX_LAYERS];
+  UInt        m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
+#endif
+
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
   Int     m_vpsVuiOffset;
@@ -977,6 +983,13 @@ Void      deriveNumberOfSubDpbs();
   Void setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
   Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
+#endif
+#if P0182_VPS_VUI_PS_FLAG
+  Int     getSPSId       (Int layer)                   { return m_SPSId[layer];          }
+  Void    setSPSId       (Int layer, Int val)            { m_SPSId[layer] = val;             }
+  Int     getPPSId       (Int layer)                   { return m_PPSId[layer];          }
+  Void    setPPSId       (Int layer, Int val)            { m_PPSId[layer] = val;             }
+  Void    setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
 #endif
 #if P0300_ALT_OUTPUT_LAYER_FLAG
   Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
