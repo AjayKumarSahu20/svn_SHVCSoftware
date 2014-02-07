@@ -990,6 +990,7 @@ Void      deriveNumberOfSubDpbs();
   Int     getPPSId       (Int layer)                   { return m_PPSId[layer];          }
   Void    setPPSId       (Int layer, Int val)            { m_PPSId[layer] = val;             }
   Void    setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
+  Int     getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
 #if P0300_ALT_OUTPUT_LAYER_FLAG
   Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
