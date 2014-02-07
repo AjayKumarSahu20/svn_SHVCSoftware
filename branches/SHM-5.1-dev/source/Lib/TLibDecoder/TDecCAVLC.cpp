@@ -849,7 +849,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 #else
   READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
 #endif
-  READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 );
+  READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 ); assert(uiCode <= 6);
   READ_FLAG(     uiCode,  "vps_temporal_id_nesting_flag" );       pcVPS->setTemporalNestingFlag( uiCode ? true:false );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
@@ -1672,6 +1672,32 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
         }
 #endif
         READ_UVLC( uiCode, "max_vps_latency_increase_plus1[i][j]" );        vps->setMaxVpsLatencyIncreasePlus1( i, j, uiCode);
+      }
+    }
+    for(Int j = vps->getMaxTLayers(); j < MAX_TLAYER; j++)
+    {
+      vps->setSubLayerDpbInfoPresentFlag( i, j, false );
+    }
+  }
+
+  // Infer values when not signalled
+  for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+  {
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+    for(Int j = 0; j < MAX_TLAYER; j++)
+    {
+      if( !vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is NOT present
+      {
+        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+        {
+          vps->setMaxVpsDecPicBufferingMinus1( i, k, j, vps->getMaxVpsDecPicBufferingMinus1( i, k, j - 1 ) );
+        }
+        vps->setMaxVpsNumReorderPics( i, j, vps->getMaxVpsNumReorderPics( i, j - 1) );
+        for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
+        {
+          vps->setMaxVpsLayerDecPicBuffMinus1( i, k, j, vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j - 1));
+        }
+        vps->setMaxVpsLatencyIncreasePlus1( i, j, vps->getMaxVpsLatencyIncreasePlus1( i, j - 1 ) );
       }
     }
   }
