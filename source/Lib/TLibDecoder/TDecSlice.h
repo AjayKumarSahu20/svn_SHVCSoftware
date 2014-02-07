@@ -71,7 +71,7 @@ private:
   TDecBinCABAC*   m_pcBufferLowLatBinCABACs;
   std::vector<TDecSbac*> CTXMem;
 #if SVC_EXTENSION
-  TDecTop**       m_ppcTDecTop;
+  UInt*           m_saoMaxOffsetQVal; 
 #endif 
   
 public:
@@ -79,7 +79,7 @@ public:
   virtual ~TDecSlice();
   
 #if SVC_EXTENSION  
-  Void  init              ( TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
+  Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder, UInt* saoMaxOffsetQVal );
 #else
   Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
 #endif
@@ -90,9 +90,6 @@ public:
   Void      initCtxMem(  UInt i );
   Void      setCtxMem( TDecSbac* sb, Int b )   { CTXMem[b] = sb; }
   Int       getCtxMemSize( )                   { return (Int)CTXMem.size(); }
-#if SVC_EXTENSION
-  TDecTop*  getLayerDec   ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }  
-#endif
 };
 
 
