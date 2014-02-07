@@ -137,7 +137,7 @@ Void TDecTop::init()
 #endif
 #if SVC_EXTENSION
   m_cGopDecoder.init( m_ppcTDecTop, &m_cEntropyDecoder, &m_cSbacDecoder, &m_cBinCABAC, &m_cCavlcDecoder, &m_cSliceDecoder, &m_cLoopFilter, &m_cSAO);
-  m_cSliceDecoder.init( m_ppcTDecTop, &m_cEntropyDecoder, &m_cCuDecoder );
+  m_cSliceDecoder.init( &m_cEntropyDecoder, &m_cCuDecoder, m_cSAO.getSaoMaxOffsetQVal() );
 #else
   m_cGopDecoder.init( &m_cEntropyDecoder, &m_cSbacDecoder, &m_cBinCABAC, &m_cCavlcDecoder, &m_cSliceDecoder, &m_cLoopFilter, &m_cSAO);
   m_cSliceDecoder.init( &m_cEntropyDecoder, &m_cCuDecoder );

@@ -1355,7 +1355,11 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstre
           aboveMergeAvail = rpcPic->getSAOMergeAvailability(uiCUAddr, uiCUAddr-uiWidthInLCUs);
         }
 
+#if SVC_EXTENSION
+        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerId()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
+#else
         m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam,sliceEnabled, leftMergeAvail, aboveMergeAvail);
+#endif
       }
     }
 
