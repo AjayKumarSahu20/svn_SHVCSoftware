@@ -1914,6 +1914,21 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
 #endif 
 #endif
+
+#if P0182_VPS_VUI_PS_FLAG
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      if (vps->getNumRefLayers(vps->getLayerIdInNuh(i)) == 0)
+      {
+        READ_FLAG( uiCode, "base_layer_parameter_set_compatibility_flag" ); 
+        vps->setBaseLayerPSCompatibilityFlag( i, uiCode );
+      }
+      else
+      {
+        vps->setBaseLayerPSCompatibilityFlag( i, 0 );
+      }
+    }
+#endif
 }
 #endif
 #endif //SVC_EXTENSION
