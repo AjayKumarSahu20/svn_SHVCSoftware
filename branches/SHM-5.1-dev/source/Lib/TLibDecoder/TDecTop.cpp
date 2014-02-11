@@ -875,6 +875,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   // exit when a new picture is found
 #if SVC_EXTENSION
   bNewPOC = (m_apcSlicePilot->getPOC()!= m_prevPOC);
+#if ALIGNED_BUMPING
+  if (bNewPOC || m_layerId!=m_uiPrevLayerId)
+  {
+    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
+  }
+#endif
   if (m_apcSlicePilot->isNextSlice() && (bNewPOC || m_layerId!=m_uiPrevLayerId) && !m_bFirstSliceInSequence )
   {
     m_prevPOC = m_apcSlicePilot->getPOC();
@@ -1139,7 +1145,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff();
+#if !ALIGNED_BUMPING
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
+#endif
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
 

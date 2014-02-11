@@ -54,7 +54,9 @@
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
-
+#if ALIGNED_BUMPING
+struct DpbStatus;
+#endif
 /// decoder application class
 class TAppDecTop : public TAppDecCfg
 {
@@ -97,8 +99,60 @@ protected:
   Void  xFlushOutput      ( TComList<TComPic*>* pcListPic ); ///< flush all remaining decoded pictures to file
 #endif
   Bool  isNaluWithinTargetDecLayerIdSet ( InputNALUnit* nalu ); ///< check whether given Nalu is within targetDecLayerIdSet
+#if ALIGNED_BUMPING
+  Void checkOutputBeforeDecoding(Int layerIdx);
+  Void checkOutputAfterDecoding();
+  Void flushAllPictures(Bool outputPictures); 
+  Void flushAllPictures(Int layerId, Bool outputPictures);
+
+  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerID, Int &pocLastDisplay, DpbStatus &dpbStatus);
+  Void xFindDPBStatus( std::vector<Int> &listOfPocs
+                            , std::vector<Int> *listOfPocsInEachLayer
+                            , std::vector<Int> *listOfPocsPositionInEachLayer
+                            , DpbStatus &dpbStatus
+                            );
+
+  Bool ifInvokeBumpingBeforeDecoding( const DpbStatus &dpbStatus, const DpbStatus &dpbLimit, const Int layerIdx, const Int subDpbIdx );
+  Bool ifInvokeBumpingAfterDecoding ( const DpbStatus &dpbStatus, const DpbStatus &dpbLimit );
+  Void bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *listOfPocsInEachLayer, std::vector<Int> *listOfPocsPositionInEachLayer, DpbStatus &dpbStatus);
+  Void emptyUnusedPicturesNotNeededForOutput();
+  Void markAllPicturesAsErased();
+  Void markAllPicturesAsErased(Int layerIdx);
+  TComVPS* findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit);
+#endif
 };
 
+#if ALIGNED_BUMPING
+struct DpbStatus
+{
+  // Number of AUs and pictures
+  Int m_numAUsNotDisplayed;
+  Int m_numPicsNotDisplayedInLayer[MAX_LAYERS];
+  Int m_numPicsInLayer[MAX_LAYERS];   // Pictures marked as used_for_reference or needed for output in the layer
+  Int m_numPicsInSubDpb[MAX_LAYERS];  // Pictures marked as used_for_reference or needed for output in the sub-DPB
+  Bool m_maxLatencyIncrease;
+  Int m_maxLatencyPictures;
+  
+  Int m_numSubDpbs;
+  Int m_numLayers;
+
+  DpbStatus()
+  {
+    init();
+  }
+  Void init()
+  {
+    m_numAUsNotDisplayed = 0;
+    m_maxLatencyIncrease  = false;
+    m_maxLatencyPictures  = 0;
+    ::memset( m_numPicsInLayer,  0, sizeof(m_numPicsInLayer)  );
+    ::memset( m_numPicsInSubDpb, 0, sizeof(m_numPicsInSubDpb) );
+    ::memset(m_numPicsNotDisplayedInLayer, 0, sizeof(m_numPicsNotDisplayedInLayer) );
+    m_numSubDpbs = -1;
+    m_numLayers = -1;
+  }
+};
+#endif
 //! \}
 
 #endif
