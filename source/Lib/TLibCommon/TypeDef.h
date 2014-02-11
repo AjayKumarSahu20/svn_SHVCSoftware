@@ -57,6 +57,8 @@
 #define VPS_EXTN_UEV_CODING              1      ///< JCTVC-P0306: Code some syntax elements as ue(v), and remove some syntax elements that duplicate behaviour
 #define CHANGE_NUMSUBDPB_IDX             1      ///< Change index of NumSubDpb from output layer set to layer set, to be more aligned with the Spec
 #define RESOLUTION_BASED_DPB             1      ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
+#define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
+#define MAX_SUBDPBS                      MAX_LAYERS
 #define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
 #if SUB_BITSTREAM_PROPERTY_SEI
 #define MAX_SUB_STREAMS                  1024
