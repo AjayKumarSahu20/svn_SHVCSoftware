@@ -1196,13 +1196,21 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         // Add sub-DPB sizes of layers belonging to a sub-DPB. If a different sub-DPB size is calculated
         // at the encoder, modify below
         Int oldValue = vps->getMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j );
-        oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j );
+        oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j ) + 1;
         vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue );
 #else
         vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
 #endif
         maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
       }
+#if RESOLUTION_BASED_DPB
+      for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+      {
+        // Decrement m_maxVpsDecPicBufferingMinus1
+        Int oldValue = vps->getMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j );
+        vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue - 1 );
+      }
+#endif
       vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
       vps->determineSubDpbInfoFlags();
     }
