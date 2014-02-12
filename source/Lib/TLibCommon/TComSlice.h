@@ -653,6 +653,9 @@ private:
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
+#if SPS_DPB_PARAMS
+    Int         m_TolsIdx;
+#endif
 #if VPS_DPB_SIZE_TABLE
   Bool    m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool    m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
@@ -744,6 +747,11 @@ public:
 
   TComPTL* getPTL() { return &m_pcPTL; }
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
+
+#if SPS_DPB_PARAMS
+    Int       getTolsIdx  ()             { return m_TolsIdx;   }
+    Void      setTolsIdx  ( Int value  ) { m_TolsIdx = value;  }
+#endif
 
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES

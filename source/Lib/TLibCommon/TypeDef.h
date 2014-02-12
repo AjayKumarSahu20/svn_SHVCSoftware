@@ -227,6 +227,7 @@
 #define USE_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: Use signaled DPB-size table parameters in the decoder
 #endif
 #endif
+#define SPS_DPB_PARAMS                   1      ///< JCTVC-P0155 signaling & inferrence for sps dpb parameters for nuh_layer_id > 0
 
 #define NO_CLRAS_OUTPUT_FLAG             1
 #define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header

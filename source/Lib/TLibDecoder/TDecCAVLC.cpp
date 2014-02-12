@@ -643,7 +643,10 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   READ_UVLC( uiCode,    "log2_max_pic_order_cnt_lsb_minus4" );   pcSPS->setBitsForPOC( 4 + uiCode );
   assert(uiCode <= 12);
 
-  UInt subLayerOrderingInfoPresentFlag;
+#if SPS_DPB_PARAMS
+    if( pcSPS->getLayerId() == 0 )  {
+#endif
+    UInt subLayerOrderingInfoPresentFlag;
   READ_FLAG(subLayerOrderingInfoPresentFlag, "sps_sub_layer_ordering_info_present_flag");
 
   for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
@@ -666,7 +669,16 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
       break;
     }
   }
-
+#if SPS_DPB_PARAMS
+    }
+    else
+    {
+        for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
+        {
+            pcSPS->setMaxDecPicBuffering( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getMaxVpsDecPicBufferingMinus1(  parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getTolsIdx(), pcSPS->getLayerId(), i)+1, i);
+        }
+    }
+#endif
   READ_UVLC( uiCode, "log2_min_coding_block_size_minus3" );
   Int log2MinCUSize = uiCode + 3;
   pcSPS->setLog2MinCodingBlockSize(log2MinCUSize);
