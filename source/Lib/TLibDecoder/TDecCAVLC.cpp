@@ -1253,7 +1253,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 )
     {
       Int lsIdx = vps->getOutputLayerSetIdx(i);
+#if NUM_OL_FLAGS
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
+#else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
+#endif
       {
         READ_FLAG( uiCode, "output_layer_flag[i][j]"); vps->setOutputLayerFlag(i, j, uiCode);
       }
@@ -1324,7 +1328,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
       READ_CODE( numBits, uiCode, "output_layer_set_idx_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
       Int lsIdx = vps->getOutputLayerSetIdx(i);
+#if NUM_OL_FLAGS
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
+#else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
+#endif
       {
         READ_FLAG( uiCode, "output_layer_flag[i][j]"); vps->setOutputLayerFlag(i, j, uiCode);
       }
@@ -1630,6 +1638,24 @@ Void  TDecCavlc::parseRepFormat      ( RepFormat *repFormat )
 Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 {
   UInt uiCode;
+#if DPB_PARAMS_MAXTLAYERS
+    Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumOutputLayerSets()];
+    for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+    {
+        UInt maxSLMinus1 = 0;
+#if CHANGE_NUMSUBDPB_IDX
+        Int optLsIdx = vps->getOutputLayerSetIdx( i );
+#else
+        Int optLsIdx = i;
+#endif
+        for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
+            Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
+            maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdInVps(lId)));
+        }
+        MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
+    }
+#endif
+    
 #if !RESOLUTION_BASED_DPB
   vps->deriveNumberOfSubDpbs();
 #endif
@@ -1639,7 +1665,11 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
 #endif
     READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
-    for(Int j = 0; j < vps->getMaxTLayers(); j++)
+#if DPB_PARAMS_MAXTLAYERS
+      for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
+#else
+    for(Int j = 0; j <= vps->getMaxTLayers(); j++)
+#endif
     {
       if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
       {
