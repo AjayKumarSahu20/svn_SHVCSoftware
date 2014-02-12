@@ -1002,7 +1002,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
 #endif
       Int lsIdx = vps->getOutputLayerSetIdx(i);
+#if NUM_OL_FLAGS
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
+#else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
+#endif
       {
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
@@ -1244,13 +1248,35 @@ Void  TEncCavlc::codeRepFormat      ( RepFormat *repFormat )
 #if VPS_DPB_SIZE_TABLE
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
+#if DPB_PARAMS_MAXTLAYERS
+    Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumOutputLayerSets()];
+    for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+    {
+        UInt maxSLMinus1 = 0;
+#if CHANGE_NUMSUBDPB_IDX
+        Int optLsIdx = vps->getOutputLayerSetIdx( i );
+#else
+        Int optLsIdx = i;
+#endif
+        for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
+            Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
+            maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdInVps(lId)));
+        }
+        MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
+    }
+#endif
+    
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
 #if CHANGE_NUMSUBDPB_IDX
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
 #endif
-    WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");  
+    WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");
+#if DPB_PARAMS_MAXTLAYERS
+    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
+#else
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
+#endif
     {
       if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
       {

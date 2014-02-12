@@ -228,7 +228,8 @@
 #endif
 #endif
 #define SPS_DPB_PARAMS                   1      ///< JCTVC-P0155 signaling & inferrence for sps dpb parameters for nuh_layer_id > 0
-
+#define DPB_PARAMS_MAXTLAYERS            1      ///< JCTVC-P0156 DPB parameters up to maximum temporal sub-layers in the layer set
+#define NUM_OL_FLAGS                     1      ///< JCTVC-P0156 output_layer_flag[ i ][ j ] is signalled for j equal to 0 to NumLayersInIdList[ lsIdx ] inclusive
 #define NO_CLRAS_OUTPUT_FLAG             1
 #define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header
 
