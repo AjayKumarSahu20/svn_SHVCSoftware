@@ -671,13 +671,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   }
 #if SPS_DPB_PARAMS
     }
-    else
-    {
-        for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
-        {
-            pcSPS->setMaxDecPicBuffering( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getMaxVpsDecPicBufferingMinus1(  parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getTolsIdx(), pcSPS->getLayerId(), i)+1, i);
-        }
-    }
 #endif
   READ_UVLC( uiCode, "log2_min_coding_block_size_minus3" );
   Int log2MinCUSize = uiCode + 3;
@@ -1106,14 +1099,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
     if (vps->getMaxTSLayersPresentFlag())
     {
-        for(i = 0; i < vps->getMaxLayers() - 1; i++)
+        for(i = 0; i < vps->getMaxLayers(); i++)
         {
             READ_CODE( 3, uiCode, "sub_layers_vps_max_minus1[i]" ); vps->setMaxTSLayersMinus1(i, uiCode);
         }
     }
     else
     {
-        for( i = 0; i < vps->getMaxLayers() - 1; i++)
+        for( i = 0; i < vps->getMaxLayers(); i++)
         {
             vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
         }
