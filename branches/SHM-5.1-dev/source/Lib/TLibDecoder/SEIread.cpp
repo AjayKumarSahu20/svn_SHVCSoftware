@@ -379,6 +379,38 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
   setBitstream(bs);
 }
 
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+/**
+ * Check if SEI message contains payload extension
+ */
+Bool SEIReader::xPayloadExtensionPresent()
+{
+  Int payloadBitsRemaining = getBitstream()->getNumBitsLeft();
+  Bool payloadExtensionPresent = false;
+
+  if (payloadBitsRemaining > 8)
+  {
+    payloadExtensionPresent = true;
+  }
+  else
+  {
+    Int finalBits = getBitstream()->peekBits(payloadBitsRemaining);
+    while (payloadBitsRemaining && (finalBits & 1) == 0)
+    {
+      payloadBitsRemaining--;
+      finalBits >>= 1;
+    }
+    payloadBitsRemaining--;
+    if (payloadBitsRemaining > 0)
+    {
+      payloadExtensionPresent = true;
+    }
+  }
+
+  return payloadExtensionPresent;
+}
+#endif
+
 /**
  * parse bitstream bs and unpack a user_data_unregistered SEI message
  * of payloasSize bytes into sei.
@@ -535,6 +567,18 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payload
       }
     }
   }
+
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  sei.m_useAltCpbParamsFlag = false;
+  sei.m_useAltCpbParamsFlagPresent = false;
+  if (xPayloadExtensionPresent())
+  {
+    READ_FLAG (code, "use_alt_cpb_params_flag");
+    sei.m_useAltCpbParamsFlag = code;
+    sei.m_useAltCpbParamsFlagPresent = true;
+  }
+#endif
+
   xParseByteAlign();
 }
 Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize*/, TComSPS *sps)

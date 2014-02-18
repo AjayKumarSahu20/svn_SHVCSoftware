@@ -228,6 +228,9 @@ Void TComInputBitstream::pseudoRead ( UInt uiNumberOfBits, UInt& ruiBits )
   UInt saved_num_held_bits = m_num_held_bits;
   UChar saved_held_bits = m_held_bits;
   UInt saved_fifo_idx = m_fifo_idx;
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  UInt saved_numBitsRead = m_numBitsRead;
+#endif
 
   UInt num_bits_to_read = min(uiNumberOfBits, getNumBitsLeft());
   read(num_bits_to_read, ruiBits);
@@ -236,6 +239,9 @@ Void TComInputBitstream::pseudoRead ( UInt uiNumberOfBits, UInt& ruiBits )
   m_fifo_idx = saved_fifo_idx;
   m_held_bits = saved_held_bits;
   m_num_held_bits = saved_num_held_bits;
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  m_numBitsRead = saved_numBitsRead;
+#endif
 }
 
 

@@ -156,6 +156,10 @@ public:
   , m_rapCpbParamsPresentFlag (false)
   , m_cpbDelayOffset      (0)
   , m_dpbDelayOffset      (0)
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  , m_useAltCpbParamsFlagPresent(false)
+  , m_useAltCpbParamsFlag (false)
+#endif
   {
     ::memset(m_initialCpbRemovalDelay, 0, sizeof(m_initialCpbRemovalDelay));
     ::memset(m_initialCpbRemovalDelayOffset, 0, sizeof(m_initialCpbRemovalDelayOffset));
@@ -174,6 +178,10 @@ public:
   UInt m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
   Bool m_concatenationFlag;
   UInt m_auCpbRemovalDelayDelta;
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  Bool m_useAltCpbParamsFlagPresent;
+  Bool m_useAltCpbParamsFlag;
+#endif
 };
 class SEIPictureTiming : public SEI
 {

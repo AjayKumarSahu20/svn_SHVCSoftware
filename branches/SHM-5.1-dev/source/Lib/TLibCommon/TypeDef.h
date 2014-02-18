@@ -233,6 +233,8 @@
 #define NO_CLRAS_OUTPUT_FLAG             1
 #define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header
 
+#define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
+
 #if VIEW_ID_RELATED_SIGNALING
 /// scalability types
 enum ScalabilityType

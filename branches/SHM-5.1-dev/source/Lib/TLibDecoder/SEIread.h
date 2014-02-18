@@ -66,6 +66,9 @@ protected:
 #else
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
 #endif
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  Bool xPayloadExtensionPresent       ();
+#endif
   Void xParseSEIuserDataUnregistered  (SEIuserDataUnregistered &sei, UInt payloadSize);
   Void xParseSEIActiveParameterSets   (SEIActiveParameterSets  &sei, UInt payloadSize);
   Void xParseSEIDecodingUnitInfo      (SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps);
