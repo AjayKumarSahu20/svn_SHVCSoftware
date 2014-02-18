@@ -366,6 +366,12 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
       }
     }
   }
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  if (sei.m_useAltCpbParamsFlagPresent)
+  {
+    WRITE_FLAG( sei.m_useAltCpbParamsFlag, "use_alt_cpb_params_flag");
+  }
+#endif
   xWriteByteAlign();
 }
 Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps)
