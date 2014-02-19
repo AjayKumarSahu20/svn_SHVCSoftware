@@ -1546,13 +1546,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if P0307_VPS_NON_VUI_EXTENSION
   READ_UVLC( uiCode,           "vps_non_vui_extension_length"); vps->setVpsNonVuiExtLength((Int)uiCode);
 #if P0307_VPS_NON_VUI_EXT_UPDATE
-  if (uiCode > 0)
+  Int nonVuiExtByte = uiCode;
+  for (i = 1; i <= nonVuiExtByte; i++)
   {
-    Int nonVuiExtBits = uiCode * 8;
-    for (i = 0; i < nonVuiExtBits; i++)
-    {
-      READ_FLAG(uiCode, "vps_non_vui_extension_data_bit" ); //just parse and discard for now.
-    }
+    READ_CODE( 8, uiCode, "vps_non_vui_extension_data_byte" ); //just parse and discard for now.
   }
 #else
   if ( vps->getVpsNonVuiExtLength() > 0 )
