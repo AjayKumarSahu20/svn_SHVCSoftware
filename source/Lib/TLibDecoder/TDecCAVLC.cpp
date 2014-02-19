@@ -1545,10 +1545,21 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
 #if P0307_VPS_NON_VUI_EXTENSION
   READ_UVLC( uiCode,           "vps_non_vui_extension_length"); vps->setVpsNonVuiExtLength((Int)uiCode);
+#if P0307_VPS_NON_VUI_EXT_UPDATE
+  if (uiCode > 0)
+  {
+    Int nonVuiExtBits = uiCode * 8;
+    for (i = 0; i < nonVuiExtBits; i++)
+    {
+      READ_FLAG(uiCode, "vps_non_vui_extension_data_bit" ); //just parse and discard for now.
+    }
+  }
+#else
   if ( vps->getVpsNonVuiExtLength() > 0 )
   {
     printf("\n\nUp to the current spec, the value of vps_non_vui_extension_length is supposed to be 0\n");
   }
+#endif
 #endif
 
 #if !O0109_O0199_FLAGS_TO_VUI

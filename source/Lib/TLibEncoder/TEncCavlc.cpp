@@ -1155,10 +1155,21 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
 #if P0307_VPS_NON_VUI_EXTENSION
   WRITE_UVLC( vps->getVpsNonVuiExtLength(), "vps_non_vui_extension_length" );
+#if P0307_VPS_NON_VUI_EXT_UPDATE
+  if (vps->getVpsNonVuiExtLength() > 0)
+  {
+    Int nonVuiExtBits = vps->getVpsNonVuiExtLength() * 8;
+    for (i = 0; i < nonVuiExtBits; i++)
+    {
+      WRITE_FLAG(1, "vps_non_vui_extension_data_bit"); //just parse and discard for now.
+    }
+  }
+#else
   if ( vps->getVpsNonVuiExtLength() > 0 )
   {
     printf("\n\nUp to the current spec, the value of vps_non_vui_extension_length is supposed to be 0\n");
   }
+#endif
 #endif
 
 #if !O0109_MOVE_VPS_VUI_FLAG

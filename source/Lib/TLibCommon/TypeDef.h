@@ -52,6 +52,7 @@
 #define P0130_EOB                        1      ///< JCTVC-P0130, set layer Id of EOB NALU to be fixed to 0
 #define P0307_REMOVE_VPS_VUI_OFFSET      1      ///< JCTVC-P0307, remove implementation related to VPS VUI offset signalling
 #define P0307_VPS_NON_VUI_EXTENSION      1      ///< JCTVC-P0307, implementation related to NON VUI VPS Extension signalling
+#define P0307_VPS_NON_VUI_EXT_UPDATE     1      ///< JCTVC-P0307, implementation related to NON VUI VPS Extension signalling
 
 #define DISCARDABLE_PIC_RPS              1      ///< JCTVC-P0130: Inter-layer RPS and temporal RPS should not contain picture with discardable_flag equal to 1
 #define VPS_EXTN_UEV_CODING              1      ///< JCTVC-P0306: Code some syntax elements as ue(v), and remove some syntax elements that duplicate behaviour
