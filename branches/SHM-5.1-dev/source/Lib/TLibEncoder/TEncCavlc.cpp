@@ -1767,12 +1767,12 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #if SVC_EXTENSION
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
-    if((pcSlice->getSPS()->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
+    if((pcSlice->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
 #else
-    if((pcSlice->getSPS()->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
+    if((pcSlice->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
 #endif
 #else
-    if((pcSlice->getSPS()->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
+    if((pcSlice->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
 #endif
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");

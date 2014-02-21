@@ -847,7 +847,7 @@ Int TComSlice::getNumRpsCurrTempList()
   Int numRpsCurrTempList = 0;
 
 #if SVC_EXTENSION
-  if( m_eSliceType == I_SLICE || ( m_pcSPS->getLayerId() && 
+  if( m_eSliceType == I_SLICE || ( m_layerId && 
     (m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
     (m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) ) )
 #else
@@ -871,7 +871,7 @@ Int TComSlice::getNumRpsCurrTempList()
   if( m_layerId > 0 )
   {
     numRpsCurrTempList += m_activeNumILRRefIdx;
-}
+  }
 #endif
 
   return numRpsCurrTempList;
