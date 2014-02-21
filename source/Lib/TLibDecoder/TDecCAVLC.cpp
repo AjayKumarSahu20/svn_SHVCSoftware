@@ -2336,12 +2336,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setActiveNumILRRefIdx(0);
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
-    if((sps->getLayerId() > 0) && !(rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (rpcSlice->getNumILRRefIdx() > 0) )
+    if((rpcSlice->getLayerId() > 0) && !(rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (rpcSlice->getNumILRRefIdx() > 0) )
 #else
-    if((sps->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
+    if((rpcSlice->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
 #endif
 #else
-    if((sps->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
+    if((rpcSlice->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
 #endif
     {
       READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
