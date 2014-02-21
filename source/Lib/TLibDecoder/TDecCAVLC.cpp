@@ -644,33 +644,34 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   assert(uiCode <= 12);
 
 #if SPS_DPB_PARAMS
-    if( pcSPS->getLayerId() == 0 )  {
+  if( pcSPS->getLayerId() == 0 )  
+  {
 #endif
     UInt subLayerOrderingInfoPresentFlag;
-  READ_FLAG(subLayerOrderingInfoPresentFlag, "sps_sub_layer_ordering_info_present_flag");
+    READ_FLAG(subLayerOrderingInfoPresentFlag, "sps_sub_layer_ordering_info_present_flag");
 
-  for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
-  {
-    READ_UVLC ( uiCode, "sps_max_dec_pic_buffering_minus1");
-    pcSPS->setMaxDecPicBuffering( uiCode + 1, i);
-    READ_UVLC ( uiCode, "sps_num_reorder_pics" );
-    pcSPS->setNumReorderPics(uiCode, i);
-    READ_UVLC ( uiCode, "sps_max_latency_increase_plus1");
-    pcSPS->setMaxLatencyIncrease( uiCode, i );
-
-    if (!subLayerOrderingInfoPresentFlag)
+    for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
     {
-      for (i++; i <= pcSPS->getMaxTLayers()-1; i++)
+      READ_UVLC ( uiCode, "sps_max_dec_pic_buffering_minus1");
+      pcSPS->setMaxDecPicBuffering( uiCode + 1, i);
+      READ_UVLC ( uiCode, "sps_num_reorder_pics" );
+      pcSPS->setNumReorderPics(uiCode, i);
+      READ_UVLC ( uiCode, "sps_max_latency_increase_plus1");
+      pcSPS->setMaxLatencyIncrease( uiCode, i );
+
+      if (!subLayerOrderingInfoPresentFlag)
       {
-        pcSPS->setMaxDecPicBuffering(pcSPS->getMaxDecPicBuffering(0), i);
-        pcSPS->setNumReorderPics(pcSPS->getNumReorderPics(0), i);
-        pcSPS->setMaxLatencyIncrease(pcSPS->getMaxLatencyIncrease(0), i);
+        for (i++; i <= pcSPS->getMaxTLayers()-1; i++)
+        {
+          pcSPS->setMaxDecPicBuffering(pcSPS->getMaxDecPicBuffering(0), i);
+          pcSPS->setNumReorderPics(pcSPS->getNumReorderPics(0), i);
+          pcSPS->setMaxLatencyIncrease(pcSPS->getMaxLatencyIncrease(0), i);
+        }
+        break;
       }
-      break;
     }
-  }
 #if SPS_DPB_PARAMS
-    }
+  }
 #endif
   READ_UVLC( uiCode, "log2_min_coding_block_size_minus3" );
   Int log2MinCUSize = uiCode + 3;

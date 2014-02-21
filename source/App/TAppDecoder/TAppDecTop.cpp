@@ -1149,9 +1149,18 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 
   // Find DPB-information from the VPS
   DpbStatus maxDpbLimit;
+  Int targetLsIdx, subDpbIdx;
   TComVPS *vps = findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
-  Int targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
-  Int subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
+  if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
+  {
+    targetLsIdx = 0;
+    subDpbIdx   = 0; 
+  }
+  else
+  {
+    targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
+    subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
+  }
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
   while( ifInvokeBumpingBeforeDecoding(dpbStatus, maxDpbLimit, layerIdx, subDpbIdx) )
   {
@@ -1229,50 +1238,79 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
 
 TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit)
 {
-  // -------------------------------------
-  // Find the VPS used for the pictures
-  // -------------------------------------
-  TComVPS *vps;
-  for(Int i = 0; i < MAX_LAYERS; i++)
-  {
-    if( m_acTDecTop[i].getListPic()->empty() )
-    {
-      assert( listOfPocsInEachLayer[i].size() == 0 );
-      continue;
-    }
-    std::vector<Int>::const_iterator it;
-    it = find( listOfPocsInEachLayer[i].begin(), listOfPocsInEachLayer[i].end(), listOfPocs[0] );
-    TComList<TComPic*>::iterator iterPic;
-    if( it != listOfPocsInEachLayer[i].end() )
-    {
-      Int picPosition = std::distance( listOfPocsInEachLayer[i].begin(), it );
-      Int j;
-      for(j = 0, iterPic = m_acTDecTop[i].getListPic()->begin(); j < listOfPocsPositionInEachLayer[i][picPosition]; j++) // Picture to be output
-      {
-        iterPic++;
-      }
-      TComPic *pic = *iterPic;
-      vps = pic->getSlice(0)->getVPS();
-      break;
-    }
-  }
   Int targetOutputLsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
-  Int targetLsIdx       = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
-  Int highestTId = getCommonDecoderParams()->getHighestTId();
+  TComVPS *vps;
 
-  maxDpbLimit.m_numAUsNotDisplayed = vps->getMaxVpsNumReorderPics( targetOutputLsIdx, highestTId ); // m_numAUsNotDisplayed is only variable name - stores reorderpics
-  maxDpbLimit.m_maxLatencyIncrease  = vps->getMaxVpsLatencyIncreasePlus1(targetOutputLsIdx, highestTId ) > 0;
-  if( maxDpbLimit.m_maxLatencyIncrease )
+  if( targetOutputLsIdx == 0 )   // Only base layer is output
   {
-    maxDpbLimit.m_maxLatencyPictures = vps->getMaxVpsNumReorderPics( targetOutputLsIdx, highestTId ) + vps->getMaxVpsLatencyIncreasePlus1(targetOutputLsIdx, highestTId ) - 1;
+    TComSPS *sps = NULL;
+    assert( listOfPocsInEachLayer[0].size() != 0 );
+    TComList<TComPic*>::iterator iterPic;
+    Int j;
+    for(j = 0, iterPic = m_acTDecTop[0].getListPic()->begin(); j < listOfPocsPositionInEachLayer[0][0]; j++) // Picture to be output
+    {
+      iterPic++;
+    }
+    TComPic *pic = *iterPic;
+    sps = pic->getSlice(0)->getSPS();   assert( sps->getLayerId() == 0 );
+    vps = pic->getSlice(0)->getVPS();
+    Int highestTId = sps->getMaxTLayers() - 1;
+
+    maxDpbLimit.m_numAUsNotDisplayed = sps->getNumReorderPics( highestTId ); // m_numAUsNotDisplayed is only variable name - stores reorderpics
+    maxDpbLimit.m_maxLatencyIncrease = sps->getMaxLatencyIncrease( highestTId ) > 0;
+    if( maxDpbLimit.m_maxLatencyIncrease )
+    {
+      maxDpbLimit.m_maxLatencyPictures = sps->getMaxLatencyIncrease( highestTId ) + sps->getNumReorderPics( highestTId ) - 1;
+    }
+    maxDpbLimit.m_numPicsInLayer[0] = sps->getMaxDecPicBuffering( highestTId );
+    maxDpbLimit.m_numPicsInSubDpb[0] = sps->getMaxDecPicBuffering( highestTId );
   }
-  for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
+  else
   {
-    maxDpbLimit.m_numPicsInLayer[i] = vps->getMaxVpsLayerDecPicBuffMinus1( targetOutputLsIdx, i, highestTId ) + 1;
-    maxDpbLimit.m_numPicsInSubDpb[vps->getSubDpbAssigned( targetLsIdx, i )] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, vps->getSubDpbAssigned( targetLsIdx, i ), highestTId) + 1;
+    // -------------------------------------
+    // Find the VPS used for the pictures
+    // -------------------------------------
+    for(Int i = 0; i < MAX_LAYERS; i++)
+    {
+      if( m_acTDecTop[i].getListPic()->empty() )
+      {
+        assert( listOfPocsInEachLayer[i].size() == 0 );
+        continue;
+      }
+      std::vector<Int>::const_iterator it;
+      it = find( listOfPocsInEachLayer[i].begin(), listOfPocsInEachLayer[i].end(), listOfPocs[0] );
+      TComList<TComPic*>::iterator iterPic;
+      if( it != listOfPocsInEachLayer[i].end() )
+      {
+        Int picPosition = std::distance( listOfPocsInEachLayer[i].begin(), it );
+        Int j;
+        for(j = 0, iterPic = m_acTDecTop[i].getListPic()->begin(); j < listOfPocsPositionInEachLayer[i][picPosition]; j++) // Picture to be output
+        {
+          iterPic++;
+        }
+        TComPic *pic = *iterPic;
+        vps = pic->getSlice(0)->getVPS();
+        break;
+      }
+    }
+
+    Int targetLsIdx       = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
+    Int highestTId = vps->getMaxTLayers() - 1;
+
+    maxDpbLimit.m_numAUsNotDisplayed = vps->getMaxVpsNumReorderPics( targetOutputLsIdx, highestTId ); // m_numAUsNotDisplayed is only variable name - stores reorderpics
+    maxDpbLimit.m_maxLatencyIncrease  = vps->getMaxVpsLatencyIncreasePlus1(targetOutputLsIdx, highestTId ) > 0;
+    if( maxDpbLimit.m_maxLatencyIncrease )
+    {
+      maxDpbLimit.m_maxLatencyPictures = vps->getMaxVpsNumReorderPics( targetOutputLsIdx, highestTId ) + vps->getMaxVpsLatencyIncreasePlus1(targetOutputLsIdx, highestTId ) - 1;
+    }
+    for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
+    {
+      maxDpbLimit.m_numPicsInLayer[i] = vps->getMaxVpsLayerDecPicBuffMinus1( targetOutputLsIdx, i, highestTId ) + 1;
+      maxDpbLimit.m_numPicsInSubDpb[vps->getSubDpbAssigned( targetLsIdx, i )] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, vps->getSubDpbAssigned( targetLsIdx, i ), highestTId) + 1;
+    }
+    // -------------------------------------
   }
   return vps;
-  // -------------------------------------
 }
 Void TAppDecTop::emptyUnusedPicturesNotNeededForOutput()
 {
@@ -1373,7 +1411,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   Int targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
   // Update status
   dpbStatus.m_numAUsNotDisplayed = listOfPocs.size();   // Number of AUs not displayed
-  dpbStatus.m_numLayers = vps->getMaxLayers();
+  dpbStatus.m_numLayers = vps->getNumLayersInIdList( targetLsIdx );
   dpbStatus.m_numSubDpbs = vps->getNumSubDpbs( vps->getOutputLayerSetIdx(
                                                       this->getCommonDecoderParams()->getTargetOutputLayerSetIdx() ) );
 
