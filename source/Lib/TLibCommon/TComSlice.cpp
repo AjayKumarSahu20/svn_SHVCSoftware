@@ -1388,7 +1388,9 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
   TComPic* rpcPic;
   Int i, isReference;
 
+#if !ALIGNED_BUMPING
   checkLeadingPictureRestrictions(rcListPic);
+#endif
 
   // loop through all pictures in the reference picture buffer
   TComList<TComPic*>::iterator iterPic = rcListPic.begin();
@@ -3404,7 +3406,6 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
     //set reference picture POC of each ILP reference 
     Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
-    assert(thePoc >= 0);
     assert(thePoc == pcRefPicBL->getPOC());
 
     ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
