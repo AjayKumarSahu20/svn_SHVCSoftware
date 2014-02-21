@@ -927,6 +927,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       pcSlice->createExplicitReferencePictureSetFromReference(rcListPic, pcSlice->getRPS(), pcSlice->isIRAP());
     }
+#if ALIGNED_BUMPING
+    pcSlice->checkLeadingPictureRestrictions(rcListPic);
+#endif
     pcSlice->applyReferencePictureSet(rcListPic, pcSlice->getRPS());
 
     if(pcSlice->getTLayer() > 0 

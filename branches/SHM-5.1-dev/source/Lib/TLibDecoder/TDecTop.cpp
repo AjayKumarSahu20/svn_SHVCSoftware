@@ -1150,6 +1150,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_cPrediction.initTempBuff();
 #if !ALIGNED_BUMPING
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
+#else
+    m_apcSlicePilot->checkLeadingPictureRestrictions(m_cListPic);
 #endif
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
