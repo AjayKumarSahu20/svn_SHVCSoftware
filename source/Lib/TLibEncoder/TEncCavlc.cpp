@@ -250,7 +250,22 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
   WRITE_FLAG( pcPPS->getListsModificationPresentFlag(), "lists_modification_present_flag");
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
   WRITE_FLAG( pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
+#if P0166_MODIFIED_PPS_EXTENSION
+  WRITE_FLAG( 1, "pps_extension_flag" );
+  if( 1 ) //pps_extension_flag
+  {
+    UInt ppsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
+    for (UInt i = 0; i < 8; i++)
+    {
+      WRITE_FLAG( ppsExtensionTypeFlag[i], "pps_extension_type_flag" );
+    }
+    if( ppsExtensionTypeFlag[1] )
+    {
+    }
+  }
+#else
   WRITE_FLAG( 0, "pps_extension_flag" );
+#endif
 }
 
 Void TEncCavlc::codeVUI( TComVUI *pcVUI, TComSPS* pcSPS )

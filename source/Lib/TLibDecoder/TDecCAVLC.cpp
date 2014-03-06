@@ -333,10 +333,26 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
   READ_FLAG( uiCode, "pps_extension_flag");
   if (uiCode)
   {
+#if P0166_MODIFIED_PPS_EXTENSION
+    UInt ppsExtensionTypeFlag[8];
+    for (UInt i = 0; i < 8; i++)
+    {
+      READ_FLAG( ppsExtensionTypeFlag[i], "pps_extension_type_flag" );
+    }
+    if (ppsExtensionTypeFlag[1])
+    {
+    }
+    if (ppsExtensionTypeFlag[7])
+    {
+#endif
+
     while ( xMoreRbspData() )
     {
       READ_FLAG( uiCode, "pps_extension_data_flag");
     }
+#if P0166_MODIFIED_PPS_EXTENSION
+    }
+#endif
   }
 }
 
