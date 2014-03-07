@@ -339,8 +339,15 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
     {
       READ_FLAG( ppsExtensionTypeFlag[i], "pps_extension_type_flag" );
     }
+#if !POC_RESET_IDC
     if (ppsExtensionTypeFlag[1])
     {
+#else
+    if( ppsExtensionTypeFlag[0] )
+    {
+      READ_FLAG( uiCode, "poc_reset_info_present_flag" );
+      pcPPS->setPocResetInfoPresentFlag(uiCode ? true : false);
+#endif
     }
     if (ppsExtensionTypeFlag[7])
     {

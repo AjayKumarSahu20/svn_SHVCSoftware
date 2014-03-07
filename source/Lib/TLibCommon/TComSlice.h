@@ -1655,6 +1655,9 @@ private:
   Bool     m_inferScalingListFlag;
   UInt     m_scalingListRefLayerId;
 #endif
+#if POC_RESET_IDC
+  Bool     m_pocResetInfoPresentFlag;
+#endif
 #endif
 
 public:
@@ -1792,6 +1795,10 @@ public:
   Bool      getLoopFilterAcrossSlicesEnabledFlag ()                    { return m_loopFilterAcrossSlicesEnabledFlag;   } 
   Bool getSliceHeaderExtensionPresentFlag   ()                    { return m_sliceHeaderExtensionPresentFlag; }
   Void setSliceHeaderExtensionPresentFlag   (Bool val)            { m_sliceHeaderExtensionPresentFlag = val; }
+#if POC_RESET_IDC
+  Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
+  Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
+#endif
 };
 
 typedef struct
