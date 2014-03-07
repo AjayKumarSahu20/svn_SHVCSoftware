@@ -254,13 +254,23 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
   WRITE_FLAG( 1, "pps_extension_flag" );
   if( 1 ) //pps_extension_flag
   {
+#if !POC_RESET_IDC
     UInt ppsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
+#else
+    UInt ppsExtensionTypeFlag[8] = { 1, 0, 0, 0, 0, 0, 0, 0 };
+#endif
     for (UInt i = 0; i < 8; i++)
     {
       WRITE_FLAG( ppsExtensionTypeFlag[i], "pps_extension_type_flag" );
     }
+#if !POC_RESET_IDC
+    if( ppsExtensionTypeFlag[0] )
+    {
+#else
     if( ppsExtensionTypeFlag[1] )
     {
+      WRITE_FLAG( pcPPS->getPocResetInfoPresentFlag() ? 1 : 0, "poc_reset_info_present_flag" );
+#endif
     }
   }
 #else

@@ -2737,6 +2737,9 @@ TComPPS::TComPPS()
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
 #endif
+#if POC_RESET_IDC
+, m_pocResetInfoPresentFlag   (false)
+#endif
 {
   m_scalingList = new TComScalingList;
 }
