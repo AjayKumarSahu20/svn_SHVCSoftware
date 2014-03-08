@@ -383,6 +383,9 @@ protected:
 #if N0147_IRAP_ALIGN_FLAG
   Bool      m_crossLayerIrapAlignFlag;
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  Bool      m_crossLayerAlignedIdrOnlyFlag;
+#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
 #endif

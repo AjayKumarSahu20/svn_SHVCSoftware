@@ -1351,6 +1351,12 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #endif 
 #if IRAP_ALIGN_FLAG_IN_VPS_VUI
     WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+    if(vps->getCrossLayerIrapAlignFlag())
+    {
+       WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "only_idr_for_IRAP_across_layers");
+    }
+#endif
 #endif 
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }

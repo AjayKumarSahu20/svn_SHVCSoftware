@@ -183,6 +183,8 @@
 
 #define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
 
+#define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
+
 #define N0147_IRAP_ALIGN_FLAG            1      ///< a flag to indicatate whether IRAPs are aligned across layers
 #if N0147_IRAP_ALIGN_FLAG
 #define O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS  1  ///< Remove IRAP align depedency constraints on poc_Reset_flag.

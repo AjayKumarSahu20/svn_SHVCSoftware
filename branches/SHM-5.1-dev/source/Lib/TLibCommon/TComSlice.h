@@ -567,6 +567,9 @@ private:
 #if N0147_IRAP_ALIGN_FLAG
   Bool       m_crossLayerIrapAlignFlag;
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  Bool       m_crossLayerAlignedIdrOnlyFlag;;
+#endif
 #if O0225_MAX_TID_FOR_REF_LAYERS
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1][MAX_VPS_LAYER_ID_PLUS1];
 #else
@@ -892,6 +895,10 @@ Void      deriveNumberOfSubDpbs();
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
   Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;                         }
+#endif 
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  Bool   getCrossLayerAlignedIdrOnlyFlag()                                    { return m_crossLayerAlignedIdrOnlyFlag;                      }
+  Void   setCrossLayerAlignedIdrOnlyFlag(Bool x)                              { m_crossLayerAlignedIdrOnlyFlag = x;                         }
 #endif 
 #if N0147_IRAP_ALIGN_FLAG
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
