@@ -1297,6 +1297,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
     vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+    vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
+#endif
 #if N0147_IRAP_ALIGN_FLAG
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)

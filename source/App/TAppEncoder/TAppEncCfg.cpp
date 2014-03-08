@@ -588,6 +588,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0147_IRAP_ALIGN_FLAG
   ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  ("CrossLayerAlignedIdrOnlyFlag", m_crossLayerAlignedIdrOnlyFlag, true, "only idr for IRAP across layers" )  
+#endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   ("InterLayerWeightedPred", m_useInterLayerWeightedPred, false, "enable IL WP parameters estimation at encoder" )  
 #endif
@@ -2339,6 +2342,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
+#endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  printf("IDR only for IRAP             : %d\n", m_crossLayerAlignedIdrOnlyFlag );
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   printf("InterLayerWeightedPred        : %d\n", m_useInterLayerWeightedPred );
