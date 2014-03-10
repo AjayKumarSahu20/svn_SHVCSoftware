@@ -255,6 +255,12 @@ Void TAppDecTop::decode()
       }
 #if ALIGNED_BUMPING
       Bool outputPicturesFlag = true;  
+#if NO_OUTPUT_OF_PRIOR_PICS
+      if( m_acTDecTop[nalu.m_layerId].getNoOutputOfPriorPicsFlags() )
+      {
+        outputPicturesFlag = false;
+      }
+#endif
 
       if (nalu.m_nalUnitType == NAL_UNIT_EOS) // End of sequence
       {
@@ -262,7 +268,11 @@ Void TAppDecTop::decode()
       }
       if( bNewPicture ) // New picture, slice header parsed but picture not decoded
       {
+#if NO_OUTPUT_OF_PRIOR_PICS
+        if( 
+#else
         if ( bNewPOC &&
+#endif
            (   nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -1040,7 +1050,6 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
       conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
   }
-        
   // update POC of display order
   pocLastDisplay = pic->getPOC();
 

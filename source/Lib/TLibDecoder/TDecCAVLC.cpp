@@ -2048,7 +2048,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   READ_FLAG( firstSliceSegmentInPic, "first_slice_segment_in_pic_flag" );
   if( rpcSlice->getRapPicFlag())
   {
+#if !NO_OUTPUT_OF_PRIOR_PICS
     READ_FLAG( uiCode, "no_output_of_prior_pics_flag" );  //ignored
+#else
+    READ_FLAG( uiCode, "no_output_of_prior_pics_flag" );  rpcSlice->setNoOutputOfPriorPicsFlag( uiCode ? true : false );
+#endif
   }
   READ_UVLC (    uiCode, "slice_pic_parameter_set_id" );  rpcSlice->setPPSId(uiCode);
   pps = parameterSetManager->getPrefetchedPPS(uiCode);

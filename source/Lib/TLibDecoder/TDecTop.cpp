@@ -802,8 +802,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
+#if !NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
   Bool bFirstSliceInSeq;
+#endif
 #endif
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
@@ -857,6 +859,23 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setAssociatedIRAPPOC(m_pocCRA);
   m_apcSlicePilot->setAssociatedIRAPType(m_associatedIRAPType);
 
+#if NO_OUTPUT_OF_PRIOR_PICS
+  // Infer the value of NoOutputOfPriorPicsFlag
+  if( m_apcSlicePilot->getRapPicFlag() )
+  {
+    if ( m_apcSlicePilot->getBlaPicFlag() || m_apcSlicePilot->getIdrPicFlag()  || 
+        (m_apcSlicePilot->getCraPicFlag() && m_bFirstSliceInSequence) ||
+        (m_apcSlicePilot->getCraPicFlag() && m_apcSlicePilot->getHandleCraAsBlaFlag()))
+    {
+      m_apcSlicePilot->setNoRaslOutputFlag( true );
+    }
+    else
+    {
+      m_apcSlicePilot->setNoRaslOutputFlag( false );
+    }
+  }
+#endif
+
   // Skip pictures due to random access
   if (isRandomAccessSkipPicture(iSkipFrame, iPOCLastDisplay))
   {
@@ -878,6 +897,59 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   // exit when a new picture is found
 #if SVC_EXTENSION
   bNewPOC = (m_apcSlicePilot->getPOC()!= m_prevPOC);
+
+#if NO_OUTPUT_OF_PRIOR_PICS
+#if NO_CLRAS_OUTPUT_FLAG
+  if (m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() )
+  {
+    if (m_bFirstSliceInSequence)
+    {
+      setNoClrasOutputFlag(true);
+    }
+    else if ( m_apcSlicePilot->getBlaPicFlag() )
+    {
+      setNoClrasOutputFlag(true);
+    }
+#if O0149_CROSS_LAYER_BLA_FLAG
+    else if (m_apcSlicePilot->getIdrPicFlag() && m_apcSlicePilot->getCrossLayerBLAFlag())
+    {
+      setNoClrasOutputFlag(true);
+    }
+#endif
+    else
+    {
+      setNoClrasOutputFlag(false);
+    }      
+  }
+  else
+  {
+    setNoClrasOutputFlag(false);
+  }
+
+  m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
+#endif
+
+  // Derive the value of NoOutputOfPriorPicsFlag
+  if( bNewPOC || m_layerId!=m_uiPrevLayerId )   // i.e. new coded picture
+  {
+    if( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_apcSlicePilot->getNoRaslOutputFlag() )
+    {
+      this->setNoOutputOfPriorPicsFlags( true );
+    }
+    else if( m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoRaslOutputFlag() )
+    {
+      this->setNoOutputOfPriorPicsFlags( m_apcSlicePilot->getNoOutputOfPriorPicsFlag() );
+    }
+    else
+    {
+      if( this->m_ppcTDecTop[0]->getNoClrasOutputFlag() )
+      {
+        this->setNoOutputOfPriorPicsFlags( true );
+      }
+    }
+  }
+#endif
+
 #if ALIGNED_BUMPING
   if (bNewPOC || m_layerId!=m_uiPrevLayerId)
   {
@@ -937,8 +1009,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_uiPrevLayerId = m_layerId;
 #endif
   }
+#if !NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
   bFirstSliceInSeq = m_bFirstSliceInSequence;
+#endif
 #endif
   m_bFirstSliceInSequence = false;
 #if POC_RESET_FLAG
@@ -1101,6 +1175,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 #endif
 
+#if !NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
     if (m_layerId == 0 &&
         (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -1145,7 +1220,16 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if NO_CLRAS_OUTPUT_FLAG
     m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
 #endif
-
+#else
+    if ( m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() && getNoClrasOutputFlag() )
+    {
+      for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
+      {
+        m_ppcTDecTop[i]->setLayerInitializedFlag(false);
+        m_ppcTDecTop[i]->setFirstPicInLayerDecodedFlag(false);
+      }
+    }
+#endif
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff();
 #if !ALIGNED_BUMPING
