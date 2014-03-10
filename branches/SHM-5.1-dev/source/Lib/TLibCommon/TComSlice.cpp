@@ -110,6 +110,11 @@ TComSlice::TComSlice()
 #if O0149_CROSS_LAYER_BLA_FLAG
 , m_bCrossLayerBLAFlag            ( false )
 #endif
+#if NO_OUTPUT_OF_PRIOR_PICS
+, m_noOutputOfPriorPicsFlag       ( false )
+, m_noRaslOutputFlag              ( false )
+, m_handleCraAsBlaFlag            ( false )
+#endif
 #endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
@@ -193,6 +198,18 @@ Bool TComSlice::getRapPicFlag()
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
 }
+#if NO_OUTPUT_OF_PRIOR_PICS
+Bool TComSlice::getBlaPicFlag       ()
+{
+    return  getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP;
+}
+Bool TComSlice::getCraPicFlag       ()
+{
+    return getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
+}
+#endif
 
 /**
  - allocate table to contain substream sizes to be written to the slice header.

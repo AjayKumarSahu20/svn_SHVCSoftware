@@ -238,7 +238,12 @@ public:
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-
+#if NO_OUTPUT_OF_PRIOR_PICS
+#if NO_CLRAS_OUTPUT_FLAG
+  Bool getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+#endif
+#endif
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);
@@ -265,8 +270,10 @@ protected:
   Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+#if !NO_OUTPUT_OF_PRIOR_PICS
   Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
   Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+#endif
 #endif
 };// END CLASS DEFINITION TDecTop
 

@@ -1566,7 +1566,11 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   WRITE_FLAG( sliceSegmentAddress==0, "first_slice_segment_in_pic_flag" );
   if ( pcSlice->getRapPicFlag() )
   {
+#if NO_OUTPUT_OF_PRIOR_PICS
+    WRITE_FLAG( pcSlice->getNoOutputOfPriorPicsFlag(), "no_output_of_prior_pics_flag" );
+#else
     WRITE_FLAG( 0, "no_output_of_prior_pics_flag" );
+#endif
   }
   WRITE_UVLC( pcSlice->getPPS()->getPPSId(), "slice_pic_parameter_set_id" );
   pcSlice->setDependentSliceSegmentFlag(!pcSlice->isNextSlice());

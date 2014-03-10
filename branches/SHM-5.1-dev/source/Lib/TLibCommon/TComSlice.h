@@ -1951,6 +1951,11 @@ private:
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool        m_bCrossLayerBLAFlag;
 #endif
+#if NO_OUTPUT_OF_PRIOR_PICS
+  Bool        m_noOutputOfPriorPicsFlag;
+  Bool        m_noRaslOutputFlag;
+  Bool        m_handleCraAsBlaFlag;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -2037,6 +2042,10 @@ public:
   Void      setNalUnitType      ( NalUnitType e )               { m_eNalUnitType      = e;      }
   NalUnitType getNalUnitType    () const                        { return m_eNalUnitType;        }
   Bool      getRapPicFlag       ();  
+#if NO_OUTPUT_OF_PRIOR_PICS
+  Bool      getBlaPicFlag       ();
+  Bool      getCraPicFlag       ();
+#endif
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
@@ -2258,6 +2267,17 @@ public:
 #endif
 
   Void setILRPic(TComPic **pcIlpPic);
+#if NO_OUTPUT_OF_PRIOR_PICS
+  Void setNoOutputOfPriorPicsFlag(const Bool x)   { m_noOutputOfPriorPicsFlag = x;    }
+  Bool getNoOutputOfPriorPicsFlag()               { return m_noOutputOfPriorPicsFlag; }
+
+  Void setNoRaslOutputFlag    ( const Bool val )   { m_noRaslOutputFlag = val;  }
+  Bool getNoRaslOutputFlag    ()                   { return m_noRaslOutputFlag; }
+
+  Void setHandleCraAsBlaFlag  ( const Bool val )   { m_handleCraAsBlaFlag = val;  }
+  Bool getHandleCraAsBlaFlag  ()                   { return m_handleCraAsBlaFlag; }
+
+#endif
 
 #endif //SVC_EXTENSION
 protected:
