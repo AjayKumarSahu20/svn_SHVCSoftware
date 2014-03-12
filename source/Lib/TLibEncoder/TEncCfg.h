@@ -385,7 +385,11 @@ public:
   Void      setSourceHeight                 ( Int   i )      { m_iSourceHeight = i; }
 
   Window   &getConformanceWindow()                           { return m_conformanceWindow; }
+#if P0312_VERT_PHASE_ADJ 
+  Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom, false, false); }
+#else
   Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom); }
+#endif
 
   Void      setFramesToBeEncoded            ( Int   i )      { m_framesToBeEncoded = i; }
   

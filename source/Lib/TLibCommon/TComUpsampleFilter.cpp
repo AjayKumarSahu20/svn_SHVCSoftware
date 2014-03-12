@@ -126,6 +126,15 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
 
+#if P0312_VERT_PHASE_ADJ
+  Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
+  Bool vertPhasePositionFlag = scalEL.getVertPhasePositionFlag();
+  if (vertPhasePositionFlag)
+  {
+    assert (vertPhasePositionEnableFlag);
+  }
+#endif
+
   Pel* piTempBufY = pcTempPic->getLumaAddr();
   Pel* piSrcBufY  = pcBasePic->getLumaAddr();
   Pel* piDstBufY  = pcUsPic->getLumaAddr();
@@ -218,10 +227,18 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
     Int   phaseX = 2*phaseAlignFlag;
+#if P0312_VERT_PHASE_ADJ
+    Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(2*phaseAlignFlag));
+#else
     Int   phaseY = 2*phaseAlignFlag;
+#endif
 #else
     Int   phaseX = 0;
+#if P0312_VERT_PHASE_ADJ
+    Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(0));
+#else
     Int   phaseY = 0;
+#endif
 #endif
 
 #if ROUNDING_OFFSET
@@ -362,34 +379,31 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     shiftY = 16;
 
 #if O0215_PHASE_ALIGNMENT
+    Int phaseXC = phaseAlignFlag;
+#if P0312_VERT_PHASE_ADJ
+    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4):(phaseAlignFlag + 1);
+#else
+    Int phaseYC = phaseAlignFlag + 1;
+#endif
+#else
     Int phaseXC = 0;
+#if P0312_VERT_PHASE_ADJ
+    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;;
+#else
     Int phaseYC = 1;
-
+#endif
+#endif
+    
 #if ROUNDING_OFFSET
-    addX       = ( ( (phaseXC+phaseAlignFlag) * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( (phaseYC+phaseAlignFlag) * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
+    addX       = ( ( phaseXC * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( phaseYC * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
 #else
-    addX       = ( ( ( widthBL * (phaseXC+phaseAlignFlag) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( ( heightBL * (phaseYC+phaseAlignFlag) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+    addX       = ( ( ( widthBL * (phaseXC) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( ( heightBL * (phaseYC) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
-    deltaX     = 4 * (phaseXC+phaseAlignFlag);
-    deltaY     = 4 * (phaseYC+phaseAlignFlag);
-#else
-    phaseX = 0;
-    phaseY = 1;
-
-#if ROUNDING_OFFSET
-    addX       = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
-#else
-    addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
-#endif
-
-    deltaX     = 4 * phaseX;
-    deltaY     = 4 * phaseY;
-#endif
+    deltaX     = 4 * phaseXC;
+    deltaY     = 4 * phaseYC;
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;

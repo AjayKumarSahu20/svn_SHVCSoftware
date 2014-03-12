@@ -96,6 +96,10 @@ protected:
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
+#if P0312_VERT_PHASE_ADJ 
+  Bool      m_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
+
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
   Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)

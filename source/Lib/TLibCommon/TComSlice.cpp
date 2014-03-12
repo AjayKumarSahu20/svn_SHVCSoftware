@@ -124,6 +124,9 @@ TComSlice::TComSlice()
   m_activeNumILRRefIdx        = 0; 
   m_interLayerPredEnabledFlag = 0;
   ::memset( m_interLayerPredLayerIdc, 0, sizeof(m_interLayerPredLayerIdc) );
+#if P0312_VERT_PHASE_ADJ
+  ::memset( m_vertPhasePositionFlag, 0, sizeof(m_vertPhasePositionFlag) );
+#endif
 #endif //SVC_EXTENSION
 
   initEqualRef();
@@ -1121,6 +1124,9 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
+#if P0312_VERT_PHASE_ADJ
+  memcpy( m_vertPhasePositionFlag, pSrc->m_vertPhasePositionFlag, sizeof( m_vertPhasePositionFlag ) );
+#endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;
   m_pcPPS                = pSrc->m_pcPPS;
