@@ -1039,7 +1039,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     const Window &conf = pic->getConformanceWindow();
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
     Int xScal =  1, yScal = 1;
-  #if REPN_FORMAT_IN_VPS
+#if REPN_FORMAT_IN_VPS
     UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
     xScal = TComSPS::getWinUnitX( chromaFormatIdc );
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
@@ -1075,7 +1075,6 @@ Void TAppDecTop::flushAllPictures(Int layerId, Bool outputPictures)
 
   if( outputPictures )  // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
   {
-    Int numReorderPics = -1;
     std::vector<Int>  listOfPocs;
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1103,7 +1102,6 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
 
   if( outputPictures )  // All pictures in the DPB are to be output
   {
-    Int numReorderPics = -1;
     std::vector<Int>  listOfPocs;
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1138,7 +1136,6 @@ Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
 Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 {
     
-  Int numReorderPics = -1;
   std::vector<Int>  listOfPocs;
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1179,7 +1176,6 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 
 Void TAppDecTop::checkOutputAfterDecoding()
 {    
-  Int numReorderPics = -1;
   std::vector<Int>  listOfPocs;
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
