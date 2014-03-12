@@ -1244,7 +1244,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
 TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit)
 {
   Int targetOutputLsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
-  TComVPS *vps;
+  TComVPS *vps = NULL;
 
   if( targetOutputLsIdx == 0 )   // Only base layer is output
   {

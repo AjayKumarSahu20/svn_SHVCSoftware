@@ -858,6 +858,9 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
       READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
       READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
       READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
+#if P0312_VERT_PHASE_ADJ
+      READ_FLAG( uiCode, "vert_phase_pos_enable_flag" );scaledWindow.setVertPhasePositionEnableFlag  (uiCode);  pcSPS->setVertPhasePositionEnableFlag(i,uiCode);
+#endif
     }
   }
 }
@@ -1939,6 +1942,10 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif
 
+#if P0312_VERT_PHASE_ADJ
+  READ_FLAG( uiCode, "vps_vui_vert_phase_in_use_flag" ); vps->setVpsVuiVertPhaseInUseFlag(uiCode);
+#endif
+
 #if O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
@@ -2484,6 +2491,15 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #endif 
     }
 #endif
+#endif
+#if P0312_VERT_PHASE_ADJ
+    for(Int i = 0; i < rpcSlice->getSPS()->getNumScaledRefLayerOffsets(); i++)
+    {
+      if (rpcSlice->getSPS()->getVertPhasePositionEnableFlag(rpcSlice->getInterLayerPredLayerIdc(i)))
+      {
+        READ_FLAG( uiCode, "phase_pos_flag" ); rpcSlice->setVertPhasePositionFlag( uiCode? true: false, i);
+      }
+    }
 #endif
 
     if(sps->getUseSAO())

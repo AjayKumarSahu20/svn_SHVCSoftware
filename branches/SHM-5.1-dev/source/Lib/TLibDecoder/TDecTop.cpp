@@ -1466,10 +1466,18 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
 #endif
 
+#if P0312_VERT_PHASE_ADJ
+#if O0098_SCALED_REF_LAYER_ID
+        Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
+#else
+        Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
+#endif
+#else
 #if O0098_SCALED_REF_LAYER_ID
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
 #else
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
+#endif
 #endif
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
@@ -1492,6 +1500,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #else
           Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 #endif*/
+#if P0312_VERT_PHASE_ADJ
+          scalEL.setVertPhasePositionFlag (pcSlice->getVertPhasePositionFlag(i));
+#endif
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
           m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );

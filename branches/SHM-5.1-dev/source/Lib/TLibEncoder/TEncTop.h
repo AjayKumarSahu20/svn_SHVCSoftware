@@ -138,6 +138,9 @@ private:
   UInt                    m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
+#if P0312_VERT_PHASE_ADJ
+  Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
 #endif
@@ -225,6 +228,11 @@ public:
   Window&  getScaledRefLayerWindowForLayer(Int layerId);
 #endif
   Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
+#if P0312_VERT_PHASE_ADJ
+  Void                    setVertPhasePositionEnableFlag(Int x, Bool b) { m_vertPhasePositionEnableFlag[x] = b;   }
+  UInt                    getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
+#endif
+
   TComPic** getIlpList() { return m_cIlpPic; }
 #if REF_IDX_MFM
   Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}

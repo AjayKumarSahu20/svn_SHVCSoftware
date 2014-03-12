@@ -384,6 +384,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
   Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
+#if P0312_VERT_PHASE_ADJ
+  string    cfg_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
 
 #if O0098_SCALED_REF_LAYER_ID
   string*    cfg_scaledRefLayerIdPtr           [MAX_LAYERS];
@@ -392,6 +395,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
+  #if P0312_VERT_PHASE_ADJ
+  string*    cfg_vertPhasePositionEnableFlagPtr[MAX_LAYERS];
+#endif
+
 #if RC_SHVC_HARMONIZATION
   Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
   Int*    cfg_RCTargetBitRate      [MAX_LAYERS];
@@ -456,6 +463,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer]   ;
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
+#if P0312_VERT_PHASE_ADJ
+      cfg_vertPhasePositionEnableFlagPtr [layer]   = &cfg_vertPhasePositionEnableFlag[layer] ;
+#endif
     }
 #if RC_SHVC_HARMONIZATION
     cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
@@ -568,7 +578,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ScaledRefLayerRightOffset%d",  cfg_scaledRefLayerRightOffsetPtr, string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
-                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
+  " bottom-right luma sample of the EL picture, in units of two luma samples")
+#if P0312_VERT_PHASE_ADJ
+  ("VertPhasePositionEnableFlag%d", cfg_vertPhasePositionEnableFlagPtr,string(""), MAX_LAYERS, "VertPhasePositionEnableFlag for layer %d")
+#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   ("InputBitDepth%d",       cfg_InputBitDepthY,    8, MAX_LAYERS, "Bit-depth of input file for layer %d")
   ("InternalBitDepth%d",    cfg_InternalBitDepthY, 0, MAX_LAYERS, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d ")
@@ -1071,11 +1084,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0098_SCALED_REF_LAYER_ID
       assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
 #endif
+#if P0312_VERT_PHASE_ADJ
       assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
               strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
-              strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"")
-            ); 
+              strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"") ||
+              strcmp(cfg_vertPhasePositionEnableFlag[layer].c_str(),"") ); 
+#else
+      assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
+              strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
+              strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
+              strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"") ); 
+#endif
     }
 
     Int *tempArray = NULL;   // Contain the value 
@@ -1151,6 +1171,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         delete [] tempArray; tempArray = NULL;
       }
     }
+#if P0312_VERT_PHASE_ADJ
+   // VertPhasePositionEnableFlag //
+    if(strcmp(cfg_vertPhasePositionEnableFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_vertPhasePositionEnableFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "VertPhasePositionEnableFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
   }
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)

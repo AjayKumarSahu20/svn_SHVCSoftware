@@ -662,6 +662,9 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
       WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
       WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
       WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+#if P0312_VERT_PHASE_ADJ
+      WRITE_FLAG( scaledWindow.getVertPhasePositionEnableFlag(), "vert_phase_pos_enable_flag" ); 
+#endif
     }
   }
 }
@@ -1459,6 +1462,10 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 #endif
 
+#if P0312_VERT_PHASE_ADJ
+    WRITE_FLAG( vps->getVpsVuiVertPhaseInUseFlag(), "vps_vui_vert_phase_in_use_flag" );
+#endif
+
 #if O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
@@ -1838,6 +1845,15 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         }
       }
     }     
+#if P0312_VERT_PHASE_ADJ
+    for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+    {
+      if (pcSlice->getSPS()->getVertPhasePositionEnableFlag(pcSlice->getInterLayerPredLayerIdc(i)))
+      {
+        WRITE_FLAG( pcSlice->getVertPhasePositionFlag(i), "phase_pos_flag" );
+      }
+    }
+#endif
 #endif //SVC_EXTENSION
 
     if(pcSlice->getSPS()->getUseSAO())
