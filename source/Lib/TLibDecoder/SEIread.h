@@ -61,10 +61,18 @@ public:
   Void parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
 #endif
 protected:
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+  Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, const SEIScalableNesting *nestingSei=NULL, const SEIBspNesting *bspNestingSei=NULL);
+#else
+  Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting *nestingSei=NULL);
+#endif
+#else
 #if LAYERS_NOT_PRESENT_SEI
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
 #else
   Void xReadSEImessage                (SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps);
+#endif
 #endif
 #if P0138_USE_ALT_CPB_PARAMS_FLAG
   Bool xPayloadExtensionPresent       ();
@@ -93,6 +101,16 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps);
 #else
   Void xParseSEIScalableNesting       (SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps);
+#endif
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+  Void xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei);
+#else
+  Void xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting &nestingSei);
+#endif
+  Void xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
+  Void xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
+  Void xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
 #endif
   Void xParseByteAlign();
 };

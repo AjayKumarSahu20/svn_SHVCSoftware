@@ -110,9 +110,20 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     break;
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
-    case SEI::SUB_BITSTREAM_PROPERTY:
-      fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
-      break;
+  case SEI::SUB_BITSTREAM_PROPERTY:
+    fprintf( g_hTrace, "=========== Sub-bitstream property SEI message ===========\n");
+    break;
+#endif
+#if O0164_MULTI_LAYER_HRD
+  case SEI::BSP_NESTING:
+    fprintf( g_hTrace, "=========== Bitstream parition nesting SEI message ===========\n");
+    break;
+  case SEI::BSP_INITIAL_ARRIVAL_TIME:
+    fprintf( g_hTrace, "=========== Bitstream parition initial arrival time SEI message ===========\n");
+    break;
+  case SEI::BSP_HRD:
+    fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
+    break;
 #endif
 #endif //SVC_EXTENSION
   default:
@@ -151,10 +162,18 @@ void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
   assert(rbspTrailingBits == 0x80);
 }
 
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, const SEIScalableNesting *nestingSei, const SEIBspNesting *bspNestingSei)
+#else
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting *nestingSei)
+#endif
+#else
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
 #else
 Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps)
+#endif
 #endif
 {
 #if ENC_DEC_TRACE
@@ -271,6 +290,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
 #else
       xParseSEIScalableNesting((SEIScalableNesting&) *sei, nalUnitType, payloadSize, sps);
 #endif
+      break;
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
     case SEI::LAYERS_NOT_PRESENT:
@@ -295,6 +315,24 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
    case SEI::SUB_BITSTREAM_PROPERTY:
      sei = new SEISubBitstreamProperty;
      xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei);
+     break;
+#endif
+#if O0164_MULTI_LAYER_HRD
+   case SEI::BSP_NESTING:
+     sei = new SEIBspNesting;
+#if LAYERS_NOT_PRESENT_SEI
+     xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, vps, sps, *nestingSei);
+#else
+     xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, sps, *nestingSei);
+#endif
+     break;
+   case SEI::BSP_INITIAL_ARRIVAL_TIME:
+     sei = new SEIBspInitialArrivalTime;
+     xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei);
+     break;
+   case SEI::BSP_HRD:
+     sei = new SEIBspHrd;
+     xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei);
      break;
 #endif
 #endif //SVC_EXTENSION
@@ -869,10 +907,18 @@ Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitT
 
   // read nested SEI messages
   do {
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &sei);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, &sei);
+#endif
+#else
 #if LAYERS_NOT_PRESENT_SEI
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
 #else
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
 #endif
   } while (m_pcBitstream->getNumBitsLeft() > 8);
 
@@ -973,6 +1019,195 @@ Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
   xParseByteAlign();
 }
 #endif
+
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei)
+#else
+Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting &nestingSei)
+#endif
+{
+  UInt uiCode;
+  READ_UVLC( uiCode, "bsp_idx" ); sei.m_bspIdx = uiCode;
+
+  // byte alignment
+  while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
+  {
+    UInt code;
+    READ_FLAG( code, "bsp_nesting_zero_bit" );
+  }
+
+  sei.m_callerOwnsSEIs = false;
+
+  // read nested SEI messages
+  do {
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &nestingSei, &sei);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, &nestingSei);
+#endif
+  } while (m_pcBitstream->getNumBitsLeft() > 8);
+}
+
+Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)
+{
+  assert(vps->getVpsVuiPresentFlag());
+
+  UInt schedCombCnt = vps->getNumBspSchedCombinations(nestingSei.m_nestingOpIdx[0]);
+  UInt len;
+  UInt hrdIdx;
+  UInt uiCode;
+
+  if (schedCombCnt > 0)
+  {
+    hrdIdx = vps->getBspCombHrdIdx(nestingSei.m_nestingOpIdx[0], 0, bspNestingSei.m_bspIdx);
+  }
+  else
+  {
+    hrdIdx = 0;
+  }
+
+  TComHRD *hrd = vps->getBspHrd(hrdIdx);
+
+  if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
+  {
+    len = hrd->getInitialCpbRemovalDelayLengthMinus1() + 1;
+  }
+  else
+  {
+    len = 23 + 1;
+  }
+
+  if (hrd->getNalHrdParametersPresentFlag())
+  {
+    for(UInt i = 0; i < schedCombCnt; i++)
+    {
+      READ_CODE( len, uiCode, "nal_initial_arrival_delay" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
+    }
+  }
+  else
+  {
+    for(UInt i = 0; i < schedCombCnt; i++)
+    {
+      READ_CODE( len, uiCode, "vcl_initial_arrival_delay" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
+    }
+  }
+}
+
+Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei)
+{
+  UInt uiCode;
+  READ_UVLC( uiCode, "sei_num_bsp_hrd_parameters_minus1" ); sei.m_seiNumBspHrdParametersMinus1 = uiCode;
+  for (UInt i = 0; i <= sei.m_seiNumBspHrdParametersMinus1; i++)
+  {
+    if (i > 0)
+    {
+      READ_FLAG( uiCode, "sei_bsp_cprms_present_flag" ); sei.m_seiBspCprmsPresentFlag[i] = uiCode;
+    }
+    xParseHrdParameters(sei.hrd, i==0 ? 1 : sei.m_seiBspCprmsPresentFlag[i], nestingSei.m_nestingMaxTemporalIdPlus1[0]-1);
+  }
+  for (UInt h = 0; h <= nestingSei.m_nestingNumOpsMinus1; h++)
+  {
+    UInt lsIdx = nestingSei.m_nestingOpIdx[h];
+    READ_UVLC( uiCode, "num_sei_bitstream_partitions_minus1[i]"); sei.m_seiNumBitstreamPartitionsMinus1[lsIdx] = uiCode;
+    for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
+    {
+      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
+      {
+        if (sei.m_layerIdIncludedFlag[lsIdx][j])
+        {
+          READ_FLAG( uiCode, "sei_layer_in_bsp_flag[lsIdx][i][j]" ); sei.m_seiLayerInBspFlag[lsIdx][i][j] = uiCode;
+        }
+      }
+    }
+    READ_UVLC( uiCode, "sei_num_bsp_sched_combinations_minus1[i]"); sei.m_seiNumBspSchedCombinationsMinus1[lsIdx] = uiCode;
+    for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
+    {
+      for (UInt j = 0; j <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; j++)
+      {
+        READ_UVLC( uiCode, "sei_bsp_comb_hrd_idx[lsIdx][i][j]"); sei.m_seiBspCombHrdIdx[lsIdx][i][j] = uiCode;
+        READ_UVLC( uiCode, "sei_bsp_comb_sched_idx[lsIdx][i][j]"); sei.m_seiBspCombScheddx[lsIdx][i][j] = uiCode;
+      }
+    }
+  }
+}
+
+Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
+{
+  UInt  uiCode;
+  if( commonInfPresentFlag )
+  {
+    READ_FLAG( uiCode, "nal_hrd_parameters_present_flag" );           hrd->setNalHrdParametersPresentFlag( uiCode == 1 ? true : false );
+    READ_FLAG( uiCode, "vcl_hrd_parameters_present_flag" );           hrd->setVclHrdParametersPresentFlag( uiCode == 1 ? true : false );
+    if( hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag() )
+    {
+      READ_FLAG( uiCode, "sub_pic_cpb_params_present_flag" );         hrd->setSubPicCpbParamsPresentFlag( uiCode == 1 ? true : false );
+      if( hrd->getSubPicCpbParamsPresentFlag() )
+      {
+        READ_CODE( 8, uiCode, "tick_divisor_minus2" );                hrd->setTickDivisorMinus2( uiCode );
+        READ_CODE( 5, uiCode, "du_cpb_removal_delay_length_minus1" ); hrd->setDuCpbRemovalDelayLengthMinus1( uiCode );
+        READ_FLAG( uiCode, "sub_pic_cpb_params_in_pic_timing_sei_flag" ); hrd->setSubPicCpbParamsInPicTimingSEIFlag( uiCode == 1 ? true : false );
+        READ_CODE( 5, uiCode, "dpb_output_delay_du_length_minus1"  ); hrd->setDpbOutputDelayDuLengthMinus1( uiCode );
+      }
+      READ_CODE( 4, uiCode, "bit_rate_scale" );                       hrd->setBitRateScale( uiCode );
+      READ_CODE( 4, uiCode, "cpb_size_scale" );                       hrd->setCpbSizeScale( uiCode );
+      if( hrd->getSubPicCpbParamsPresentFlag() )
+      {
+        READ_CODE( 4, uiCode, "cpb_size_du_scale" );                  hrd->setDuCpbSizeScale( uiCode );
+      }
+      READ_CODE( 5, uiCode, "initial_cpb_removal_delay_length_minus1" ); hrd->setInitialCpbRemovalDelayLengthMinus1( uiCode );
+      READ_CODE( 5, uiCode, "au_cpb_removal_delay_length_minus1" );      hrd->setCpbRemovalDelayLengthMinus1( uiCode );
+      READ_CODE( 5, uiCode, "dpb_output_delay_length_minus1" );       hrd->setDpbOutputDelayLengthMinus1( uiCode );
+    }
+  }
+  Int i, j, nalOrVcl;
+  for( i = 0; i <= maxNumSubLayersMinus1; i ++ )
+  {
+    READ_FLAG( uiCode, "fixed_pic_rate_general_flag" );                     hrd->setFixedPicRateFlag( i, uiCode == 1 ? true : false  );
+    if( !hrd->getFixedPicRateFlag( i ) )
+    {
+      READ_FLAG( uiCode, "fixed_pic_rate_within_cvs_flag" );                hrd->setFixedPicRateWithinCvsFlag( i, uiCode == 1 ? true : false  );
+    }
+    else
+    {
+      hrd->setFixedPicRateWithinCvsFlag( i, true );
+    }
+    hrd->setLowDelayHrdFlag( i, 0 ); // Infered to be 0 when not present
+    hrd->setCpbCntMinus1   ( i, 0 ); // Infered to be 0 when not present
+    if( hrd->getFixedPicRateWithinCvsFlag( i ) )
+    {
+      READ_UVLC( uiCode, "elemental_duration_in_tc_minus1" );             hrd->setPicDurationInTcMinus1( i, uiCode );
+    }
+    else
+    {
+      READ_FLAG( uiCode, "low_delay_hrd_flag" );                      hrd->setLowDelayHrdFlag( i, uiCode == 1 ? true : false  );
+    }
+    if (!hrd->getLowDelayHrdFlag( i ))
+    {
+      READ_UVLC( uiCode, "cpb_cnt_minus1" );                          hrd->setCpbCntMinus1( i, uiCode );
+    }
+    for( nalOrVcl = 0; nalOrVcl < 2; nalOrVcl ++ )
+    {
+      if( ( ( nalOrVcl == 0 ) && ( hrd->getNalHrdParametersPresentFlag() ) ) ||
+          ( ( nalOrVcl == 1 ) && ( hrd->getVclHrdParametersPresentFlag() ) ) )
+      {
+        for( j = 0; j <= ( hrd->getCpbCntMinus1( i ) ); j ++ )
+        {
+          READ_UVLC( uiCode, "bit_rate_value_minus1" );             hrd->setBitRateValueMinus1( i, j, nalOrVcl, uiCode );
+          READ_UVLC( uiCode, "cpb_size_value_minus1" );             hrd->setCpbSizeValueMinus1( i, j, nalOrVcl, uiCode );
+          if( hrd->getSubPicCpbParamsPresentFlag() )
+          {
+            READ_UVLC( uiCode, "cpb_size_du_value_minus1" );       hrd->setDuCpbSizeValueMinus1( i, j, nalOrVcl, uiCode );
+            READ_UVLC( uiCode, "bit_rate_du_value_minus1" );       hrd->setDuBitRateValueMinus1( i, j, nalOrVcl, uiCode );
+          }
+          READ_FLAG( uiCode, "cbr_flag" );                          hrd->setCbrFlag( i, j, nalOrVcl, uiCode == 1 ? true : false  );
+        }
+      }
+    }
+  }
+}
+#endif
+
 #endif //SVC_EXTENSION
 
 //! \}

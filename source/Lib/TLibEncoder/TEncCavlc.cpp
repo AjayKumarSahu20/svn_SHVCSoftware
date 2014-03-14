@@ -1522,6 +1522,47 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
 #endif 
 #endif
+#if O0164_MULTI_LAYER_HRD
+    WRITE_FLAG(vps->getVpsVuiBspHrdPresentFlag(), "vps_vui_bsp_hrd_present_flag" );
+    if (vps->getVpsVuiBspHrdPresentFlag())
+    {
+      WRITE_UVLC( vps->getVpsNumBspHrdParametersMinus1(), "vps_num_bsp_hrd_parameters_minus1" );
+      for (UInt i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++)
+      {
+        if (i > 0)
+        {
+          WRITE_FLAG( vps->getBspCprmsPresentFlag(i), "bsp_cprms_present_flag[i]" );
+        }
+        codeHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
+      }
+      for (UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+      {
+        WRITE_UVLC( vps->getNumBitstreamPartitions(h), "num_bitstream_partitions[i]");
+        for (UInt i = 0; i < vps->getNumBitstreamPartitions(h); i++)
+        {
+          for (UInt j = 0; j <= (vps->getMaxLayers()-1); j++)
+          {
+            if (vps->getLayerIdIncludedFlag(h, j))
+            {
+              WRITE_FLAG( vps->getLayerInBspFlag(h, i, j), "layer_in_bsp_flag[h][i][j]" );
+            }
+          }
+        }
+        if (vps->getNumBitstreamPartitions(h))
+        {
+          WRITE_UVLC( vps->getNumBspSchedCombinations(h), "num_bsp_sched_combinations[h]");
+          for (UInt i = 0; i < vps->getNumBspSchedCombinations(h); i++)
+          {
+            for (UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++)
+            {
+              WRITE_UVLC( vps->getBspCombHrdIdx(h, i, j), "bsp_comb_hrd_idx[h][i][j]");
+              WRITE_UVLC( vps->getBspCombSchedIdx(h, i, j), "bsp_comb_sched_idx[h][i][j]");
+            }
+          }
+        }
+      }
+    }
+#endif
 #if P0182_VPS_VUI_PS_FLAG
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
