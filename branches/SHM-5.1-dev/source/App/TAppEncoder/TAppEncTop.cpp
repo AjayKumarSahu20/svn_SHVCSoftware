@@ -1358,6 +1358,66 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 
+#if O0164_MULTI_LAYER_HRD
+  vps->setVpsVuiBspHrdPresentFlag(false);
+  TEncTop *pcCfg = &m_acTEncTop[0];
+  if( pcCfg->getBufferingPeriodSEIEnabled() )
+  {
+    vps->setVpsVuiBspHrdPresentFlag(true);
+    vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
+    vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
+    for (UInt i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++)
+    {
+      vps->setBspCprmsPresentFlag(i, true);
+
+      UInt layerId = i + 1;
+      TEncTop *pcCfgLayer = &m_acTEncTop[layerId];
+
+      Int iPicWidth         = pcCfgLayer->getSourceWidth();
+      Int iPicHeight        = pcCfgLayer->getSourceHeight();
+      UInt uhTotalDepth      = m_uiMaxCUDepth;
+      UInt uiNumPartitions   = 1<<(uhTotalDepth<<1);
+      UInt uiMinCUWidth      = m_uiMaxCUWidth  >> uhTotalDepth;
+      UInt uiMinCUHeight     = m_uiMaxCUHeight >> uhTotalDepth;
+      UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
+      UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;
+      UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
+
+      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_uiMaxCUDepth << 1);
+      UInt numDU = ( pcCfgLayer->getSliceMode() == 1 ) ? ( uiNumCUsInFrame / maxCU ) : ( 0 );
+      if( uiNumCUsInFrame % maxCU != 0 || numDU == 0 )
+      {
+        numDU ++;
+      }
+      vps->getBspHrd(i)->setNumDU( numDU );
+      vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
+    }
+    for (UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+    {
+      vps->setNumBitstreamPartitions(h, 1);
+      for (UInt i = 0; i < vps->getNumBitstreamPartitions(h); i++)
+      {
+        for (UInt j = 0; j <= (vps->getMaxLayers()-1); j++)
+        {
+          if (vps->getLayerIdIncludedFlag(h, j) && h == j)
+          {
+            vps->setLayerInBspFlag(h, i, j, true);
+          }
+        }
+      }
+      vps->setNumBspSchedCombinations(h, 1);
+      for (UInt i = 0; i < vps->getNumBspSchedCombinations(h); i++)
+      {
+        for (UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++)
+        {
+          vps->setBspCombHrdIdx(h, i, j, 0);
+          vps->setBspCombSchedIdx(h, i, j, 0);
+        }
+      }
+    }
+  }
+#endif
+
 #else //SVC_EXTENSION
   m_cTEncTop.init(isFieldCoding);
 #endif //SVC_EXTENSION

@@ -210,6 +210,9 @@ protected:
   Void xBuildTileSetsMap(TComPicSym* picSym);
   SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
 #endif
+#if O0164_MULTI_LAYER_HRD
+  SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
+#endif
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TEncGOP
 
