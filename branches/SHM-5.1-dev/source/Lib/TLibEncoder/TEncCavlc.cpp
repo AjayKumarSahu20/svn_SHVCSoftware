@@ -263,11 +263,8 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
     {
       WRITE_FLAG( ppsExtensionTypeFlag[i], "pps_extension_type_flag" );
     }
-#if !POC_RESET_IDC
+#if POC_RESET_IDC
     if( ppsExtensionTypeFlag[0] )
-    {
-#else
-    if( ppsExtensionTypeFlag[1] )
     {
       WRITE_FLAG( pcPPS->getPocResetInfoPresentFlag() ? 1 : 0, "poc_reset_info_present_flag" );
 #endif
@@ -2213,18 +2210,34 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     if (slice->getPPS()->getPocResetInfoPresentFlag())
     {
       shExtnLengthInBit += 2;
-      if (slice->getPocResetIdc() > 0)
-      {
-        shExtnLengthInBit += 6;
-        if (slice->getPocResetIdc() == 3)
-        {
-          shExtnLengthInBit += (slice->getSPS()->getBitsForPOC() + 1);
-        }
-      }
+    }
+    if (slice->getPocResetIdc() > 0)
+    {
+      shExtnLengthInBit += 6;
+    }
+    if (slice->getPocResetIdc() == 3)
+    {
+      shExtnLengthInBit += (slice->getSPS()->getBitsForPOC() + 1);
     }
 
 
-    if ( slice->getPocMsbValRequiredFlag() )
+    if( !slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */ )
+    {
+      shExtnLengthInBit++;
+    }
+    else
+    {
+      if( slice->getPocMsbValRequiredFlag() )
+      {
+        slice->setPocMsbValPresentFlag( true );
+      }
+      else
+      {
+        slice->setPocMsbValPresentFlag( false );
+      }
+    }
+
+    if( slice->getPocMsbValPresentFlag() )
     {
       Int iMaxPOClsb = 1<< slice->getSPS()->getBitsForPOC();
 
@@ -2260,7 +2273,7 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       WRITE_CODE( slice->getPocLsbVal(), slice->getSPS()->getBitsForPOC(),  "poc_lsb_val");
     }
 
-    if( slice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */ )
+    if( !slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */ )
     {
       WRITE_FLAG( slice->getPocMsbValPresentFlag(),                           "poc_msb_val_present_flag" );
     }

@@ -2903,7 +2903,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
                                           /* || related to vps_poc_lsb_aligned_flag */
                                           );
 
-    if( rpcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */ )
+    if( !rpcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */ )
     {
       READ_FLAG( uiCode,    "poc_msb_val_present_flag"); rpcSlice->setPocMsbValPresentFlag( uiCode ? true : false );
     }
