@@ -2046,7 +2046,7 @@ private:
   Bool        m_noRaslOutputFlag;
   Bool        m_handleCraAsBlaFlag;
 #endif
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
   Int         m_pocResetIdc;
   Int         m_pocResetPeriodId;
   Bool        m_fullPocResetFlag;
@@ -2382,7 +2382,7 @@ public:
   Bool getHandleCraAsBlaFlag  ()                   { return m_handleCraAsBlaFlag; }
 
 #endif
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
   Int       getPocResetIdc       ()                              { return m_pocResetIdc;       }
   Void      setPocResetIdc       (Int b)                         { m_pocResetIdc = b;          }
   Int       getPocResetPeriodId  ()                              { return m_pocResetPeriodId;       }

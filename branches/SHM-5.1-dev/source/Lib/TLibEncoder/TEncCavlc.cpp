@@ -2056,7 +2056,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     }
   }
 
-#if !POC_RESET_IDC_SIGNALlING   // Wrong place to put slice header extension
+#if !POC_RESET_IDC_SIGNALLING   // Wrong place to put slice header extension
   if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     WRITE_UVLC(0,"slice_header_extension_length");
@@ -2197,7 +2197,7 @@ Void  TEncCavlc::codeTilesWPPEntryPoint( TComSlice* pSlice )
   delete [] entryPointOffset;
 }
 
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
 Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow )
 {
   Int tmpBitsBeforeWriting = getNumberOfWrittenBits();

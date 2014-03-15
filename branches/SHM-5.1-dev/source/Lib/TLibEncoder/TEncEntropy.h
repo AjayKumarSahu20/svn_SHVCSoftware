@@ -73,7 +73,7 @@ public:
   virtual Void  codeSliceHeader         ( TComSlice* pcSlice )                                  = 0;
 
   virtual Void  codeTilesWPPEntryPoint  ( TComSlice* pSlice )     = 0;
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
   virtual Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
 #endif
   virtual Void  codeTerminatingBit      ( UInt uilsLast )                                       = 0;
@@ -144,7 +144,7 @@ public:
   
   Void    encodeSliceHeader         ( TComSlice* pcSlice );
   Void    encodeTilesWPPEntryPoint( TComSlice* pSlice );
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
 Void      encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
 #endif
   Void    encodeTerminatingBit      ( UInt uiIsLast );

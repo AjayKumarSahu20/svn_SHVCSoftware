@@ -115,7 +115,7 @@ TComSlice::TComSlice()
 , m_noRaslOutputFlag              ( false )
 , m_handleCraAsBlaFlag            ( false )
 #endif
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
 , m_pocResetIdc                   ( 0 )
 , m_pocResetPeriodId              ( 0 )
 , m_fullPocResetFlag              ( false )
