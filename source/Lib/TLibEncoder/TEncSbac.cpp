@@ -265,7 +265,7 @@ Void TEncSbac::codeTilesWPPEntryPoint( TComSlice* pSlice )
   return;
 }
 
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
 Void  TEncSbac::codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
 {
   assert (0);

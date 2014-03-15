@@ -2861,7 +2861,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setNumEntryPointOffsets ( 0 );
   }
 
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
   Int sliceHederExtensionLength = 0;
   if(pps->getSliceHeaderExtensionPresentFlag())
   {

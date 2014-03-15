@@ -94,7 +94,7 @@ public:
   Void  codePPS                 ( TComPPS* pcPPS     );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
-#if POC_RESET_IDC_SIGNALlING
+#if POC_RESET_IDC_SIGNALLING
   Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
 #endif
   Void  codeTerminatingBit      ( UInt uilsLast      );
