@@ -2214,7 +2214,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             // Complete the slice header info.
             m_pcEntropyCoder->setEntropyCoder   ( m_pcCavlcCoder, pcSlice );
             m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if !POC_RESET_IDC_SIGNALlING
             m_pcEntropyCoder->encodeTilesWPPEntryPoint( pcSlice );
+#else
+            tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
+            m_pcEntropyCoder->encodeTilesWPPEntryPoint( pcSlice );
+            actualHeadBits += ( m_pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting );
+            m_pcEntropyCoder->encodeSliceHeaderExtn( pcSlice, actualHeadBits );
+#endif
 
             // Substreams...
             TComOutputBitstream *pcOut = pcBitstreamRedirect;

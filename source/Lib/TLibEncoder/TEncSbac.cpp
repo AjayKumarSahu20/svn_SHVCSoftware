@@ -265,6 +265,13 @@ Void TEncSbac::codeTilesWPPEntryPoint( TComSlice* pSlice )
   return;
 }
 
+#if POC_RESET_IDC_SIGNALlING
+Void  TEncSbac::codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
+{
+  assert (0);
+  return;
+}
+#endif
 Void TEncSbac::codeTerminatingBit( UInt uilsLast )
 {
   m_pcBinIf->encodeBinTrm( uilsLast );

@@ -2861,6 +2861,92 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setNumEntryPointOffsets ( 0 );
   }
 
+#if POC_RESET_IDC_SIGNALlING
+  Int sliceHederExtensionLength = 0;
+  if(pps->getSliceHeaderExtensionPresentFlag())
+  {
+    READ_UVLC( uiCode, "slice_header_extension_length"); sliceHederExtensionLength = uiCode;
+  }
+  else
+  {
+    sliceHederExtensionLength = 0;
+  }
+  UInt startBits = m_pcBitstream->getNumBitsRead();     // Start counter of # SH Extn bits
+  if( sliceHederExtensionLength > 0 )
+  {
+    if( rpcSlice->getPPS()->getPocResetInfoPresentFlag() )
+    {
+      READ_CODE( 2, uiCode,       "poc_reset_idc"); rpcSlice->setPocResetIdc(uiCode);
+    }
+    else
+    {
+      rpcSlice->setPocResetIdc( 0 );
+    }
+    if( rpcSlice->getPocResetIdc() > 0 )
+    {
+      READ_CODE(6, uiCode,      "poc_reset_period_id"); rpcSlice->setPocResetPeriodId(uiCode);
+    }
+    else
+    {
+     
+      rpcSlice->setPocResetPeriodId( 0 );
+    }
+
+    if (rpcSlice->getPocResetIdc() == 3)
+    {
+      READ_FLAG( uiCode,        "full_poc_reset_flag"); rpcSlice->setFullPocResetFlag((uiCode == 1) ? true : false);
+      READ_CODE(rpcSlice->getSPS()->getBitsForPOC(), uiCode,"poc_lsb_val"); rpcSlice->setPocLsbVal(uiCode);
+    }
+
+    // Derive the value of PocMsbValRequiredFlag
+    rpcSlice->setPocMsbValRequiredFlag( rpcSlice->getCraPicFlag() || rpcSlice->getBlaPicFlag()
+                                          /* || related to vps_poc_lsb_aligned_flag */
+                                          );
+
+    if( rpcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */ )
+    {
+      READ_FLAG( uiCode,    "poc_msb_val_present_flag"); rpcSlice->setPocMsbValPresentFlag( uiCode ? true : false );
+    }
+    else
+    {
+      if( rpcSlice->getPocMsbValRequiredFlag() )
+      {
+        rpcSlice->setPocMsbValPresentFlag( true );
+      }
+      else
+      {
+        rpcSlice->setPocMsbValPresentFlag( false );
+      }
+    }
+
+    Int maxPocLsb  = 1 << rpcSlice->getSPS()->getBitsForPOC();
+    if( rpcSlice->getPocMsbValPresentFlag() )
+    {
+      READ_UVLC( uiCode,    "poc_msb_val");             rpcSlice->setPocMsbVal( uiCode );
+      // Update POC of the slice based on this MSB val
+      Int pocLsb     = rpcSlice->getPOC() % maxPocLsb;
+      rpcSlice->setPOC((rpcSlice->getPocMsbVal() * maxPocLsb) + pocLsb);
+    }
+    else
+    {
+      rpcSlice->setPocMsbVal( rpcSlice->getPOC() / maxPocLsb );
+    }
+
+    // Read remaining bits in the slice header extension.
+    UInt endBits = m_pcBitstream->getNumBitsRead();
+    Int counter = (endBits - startBits) % 8;
+    if( counter )
+    {
+      counter = 8 - counter;
+    }
+
+    while( counter )
+    {
+      READ_FLAG( uiCode, "slice_segment_header_extension_reserved_bit" ); assert( uiCode == 1 );
+      counter--;
+    }
+  }
+#else
   if(pps->getSliceHeaderExtensionPresentFlag())
   {
     READ_UVLC(uiCode,"slice_header_extension_length");
@@ -2870,6 +2956,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       READ_CODE(8,ignore,"slice_header_extension_data_byte");
     }
   }
+#endif
   m_pcBitstream->readByteAlignment();
 
   if( pps->getTilesEnabledFlag() || pps->getEntropyCodingSyncEnabledFlag() )
