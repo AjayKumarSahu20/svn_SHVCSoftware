@@ -2536,7 +2536,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #endif
 #endif
 #if P0312_VERT_PHASE_ADJ
-    for(Int i = 0; i < rpcSlice->getSPS()->getNumScaledRefLayerOffsets(); i++)
+    for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ ) 
     {
       if (rpcSlice->getSPS()->getVertPhasePositionEnableFlag(rpcSlice->getInterLayerPredLayerIdc(i)))
       {
