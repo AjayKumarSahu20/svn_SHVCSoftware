@@ -59,6 +59,13 @@ Void  TEncEntropy::encodeTilesWPPEntryPoint( TComSlice* pSlice )
   m_pcEntropyCoderIf->codeTilesWPPEntryPoint( pSlice );
 }
 
+#if POC_RESET_IDC_SIGNALlING
+Void  TEncEntropy::encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
+{
+  m_pcEntropyCoderIf->codeSliceHeaderExtn( pSlice, shBitsWrittenTillNow );
+}
+#endif
+
 Void TEncEntropy::encodeTerminatingBit      ( UInt uiIsLast )
 {
   m_pcEntropyCoderIf->codeTerminatingBit( uiIsLast );

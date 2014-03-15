@@ -2046,6 +2046,15 @@ private:
   Bool        m_noRaslOutputFlag;
   Bool        m_handleCraAsBlaFlag;
 #endif
+#if POC_RESET_IDC_SIGNALlING
+  Int         m_pocResetIdc;
+  Int         m_pocResetPeriodId;
+  Bool        m_fullPocResetFlag;
+  Int         m_pocLsbVal;
+  Int         m_pocMsbVal;
+  Bool        m_pocMsbValRequiredFlag;
+  Bool        m_pocMsbValPresentFlag;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -2372,6 +2381,22 @@ public:
   Void setHandleCraAsBlaFlag  ( const Bool val )   { m_handleCraAsBlaFlag = val;  }
   Bool getHandleCraAsBlaFlag  ()                   { return m_handleCraAsBlaFlag; }
 
+#endif
+#if POC_RESET_IDC_SIGNALlING
+  Int       getPocResetIdc       ()                              { return m_pocResetIdc;       }
+  Void      setPocResetIdc       (Int b)                         { m_pocResetIdc = b;          }
+  Int       getPocResetPeriodId  ()                              { return m_pocResetPeriodId;       }
+  Void      setPocResetPeriodId  (Int b)                         { m_pocResetPeriodId = b;          }
+  Bool      getFullPocResetFlag  ()                              { return m_fullPocResetFlag;       }
+  Void      setFullPocResetFlag  (Bool b)                        { m_fullPocResetFlag = b;          }
+  Int       getPocLsbVal         ()                              { return m_pocLsbVal;       }
+  Void      setPocLsbVal       (Int b)                           { m_pocLsbVal = b;          }
+  Int       getPocMsbVal         ()                              { return m_pocMsbVal;       }
+  Void      setPocMsbVal       (Int b)                           { m_pocMsbVal = b;          }
+  Bool      getPocMsbValPresentFlag ()                           { return m_pocMsbValPresentFlag; }
+  Void      setPocMsbValPresentFlag (Bool x)                     { m_pocMsbValPresentFlag = x; }
+  Bool      getPocMsbValRequiredFlag ()                           { return m_pocMsbValRequiredFlag; }
+  Void      setPocMsbValRequiredFlag (Bool x)                     { m_pocMsbValRequiredFlag = x; }
 #endif
 
 #endif //SVC_EXTENSION

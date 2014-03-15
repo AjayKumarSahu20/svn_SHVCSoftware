@@ -95,6 +95,9 @@ public:
   Void  codeProfileTier         ( ProfileTierLevel* ptl );
   Void  codeHrdParameters       ( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
+#if POC_RESET_IDC_SIGNALlING
+  Void  codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow );
+#endif
   Void  codeTerminatingBit      ( UInt uilsLast );
   Void  codeSliceFinish         ();
   

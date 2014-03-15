@@ -115,6 +115,15 @@ TComSlice::TComSlice()
 , m_noRaslOutputFlag              ( false )
 , m_handleCraAsBlaFlag            ( false )
 #endif
+#if POC_RESET_IDC_SIGNALlING
+, m_pocResetIdc                   ( 0 )
+, m_pocResetPeriodId              ( 0 )
+, m_fullPocResetFlag              ( false )
+, m_pocLsbVal                     ( 0 )
+, m_pocMsbVal                     ( 0 )
+, m_pocMsbValRequiredFlag         ( false )
+, m_pocMsbValPresentFlag          ( false )
+#endif
 #endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;

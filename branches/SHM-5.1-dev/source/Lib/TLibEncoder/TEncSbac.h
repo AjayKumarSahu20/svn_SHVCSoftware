@@ -94,6 +94,9 @@ public:
   Void  codePPS                 ( TComPPS* pcPPS     );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
+#if POC_RESET_IDC_SIGNALlING
+  Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
+#endif
   Void  codeTerminatingBit      ( UInt uilsLast      );
   Void  codeSliceFinish         ();
   Void  codeSaoMaxUvlc    ( UInt code, UInt maxSymbol );
