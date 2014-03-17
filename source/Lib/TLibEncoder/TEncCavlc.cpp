@@ -1523,20 +1523,20 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     if (vps->getVpsVuiBspHrdPresentFlag())
     {
       WRITE_UVLC( vps->getVpsNumBspHrdParametersMinus1(), "vps_num_bsp_hrd_parameters_minus1" );
-      for (UInt i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++)
+      for( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
       {
-        if (i > 0)
+        if( i > 0 )
         {
           WRITE_FLAG( vps->getBspCprmsPresentFlag(i), "bsp_cprms_present_flag[i]" );
         }
         codeHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
       }
-      for (UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+      for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
       {
         WRITE_UVLC( vps->getNumBitstreamPartitions(h), "num_bitstream_partitions[i]");
-        for (UInt i = 0; i < vps->getNumBitstreamPartitions(h); i++)
+        for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
         {
-          for (UInt j = 0; j <= (vps->getMaxLayers()-1); j++)
+          for( j = 0; j <= (vps->getMaxLayers()-1); j++ )
           {
             if (vps->getLayerIdIncludedFlag(h, j))
             {
@@ -1547,9 +1547,9 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         if (vps->getNumBitstreamPartitions(h))
         {
           WRITE_UVLC( vps->getNumBspSchedCombinations(h), "num_bsp_sched_combinations[h]");
-          for (UInt i = 0; i < vps->getNumBspSchedCombinations(h); i++)
+          for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
           {
-            for (UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++)
+            for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
             {
               WRITE_UVLC( vps->getBspCombHrdIdx(h, i, j), "bsp_comb_hrd_idx[h][i][j]");
               WRITE_UVLC( vps->getBspCombSchedIdx(h, i, j), "bsp_comb_sched_idx[h][i][j]");
@@ -2239,8 +2239,6 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
 
     if( slice->getPocMsbValPresentFlag() )
     {
-      Int iMaxPOClsb = 1<< slice->getSPS()->getBitsForPOC();
-
       UInt lengthVal = 1;
       UInt tempVal = slice->getPocMsbVal() + 1;
       assert ( tempVal );

@@ -1362,7 +1362,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   Bool vpsVuiVertPhaseInUseFlag = false;
   for( UInt layerId = 1; layerId < m_numLayers; layerId++ )
   {
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numScaledRefLayerOffsets; i++)
+    for( i = 0; i < m_acLayerCfg[layerId].m_numScaledRefLayerOffsets; i++ )
     {
       if( m_acTEncTop[layerId].getVertPhasePositionEnableFlag(i) )
       {
@@ -1382,7 +1382,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setVpsVuiBspHrdPresentFlag(true);
     vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
     vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
-    for (UInt i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++)
+    for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
     {
       vps->setBspCprmsPresentFlag(i, true);
 
@@ -1391,10 +1391,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
       Int iPicWidth         = pcCfgLayer->getSourceWidth();
       Int iPicHeight        = pcCfgLayer->getSourceHeight();
-      UInt uhTotalDepth      = m_uiMaxCUDepth;
-      UInt uiNumPartitions   = 1<<(uhTotalDepth<<1);
-      UInt uiMinCUWidth      = m_uiMaxCUWidth  >> uhTotalDepth;
-      UInt uiMinCUHeight     = m_uiMaxCUHeight >> uhTotalDepth;
       UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
       UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;
       UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
@@ -1408,12 +1404,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->getBspHrd(i)->setNumDU( numDU );
       vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
     }
-    for (UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+    for(UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
     {
       vps->setNumBitstreamPartitions(h, 1);
-      for (UInt i = 0; i < vps->getNumBitstreamPartitions(h); i++)
+      for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
       {
-        for (UInt j = 0; j <= (vps->getMaxLayers()-1); j++)
+        for( UInt j = 0; j <= (vps->getMaxLayers()-1); j++ )
         {
           if (vps->getLayerIdIncludedFlag(h, j) && h == j)
           {
@@ -1422,9 +1418,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         }
       }
       vps->setNumBspSchedCombinations(h, 1);
-      for (UInt i = 0; i < vps->getNumBspSchedCombinations(h); i++)
+      for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
       {
-        for (UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++)
+        for( UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
         {
           vps->setBspCombHrdIdx(h, i, j, 0);
           vps->setBspCombSchedIdx(h, i, j, 0);
