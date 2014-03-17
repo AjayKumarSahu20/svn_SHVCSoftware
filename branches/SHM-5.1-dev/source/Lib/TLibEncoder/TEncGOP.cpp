@@ -1752,7 +1752,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if O0164_MULTI_LAYER_HRD
       if (pcSlice->getLayerId() == 0 && m_pcEncTop->getVPS()->getVpsVuiBspHrdPresentFlag())
       {
-        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, 0, 1);
+        nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, 1);
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
         m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
         SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice);
