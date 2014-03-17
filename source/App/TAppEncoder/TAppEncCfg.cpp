@@ -395,7 +395,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
-  #if P0312_VERT_PHASE_ADJ
+#if P0312_VERT_PHASE_ADJ
   string*    cfg_vertPhasePositionEnableFlagPtr[MAX_LAYERS];
 #endif
 
@@ -457,14 +457,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
 #if O0098_SCALED_REF_LAYER_ID
-      cfg_scaledRefLayerIdPtr          [layer] = &cfg_scaledRefLayerId[layer]          ;
+      cfg_scaledRefLayerIdPtr          [layer] = &cfg_scaledRefLayerId[layer];
 #endif
-      cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer]  ;
-      cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer]   ;
-      cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer] ;
+      cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer];
+      cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer];
+      cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer];
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
 #if P0312_VERT_PHASE_ADJ
-      cfg_vertPhasePositionEnableFlagPtr [layer]   = &cfg_vertPhasePositionEnableFlag[layer] ;
+      cfg_vertPhasePositionEnableFlagPtr[layer] = &cfg_vertPhasePositionEnableFlag[layer];
 #endif
     }
 #if RC_SHVC_HARMONIZATION

@@ -128,10 +128,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
-  Bool vertPhasePositionFlag = scalEL.getVertPhasePositionFlag();
-  if (vertPhasePositionFlag)
+  Bool vertPhasePositionFlag = currSlice->getVertPhasePositionFlag( refLayerIdc );
+  if( vertPhasePositionFlag )
   {
-    assert (vertPhasePositionEnableFlag);
+    assert( vertPhasePositionEnableFlag );
   }
 #endif
 
@@ -228,7 +228,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
     Int   phaseX = 2*phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
-    Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(2*phaseAlignFlag));
+    Int   phaseY = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( 2 * phaseAlignFlag );
 #else
     Int   phaseY = 2*phaseAlignFlag;
 #endif
@@ -381,14 +381,14 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0215_PHASE_ALIGNMENT
     Int phaseXC = phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
-    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4):(phaseAlignFlag + 1);
+    Int phaseYC = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( phaseAlignFlag + 1 );
 #else
     Int phaseYC = phaseAlignFlag + 1;
 #endif
 #else
     Int phaseXC = 0;
 #if P0312_VERT_PHASE_ADJ
-    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;;
+    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;
 #else
     Int phaseYC = 1;
 #endif

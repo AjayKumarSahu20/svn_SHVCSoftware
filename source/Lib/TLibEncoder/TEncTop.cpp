@@ -902,7 +902,7 @@ Void TEncTop::xInitSPS()
 #endif
     m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
 #if P0312_VERT_PHASE_ADJ
-    m_cSPS.setVertPhasePositionEnableFlag(i,m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag());
+    m_cSPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
 #endif
   }
 #endif //SVC_EXTENSION

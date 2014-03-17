@@ -794,18 +794,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           continue; // ILP is not valid due to temporal layer restriction
         }
 
-#if P0312_VERT_PHASE_ADJ
-#if O0098_SCALED_REF_LAYER_ID
-        Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
-#else
-        Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif
-#else
 #if O0098_SCALED_REF_LAYER_ID
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
 #else
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
-#endif
 #endif
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
@@ -830,10 +822,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif*/
 #if P0312_VERT_PHASE_ADJ
           //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
-          if (scalEL.getVertPhasePositionEnableFlag())
+          if( scalEL.getVertPhasePositionEnableFlag() )
           {
-            pcSlice->setVertPhasePositionFlag(pcSlice->getPOC()%2, i);
-            scalEL.setVertPhasePositionFlag (pcSlice->getVertPhasePositionFlag(i));
+            pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
           }
 #endif
 #if O0215_PHASE_ALIGNMENT
