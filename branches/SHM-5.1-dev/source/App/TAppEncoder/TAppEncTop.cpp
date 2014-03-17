@@ -570,9 +570,9 @@ Void TAppEncTop::xInitLibCfg()
         m_acTEncTop[layer].setScaledRefLayerId(i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
 #endif
 #if P0312_VERT_PHASE_ADJ
-        m_acTEncTop[layer].setVertPhasePositionEnableFlag( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i]);
+        m_acTEncTop[layer].setVertPhasePositionEnableFlag( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i], false);
+                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
 #else
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                   2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
@@ -1356,6 +1356,22 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
 #endif
+#endif
+
+#if P0312_VERT_PHASE_ADJ
+  Bool vpsVuiVertPhaseInUseFlag = false;
+  for( UInt layerId = 1; layerId < m_numLayers; layerId++ )
+  {
+    for(Int i = 0; i < m_acLayerCfg[layerId].m_numScaledRefLayerOffsets; i++)
+    {
+      if( m_acTEncTop[layerId].getVertPhasePositionEnableFlag(i) )
+      {
+        vpsVuiVertPhaseInUseFlag = true;
+        break;
+      }
+    }
+  }
+  vps->setVpsVuiVertPhaseInUseFlag( vpsVuiVertPhaseInUseFlag );
 #endif
 
 #if O0164_MULTI_LAYER_HRD

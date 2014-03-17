@@ -568,7 +568,7 @@ private:
   Bool       m_crossLayerIrapAlignFlag;
 #endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-  Bool       m_crossLayerAlignedIdrOnlyFlag;;
+  Bool       m_crossLayerAlignedIdrOnlyFlag;
 #endif
 #if O0225_MAX_TID_FOR_REF_LAYERS
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1][MAX_VPS_LAYER_ID_PLUS1];
@@ -601,34 +601,34 @@ private:
   Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if N0160_VUI_EXT_ILP_REF    
-  Bool        m_ilpRestrictedRefLayersFlag;
-  Int         m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  Bool        m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  Int         m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_ilpRestrictedRefLayersFlag;
+  Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int        m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif 
 #if VPS_VUI_VIDEO_SIGNAL
-  Bool        m_vidSigPresentVpsFlag;
-  Int         m_vpsVidSigInfo;
-  Int         m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
-  Int         m_vpsVidFormat[16];
-  Bool        m_vpsFullRangeFlag[16];
-  Int         m_vpsColorPrimaries[16];
-  Int         m_vpsTransChar[16];
-  Int         m_vpsMatCoeff[16];
+  Bool       m_vidSigPresentVpsFlag;
+  Int        m_vpsVidSigInfo;
+  Int        m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
+  Int        m_vpsVidFormat[16];
+  Bool       m_vpsFullRangeFlag[16];
+  Int        m_vpsColorPrimaries[16];
+  Int        m_vpsTransChar[16];
+  Int        m_vpsMatCoeff[16];
 #endif 
 #if VPS_VUI_BITRATE_PICRATE
-  Bool        m_bitRatePresentVpsFlag;
-  Bool        m_picRatePresentVpsFlag;
-  Bool        m_bitRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  Bool        m_picRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  Int         m_avgBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  Int         m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  Int         m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  Int         m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Bool       m_bitRatePresentVpsFlag;
+  Bool       m_picRatePresentVpsFlag;
+  Bool       m_bitRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Bool       m_picRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int        m_avgBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int        m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int        m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
+  Int        m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 #endif
   
 #if P0312_VERT_PHASE_ADJ
-  Bool        m_vpsVuiVertPhaseInUseFlag;
+  Bool       m_vpsVuiVertPhaseInUseFlag;
 #endif
 
 #if P0300_ALT_OUTPUT_LAYER_FLAG
@@ -646,11 +646,11 @@ private:
 #endif
 #if VIEW_ID_RELATED_SIGNALING 
 #if O0109_VIEW_ID_LEN
-  Int         m_viewIdLen;
+  Int        m_viewIdLen;
 #else
-  Int         m_viewIdLenMinus1;
+  Int        m_viewIdLenMinus1;
 #endif
-  Int         m_viewIdVal                [MAX_LAYERS];
+  Int        m_viewIdVal                [MAX_LAYERS];
 #endif
 
 #if O0215_PHASE_ALIGNMENT
@@ -662,21 +662,21 @@ private:
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
 #if SPS_DPB_PARAMS
-    Int         m_TolsIdx;
+  Int        m_TolsIdx;
 #endif
 #if VPS_DPB_SIZE_TABLE
-  Bool    m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
-  Bool    m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
-  Int     m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
+  Bool       m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
+  Bool       m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int        m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
 #if RESOLUTION_BASED_DPB
-  Int     m_maxVpsLayerDecPicBuffMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];  
+  Int        m_maxVpsLayerDecPicBuffMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];  
 #endif
-  Int     m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
-  Int     m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
 #if CHANGE_NUMSUBDPB_IDX
-  Int     m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1];
+  Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1];
 #else
-  Int     m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
+  Int        m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
 #endif
 
@@ -697,21 +697,21 @@ private:
 #endif
 
 #if P0182_VPS_VUI_PS_FLAG
-  UInt        m_SPSId[MAX_LAYERS];
-  UInt        m_PPSId[MAX_LAYERS];
-  UInt        m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
+  UInt       m_SPSId[MAX_LAYERS];
+  UInt       m_PPSId[MAX_LAYERS];
+  UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
 #endif
 
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
-  Int     m_vpsVuiOffset;
+  Int        m_vpsVuiOffset;
 #endif
 #endif
 #if P0307_VPS_NON_VUI_EXTENSION
-  Int     m_vpsNonVuiExtLength;
+  Int        m_vpsNonVuiExtLength;
 #endif
 #if RESOLUTION_BASED_DPB
-  Int     m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
+  Int        m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -942,10 +942,10 @@ Void      deriveNumberOfSubDpbs();
   Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
 #endif 
 #if VPS_TSLAYERS
-    Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
-    Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
-    UInt   getMaxTSLayersMinus1(Int layerId)                            { return m_maxTSLayerMinus1[layerId];}
-    Void   setMaxTSLayersMinus1(Int layerId, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerId] = maxTSublayer;}
+  Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
+  Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
+  UInt   getMaxTSLayersMinus1(Int layerId)                            { return m_maxTSLayerMinus1[layerId];}
+  Void   setMaxTSLayersMinus1(Int layerId, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerId] = maxTSublayer;}
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
@@ -974,56 +974,56 @@ Void      deriveNumberOfSubDpbs();
   Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
 #endif 
 #if N0160_VUI_EXT_ILP_REF  
-  Bool  getIlpRestrictedRefLayersFlag   ( )                                        { return m_ilpRestrictedRefLayersFlag        ;}
-  Void  setIlpRestrictedRefLayersFlag   ( Int val )                                { m_ilpRestrictedRefLayersFlag         = val;}
+  Bool   getIlpRestrictedRefLayersFlag   ( )                                        { return m_ilpRestrictedRefLayersFlag        ;}
+  Void   setIlpRestrictedRefLayersFlag   ( Int val )                                { m_ilpRestrictedRefLayersFlag         = val;}
   
-  Int  getMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId )          { return m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId];}
-  Void setMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId, Int val ) { m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId] = val;}
+  Int    getMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId )          { return m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId];}
+  Void   setMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId, Int val ) { m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId] = val;}
   
-  Bool getCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId )            { return m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId];}
-  Void setCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId, Bool flag ) { m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId] = flag;}
+  Bool   getCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId )            { return m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId];}
+  Void   setCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId, Bool flag ) { m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId] = flag;}
   
-  Int  getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
-  Void setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
+  Int    getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
+  Void   setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
 #endif
 #if VPS_VUI_VIDEO_SIGNAL
-    Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
-    Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
-    Int    getNumVideoSignalInfo()               { return m_vpsVidSigInfo;        }
-    Void   setNumVideoSignalInfo(Int x)          { m_vpsVidSigInfo = x;           }
-    Int    getVideoSignalInfoIdx(Int idx)        { return m_vpsVidSigIdx[idx];    }
-    Void   setVideoSignalInfoIdx(Int idx, Int x) { m_vpsVidSigIdx[idx] = x;       }
-    Int    getVideoVPSFormat(Int idx)            { return m_vpsVidFormat[idx];    }
-    Void   setVideoVPSFormat(Int idx, Int x)     { m_vpsVidFormat[idx] = x;       }
-    Bool   getVideoFullRangeVpsFlag(Int idx)     { return m_vpsFullRangeFlag[idx];}
-    Void   setVideoFullRangeVpsFlag(Int idx, Bool x) { m_vpsFullRangeFlag[idx] = x;   }
-    Int    getColorPrimaries(Int idx)            { return m_vpsColorPrimaries[idx];   }
-    Void   setColorPrimaries(Int idx, Int x)     { m_vpsColorPrimaries[idx] = x;      }
-    Int    getTransCharacter(Int idx)            { return m_vpsTransChar[idx];    }
-    Void   setTransCharacter(Int idx, Int x)     { m_vpsTransChar[idx] = x;       }
-    Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
-    Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
+  Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
+  Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
+  Int    getNumVideoSignalInfo()               { return m_vpsVidSigInfo;        }
+  Void   setNumVideoSignalInfo(Int x)          { m_vpsVidSigInfo = x;           }
+  Int    getVideoSignalInfoIdx(Int idx)        { return m_vpsVidSigIdx[idx];    }
+  Void   setVideoSignalInfoIdx(Int idx, Int x) { m_vpsVidSigIdx[idx] = x;       }
+  Int    getVideoVPSFormat(Int idx)            { return m_vpsVidFormat[idx];    }
+  Void   setVideoVPSFormat(Int idx, Int x)     { m_vpsVidFormat[idx] = x;       }
+  Bool   getVideoFullRangeVpsFlag(Int idx)     { return m_vpsFullRangeFlag[idx];}
+  Void   setVideoFullRangeVpsFlag(Int idx, Bool x) { m_vpsFullRangeFlag[idx] = x;   }
+  Int    getColorPrimaries(Int idx)            { return m_vpsColorPrimaries[idx];   }
+  Void   setColorPrimaries(Int idx, Int x)     { m_vpsColorPrimaries[idx] = x;      }
+  Int    getTransCharacter(Int idx)            { return m_vpsTransChar[idx];    }
+  Void   setTransCharacter(Int idx, Int x)     { m_vpsTransChar[idx] = x;       }
+  Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
+  Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
 #endif
 #if VPS_VUI_BITRATE_PICRATE
-  Bool getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
-  Void setBitRatePresentVpsFlag(Bool x) { m_bitRatePresentVpsFlag = x;    }
-  Bool getPicRatePresentVpsFlag()       { return m_picRatePresentVpsFlag; }
-  Void setPicRatePresentVpsFlag(Bool x) { m_picRatePresentVpsFlag = x;    }
-
-  Bool getBitRatePresentFlag(Int i, Int j)          { return m_bitRatePresentFlag[i][j]; }
-  Void setBitRatePresentFlag(Int i, Int j, Bool x)  { m_bitRatePresentFlag[i][j] = x;    }
-  Bool getPicRatePresentFlag(Int i, Int j)          { return m_picRatePresentFlag[i][j]; }
-  Void setPicRatePresentFlag(Int i, Int j, Bool x)  { m_picRatePresentFlag[i][j] = x;    }
-  
-  Int  getAvgBitRate(Int i, Int j)          { return m_avgBitRate[i][j]; }
-  Void setAvgBitRate(Int i, Int j, Int x)   { m_avgBitRate[i][j] = x;    }
-  Int  getMaxBitRate(Int i, Int j)          { return m_maxBitRate[i][j]; }
-  Void setMaxBitRate(Int i, Int j, Int x)   { m_maxBitRate[i][j] = x;    }
-  
-  Int  getConstPicRateIdc(Int i, Int j)          { return m_constPicRateIdc[i][j]; }
-  Void setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
-  Int  getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
-  Void setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
+  Bool   getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
+  Void   setBitRatePresentVpsFlag(Bool x) { m_bitRatePresentVpsFlag = x;    }
+  Bool   getPicRatePresentVpsFlag()       { return m_picRatePresentVpsFlag; }
+  Void   setPicRatePresentVpsFlag(Bool x) { m_picRatePresentVpsFlag = x;    }
+         
+  Bool   getBitRatePresentFlag(Int i, Int j)          { return m_bitRatePresentFlag[i][j]; }
+  Void   setBitRatePresentFlag(Int i, Int j, Bool x)  { m_bitRatePresentFlag[i][j] = x;    }
+  Bool   getPicRatePresentFlag(Int i, Int j)          { return m_picRatePresentFlag[i][j]; }
+  Void   setPicRatePresentFlag(Int i, Int j, Bool x)  { m_picRatePresentFlag[i][j] = x;    }
+         
+  Int    getAvgBitRate(Int i, Int j)          { return m_avgBitRate[i][j]; }
+  Void   setAvgBitRate(Int i, Int j, Int x)   { m_avgBitRate[i][j] = x;    }
+  Int    getMaxBitRate(Int i, Int j)          { return m_maxBitRate[i][j]; }
+  Void   setMaxBitRate(Int i, Int j, Int x)   { m_maxBitRate[i][j] = x;    }
+         
+  Int    getConstPicRateIdc(Int i, Int j)          { return m_constPicRateIdc[i][j]; }
+  Void   setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
+  Int    getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
+  Void   setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
 #endif
 #if O0164_MULTI_LAYER_HRD
   Bool     getVpsVuiBspHrdPresentFlag()                         { return m_vpsVuiBspHrdPresentFlag;      }
@@ -1045,17 +1045,17 @@ Void      deriveNumberOfSubDpbs();
   Void     setBspCombSchedIdx(UInt h, UInt i, UInt j, UInt val) { m_bspCombSchedIdx[h][i][j] = val;      }
 #endif
 #if P0182_VPS_VUI_PS_FLAG
-  Int     getSPSId       (Int layer)                   { return m_SPSId[layer];          }
-  Void    setSPSId       (Int layer, Int val)            { m_SPSId[layer] = val;             }
-  Int     getPPSId       (Int layer)                   { return m_PPSId[layer];          }
-  Void    setPPSId       (Int layer, Int val)            { m_PPSId[layer] = val;             }
-  Void    setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
-  Int     getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
+  Int    getSPSId       (Int layer)                   { return m_SPSId[layer];       }
+  Void   setSPSId       (Int layer, Int val)          { m_SPSId[layer] = val;        }
+  Int    getPPSId       (Int layer)                   { return m_PPSId[layer];       }
+  Void   setPPSId       (Int layer, Int val)          { m_PPSId[layer] = val;        }
+  Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
+  Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
 
 #if P0312_VERT_PHASE_ADJ
-  Bool getVpsVuiVertPhaseInUseFlag()       { return m_vpsVuiVertPhaseInUseFlag; }
-  Void setVpsVuiVertPhaseInUseFlag(Bool x) { m_vpsVuiVertPhaseInUseFlag = x;    }
+  Bool   getVpsVuiVertPhaseInUseFlag()       { return m_vpsVuiVertPhaseInUseFlag; }
+  Void   setVpsVuiVertPhaseInUseFlag(Bool x) { m_vpsVuiVertPhaseInUseFlag = x;    }
 #endif
 
 #if P0300_ALT_OUTPUT_LAYER_FLAG
@@ -1076,31 +1076,31 @@ Void      deriveNumberOfSubDpbs();
 
   RepFormat* getVpsRepFormat(Int idx)       { return &m_vpsRepFormat[idx];      }
 
-  Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];   }
-  Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;      }         
+  Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];    }
+  Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;       }         
 #endif
 #if VIEW_ID_RELATED_SIGNALING
 #if O0109_VIEW_ID_LEN
-  Void    setViewIdLen( Int  val )                                   { m_viewIdLen = val; } 
-  Int     getViewIdLen(  )                                           { return m_viewIdLen; } 
+  Void   setViewIdLen( Int  val )                                   { m_viewIdLen = val;  } 
+  Int    getViewIdLen(  )                                           { return m_viewIdLen; } 
 #else
-  Void    setViewIdLenMinus1( Int  val )                                   { m_viewIdLenMinus1 = val; } 
-  Int     getViewIdLenMinus1(  )                                           { return m_viewIdLenMinus1; } 
+  Void   setViewIdLenMinus1( Int  val )                             { m_viewIdLenMinus1 = val;  } 
+  Int    getViewIdLenMinus1(  )                                     { return m_viewIdLenMinus1; } 
 #endif
 
-  Void    setViewIdVal( Int viewOrderIndex, Int  val )                     { m_viewIdVal[viewOrderIndex] = val; } 
-  Int     getViewIdVal( Int viewOrderIndex )                               { return m_viewIdVal[viewOrderIndex]; } 
-  Int     getScalabilityId(Int, ScalabilityType scalType );
+  Void   setViewIdVal( Int viewOrderIndex, Int  val )               { m_viewIdVal[viewOrderIndex] = val;  } 
+  Int    getViewIdVal( Int viewOrderIndex )                         { return m_viewIdVal[viewOrderIndex]; } 
+  Int    getScalabilityId(Int, ScalabilityType scalType );
 
-  Int     getViewIndex    ( Int layerIdInNuh )                             { return getScalabilityId( getLayerIdInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
+  Int    getViewIndex    ( Int layerIdInNuh )                       { return getScalabilityId( getLayerIdInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
 
-  Int     getNumViews();
-  Int     scalTypeToScalIdx( ScalabilityType scalType );
+  Int    getNumViews();
+  Int    scalTypeToScalIdx( ScalabilityType scalType );
 #endif
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if VPS_EXTN_OFFSET
-  Int     getExtensionOffset()                 { return m_extensionOffset;   }
-  Void    setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
+  Int    getExtensionOffset()                 { return m_extensionOffset;   }
+  Void   setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
 #endif
 #endif
 #if O0215_PHASE_ALIGNMENT
@@ -1108,30 +1108,30 @@ Void      deriveNumberOfSubDpbs();
   Void   setPhaseAlignFlag(Bool x)                       { m_phaseAlignFlag = x;    }
 #endif
 #if VPS_DPB_SIZE_TABLE
-  Bool    getSubLayerFlagInfoPresentFlag(Int i)         {return m_subLayerFlagInfoPresentFlag[i]; }
-  Void    setSubLayerFlagInfoPresentFlag(Int i, Bool x) {m_subLayerFlagInfoPresentFlag[i] = x;    }
+  Bool   getSubLayerFlagInfoPresentFlag(Int i)         {return m_subLayerFlagInfoPresentFlag[i]; }
+  Void   setSubLayerFlagInfoPresentFlag(Int i, Bool x) {m_subLayerFlagInfoPresentFlag[i] = x;    }
 
-  Bool    getSubLayerDpbInfoPresentFlag(Int i, Int j)         {return m_subLayerDpbInfoPresentFlag[i][j]; }
-  Void    setSubLayerDpbInfoPresentFlag(Int i, Int j, Bool x) {m_subLayerDpbInfoPresentFlag[i][j] = x;    }
+  Bool   getSubLayerDpbInfoPresentFlag(Int i, Int j)         {return m_subLayerDpbInfoPresentFlag[i][j]; }
+  Void   setSubLayerDpbInfoPresentFlag(Int i, Int j, Bool x) {m_subLayerDpbInfoPresentFlag[i][j] = x;    }
 
   // For the 0-th output layer set, use the date from the active SPS for base layer.
-  Int     getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { assert(i != 0); return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
-  Void    setMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j, Int x) { m_maxVpsDecPicBufferingMinus1[i][k][j] = x;    }
+  Int    getMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j)         { assert(i != 0); return m_maxVpsDecPicBufferingMinus1[i][k][j]; }
+  Void   setMaxVpsDecPicBufferingMinus1(Int i, Int k, Int j, Int x) { m_maxVpsDecPicBufferingMinus1[i][k][j] = x;    }
 
 #if RESOLUTION_BASED_DPB
-  Int     getMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j)        { assert(i != 0); return m_maxVpsLayerDecPicBuffMinus1[i][k][j]; }
-  Void    setMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j, Int x) { m_maxVpsLayerDecPicBuffMinus1[i][k][j] = x;    }
+  Int    getMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j)        { assert(i != 0); return m_maxVpsLayerDecPicBuffMinus1[i][k][j]; }
+  Void   setMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j, Int x) { m_maxVpsLayerDecPicBuffMinus1[i][k][j] = x;    }
 #endif
 
-  Int     getMaxVpsNumReorderPics(Int i, Int j)         { assert(i != 0); return m_maxVpsNumReorderPics[i][j]; }
-  Void    setMaxVpsNumReorderPics(Int i, Int j, Int x) { m_maxVpsNumReorderPics[i][j] = x;    }
+  Int    getMaxVpsNumReorderPics(Int i, Int j)        { assert(i != 0); return m_maxVpsNumReorderPics[i][j]; }
+  Void   setMaxVpsNumReorderPics(Int i, Int j, Int x) { m_maxVpsNumReorderPics[i][j] = x;    }
 
-  Int     getMaxVpsLatencyIncreasePlus1(Int i, Int j)         { assert(i != 0); return m_maxVpsLatencyIncreasePlus1[i][j]; }
-  Void    setMaxVpsLatencyIncreasePlus1(Int i, Int j, Int x) { m_maxVpsLatencyIncreasePlus1[i][j] = x;    }
+  Int    getMaxVpsLatencyIncreasePlus1(Int i, Int j)        { assert(i != 0); return m_maxVpsLatencyIncreasePlus1[i][j]; }
+  Void   setMaxVpsLatencyIncreasePlus1(Int i, Int j, Int x) { m_maxVpsLatencyIncreasePlus1[i][j] = x;    }
 
-  Int     getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
-  Void    setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
-  Void    determineSubDpbInfoFlags();
+  Int    getNumSubDpbs(Int i)                          { return m_numSubDpbs[i]; }
+  Void   setNumSubDpbs(Int i, Int x)                   { m_numSubDpbs[i] = x;    }
+  Void   determineSubDpbInfoFlags();
 #endif
 
 #if O0109_MOVE_VPS_VUI_FLAG
@@ -1141,18 +1141,18 @@ Void      deriveNumberOfSubDpbs();
 
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
-  Int     getVpsVuiOffset()         { return m_vpsVuiOffset; }
-  Void    setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
+  Int    getVpsVuiOffset()         { return m_vpsVuiOffset; }
+  Void   setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
 #endif
 #endif
 #if P0307_VPS_NON_VUI_EXTENSION
-  Int     getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
-  Void    setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
+  Int    getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
+  Void   setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
 #endif
 #if RESOLUTION_BASED_DPB
-  Void assignSubDpbIndices();
-  Int  getSubDpbAssigned  (Int lsIdx, Int layerIdx) { return m_subDpbAssigned[lsIdx][layerIdx]; }
-  Int  findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId );
+  Void   assignSubDpbIndices();
+  Int    getSubDpbAssigned  (Int lsIdx, Int layerIdx) { return m_subDpbAssigned[lsIdx][layerIdx]; }
+  Int    findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId );
 #endif
 #if O0164_MULTI_LAYER_HRD
   Void setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
@@ -1170,7 +1170,6 @@ private:
   Int           m_winBottomOffset;
 #if P0312_VERT_PHASE_ADJ
   Bool          m_vertPhasePositionEnableFlag;
-  Bool          m_vertPhasePositionFlag;
 #endif
 public:
   Window()
@@ -1180,14 +1179,13 @@ public:
   , m_winTopOffset      (0)
   , m_winBottomOffset   (0)
 #if P0312_VERT_PHASE_ADJ
-  , m_vertPhasePositionEnableFlag(false)
-  , m_vertPhasePositionFlag(false)
+  , m_vertPhasePositionEnableFlag(false)  
 #endif
   { }
 
   Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
 #if P0312_VERT_PHASE_ADJ 
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = m_vertPhasePositionFlag = false;} 
+  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
 #else
   Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
 #endif
@@ -1201,13 +1199,9 @@ public:
   Void          setWindowBottomOffset(Int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
 
 #if P0312_VERT_PHASE_ADJ
-  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag ; }
+  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
   Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
-
-  Bool          getVertPhasePositionFlag() const     { return m_vertPhasePositionEnableFlag ? m_vertPhasePositionFlag: 0; }
-  Void          setVertPhasePositionFlag(Bool val)    { m_vertPhasePositionFlag = val;  }
-
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom  , Bool vertPhasePositionEnableFlag = 0, Bool phasePosFlag = 0)
+  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
 #else
   Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
 #endif
@@ -1218,8 +1212,7 @@ public:
     m_winTopOffset      = offsetLTop;
     m_winBottomOffset   = offsetLBottom;
 #if P0312_VERT_PHASE_ADJ
-    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;
-    m_vertPhasePositionFlag = phasePosFlag;
+    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
 #endif
   }
 };
@@ -1470,7 +1463,7 @@ private:
   TComPTL     m_pcPTL;
 
 #if SVC_EXTENSION
-  UInt m_layerId;
+  UInt        m_layerId;
   UInt        m_numScaledRefLayerOffsets;
 #if P0312_VERT_PHASE_ADJ
  Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
@@ -1480,14 +1473,14 @@ private:
 #endif
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
 #if REPN_FORMAT_IN_VPS
-  Bool m_updateRepFormatFlag;
+  Bool        m_updateRepFormatFlag;
 #if O0096_REP_FORMAT_INDEX
-  UInt m_updateRepFormatIndex;
+  UInt        m_updateRepFormatIndex;
 #endif
 #endif
 #if SCALINGLIST_INFERRING
-  Bool       m_inferScalingListFlag;
-  UInt       m_scalingListRefLayerId;
+  Bool        m_inferScalingListFlag;
+  UInt        m_scalingListRefLayerId;
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -1627,17 +1620,17 @@ public:
   TComPTL* getPTL()     { return &m_pcPTL; }
 
 #if SVC_EXTENSION
-  Void     setLayerId(UInt layerId) { m_layerId = layerId; }
-  UInt     getLayerId() { return m_layerId; }
-  UInt     getNumScaledRefLayerOffsets()  { return m_numScaledRefLayerOffsets; }
-  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x; }
+  Void     setLayerId(UInt layerId)            { m_layerId = layerId; }
+  UInt     getLayerId()                        { return m_layerId;    }
+  UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
+  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
 #if P0312_VERT_PHASE_ADJ
-  Bool     getVertPhasePositionEnableFlag(Int x)  { return m_vertPhasePositionEnableFlag[x]; }
-  Void     setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b; } 
+  Bool     getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
+  Void     setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b;    } 
 #endif
 #if O0098_SCALED_REF_LAYER_ID
   UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
-  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id; }
+  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
 #endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
