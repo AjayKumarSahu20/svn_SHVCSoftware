@@ -315,9 +315,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #else
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
-#if SPS_DPB_PARAMS
-      pcSlice->getVPS()->setTolsIdx(getCommonDecoderParams()->getTargetOutputLayerSetIdx());
-#endif
   }
 #else
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
@@ -739,6 +736,24 @@ Void TDecTop::xActivateParameterSets()
         printf("\nWarning: LayerId = %d: vert_phase_position_enable_flag[%d] = 1, however indication vert_phase_position_in_use_flag = 0\n", m_layerId, scaledRefLayerId );
         break;
       }
+    }
+  }
+#endif
+
+#if SPS_DPB_PARAMS
+  if( m_layerId > 0 )
+  {
+    // When not present sps_max_sub_layers_minus1 is inferred to be equal to vps_max_sub_layers_minus1.
+    sps->setMaxTLayers( activeVPS->getMaxTLayers() );
+
+    // When not present sps_temporal_id_nesting_flag is inferred to be equal to vps_temporal_id_nesting_flag
+    sps->setTemporalIdNestingFlag( activeVPS->getTemporalNestingFlag() );
+
+    // When sps_max_dec_pic_buffering_minus1[ i ] is not present for i in the range of 0 to sps_max_sub_layers_minus1, inclusive, due to nuh_layer_id being greater than 0, 
+    // it is inferred to be equal to max_vps_dec_pic_buffering_minus1[ TargetOptLayerSetIdx ][ currLayerId ][ i ] of the active VPS, where currLayerId is the nuh_layer_id of the layer that refers to the SPS.
+    for(UInt i=0; i < sps->getMaxTLayers(); i++)
+    {
+      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
     }
   }
 #endif
@@ -1711,7 +1726,11 @@ Void TDecTop::xDecodeSPS()
   TComSPS* sps = new TComSPS();
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
+#if SPS_DPB_PARAMS
+  m_cEntropyDecoder.decodeSPS( sps ); // it should be removed after macro clean up
+#else
   m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder );
+#endif
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 #if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
   if(m_numLayer>0)

@@ -777,11 +777,6 @@ public:
   TComPTL* getPTL() { return &m_pcPTL; }
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 
-#if SPS_DPB_PARAMS
-    Int       getTolsIdx  ()             { return m_TolsIdx;   }
-    Void      setTolsIdx  ( Int value  ) { m_TolsIdx = value;  }
-#endif
-
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
