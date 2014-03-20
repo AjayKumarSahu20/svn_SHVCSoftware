@@ -161,9 +161,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0194_JOINT_US_BITSHIFT
   UInt currLayerId = currSlice->getLayerId();
   UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
-#endif
 
+  if( scaleX == 65536 && scaleY == 65536 && g_bitDepthYLayer[currLayerId] == g_bitDepthYLayer[refLayerId] && g_bitDepthCLayer[currLayerId] == g_bitDepthCLayer[refLayerId] ) // ratio 1x
+#else
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
+#endif
   {
     piSrcY = piSrcBufY;
     piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
