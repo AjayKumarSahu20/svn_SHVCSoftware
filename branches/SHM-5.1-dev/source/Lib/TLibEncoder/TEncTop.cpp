@@ -790,7 +790,14 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #else
           TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+          UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
+          Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
+
+          if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets || !sameBitDepths )
+#else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
+#endif
           {
             pcEPic->setSpatialEnhLayerFlag( i, true );
 
@@ -845,7 +852,14 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #else
           TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+          UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
+          Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
+
+          if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets || !sameBitDepths )
+#else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
+#endif
           {
             rpcPic->setSpatialEnhLayerFlag( i, true );
 
