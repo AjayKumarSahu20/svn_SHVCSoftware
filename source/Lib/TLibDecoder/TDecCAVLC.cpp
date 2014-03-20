@@ -536,7 +536,7 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
   }
 }
 
-#if SVC_EXTENSION
+#if SVC_EXTENSION && !SPS_DPB_PARAMS
 Void TDecCavlc::parseSPS(TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager)
 #else
 Void TDecCavlc::parseSPS(TComSPS* pcSPS)
@@ -558,17 +558,22 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );               pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
 #if SVC_EXTENSION
   }
+#if !SPS_DPB_PARAMS
   else
   {
     pcSPS->setMaxTLayers           ( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getMaxTLayers()          );
     pcSPS->setTemporalIdNestingFlag( parameterSetManager->getPrefetchedVPS(pcSPS->getVPSId())->getTemporalNestingFlag() );
   }
 #endif
+#endif
+
   if ( pcSPS->getMaxTLayers() == 1 )
   {
     // sps_temporal_id_nesting_flag must be 1 when sps_max_sub_layers_minus1 is 0
 #if SVC_EXTENSION
+#if !SPS_DPB_PARAMS
     assert( pcSPS->getTemporalIdNestingFlag() == true );
+#endif
 #else
     assert( uiCode == 1 );
 #endif

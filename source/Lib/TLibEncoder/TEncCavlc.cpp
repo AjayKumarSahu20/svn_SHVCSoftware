@@ -518,7 +518,8 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_UVLC( pcSPS->getBitsForPOC()-4,                 "log2_max_pic_order_cnt_lsb_minus4" );
 
 #if SPS_DPB_PARAMS
-    if( pcSPS->getLayerId() == 0 )  {
+  if( pcSPS->getLayerId() == 0 )
+  {
 #endif
   const Bool subLayerOrderingInfoPresentFlag = 1;
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,       "sps_sub_layer_ordering_info_present_flag");
@@ -533,7 +534,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     }
   }
 #if SPS_DPB_PARAMS
-    }
+  }
 #endif
   assert( pcSPS->getMaxCUWidth() == pcSPS->getMaxCUHeight() );
   
