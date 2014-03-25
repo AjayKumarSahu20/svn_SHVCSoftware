@@ -760,6 +760,9 @@ Void TDecTop::xActivateParameterSets()
     // it is inferred to be equal to max_vps_dec_pic_buffering_minus1[ TargetOptLayerSetIdx ][ currLayerId ][ i ] of the active VPS, where currLayerId is the nuh_layer_id of the layer that refers to the SPS.
     for(UInt i=0; i < sps->getMaxTLayers(); i++)
     {
+      // to avoid compiler warning "array subscript is above array bounds"
+      assert( i < MAX_TLAYER );
+
       sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
     }
   }
