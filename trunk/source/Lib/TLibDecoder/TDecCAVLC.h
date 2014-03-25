@@ -85,7 +85,11 @@ public:
 #if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
 #endif
+#if SPS_DPB_PARAMS
+  Void  parseSPS            ( TComSPS* pcSPS ); // it should be removed after macro clean up
+#else
   Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager );
+#endif
   Void  parseSPSExtension    ( TComSPS* pcSPS );
 #else //SVC_EXTENSION
   Void  parseSPS            ( TComSPS* pcSPS );

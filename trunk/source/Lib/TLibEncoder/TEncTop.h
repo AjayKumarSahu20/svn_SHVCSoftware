@@ -138,6 +138,9 @@ private:
   UInt                    m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
+#if P0312_VERT_PHASE_ADJ
+  Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
 #if POC_RESET_FLAG
   Int                     m_pocAdjustmentValue;
 #endif
@@ -212,23 +215,28 @@ public:
 
   /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
-  Void                    setLayerEnc(TEncTop** p) {m_ppcTEncTop = p;}
-  TEncTop**               getLayerEnc()            {return m_ppcTEncTop;}
-  Int                     getPOCLast            () { return m_iPOCLast;               }
-  Int                     getNumPicRcvd         () { return m_iNumPicRcvd;            }
-  Void                    setNumPicRcvd         ( Int num ) { m_iNumPicRcvd = num;      }
-  Void                    setNumScaledRefLayerOffsets(Int x) { m_numScaledRefLayerOffsets = x; }
-  UInt                    getNumScaledRefLayerOffsets() { return m_numScaledRefLayerOffsets; }
+  Void      setLayerEnc(TEncTop** p)            { m_ppcTEncTop = p;                  }
+  TEncTop** getLayerEnc()                       { return m_ppcTEncTop;               }
+  Int       getPOCLast            ()            { return m_iPOCLast;                 }
+  Int       getNumPicRcvd         ()            { return m_iNumPicRcvd;              }
+  Void      setNumPicRcvd         ( Int num )   { m_iNumPicRcvd = num;               }
+  Void      setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
+  UInt      getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
 #if O0098_SCALED_REF_LAYER_ID
-  Void                    setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
-  UInt                    getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
-  Window&  getScaledRefLayerWindowForLayer(Int layerId);
+  Void      setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
+  UInt      getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Window&   getScaledRefLayerWindowForLayer(Int layerId);
 #endif
-  Window&  getScaledRefLayerWindow(Int x)            { return m_scaledRefLayerWindow[x]; }
+  Window&   getScaledRefLayerWindow(Int x)                 { return m_scaledRefLayerWindow[x];        }
+#if P0312_VERT_PHASE_ADJ
+  Void      setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b;    }
+  UInt      getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
+#endif
+
   TComPic** getIlpList() { return m_cIlpPic; }
 #if REF_IDX_MFM
-  Void      setMFMEnabledFlag       (Bool flag)   {m_bMFMEnabledFlag = flag;}
-  Bool      getMFMEnabledFlag()                   {return m_bMFMEnabledFlag;}    
+  Void      setMFMEnabledFlag       (Bool flag)   { m_bMFMEnabledFlag = flag; }
+  Bool      getMFMEnabledFlag()                   { return m_bMFMEnabledFlag; }    
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
@@ -246,8 +254,8 @@ public:
   TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
 #if POC_RESET_FLAG
-  Int  getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
-  Void setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
+  Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
+  Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
   Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}

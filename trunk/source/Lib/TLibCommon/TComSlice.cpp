@@ -110,6 +110,20 @@ TComSlice::TComSlice()
 #if O0149_CROSS_LAYER_BLA_FLAG
 , m_bCrossLayerBLAFlag            ( false )
 #endif
+#if NO_OUTPUT_OF_PRIOR_PICS
+, m_noOutputOfPriorPicsFlag       ( false )
+, m_noRaslOutputFlag              ( false )
+, m_handleCraAsBlaFlag            ( false )
+#endif
+#if POC_RESET_IDC_SIGNALLING
+, m_pocResetIdc                   ( 0 )
+, m_pocResetPeriodId              ( 0 )
+, m_fullPocResetFlag              ( false )
+, m_pocLsbVal                     ( 0 )
+, m_pocMsbVal                     ( 0 )
+, m_pocMsbValRequiredFlag         ( false )
+, m_pocMsbValPresentFlag          ( false )
+#endif
 #endif //SVC_EXTENSION
 {
   m_aiNumRefIdx[0] = m_aiNumRefIdx[1] = 0;
@@ -119,6 +133,9 @@ TComSlice::TComSlice()
   m_activeNumILRRefIdx        = 0; 
   m_interLayerPredEnabledFlag = 0;
   ::memset( m_interLayerPredLayerIdc, 0, sizeof(m_interLayerPredLayerIdc) );
+#if P0312_VERT_PHASE_ADJ
+  ::memset( m_vertPhasePositionFlag, 0, sizeof(m_vertPhasePositionFlag) );
+#endif
 #endif //SVC_EXTENSION
 
   initEqualRef();
@@ -193,6 +210,18 @@ Bool TComSlice::getRapPicFlag()
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
 }
+#if NO_OUTPUT_OF_PRIOR_PICS
+Bool TComSlice::getBlaPicFlag       ()
+{
+    return  getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+    || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP;
+}
+Bool TComSlice::getCraPicFlag       ()
+{
+    return getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
+}
+#endif
 
 /**
  - allocate table to contain substream sizes to be written to the slice header.
@@ -847,7 +876,7 @@ Int TComSlice::getNumRpsCurrTempList()
   Int numRpsCurrTempList = 0;
 
 #if SVC_EXTENSION
-  if( m_eSliceType == I_SLICE || ( m_pcSPS->getLayerId() && 
+  if( m_eSliceType == I_SLICE || ( m_layerId && 
     (m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
     (m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) ) )
 #else
@@ -871,7 +900,7 @@ Int TComSlice::getNumRpsCurrTempList()
   if( m_layerId > 0 )
   {
     numRpsCurrTempList += m_activeNumILRRefIdx;
-}
+  }
 #endif
 
   return numRpsCurrTempList;
@@ -1104,6 +1133,9 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
+#if P0312_VERT_PHASE_ADJ
+  memcpy( m_vertPhasePositionFlag, pSrc->m_vertPhasePositionFlag, sizeof( m_vertPhasePositionFlag ) );
+#endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;
   m_pcPPS                = pSrc->m_pcPPS;
@@ -1388,7 +1420,9 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
   TComPic* rpcPic;
   Int i, isReference;
 
+#if !ALIGNED_BUMPING
   checkLeadingPictureRestrictions(rcListPic);
+#endif
 
   // loop through all pictures in the reference picture buffer
   TComList<TComPic*>::iterator iterPic = rcListPic.begin();
@@ -2070,6 +2104,9 @@ TComVPS::TComVPS()
 #if N0147_IRAP_ALIGN_FLAG
   m_crossLayerIrapAlignFlag = true;
 #endif 
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  m_crossLayerAlignedIdrOnlyFlag = false;
+#endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   m_maxTidRefPresentFlag = true;
 #endif 
@@ -2454,6 +2491,85 @@ Int  TComVPS::findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId )
   }
   return -1;  // Layer not found
 }
+#if O0164_MULTI_LAYER_HRD
+Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess )
+{
+  if( !getVpsVuiBspHrdPresentFlag() )
+  {
+    return;
+  }
+
+  TComHRD *hrd = getBspHrd(hrdIdx);
+
+  Bool rateCnt = ( bitRate > 0 );
+  hrd->setNalHrdParametersPresentFlag( rateCnt );
+  hrd->setVclHrdParametersPresentFlag( rateCnt );
+
+  hrd->setSubPicCpbParamsPresentFlag( ( numDU > 1 ) );
+
+  if( hrd->getSubPicCpbParamsPresentFlag() )
+  {
+    hrd->setTickDivisorMinus2( 100 - 2 );                          // 
+    hrd->setDuCpbRemovalDelayLengthMinus1( 7 );                    // 8-bit precision ( plus 1 for last DU in AU )
+    hrd->setSubPicCpbParamsInPicTimingSEIFlag( true );
+    hrd->setDpbOutputDelayDuLengthMinus1( 5 + 7 );                 // With sub-clock tick factor of 100, at least 7 bits to have the same value as AU dpb delay
+  }
+  else
+  {
+    hrd->setSubPicCpbParamsInPicTimingSEIFlag( false );  
+  }
+
+  hrd->setBitRateScale( 4 );                                       // in units of 2~( 6 + 4 ) = 1,024 bps
+  hrd->setCpbSizeScale( 6 );                                       // in units of 2~( 4 + 4 ) = 1,024 bit
+  hrd->setDuCpbSizeScale( 6 );                                       // in units of 2~( 4 + 4 ) = 1,024 bit
+
+  hrd->setInitialCpbRemovalDelayLengthMinus1(15);                  // assuming 0.5 sec, log2( 90,000 * 0.5 ) = 16-bit
+  if( randomAccess )
+  {
+    hrd->setCpbRemovalDelayLengthMinus1(5);                        // 32 = 2^5 (plus 1)
+    hrd->setDpbOutputDelayLengthMinus1 (5);                        // 32 + 3 = 2^6
+  }
+  else
+  {
+    hrd->setCpbRemovalDelayLengthMinus1(9);                        // max. 2^10
+    hrd->setDpbOutputDelayLengthMinus1 (9);                        // max. 2^10
+  }
+
+  /*
+  Note: only the case of "vps_max_temporal_layers_minus1 = 0" is supported.
+  */
+  Int i, j;
+  UInt birateValue, cpbSizeValue;
+  UInt ducpbSizeValue;
+  UInt duBitRateValue = 0;
+
+  for( i = 0; i < MAX_TLAYER; i ++ )
+  {
+    hrd->setFixedPicRateFlag( i, 1 );
+    hrd->setPicDurationInTcMinus1( i, 0 );
+    hrd->setLowDelayHrdFlag( i, 0 );
+    hrd->setCpbCntMinus1( i, 0 );
+
+    birateValue  = bitRate;
+    cpbSizeValue = bitRate;                                     // 1 second
+    ducpbSizeValue = bitRate/numDU;
+    duBitRateValue = bitRate;
+    for( j = 0; j < ( hrd->getCpbCntMinus1( i ) + 1 ); j ++ )
+    {
+      hrd->setBitRateValueMinus1( i, j, 0, ( birateValue  - 1 ) );
+      hrd->setCpbSizeValueMinus1( i, j, 0, ( cpbSizeValue - 1 ) );
+      hrd->setDuCpbSizeValueMinus1( i, j, 0, ( ducpbSizeValue - 1 ) );
+      hrd->setCbrFlag( i, j, 0, ( j == 0 ) );
+
+      hrd->setBitRateValueMinus1( i, j, 1, ( birateValue  - 1) );
+      hrd->setCpbSizeValueMinus1( i, j, 1, ( cpbSizeValue - 1 ) );
+      hrd->setDuCpbSizeValueMinus1( i, j, 1, ( ducpbSizeValue - 1 ) );
+      hrd->setDuBitRateValueMinus1( i, j, 1, ( duBitRateValue - 1 ) );
+      hrd->setCbrFlag( i, j, 1, ( j == 0 ) );
+    }
+  }
+}
+#endif
 // RepFormat Assignment operator
 RepFormat& RepFormat::operator= (const RepFormat &other)
 {
@@ -2547,6 +2663,10 @@ TComSPS::TComSPS()
   m_scalingList = new TComScalingList;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_usedByCurrPicLtSPSFlag, 0, sizeof(m_usedByCurrPicLtSPSFlag));
+
+#if P0312_VERT_PHASE_ADJ 
+  ::memset(m_vertPhasePositionEnableFlag, 0, sizeof(m_vertPhasePositionEnableFlag));
+#endif
 }
 
 TComSPS::~TComSPS()
@@ -2734,6 +2854,9 @@ TComPPS::TComPPS()
 #if SCALINGLIST_INFERRING
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
+#endif
+#if POC_RESET_IDC
+, m_pocResetInfoPresentFlag   (false)
 #endif
 {
   m_scalingList = new TComScalingList;
@@ -3404,7 +3527,6 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
     //set reference picture POC of each ILP reference 
     Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
-    assert(thePoc >= 0);
     assert(thePoc == pcRefPicBL->getPOC());
 
     ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );

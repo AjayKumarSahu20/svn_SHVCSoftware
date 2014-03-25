@@ -59,6 +59,9 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
   ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
+#if P0312_VERT_PHASE_ADJ 
+  ::memset(m_vertPhasePositionEnableFlag, 0, sizeof(m_vertPhasePositionEnableFlag));
+#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()

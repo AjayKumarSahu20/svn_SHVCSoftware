@@ -57,7 +57,7 @@
 
 #if SVC_EXTENSION
 #include <vector>
-#define NV_VERSION        "5.0 (HM-13.0)"                 ///< Current software version
+#define NV_VERSION        "5.1 (HM-13.0)"                 ///< Current software version
 #else
 #define NV_VERSION        "13.0"                ///< Current software version
 #endif
@@ -177,7 +177,7 @@ template <typename T> inline T Clip3( T minVal, T maxVal, T a) { return std::min
 #define DYN_REF_FREE                0           ///< dynamic free of reference memories
 
 // Explicit temporal layer QP offset
-#define MAX_TLAYER                  8           ///< max number of temporal layer
+#define MAX_TLAYER                  7           ///< max number of temporal layer
 #define HB_LAMBDA_FOR_LDC           1           ///< use of B-style lambda for non-key pictures in low-delay mode
 
 // Fast estimation of generalized B in low-delay mode
@@ -287,12 +287,14 @@ class CommonDecoderParams
   Int m_targetOutputLayerSetIdx;
   std::vector<Int> *m_targetDecLayerIdSet; 
   Bool m_valueCheckedFlag;
+  Int m_highestTId;
 public:
   CommonDecoderParams(): 
     m_targetLayerId(0)
     , m_targetOutputLayerSetIdx(-1)
     , m_targetDecLayerIdSet(NULL)
     , m_valueCheckedFlag(false)
+    , m_highestTId(6)
  {}
 
   Void setTargetLayerId(const Int x) { m_targetLayerId = x;   }
@@ -307,6 +309,8 @@ public:
   Void setValueCheckedFlag(const Bool x) { m_valueCheckedFlag = x;   }
   Bool getValueCheckedFlag()            { return m_valueCheckedFlag;}
   
+  Void setHighestTId(const Int x) { m_highestTId = x; }
+  Int  getHighestTId()            { return m_highestTId; }
 };
 #endif
 //! \}

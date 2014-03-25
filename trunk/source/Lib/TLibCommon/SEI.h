@@ -39,6 +39,9 @@
 //! \ingroup TLibCommon
 //! \{
 class TComSPS;
+#if O0164_MULTI_LAYER_HRD
+class TComHRD;
+#endif
 
 /**
  * Abstract class representing an SEI message with lightweight RTTI.
@@ -79,6 +82,11 @@ public:
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
    ,SUB_BITSTREAM_PROPERTY               = 139    // Final PayloadType to be defined after finalization
+#endif
+#if O0164_MULTI_LAYER_HRD
+   ,BSP_NESTING                          = 140
+   ,BSP_INITIAL_ARRIVAL_TIME             = 141
+   ,BSP_HRD                              = 142
 #endif
   };
   
@@ -156,6 +164,10 @@ public:
   , m_rapCpbParamsPresentFlag (false)
   , m_cpbDelayOffset      (0)
   , m_dpbDelayOffset      (0)
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  , m_useAltCpbParamsFlagPresent(false)
+  , m_useAltCpbParamsFlag (false)
+#endif
   {
     ::memset(m_initialCpbRemovalDelay, 0, sizeof(m_initialCpbRemovalDelay));
     ::memset(m_initialCpbRemovalDelayOffset, 0, sizeof(m_initialCpbRemovalDelayOffset));
@@ -174,6 +186,10 @@ public:
   UInt m_initialAltCpbRemovalDelayOffset[MAX_CPB_CNT][2];
   Bool m_concatenationFlag;
   UInt m_auCpbRemovalDelayDelta;
+#if P0138_USE_ALT_CPB_PARAMS_FLAG
+  Bool m_useAltCpbParamsFlagPresent;
+  Bool m_useAltCpbParamsFlag;
+#endif
 };
 class SEIPictureTiming : public SEI
 {
@@ -438,6 +454,62 @@ SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
 /// delete list of SEI messages (freeing the referenced objects)
 Void deleteSEIs (SEIMessages &seiList);
+
+#if O0164_MULTI_LAYER_HRD
+
+class SEIBspNesting : public SEI
+{
+public:
+  PayloadType payloadType() const { return BSP_NESTING; }
+
+  SEIBspNesting() {}
+  virtual ~SEIBspNesting()
+  {
+    if (!m_callerOwnsSEIs)
+    {
+      deleteSEIs(m_nestedSEIs);
+    }
+  }
+
+  Int  m_bspIdx;
+  Bool  m_callerOwnsSEIs;
+  SEIMessages m_nestedSEIs;
+};
+
+class SEIBspInitialArrivalTime : public SEI
+{
+public:
+  PayloadType payloadType() const { return BSP_INITIAL_ARRIVAL_TIME; }
+
+  SEIBspInitialArrivalTime () {}
+  virtual ~SEIBspInitialArrivalTime () {}
+
+  UInt m_nalInitialArrivalDelay[256];
+  UInt m_vclInitialArrivalDelay[256];
+};
+
+class SEIBspHrd : public SEI
+{
+public:
+  PayloadType payloadType() const { return BSP_HRD; }
+
+  SEIBspHrd () {}
+  virtual ~SEIBspHrd () {}
+
+  UInt m_seiNumBspHrdParametersMinus1;
+  Bool m_seiBspCprmsPresentFlag[MAX_VPS_LAYER_SETS_PLUS1];
+  UInt m_seiNumBitstreamPartitionsMinus1[MAX_VPS_LAYER_SETS_PLUS1];
+  Bool m_seiLayerInBspFlag[MAX_VPS_LAYER_SETS_PLUS1][8][MAX_LAYERS];
+  UInt m_seiNumBspSchedCombinationsMinus1[MAX_VPS_LAYER_SETS_PLUS1];
+  UInt m_seiBspCombHrdIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
+  UInt m_seiBspCombScheddx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
+  UInt m_vpsMaxLayers;
+  Bool m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+
+  TComHRD *hrd;
+};
+
+#endif
 
 class SEIScalableNesting : public SEI
 {

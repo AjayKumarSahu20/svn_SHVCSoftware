@@ -569,8 +569,14 @@ Void TAppEncTop::xInitLibCfg()
 #if O0098_SCALED_REF_LAYER_ID
         m_acTEncTop[layer].setScaledRefLayerId(i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
 #endif
+#if P0312_VERT_PHASE_ADJ
+        m_acTEncTop[layer].setVertPhasePositionEnableFlag( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
+        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
+                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
+#else
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                   2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
+#endif
       }
     }
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
@@ -955,6 +961,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
     m_acTEncTop[layer].init(isFieldCoding);
+#if P0182_VPS_VUI_PS_FLAG
+    m_acTEncTop[layer].getVPS()->setSPSId(layer, m_acTEncTop[layer].getSPS()->getSPSId());
+    m_acTEncTop[layer].getVPS()->setPPSId(layer, m_acTEncTop[layer].getPPS()->getPPSId());
+#endif
   }
 #if VPS_RENAME
   m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
@@ -1192,13 +1202,21 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         // Add sub-DPB sizes of layers belonging to a sub-DPB. If a different sub-DPB size is calculated
         // at the encoder, modify below
         Int oldValue = vps->getMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j );
-        oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j );
+        oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j ) + 1;
         vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue );
 #else
         vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
 #endif
         maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
       }
+#if RESOLUTION_BASED_DPB
+      for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
+      {
+        // Decrement m_maxVpsDecPicBufferingMinus1
+        Int oldValue = vps->getMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j );
+        vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue - 1 );
+      }
+#endif
       vps->setMaxVpsNumReorderPics(i, j, maxNumReorderPics);
       vps->determineSubDpbInfoFlags();
     }
@@ -1285,6 +1303,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
     vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+    vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
+#endif
 #if N0147_IRAP_ALIGN_FLAG
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
@@ -1326,8 +1347,87 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setPhaseAlignFlag( m_phaseAlignFlag );
 #endif
 
+#if P0300_ALT_OUTPUT_LAYER_FLAG
+  for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
+  {
+    vps->setAltOuputLayerFlag( k, m_altOutputLayerFlag );
+  }
+#else
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
+#endif
+#endif
+
+#if P0312_VERT_PHASE_ADJ
+  Bool vpsVuiVertPhaseInUseFlag = false;
+  for( UInt layerId = 1; layerId < m_numLayers; layerId++ )
+  {
+    for( i = 0; i < m_acLayerCfg[layerId].m_numScaledRefLayerOffsets; i++ )
+    {
+      if( m_acTEncTop[layerId].getVertPhasePositionEnableFlag(i) )
+      {
+        vpsVuiVertPhaseInUseFlag = true;
+        break;
+      }
+    }
+  }
+  vps->setVpsVuiVertPhaseInUseFlag( vpsVuiVertPhaseInUseFlag );
+#endif
+
+#if O0164_MULTI_LAYER_HRD
+  vps->setVpsVuiBspHrdPresentFlag(false);
+  TEncTop *pcCfg = &m_acTEncTop[0];
+  if( pcCfg->getBufferingPeriodSEIEnabled() )
+  {
+    vps->setVpsVuiBspHrdPresentFlag(true);
+    vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
+    vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
+    for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
+    {
+      vps->setBspCprmsPresentFlag(i, true);
+
+      UInt layerId = i + 1;
+      TEncTop *pcCfgLayer = &m_acTEncTop[layerId];
+
+      Int iPicWidth         = pcCfgLayer->getSourceWidth();
+      Int iPicHeight        = pcCfgLayer->getSourceHeight();
+      UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
+      UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;
+      UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
+
+      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_uiMaxCUDepth << 1);
+      UInt numDU = ( pcCfgLayer->getSliceMode() == 1 ) ? ( uiNumCUsInFrame / maxCU ) : ( 0 );
+      if( uiNumCUsInFrame % maxCU != 0 || numDU == 0 )
+      {
+        numDU ++;
+      }
+      vps->getBspHrd(i)->setNumDU( numDU );
+      vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
+    }
+    for(UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+    {
+      vps->setNumBitstreamPartitions(h, 1);
+      for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
+      {
+        for( UInt j = 0; j <= (vps->getMaxLayers()-1); j++ )
+        {
+          if (vps->getLayerIdIncludedFlag(h, j) && h == j)
+          {
+            vps->setLayerInBspFlag(h, i, j, true);
+          }
+        }
+      }
+      vps->setNumBspSchedCombinations(h, 1);
+      for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
+      {
+        for( UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
+        {
+          vps->setBspCombHrdIdx(h, i, j, 0);
+          vps->setBspCombSchedIdx(h, i, j, 0);
+        }
+      }
+    }
+  }
 #endif
 
 #else //SVC_EXTENSION

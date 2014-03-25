@@ -46,10 +46,18 @@ public:
   SEIWriter() {};
   virtual ~SEIWriter() {};
 
+#if O0164_MULTI_LAYER_HRD
+  void writeSEImessage(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+#else
   void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+#endif
 
 protected:
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting& nestingSei, const SEIBspNesting& bspNestingSei);
+#else
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+#endif
   Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
   Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
   Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps);
@@ -64,7 +72,11 @@ protected:
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComVPS *vps, TComSPS *sps);
+#else
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
+#endif
   Void xWriteByteAlign();
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
@@ -75,6 +87,12 @@ protected:
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
   Void xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei);
+#endif
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei);
+  Void xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
+  Void xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
+  Void xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
 #endif
 #endif //SVC_EXTENSION
 };

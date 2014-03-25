@@ -126,6 +126,15 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
 
+#if P0312_VERT_PHASE_ADJ
+  Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
+  Bool vertPhasePositionFlag = currSlice->getVertPhasePositionFlag( refLayerIdc );
+  if( vertPhasePositionFlag )
+  {
+    assert( vertPhasePositionEnableFlag );
+  }
+#endif
+
   Pel* piTempBufY = pcTempPic->getLumaAddr();
   Pel* piSrcBufY  = pcBasePic->getLumaAddr();
   Pel* piDstBufY  = pcUsPic->getLumaAddr();
@@ -154,13 +163,26 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
 #endif
 
+  // non-normative software optimization for certain simple resampling cases
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
     piSrcY = piSrcBufY;
     piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
+
+#if O0194_JOINT_US_BITSHIFT
+    Int shift = g_bitDepthYLayer[currLayerId] - g_bitDepthYLayer[refLayerId];
+#endif
+
     for( i = 0; i < heightBL; i++ )
     {
+#if O0194_JOINT_US_BITSHIFT
+      for( j = 0; j < widthBL; j++ )
+      {
+        piDstY[j] = piSrcY[j] << shift;
+      }
+#else
       memcpy( piDstY, piSrcY, sizeof(Pel) * widthBL );
+#endif
       piSrcY += strideBL;
       piDstY += strideEL;
     }
@@ -171,8 +193,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     widthBL  >>= 1;
     heightBL >>= 1;
 
-    strideBL  = pcBasePic->getCStride();
-    strideEL  = pcUsPic->getCStride();
+    strideBL = pcBasePic->getCStride();
+    strideEL = pcUsPic->getCStride();
 
     piSrcU = piSrcBufU;
     piSrcV = piSrcBufV;
@@ -180,17 +202,29 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
     piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
 
+#if O0194_JOINT_US_BITSHIFT
+    shift = g_bitDepthCLayer[currLayerId] - g_bitDepthCLayer[refLayerId];
+#endif
+
     for( i = 0; i < heightBL; i++ )
     {
+#if O0194_JOINT_US_BITSHIFT
+      for( j = 0; j < widthBL; j++ )
+      {
+        piDstU[j] = piSrcU[j] << shift;
+        piDstV[j] = piSrcV[j] << shift;
+      }
+#else
       memcpy( piDstU, piSrcU, sizeof(Pel) * widthBL );
       memcpy( piDstV, piSrcV, sizeof(Pel) * widthBL );
+#endif
       piSrcU += strideBL;
       piSrcV += strideBL;
       piDstU += strideEL;
       piDstV += strideEL;
     }
   }
-  else
+  else // general resampling process
   {
     Int refPos16 = 0;
     Int phase    = 0;
@@ -211,17 +245,25 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
 
     pcBasePic->setBorderExtension(false);
-    pcBasePic->extendPicBorder   (); // extend the border.
+    pcBasePic->extendPicBorder(); // extend the border.
 
     Int   shiftX = 16;
     Int   shiftY = 16;
 
 #if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
     Int   phaseX = 2*phaseAlignFlag;
+#if P0312_VERT_PHASE_ADJ
+    Int   phaseY = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( 2 * phaseAlignFlag );
+#else
     Int   phaseY = 2*phaseAlignFlag;
+#endif
 #else
     Int   phaseX = 0;
+#if P0312_VERT_PHASE_ADJ
+    Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(0));
+#else
     Int   phaseY = 0;
+#endif
 #endif
 
 #if ROUNDING_OFFSET
@@ -250,7 +292,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
 
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthYLayer[refLayerId] - 8;
@@ -273,7 +315,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
         *piDstY = sumLumaHor(piSrcY, coeff) >> shift1;
 #else
         *piDstY = sumLumaHor(piSrcY, coeff);
@@ -289,7 +331,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL);
 
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     Int nShift = 20 - g_bitDepthYLayer[currLayerId];
 #else
@@ -362,34 +404,31 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     shiftY = 16;
 
 #if O0215_PHASE_ALIGNMENT
+    Int phaseXC = phaseAlignFlag;
+#if P0312_VERT_PHASE_ADJ
+    Int phaseYC = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( phaseAlignFlag + 1 );
+#else
+    Int phaseYC = phaseAlignFlag + 1;
+#endif
+#else
     Int phaseXC = 0;
+#if P0312_VERT_PHASE_ADJ
+    Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;
+#else
     Int phaseYC = 1;
-
+#endif
+#endif
+    
 #if ROUNDING_OFFSET
-    addX       = ( ( (phaseXC+phaseAlignFlag) * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( (phaseYC+phaseAlignFlag) * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
+    addX       = ( ( phaseXC * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( phaseYC * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
 #else
-    addX       = ( ( ( widthBL * (phaseXC+phaseAlignFlag) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( ( heightBL * (phaseYC+phaseAlignFlag) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+    addX       = ( ( ( widthBL * (phaseXC) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
+    addY       = ( ( ( heightBL * (phaseYC) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
-    deltaX     = 4 * (phaseXC+phaseAlignFlag);
-    deltaY     = 4 * (phaseYC+phaseAlignFlag);
-#else
-    phaseX = 0;
-    phaseY = 1;
-
-#if ROUNDING_OFFSET
-    addX       = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
-#else
-    addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
-#endif
-
-    deltaX     = 4 * phaseX;
-    deltaY     = 4 * phaseY;
-#endif
+    deltaX     = 4 * phaseXC;
+    deltaY     = 4 * phaseYC;
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
@@ -400,7 +439,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     widthBL   = pcBasePic->getWidth () >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
 
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthCLayer[refLayerId] - 8;
@@ -425,7 +464,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
         *piDstU = sumChromaHor(piSrcU, coeff) >> shift1;
         *piDstV = sumChromaHor(piSrcV, coeff) >> shift1;
 #else
@@ -446,7 +485,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL << 1);
 
-#if  N0214_INTERMEDIATE_BUFFER_16BITS
+#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     nShift = 20 - g_bitDepthCLayer[currLayerId];
 #else
