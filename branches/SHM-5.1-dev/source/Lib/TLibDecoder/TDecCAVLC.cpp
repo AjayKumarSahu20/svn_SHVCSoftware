@@ -1279,7 +1279,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       Int lsIdx = vps->getOutputLayerSetIdx(i);
 #if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
+      for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
 #else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
 #endif
