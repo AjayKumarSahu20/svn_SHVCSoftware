@@ -75,7 +75,7 @@ public:
   Void  resetEntropy (TComSlice* pSlice );
   Void  setBitstream              ( TComInputBitstream* p  ) { m_pcBitstream = p; m_pcTDecBinIf->init( p ); }
   Void  parseVPS                  ( TComVPS* /*pcVPS*/ ) {}
-#if SVC_EXTENSION
+#if SVC_EXTENSION && !SPS_DPB_PARAMS
   Void  parseSPS                  ( TComSPS* /*pcSPS*/, ParameterSetManagerDecoder * /*parameterSetManager*/ ) {}
 #else
   Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
@@ -89,7 +89,12 @@ public:
   Void  parseSaoMerge         ( UInt&  ruiVal   );
   Void  parseSaoTypeIdx           ( UInt&  ruiVal  );
   Void  parseSaoUflc              ( UInt uiLength, UInt& ruiVal     );
+
+#if SVC_EXTENSION
+  Void parseSAOBlkParam (SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail );
+#else
   Void parseSAOBlkParam (SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail);
+#endif
   Void parseSaoSign(UInt& val);
 private:
   Void  xReadUnarySymbol    ( UInt& ruiSymbol, ContextModel* pcSCModel, Int iOffset );

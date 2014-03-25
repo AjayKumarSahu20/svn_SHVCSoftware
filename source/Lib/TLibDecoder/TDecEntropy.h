@@ -65,7 +65,7 @@ public:
   virtual Void  setBitstream          ( TComInputBitstream* p )  = 0;
 
   virtual Void  parseVPS                  ( TComVPS* pcVPS )                       = 0;
-#if SVC_EXTENSION
+#if SVC_EXTENSION && !SPS_DPB_PARAMS
   virtual Void  parseSPS                  ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager )           = 0;
 #else
   virtual Void  parseSPS                  ( TComSPS* pcSPS )                                      = 0;
@@ -132,7 +132,7 @@ public:
   Void    setBitstream                ( TComInputBitstream* p ) { m_pcEntropyDecoderIf->setBitstream(p);                    }
   Void    resetEntropy                ( TComSlice* p)           { m_pcEntropyDecoderIf->resetEntropy(p);                    }
   Void    decodeVPS                   ( TComVPS* pcVPS ) { m_pcEntropyDecoderIf->parseVPS(pcVPS); }
-#if SVC_EXTENSION
+#if SVC_EXTENSION && !SPS_DPB_PARAMS
   Void    decodeSPS                   ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager )    { m_pcEntropyDecoderIf->parseSPS(pcSPS, parameterSetManager);                    }
 #else
   Void    decodeSPS                   ( TComSPS* pcSPS     )    { m_pcEntropyDecoderIf->parseSPS(pcSPS);                    }

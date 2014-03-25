@@ -1393,6 +1393,9 @@ Void TDecSbac::parseSaoSign(UInt& val)
 }
 
 Void TDecSbac::parseSAOBlkParam (SAOBlkParam& saoBlkParam
+#if SVC_EXTENSION
+                                , UInt* saoMaxOffsetQVal
+#endif
                                 , Bool* sliceEnabled
                                 , Bool leftMergeAvail
                                 , Bool aboveMergeAvail
@@ -1467,7 +1470,11 @@ Void TDecSbac::parseSAOBlkParam (SAOBlkParam& saoBlkParam
         Int offset[4];
         for(Int i=0; i< 4; i++)
         {
+#if SVC_EXTENSION
+          parseSaoMaxUvlc(uiSymbol,  saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
+#else
           parseSaoMaxUvlc(uiSymbol,  g_saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
+#endif
           offset[i] = (Int)uiSymbol;
         }
 

@@ -43,7 +43,9 @@
 
 //! \ingroup TLibCommon
 //! \{
+#if !SVC_EXTENSION
 UInt g_saoMaxOffsetQVal[NUM_SAO_COMPONENTS]; 
+#endif
 
 SAOOffset::SAOOffset()
 { 
@@ -159,7 +161,11 @@ Void TComSampleAdaptiveOffset::create( Int picWidth, Int picHeight, UInt maxCUWi
   {
     Int bitDepthSample = (compIdx == SAO_Y)?g_bitDepthY:g_bitDepthC;
     m_offsetStepLog2  [compIdx] = max(bitDepthSample - MAX_SAO_TRUNCATED_BITDEPTH, 0);
+#if SVC_EXTENSION
+    m_saoMaxOffsetQVal[compIdx] = (1<<(min(bitDepthSample,MAX_SAO_TRUNCATED_BITDEPTH)-5))-1; //Table 9-32, inclusive
+#else
     g_saoMaxOffsetQVal[compIdx] = (1<<(min(bitDepthSample,MAX_SAO_TRUNCATED_BITDEPTH)-5))-1; //Table 9-32, inclusive
+#endif
   }
 
   //look-up table for clipping
@@ -167,7 +173,11 @@ Void TComSampleAdaptiveOffset::create( Int picWidth, Int picHeight, UInt maxCUWi
   {
     Int bitDepthSample = (compIdx == SAO_Y)?g_bitDepthY:g_bitDepthC; //exclusive
     Int maxSampleValue = (1<< bitDepthSample); //exclusive
+#if SVC_EXTENSION
+    Int maxOffsetValue = (m_saoMaxOffsetQVal[compIdx] << m_offsetStepLog2[compIdx]); 
+#else
     Int maxOffsetValue = (g_saoMaxOffsetQVal[compIdx] << m_offsetStepLog2[compIdx]); 
+#endif
 
     m_offsetClipTable[compIdx] = new Int[(maxSampleValue + maxOffsetValue -1)+ (maxOffsetValue)+1 ]; //positive & negative range plus 0
     m_offsetClip[compIdx] = &(m_offsetClipTable[compIdx][maxOffsetValue]);

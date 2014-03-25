@@ -302,7 +302,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 
     //nalu = NALUnit(NAL_UNIT_SEI); 
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -315,7 +319,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -326,7 +334,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI); 
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -337,7 +349,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
       
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI); 
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -349,7 +365,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   {
     SEILayersNotPresent *sei = xCreateSEILayersNotPresent ();
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -363,7 +383,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
     writeRBSPTrailingBits(nalu.m_Bitstream);
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
@@ -796,6 +820,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #else
           Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 #endif*/
+#if P0312_VERT_PHASE_ADJ
+          //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
+          if( scalEL.getVertPhasePositionEnableFlag() )
+          {
+            pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
+          }
+#endif
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
           m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
@@ -927,6 +958,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       pcSlice->createExplicitReferencePictureSetFromReference(rcListPic, pcSlice->getRPS(), pcSlice->isIRAP());
     }
+#if ALIGNED_BUMPING
+    pcSlice->checkLeadingPictureRestrictions(rcListPic);
+#endif
     pcSlice->applyReferencePictureSet(rcListPic, pcSlice->getRPS());
 
     if(pcSlice->getTLayer() > 0 
@@ -1715,6 +1749,30 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       xCreateLeadingSEIMessages(accessUnit, pcSlice->getSPS());
 
+#if O0164_MULTI_LAYER_HRD
+      if (pcSlice->getLayerId() == 0 && m_pcEncTop->getVPS()->getVpsVuiBspHrdPresentFlag())
+      {
+        nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, 1);
+        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+        SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice);
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *scalableBspNestingSei, m_pcEncTop->getVPS(), pcSlice->getSPS());
+        writeRBSPTrailingBits(nalu.m_Bitstream);
+
+        UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
+        UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
+          + m_bufferingPeriodSEIPresentInAU 
+          + m_pictureTimingSEIPresentInAU
+          + m_nestedPictureTimingSEIPresentInAU;  // Insert SEI after APS, BP and PT SEI
+        AccessUnit::iterator it;
+        for(j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
+        {
+          it++;
+        }
+        accessUnit.insert(it, new NALUnitEBSP(nalu));
+      }
+#endif
+
       m_bSeqFirst = false;
     }
 
@@ -1749,7 +1807,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       SOPDescriptionSEI.m_numPicsInSopMinus1 = i - 1;
 
+#if O0164_MULTI_LAYER_HRD
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, SOPDescriptionSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
       m_seiWriter.writeSEImessage( nalu.m_Bitstream, SOPDescriptionSEI, pcSlice->getSPS());
+#endif
       writeRBSPTrailingBits(nalu.m_Bitstream);
       accessUnit.push_back(new NALUnitEBSP(nalu));
 
@@ -1833,7 +1895,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       sei_buffering_period.m_cpbDelayOffset = 0;
       sei_buffering_period.m_dpbDelayOffset = 0;
 
+#if O0164_MULTI_LAYER_HRD
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_buffering_period, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
       m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_buffering_period, pcSlice->getSPS());
+#endif
       writeRBSPTrailingBits(nalu.m_Bitstream);
       {
       UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
@@ -1854,7 +1920,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         m_pcEntropyCoder->setBitstream(&naluTmp.m_Bitstream);
         scalableNestingSEI.m_nestedSEIs.clear();
         scalableNestingSEI.m_nestedSEIs.push_back(&sei_buffering_period);
+#if O0164_MULTI_LAYER_HRD
+        m_seiWriter.writeSEImessage( naluTmp.m_Bitstream, scalableNestingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
         m_seiWriter.writeSEImessage( naluTmp.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
+#endif
         writeRBSPTrailingBits(naluTmp.m_Bitstream);
         UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
         UInt offsetPosition = m_activeParameterSetSEIPresentInAU + m_bufferingPeriodSEIPresentInAU + m_pictureTimingSEIPresentInAU;   // Insert BP SEI after non-nested APS, BP and PT SEIs
@@ -1883,7 +1953,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
         seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
 
+#if O0164_MULTI_LAYER_HRD
+        m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiGradualDecodingRefreshInfo, m_pcEncTop->getVPS(), pcSlice->getSPS() );
+#else
         m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiGradualDecodingRefreshInfo, pcSlice->getSPS() );
+#endif
         writeRBSPTrailingBits(nalu.m_Bitstream);
         accessUnit.push_back(new NALUnitEBSP(nalu));
       }
@@ -1901,7 +1975,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       sei_recovery_point.m_brokenLinkFlag    = false;
 
+#if O0164_MULTI_LAYER_HRD
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_recovery_point, m_pcEncTop->getVPS(), pcSlice->getSPS() );
+#else
       m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_recovery_point, pcSlice->getSPS() );
+#endif
       writeRBSPTrailingBits(nalu.m_Bitstream);
       accessUnit.push_back(new NALUnitEBSP(nalu));
     }
@@ -2127,7 +2205,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             // Complete the slice header info.
             m_pcEntropyCoder->setEntropyCoder   ( m_pcCavlcCoder, pcSlice );
             m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if !POC_RESET_IDC_SIGNALLING
             m_pcEntropyCoder->encodeTilesWPPEntryPoint( pcSlice );
+#else
+            tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
+            m_pcEntropyCoder->encodeTilesWPPEntryPoint( pcSlice );
+            actualHeadBits += ( m_pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting );
+            m_pcEntropyCoder->encodeSliceHeaderExtn( pcSlice, actualHeadBits );
+#endif
 
             // Substreams...
             TComOutputBitstream *pcOut = pcBitstreamRedirect;
@@ -2268,7 +2353,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         /* write the SEI messages */
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+#if O0164_MULTI_LAYER_HRD
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recon_picture_digest, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recon_picture_digest, pcSlice->getSPS());
+#endif
         writeRBSPTrailingBits(nalu.m_Bitstream);
 
         accessUnit.insert(accessUnit.end(), new NALUnitEBSP(nalu));
@@ -2292,7 +2381,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         /* write the SEI messages */
         m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+#if O0164_MULTI_LAYER_HRD
+        m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_temporal_level0_index, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
         m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_temporal_level0_index, pcSlice->getSPS());
+#endif
         writeRBSPTrailingBits(nalu.m_Bitstream);
 
         /* insert the SEI message NALUnit before any Slice NALUnits */
@@ -2442,7 +2535,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
           m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
           pictureTimingSEI.m_picStruct = (isField && pcSlice->getPic()->isTopField())? 1 : isField? 2 : 0;
+#if O0164_MULTI_LAYER_HRD
+          m_seiWriter.writeSEImessage(nalu.m_Bitstream, pictureTimingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
           m_seiWriter.writeSEImessage(nalu.m_Bitstream, pictureTimingSEI, pcSlice->getSPS());
+#endif
           writeRBSPTrailingBits(nalu.m_Bitstream);
           UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
           UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
@@ -2461,7 +2558,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
             scalableNestingSEI.m_nestedSEIs.clear();
             scalableNestingSEI.m_nestedSEIs.push_back(&pictureTimingSEI);
+#if O0164_MULTI_LAYER_HRD
+            m_seiWriter.writeSEImessage(nalu.m_Bitstream, scalableNestingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
             m_seiWriter.writeSEImessage(nalu.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
+#endif
             writeRBSPTrailingBits(nalu.m_Bitstream);
             UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
             UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
@@ -2493,7 +2594,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             if(i == 0)
             {
               // Insert before the first slice. 
+#if O0164_MULTI_LAYER_HRD
+              m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
               m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, pcSlice->getSPS());
+#endif
               writeRBSPTrailingBits(nalu.m_Bitstream);
 
               UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
@@ -2515,7 +2620,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
                 if(ctr == accumNalsDU[ i - 1 ])
                 {
                   // Insert before the first slice. 
+#if O0164_MULTI_LAYER_HRD
+                  m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
+#else
                   m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, pcSlice->getSPS());
+#endif
                   writeRBSPTrailingBits(nalu.m_Bitstream);
 
                   accessUnit.insert(it, new NALUnitEBSP(nalu));
@@ -3651,6 +3760,73 @@ Void TEncGOP::xBuildTileSetsMap(TComPicSym* picSym)
   }
 }
 #endif
+
+#if O0164_MULTI_LAYER_HRD
+SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice)
+{
+  SEIScalableNesting *seiScalableNesting = new SEIScalableNesting();
+  SEIBspInitialArrivalTime *seiBspInitialArrivalTime = new SEIBspInitialArrivalTime();
+  SEIBspNesting *seiBspNesting = new SEIBspNesting();
+  SEIBufferingPeriod *seiBufferingPeriod = new SEIBufferingPeriod();
+
+  // Scalable nesting SEI
+
+  seiScalableNesting->m_bitStreamSubsetFlag           = 1;      // If the nested SEI messages are picture buffereing SEI mesages, picure timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
+  seiScalableNesting->m_nestingOpFlag                 = 1;
+  seiScalableNesting->m_defaultOpFlag                 = 0;
+  seiScalableNesting->m_nestingNumOpsMinus1           = 0;      //nesting_num_ops_minus1
+  seiScalableNesting->m_nestingOpIdx[0]               = 1;
+  seiScalableNesting->m_allLayersFlag                 = 0;
+  seiScalableNesting->m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1;  //nesting_no_op_max_temporal_id_plus1
+  seiScalableNesting->m_nestingNumLayersMinus1        = 1 - 1;  //nesting_num_layers_minus1
+  seiScalableNesting->m_nestingLayerId[0]             = 0;
+  seiScalableNesting->m_callerOwnsSEIs                = true;
+
+  // Bitstream partition nesting SEI
+
+  seiBspNesting->m_bspIdx = 0;
+  seiBspNesting->m_callerOwnsSEIs = true;
+
+  // Buffering period SEI
+
+  UInt uiInitialCpbRemovalDelay = (90000/2);                      // 0.5 sec
+  seiBufferingPeriod->m_initialCpbRemovalDelay      [0][0]     = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialCpbRemovalDelayOffset[0][0]     = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialCpbRemovalDelay      [0][1]     = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialCpbRemovalDelayOffset[0][1]     = uiInitialCpbRemovalDelay;
+
+  Double dTmp = (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick() / (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
+
+  UInt uiTmp = (UInt)( dTmp * 90000.0 ); 
+  uiInitialCpbRemovalDelay -= uiTmp;
+  uiInitialCpbRemovalDelay -= uiTmp / ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2 );
+  seiBufferingPeriod->m_initialAltCpbRemovalDelay      [0][0]  = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialAltCpbRemovalDelayOffset[0][0]  = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialAltCpbRemovalDelay      [0][1]  = uiInitialCpbRemovalDelay;
+  seiBufferingPeriod->m_initialAltCpbRemovalDelayOffset[0][1]  = uiInitialCpbRemovalDelay;
+
+  seiBufferingPeriod->m_rapCpbParamsPresentFlag              = 0;
+  //for the concatenation, it can be set to one during splicing.
+  seiBufferingPeriod->m_concatenationFlag = 0;
+  //since the temporal layer HRD is not ready, we assumed it is fixed
+  seiBufferingPeriod->m_auCpbRemovalDelayDelta = 1;
+  seiBufferingPeriod->m_cpbDelayOffset = 0;
+  seiBufferingPeriod->m_dpbDelayOffset = 0;
+
+  // Intial arrival time SEI message
+
+  seiBspInitialArrivalTime->m_nalInitialArrivalDelay[0] = 0;
+  seiBspInitialArrivalTime->m_vclInitialArrivalDelay[0] = 0;
+
+
+  seiBspNesting->m_nestedSEIs.push_back(seiBufferingPeriod);
+  seiBspNesting->m_nestedSEIs.push_back(seiBspInitialArrivalTime);
+  seiScalableNesting->m_nestedSEIs.push_back(seiBspNesting); // BSP nesting SEI is contained in scalable nesting SEI
+
+  return seiScalableNesting;
+}
+#endif
+
 #endif //SVC_EXTENSION
 
 //! \}

@@ -48,7 +48,6 @@
 #include "TComWeightPrediction.h"
 
 #if SVC_UPSAMPLING
-#include "TComDataCU.h"
 #include "TComUpsampleFilter.h"
 #endif
 //! \ingroup TLibCommon
@@ -121,9 +120,9 @@ public:
 #if SVC_UPSAMPLING
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
-  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag );
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag );
 #else
-  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag );
+  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag );
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT

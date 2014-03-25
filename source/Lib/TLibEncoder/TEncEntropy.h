@@ -73,6 +73,9 @@ public:
   virtual Void  codeSliceHeader         ( TComSlice* pcSlice )                                  = 0;
 
   virtual Void  codeTilesWPPEntryPoint  ( TComSlice* pSlice )     = 0;
+#if POC_RESET_IDC_SIGNALLING
+  virtual Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
+#endif
   virtual Void  codeTerminatingBit      ( UInt uilsLast )                                       = 0;
   virtual Void  codeSliceFinish         ()                                                      = 0;
   virtual Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList ) = 0;
@@ -104,7 +107,11 @@ public:
   virtual Void codeDeltaQP       ( TComDataCU* pcCU, UInt uiAbsPartIdx ) = 0;
   virtual Void codeCoeffNxN      ( TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType ) = 0;
   virtual Void codeTransformSkipFlags ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType ) = 0;
+#if SVC_EXTENSION
+  virtual Void codeSAOBlkParam(SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
+#else
   virtual Void codeSAOBlkParam(SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
+#endif
   virtual Void estBit               (estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType) = 0;
   
   virtual Void updateContextTables ( SliceType eSliceType, Int iQp, Bool bExecuteFinish )   = 0;
@@ -137,6 +144,9 @@ public:
   
   Void    encodeSliceHeader         ( TComSlice* pcSlice );
   Void    encodeTilesWPPEntryPoint( TComSlice* pSlice );
+#if POC_RESET_IDC_SIGNALLING
+Void      encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
+#endif
   Void    encodeTerminatingBit      ( UInt uiIsLast );
   Void    encodeSliceFinish         ();
   TEncEntropyIf*      m_pcEntropyCoderIf;
@@ -183,7 +193,11 @@ public:
   Void encodeCoeffNxN         ( TComDataCU* pcCU, TCoeff* pcCoeff, UInt uiAbsPartIdx, UInt uiTrWidth, UInt uiTrHeight, UInt uiDepth, TextType eType );
   
   Void estimateBit             ( estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
+#if SVC_EXTENSION
+  Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, saoMaxOffsetQVal, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
+#else
   Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
+#endif
   static Int countNonZeroCoeffs( TCoeff* pcCoef, UInt uiSize );
 
 };// END CLASS DEFINITION TEncEntropy
