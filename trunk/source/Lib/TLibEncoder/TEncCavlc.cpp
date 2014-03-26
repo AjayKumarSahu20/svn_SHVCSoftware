@@ -1355,7 +1355,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
     if(vps->getCrossLayerIrapAlignFlag())
     {
-       WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "only_idr_for_IRAP_across_layers");
+       WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "all_layers_idr_aligned_flag");
     }
 #endif
 #endif 

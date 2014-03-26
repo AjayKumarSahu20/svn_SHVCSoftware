@@ -1150,19 +1150,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     vps->setProfileLevelTierIdx(i, i);
     vps->setOutputLayerSetIdx(i, i);
-  }
-
-  for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
-  {
-    // Include the highest layer as output layer
-    for(UInt layer=0; layer <= vps->getMaxLayerId() ; layer++)
-    {
-      if(vps->getLayerIdIncludedFlag(lsIdx, layer))
-      {
-        vps->setOutputLayerFlag(lsIdx, layer, layer == (vps->getMaxLayerId()));
-      }
-    }
-  }
+  }  
 #endif
  #if VPS_DPB_SIZE_TABLE
   // The Layer ID List variables can be derived here.  
@@ -1174,6 +1162,31 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #else
   vps->deriveNumberOfSubDpbs();
 #endif
+
+  // derive OutputLayerFlag[i][j] 
+  if( vps->getDefaultTargetOutputLayerIdc() == 1 )
+  {
+    // default_target_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
+    // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
+
+    // Include the highest layer as output layer for each layer set
+    for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
+    {
+      for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
+      {
+        if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
+        {        
+          vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
+        }
+      }
+    }
+  }
+  else
+  {
+    // cases when default_target_output_layer_idc is not equal to 1
+    assert(!"default_target_output_layer_idc not equal to 1 is not yet supported");
+  }
+
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
@@ -1321,11 +1334,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
           }
         }
       }
-    }
-
-    if( vps->getAvcBaseLayerFlag() )
-    {
-      vps->setCrossLayerIrapAlignFlag(false);
     }
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
