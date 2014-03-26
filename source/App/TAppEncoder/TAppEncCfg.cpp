@@ -1760,6 +1760,15 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
 
+  
+  // it can be updated after AVC BL support will be added to the WD
+  if( m_avcBaseLayerFlag )
+  {
+    m_crossLayerIrapAlignFlag = false;
+    m_crossLayerPictureTypeAlignFlag = false;
+    m_crossLayerAlignedIdrOnlyFlag = false;
+  }
+
   // verify layer configuration parameters
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
