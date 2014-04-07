@@ -78,11 +78,15 @@ TDecTop::TDecTop()
 #endif
   m_prevSliceSkipped = false;
   m_skippedPOC = 0;
-#if NO_CLRAS_OUTPUT_FLAG
-  m_noClrasOutputFlag          = false;
+#if SETTING_NO_OUT_PIC_PRIOR
+  m_bFirstSliceInBitstream  = true;
+  m_lastPOCNoOutputPriorPics = -1;
+  m_craNoRaslOutputFlag = false;
+  m_isNoOutputPriorPics = false;
+#endif
+#if NO_CLRAS_OUTPUT_FLAG  
   m_layerInitializedFlag       = false;
-  m_firstPicInLayerDecodedFlag = false;
-  m_noOutputOfPriorPicsFlags   = false;
+  m_firstPicInLayerDecodedFlag = false;  
   m_bRefreshPending            = false;
 #endif
 #if RESOLUTION_BASED_DPB
@@ -502,7 +506,6 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   TComPic*&   pcPic         = m_pcPic;
 
   // Execute Deblock + Cleanup
-
   m_cGopDecoder.filterPicture(pcPic);
 
 #if SYNTAX_OUTPUT
@@ -516,6 +519,24 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
 
   return;
 }
+
+#if SETTING_NO_OUT_PIC_PRIOR
+Void TDecTop::checkNoOutputPriorPics (TComList<TComPic*>*& rpcListPic)
+{
+  if (!rpcListPic || !m_isNoOutputPriorPics) return;
+
+  TComList<TComPic*>::iterator  iterPic   = rpcListPic->begin();
+
+  while (iterPic != rpcListPic->end())
+  {
+    TComPic*& pcPicTmp = *(iterPic++);
+    if (m_lastPOCNoOutputPriorPics != pcPicTmp->getPOC())
+    {
+      pcPicTmp->setOutputMark(false);
+    }
+  }
+}
+#endif
 
 #if EARLY_REF_PIC_MARKING
 Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdSet)
@@ -842,11 +863,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  Bool bFirstSliceInSeq;
-#endif
-#endif
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
@@ -899,20 +915,59 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setAssociatedIRAPPOC(m_pocCRA);
   m_apcSlicePilot->setAssociatedIRAPType(m_associatedIRAPType);
 
-#if NO_OUTPUT_OF_PRIOR_PICS
-  // Infer the value of NoOutputOfPriorPicsFlag
-  if( m_apcSlicePilot->getRapPicFlag() )
+#if SETTING_NO_OUT_PIC_PRIOR
+  //For inference of NoOutputOfPriorPicsFlag
+  if (m_apcSlicePilot->getRapPicFlag())
   {
-    if ( m_apcSlicePilot->getBlaPicFlag() || m_apcSlicePilot->getIdrPicFlag()  || 
-        (m_apcSlicePilot->getCraPicFlag() && m_bFirstSliceInSequence) ||
-        (m_apcSlicePilot->getCraPicFlag() && m_apcSlicePilot->getHandleCraAsBlaFlag()))
+    if ((m_apcSlicePilot->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_apcSlicePilot->getNalUnitType() <= NAL_UNIT_CODED_SLICE_IDR_N_LP) || 
+        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_bFirstSliceInSequence) ||
+        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_apcSlicePilot->getHandleCraAsBlaFlag()))
     {
-      m_apcSlicePilot->setNoRaslOutputFlag( true );
+      m_apcSlicePilot->setNoRaslOutputFlag(true);
+    }
+    //the inference for NoOutputPriorPicsFlag
+    if (!m_bFirstSliceInBitstream && m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoRaslOutputFlag())
+    {
+      if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+      {
+        m_apcSlicePilot->setNoOutputPriorPicsFlag(true);
+      }
     }
     else
     {
-      m_apcSlicePilot->setNoRaslOutputFlag( false );
+      m_apcSlicePilot->setNoOutputPriorPicsFlag(false);
     }
+
+    if(m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+    {
+      m_craNoRaslOutputFlag = m_apcSlicePilot->getNoRaslOutputFlag();
+    }
+  }
+  if (m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoOutputPriorPicsFlag())
+  {
+    m_lastPOCNoOutputPriorPics = m_apcSlicePilot->getPOC();
+    m_isNoOutputPriorPics = true;
+  }
+  else
+  {
+    m_isNoOutputPriorPics = false;
+  }
+
+  //For inference of PicOutputFlag
+  if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)
+  {
+    if ( m_craNoRaslOutputFlag )
+    {
+      m_apcSlicePilot->setPicOutputFlag(false);
+    }
+  }
+#endif
+
+#if FIX_POC_CRA_NORASL_OUTPUT
+  if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_craNoRaslOutputFlag) //Reset POC MSB when CRA has NoRaslOutputFlag equal to 1
+  {
+    Int iMaxPOClsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+    m_apcSlicePilot->setPOC( m_apcSlicePilot->getPOC() & (iMaxPOClsb - 1) );
   }
 #endif
 
@@ -974,17 +1029,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     if( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_apcSlicePilot->getNoRaslOutputFlag() )
     {
-      this->setNoOutputOfPriorPicsFlags( true );
+      this->setNoOutputPriorPicsFlag( true );
     }
     else if( m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoRaslOutputFlag() )
     {
-      this->setNoOutputOfPriorPicsFlags( m_apcSlicePilot->getNoOutputOfPriorPicsFlag() );
+      this->setNoOutputPriorPicsFlag( m_apcSlicePilot->getNoOutputPriorPicsFlag() );
     }
     else
     {
       if( this->m_ppcTDecTop[0]->getNoClrasOutputFlag() )
       {
-        this->setNoOutputOfPriorPicsFlags( true );
+        this->setNoOutputPriorPicsFlag( true );
       }
     }
   }
@@ -1005,7 +1060,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   }
 #else
   //we should only get a different poc for a new picture (with CTU address==0)
-  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (!m_apcSlicePilot->getSliceCurStartCUAddr()==0))
+  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCUAddr()!=0))
   {
     printf ("Warning, the first slice of a picture might have been lost!\n");
   }
@@ -1049,12 +1104,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_uiPrevLayerId = m_layerId;
 #endif
   }
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  bFirstSliceInSeq = m_bFirstSliceInSequence;
-#endif
-#endif
   m_bFirstSliceInSequence = false;
+#if SETTING_NO_OUT_PIC_PRIOR  
+  m_bFirstSliceInBitstream  = false;
+#endif
 #if POC_RESET_FLAG
   // This operation would do the following:
   // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
@@ -1215,52 +1268,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 #endif
 
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-    if (m_layerId == 0 &&
-        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA))
-    {
-      if (bFirstSliceInSeq)
-      {
-        setNoClrasOutputFlag(true);
-      }
-      else if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
-      {
-        setNoClrasOutputFlag(true);
-      }
-#if O0149_CROSS_LAYER_BLA_FLAG
-      else if ((m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) &&
-               m_apcSlicePilot->getCrossLayerBLAFlag())
-      {
-        setNoClrasOutputFlag(true);
-      }
-#endif
-      else
-      {
-        setNoClrasOutputFlag(false);
-      }
-      if (getNoClrasOutputFlag())
-      {
-        for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
-        {
-          m_ppcTDecTop[i]->setLayerInitializedFlag(false);
-          m_ppcTDecTop[i]->setFirstPicInLayerDecodedFlag(false);
-        }
-      }
-    }
-#endif
-
-#if NO_CLRAS_OUTPUT_FLAG
-    m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
-#endif
-#else
+#if NO_OUTPUT_OF_PRIOR_PICS
     if ( m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() && getNoClrasOutputFlag() )
     {
       for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
@@ -1272,10 +1280,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff();
-#if !ALIGNED_BUMPING
-    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
-#else
+#if ALIGNED_BUMPING
     m_apcSlicePilot->checkLeadingPictureRestrictions(m_cListPic);
+#else
+    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
 #endif
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
@@ -1808,8 +1816,8 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
       m_parameterSetManagerDecoder.applyPrefetchedPS();
-      assert(seiAps->activeSeqParamSetId.size()>0);
-      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParamSetId[0] ) )
+      assert(seiAps->activeSeqParameterSetId.size()>0);
+      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
@@ -1836,8 +1844,8 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
       m_parameterSetManagerDecoder.applyPrefetchedPS();
-      assert(seiAps->activeSeqParamSetId.size()>0);
-      if (! m_parameterSetManagerDecoder.activateSPSWithSEI(seiAps->activeSeqParamSetId[0] ))
+      assert(seiAps->activeSeqParameterSetId.size()>0);
+      if (! m_parameterSetManagerDecoder.activateSPSWithSEI(seiAps->activeSeqParameterSetId[0] ))
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
@@ -1996,6 +2004,8 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
       return false;
       
+    case NAL_UNIT_FILLER_DATA:
+      return false;
       
     case NAL_UNIT_RESERVED_VCL_N10:
     case NAL_UNIT_RESERVED_VCL_R11:
@@ -2016,7 +2026,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_RESERVED_VCL30:
     case NAL_UNIT_RESERVED_VCL31:
       
-    case NAL_UNIT_FILLER_DATA:
     case NAL_UNIT_RESERVED_NVCL41:
     case NAL_UNIT_RESERVED_NVCL42:
     case NAL_UNIT_RESERVED_NVCL43:
