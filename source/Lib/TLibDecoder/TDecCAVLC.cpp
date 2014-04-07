@@ -680,11 +680,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
     for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
     {
-      READ_UVLC ( uiCode, "sps_max_dec_pic_buffering_minus1");
+      READ_UVLC ( uiCode, "sps_max_dec_pic_buffering_minus1[i]");
       pcSPS->setMaxDecPicBuffering( uiCode + 1, i);
-      READ_UVLC ( uiCode, "sps_num_reorder_pics" );
+      READ_UVLC ( uiCode, "sps_num_reorder_pics[i]" );
       pcSPS->setNumReorderPics(uiCode, i);
-      READ_UVLC ( uiCode, "sps_max_latency_increase_plus1");
+      READ_UVLC ( uiCode, "sps_max_latency_increase_plus1[i]");
       pcSPS->setMaxLatencyIncrease( uiCode, i );
 
       if (!subLayerOrderingInfoPresentFlag)
@@ -886,7 +886,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 #else
   READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
 #endif
-  READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 ); assert(uiCode <= 6);
+  READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 ); assert(uiCode+1 <= MAX_TLAYER);
   READ_FLAG(     uiCode,  "vps_temporal_id_nesting_flag" );       pcVPS->setTemporalNestingFlag( uiCode ? true:false );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
@@ -2101,10 +2101,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   READ_FLAG( firstSliceSegmentInPic, "first_slice_segment_in_pic_flag" );
   if( rpcSlice->getRapPicFlag())
   {
-#if !NO_OUTPUT_OF_PRIOR_PICS
-    READ_FLAG( uiCode, "no_output_of_prior_pics_flag" );  //ignored
+    READ_FLAG( uiCode, "no_output_of_prior_pics_flag" );  //ignored -- updated already
+#if SETTING_NO_OUT_PIC_PRIOR
+    rpcSlice->setNoOutputPriorPicsFlag(uiCode ? true : false);
 #else
-    READ_FLAG( uiCode, "no_output_of_prior_pics_flag" );  rpcSlice->setNoOutputOfPriorPicsFlag( uiCode ? true : false );
+    rpcSlice->setNoOutputPicPrior( false );
 #endif
   }
   READ_UVLC (    uiCode, "slice_pic_parameter_set_id" );  rpcSlice->setPPSId(uiCode);
@@ -2304,7 +2305,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         }
         else
         {
-          uiCode = 0;
+          uiCode = 0;       
         }
         *rps = *(sps->getRPSList()->getReferencePictureSet(uiCode));
       }

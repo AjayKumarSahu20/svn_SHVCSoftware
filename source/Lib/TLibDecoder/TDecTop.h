@@ -103,6 +103,12 @@ private:
 #endif
   Bool                    m_prevSliceSkipped;
   Int                     m_skippedPOC;
+#if SETTING_NO_OUT_PIC_PRIOR  
+  Bool                    m_bFirstSliceInBitstream;
+  Int                     m_lastPOCNoOutputPriorPics;
+  Bool                    m_isNoOutputPriorPics;
+  Bool                    m_craNoRaslOutputFlag;    //value of variable NoRaslOutputFlag of the last CRA pic
+#endif
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
@@ -135,17 +141,14 @@ private:
   fstream*               m_pBLSyntaxFile;
 #endif
 
-#if NO_CLRAS_OUTPUT_FLAG
-  Bool                    m_noClrasOutputFlag;
+#if NO_CLRAS_OUTPUT_FLAG  
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
-  Bool                    m_noOutputOfPriorPicsFlags;
-
-  Bool                   m_bRefreshPending;
+  Bool                    m_bRefreshPending;
 #endif
 #if RESOLUTION_BASED_DPB
-  Int                    m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
-                                          // When new VPS is activated, this should be re-initialized to -1
+  Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
+                                           // When new VPS is activated, this should be re-initialized to -1
 #endif
 public:
   TDecTop();
@@ -165,7 +168,17 @@ public:
   
   Void  deletePicBuffer();
 
+  
+  TComSPS* getActiveSPS() { return m_parameterSetManagerDecoder.getActiveSPS(); }
+
+
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+#if SETTING_NO_OUT_PIC_PRIOR  
+  Void  checkNoOutputPriorPics (TComList<TComPic*>*& rpcListPic);
+  Bool  getNoOutputPriorPicsFlag ()         { return m_isNoOutputPriorPics; }
+  Void  setNoOutputPriorPicsFlag (Bool val) { m_isNoOutputPriorPics = val; }
+#endif
+
 #if SVC_EXTENSION
 #if EARLY_REF_PIC_MARKING
   Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
@@ -238,12 +251,6 @@ public:
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-#if NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  Bool getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
-#endif
-#endif
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);
@@ -264,16 +271,12 @@ protected:
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if NO_CLRAS_OUTPUT_FLAG
-  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
-  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int  getNoClrasOutputFlag()                { return m_craNoRaslOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_craNoRaslOutputFlag = x;   }
   Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
   Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
-#if !NO_OUTPUT_OF_PRIOR_PICS
-  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
-#endif
 #endif
 };// END CLASS DEFINITION TDecTop
 
