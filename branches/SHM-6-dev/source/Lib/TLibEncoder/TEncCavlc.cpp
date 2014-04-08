@@ -1563,17 +1563,17 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #if P0182_VPS_VUI_PS_FLAG
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
-      if(vps->getNumRefLayers(vps->getLayerIdInNuh(i)) == 0) 
+      if( vps->getNumRefLayers(vps->getLayerIdInNuh(i)) == 0 ) 
       {
-        if ((vps->getSPSId(i) == 0) && (vps->getPPSId(i) == 0))
+        if( (vps->getSPSId(i) == 0) && (vps->getPPSId(i) == 0) )
         {
           vps->setBaseLayerPSCompatibilityFlag(i, 1);
-          WRITE_FLAG(vps->getBaseLayerPSCompatibilityFlag(i), "base_layer_parameter_set_compatibility_flag" );
         }
         else
         {
           vps->setBaseLayerPSCompatibilityFlag(i, 0);
         }
+        WRITE_FLAG(vps->getBaseLayerPSCompatibilityFlag(i), "base_layer_parameter_set_compatibility_flag" );
       }
     }
 #endif
