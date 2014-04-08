@@ -2447,26 +2447,26 @@ Void TComVPS::setWppNotInUseFlag(Bool x)
 #if O0092_0094_DEPENDENCY_CONSTRAINT
 Void TComVPS::setRefLayersFlags(Int currLayerId)
 {
-  for (Int i = 0; i < getNumDirectRefLayers(currLayerId); i++)
+  for (Int i = 0; i < m_numDirectRefLayers[currLayerId]; i++)
   {
     UInt refLayerId = getRefLayerId(currLayerId, i);
-    setRecursiveRefLayerFlag(currLayerId, refLayerId, true);
+    m_recursiveRefLayerFlag[currLayerId][refLayerId] = true;
     for (Int k = 0; k < MAX_NUM_LAYER_IDS; k++)
     {
-      setRecursiveRefLayerFlag(currLayerId, k, (getRecursiveRefLayerFlag(currLayerId, k) | getRecursiveRefLayerFlag(refLayerId, k)));
+      m_recursiveRefLayerFlag[currLayerId][k] = m_recursiveRefLayerFlag[currLayerId][k] | m_recursiveRefLayerFlag[refLayerId][k];
     }
   }
 }
 
 Void TComVPS::setNumRefLayers(Int currLayerId)
 {
-  for (Int i = 0; i <= getMaxLayers(); i++)
+  for (Int i = 0; i < m_uiMaxLayers; i++)
   {
-    UInt iNuhLId = getLayerIdInNuh(i);
+    UInt iNuhLId = m_layerIdInNuh[i];
     setRefLayersFlags(iNuhLId);
     for (UInt j = 0; j < MAX_NUM_LAYER_IDS; j++)
     {
-      m_numberRefLayers[iNuhLId] += (getRecursiveRefLayerFlag(iNuhLId, j) == true ? 1 : 0);
+      m_numberRefLayers[iNuhLId] += (m_recursiveRefLayerFlag[iNuhLId][j] == true ? 1 : 0);
     }
   }
 }
