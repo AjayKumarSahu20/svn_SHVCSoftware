@@ -535,9 +535,10 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       for( i=0; i < m_activeNumILRRefIdx; i++ )
       {
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
+        UInt refLayerId = m_pcVPS->getRefLayerId( m_layerId, refLayerIdc );
 #if RESAMPLING_CONSTRAINT_BUG_FIX
 #if O0098_SCALED_REF_LAYER_ID
-        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_pcVPS->getRefLayerId( m_layerId, m_interLayerPredLayerIdc[i] ));
+        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
 #endif
@@ -547,10 +548,16 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                              (scalEL.getWindowBottomOffset() == 0 ) 
                             );
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        Int sameBitDepth = g_bitDepthYLayer[m_layerId] - g_bitDepthYLayer[refLayerId] + g_bitDepthCLayer[m_layerId] - g_bitDepthCLayer[refLayerId];
+
+        if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepth ) // ratio 1x
+#else
         if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
+#endif
         {
 #if MOTION_RESAMPLING_CONSTRAINT
-          UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, m_pcVPS->getRefLayerId( m_layerId, refLayerIdc ) ) + 1;
+          UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, refLayerId ) + 1;
 
           if( predType & 0x1 )
           {
