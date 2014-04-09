@@ -1622,30 +1622,30 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 }
 #endif
 #if REPN_FORMAT_IN_VPS
-Void  TDecCavlc::parseRepFormat      ( RepFormat *repFormat )
+Void  TDecCavlc::parseRepFormat( RepFormat *repFormat )
 {
   UInt uiCode;
-#if REPN_FORMAT_CONTROL_FLAG
-  READ_FLAG ( uiCode, "chroma_and_bit_depth_vps_present_flag");   repFormat->setChromaAndBitDepthVpsPresentFlag(uiCode ? true : false); 
-  READ_CODE ( 16, uiCode, "pic_width_in_luma_samples" );          repFormat->setPicWidthVpsInLumaSamples ( uiCode );
-  READ_CODE ( 16, uiCode, "pic_height_in_luma_samples" );         repFormat->setPicHeightVpsInLumaSamples( uiCode );
+#if REPN_FORMAT_CONTROL_FLAG  
+  READ_CODE( 16, uiCode, "pic_width_vps_in_luma_samples" );        repFormat->setPicWidthVpsInLumaSamples ( uiCode );
+  READ_CODE( 16, uiCode, "pic_height_vps_in_luma_samples" );       repFormat->setPicHeightVpsInLumaSamples( uiCode );
+  READ_FLAG( uiCode, "chroma_and_bit_depth_vps_present_flag" );    repFormat->setChromaAndBitDepthVpsPresentFlag( uiCode ? true : false ); 
 
   if( repFormat->getChromaAndBitDepthVpsPresentFlag() )
   {
+    READ_CODE( 2, uiCode, "chroma_format_vps_idc" );
 #if AUXILIARY_PICTURES
-    READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( ChromaFormat(uiCode) );
+    repFormat->setChromaFormatVpsIdc( ChromaFormat(uiCode) );
 #else
-    READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( uiCode );
+    repFormat->setChromaFormatVpsIdc( uiCode );
 #endif
 
     if( repFormat->getChromaFormatVpsIdc() == 3 )
     {
-      READ_FLAG( uiCode, "separate_colour_plane_flag");        repFormat->setSeparateColourPlaneVpsFlag(uiCode ? true : false);
+      READ_FLAG( uiCode, "separate_colour_plane_vps_flag" );       repFormat->setSeparateColourPlaneVpsFlag( uiCode ? true : false );
     }
 
-
-    READ_CODE( 4, uiCode, "bit_depth_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
-    READ_CODE( 4, uiCode, "bit_depth_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
+    READ_CODE( 4, uiCode, "bit_depth_vps_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
+    READ_CODE( 4, uiCode, "bit_depth_vps_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
   }
 #else 
 #if AUXILIARY_PICTURES
