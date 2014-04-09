@@ -3524,7 +3524,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   
   uiCUAddrBase = ( iBY / baseMaxCUHeight ) * baseColPic->getFrameWidthInCU() + ( iBX / baseMaxCUWidth );
 #else
-  uiCUAddrBase = (iBY/g_uiMaxCUHeight)*cBaseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
+  uiCUAddrBase = (iBY/g_uiMaxCUHeight)*baseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
 #endif
 
   assert(uiCUAddrBase < baseColPic->getNumCUsInFrame());
@@ -3534,7 +3534,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   
   uiAbsPartIdxBase = g_auiLayerRasterToZscan[baseColPic->getLayerId()][uiRasterAddrBase];
 #else
-  UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*cBaseColPic->getNumPartInWidth()
+  UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*baseColPic->getNumPartInWidth()
     + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
 
   uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
