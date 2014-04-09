@@ -3506,13 +3506,13 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 #if N0139_POSITION_ROUNDING_OFFSET
   if( iMotionMapping == 1 )
   {
-    iBX += 4;
-    iBY += 4;
+    // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
+    iBX = ( ( iBX + 4 ) >> 4 ) << 4;
+    iBY = ( ( iBY + 4 ) >> 4 ) << 4;
   }
 #endif
 
-  if ( iBX >= baseColPic->getPicYuvRec()->getWidth() || iBY >= baseColPic->getPicYuvRec()->getHeight() ||
-       iBX < 0                                        || iBY < 0                                           )
+  if ( iBX < 0 || iBX >= baseColPic->getPicYuvRec()->getWidth() || iBY < 0 || iBY >= baseColPic->getPicYuvRec()->getHeight() )
   {
     return NULL;
   }
