@@ -3667,14 +3667,18 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     UInt refLayerIdc = m_interLayerPredLayerIdc[i];
 
     TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
+
     //set reference picture POC of each ILP reference 
     Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
     assert(thePoc == pcRefPicBL->getPOC());
 
     ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
 
-    //copy reference pictures marking from the reference layer
-    ilpPic[refLayerIdc]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
+    //copy layer id from the reference layer    
+    ilpPic[refLayerIdc]->setLayerId( pcRefPicBL->getLayerId() );
+
+    //copy slice type from the reference layer
+    ilpPic[refLayerIdc]->getSlice(0)->setSliceType( pcRefPicBL->getSlice(0)->getSliceType() );
 
     for( Int refList = 0; refList < 2; refList++ )
     {
@@ -3696,6 +3700,12 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
       { 
         ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
         ilpPic[refLayerIdc]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+      }
+
+      //copy reference pictures' marking from the reference layer
+      for(Int j = 0; j < MAX_NUM_REF + 1; j++)
+      {
+        ilpPic[refLayerIdc]->getSlice(0)->setIsUsedAsLongTerm(refList, j, pcRefPicBL->getSlice(0)->getIsUsedAsLongTerm(refList, j));
       }
     }
   }
