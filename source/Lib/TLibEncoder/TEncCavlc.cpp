@@ -1075,6 +1075,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   if( vps->getRepFormatIdxPresentFlag() )
   {
+    // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
+    assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
+
 #if O0096_REP_FORMAT_INDEX
 #if !VPS_EXTN_UEV_CODING
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 8, "vps_num_rep_formats_minus1" );
