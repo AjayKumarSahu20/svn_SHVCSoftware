@@ -1452,6 +1452,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     assert (vps->getMaxLayers() <= 16);       // If max_layers_is more than 15, num_rep_formats has to be signaled
     vps->setVpsNumRepFormats( vps->getMaxLayers() );
   }
+
+  // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
+  assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
+
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
