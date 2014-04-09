@@ -3484,7 +3484,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UI
 
 TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
 {
-  TComPic* cBaseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
+  TComPic* baseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
   uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
   uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
@@ -3494,11 +3494,11 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 #endif
 
 #if O0098_SCALED_REF_LAYER_ID
-  Int leftStartL = getSlice()->getSPS()->getScaledRefLayerWindowForLayer(getSlice()->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
-  Int topStartL  = getSlice()->getSPS()->getScaledRefLayerWindowForLayer(getSlice()->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
+  Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
+  Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
 #else
-  Int leftStartL = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
-  Int topStartL  = this->getSlice()->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
+  Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
+  Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
 #endif
   Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
@@ -3511,28 +3511,28 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   }
 #endif
 
-  if ( iBX >= cBaseColPic->getPicYuvRec()->getWidth() || iBY >= cBaseColPic->getPicYuvRec()->getHeight() ||
+  if ( iBX >= baseColPic->getPicYuvRec()->getWidth() || iBY >= baseColPic->getPicYuvRec()->getHeight() ||
        iBX < 0                                        || iBY < 0                                           )
   {
     return NULL;
   }
 
 #if LAYER_CTB
-  UInt baseMaxCUHeight = cBaseColPic->getPicSym()->getMaxCUHeight();
-  UInt baseMaxCUWidth  = cBaseColPic->getPicSym()->getMaxCUWidth();
-  UInt baseMinUnitSize = cBaseColPic->getMinCUWidth();
+  UInt baseMaxCUHeight = baseColPic->getPicSym()->getMaxCUHeight();
+  UInt baseMaxCUWidth  = baseColPic->getPicSym()->getMaxCUWidth();
+  UInt baseMinUnitSize = baseColPic->getMinCUWidth();
   
-  uiCUAddrBase = ( iBY / cBaseColPic->getPicSym()->getMaxCUHeight() ) * cBaseColPic->getFrameWidthInCU() + ( iBX / cBaseColPic->getPicSym()->getMaxCUWidth() );
+  uiCUAddrBase = ( iBY / baseMaxCUHeight ) * baseColPic->getFrameWidthInCU() + ( iBX / baseMaxCUWidth );
 #else
   uiCUAddrBase = (iBY/g_uiMaxCUHeight)*cBaseColPic->getFrameWidthInCU() + (iBX/g_uiMaxCUWidth);
 #endif
 
-  assert(uiCUAddrBase < cBaseColPic->getNumCUsInFrame());
+  assert(uiCUAddrBase < baseColPic->getNumCUsInFrame());
 
 #if LAYER_CTB
-  UInt uiRasterAddrBase = ( iBY - (iBY/baseMaxCUHeight)*baseMaxCUHeight ) / baseMinUnitSize * cBaseColPic->getNumPartInWidth() + ( iBX - (iBX/baseMaxCUWidth)*baseMaxCUWidth ) / baseMinUnitSize;
+  UInt uiRasterAddrBase = ( iBY - (iBY/baseMaxCUHeight)*baseMaxCUHeight ) / baseMinUnitSize * baseColPic->getNumPartInWidth() + ( iBX - (iBX/baseMaxCUWidth)*baseMaxCUWidth ) / baseMinUnitSize;
   
-  uiAbsPartIdxBase = g_auiLayerRasterToZscan[cBaseColPic->getLayerId()][uiRasterAddrBase];
+  uiAbsPartIdxBase = g_auiLayerRasterToZscan[baseColPic->getLayerId()][uiRasterAddrBase];
 #else
   UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*cBaseColPic->getNumPartInWidth()
     + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
@@ -3540,7 +3540,7 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
 #endif
 
-  return cBaseColPic->getCU(uiCUAddrBase);
+  return baseColPic->getCU(uiCUAddrBase);
 }
 
 Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
