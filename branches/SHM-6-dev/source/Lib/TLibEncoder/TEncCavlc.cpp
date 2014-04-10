@@ -1071,16 +1071,27 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if REPN_FORMAT_IN_VPS
-#if Q0195_REP_FORMAT_CLEANUP
+#if Q0195_REP_FORMAT_CLEANUP  
+  // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
+  assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
+  
   WRITE_UVLC( vps->getVpsNumRepFormats() - 1, "vps_num_rep_formats_minus1" );
+
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Write rep_format_structures
     codeRepFormat( vps->getVpsRepFormat(i) );
   }
 
-  if ( vps->getVpsNumRepFormats() > 1 )
+  if( vps->getVpsNumRepFormats() > 1 )
+  {
     WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
+  }
+  else
+  {
+    // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
+    assert( !vps->getRepFormatIdxPresentFlag() );
+  }
 
   if( vps->getRepFormatIdxPresentFlag() )
   {

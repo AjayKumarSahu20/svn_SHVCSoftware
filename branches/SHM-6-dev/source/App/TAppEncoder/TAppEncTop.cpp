@@ -90,8 +90,7 @@ Void TAppEncTop::xInitLibCfg()
     vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
   }
 
-#if REPN_FORMAT_IN_VPS
-  vps->setRepFormatIdxPresentFlag( true );   // Could be disabled to optimize in some cases.
+#if REPN_FORMAT_IN_VPS  
   Int maxRepFormatIdx = -1;
   Int formatIdx = -1;
   for(UInt layer=0; layer < m_numLayers; layer++)
@@ -124,11 +123,16 @@ Void TAppEncTop::xInitLibCfg()
     }
 
     assert( m_acLayerCfg[layer].getRepFormatIdx() != -1 && "RepFormatIdx not assigned for a layer" );
+
     vps->setVpsRepFormatIdx( layer, m_acLayerCfg[layer].getRepFormatIdx() );
+
     maxRepFormatIdx = std::max( m_acLayerCfg[layer].getRepFormatIdx(), maxRepFormatIdx );
   }
+
   assert( vps->getVpsRepFormatIdx( 0 ) == 0 );  // Base layer should point to the first one.
+
   Int* mapIdxToLayer = new Int[maxRepFormatIdx + 1];
+
   // Check that all the indices from 0 to maxRepFormatIdx are used in the VPS
   for(Int i = 0; i <= maxRepFormatIdx; i++)
   {
@@ -144,7 +148,16 @@ Void TAppEncTop::xInitLibCfg()
     }
     assert( layer != m_numLayers );   // One of the VPS Rep format indices not set
   }
+
   vps->setVpsNumRepFormats( maxRepFormatIdx + 1 );
+
+#if Q0195_REP_FORMAT_CLEANUP
+  // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
+  vps->setRepFormatIdxPresentFlag( vps->getVpsNumRepFormats() > 1 ? true : false );
+#else
+  vps->setRepFormatIdxPresentFlag( true );
+#endif
+
   for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
   {
     RepFormat *repFormat = vps->getVpsRepFormat( idx );
