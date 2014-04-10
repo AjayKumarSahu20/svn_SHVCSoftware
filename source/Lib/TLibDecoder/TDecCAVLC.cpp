@@ -1437,6 +1437,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if Q0195_REP_FORMAT_CLEANUP
   READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
   vps->setVpsNumRepFormats( uiCode + 1 );
+
+  // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
+  assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
+
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
@@ -1453,8 +1457,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   else
   {
+    // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
     vps->setRepFormatIdxPresentFlag( false );
   }
+
   if( vps->getRepFormatIdxPresentFlag() )
   {
     for(i = 1; i < vps->getMaxLayers(); i++)
