@@ -1071,6 +1071,30 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if REPN_FORMAT_IN_VPS
+#if Q0195_REP_FORMAT_CLEANUP
+  WRITE_UVLC( vps->getVpsNumRepFormats() - 1, "vps_num_rep_formats_minus1" );
+  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
+  {
+    // Write rep_format_structures
+    codeRepFormat( vps->getVpsRepFormat(i) );
+  }
+
+  if ( vps->getVpsNumRepFormats() > 1 )
+    WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
+
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      Int numBits = 1;
+      while ((1 << numBits) < (vps->getVpsNumRepFormats()))
+      {
+        numBits++;
+      }
+      WRITE_CODE( vps->getVpsRepFormatIdx(i), numBits, "vps_rep_format_idx[i]" );
+    }
+  }
+#else
   WRITE_FLAG( vps->getRepFormatIdxPresentFlag(), "rep_format_idx_present_flag"); 
 
   if( vps->getRepFormatIdxPresentFlag() )
@@ -1117,6 +1141,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+#endif
 #endif
 
   WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");

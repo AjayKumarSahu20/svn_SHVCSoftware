@@ -598,7 +598,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   }
   else
   {
+#if REP_FORMAT_FIX
+    pcSPS->setUpdateRepFormatFlag( false );
+#else
     pcSPS->setUpdateRepFormatFlag( true );
+#endif
   }
 #if O0096_REP_FORMAT_INDEX
   if( pcSPS->getLayerId() == 0 )
@@ -1430,6 +1434,49 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 
 #if REPN_FORMAT_IN_VPS
+#if Q0195_REP_FORMAT_CLEANUP
+  READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
+  vps->setVpsNumRepFormats( uiCode + 1 );
+  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
+  {
+    // Read rep_format_structures
+    parseRepFormat( vps->getVpsRepFormat(i) );
+  }
+
+  // Default assignment for layer 0
+  vps->setVpsRepFormatIdx( 0, 0 );
+
+  if( vps->getVpsNumRepFormats() > 1 )
+  {
+    READ_FLAG( uiCode, "rep_format_idx_present_flag");
+    vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
+  }
+  else
+  {
+    vps->setRepFormatIdxPresentFlag( false );
+  }
+  if( vps->getRepFormatIdxPresentFlag() )
+  {
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      Int numBits = 1;
+      while ((1 << numBits) < (vps->getVpsNumRepFormats()))
+      {
+        numBits++;
+      }
+      READ_CODE( numBits, uiCode, "vps_rep_format_idx[i]" );
+      vps->setVpsRepFormatIdx( i, uiCode );
+    }
+  }
+  else
+  {
+    // default assignment - each layer assigned each rep_format() structure in the order signaled
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      vps->setVpsRepFormatIdx( i, min( (Int)i, vps->getVpsNumRepFormats()-1 ) );
+    }
+  }
+#else
   READ_FLAG( uiCode, "rep_format_idx_present_flag");
   vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
 
@@ -1501,6 +1548,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->setVpsRepFormatIdx( i, i );
     }
   }
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   vps->assignSubDpbIndices();
@@ -2564,6 +2612,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       else
       {
         format = rpcSlice->getVPS()->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getVPS()->getVpsRepFormatIdx(sps->getLayerId()) )->getChromaFormatVpsIdc();
+#if Q0195_REP_FORMAT_CLEANUP
+         assert( (sps->getUpdateRepFormatFlag()==false && rpcSlice->getVPS()->getVpsNumRepFormats()==1) || rpcSlice->getVPS()->getVpsNumRepFormats() > 1 ); //conformance check
+#endif
       }
 #else
       if( ( sps->getLayerId() == 0 ) || sps->getUpdateRepFormatFlag() )
