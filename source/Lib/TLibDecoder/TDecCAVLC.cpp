@@ -1132,21 +1132,22 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #if VPS_TSLAYERS
-    READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
-    if (vps->getMaxTSLayersPresentFlag())
+  READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
+
+  if (vps->getMaxTSLayersPresentFlag())
+  {
+    for(i = 0; i < vps->getMaxLayers(); i++)
     {
-        for(i = 0; i < vps->getMaxLayers(); i++)
-        {
-            READ_CODE( 3, uiCode, "sub_layers_vps_max_minus1[i]" ); vps->setMaxTSLayersMinus1(i, uiCode);
-        }
+      READ_CODE( 3, uiCode, "sub_layers_vps_max_minus1[i]" ); vps->setMaxTSLayersMinus1(i, uiCode);
     }
-    else
+  }
+  else
+  {
+    for( i = 0; i < vps->getMaxLayers(); i++)
     {
-        for( i = 0; i < vps->getMaxLayers(); i++)
-        {
-            vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
-        }
+      vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
+  }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
   READ_FLAG( uiCode, "max_tid_ref_present_flag"); vps->setMaxTidRefPresentFlag(uiCode ? true : false);
@@ -1267,6 +1268,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #else
   READ_UVLC( uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
 #endif
+
+  // The value of num_add_output_layer_sets shall be in the range of 0 to 1023, inclusive.
+  assert( vps->getNumAddOutputLayerSets() >= 0 && vps->getNumAddOutputLayerSets() < 1024 );
+
   Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
 #endif
 
