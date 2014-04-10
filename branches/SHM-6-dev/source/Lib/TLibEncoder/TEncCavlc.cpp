@@ -997,8 +997,20 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #else
   Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
   assert( numOutputLayerSets - (Int)vps->getNumLayerSets() >= 0 );
+
+#if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
+  if( vps->getNumLayerSets() > 1 )
+  {
+    WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
+    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_target_output_layer_idc" );
+  }
+#else
   WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
 #endif
+
+#endif
+
+#if !Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( numOutputLayerSets > 1 )
   {
 #if P0295_DEFAULT_OUT_LAYER_IDC
@@ -1011,6 +1023,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif
   }
+#endif
 
   for(i = 1; i < numOutputLayerSets; i++)
   {
@@ -1058,6 +1071,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       WRITE_FLAG(vps->getAltOuputLayerFlag(i), "alt_output_layer_flag[i]");
     }
+
+#if Q0165_OUTPUT_LAYER_SET
+    assert( NumOutputLayersInOutputLayerSet[i]>0 );
+#endif
+
 #endif
   }
 

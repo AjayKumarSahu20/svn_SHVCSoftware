@@ -1253,15 +1253,30 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
   }
 #else
+
+#if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
+  if( vps->getNumLayerSets() > 1 )
+  {
+    READ_UVLC( uiCode, "num_add_output_layer_sets" );            vps->setNumAddOutputLayerSets( uiCode );
+    READ_CODE( 2, uiCode, "default_target_output_layer_idc" );   vps->setDefaultTargetOutputLayerIdc( uiCode );
+  }
+  else
+  {
+    vps->setNumAddOutputLayerSets( 0 );
+  }
+#else
   READ_UVLC( uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
+#endif
   Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
 #endif
 
 #if P0295_DEFAULT_OUT_LAYER_IDC
+#if !Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( numOutputLayerSets > 1 )
   {
     READ_CODE( 2, uiCode, "default_target_output_layer_idc" );   vps->setDefaultTargetOutputLayerIdc( uiCode );
   }
+#endif
   vps->setNumOutputLayerSets( numOutputLayerSets );
 
   for(i = 1; i < numOutputLayerSets; i++)
@@ -1333,6 +1348,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       READ_FLAG(uiCode, "alt_output_layer_flag[i]");
       vps->setAltOuputLayerFlag(i, uiCode ? true : false);
     }
+#if Q0165_OUTPUT_LAYER_SET
+    assert( NumOutputLayersInOutputLayerSet[i]>0 );
+#endif
+
 #endif
   }
 #else
