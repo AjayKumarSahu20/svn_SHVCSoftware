@@ -3691,6 +3691,9 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     //copy slice type from the reference layer
     ilpPic[refLayerIdc]->getSlice(0)->setSliceType( pcRefPicBL->getSlice(0)->getSliceType() );
 
+    //copy "used for reference"
+    ilpPic[refLayerIdc]->getSlice(0)->setReferenced( pcRefPicBL->getSlice(0)->isReferenced() );
+
     for( Int refList = 0; refList < 2; refList++ )
     {
       RefPicList refPicList = RefPicList( refList );
