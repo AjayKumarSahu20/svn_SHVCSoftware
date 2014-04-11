@@ -1468,7 +1468,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
-    parseRepFormat( vps->getVpsRepFormat(i) );
+    parseRepFormat( vps->getVpsRepFormat(i), i > 0 ? vps->getVpsRepFormat(i-1) : 0 );
   }
 
   // Default assignment for layer 0
@@ -1536,7 +1536,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
     // Read rep_format_structures
-    parseRepFormat( vps->getVpsRepFormat(i) );
+    parseRepFormat( vps->getVpsRepFormat(i), i > 0 ? vps->getVpsRepFormat(i-1) : 0 );
   }
 
   // Default assignment for layer 0
@@ -1704,13 +1704,19 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 }
 #endif
 #if REPN_FORMAT_IN_VPS
-Void  TDecCavlc::parseRepFormat( RepFormat *repFormat )
+Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev )
 {
   UInt uiCode;
 #if REPN_FORMAT_CONTROL_FLAG  
   READ_CODE( 16, uiCode, "pic_width_vps_in_luma_samples" );        repFormat->setPicWidthVpsInLumaSamples ( uiCode );
   READ_CODE( 16, uiCode, "pic_height_vps_in_luma_samples" );       repFormat->setPicHeightVpsInLumaSamples( uiCode );
   READ_FLAG( uiCode, "chroma_and_bit_depth_vps_present_flag" );    repFormat->setChromaAndBitDepthVpsPresentFlag( uiCode ? true : false ); 
+
+  if( !repFormatPrev )
+  {
+    // The value of chroma_and_bit_depth_vps_present_flag of the first rep_format( ) syntax structure in the VPS shall be equal to 1
+    assert( repFormat->getChromaAndBitDepthVpsPresentFlag() );
+  }
 
   if( repFormat->getChromaAndBitDepthVpsPresentFlag() )
   {
@@ -1728,6 +1734,16 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat )
 
     READ_CODE( 4, uiCode, "bit_depth_vps_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
     READ_CODE( 4, uiCode, "bit_depth_vps_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
+  }
+  else if( repFormatPrev )
+  {
+    // chroma_and_bit_depth_vps_present_flag equal to 0 specifies that the syntax elements, chroma_format_vps_idc, separate_colour_plane_vps_flag, bit_depth_vps_luma_minus8, and 
+    // bit_depth_vps_chroma_minus8 are not present and inferred from the previous rep_format( ) syntax structure in the VPS.
+
+    repFormat->setChromaFormatVpsIdc        ( repFormatPrev->getChromaFormatVpsIdc() );
+    repFormat->setSeparateColourPlaneVpsFlag( repFormatPrev->getSeparateColourPlaneVpsFlag() );
+    repFormat->setBitDepthVpsLuma           ( repFormatPrev->getBitDepthVpsLuma() );
+    repFormat->setBitDepthVpsChroma         ( repFormatPrev->getBitDepthVpsChroma() );
   }
 #else 
 #if AUXILIARY_PICTURES

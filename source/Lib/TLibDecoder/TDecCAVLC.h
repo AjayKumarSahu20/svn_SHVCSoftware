@@ -80,7 +80,7 @@ public:
   Void  parseVPSVUI   ( TComVPS* pcVPS );
 #endif 
 #if REPN_FORMAT_IN_VPS
-  Void  parseRepFormat      ( RepFormat *repFormat );
+  Void  parseRepFormat      ( RepFormat *repFormat, RepFormat *repFormatPrev );
 #endif
 #if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
