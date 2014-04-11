@@ -142,6 +142,7 @@ private:
 #endif
 
 #if NO_CLRAS_OUTPUT_FLAG  
+  Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
   Bool                    m_bRefreshPending;
@@ -271,8 +272,8 @@ protected:
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if NO_CLRAS_OUTPUT_FLAG
-  Int  getNoClrasOutputFlag()                { return m_craNoRaslOutputFlag;}
-  Void setNoClrasOutputFlag(Bool x)          { m_craNoRaslOutputFlag = x;   }
+  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
   Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
   Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
