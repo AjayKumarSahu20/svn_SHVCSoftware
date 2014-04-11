@@ -2134,6 +2134,7 @@ public:
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
 #if NO_CLRAS_OUTPUT_FLAG
+  Void      decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag );
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
 #else
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);

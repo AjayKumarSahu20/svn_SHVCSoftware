@@ -1014,6 +1014,50 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
 #if NO_CLRAS_OUTPUT_FLAG
+Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag )
+{
+  if( !isIRAP() )
+  {
+    return;
+  }
+
+  // When the current picture is an IRAP picture with nuh_layer_id equal to 0 and NoClrasOutputFlag is equal to 1, 
+  // all reference pictures with any value of nuh_layer_id currently in the DPB (if any) are marked as "unused for reference".
+  if( m_layerId == 0 && noClrasOutputFlag )
+  {
+    Int pocCurr = getPOC();
+    TComPic* rpcPic;
+
+    // mark all pictures for all layers as not used for reference
+    TComList<TComPic*>::iterator        iterPic       = rcListPic.begin();
+    while( iterPic != rcListPic.end() )
+    {
+      if( rpcPic->getPOC() != pocCurr )
+      {
+        rpcPic->getSlice(0)->setReferenced(false);
+      }
+    }
+  }
+
+  // When the current picture is an IRAP picture with NoRaslOutputFlag equal to 1, 
+  // all reference pictures with nuh_layer_id equal to currPicLayerId currently in the DPB (if any) are marked as "unused for reference".
+  if( m_noRaslOutputFlag )
+  {
+    Int pocCurr = getPOC();
+    TComPic* rpcPic;
+
+    // mark all pictures of a current layer as not used for reference
+    TComList<TComPic*>::iterator        iterPic       = rcListPic.begin();
+    while( iterPic != rcListPic.end() )
+    {
+      if( rpcPic->getPOC() != pocCurr && rpcPic->getLayerId() == m_layerId )
+      {
+        rpcPic->getSlice(0)->setReferenced(false);
+      }
+    }
+  }
+}
+
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag)
 #else
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic)
