@@ -84,7 +84,8 @@ TDecTop::TDecTop()
   m_craNoRaslOutputFlag = false;
   m_isNoOutputPriorPics = false;
 #endif
-#if NO_CLRAS_OUTPUT_FLAG  
+#if NO_CLRAS_OUTPUT_FLAG
+  m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
   m_firstPicInLayerDecodedFlag = false;  
   m_bRefreshPending            = false;
