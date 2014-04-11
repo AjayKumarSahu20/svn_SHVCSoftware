@@ -145,7 +145,6 @@ private:
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
-  Bool                    m_bRefreshPending;
 #endif
 #if RESOLUTION_BASED_DPB
   Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.

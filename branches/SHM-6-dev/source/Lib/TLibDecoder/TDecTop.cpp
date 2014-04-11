@@ -88,7 +88,6 @@ TDecTop::TDecTop()
   m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
   m_firstPicInLayerDecodedFlag = false;  
-  m_bRefreshPending            = false;
 #endif
 #if RESOLUTION_BASED_DPB
   m_subDpbIdx = -1;
@@ -1022,7 +1021,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     setNoClrasOutputFlag(false);
   }
 
-  m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
+  m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag );
 #endif
 
   // Derive the value of NoOutputOfPriorPicsFlag
