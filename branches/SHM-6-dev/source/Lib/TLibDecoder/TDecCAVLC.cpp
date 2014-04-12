@@ -976,8 +976,9 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       parseHrdParameters(pcVPS->getHrdParameters(i), pcVPS->getCprmsPresentFlag( i ), pcVPS->getMaxTLayers() - 1);
     }
   }
-  READ_FLAG( uiCode,  "vps_extension_flag" );
-  if (uiCode)
+  READ_FLAG( uiCode,  "vps_extension_flag" );      pcVPS->setVpsExtensionFlag( uiCode ? true : false );
+
+  if( pcVPS->getVpsExtensionFlag()  )
   {
 #if VPS_EXTNS
     while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
@@ -999,6 +1000,11 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       READ_FLAG( uiCode, "vps_extension_data_flag");
     }
 #endif
+  }
+  else
+  {
+    // set default parameters when syntax elements are not present
+    defaultVPSExtension(pcVPS);    
   }
 
   return;
@@ -1500,7 +1506,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
   else
   {
-    // default assignment - each layer assigned each rep_format() structure in the order signaled
+    // When not present, the value of vps_rep_format_idx[ i ] is inferred to be equal to Min (i, vps_num_rep_formats_minus1)
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       vps->setVpsRepFormatIdx( i, min( (Int)i, vps->getVpsNumRepFormats()-1 ) );
@@ -1659,6 +1665,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
 #if P0307_VPS_NON_VUI_EXTENSION
   READ_UVLC( uiCode,           "vps_non_vui_extension_length"); vps->setVpsNonVuiExtLength((Int)uiCode);
+
+  // The value of vps_non_vui_extension_length shall be in the range of 0 to 4096, inclusive.
+  assert( vps->getVpsNonVuiExtLength() >= 0 && vps->getVpsNonVuiExtLength() <= 4096 );
+
 #if P0307_VPS_NON_VUI_EXT_UPDATE
   Int nonVuiExtByte = uiCode;
   for (i = 1; i <= nonVuiExtByte; i++)
@@ -1701,8 +1711,117 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     parseVPSVUI(vps);
 #endif
   }
+  else
+  {
+    // set default values for VPS VUI
+    defaultVPSVUI( vps );
+  }
+}
+
+Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
+{
+  // set default parameters when they are not present
+  Int i, j;
+
+  // When layer_id_in_nuh[ i ] is not present, the value is inferred to be equal to i.
+  for(i = 0; i < vps->getMaxLayers(); i++)
+  {
+    vps->setLayerIdInNuh(i, i);
+    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+  }
+
+  // When not present, sub_layers_vps_max_minus1[ i ] is inferred to be equal to vps_max_sub_layers_minus1.
+  for( i = 0; i < vps->getMaxLayers(); i++)
+  {
+    vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
+  }
+
+  // When not present, max_tid_il_ref_pics_plus1[ i ][ j ] is inferred to be equal to 7.
+  for( i = 0; i < vps->getMaxLayers() - 1; i++ )
+  {
+#if O0225_MAX_TID_FOR_REF_LAYERS
+    for( j = i + 1; j < vps->getMaxLayers(); j++ )
+    {
+      vps->setMaxTidIlRefPicsPlus1(i, j, 7);
+    }
+#else
+    vps->setMaxTidIlRefPicsPlus1(i, 7);
+#endif
+  }
+  
+  // When not present, the value of num_add_output_layer_sets is inferred to be equal to 0.
+  // NumOutputLayerSets = num_add_output_layer_sets + vps_num_layer_sets_minus1 + 1
+  vps->setNumOutputLayerSets( vps->getNumLayerSets() );
+
+  // For i in the range of 0 to NumOutputLayerSets-1, inclusive, the variable LayerSetIdxForOutputLayerSet[ i ] is derived as specified in the following: 
+  // LayerSetIdxForOutputLayerSet[ i ] = ( i <= vps_number_layer_sets_minus1 ) ? i : output_layer_set_idx_minus1[ i ] + 1
+  for( i = 1; i < vps->getNumOutputLayerSets(); i++ )
+  {
+    vps->setOutputLayerSetIdx( i, i );
+    Int lsIdx = vps->getOutputLayerSetIdx(i);
+
+    for( j = 0; j < vps->getNumLayersInIdList(lsIdx); j++ )
+    {
+    vps->setOutputLayerFlag(i, j, 1);
+    }
+  }
+
+  // The value of sub_layer_dpb_info_present_flag[ i ][ 0 ] for any possible value of i is inferred to be equal to 1
+  // When not present, the value of sub_layer_dpb_info_present_flag[ i ][ j ] for j greater than 0 and any possible value of i, is inferred to be equal to be equal to 0.
+  for( i = 1; i < vps->getNumOutputLayerSets(); i++ )
+  {
+    vps->setSubLayerDpbInfoPresentFlag( i, 0, true );
+  }
+  
+  // When not present, the value of vps_num_rep_formats_minus1 is inferred to be equal to MaxLayersMinus1.
+  vps->setVpsNumRepFormats( vps->getMaxLayers() );
+
+  // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
+  vps->setRepFormatIdxPresentFlag( false );
+
+  if( !vps->getRepFormatIdxPresentFlag() )
+  {
+    // When not present, the value of vps_rep_format_idx[ i ] is inferred to be equal to Min(i, vps_num_rep_formats_minus1). 
+    for(i = 1; i < vps->getMaxLayers(); i++)
+    {
+      vps->setVpsRepFormatIdx( i, min( (Int)i, vps->getVpsNumRepFormats() - 1 ) );
+    }
+  }
+
+  // vps_poc_lsb_aligned_flag
+  // When not present, vps_poc_lsb_aligned_flag is inferred to be equal to 0.
+  
+#if O0062_POC_LSB_NOT_PRESENT_FLAG
+  // When not present, poc_lsb_not_present_flag[ i ] is inferred to be equal to 0.
+  for(i = 1; i< vps->getMaxLayers(); i++)
+  {
+    vps->setPocLsbNotPresentFlag(i, 0);
+  }
+#endif
+
+  // set default values for VPS VUI
+  defaultVPSVUI( vps );
+}
+
+Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
+{
+#if N0147_IRAP_ALIGN_FLAG
+  // When not present, the value of all_layers_idr_aligned_flag is inferred to be equal to 0.
+  vps->setCrossLayerIrapAlignFlag( false );
+#endif
+
+#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+  // When single_layer_for_non_irap_flag is not present, it is inferred to be equal to 0.
+  vps->setSingleLayerForNonIrapFlag( false );
+#endif
+
+#if HIGHER_LAYER_IRAP_SKIP_FLAG
+  // When higher_layer_irap_skip_flag is not present it is inferred to be equal to 0
+  vps->setHigherLayerIrapSkipFlag( false );
+#endif
 }
 #endif
+
 #if REPN_FORMAT_IN_VPS
 Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev )
 {
@@ -1797,7 +1916,7 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 #endif
     READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
 #if DPB_PARAMS_MAXTLAYERS
-      for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
+    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
 #else
     for(Int j = 0; j <= vps->getMaxTLayers(); j++)
 #endif
@@ -1917,7 +2036,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       {
         if( parseFlag && vps->getBitRatePresentVpsFlag() )
         {
-          READ_FLAG( uiCode,        "bit_rate_present_vps_flag[i][j]" );  vps->setBitRatePresentFlag( i, j, uiCode ? true : false );
+          READ_FLAG( uiCode,        "bit_rate_present_flag[i][j]" );  vps->setBitRatePresentFlag( i, j, uiCode ? true : false );
         }
         else
         {
@@ -1925,7 +2044,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
         }
         if( parseFlag && vps->getPicRatePresentVpsFlag() )
         {
-          READ_FLAG( uiCode,        "pic_rate_present_vps_flag[i][j]" );  vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
+          READ_FLAG( uiCode,        "pic_rate_present_flag[i][j]" );  vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
         }
         else
         {
@@ -1965,7 +2084,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     vps->setNumVideoSignalInfo(vps->getMaxLayers());
   }
-
 
   for(i = 0; i < vps->getNumVideoSignalInfo(); i++)
   {
@@ -2051,6 +2169,12 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
+
+  // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
+  if( !vps->getSingleLayerForNonIrapFlag() )
+  {
+    assert( !vps->getHigherLayerIrapSkipFlag() );
+  }
 #endif
 #endif
 #if P0312_VERT_PHASE_ADJ
