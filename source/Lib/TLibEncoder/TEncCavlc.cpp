@@ -779,8 +779,10 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if !VPS_EXTNS
   WRITE_FLAG( 0,                     "vps_extension_flag" );
 #else
-  WRITE_FLAG( 1,                     "vps_extension_flag" );
-  if(1) // Should be conditioned on the value of vps_extension_flag
+  pcVPS->setVpsExtensionFlag(true);
+  WRITE_FLAG( pcVPS->getVpsExtensionFlag() ? 1 : 0,                     "vps_extension_flag" );
+
+  if( pcVPS->getVpsExtensionFlag() )
   {
     while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
     {
@@ -1239,6 +1241,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if P0307_VPS_NON_VUI_EXTENSION
+  // The value of vps_non_vui_extension_length shall be in the range of 0 to 4096, inclusive.
+  assert( vps->getVpsNonVuiExtLength() >= 0 && vps->getVpsNonVuiExtLength() <= 4096 );
+
   WRITE_UVLC( vps->getVpsNonVuiExtLength(), "vps_non_vui_extension_length" );
 #if P0307_VPS_NON_VUI_EXT_UPDATE
   for (i = 1; i <= vps->getVpsNonVuiExtLength(); i++)
@@ -1274,8 +1279,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif 
 #else
 #if P0307_REMOVE_VPS_VUI_OFFSET
-  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
   vps->setVpsVuiPresentFlag(true);
+  WRITE_FLAG( vps->getVpsVuiPresentFlag() ? 1 : 0,                     "vps_vui_present_flag" );
 #endif
   if(vps->getVpsVuiPresentFlag())   // Should be conditioned on the value of vps_vui_present_flag
   {
@@ -1431,11 +1436,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       {
         if( vps->getBitRatePresentVpsFlag() )
         {
-          WRITE_FLAG( vps->getBitRatePresentFlag( i, j),        "bit_rate_present_vps_flag[i][j]" );
+          WRITE_FLAG( vps->getBitRatePresentFlag( i, j),        "bit_rate_present_flag[i][j]" );
         }
         if( vps->getPicRatePresentVpsFlag() )
         {
-          WRITE_FLAG( vps->getPicRatePresentFlag( i, j),        "pic_rate_present_vps_flag[i][j]" );
+          WRITE_FLAG( vps->getPicRatePresentFlag( i, j),        "pic_rate_present_flag[i][j]" );
         }
         if( vps->getBitRatePresentFlag(i, j) )
         {
@@ -1522,6 +1527,12 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
+  // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
+  if( !vps->getSingleLayerForNonIrapFlag() )
+  {
+    assert( !vps->getHigherLayerIrapSkipFlag() );
+  }
+
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
 #endif
 #endif

@@ -74,10 +74,12 @@ public:
 #if SPS_EXTENSION
 #if VPS_EXTNS
   Void  parseVPSExtension   ( TComVPS* pcVPS );
+  Void  defaultVPSExtension ( TComVPS* pcVPS );
 #endif
 
 #if VPS_VUI
   Void  parseVPSVUI   ( TComVPS* pcVPS );
+  Void  defaultVPSVUI ( TComVPS* pcVPS );
 #endif 
 #if REPN_FORMAT_IN_VPS
   Void  parseRepFormat      ( RepFormat *repFormat, RepFormat *repFormatPrev );
