@@ -988,6 +988,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   TComVPS* vps = m_acTEncTop[0].getVPS();
   vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
 
+  vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
+
   vps->setNumLayerSets(m_numLayers);
   for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
   {

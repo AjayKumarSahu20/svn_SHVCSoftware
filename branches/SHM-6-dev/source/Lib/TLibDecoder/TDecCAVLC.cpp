@@ -976,11 +976,18 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       parseHrdParameters(pcVPS->getHrdParameters(i), pcVPS->getCprmsPresentFlag( i ), pcVPS->getMaxTLayers() - 1);
     }
   }
+
+#if VPS_EXTNS
   READ_FLAG( uiCode,  "vps_extension_flag" );      pcVPS->setVpsExtensionFlag( uiCode ? true : false );
+
+  // When MaxLayersMinus1 is greater than 0, vps_extension_flag shall be equal to 1.
+  if( pcVPS->getMaxLayers() > 1 )
+  {
+    assert( pcVPS->getVpsExtensionFlag() == true );
+  }
 
   if( pcVPS->getVpsExtensionFlag()  )
   {
-#if VPS_EXTNS
     while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
     {
       READ_FLAG( uiCode, "vps_extension_alignment_bit_equal_to_one"); assert(uiCode == 1);
@@ -994,18 +1001,22 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
         READ_FLAG( uiCode, "vps_extension_data_flag");
       }
     }
-#else
-    while ( xMoreRbspData() )
-    {
-      READ_FLAG( uiCode, "vps_extension_data_flag");
-    }
-#endif
   }
   else
   {
     // set default parameters when syntax elements are not present
     defaultVPSExtension(pcVPS);    
   }
+#else
+  READ_FLAG( uiCode,  "vps_extension_flag" );
+  if (uiCode)
+  {
+    while ( xMoreRbspData() )
+    {
+      READ_FLAG( uiCode, "vps_extension_data_flag");
+    }
+  }
+#endif
 
   return;
 }

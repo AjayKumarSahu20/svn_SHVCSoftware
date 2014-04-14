@@ -776,10 +776,13 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       codeHrdParameters(pcVPS->getHrdParameters(i), pcVPS->getCprmsPresentFlag( i ), pcVPS->getMaxTLayers() - 1);
     }
   }
-#if !VPS_EXTNS
-  WRITE_FLAG( 0,                     "vps_extension_flag" );
-#else
-  pcVPS->setVpsExtensionFlag(true);
+#if VPS_EXTNS
+  // When MaxLayersMinus1 is greater than 0, vps_extension_flag shall be equal to 1.
+  if( pcVPS->getMaxLayers() > 1 )
+  {
+    assert( pcVPS->getVpsExtensionFlag() == true );
+  }
+
   WRITE_FLAG( pcVPS->getVpsExtensionFlag() ? 1 : 0,                     "vps_extension_flag" );
 
   if( pcVPS->getVpsExtensionFlag() )
@@ -798,6 +801,8 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     codeVPSExtension(pcVPS);
     WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
   }
+#else
+  WRITE_FLAG( 0,                     "vps_extension_flag" );
 #endif  
   //future extensions here..
   
