@@ -966,7 +966,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setInterLayerPredLayerIdc( interLayerPredLayerIdcTmp[i], i );
       }
 
-#if !O0225_TID_BASED_IL_RPS_DERIV
+#if !O0225_TID_BASED_IL_RPS_DERIV || Q0060_MAX_TID_REF_EQUAL_TO_ZERO
       pcSlice->setActiveNumILRRefIdx( activeNumILRRefIdxTmp );
 #endif 
       if ( pcSlice->getActiveNumILRRefIdx() == 0 )

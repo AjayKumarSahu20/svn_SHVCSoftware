@@ -184,6 +184,7 @@
 #define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
+#define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
 #if REF_IDX_MFM
 #define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
 #endif

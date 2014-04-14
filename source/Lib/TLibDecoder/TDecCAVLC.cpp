@@ -2675,8 +2675,13 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if P0079_DERIVE_NUMACTIVE_REF_PICS
             for( Int i = 0; i < rpcSlice->getNumILRRefIdx(); i++ ) 
             {
+#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
+              if((rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer() || rpcSlice->getTLayer()==0) &&
+                (rpcSlice->getVPS()->getMaxTSLayersMinus1(rpcSlice->getVPS()->getLayerIdInVps(i)) >=  rpcSlice->getTLayer()) )
+#else 
               if(rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer() &&
                 (rpcSlice->getVPS()->getMaxTSLayersMinus1(rpcSlice->getVPS()->getLayerIdInVps(i)) >=  rpcSlice->getTLayer()) )
+#endif 
               {          
                 rpcSlice->setActiveNumILRRefIdx(1);
                 break;
@@ -2709,8 +2714,13 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         else
         {
 #if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
+#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
+          if((rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(0,rpcSlice->getLayerId()) >  rpcSlice->getTLayer() || rpcSlice->getTLayer()==0) &&
+            (rpcSlice->getVPS()->getMaxTSLayersMinus1(0) >=  rpcSlice->getTLayer()) )
+#else
           if( (rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(0,rpcSlice->getLayerId()) >  rpcSlice->getTLayer()) &&
              (rpcSlice->getVPS()->getMaxTSLayersMinus1(0) >=  rpcSlice->getTLayer()) )
+#endif 
         {
 #endif
           rpcSlice->setActiveNumILRRefIdx(1);
@@ -2736,8 +2746,13 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       Int   refLayerPicIdc  [MAX_VPS_LAYER_ID_PLUS1];
       for(i = 0, numRefLayerPics = 0;  i < rpcSlice->getNumILRRefIdx(); i++ ) 
       {
+#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
+        if((rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer() || rpcSlice->getTLayer()==0) &&
+          (rpcSlice->getVPS()->getMaxTSLayersMinus1(rpcSlice->getVPS()->getLayerIdInVps(i)) >=  rpcSlice->getTLayer()) )
+#else 
         if(rpcSlice->getVPS()->getMaxTidIlRefPicsPlus1(rpcSlice->getVPS()->getLayerIdInVps(i),rpcSlice->getLayerId()) >  rpcSlice->getTLayer() &&
            (rpcSlice->getVPS()->getMaxTSLayersMinus1(rpcSlice->getVPS()->getLayerIdInVps(i)) >=  rpcSlice->getTLayer()) )
+#endif 
         {          
           refLayerPicIdc[ numRefLayerPics++ ] = i;
         }
