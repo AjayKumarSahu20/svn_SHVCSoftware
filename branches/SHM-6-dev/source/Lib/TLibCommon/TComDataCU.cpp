@@ -171,14 +171,20 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
     memset( m_pcTrCoeffY, 0,uiWidth*uiHeight * sizeof( TCoeff ) );
     memset( m_pcTrCoeffCb, 0,uiWidth*uiHeight/4 * sizeof( TCoeff ) );
     memset( m_pcTrCoeffCr, 0,uiWidth*uiHeight/4 * sizeof( TCoeff ) );
-#if ADAPTIVE_QP_SELECTION    
+#if ADAPTIVE_QP_SELECTION
     if( bGlobalRMARLBuffer )
     {
       if( m_pcGlbArlCoeffY == NULL )
       {
+#if LAYER_CTB
+        m_pcGlbArlCoeffY   = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE);
+        m_pcGlbArlCoeffCb  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE/4);
+        m_pcGlbArlCoeffCr  = (Int*)xMalloc(Int, MAX_CU_SIZE * MAX_CU_SIZE/4);
+#else
         m_pcGlbArlCoeffY   = (Int*)xMalloc(Int, uiWidth*uiHeight);
         m_pcGlbArlCoeffCb  = (Int*)xMalloc(Int, uiWidth*uiHeight/4);
         m_pcGlbArlCoeffCr  = (Int*)xMalloc(Int, uiWidth*uiHeight/4);
+#endif
       }
       m_pcArlCoeffY        = m_pcGlbArlCoeffY;
       m_pcArlCoeffCb       = m_pcGlbArlCoeffCb;
