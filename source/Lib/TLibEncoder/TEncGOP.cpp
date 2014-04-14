@@ -3284,7 +3284,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
          pcSlice->getLayerId(),
          pcSlice->getTLayer(),
          c,
-         NaluToStr( pcSlice->getNalUnitType() ).data().
+         NaluToStr( pcSlice->getNalUnitType() ).data(),
          pcSlice->getSliceQp(),
          uibits );
 #endif
