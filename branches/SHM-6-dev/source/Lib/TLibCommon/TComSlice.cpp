@@ -1032,10 +1032,12 @@ Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noCl
     TComList<TComPic*>::iterator iterPic = rcListPic.begin();
     while( iterPic != rcListPic.end() )
     {
+      rpcPic = *(iterPic);
       if( rpcPic->getPOC() != pocCurr )
       {
         rpcPic->getSlice(0)->setReferenced(false);
       }
+      iterPic++;
     }
   }
 
@@ -1047,10 +1049,12 @@ Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noCl
     TComList<TComPic*>::iterator iterPic = rcListPic.begin();
     while( iterPic != rcListPic.end() )
     {
+      rpcPic = *(iterPic);
       if( rpcPic->getPOC() != pocCurr && rpcPic->getLayerId() == m_layerId )
       {
         rpcPic->getSlice(0)->setReferenced(false);
       }
+      iterPic++;
     }
   }
 }
