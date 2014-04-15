@@ -580,7 +580,7 @@ private:
 #endif 
 #if VPS_TSLAYERS
   Bool       m_maxTSLayersPresentFlag;
-  UInt       m_maxTSLayerMinus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+  UInt       m_maxTSLayerMinus1[MAX_LAYERS];
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
