@@ -88,6 +88,9 @@ private:
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int                   m_nFrameBit;
+#endif
 
 public:
   TComPic();
@@ -219,6 +222,10 @@ public:
   Void wrireBLSyntax( fstream* filestream, UInt numBytes );
 #endif
 
+#if Q0048_CGS_3D_ASYMLUT
+  Void  setFrameBit( Int n )  { m_nFrameBit = n;    }
+  Int   getFrameBit()         { return m_nFrameBit; }
+#endif
 };// END CLASS DEFINITION TComPic
 
 //! \}

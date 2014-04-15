@@ -44,6 +44,9 @@
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/SEI.h"
+#if Q0048_CGS_3D_ASYMLUT
+#include "TLibCommon/TCom3DAsymLUT.h"
+#endif
 
 #include "TDecGop.h"
 #include "TDecEntropy.h"
@@ -78,6 +81,10 @@ private:
 
   // functional classes
   TComPrediction          m_cPrediction;
+#if Q0048_CGS_3D_ASYMLUT
+  TCom3DAsymLUT           m_c3DAsymLUTPPS;
+  TComPicYuv*             m_pColorMappedPic;
+#endif
   TComTrQuant             m_cTrQuant;
   TDecGop                 m_cGopDecoder;
   TDecSlice               m_cSliceDecoder;
@@ -267,7 +274,11 @@ protected:
 #endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
-  Void      xDecodePPS();
+  Void      xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+    TCom3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if NO_CLRAS_OUTPUT_FLAG
@@ -277,6 +288,9 @@ protected:
   Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Void initAsymLut(TComSlice *pcSlice);
 #endif
 };// END CLASS DEFINITION TDecTop
 

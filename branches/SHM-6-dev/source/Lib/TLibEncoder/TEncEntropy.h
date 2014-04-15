@@ -49,6 +49,9 @@
 class TEncSbac;
 class TEncCavlc;
 class SEI;
+#if Q0048_CGS_3D_ASYMLUT
+class TEnc3DAsymLUT;
+#endif
 
 // ====================================================================================================================
 // Class definition
@@ -69,7 +72,11 @@ public:
 
   virtual Void  codeVPS                 ( TComVPS* pcVPS )                                      = 0;
   virtual Void  codeSPS                 ( TComSPS* pcSPS )                                      = 0;
-  virtual Void  codePPS                 ( TComPPS* pcPPS )                                      = 0;
+  virtual Void  codePPS                 ( TComPPS* pcPPS 
+#if Q0048_CGS_3D_ASYMLUT
+    , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+    )                                      = 0;
   virtual Void  codeSliceHeader         ( TComSlice* pcSlice )                                  = 0;
 
   virtual Void  codeTilesWPPEntryPoint  ( TComSlice* pSlice )     = 0;
@@ -155,7 +162,11 @@ public:
   Void encodeVPS               ( TComVPS* pcVPS);
   // SPS
   Void encodeSPS               ( TComSPS* pcSPS );
-  Void encodePPS               ( TComPPS* pcPPS );
+  Void encodePPS               ( TComPPS* pcPPS 
+#if Q0048_CGS_3D_ASYMLUT
+    , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void encodeSplitFlag         ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false );
   Void encodeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );
   Void encodeSkipFlag          ( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );

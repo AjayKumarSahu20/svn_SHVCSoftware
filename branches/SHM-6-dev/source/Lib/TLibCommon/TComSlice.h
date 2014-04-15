@@ -1743,6 +1743,11 @@ private:
 #if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int      m_nCGSFlag;
+  Int      m_nCGSOutputBitDepthY; // not for syntax
+  Int      m_nCGSOutputBitDepthC; // not for syntax
+#endif
 #endif
 
 public:
@@ -1883,6 +1888,14 @@ public:
 #if POC_RESET_IDC
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int     getCGSFlag()     { return m_nCGSFlag;  }
+  Void    setCGSFlag(Int n){ m_nCGSFlag = n;     }
+  Int     getCGSOutputBitDepthY()     { return m_nCGSOutputBitDepthY;  }
+  Void    setCGSOutputBitDepthY(Int n){ m_nCGSOutputBitDepthY = n;     }
+  Int     getCGSOutputBitDepthC()     { return m_nCGSOutputBitDepthC;  }
+  Void    setCGSOutputBitDepthC(Int n){ m_nCGSOutputBitDepthC = n;     }
 #endif
 };
 
@@ -2047,6 +2060,9 @@ private:
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int        m_nCGSOverWritePPS;  // for optimization, not output to bitstream
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -2163,6 +2179,10 @@ public:
 
 #if SVC_EXTENSION
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
+#if Q0048_CGS_3D_ASYMLUT
+  Int       getCGSOverWritePPS()              { return m_nCGSOverWritePPS;    }
+  Void      setCGSOverWritePPS(Int n)         { m_nCGSOverWritePPS = n;       }
+#endif
 #else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false );
 #endif

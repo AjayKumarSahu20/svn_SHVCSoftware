@@ -91,7 +91,11 @@ public:
 
   Void  codeVPS                 ( TComVPS* pcVPS );
   Void  codeSPS                 ( TComSPS* pcSPS     );
-  Void  codePPS                 ( TComPPS* pcPPS     );
+  Void  codePPS                 ( TComPPS* pcPPS     
+#if Q0048_CGS_3D_ASYMLUT
+    , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
   Void  codeTerminatingBit      ( UInt uilsLast      );

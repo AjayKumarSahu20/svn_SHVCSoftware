@@ -364,6 +364,12 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int  m_nCGSFlag;
+  Int  m_nCGSMaxOctantDepth;
+  Int  m_nCGSMaxYPartNumLog2;
+  Int  m_nCGSLUTBit;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -902,6 +908,16 @@ public:
     }
   }
   UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Void      setCGSFlag(Int n)  { m_nCGSFlag = n;    }
+  Int       getCGSFlag()       { return m_nCGSFlag; }
+  Void      setCGSMaxOctantDepth(Int n)  { m_nCGSMaxOctantDepth = n;    }
+  Int       getCGSMaxOctantDepth()       { return m_nCGSMaxOctantDepth; }
+  Void      setCGSMaxYPartNumLog2(Int n)  { m_nCGSMaxYPartNumLog2 = n;    }
+  Int       getCGSMaxYPartNumLog2()       { return m_nCGSMaxYPartNumLog2; }
+  Void      setCGSLUTBit(Int n)  { m_nCGSLUTBit = n;    }
+  Int       getCGSLUTBit()       { return m_nCGSLUTBit; }
 #endif
 #endif
 };

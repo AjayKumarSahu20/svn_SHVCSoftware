@@ -45,6 +45,9 @@
 #include "TDecEntropy.h"
 #include "SyntaxElementParser.h"
 
+#if Q0048_CGS_3D_ASYMLUT
+class TCom3DAsymLUT;
+#endif
 //! \ingroup TLibDecoder
 //! \{
 
@@ -96,7 +99,11 @@ public:
 #else //SVC_EXTENSION
   Void  parseSPS            ( TComSPS* pcSPS );
 #endif //SVC_EXTENSION
-  Void  parsePPS            ( TComPPS* pcPPS);
+  Void  parsePPS            ( TComPPS* pcPPS
+#if Q0048_CGS_3D_ASYMLUT
+    , TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID
+#endif
+    );
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
   Void  parseSEI            ( SEIMessages& );
   Void  parsePTL            ( TComPTL *rpcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1 );
@@ -136,6 +143,11 @@ public:
   Void xDecodeScalingList    ( TComScalingList *scalingList, UInt sizeId, UInt listId);
 protected:
   Bool  xMoreRbspData();
+
+#if Q0048_CGS_3D_ASYMLUT
+  Void xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
+  Void xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
+#endif
 };
 
 //! \}
