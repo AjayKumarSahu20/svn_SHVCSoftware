@@ -85,10 +85,8 @@
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
 #define O0194_JOINT_US_BITSHIFT          1      ///< JCTVC-O0194: Joint Upsampling and bit-shift
 #endif
-#define Q0048_CGS_3D_ASYMLUT                   1
+#define Q0048_CGS_3D_ASYMLUT             1
 #if Q0048_CGS_3D_ASYMLUT
-#define Q0048_CGS_3D_ASYMLUT_OFF               0
-#define Q0048_CGS_3D_ASYMLUT_PPSUPDATE         1
 #define O0194_WEIGHTED_PREDICTION_CGS    0
 #else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability

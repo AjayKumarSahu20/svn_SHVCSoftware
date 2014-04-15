@@ -389,7 +389,7 @@ Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , 
   Int nPartNumLog2 = 4;
   if( pSlice->getBaseColPic( pSlice->getInterLayerPredLayerIdc( 0 ) )->getSlice( 0 )->isIntra() )
     nPartNumLog2 = xGetMaxPartNumLog2();
-  if( m_nPrevFrameBit[nSliceType][nSliceTempLevel] && pSlice->getPPS()->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE  ) 
+  if( m_nPrevFrameBit[nSliceType][nSliceTempLevel] && pSlice->getPPS()->getCGSFlag() ) 
   {
     Double dBitCost = 1.0 * m_nPrevFrameCGSBit[nSliceType][nSliceTempLevel] / m_nPrevFrameBit[nSliceType][nSliceTempLevel];
     nPartNumLog2 = m_nPrevFrameCGSPartNumLog2[nSliceType][nSliceTempLevel];

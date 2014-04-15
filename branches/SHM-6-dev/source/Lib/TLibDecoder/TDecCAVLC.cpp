@@ -357,7 +357,7 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
 #if Q0048_CGS_3D_ASYMLUT
       READ_FLAG( uiCode , "colour_mapping_enabled_flag" ); 
       pcPPS->setCGSFlag( uiCode );
-      if( pcPPS->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE )
+      if( pcPPS->getCGSFlag() )
       {
         xParse3DAsymLUT( pc3DAsymLUT );
         pcPPS->setCGSOutputBitDepthY( pc3DAsymLUT->getOutputBitDepthY() );

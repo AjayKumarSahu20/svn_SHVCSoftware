@@ -274,7 +274,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 #if Q0048_CGS_3D_ASYMLUT
       UInt uiPos = getNumberOfWrittenBits();
       WRITE_FLAG( pcPPS->getCGSFlag() , "colour_mapping_enabled_flag" );
-      if( pcPPS->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE )
+      if( pcPPS->getCGSFlag() )
       {
         assert( pc3DAsymLUT != NULL );
         xCode3DAsymLUT( pc3DAsymLUT );
