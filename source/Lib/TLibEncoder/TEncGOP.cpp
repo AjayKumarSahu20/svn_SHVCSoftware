@@ -954,7 +954,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if Q0048_CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
-        if( pcSlice->getPPS()->getCGSFlag() != Q0048_CGS_3D_ASYMLUT_OFF)
+        if( pcSlice->getPPS()->getCGSFlag() )
         {
           if(g_posScalingFactor[refLayerIdc][0] < (1<<16) || g_posScalingFactor[refLayerIdc][1] < (1<<16)) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
@@ -1995,7 +1995,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_bSeqFirst = false;
     }
 #if Q0048_CGS_3D_ASYMLUT
-    else if( m_pcCfg->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE && pcSlice->getLayerId() && pcSlice->getCGSOverWritePPS() )
+    else if( m_pcCfg->getCGSFlag() && pcSlice->getLayerId() && pcSlice->getCGSOverWritePPS() )
     {
 #if SVC_EXTENSION
       OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
@@ -4152,7 +4152,7 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt 
     m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );
     pSlice->setCGSOverWritePPS( 1 ); // regular PPS update
   }
-  else if( nCGSFlag == Q0048_CGS_3D_ASYMLUT_PPSUPDATE )
+  else if( nCGSFlag )
   {
     dErrorPPS = m_Enc3DAsymLUTPPS.estimateDistWithCur3DAsymLUT( pCurPic , refLayerIdc );
     Double dFactor = pCfg->getIntraPeriod() == 1 ? 0.99 : 0.9;

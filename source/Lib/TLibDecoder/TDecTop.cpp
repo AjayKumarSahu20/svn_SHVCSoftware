@@ -1549,7 +1549,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if Q0048_CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
-        if( pcSlice->getPPS()->getCGSFlag() != Q0048_CGS_3D_ASYMLUT_OFF )
+        if( pcSlice->getPPS()->getCGSFlag() )
         {
           if(!m_pColorMappedPic)
             initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
