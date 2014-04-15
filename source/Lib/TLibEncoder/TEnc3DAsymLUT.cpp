@@ -339,7 +339,6 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
         u = pIRLU[posIRLUV];
         v = pIRLV[posIRLUV];
         SColorInfo & rCuboidColorInfoC = m_pColorInfoC[y>>xGetYShift2Idx()][u>>xGetUShift2Idx()][v>>xGetVShift2Idx()];
-        //sColorInfo.Ys = Y;
         sColorInfo.Us = U;
         sColorInfo.Vs = V;
         sColorInfo.ys = y;

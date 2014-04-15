@@ -192,10 +192,10 @@ SYUVP  TCom3DAsymLUT::xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , 
     sPredB.V += recNeighborP.V - sPredNeighbor.V ;
 
     Pel min = - ( 1 << ( getOutputBitDepthY() - 2 ) );
-    Pel max =  - min /*- 1*/;
+    Pel max =  - min;
     sPredB.Y = Clip3( min , max , sPredB.Y );
     min = - ( 1 << ( getOutputBitDepthC() - 2 ) );
-    max =  - min /*- 1*/;
+    max =  - min;
     sPredB.U = Clip3( min , max , sPredB.U );
     sPredB.V = Clip3( min , max , sPredB.V );
   }

@@ -4253,7 +4253,6 @@ Void TEncGOP::filterImg(
     {
       i0      += m_iN;
       div_i0   = (i0 / m_iM);
-      //p_src    = &src[j1][ div_i0 - (length >> 1)];
       p_src    =  p_src_line + ( div_i0 - (length >> 1));
       p_filter = m_phase_filter[i0 - div_i0 * m_iM]; // phase_filter[i0 % M]
       iSum     = 0;
@@ -4280,7 +4279,6 @@ Void TEncGOP::filterImg(
   {
     j0      += m_iN;
     div_j0   = (j0 / m_iM);
-    //p_dst    = dst[j1];
     p_dst = p_dst_line;
     p_temp   = &m_temp[div_j0 - (length>>1)];
     p_filter = m_phase_filter[j0 - div_j0 * m_iM]; // phase_filter[j0 % M]
