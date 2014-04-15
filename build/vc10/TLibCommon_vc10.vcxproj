@@ -147,6 +147,7 @@
     <ClCompile Include="..\..\source\Lib\TLibCommon\ContextModel3DBuffer.cpp" />
     <ClCompile Include="..\..\source\Lib\libmd5\libmd5.c" />
     <ClCompile Include="..\..\source\Lib\TLibCommon\SEI.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibCommon\TComBitStream.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibCommon\TComCABACTables.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibCommon\TComDataCU.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\source\Lib\libmd5\MD5.h" />
     <ClInclude Include="..\..\source\Lib\TLibCommon\NAL.h" />
     <ClInclude Include="..\..\source\Lib\TLibCommon\SEI.h" />
+    <ClInclude Include="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.h" />
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComBitCounter.h" />
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComBitStream.h" />
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComCABACTables.h" />

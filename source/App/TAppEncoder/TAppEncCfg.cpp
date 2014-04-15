@@ -960,6 +960,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0149_CROSS_LAYER_BLA_FLAG
   ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  ("CGS",     m_nCGSFlag , 0, "whether CGS is enabled")
+  ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
+  ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
+  ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
@@ -2300,6 +2306,9 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layer].m_auxId > 0 && m_acLayerCfg[layer].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
   }
 #endif 
+#if Q0048_CGS_3D_ASYMLUT
+  xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
+#endif
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2558,6 +2567,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
 #endif
   printf("\n\n");
   

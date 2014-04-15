@@ -92,12 +92,23 @@ TDecTop::TDecTop()
 #if RESOLUTION_BASED_DPB
   m_subDpbIdx = -1;
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  m_pColorMappedPic = NULL;
+#endif
 }
 
 TDecTop::~TDecTop()
 {
 #if ENC_DEC_TRACE
   fclose( g_hTrace );
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  if(m_pColorMappedPic)
+  {
+    m_pColorMappedPic->destroy();
+    delete m_pColorMappedPic;
+    m_pColorMappedPic = NULL;
+  }
 #endif
 }
 
@@ -356,7 +367,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, i);
         Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
-        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets || !sameBitDepths )
+        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets || !sameBitDepths 
+#if Q0048_CGS_3D_ASYMLUT
+          || pcSlice->getPPS()->getCGSFlag() > 0
+#endif
+          )
 #else
         if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets )
 #endif
@@ -1532,6 +1547,16 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 
+#if Q0048_CGS_3D_ASYMLUT 
+        TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+        if( pcSlice->getPPS()->getCGSFlag() != Q0048_CGS_3D_ASYMLUT_OFF )
+        {
+          if(!m_pColorMappedPic)
+            initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
+          m_c3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(),  m_pColorMappedPic );
+          pBaseColRec = m_pColorMappedPic;
+        }
+#endif
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
@@ -1542,15 +1567,31 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif*/
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+#else
           m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
+#endif
 #else
 #if O0194_JOINT_US_BITSHIFT
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+#else
           m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
         }
@@ -1762,7 +1803,11 @@ Void TDecTop::xDecodeSPS()
 #endif //SVC_EXTENSION
 }
 
-Void TDecTop::xDecodePPS()
+Void TDecTop::xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+  TCom3DAsymLUT * pc3DAsymLUT
+#endif
+  )
 {
   TComPPS* pps = new TComPPS();
 
@@ -1770,7 +1815,11 @@ Void TDecTop::xDecodePPS()
   pps->setLayerId( m_layerId );
 #endif
 
-  m_cEntropyDecoder.decodePPS( pps );
+  m_cEntropyDecoder.decodePPS( pps 
+#if Q0048_CGS_3D_ASYMLUT
+    , pc3DAsymLUT , m_layerId 
+#endif
+    );
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
@@ -1948,7 +1997,11 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_PPS:
-      xDecodePPS();
+      xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+        &m_c3DAsymLUTPPS
+#endif
+        );
       return false;
       
     case NAL_UNIT_PREFIX_SEI:
@@ -2309,6 +2362,22 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
 
     // Copy from the active VPS based on the layer ID.
     m_subDpbIdx = vps->getSubDpbAssigned( lsIdx, layerIdx );
+  }
+}
+#endif
+
+#if Q0048_CGS_3D_ASYMLUT
+Void TDecTop::initAsymLut(TComSlice *pcSlice)
+{
+  if(m_layerId>0)
+  {
+    if(!m_pColorMappedPic)
+    {
+      Int picWidth    = pcSlice->getPicWidthInLumaSamples();
+      Int picHeight   = pcSlice->getPicHeightInLumaSamples();
+      m_pColorMappedPic = new TComPicYuv;
+      m_pColorMappedPic->create( picWidth, picHeight, pcSlice->getChromaFormatIdc()/*CHROMA_420*/, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    }
   }
 }
 #endif

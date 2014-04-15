@@ -105,11 +105,28 @@ TEncGOP::TEncGOP()
 #if SVC_UPSAMPLING
   m_pcPredSearch        = NULL;
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  m_temp = NULL;
+  m_pColorMappedPic = NULL;
+#endif
   return;
 }
 
 TEncGOP::~TEncGOP()
 {
+#if Q0048_CGS_3D_ASYMLUT
+  if(m_pColorMappedPic)
+  {
+    m_pColorMappedPic->destroy();
+    delete m_pColorMappedPic;
+    m_pColorMappedPic = NULL;                
+  }
+  if(m_temp)
+  {
+    free_mem2DintWithPad(m_temp, m_iTap>>1, 0);
+    m_temp = NULL;
+  }
+#endif
 }
 
 /** Create list to contain pointers to LCU start addresses of slice.
@@ -158,6 +175,18 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 #endif
 #if SVC_UPSAMPLING
   m_pcPredSearch         = pcTEncTop->getPredSearch();                       ///< encoder search class
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  if( pcTEncTop->getLayerId() )
+  {
+    m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthYLayer[pcTEncTop->getLayerId()-1] , g_bitDepthCLayer[pcTEncTop->getLayerId()-1] , g_bitDepthYLayer[pcTEncTop->getLayerId()] , g_bitDepthCLayer[pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
+    m_Enc3DAsymLUTPPS.create(   m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthYLayer[pcTEncTop->getLayerId()-1] , g_bitDepthCLayer[pcTEncTop->getLayerId()-1] , g_bitDepthYLayer[pcTEncTop->getLayerId()] , g_bitDepthCLayer[pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
+    if(!m_pColorMappedPic)
+    {
+      m_pColorMappedPic = new TComPicYuv;
+      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), CHROMA_420, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    }
+  }
 #endif
 }
 
@@ -923,6 +952,31 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 
+#if Q0048_CGS_3D_ASYMLUT 
+        TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+        if( pcSlice->getPPS()->getCGSFlag() != Q0048_CGS_3D_ASYMLUT_OFF)
+        {
+          if(g_posScalingFactor[refLayerIdc][0] < (1<<16) || g_posScalingFactor[refLayerIdc][1] < (1<<16)) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
+          {
+            //downsampling;
+            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
+            //pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg()->dump("ds.yuv", true, true);
+            m_Enc3DAsymLUTPPS.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
+            m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
+          }
+          else
+          {
+            m_Enc3DAsymLUTPPS.setDsOrigPic(pcPic->getPicYuvOrg());
+            m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcPic->getPicYuvOrg());
+          }
+
+          Bool bSignalPPS = m_bSeqFirst;
+          bSignalPPS |= m_pcCfg->getGOPSize() > 1 ? pocCurr % m_pcCfg->getIntraPeriod() == 0 : pocCurr % m_pcCfg->getFrameRate() == 0;
+          xDetermin3DAsymLUT( pcSlice , pcPic , refLayerIdc , m_pcCfg , bSignalPPS );
+          m_Enc3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(),  m_pColorMappedPic );
+          pBaseColRec = m_pColorMappedPic;
+        }
+#endif
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
         {
@@ -940,21 +994,41 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
+#if Q0048_CGS_3D_ASYMLUT 
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+#else
           m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT
+          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
           m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
+#endif
 #else
 #if O0194_JOINT_US_BITSHIFT
+#if Q0048_CGS_3D_ASYMLUT 
+          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+#else
           m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT 
+          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
           m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
         }
         else
         {
+#if Q0048_CGS_3D_ASYMLUT 
+          pcPic->setFullPelBaseRec( refLayerIdc, pBaseColRec );
+#else
           pcPic->setFullPelBaseRec( refLayerIdc, pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec() );
+#endif
         }
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
 #endif
@@ -1883,7 +1957,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if O0092_0094_DEPENDENCY_CONSTRAINT
       assert( pcSlice->getPPS()->getPPSId() == 0 || pcSlice->getPPS()->getPPSId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getPPSId()) );
 #endif
-      m_pcEntropyCoder->encodePPS(pcSlice->getPPS());
+      m_pcEntropyCoder->encodePPS(pcSlice->getPPS()
+#if Q0048_CGS_3D_ASYMLUT
+        , & m_Enc3DAsymLUTPPS
+#endif
+        );
       writeRBSPTrailingBits(nalu.m_Bitstream);
       accessUnit.push_back(new NALUnitEBSP(nalu));
       actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
@@ -1916,6 +1994,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       m_bSeqFirst = false;
     }
+#if Q0048_CGS_3D_ASYMLUT
+    else if( m_pcCfg->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE && pcSlice->getLayerId() && pcSlice->getCGSOverWritePPS() )
+    {
+#if SVC_EXTENSION
+      OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
+#endif
+
+      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+      m_pcEntropyCoder->encodePPS(pcSlice->getPPS() , &m_Enc3DAsymLUTPPS );
+      writeRBSPTrailingBits(nalu.m_Bitstream);
+      accessUnit.push_back(new NALUnitEBSP(nalu));
+    }
+#endif
 
     if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP
     {
@@ -3338,6 +3429,11 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     }
     printf("]");
   }
+#if Q0048_CGS_3D_ASYMLUT
+  pcPic->setFrameBit( (Int)uibits );
+  if( m_layerId && pcSlice->getPPS()->getCGSFlag())
+    m_Enc3DAsymLUTPicUpdate.updatePicCGSBits( pcSlice , m_Enc3DAsymLUTPPS.getPPSBit() );
+#endif
 }
 
 
@@ -4044,6 +4140,225 @@ SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice)
 }
 #endif
 
+#if Q0048_CGS_3D_ASYMLUT
+Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS )
+{
+  Int nCGSFlag = pSlice->getPPS()->getCGSFlag();
+  m_Enc3DAsymLUTPPS.setPPSBit( 0 );
+  Double dErrorUpdatedPPS = 0 , dErrorPPS = 0;
+  dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB() );
+  if( bSignalPPS )
+  {
+    m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );
+    pSlice->setCGSOverWritePPS( 1 ); // regular PPS update
+  }
+  else if( nCGSFlag == Q0048_CGS_3D_ASYMLUT_PPSUPDATE )
+  {
+    dErrorPPS = m_Enc3DAsymLUTPPS.estimateDistWithCur3DAsymLUT( pCurPic , refLayerIdc );
+    Double dFactor = pCfg->getIntraPeriod() == 1 ? 0.99 : 0.9;
+    pSlice->setCGSOverWritePPS( dErrorUpdatedPPS < dFactor * dErrorPPS );
+    if( pSlice->getCGSOverWritePPS() )
+      m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );
+  }
+  pSlice->getPPS()->setCGSOutputBitDepthY( m_Enc3DAsymLUTPPS.getOutputBitDepthY() );
+  pSlice->getPPS()->setCGSOutputBitDepthC( m_Enc3DAsymLUTPPS.getOutputBitDepthC() );
+}
+
+Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest)
+{
+  Int inputBitDepth = g_bitDepthYLayer[m_layerId];
+  Int outputBitDepth = g_bitDepthYLayer[m_layerId];
+  {
+    pcYuvSrc->setBorderExtension(false);
+    pcYuvSrc->extendPicBorder   (); // extend the border.
+    pcYuvSrc->setBorderExtension(false);
+
+    Int iWidth = pcYuvSrc->getWidth();
+    Int iHeight =pcYuvSrc->getHeight(); 
+
+    if(!m_temp)
+      initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1);
+
+    filterImg(pcYuvSrc->getLumaAddr(), pcYuvSrc->getStride(), pcYuvDest->getLumaAddr(), pcYuvDest->getStride(), iHeight, iWidth,  inputBitDepth-outputBitDepth, 0);
+    filterImg(pcYuvSrc->getCbAddr(), pcYuvSrc->getCStride(), pcYuvDest->getCbAddr(), pcYuvDest->getCStride(), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 1);
+    filterImg(pcYuvSrc->getCrAddr(), pcYuvSrc->getCStride(), pcYuvDest->getCrAddr(), pcYuvDest->getCStride(), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 2);  
+  }
+}
+const int TEncGOP::m_phase_filter_0_t0[4][13]={
+  {0,  2,  -3,  -9,   6,  39,  58,  39,   6,  -9,  -3,  2,  0},  
+  {0, 0,  0,  -2,  8,-20, 116, 34, -10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
+  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
+};
+
+const int TEncGOP::m_phase_filter_0_t1[4][13]={
+  {0,  4,  0,  -12, 0,  40,  64,  40, 0, -12,  0,  4,  0},
+  {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
+  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
+};
+const int TEncGOP::m_phase_filter_0_t1_chroma[4][13]={
+  {0,  0,  0,   0,  0,   0,  128, 0,  0,  0,  0,  0,  0},
+  {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
+  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
+};
+
+const int TEncGOP::m_phase_filter_1[8][13]={
+  {0,   0,  5,  -6,  -10,37,  76,  37,-10,   -6, 5,  0,   0},    
+  {0,  -1,  5,  -3,  -12,29,  75,  45,  -7,   -8, 5,  0,   0},    
+  {0,  -1,  4,  -1,  -13,22,  73,  52,  -3,  -10, 4,  1,   0},    
+  {0,  -1,  4,   1,  -13,14,  70,  59,   2,  -12, 3,  2,  -1},  
+  {0,  -1,  3,   2,  -13, 8,  65,  65,   8,  -13, 2,  3,  -1},    
+  {0,  -1,  2,   3,  -12, 2,  59,  70,  14,  -13, 1,  4,  -1},    
+  {0,   0,  1,   4,  -10,-3,  52,  73,  22,  -13,-1,  4,  -1},    
+  {0,   0,  0,   5,   -8,-7,  45,  75,  29,  -12,-3,  5,  -1}    
+};
+
+Void TEncGOP::filterImg(
+    Pel           *src,
+    Int           iSrcStride,
+    Pel           *dst,
+    Int           iDstStride,
+    Int           height1,  
+    Int           width1,  
+    Int           shift,
+    Int           plane)
+{
+  Int length = m_iTap;
+  Int height2,width2;
+  Int k,iSum;
+  Int i0, div_i0, i1;
+  Int j0, div_j0, j1;
+  const Int *p_filter;
+  Pel *p_src, *p_dst;
+  Pel *p_src_line, *p_dst_line;
+  Int **p_temp, *p_tmp;
+  Int shift2 = 2*7+shift;
+  Int shift_round = (1 << (shift2 - 1));
+  Int iMax = (1<<(g_bitDepthY-shift))-1;
+  height2 = (height1 * m_iM) / m_iN;
+  width2  = (width1  * m_iM) / m_iN;
+
+  m_phase_filter = plane? m_phase_filter_chroma : m_phase_filter_luma;
+
+  // horizontal filtering
+  p_src_line = src;
+  for(j1 = 0; j1 < height1; j1++)
+  {
+    i0=-m_iN;
+    p_tmp = m_temp[j1];
+    
+    for(i1 = 0; i1 < width2; i1++)
+    {
+      i0      += m_iN;
+      div_i0   = (i0 / m_iM);
+      //p_src    = &src[j1][ div_i0 - (length >> 1)];
+      p_src    =  p_src_line + ( div_i0 - (length >> 1));
+      p_filter = m_phase_filter[i0 - div_i0 * m_iM]; // phase_filter[i0 % M]
+      iSum     = 0;
+      for(k = 0; k < length; k++)
+      {
+        iSum += (*p_src++) * (*p_filter++);
+      }
+      *p_tmp++ = iSum;
+    }
+    p_src_line +=  iSrcStride;
+  }
+
+  // pad temp (vertical)
+  for (k=-(length>>1); k<0; k++)
+    memcpy(m_temp[k], m_temp[0], width2*sizeof(int));
+  for (k=height1; k<(height1+(length>>1)); k++)
+    memcpy(m_temp[k], m_temp[k-1], (width2)* sizeof(int));
+
+  // vertical filtering
+  j0 = (plane == 0) ? -m_iN : -(m_iN-1);
+  
+  p_dst_line = dst;
+  for(j1 = 0; j1 < height2; j1++)
+  {
+    j0      += m_iN;
+    div_j0   = (j0 / m_iM);
+    //p_dst    = dst[j1];
+    p_dst = p_dst_line;
+    p_temp   = &m_temp[div_j0 - (length>>1)];
+    p_filter = m_phase_filter[j0 - div_j0 * m_iM]; // phase_filter[j0 % M]
+    for(i1 = 0; i1 < width2;i1++)
+    {
+      iSum=0;
+      for(k = 0; k < length; k++)
+      {
+        iSum += p_temp[k][i1] * p_filter[k];
+      }
+      iSum=((iSum + shift_round) >> shift2);
+      *p_dst++ = (short)(iSum > iMax ? iMax : (iSum < 0 ? 0 : iSum));
+    }
+    p_dst_line += iDstStride;
+  }
+}
+
+Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType)
+{
+  m_iTap = 13;
+  if(g_posScalingFactor[0][0] == (1<<15))
+  {
+    m_iM = 4;
+    m_iN = 8;
+    m_phase_filter_luma = iType? m_phase_filter_0_t1 : m_phase_filter_0_t0;
+    m_phase_filter_chroma = m_phase_filter_0_t1_chroma; 
+  }
+  else
+  {
+    m_iM = 8;
+    m_iN = 12;
+    m_phase_filter_luma = m_phase_filter_chroma =  m_phase_filter_1;
+    m_phase_filter = m_phase_filter_1;
+  }
+
+  get_mem2DintWithPad (&m_temp, iHeight, iWidth*m_iM/m_iN,   m_iTap>>1, 0);
+}
+
+Int TEncGOP::get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX)
+{
+  Int i;
+  Int *curr = NULL;
+  Int iHeight, iWidth;
+
+  iHeight = dim0+2*iPadY;
+  iWidth = dim1+2*iPadX;
+  (*array2D) = (Int**)malloc(iHeight*sizeof(Int*));
+  *(*array2D) = (Int* )xMalloc(Int, iHeight*iWidth);
+
+  (*array2D)[0] += iPadX;
+  curr = (*array2D)[0];
+  for(i = 1 ; i < iHeight; i++)
+  {
+    curr += iWidth;
+    (*array2D)[i] = curr;
+  }
+  (*array2D) = &((*array2D)[iPadY]);
+
+  return 0;
+}
+
+Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
+{
+  if (array2D)
+  {
+    if (*array2D)
+      xFree(array2D[-iPadY]-iPadX);
+    else 
+      printf("free_mem2DintWithPad: trying to free unused memory\r\nPress Any Key\r\n");
+
+    free (&array2D[-iPadY]);
+  } 
+  else
+  {
+    printf("free_mem2DintWithPad: trying to free unused memory\r\nPress Any Key\r\n");
+  }
+}
+#endif
 #endif //SVC_EXTENSION
 
 //! \}

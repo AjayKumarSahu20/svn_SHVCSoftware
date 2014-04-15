@@ -171,6 +171,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if O0194_JOINT_US_BITSHIFT
     Int shift = g_bitDepthYLayer[currLayerId] - g_bitDepthYLayer[refLayerId];
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift = g_bitDepthYLayer[currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthY();
+    }
+    assert( shift >= 0 );
+#endif
 #endif
 
     for( i = 0; i < heightBL; i++ )
@@ -204,6 +211,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if O0194_JOINT_US_BITSHIFT
     shift = g_bitDepthCLayer[currLayerId] - g_bitDepthCLayer[refLayerId];
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift = g_bitDepthCLayer[currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthC();
+    }
+#endif
 #endif
 
     for( i = 0; i < heightBL; i++ )
@@ -296,6 +309,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthYLayer[refLayerId] - 8;
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift1 = currSlice->getPPS()->getCGSOutputBitDepthY() - 8;
+    }
+#endif
 #else
     Int shift1 = g_bitDepthY - 8;
 #endif
@@ -443,6 +462,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthCLayer[refLayerId] - 8;
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift1 = currSlice->getPPS()->getCGSOutputBitDepthC() - 8;
+    }
+#endif
 #else
     shift1 = g_bitDepthC - 8;
 #endif

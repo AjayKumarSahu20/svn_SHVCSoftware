@@ -604,6 +604,12 @@ Void TAppEncTop::xInitLibCfg()
 #if O0149_CROSS_LAYER_BLA_FLAG
     m_acTEncTop[layer].setCrossLayerBLAFlag( m_crossLayerBLAFlag );
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+    m_acTEncTop[layer].setCGSFlag( layer == 0 ? 0 : m_nCGSFlag );
+    m_acTEncTop[layer].setCGSMaxOctantDepth( m_nCGSMaxOctantDepth );
+    m_acTEncTop[layer].setCGSMaxYPartNumLog2( m_nCGSMaxYPartNumLog2 );
+    m_acTEncTop[layer].setCGSLUTBit( m_nCGSLUTBit );
+#endif
   }
 }
 #else //SVC_EXTENSION

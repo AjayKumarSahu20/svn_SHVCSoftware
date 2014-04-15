@@ -38,6 +38,9 @@
 #include "TDecCAVLC.h"
 #include "SEIread.h"
 #include "TDecSlice.h"
+#if Q0048_CGS_3D_ASYMLUT
+#include "../TLibCommon/TCom3DAsymLUT.h"
+#endif
 
 //! \ingroup TLibDecoder
 //! \{
@@ -174,7 +177,11 @@ void TDecCavlc::parseShortTermRefPicSet( TComSPS* sps, TComReferencePictureSet* 
 #endif
 }
 
-Void TDecCavlc::parsePPS(TComPPS* pcPPS)
+Void TDecCavlc::parsePPS(TComPPS* pcPPS
+#if Q0048_CGS_3D_ASYMLUT
+  , TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID
+#endif
+  )
 {
 #if ENC_DEC_TRACE
   xTracePPSHeader (pcPPS);
@@ -347,6 +354,16 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
     {
       READ_FLAG( uiCode, "poc_reset_info_present_flag" );
       pcPPS->setPocResetInfoPresentFlag(uiCode ? true : false);
+#if Q0048_CGS_3D_ASYMLUT
+      READ_FLAG( uiCode , "colour_mapping_enabled_flag" ); 
+      pcPPS->setCGSFlag( uiCode );
+      if( pcPPS->getCGSFlag() == Q0048_CGS_3D_ASYMLUT_PPSUPDATE )
+      {
+        xParse3DAsymLUT( pc3DAsymLUT );
+        pcPPS->setCGSOutputBitDepthY( pc3DAsymLUT->getOutputBitDepthY() );
+        pcPPS->setCGSOutputBitDepthC( pc3DAsymLUT->getOutputBitDepthC() );
+      }
+#endif
 #endif
     }
     if (ppsExtensionTypeFlag[7])
@@ -3719,5 +3736,66 @@ Bool TDecCavlc::xMoreRbspData()
   return (cnt>0);
 }
 
+#if Q0048_CGS_3D_ASYMLUT
+Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
+{
+  UInt uiCurOctantDepth , uiCurPartNumLog2 , uiInputBitDepthM8 , uiOutputBitDepthM8 , uiResQaunBit;
+  READ_CODE( 2 , uiCurOctantDepth , "cm_octant_depth" ); 
+  READ_CODE( 2 , uiCurPartNumLog2 , "cm_y_part_num_log2" );     
+  READ_CODE( 3 , uiInputBitDepthM8 , "cm_input_bit_depth_minus8" );
+  Int iInputBitDepthCDelta;
+  READ_SVLC(iInputBitDepthCDelta, "cm_input_bit_depth_chroma delta");
+  READ_CODE( 3 , uiOutputBitDepthM8 , "cm_output_bit_depth_minus8" ); 
+  Int iOutputBitDepthCDelta;
+  READ_SVLC(iOutputBitDepthCDelta, "cm_output_bit_depth_chroma_delta");
+  READ_CODE( 2 , uiResQaunBit , "cm_res_quant_bit" );
+  pc3DAsymLUT->destroy();
+  pc3DAsymLUT->create( uiCurOctantDepth , uiInputBitDepthM8 + 8 ,  uiInputBitDepthM8 + 8 + iInputBitDepthCDelta, uiOutputBitDepthM8 + 8 , uiOutputBitDepthM8 + 8 + iOutputBitDepthCDelta ,uiCurPartNumLog2 );
+  pc3DAsymLUT->setResQuantBit( uiResQaunBit );
+
+  xParse3DAsymLUTOctant( pc3DAsymLUT , 0 , 0 , 0 , 0 , 1 << pc3DAsymLUT->getCurOctantDepth() );
+}
+
+Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength )
+{
+  UInt uiOctantSplit = nDepth < pc3DAsymLUT->getCurOctantDepth();
+  if( nDepth < pc3DAsymLUT->getCurOctantDepth() )
+    READ_FLAG( uiOctantSplit , "split_octant_flag" );
+  Int nYPartNum = 1 << pc3DAsymLUT->getCurYPartNumLog2();
+  if( uiOctantSplit )
+  {
+    Int nHalfLength = nLength >> 1;
+    for( Int l = 0 ; l < 2 ; l++ )
+    {
+      for( Int m = 0 ; m < 2 ; m++ )
+      {
+        for( Int n = 0 ; n < 2 ; n++ )
+        {
+          xParse3DAsymLUTOctant( pc3DAsymLUT , nDepth + 1 , yIdx + l * nHalfLength * nYPartNum , uIdx + m * nHalfLength , vIdx + n * nHalfLength , nHalfLength );
+        }
+      }
+    }
+  }
+  else
+  {
+    for( Int l = 0 ; l < nYPartNum ; l++ )
+    {
+      for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+      {
+        UInt uiCodeVertex = 0;
+        Int deltaY = 0 , deltaU = 0 , deltaV = 0;
+        READ_FLAG( uiCodeVertex , "coded_vertex_flag" );
+        if( uiCodeVertex )
+        {
+          READ_SVLC( deltaY , "resY" );
+          READ_SVLC( deltaU , "resU" );
+          READ_SVLC( deltaV , "resV" );
+        }
+        pc3DAsymLUT->setCuboidVertexResTree( yIdx + l , uIdx , vIdx , nVertexIdx , deltaY , deltaU , deltaV );
+      }
+    }
+  }
+}
+#endif
 //! \}
 
