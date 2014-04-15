@@ -1090,9 +1090,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if VPS_TSLAYERS
     vps->setMaxTSLayersPresentFlag(true);
-    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    for( i = 0; i < vps->getMaxLayers(); i++ )
     {
-        vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
+      vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
 #endif
 #if N0120_MAX_TID_REF_PRESENT_FLAG
@@ -1103,11 +1103,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
   if (vps->getMaxTidRefPresentFlag())
   {
-    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
 #if N0120_MAX_TID_REF_CFG
 #if O0225_MAX_TID_FOR_REF_LAYERS
-      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
       }
@@ -1116,7 +1116,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif 
 #else
 #if O0225_MAX_TID_FOR_REF_LAYERS
-      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, vps->getMaxTLayers()+1);
       }
@@ -1128,10 +1128,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
   else
   {
-    for( i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++ )
+    for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
 #if O0225_MAX_TID_FOR_REF_LAYERS
-      for( Int j = i+1; j <= MAX_VPS_LAYER_ID_PLUS1 - 1; j++)
+      for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, 7);
       }
