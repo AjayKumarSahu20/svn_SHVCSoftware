@@ -294,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\TLibEncoder\TEncAnalyze.cpp"
 				>
 			</File>
@@ -376,6 +380,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibEncoder\SyntaxElementWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.h"
 				>
 			</File>
 			<File
