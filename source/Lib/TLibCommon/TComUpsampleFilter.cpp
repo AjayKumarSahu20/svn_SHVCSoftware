@@ -266,19 +266,27 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
     Int   phaseX = 2*phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int   phaseY = 2*phaseAlignFlag;
+#else
     Int   phaseY = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( 2 * phaseAlignFlag );
+#endif
 #else
     Int   phaseY = 2*phaseAlignFlag;
 #endif
 #else
     Int   phaseX = 0;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int   phaseY = 0;
+#else
     Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(0));
+#endif
 #else
     Int   phaseY = 0;
 #endif
 #endif
-
+ 
 #if ROUNDING_OFFSET
     Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
     Int   addY = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
@@ -287,9 +295,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int   addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
+#if Q0120_PHASE_CALCULATION
+    Int   deltaX     = (Int)phaseAlignFlag <<3;
+    Int   deltaY     = (((Int)phaseAlignFlag <<3)>>(Int)vertPhasePositionEnableFlag) + ((Int)vertPhasePositionFlag<<3);
+#else
     Int   deltaX     = 4 * phaseX;
     Int   deltaY     = 4 * phaseY;
-
+#endif
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
 
@@ -425,14 +437,22 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0215_PHASE_ALIGNMENT
     Int phaseXC = phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int phaseYC = phaseAlignFlag + 1;
+#else
     Int phaseYC = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( phaseAlignFlag + 1 );
+#endif
 #else
     Int phaseYC = phaseAlignFlag + 1;
 #endif
 #else
     Int phaseXC = 0;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int phaseYC = 1;
+#else
     Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;
+#endif
 #else
     Int phaseYC = 1;
 #endif
@@ -446,8 +466,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     addY       = ( ( ( heightBL * (phaseYC) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
+#if Q0120_PHASE_CALCULATION
+    deltaX     = (Int)phaseAlignFlag << 2;
+    deltaY     = ((( (Int)phaseAlignFlag +1)<<2)>>(Int)vertPhasePositionEnableFlag)+((Int)vertPhasePositionFlag<<3);
+#else
     deltaX     = 4 * phaseXC;
     deltaY     = 4 * phaseYC;
+#endif
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
