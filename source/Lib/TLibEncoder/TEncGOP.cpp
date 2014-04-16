@@ -980,11 +980,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc))
         {
-/*#if O0098_SCALED_REF_LAYER_ID
-          Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
-#else
-          Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif*/
 #if P0312_VERT_PHASE_ADJ
           //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
           if( scalEL.getVertPhasePositionEnableFlag() )
@@ -3431,8 +3426,10 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   }
 #if Q0048_CGS_3D_ASYMLUT
   pcPic->setFrameBit( (Int)uibits );
-  if( m_layerId && pcSlice->getPPS()->getCGSFlag())
+  if( m_layerId && pcSlice->getPPS()->getCGSFlag() )
+  {
     m_Enc3DAsymLUTPicUpdate.updatePicCGSBits( pcSlice , m_Enc3DAsymLUTPPS.getPPSBit() );
+  }
 #endif
 }
 
@@ -4158,7 +4155,9 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt 
     Double dFactor = pCfg->getIntraPeriod() == 1 ? 0.99 : 0.9;
     pSlice->setCGSOverWritePPS( dErrorUpdatedPPS < dFactor * dErrorPPS );
     if( pSlice->getCGSOverWritePPS() )
+    {
       m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );
+    }
   }
   pSlice->getPPS()->setCGSOutputBitDepthY( m_Enc3DAsymLUTPPS.getOutputBitDepthY() );
   pSlice->getPPS()->setCGSOutputBitDepthC( m_Enc3DAsymLUTPPS.getOutputBitDepthC() );

@@ -1890,8 +1890,8 @@ public:
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
 #endif
 #if Q0048_CGS_3D_ASYMLUT
-  Int     getCGSFlag()     { return m_nCGSFlag;  }
-  Void    setCGSFlag(Int n){ m_nCGSFlag = n;     }
+  Int     getCGSFlag()                { return m_nCGSFlag;  }
+  Void    setCGSFlag(Int n)           { m_nCGSFlag = n;     }
   Int     getCGSOutputBitDepthY()     { return m_nCGSOutputBitDepthY;  }
   Void    setCGSOutputBitDepthY(Int n){ m_nCGSOutputBitDepthY = n;     }
   Int     getCGSOutputBitDepthC()     { return m_nCGSOutputBitDepthC;  }

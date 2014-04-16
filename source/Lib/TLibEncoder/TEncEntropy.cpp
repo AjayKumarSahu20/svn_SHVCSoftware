@@ -78,19 +78,19 @@ Void TEncEntropy::encodeSliceFinish()
   m_pcEntropyCoderIf->codeSliceFinish();
 }
 
-Void TEncEntropy::encodePPS( TComPPS* pcPPS 
 #if Q0048_CGS_3D_ASYMLUT
-  , TEnc3DAsymLUT * pc3DAsymLUT
-#endif
-  )
+Void TEncEntropy::encodePPS( TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT  )
 {
-  m_pcEntropyCoderIf->codePPS( pcPPS 
-#if Q0048_CGS_3D_ASYMLUT
-    , pc3DAsymLUT
-#endif
-    );
+  m_pcEntropyCoderIf->codePPS( pcPPS, pc3DAsymLUT );
   return;
 }
+#else
+Void TEncEntropy::encodePPS( TComPPS* pcPPS )
+{
+  m_pcEntropyCoderIf->codePPS( pcPPS );
+  return;
+}
+#endif
 
 Void TEncEntropy::encodeSPS( TComSPS* pcSPS )
 {
