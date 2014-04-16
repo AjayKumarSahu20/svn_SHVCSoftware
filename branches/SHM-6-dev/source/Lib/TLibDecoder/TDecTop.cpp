@@ -1552,7 +1552,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         if( pcSlice->getPPS()->getCGSFlag() )
         {
           if(!m_pColorMappedPic)
+          {
             initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
+          }
           m_c3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(),  m_pColorMappedPic );
           pBaseColRec = m_pColorMappedPic;
         }
@@ -1560,11 +1562,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
-/*#if O0098_SCALED_REF_LAYER_ID
-          Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
-#else
-          Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif*/
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 

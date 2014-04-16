@@ -27,7 +27,10 @@ TEnc3DAsymLUT::TEnc3DAsymLUT()
 Void TEnc3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 )
 {
   if( m_pColorInfo != NULL )
+  {
     destroy();
+  }
+
   TCom3DAsymLUT::create( nMaxOctantDepth , nInputBitDepth , nInputBitDepthC, nOutputBitDepth , nOutputBitDepthC, nMaxYPartNumLog2 );
   xAllocate3DArray( m_pColorInfo , xGetYSize() , xGetUSize() , xGetVSize() );
   xAllocate3DArray( m_pColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
@@ -47,7 +50,10 @@ Void TEnc3DAsymLUT::destroy()
 TEnc3DAsymLUT::~TEnc3DAsymLUT()
 {
   if( m_dTotalFrameBit != 0 )
+  {
     printf( "\nTotal CGS bit: %d, %.2lf%%" , m_nTotalCGSBit , m_nTotalCGSBit * 100 / m_dTotalFrameBit );
+  }
+
   destroy();
 }
 
@@ -94,14 +100,22 @@ Double TEnc3DAsymLUT::xxDeriveVertexPerColor( Double N , Double Ys , Double Yy ,
         Int nP1 = Clip3( nMin , nMax , nP0 + nDeltaP01 );
         Int nP3 = Clip3( nMin , nMax , nP1 + nDeltaP13 );
         Int nP7 = Clip3( nMin , nMax , nP3 + nDeltaP37 );
-        if ( nP0 & nMask )  
+        if ( nP0 & nMask )
+        {
           nP0 -= ( nP0 & nMask );
-        if ( nP1 & nMask )  
+        }
+        if ( nP1 & nMask )
+        {
           nP1 -= ( nP1 & nMask );
-        if ( nP3 & nMask )  
+        }
+        if ( nP3 & nMask )
+        {
           nP3 -= ( nP3 & nMask );
-        if ( nP7 & nMask )  
+        }
+        if ( nP7 & nMask )
+        {
           nP7 -= ( nP7 & nMask );
+        }
         assert( !( nP0 & nMask ) && !( nP1 & nMask ) && !( nP3 & nMask ) && !( nP7 & nMask ) );
         Double dError = xxCalEstDist( N , Ys , Yy , Yu , Yv , ys , us , vs , yy , yu , yv , uu , uv , vv , YY , y0 , u0 , v0 , nLengthY , nLengthUV , nP0 , nP1 , nP3 , nP7 );
         if( dError < dMinError )
@@ -153,7 +167,7 @@ Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt ref
           dErrorChroma += xxCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
             y0 , u0 , v0 , nLengthY , nLengthUV , rCuboid.P[0].V , rCuboid.P[1].V , rCuboid.P[2].V , rCuboid.P[3].V );
         }
-    }
+      }
     }
   }
 
@@ -183,10 +197,13 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
       dCurError = dError;
     }
     else
+    {
       break;
+    }
   }
   setResQuantBit( nBestResQuanBit );
   xSaveCuboids( m_pBestEncCuboid );
+
   return( dCurError );
 }
 
@@ -210,7 +227,9 @@ Double TEnc3DAsymLUT::xxDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid
         Int u0 = uIdx << xGetUShift2Idx();
         Int v0 = vIdx << xGetVShift2Idx();
         for( Int idxVertex = 0 ; idxVertex < 4 ; idxVertex++ )
+        {
           rCuboid.P[idxVertex] = xGetCuboidVertexPredAll( yIdx , uIdx , vIdx , idxVertex , pCurCuboid );
+        }
 
         if( rCuboidColorInfo.N > 0 )
         {
@@ -388,7 +407,9 @@ Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , 
   const Int nSliceTempLevel = pSlice->getDepth();
   Int nPartNumLog2 = 4;
   if( pSlice->getBaseColPic( pSlice->getInterLayerPredLayerIdc( 0 ) )->getSlice( 0 )->isIntra() )
+  {
     nPartNumLog2 = xGetMaxPartNumLog2();
+  }
   if( m_nPrevFrameBit[nSliceType][nSliceTempLevel] && pSlice->getPPS()->getCGSFlag() ) 
   {
     Double dBitCost = 1.0 * m_nPrevFrameCGSBit[nSliceType][nSliceTempLevel] / m_nPrevFrameBit[nSliceType][nSliceTempLevel];
