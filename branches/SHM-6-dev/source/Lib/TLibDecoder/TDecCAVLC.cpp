@@ -657,7 +657,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   if (uiCode != 0)
   {
     Window &conf = pcSPS->getConformanceWindow();
-#if REPN_FORMAT_IN_VPS
+#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
     READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode );
     READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode );
     READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode );
