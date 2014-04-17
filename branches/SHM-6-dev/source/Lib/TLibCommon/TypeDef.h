@@ -41,7 +41,6 @@
 #define SVC_EXTENSION                    1
 
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
-#define Q0200_CONFORMANCE_BL_SIZE        1       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
@@ -49,6 +48,7 @@
 #define RANDOM_ACCESS_SEI_FIX            1
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define Q0200_CONFORMANCE_BL_SIZE        0       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
 #if P0312_VERT_PHASE_ADJ
 #define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
