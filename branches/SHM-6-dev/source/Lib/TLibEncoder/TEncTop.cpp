@@ -798,6 +798,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if Q0048_CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
+#if LAYER_CTB
+            || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
+#endif
             )
 #else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
@@ -864,7 +867,10 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if Q0048_CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
-            )
+#if LAYER_CTB
+            || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
+#endif
+)
 #else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !zeroOffsets )
 #endif
