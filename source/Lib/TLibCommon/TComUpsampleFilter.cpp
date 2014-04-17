@@ -98,7 +98,11 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
-Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window
+#if Q0200_CONFORMANCE_BL_SIZE
+, const Window confBL
+#endif
+, bool phaseAlignFlag )
 #else
 Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
 #endif
@@ -125,7 +129,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
-
+#if Q0200_CONFORMANCE_BL_SIZE
+widthBL-= (confBL.getWindowLeftOffset()+confBL.getWindowRightOffset());
+heightBL-=(confBL.getWindowBottomOffset()+confBL.getWindowTopOffset());
+#endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
   Bool vertPhasePositionFlag = currSlice->getVertPhasePositionFlag( refLayerIdc );
@@ -316,7 +323,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int topStartL  = scalEL.getWindowTopOffset();
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
-
+#if Q0200_CONFORMANCE_BL_SIZE
+leftStartL+= confBL.getWindowLeftOffset()<<4;
+topStartL+= confBL.getWindowTopOffset()<<4;
+#endif
 #if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
@@ -410,7 +420,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
-
+#if Q0200_CONFORMANCE_BL_SIZE
+widthBL-= confBL.getWindowLeftOffset()+confBL.getWindowRightOffset();
+heightBL-=confBL.getWindowBottomOffset()+confBL.getWindowTopOffset();
+#endif
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 
@@ -430,7 +443,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int topStartC  = scalEL.getWindowTopOffset() >> 1;
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
     leftOffset = leftStartC > 0 ? leftStartC : 0;
-
+#if Q0200_CONFORMANCE_BL_SIZE
+leftStartC+= (confBL.getWindowLeftOffset()>>1)<<4;
+topStartC+= (confBL.getWindowTopOffset()>>1)<<4;
+#endif
     shiftX = 16;
     shiftY = 16;
 
