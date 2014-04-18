@@ -401,6 +401,11 @@ SEIColorMappingInfo*  TEncGOP::xCreateSEIColorMappingInfo( Char* file )
 
   fclose( fic );
 
+  if( retval != 1 )
+  {
+    printf("Error: can't read color mapping information\n");
+  }
+
   return seiColorMappingInfo;
 }
 #endif
