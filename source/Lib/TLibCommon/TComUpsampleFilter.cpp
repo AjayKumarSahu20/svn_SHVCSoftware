@@ -98,9 +98,9 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
-Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
 #else
-Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag )
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
@@ -115,9 +115,18 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
   Int i, j;
 
-  //========== Y component upsampling ===========
-  const Window &scalEL = window;
+#if O0194_JOINT_US_BITSHIFT
+  UInt currLayerId = currSlice->getLayerId();
+  UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
+#endif
 
+#if O0098_SCALED_REF_LAYER_ID
+  const Window &scalEL = currSlice->getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
+#else
+  const Window &scalEL = currSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
+#endif
+
+  //========== Y component upsampling ===========
   Int widthBL   = pcBasePic->getWidth ();
   Int heightBL  = pcBasePic->getHeight();
   Int strideBL  = pcBasePic->getStride();
@@ -125,6 +134,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
+
 #if Q0200_CONFORMANCE_BL_SIZE
   const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
   widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
@@ -161,11 +171,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
   Int scaleX = g_posScalingFactor[refLayerIdc][0];
   Int scaleY = g_posScalingFactor[refLayerIdc][1];
-
-#if O0194_JOINT_US_BITSHIFT
-  UInt currLayerId = currSlice->getLayerId();
-  UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
-#endif
 
   // non-normative software optimization for certain simple resampling cases
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
@@ -418,8 +423,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-    widthBL  -= confBL.getWindowLeftOffset()+confBL.getWindowRightOffset();
-    heightBL -= confBL.getWindowBottomOffset()+confBL.getWindowTopOffset();
+    widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
+    heightBL -= confBL.getWindowBottomOffset() + confBL.getWindowTopOffset();
 #endif
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
