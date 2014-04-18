@@ -326,6 +326,85 @@ SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
   return seiToneMappingInfo;
 }
 
+#if Q0074_SEI_COLOR_MAPPING
+SEIColorMappingInfo*  TEncGOP::xCreateSEIColorMappingInfo( Char* file )
+{
+  SEIColorMappingInfo *seiColorMappingInfo = new SEIColorMappingInfo();
+
+  FILE* fic = fopen( file, "r" );
+
+  Int iVal;
+
+  fscanf( fic, "%d", &seiColorMappingInfo->m_colorMapId );
+  fscanf( fic, "%d", &iVal );
+  seiColorMappingInfo->m_colorMapCancelFlag = iVal;
+  if( !seiColorMappingInfo->m_colorMapCancelFlag )
+  {
+    fscanf( fic, "%d", &iVal );
+    seiColorMappingInfo->m_colorMapPersistenceFlag = iVal;
+    fscanf( fic, "%d", &iVal );
+    seiColorMappingInfo->m_colorMap_video_signal_type_present_flag = iVal;
+    if( seiColorMappingInfo->m_colorMap_video_signal_type_present_flag )
+    {
+      fscanf( fic, "%d", &iVal );
+      seiColorMappingInfo->m_colorMap_video_full_range_flag = iVal;
+      fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_primaries );
+      fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_transfer_characteristics );
+      fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_matrix_coeffs );
+    }
+  }
+
+  fscanf( fic, "%d", &seiColorMappingInfo->m_colour_map_coded_data_bit_depth );
+  fscanf( fic, "%d", &seiColorMappingInfo->m_colour_map_target_bit_depth );
+  fscanf( fic, "%d", &iVal );
+  seiColorMappingInfo->m_colorMapModelId = iVal;
+
+  assert( seiColorMappingInfo->m_colorMapModelId == 0 );
+  
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    fscanf( fic, "%d", &seiColorMappingInfo->m_num_input_pivots[i] );
+    seiColorMappingInfo->m_coded_input_pivot_value[i]   = new Int[ seiColorMappingInfo->m_num_input_pivots[i] ];
+    seiColorMappingInfo->m_target_input_pivot_value[i]  = new Int[ seiColorMappingInfo->m_num_input_pivots[i] ];
+    for( Int j=0 ; j<seiColorMappingInfo->m_num_input_pivots[i] ; j++ )
+    {
+      fscanf( fic, "%d", &seiColorMappingInfo->m_coded_input_pivot_value[i][j] );
+      fscanf( fic, "%d", &seiColorMappingInfo->m_target_input_pivot_value[i][j] );
+    }
+  }
+
+  fscanf( fic, "%d", &iVal );
+  seiColorMappingInfo->m_matrix_flag = iVal;
+  if( seiColorMappingInfo->m_matrix_flag )
+  {
+    fscanf( fic, "%d", &seiColorMappingInfo->m_log2_matrix_denom );
+    for( Int i=0 ; i<3 ; i++ )
+    {
+      for( Int j=0 ; j<3 ; j++ )
+      {
+        fscanf( fic, "%d", &seiColorMappingInfo->m_matrix_coef[i][j] );
+      }
+    }
+  }
+
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    fscanf( fic, "%d", &seiColorMappingInfo->m_num_output_pivots[i] );
+    seiColorMappingInfo->m_coded_output_pivot_value[i]   = new Int[ seiColorMappingInfo->m_num_output_pivots[i] ];
+    seiColorMappingInfo->m_target_output_pivot_value[i]  = new Int[ seiColorMappingInfo->m_num_output_pivots[i] ];
+    for( Int j=0 ; j<seiColorMappingInfo->m_num_output_pivots[i] ; j++ )
+    {
+      fscanf( fic, "%d", &seiColorMappingInfo->m_coded_output_pivot_value[i][j] );
+      fscanf( fic, "%d", &seiColorMappingInfo->m_target_output_pivot_value[i][j] );
+    }
+  }
+
+  fclose( fic );
+
+  return seiColorMappingInfo;
+}
+#endif
+
 Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps)
 {
   OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
@@ -392,6 +471,27 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
   }
+#if Q0074_SEI_COLOR_MAPPING
+  if(m_pcCfg->getColorMappingInfoSEIFile())
+  {
+    SEIColorMappingInfo *sei = xCreateSEIColorMappingInfo( m_pcCfg->getColorMappingInfoSEIFile() );
+      
+#if SVC_EXTENSION
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_layerId);  // temporalId = 0 ?
+#else
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
+#endif
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI

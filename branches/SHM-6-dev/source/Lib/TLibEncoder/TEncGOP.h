@@ -208,6 +208,9 @@ protected:
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
+#if Q0074_SEI_COLOR_MAPPING
+  SEIColorMappingInfo*    xCreateSEIColorMappingInfo( Char* file );
+#endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);

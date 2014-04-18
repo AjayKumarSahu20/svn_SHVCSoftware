@@ -267,6 +267,9 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if Q0074_SEI_COLOR_MAPPING
+  Char*     m_pchSEIColorMappingFile;             ///< SEI Color Mapping File (initialized from external file)
+#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
