@@ -55,7 +55,7 @@ protected:
   Int       m_numActiveRefLayers;
 #endif
 #if Q0074_SEI_COLOR_MAPPING
-  string  m_cSeiColorMappingFile;
+  string    m_cSeiColorMappingFile;
 #endif
 
 #if LAYER_CTB
