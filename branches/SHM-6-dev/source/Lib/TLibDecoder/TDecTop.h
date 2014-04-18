@@ -66,15 +66,15 @@ struct InputNALUnit;
 #if Q0074_SEI_COLOR_MAPPING
 class TDecColorMapping
 {
-  Int   m_colorMapId;
-  Bool  m_colorMapCancelFlag;
-  Bool  m_colorMapPersistenceFlag;
-  Bool  m_colorMap_video_signal_type_present_flag;
-  Bool  m_colorMap_video_full_range_flag;
-  UChar m_colorMap_primaries;
-  UChar m_colorMap_transfer_characteristics;
-  UChar m_colorMap_matrix_coeffs;
-  UChar m_colorMapModelId;
+  Int    m_colorMapId;
+  Bool   m_colorMapCancelFlag;
+  Bool   m_colorMapPersistenceFlag;
+  Bool   m_colorMap_video_signal_type_present_flag;
+  Bool   m_colorMap_video_full_range_flag;
+  UShort m_colorMap_primaries;
+  UShort m_colorMap_transfer_characteristics;
+  UShort m_colorMap_matrix_coeffs;
+  UShort m_colorMapModelId;
 
   Int   m_colour_map_coded_data_bit_depth;
   Int   m_colour_map_target_bit_depth;

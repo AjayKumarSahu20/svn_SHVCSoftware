@@ -480,8 +480,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
     m_acTEncTop[layer].setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
 #if Q0074_SEI_COLOR_MAPPING
-    string  cTmp  = m_acLayerCfg[layer].m_cSeiColorMappingFile;
-    m_acTEncTop[layer].setColorMappingInfoSEIFile                   ( cTmp.empty() ? NULL : strdup(cTmp.c_str()) );
+    m_acTEncTop[layer].setColorMappingInfoSEIFile                   ( m_acLayerCfg[layer].m_cSeiColorMappingFile.empty() ? NULL : const_cast<Char *>(m_acLayerCfg[layer].m_cSeiColorMappingFile.c_str()) );
 #endif
     m_acTEncTop[layer].setFramePackingArrangementSEIEnabled( m_framePackingSEIEnabled );
     m_acTEncTop[layer].setFramePackingArrangementSEIType( m_framePackingSEIType );
