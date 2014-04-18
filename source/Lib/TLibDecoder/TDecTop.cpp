@@ -95,6 +95,10 @@ TDecTop::TDecTop()
 #if Q0048_CGS_3D_ASYMLUT
   m_pColorMappedPic = NULL;
 #endif
+
+#if Q0074_SEI_COLOR_MAPPING
+  m_ColorMapping = new TDecColorMapping();
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -109,6 +113,9 @@ TDecTop::~TDecTop()
     delete m_pColorMappedPic;
     m_pColorMappedPic = NULL;
   }
+#endif
+#if Q0074_SEI_COLOR_MAPPING
+  if ( m_ColorMapping )  delete m_ColorMapping;
 #endif
 }
 
@@ -845,6 +852,13 @@ Void TDecTop::xActivateParameterSets()
   g_uiMaxCUHeight = sps->getMaxCUHeight();
   g_uiMaxCUDepth  = sps->getMaxCUDepth();
   g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() );
+
+#if Q0074_SEI_COLOR_MAPPING
+  for(Int compID=0; compID<3; compID++)
+  {
+    m_ColorMapping->setColorMapping( compID ? g_bitDepthC : g_bitDepthY, compID );
+  }
+#endif
 
   for (Int i = 0; i < sps->getLog2DiffMaxMinCodingBlockSize(); i++)
   {
@@ -1875,6 +1889,9 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
     }
+#if Q0074_SEI_COLOR_MAPPING
+    m_ColorMapping->setColorMapping( m_SEIs );
+#endif
   }
 #else
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
@@ -2385,5 +2402,311 @@ Void TDecTop::initAsymLut(TComSlice *pcSlice)
   }
 }
 #endif
+
 #endif //SVC_EXTENSION
+
+#if Q0074_SEI_COLOR_MAPPING
+TDecColorMapping::TDecColorMapping()
+{
+  m_pcColorMappingPic[0]   = NULL;
+  m_pcColorMappingPic[1]   = NULL;
+
+  m_colorMapCancelFlag  = true;
+
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    m_lut1d_computed[i]             = false;
+    m_lut1d_input[i]                = NULL;
+    m_coded_input_pivot_value[i]    = NULL;
+    m_target_input_pivot_value[i]   = NULL;
+  }
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    m_lut1d_output[i]               = NULL;
+    m_coded_output_pivot_value[i]   = NULL;
+    m_target_output_pivot_value[i]  = NULL;
+  }
+}
+
+TDecColorMapping::~TDecColorMapping()
+{
+  if ( m_pcColorMappingPic[0] )  delete m_pcColorMappingPic[0];
+  if ( m_pcColorMappingPic[1] )  delete m_pcColorMappingPic[1];
+
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    if ( m_lut1d_input[i] )               delete  m_lut1d_input[i];
+    if ( m_coded_input_pivot_value[i] )   delete  m_coded_input_pivot_value[i];
+    if ( m_target_input_pivot_value[i] )  delete  m_target_input_pivot_value[i];
+  }
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    if ( m_lut1d_output[i] )               delete  m_lut1d_output[i];
+    if ( m_coded_output_pivot_value[i] )   delete  m_coded_output_pivot_value[i];
+    if ( m_target_output_pivot_value[i] )  delete  m_target_output_pivot_value[i];
+  }
+}
+
+Void  TDecColorMapping::setColorMapping( SEIMessages m_SEIs )
+{
+  SEIMessages colorMappingInfo = getSeisByType(m_SEIs, SEI::COLOR_MAPPING_INFO) ;
+  SEIColorMappingInfo *seiColorMappingInfo = NULL;
+  if (colorMappingInfo.size() !=0)
+  {
+    seiColorMappingInfo = (SEIColorMappingInfo*)(*colorMappingInfo.begin());
+
+    m_colorMapId                              = seiColorMappingInfo->m_colorMapId;
+    m_colorMapCancelFlag                      = seiColorMappingInfo->m_colorMapCancelFlag;
+    if( !m_colorMapCancelFlag )
+    {
+      m_colorMapPersistenceFlag                 = seiColorMappingInfo->m_colorMapPersistenceFlag;
+      m_colorMap_video_signal_type_present_flag = seiColorMappingInfo->m_colorMap_video_signal_type_present_flag;
+      m_colorMap_video_full_range_flag          = seiColorMappingInfo->m_colorMap_video_full_range_flag;
+      m_colorMap_primaries                      = seiColorMappingInfo->m_colorMap_primaries;
+      m_colorMap_transfer_characteristics       = seiColorMappingInfo->m_colorMap_transfer_characteristics;
+      m_colorMap_matrix_coeffs                  = seiColorMappingInfo->m_colorMap_matrix_coeffs;
+      m_colorMapModelId                         = seiColorMappingInfo->m_colorMapModelId;
+
+      m_colour_map_coded_data_bit_depth         = seiColorMappingInfo->m_colour_map_coded_data_bit_depth;
+      m_colour_map_target_bit_depth             = seiColorMappingInfo->m_colour_map_target_bit_depth;
+
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        m_num_input_pivots[i]                 = seiColorMappingInfo->m_num_input_pivots[i];
+        if ( m_coded_input_pivot_value[i] )   delete  m_coded_input_pivot_value[i];
+        if ( m_target_input_pivot_value[i] )  delete  m_target_input_pivot_value[i];
+        m_coded_input_pivot_value[i]          = new Int[ m_num_input_pivots[i] ];
+        m_target_input_pivot_value[i]         = new Int[ m_num_input_pivots[i] ];
+        for( Int j=0 ; j<m_num_input_pivots[i] ; j++ )
+        {
+          m_coded_input_pivot_value[i][j]     = seiColorMappingInfo->m_coded_input_pivot_value[i][j];
+          m_target_input_pivot_value[i][j]    = seiColorMappingInfo->m_target_input_pivot_value[i][j];
+        }
+      }
+
+      m_matrix_flag       = seiColorMappingInfo->m_matrix_flag;
+      m_log2_matrix_denom = m_matrix_flag ? (seiColorMappingInfo->m_log2_matrix_denom) : (0) ;
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        for( Int j=0 ; j<3 ; j++ )
+        {
+          m_matrix_coef[i][j]  = seiColorMappingInfo->m_matrix_coef[i][j];
+        }
+      }
+
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        m_num_output_pivots[i]                 = seiColorMappingInfo->m_num_output_pivots[i];
+        if ( m_coded_output_pivot_value[i] )   delete  m_coded_output_pivot_value[i];
+        if ( m_target_output_pivot_value[i] )  delete  m_target_output_pivot_value[i];
+        m_coded_output_pivot_value[i]          = new Int[ m_num_output_pivots[i] ];
+        m_target_output_pivot_value[i]         = new Int[ m_num_output_pivots[i] ];
+        for( Int j=0 ; j<m_num_output_pivots[i] ; j++ )
+        {
+          m_coded_output_pivot_value[i][j]     = seiColorMappingInfo->m_coded_output_pivot_value[i][j];
+          m_target_output_pivot_value[i][j]    = seiColorMappingInfo->m_target_output_pivot_value[i][j];
+        }
+      }
+
+      memset( m_lut1d_computed, 0, sizeof( m_lut1d_computed ) );
+    }
+  }
+
+}
+
+Void  TDecColorMapping::setColorMapping( Int bitDepth, Int iComp )
+{
+  if( !m_colorMapCancelFlag && !m_lut1d_computed[iComp] )
+  {
+
+    if ( m_lut1d_input[iComp] )   delete m_lut1d_input[iComp];
+    if ( m_lut1d_output[iComp] )  delete m_lut1d_output[iComp];
+
+    m_lut1d_input[iComp]  = new Int[ 1 << bitDepth ];
+    m_lut1d_output[iComp] = new Int[ 1 << bitDepth ];
+
+    Int iShift      = (m_colour_map_coded_data_bit_depth >= bitDepth) ? (m_colour_map_coded_data_bit_depth - bitDepth) : (0);
+    Int iShiftPivot = (m_colour_map_coded_data_bit_depth >= bitDepth) ? (0) : (bitDepth - m_colour_map_coded_data_bit_depth);
+
+    for( Int k=0 ; k<(1<<bitDepth) ; k++ )
+    {
+      Int iSample = k << iShift ;
+      if( m_num_input_pivots[iComp] > 1 )
+      {
+        for( Int iPivot=0 ; iPivot<m_num_input_pivots[iComp] ; iPivot++ )
+        {
+          Int iCodedPrev  = m_coded_input_pivot_value[iComp][iPivot]     << iShiftPivot;
+          Int iCodedNext  = m_coded_input_pivot_value[iComp][iPivot+1]   << iShiftPivot;
+          Int iTargetPrev = m_target_input_pivot_value[iComp][iPivot]    << iShiftPivot;
+          Int iTargetNext = m_target_input_pivot_value[iComp][iPivot+1]  << iShiftPivot;
+          if ( iCodedPrev <= iSample && iSample < iCodedNext )
+          {
+            Float fInterpol = (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) / (Float)(iCodedNext - iCodedPrev) ;
+            m_lut1d_input[iComp][k]  = (Int)( 0.5 + fInterpol );
+            iPivot = m_num_input_pivots[iComp]; // stop
+          }
+        }
+      }
+      else
+      {
+        m_lut1d_input[iComp][k]  = k;
+      }
+    }
+
+    iShift      = ( (m_colour_map_coded_data_bit_depth >= bitDepth) ? (m_colour_map_coded_data_bit_depth - bitDepth) : (0) );
+    Int iOffset = iShift ? (1 << (iShift - 1)) : (0) ;
+    iShiftPivot = (m_colour_map_target_bit_depth >= bitDepth) ? (0) : (bitDepth - m_colour_map_target_bit_depth) ;
+    for( Int k=0 ; k<(1<<bitDepth) ; k++ )
+    {
+      Int iSample = k << iShift;
+      if ( m_num_output_pivots[iComp]>1 )
+      {
+        for( Int iPivot=0 ; iPivot<m_num_output_pivots[iComp] ; iPivot++ )
+        {
+          Int iCodedPrev  = m_coded_output_pivot_value[iComp][iPivot]     << iShiftPivot;
+          Int iCodedNext  = m_coded_output_pivot_value[iComp][iPivot+1]   << iShiftPivot;
+          Int iTargetPrev = m_target_output_pivot_value[iComp][iPivot]    << iShiftPivot;
+          Int iTargetNext = m_target_output_pivot_value[iComp][iPivot+1]  << iShiftPivot;
+          if ( iCodedPrev <= iSample && iSample < iCodedNext )
+          {
+            Float fInterpol =  (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) / (Float)(iCodedNext - iCodedPrev) ;
+            m_lut1d_output[iComp][k]  = ( (Int)(0.5 + fInterpol) + iOffset ) >> iShift ;
+            iPivot = m_num_output_pivots[iComp]; // stop
+          }
+        }
+      }
+      else
+      {
+        m_lut1d_output[iComp][k]  = k;
+      }
+    }
+
+    m_lut1d_computed[iComp] = true;
+  }
+
+}
+
+TComPicYuv* TDecColorMapping::getColorMapping( TComPicYuv* pPicYuvRec, Int iTop, Int curlayerId )
+{
+  if( !m_colorMapCancelFlag )
+  {
+    if( !m_pcColorMappingPic[iTop] )
+    {
+      m_pcColorMappingPic[iTop] = new TComPicYuv;
+#if SVC_EXTENSION
+      m_pcColorMappingPic[iTop]->create( pPicYuvRec->getWidth(), pPicYuvRec->getHeight(), pPicYuvRec->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
+      m_pcColorMappingPic[iTop]->create( pPicYuvRec->getWidth(), pPicYuvRec->getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
+    }
+
+    Int iHeight   = pPicYuvRec->getHeight();
+    Int iWidth    = pPicYuvRec->getWidth();
+    Int iStride   = pPicYuvRec->getStride();
+    Int iCStride  = pPicYuvRec->getCStride();
+
+    Pel* Lum0   = pPicYuvRec->getLumaAddr();
+    Pel* Cb0    = pPicYuvRec->getCbAddr();
+    Pel* Cr0    = pPicYuvRec->getCrAddr();
+    Pel* Lum1   = m_pcColorMappingPic[iTop]->getLumaAddr();
+    Pel* Cb1    = m_pcColorMappingPic[iTop]->getCbAddr();
+    Pel* Cr1    = m_pcColorMappingPic[iTop]->getCrAddr();
+
+#if SVC_EXTENSION
+    Int bitDepthY = g_bitDepthYLayer[curlayerId];
+    Int bitDepthC = g_bitDepthCLayer[curlayerId];
+
+    assert( g_bitDepthY == bitDepthY );
+    assert( g_bitDepthC == bitDepthC );
+#else
+    Int bitDepthY = g_bitDepthY;
+    Int bitDepthC = g_bitDepthC;
+#endif
+
+    Int iYShift = (m_colour_map_target_bit_depth >= bitDepthY) ? (m_colour_map_target_bit_depth - bitDepthY) : (0) ;
+    Int iCShift = (m_colour_map_target_bit_depth >= bitDepthC) ? (m_colour_map_target_bit_depth - bitDepthC) : (0) ;
+    Int offsetY = (1 << (m_log2_matrix_denom+iYShift - 1));
+    Int offsetC = (1 << (m_log2_matrix_denom+iCShift - 1));
+
+    Bool  bScaleX = false ;
+    Bool  bScaleY = false ;
+    Int   cShift  = 1 ;
+
+    Pel*  LumPrev0 = Lum0;
+    for( Int y = 0; y < iHeight ; y++ )
+    {
+      Bool  bDoChroma = (y % 2);
+      for( Int x = 0; x < iWidth ; x++ )
+      {
+        Int s1Y = m_lut1d_input[0][ Lum0[x]   ];
+        Int s1U = m_lut1d_input[1][ Cb0[x>>1] ];
+        Int s1V = m_lut1d_input[2][ Cr0[x>>1] ];
+
+        Int s2Y, s2U, s2V;
+        if( m_matrix_flag )
+        {
+          s2Y = ( m_matrix_coef[0][0]*s1Y + m_matrix_coef[0][1]*s1U + m_matrix_coef[0][2]*s1V + offsetY ) >> ( m_log2_matrix_denom + iYShift );
+          //s2Y = ClipBD( s2Y , bitDepthY );
+          s2Y = ClipY( s2Y );
+          Lum1[x]   = m_lut1d_output[0][ s2Y ];
+        }
+        else
+        {
+          s1Y       = ( s1Y + offsetY ) >> iYShift ;
+          //s1Y = ClipBD( s1Y , bitDepthY );
+          s1Y = ClipY( s1Y );
+          Lum1[x]   = m_lut1d_output[0][ s1Y ];
+        }
+
+        if( bDoChroma && (x%2) )
+        {
+          if( m_matrix_flag )
+          {
+            //s1Y = ( m_lut1d_input[0][ Lum0[x] ] + m_lut1d_input[0][ Lum0[x+1] ] + m_lut1d_input[0][ LumPrev0[x] ] + m_lut1d_input[0][ LumPrev0[x+1] ] + 2 ) >> 2 ; 
+            //s1Y = m_lut1d_input[0][ (Lum0[x] + Lum0[x+1] + LumPrev0[x] + LumPrev0[x+1] + 2)>>2 ] ; 
+            s1Y = m_lut1d_input[0][ Lum0[x] ];
+
+            s2U = ( m_matrix_coef[1][0]*s1Y + m_matrix_coef[1][1]*s1U + m_matrix_coef[1][2]*s1V + offsetC ) >> ( m_log2_matrix_denom + iCShift ) ;
+            s2V = ( m_matrix_coef[2][0]*s1Y + m_matrix_coef[2][1]*s1U + m_matrix_coef[2][2]*s1V + offsetC ) >> ( m_log2_matrix_denom + iCShift ) ;
+            //s2U = ClipBD( s2U , bitDepthC );
+            //s2V = ClipBD( s2V , bitDepthC );
+            s2U = ClipC( s2U );
+            s2V = ClipC( s2V );
+            Cb1[x>>cShift] = m_lut1d_output[1][ s2U ];
+            Cr1[x>>cShift] = m_lut1d_output[2][ s2V ];
+          }
+          else
+          {
+            s1U       = ( s1U + offsetC ) >> iCShift ;
+            s1V       = ( s1V + offsetC ) >> iCShift ;
+            //s1U = ClipBD( s1U , bitDepthC );
+            //s1V = ClipBD( s1V , bitDepthC );
+            s1U = ClipC( s1U );
+            s1V = ClipC( s1V );
+            Cb1[x>>cShift] = m_lut1d_output[1][ s1U ];
+            Cr1[x>>cShift] = m_lut1d_output[2][ s1V ];
+          }
+        }
+
+      }
+
+      LumPrev0 = Lum0;
+      Lum0  += iStride;
+      Lum1  += iStride;
+      if( bDoChroma )
+      {
+        Cb0 += iCStride;
+        Cr0 += iCStride;
+        Cb1 += iCStride;
+        Cr1 += iCStride;
+      }
+    }
+
+    return m_pcColorMappingPic[iTop];
+  }
+
+  return pPicYuvRec; 
+}
+#endif
+
 //! \}

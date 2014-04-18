@@ -78,15 +78,18 @@ public:
     LAYERS_NOT_PRESENT                   = 137,
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-    INTER_LAYER_CONSTRAINED_TILE_SETS    = 138
+    INTER_LAYER_CONSTRAINED_TILE_SETS    = 138,
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
-   ,SUB_BITSTREAM_PROPERTY               = 139    // Final PayloadType to be defined after finalization
+    SUB_BITSTREAM_PROPERTY               = 139,    // Final PayloadType to be defined after finalization
 #endif
 #if O0164_MULTI_LAYER_HRD
-   ,BSP_NESTING                          = 140
-   ,BSP_INITIAL_ARRIVAL_TIME             = 141
-   ,BSP_HRD                              = 142
+    BSP_NESTING                          = 140,
+    BSP_INITIAL_ARRIVAL_TIME             = 141,
+    BSP_HRD                              = 142,
+#endif
+#if Q0074_SEI_COLOR_MAPPING
+    COLOR_MAPPING_INFO                   = 143,
 #endif
   };
   
@@ -403,6 +406,42 @@ public:
   Int    m_nominalWhiteLevelLumaCodeValue;
   Int    m_extendedWhiteLevelLumaCodeValue;
 };
+
+#if Q0074_SEI_COLOR_MAPPING
+class SEIColorMappingInfo : public SEI
+{
+public:
+  PayloadType payloadType() const { return COLOR_MAPPING_INFO; }
+  SEIColorMappingInfo() {
+  }
+  virtual ~SEIColorMappingInfo() {}
+
+  Int   m_colorMapId;
+  Bool  m_colorMapCancelFlag;
+  Bool  m_colorMapPersistenceFlag;
+  Bool  m_colorMap_video_signal_type_present_flag;
+  Bool  m_colorMap_video_full_range_flag;
+  UChar m_colorMap_primaries;
+  UChar m_colorMap_transfer_characteristics;
+  UChar m_colorMap_matrix_coeffs;
+  UChar m_colorMapModelId;
+
+  Int   m_colour_map_coded_data_bit_depth;
+  Int   m_colour_map_target_bit_depth;
+
+  Int   m_num_input_pivots[3];
+  Int*  m_coded_input_pivot_value[3];
+  Int*  m_target_input_pivot_value[3];
+  
+  Bool  m_matrix_flag;
+  Int   m_log2_matrix_denom;
+  Int   m_matrix_coef[3][3];
+
+  Int   m_num_output_pivots[3];
+  Int*  m_coded_output_pivot_value[3];
+  Int*  m_target_output_pivot_value[3];
+};
+#endif
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
 class SEIInterLayerConstrainedTileSets : public SEI

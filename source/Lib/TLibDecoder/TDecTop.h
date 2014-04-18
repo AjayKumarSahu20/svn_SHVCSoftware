@@ -63,6 +63,51 @@ struct InputNALUnit;
 // Class definition
 // ====================================================================================================================
 
+#if Q0074_SEI_COLOR_MAPPING
+class TDecColorMapping
+{
+  Int   m_colorMapId;
+  Bool  m_colorMapCancelFlag;
+  Bool  m_colorMapPersistenceFlag;
+  Bool  m_colorMap_video_signal_type_present_flag;
+  Bool  m_colorMap_video_full_range_flag;
+  UChar m_colorMap_primaries;
+  UChar m_colorMap_transfer_characteristics;
+  UChar m_colorMap_matrix_coeffs;
+  UChar m_colorMapModelId;
+
+  Int   m_colour_map_coded_data_bit_depth;
+  Int   m_colour_map_target_bit_depth;
+
+  Int   m_num_input_pivots[3];
+  Int*  m_coded_input_pivot_value[3];
+  Int*  m_target_input_pivot_value[3];
+  
+  Bool  m_matrix_flag;
+  Int   m_log2_matrix_denom;
+  Int   m_matrix_coef[3][3];
+
+  Int   m_num_output_pivots[3];
+  Int*  m_coded_output_pivot_value[3];
+  Int*  m_target_output_pivot_value[3];
+
+  Bool  m_lut1d_computed[3];
+  Int*  m_lut1d_input[3];
+  Int*  m_lut1d_output[3];
+  TComPicYuv* m_pcColorMappingPic[2];
+
+public:
+  TDecColorMapping();
+  ~TDecColorMapping();
+
+  Bool        getColorMappingFlag()                     { return(!m_colorMapCancelFlag);};
+
+  Void        setColorMapping( SEIMessages m_SEIs );
+  Void        setColorMapping( Int bitDepthY, Int bitDepthC );
+  TComPicYuv* getColorMapping( TComPicYuv* pPicYuvRec, Int iTop=0, Int curlayerId=0 );
+};// END CLASS DEFINITION TDecColorMapping
+#endif
+
 /// decoder class
 class TDecTop
 {
@@ -158,6 +203,10 @@ private:
                                            // When new VPS is activated, this should be re-initialized to -1
 #endif
 public:
+#if Q0074_SEI_COLOR_MAPPING
+  TDecColorMapping* m_ColorMapping;
+#endif
+
   TDecTop();
   virtual ~TDecTop();
   

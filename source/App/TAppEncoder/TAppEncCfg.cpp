@@ -338,6 +338,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_InputFile      [MAX_LAYERS];
   string* cfg_ReconFile      [MAX_LAYERS];
   Double* cfg_fQP            [MAX_LAYERS];
+#if Q0074_SEI_COLOR_MAPPING
+  string* cfg_seiColorMappingFile[MAX_LAYERS];
+#endif
 
 #if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
@@ -432,6 +435,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+#if Q0074_SEI_COLOR_MAPPING
+    cfg_seiColorMappingFile[layer] = &m_acLayerCfg[layer].m_cSeiColorMappingFile;
+#endif
 #if LAYER_CTB
     // coding unit (CU) definition
     cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
@@ -615,6 +621,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
+#if Q0074_SEI_COLOR_MAPPING
+  ("SEIColorMappingFile%d", cfg_seiColorMappingFile, string(""), MAX_LAYERS, "File Containing SEI Color Mapping data")
+#endif
 #else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
@@ -1485,6 +1494,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if (m_interLayerConstrainedTileSetsSEIEnabled)
   {

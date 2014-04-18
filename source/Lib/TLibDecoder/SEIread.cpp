@@ -92,6 +92,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
+#if Q0074_SEI_COLOR_MAPPING
+  case SEI::COLOR_MAPPING_INFO:
+    fprintf( g_hTrace, "===========Color Mapping Info SEI message ===========\n");
+    break;
+#endif
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
     break;
@@ -279,6 +284,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
+#if Q0074_SEI_COLOR_MAPPING
+    case SEI::COLOR_MAPPING_INFO:
+      sei = new SEIColorMappingInfo;
+      xParseSEIColorMappingInfo((SEIColorMappingInfo&) *sei, payloadSize);
+      break;
+#endif
     case SEI::SOP_DESCRIPTION:
       sei = new SEISOPDescription;
       xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
@@ -836,6 +847,93 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
 
   xParseByteAlign();
 }
+
+#if Q0074_SEI_COLOR_MAPPING
+Void SEIReader::xParseSEIColorMappingInfo(SEIColorMappingInfo& sei, UInt /*payloadSize*/)
+{
+  UInt  uiVal;
+  Int   iVal;
+
+  READ_UVLC( uiVal, "colour_map_id" );          sei.m_colorMapId = uiVal;
+  READ_FLAG( uiVal, "colour_map_cancel_flag" ); sei.m_colorMapCancelFlag = uiVal;
+  if( !sei.m_colorMapCancelFlag ) 
+  {
+    READ_FLAG( uiVal, "colour_map_persistence_flag" );                sei.m_colorMapPersistenceFlag = uiVal;
+    READ_FLAG( uiVal, "colour_map_video_signal_type_present_flag" );  sei.m_colorMap_video_signal_type_present_flag = uiVal;
+    if ( sei.m_colorMap_video_signal_type_present_flag ) {
+      READ_FLAG( uiVal,     "colour_map_video_full_range_flag" );     sei.m_colorMap_video_full_range_flag = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_primaries" );                 sei.m_colorMap_primaries = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_transfer_characteristics" );  sei.m_colorMap_transfer_characteristics = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_matrix_coeffs" );             sei.m_colorMap_matrix_coeffs = uiVal;
+    }
+  }
+
+  READ_CODE( 5, uiVal,  "colour_map_coded_data_bit_depth" );  sei.m_colour_map_coded_data_bit_depth = uiVal;
+  READ_CODE( 5, uiVal,  "colour_map_target_bit_depth" );      sei.m_colour_map_target_bit_depth = uiVal;
+  READ_UVLC( uiVal, "colour_map_model_id" );                  sei.m_colorMapModelId = uiVal;
+
+  assert( sei.m_colorMapModelId == 0 );
+  
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    READ_CODE( 8, uiVal, "num_input_pivots_minus1[i]" ); sei.m_num_input_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
+    sei.m_coded_input_pivot_value[i]   = new Int[ sei.m_num_input_pivots[i] ];
+    sei.m_target_input_pivot_value[i]  = new Int[ sei.m_num_input_pivots[i] ];
+    if( uiVal > 0 )
+    {
+      for ( Int j=0 ; j<sei.m_num_input_pivots[i] ; j++ )
+      {
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_input_pivot_value[i][j]" );  sei.m_coded_input_pivot_value[i][j] = uiVal;
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_input_pivot_value[i][j]" ); sei.m_target_input_pivot_value[i][j] = uiVal;
+      }
+    }
+    else
+    {
+      sei.m_coded_input_pivot_value[i][0]  = 0;
+      sei.m_target_input_pivot_value[i][0] = 0;
+      sei.m_coded_input_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
+      sei.m_target_input_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
+    }
+  }
+
+  READ_FLAG( uiVal,           "matrix_flag" ); sei.m_matrix_flag = uiVal;
+  if( sei.m_matrix_flag )
+  {
+    READ_CODE( 4, uiVal,         "log2_matrix_denom" ); sei.m_log2_matrix_denom = uiVal;
+    for ( Int i=0 ; i<3 ; i++ )
+    {
+      for ( Int j=0 ; j<3 ; j++ )
+      {
+        READ_SVLC( iVal,        "matrix_coef[i][j]" ); sei.m_matrix_coef[i][j] = iVal;
+      }
+    }
+  }
+
+  for ( Int i=0 ; i<3 ; i++ )
+  {
+    READ_CODE( 8, uiVal, "num_output_pivots_minus1[i]" ); sei.m_num_output_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
+    sei.m_coded_output_pivot_value[i]   = new Int[ sei.m_num_output_pivots[i] ];
+    sei.m_target_output_pivot_value[i]  = new Int[ sei.m_num_output_pivots[i] ];
+    if( uiVal > 0 )
+    {
+      for ( Int j=0 ; j<sei.m_num_output_pivots[i] ; j++ )
+      {
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_output_pivot_value[i][j]" );  sei.m_coded_output_pivot_value[i][j] = uiVal;
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_output_pivot_value[i][j]" ); sei.m_target_output_pivot_value[i][j] = uiVal;
+      }
+    }
+    else
+    {
+      sei.m_coded_output_pivot_value[i][0]  = 0;
+      sei.m_target_output_pivot_value[i][0] = 0;
+      sei.m_coded_output_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
+      sei.m_target_output_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
+    }
+  }
+
+  xParseByteAlign();
+}
+#endif
 
 Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize)
 {

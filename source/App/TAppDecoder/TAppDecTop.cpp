@@ -692,24 +692,33 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
+          TComPicYuv* pPicCYuvRecTop = pcPicTop->getPicYuvRec();
+          TComPicYuv* pPicCYuvRecBot = pcPicBottom->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_acTDecTop[layerId].m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRecTop = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecTop, 0, layerId );
+            pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
+          }
+#endif
 #if REPN_FORMAT_IN_VPS
 #if Q0200_CONFORMANCE_BL_SIZE
-Int xScal=1,yScal=1;
+          Int xScal=1,yScal=1;
 #else
-UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
-Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
-conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
-conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
-conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
+            conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
 #else
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
           // Compile time bug-fix
-          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
 #else
-          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          m_cTVideoIOYuvReconFile.write( pPicCYuvRecTop, pPicCYuvRecBot,
 #endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
@@ -726,7 +735,16 @@ conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
-          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          TComPicYuv* pPicCYuvRecTop = pcPicTop->getPicYuvRec();
+          TComPicYuv* pPicCYuvRecBot = pcPicBottom->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if ( m_cTDecTop.m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRecTop = m_cTDecTop.m_ColorMapping->getColorMapping( pPicCYuvRecTop, 0 );
+            pPicCYuvRecBot = m_cTDecTop.m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1 );
+          }
+#endif
+          m_cTVideoIOYuvReconFile.write( pPicCYuvRecTop, pPicCYuvRecBot,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -799,20 +817,28 @@ conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          TComPicYuv* pPicCYuvRec = pcPic->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if ( m_acTDecTop[layerId].m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRec = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerId );
+          }
+#endif
+
 #if REPN_FORMAT_IN_VPS
 #if Q0200_CONFORMANCE_BL_SIZE
-Int xScal=1,yScal=1;
+          Int xScal=1,yScal=1;
 #else
-UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
-Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
-conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
-conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
-conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
+            conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
 #else
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -826,9 +852,16 @@ conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
         if ( m_pchReconFile )
         {
 #if SYNTAX_OUTPUT
+          TComPicYuv* pPicCYuvRec = pcPic->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_acTDecTop[layerIdx].m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRec = m_acTDecTop[layerIdx].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerIdx );
+          }
+#endif
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+          m_cTVideoIOYuvReconFile.write( pPicCYuvRec,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -902,24 +935,33 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
+          TComPicYuv* pPicCYuvRecTop = pcPicTop->getPicYuvRec();
+          TComPicYuv* pPicCYuvRecBot = pcPicBottom->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_acTDecTop[layerId].m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRecTop = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecTop, 0, layerId );
+            pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
+          }
+#endif
 #if REPN_FORMAT_IN_VPS
 #if Q0200_CONFORMANCE_BL_SIZE
-Int xScal=1,yScal=1;
+          Int xScal=1,yScal=1;
 #else
-UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
-Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
-conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
-conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
-conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
-conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
+            conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
 #else
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
           // Compile time bug-fix
-          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
 #else
-          m_cTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          m_cTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
 #endif
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
@@ -936,7 +978,16 @@ conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
-          m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+          TComPicYuv* pPicCYuvRecTop = pcPicTop->getPicYuvRec();
+          TComPicYuv* pPicCYuvRecBot = pcPicBottom->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_cTDecTop.m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRecTop = m_cTDecTop.m_ColorMapping->getColorMapping( pPicCYuvRecTop, 0 );
+            pPicCYuvRecBot = m_cTDecTop.m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1 );
+          }
+#endif
+          m_cTVideoIOYuvReconFile.write( pPicCYuvRecTop, pPicCYuvRecBot,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -1012,20 +1063,27 @@ conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          TComPicYuv* pPicCYuvRec = pcPic->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_acTDecTop[layerId].m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRec = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerId );
+          }
+#endif
 #if REPN_FORMAT_IN_VPS
 #if Q0200_CONFORMANCE_BL_SIZE
-Int xScal=1,yScal=1;
+          Int xScal=1,yScal=1;
 #else
-UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
-Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
-conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
-conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
-conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
-conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
+            conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
 #else
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+          m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -1040,7 +1098,14 @@ conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+          TComPicYuv* pPicCYuvRec = pcPic->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+          if( m_cTDecTop.m_ColorMapping->getColorMappingFlag() )
+          {
+            pPicCYuvRec = m_cTDecTop.m_ColorMapping->getColorMapping( pPicCYuvRec );
+          }
+#endif
+          m_cTVideoIOYuvReconFile.write( pPicCYuvRec,
             conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
@@ -1117,15 +1182,19 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
     Int xScal =  1, yScal = 1;
 #if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
-UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
-xScal = TComSPS::getWinUnitX( chromaFormatIdc );
-yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+    UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
+    xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+    yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-m_acTVideoIOYuvReconFile[layerIdx].write( pic->getPicYuvRec(),
-conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
-conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
-conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+    TComPicYuv* pPicCYuvRec = pic->getPicYuvRec();
+#if Q0074_SEI_COLOR_MAPPING
+    pPicCYuvRec = m_acTDecTop[layerIdx].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerIdx );
+#endif
+    m_acTVideoIOYuvReconFile[layerIdx].write( pPicCYuvRec,
+      conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+      conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+      conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+      conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
   }
   // update POC of display order
   pocLastDisplay = pic->getPOC();

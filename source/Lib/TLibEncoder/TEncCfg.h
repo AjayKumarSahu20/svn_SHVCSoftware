@@ -247,6 +247,9 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if Q0074_SEI_COLOR_MAPPING
+  Char*     m_seiColorMappingFile;
+#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -666,6 +669,10 @@ public:
   Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue;  }
   Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue =b;  }
   Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue;  }
+#if Q0074_SEI_COLOR_MAPPING
+  Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
+  Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }
+#endif
   Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
   Int   getFramePackingArrangementSEIEnabled()           { return m_framePackingSEIEnabled; }
   Void  setFramePackingArrangementSEIType(Int b)         { m_framePackingSEIType = b; }

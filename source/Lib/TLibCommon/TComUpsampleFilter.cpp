@@ -126,9 +126,9 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
 #if Q0200_CONFORMANCE_BL_SIZE
-const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
-widthBL-= (confBL.getWindowLeftOffset()+confBL.getWindowRightOffset());
-heightBL-=(confBL.getWindowBottomOffset()+confBL.getWindowTopOffset());
+  const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
+  widthBL  -= (confBL.getWindowLeftOffset() + confBL.getWindowRightOffset());
+  heightBL -= (confBL.getWindowBottomOffset() + confBL.getWindowTopOffset());
 #endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
@@ -321,8 +321,8 @@ heightBL-=(confBL.getWindowBottomOffset()+confBL.getWindowTopOffset());
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
 #if Q0200_CONFORMANCE_BL_SIZE
-leftStartL+= confBL.getWindowLeftOffset()<<4;
-topStartL+= confBL.getWindowTopOffset()<<4;
+    leftStartL += confBL.getWindowLeftOffset() << 4;
+    topStartL  += confBL.getWindowTopOffset() << 4;
 #endif
 #if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
@@ -418,8 +418,8 @@ topStartL+= confBL.getWindowTopOffset()<<4;
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-widthBL-= confBL.getWindowLeftOffset()+confBL.getWindowRightOffset();
-heightBL-=confBL.getWindowBottomOffset()+confBL.getWindowTopOffset();
+    widthBL  -= confBL.getWindowLeftOffset()+confBL.getWindowRightOffset();
+    heightBL -= confBL.getWindowBottomOffset()+confBL.getWindowTopOffset();
 #endif
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
