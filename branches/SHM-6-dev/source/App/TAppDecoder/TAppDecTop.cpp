@@ -701,28 +701,20 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
             pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS
-#if Q0200_CONFORMANCE_BL_SIZE
-          Int xScal = 1, yScal = 1;
-#else
+#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
+
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), isTff );
 #else
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-          // Compile time bug-fix
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
-#else
-          m_cTVideoIOYuvReconFile.write( pPicCYuvRecTop, pPicCYuvRecBot,
-#endif
-            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
 #endif
         }
@@ -825,13 +817,10 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
           }
 #endif
 
-#if REPN_FORMAT_IN_VPS
-#if Q0200_CONFORMANCE_BL_SIZE
-          Int xScal = 1, yScal = 1;
-#else
+#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
+
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
@@ -839,9 +828,9 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
             conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
 #else
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
-            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
 #endif
         }
@@ -944,28 +933,20 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS
-#if Q0200_CONFORMANCE_BL_SIZE
-          Int xScal = 1, yScal = 1;
-#else
+#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
+
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
             conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), isTff );
 #else
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-          // Compile time bug-fix
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
-#else
-          m_cTVideoIOYuvReconFile[layerId].write( pPicCYuvRecTop, pPicCYuvRecBot,
-#endif
-            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), isTff );
 #endif
         }
@@ -1070,13 +1051,10 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             pPicCYuvRec = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS
-#if Q0200_CONFORMANCE_BL_SIZE
-          Int xScal = 1,yScal = 1;
-#else
+#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
+
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
             conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
@@ -1084,9 +1062,9 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
 #else
           m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec,
-            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
 #endif
         }
