@@ -2630,7 +2630,7 @@ TComPicYuv* TDecColorMapping::getColorMapping( TComPicYuv* pPicYuvRec, Int iTop,
 
     Int   cShift  = 1 ;
 
-    Pel*  LumPrev0 = Lum0;
+    //Pel*  LumPrev0 = Lum0;
     for( Int y = 0; y < iHeight ; y++ )
     {
       Bool  bDoChroma = (y % 2);
@@ -2688,7 +2688,7 @@ TComPicYuv* TDecColorMapping::getColorMapping( TComPicYuv* pPicYuvRec, Int iTop,
 
       }
 
-      LumPrev0 = Lum0;
+      //LumPrev0 = Lum0;
       Lum0  += iStride;
       Lum1  += iStride;
       if( bDoChroma )

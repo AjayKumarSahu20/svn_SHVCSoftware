@@ -72,7 +72,7 @@ protected:
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
 #if Q0074_SEI_COLOR_MAPPING
-  Void SEIWriter::xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
+  Void xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
 #endif
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #if O0164_MULTI_LAYER_HRD
