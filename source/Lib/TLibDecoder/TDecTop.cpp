@@ -2628,8 +2628,6 @@ TComPicYuv* TDecColorMapping::getColorMapping( TComPicYuv* pPicYuvRec, Int iTop,
     Int offsetY = (1 << (m_log2_matrix_denom+iYShift - 1));
     Int offsetC = (1 << (m_log2_matrix_denom+iCShift - 1));
 
-    Bool  bScaleX = false ;
-    Bool  bScaleY = false ;
     Int   cShift  = 1 ;
 
     Pel*  LumPrev0 = Lum0;
