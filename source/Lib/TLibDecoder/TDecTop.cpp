@@ -1555,9 +1555,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
-widthBL   -= (confBL.getWindowLeftOffset()+confBL.getWindowRightOffset());
-heightBL  -= (confBL.getWindowTopOffset()+confBL.getWindowBottomOffset());
+        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
+        widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
+        heightBL -= confBL.getWindowTopOffset() + confBL.getWindowBottomOffset();
 #endif
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();

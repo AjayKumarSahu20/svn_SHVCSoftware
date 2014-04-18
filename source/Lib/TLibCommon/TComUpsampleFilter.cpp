@@ -127,8 +127,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int strideEL  = pcUsPic->getStride();
 #if Q0200_CONFORMANCE_BL_SIZE
   const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
-  widthBL  -= (confBL.getWindowLeftOffset() + confBL.getWindowRightOffset());
-  heightBL -= (confBL.getWindowBottomOffset() + confBL.getWindowTopOffset());
+  widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
+  heightBL -= confBL.getWindowBottomOffset() + confBL.getWindowTopOffset();
 #endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
@@ -441,8 +441,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
     leftOffset = leftStartC > 0 ? leftStartC : 0;
 #if Q0200_CONFORMANCE_BL_SIZE
-leftStartC+= (confBL.getWindowLeftOffset()>>1)<<4;
-topStartC+= (confBL.getWindowTopOffset()>>1)<<4;
+    leftStartC += ( confBL.getWindowLeftOffset() >> 1 ) << 4;
+    topStartC  += ( confBL.getWindowTopOffset() >> 1 ) << 4;
 #endif
     shiftX = 16;
     shiftY = 16;
