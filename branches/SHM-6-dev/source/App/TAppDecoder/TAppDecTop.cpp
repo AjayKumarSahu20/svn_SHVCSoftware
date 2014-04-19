@@ -701,7 +701,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
             pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
+#if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -817,7 +817,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
           }
 #endif
 
-#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
+#if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -933,7 +933,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             pPicCYuvRecBot = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRecBot, 1, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
+#if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -1051,7 +1051,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             pPicCYuvRec = m_acTDecTop[layerId].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerId );
           }
 #endif
-#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
+#if REPN_FORMAT_IN_VPS
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -1159,7 +1159,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     const Window &conf = pic->getConformanceWindow();
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
     Int xScal =  1, yScal = 1;
-#if REPN_FORMAT_IN_VPS && !Q0200_CONFORMANCE_BL_SIZE
+#if REPN_FORMAT_IN_VPS
     UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
     xScal = TComSPS::getWinUnitX( chromaFormatIdc );
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
