@@ -508,10 +508,17 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
   if (conf.getWindowEnabledFlag())
   {
+#if REPN_FORMAT_IN_VPS
+    WRITE_UVLC( conf.getWindowLeftOffset(),   "conf_win_left_offset"   );
+    WRITE_UVLC( conf.getWindowRightOffset(),  "conf_win_right_offset"  );
+    WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_top_offset"    );
+    WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_bottom_offset" );
+#else
     WRITE_UVLC( conf.getWindowLeftOffset()   / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_left_offset" );
     WRITE_UVLC( conf.getWindowRightOffset()  / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_right_offset" );
     WRITE_UVLC( conf.getWindowTopOffset()    / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_top_offset" );
     WRITE_UVLC( conf.getWindowBottomOffset() / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_bottom_offset" );
+#endif
   }
 
 #if REPN_FORMAT_IN_VPS

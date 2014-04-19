@@ -136,9 +136,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int strideEL  = pcUsPic->getStride();
 
 #if Q0200_CONFORMANCE_BL_SIZE
+  Int chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
   const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
-  widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
-  heightBL -= confBL.getWindowBottomOffset() + confBL.getWindowTopOffset();
+  Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+  Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+
+  widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * xScal;
+  heightBL -= ( confBL.getWindowBottomOffset() + confBL.getWindowTopOffset() ) * yScal;
 #endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
@@ -300,25 +304,25 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
     Int   addY = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
 #else
-    Int   addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    Int   addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+    Int   addX = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
+    Int   addY = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
 #if Q0120_PHASE_CALCULATION
-    Int   deltaX     = (Int)phaseAlignFlag <<3;
-    Int   deltaY     = (((Int)phaseAlignFlag <<3)>>(Int)vertPhasePositionEnableFlag) + ((Int)vertPhasePositionFlag<<3);
+    Int   deltaX = (Int)phaseAlignFlag <<3;
+    Int   deltaY = (((Int)phaseAlignFlag <<3)>>(Int)vertPhasePositionEnableFlag) + ((Int)vertPhasePositionFlag<<3);
 #else
-    Int   deltaX     = 4 * phaseX;
-    Int   deltaY     = 4 * phaseY;
+    Int   deltaX = 4 * phaseX;
+    Int   deltaY = 4 * phaseY;
 #endif
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
 
-    widthEL   = pcUsPic->getWidth ();
-    heightEL  = pcUsPic->getHeight();
+    widthEL  = pcUsPic->getWidth ();
+    heightEL = pcUsPic->getHeight();
 
-    widthBL   = pcBasePic->getWidth ();
-    heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
+    widthBL  = pcBasePic->getWidth ();
+    heightBL = min<Int>( pcBasePic->getHeight(), heightEL );
 
     Int leftStartL = scalEL.getWindowLeftOffset();
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
@@ -326,8 +330,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
 #if Q0200_CONFORMANCE_BL_SIZE
-    leftStartL += confBL.getWindowLeftOffset() << 4;
-    topStartL  += confBL.getWindowTopOffset() << 4;
+    leftStartL += ( confBL.getWindowLeftOffset() * xScal ) << 4;
+    topStartL  += ( confBL.getWindowTopOffset() * yScal ) << 4;
 #endif
 #if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
@@ -423,8 +427,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-    widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
-    heightBL -= confBL.getWindowBottomOffset() + confBL.getWindowTopOffset();
+    widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * xScal;
+    heightBL -= ( confBL.getWindowBottomOffset() + confBL.getWindowTopOffset() ) * yScal;
 #endif
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
@@ -446,8 +450,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
     leftOffset = leftStartC > 0 ? leftStartC : 0;
 #if Q0200_CONFORMANCE_BL_SIZE
-    leftStartC += ( confBL.getWindowLeftOffset() >> 1 ) << 4;
-    topStartC  += ( confBL.getWindowTopOffset() >> 1 ) << 4;
+    leftStartC += ( ( confBL.getWindowLeftOffset() * xScal ) >> 1 ) << 4;
+    topStartC  += ( ( confBL.getWindowTopOffset() * yScal ) >> 1 ) << 4;
 #endif
     shiftX = 16;
     shiftY = 16;

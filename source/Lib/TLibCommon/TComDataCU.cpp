@@ -3503,8 +3503,9 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
   Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
 #if Q0200_CONFORMANCE_BL_SIZE
-  leftStartL += baseColPic->getConformanceWindow().getWindowLeftOffset();
-  topStartL  += baseColPic->getConformanceWindow().getWindowTopOffset();
+  Int chromaFormatIdc = baseColPic->getSlice(0)->getChromaFormatIdc();
+  leftStartL += baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
+  topStartL  += baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
 #else
   Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
