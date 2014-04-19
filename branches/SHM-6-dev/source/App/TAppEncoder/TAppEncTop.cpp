@@ -1325,7 +1325,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
   if(vps->getMaxLayers() > MAX_REF_LAYERS)
   {
-    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    for(UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
       assert( vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
     }

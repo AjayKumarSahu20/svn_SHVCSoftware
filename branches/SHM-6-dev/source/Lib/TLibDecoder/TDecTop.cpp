@@ -1555,18 +1555,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-        Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
-#if REPN_FORMAT_IN_VPS 
-UInt chromaFormatIdc =  pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
-Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
-Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-confBL.setWindowBottomOffset(confBL.getWindowBottomOffset()*yScal);
-confBL.setWindowTopOffset(confBL.getWindowTopOffset()*yScal);
-confBL.setWindowLeftOffset(confBL.getWindowLeftOffset()*xScal);
-confBL.setWindowRightOffset(confBL.getWindowRightOffset()*xScal);
-#endif
-        widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
-        heightBL -= confBL.getWindowTopOffset() + confBL.getWindowBottomOffset();
+        Int chromaFormatIdc = pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
+        widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * TComSPS::getWinUnitX( chromaFormatIdc );
+        heightBL -= ( confBL.getWindowTopOffset() + confBL.getWindowBottomOffset() ) * TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
@@ -1627,12 +1619,6 @@ confBL.setWindowRightOffset(confBL.getWindowRightOffset()*xScal);
           pcPic->setFullPelBaseRec( refLayerIdc, pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec() );
         }
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
-#if REPN_FORMAT_IN_VPS && Q0200_CONFORMANCE_BL_SIZE
-confBL.setWindowBottomOffset(confBL.getWindowBottomOffset()/yScal);
-confBL.setWindowTopOffset(confBL.getWindowTopOffset()/yScal);
-confBL.setWindowLeftOffset(confBL.getWindowLeftOffset()/xScal);
-confBL.setWindowRightOffset(confBL.getWindowRightOffset()/xScal);
-#endif
 #endif
       }
     }

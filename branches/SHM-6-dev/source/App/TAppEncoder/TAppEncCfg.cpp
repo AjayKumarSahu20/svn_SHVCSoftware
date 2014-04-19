@@ -1222,7 +1222,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numSamplePredRefLayers )
         {
-          printf( "NumSamplePredRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumSamplePredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_samplePredRefLayerIds + i ) = atoi( samplePredRefLayerId );
@@ -1231,7 +1231,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numSamplePredRefLayers )
       {
-        printf( "NumSamplePredRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumSamplePredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }
@@ -1253,7 +1253,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numMotionPredRefLayers )
         {
-          printf( "NumMotionPredRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumMotionPredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_motionPredRefLayerIds + i ) = atoi( motionPredRefLayerId );
@@ -1262,7 +1262,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numMotionPredRefLayers )
       {
-        printf( "NumMotionPredRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumMotionPredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }
@@ -1292,7 +1292,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numActiveRefLayers )
         {
-          printf( "NumActiveRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumActiveRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_predLayerIds + i ) = atoi( refLayerId );
@@ -1301,7 +1301,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numActiveRefLayers )
       {
-        printf( "NumActiveRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumActiveRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }

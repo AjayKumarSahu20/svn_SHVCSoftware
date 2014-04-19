@@ -170,7 +170,11 @@ Void TAppEncLayerCfg::xPrintParameter()
     printf("Base layer syntax file        : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
   }
 #endif
+#if REPN_FORMAT_IN_VPS
+  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confLeft + m_confRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confTop + m_confBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
+#else
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
+#endif
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepthY   , m_inputBitDepthC    );
@@ -228,6 +232,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       {
         m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
         m_iSourceWidth  += m_confRight;
+#if REPN_FORMAT_IN_VPS
+        m_confRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+#endif
       }
       if (m_iSourceHeight % minCuSize)
       {
@@ -238,6 +245,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
           m_iSourceHeightOrg += m_confBottom << 1;
           m_aiPad[1] = m_confBottom << 1;
         }
+#if REPN_FORMAT_IN_VPS
+        m_confBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+#endif
       }
       break;
     }
@@ -248,6 +258,10 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       m_iSourceHeight += m_aiPad[1];
       m_confRight  = m_aiPad[0];
       m_confBottom = m_aiPad[1];
+#if REPN_FORMAT_IN_VPS
+      m_confRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+      m_confBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+#endif
       break;
     }
   case 3:
@@ -330,10 +344,12 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
+#if !REPN_FORMAT_IN_VPS
   xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
+#endif
 
 #if LAYER_CTB  
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
