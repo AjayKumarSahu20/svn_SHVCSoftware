@@ -1555,7 +1555,16 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
-        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
+        Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
+#if REPN_FORMAT_IN_VPS 
+UInt chromaFormatIdc =  pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+confBL.setWindowBottomOffset(confBL.getWindowBottomOffset()*yScal);
+confBL.setWindowTopOffset(confBL.getWindowTopOffset()*yScal);
+confBL.setWindowLeftOffset(confBL.getWindowLeftOffset()*xScal);
+confBL.setWindowRightOffset(confBL.getWindowRightOffset()*xScal);
+#endif
         widthBL  -= confBL.getWindowLeftOffset() + confBL.getWindowRightOffset();
         heightBL -= confBL.getWindowTopOffset() + confBL.getWindowBottomOffset();
 #endif
@@ -1618,6 +1627,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           pcPic->setFullPelBaseRec( refLayerIdc, pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec() );
         }
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
+#if REPN_FORMAT_IN_VPS && Q0200_CONFORMANCE_BL_SIZE
+confBL.setWindowBottomOffset(confBL.getWindowBottomOffset()/yScal);
+confBL.setWindowTopOffset(confBL.getWindowTopOffset()/yScal);
+confBL.setWindowLeftOffset(confBL.getWindowLeftOffset()/xScal);
+confBL.setWindowRightOffset(confBL.getWindowRightOffset()/xScal);
+#endif
 #endif
       }
     }
