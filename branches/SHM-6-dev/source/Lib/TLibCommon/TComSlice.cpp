@@ -2085,7 +2085,14 @@ UInt TComSlice::getChromaFormatIdc()
 #if O0096_REP_FORMAT_INDEX
   if( layerId == 0 )
   {
-    retVal = sps->getChromaFormatIdc();
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
+    }
+    else
+    {
+      retVal = sps->getChromaFormatIdc();
+    }
   }
   else
   {

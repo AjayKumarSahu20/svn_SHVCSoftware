@@ -778,6 +778,51 @@ Void TDecTop::xActivateParameterSets()
   }
 #endif
 
+#if AVC_BASE
+  if( activeVPS->getAvcBaseLayerFlag() )
+  {
+    TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
+    if( m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
+    {
+      UInt refLayerId = 0;
+      RepFormat* repFormat = activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(refLayerId) );
+
+      Int  numReorderPics[MAX_TLAYER];
+      Window conformanceWindow;
+      Window defaultDisplayWindow;
+
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+#if AVC_SYNTAX
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+#if AVC_SYNTAX
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#endif
+      // it is needed where the VPS is accessed through the slice
+      pBLPic->getSlice(0)->setVPS( activeVPS );
+
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+      g_bitDepthYLayer[0] = repFormat->getBitDepthVpsLuma();
+      g_bitDepthCLayer[0] = repFormat->getBitDepthVpsChroma();
+#endif
+    }
+  }
+#endif
+
 #if P0312_VERT_PHASE_ADJ
   if( activeVPS->getVpsVuiVertPhaseInUseFlag() == 0 )
   {    
@@ -1975,47 +2020,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       
     case NAL_UNIT_SPS:
       xDecodeSPS();
-#if AVC_BASE
-      if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
-      {
-        TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
-        if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
-        {
-          // using EL SPS with spsId = 1
-          TComSPS* sps = m_parameterSetManagerDecoder.getPrefetchedSPS(1);
-          Int  numReorderPics[MAX_TLAYER];
-          Window &conformanceWindow = sps->getConformanceWindow();
-          Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
-#if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
-#if AVC_SYNTAX
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
-#endif
-#else
-#if SVC_UPSAMPLING
-#if AVC_SYNTAX
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
-#endif
-#endif
-
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-          // set AVC BL bit depth, can be an input parameter from the command line
-          g_bitDepthYLayer[0] = 8;
-          g_bitDepthCLayer[0] = 8;
-#endif
-        }
-      }
-#endif
       return false;
 
     case NAL_UNIT_PPS:
