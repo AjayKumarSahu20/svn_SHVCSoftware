@@ -3502,17 +3502,19 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 #if O0098_SCALED_REF_LAYER_ID
   Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
   Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
-#if Q0200_CONFORMANCE_BL_SIZE
-  Int chromaFormatIdc = baseColPic->getSlice(0)->getChromaFormatIdc();
-  leftStartL += baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
-  topStartL  += baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
 #else
   Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
   Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
 #endif
+
+#if Q0200_CONFORMANCE_BL_SIZE
+  Int chromaFormatIdc = baseColPic->getSlice(0)->getChromaFormatIdc();
+  Int iBX = (((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
+  Int iBY = (((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
+#else
   Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
+#endif
 
 #if N0139_POSITION_ROUNDING_OFFSET
   if( iMotionMapping == 1 )
