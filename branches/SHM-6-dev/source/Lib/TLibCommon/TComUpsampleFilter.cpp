@@ -140,9 +140,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
   Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-
-  widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * xScal;
-  heightBL -= ( confBL.getWindowBottomOffset() + confBL.getWindowTopOffset() ) * yScal;
 #endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
@@ -428,10 +425,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
-#if Q0200_CONFORMANCE_BL_SIZE
-    widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * xScal;
-    heightBL -= ( confBL.getWindowBottomOffset() + confBL.getWindowTopOffset() ) * yScal;
-#endif
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 
