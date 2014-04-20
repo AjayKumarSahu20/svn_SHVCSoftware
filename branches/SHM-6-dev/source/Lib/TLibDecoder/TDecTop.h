@@ -171,8 +171,10 @@ private:
   TDecTop**               m_ppcTDecTop;
 #if AVC_BASE
   fstream*                m_pBLReconFile;
+#if !REPN_FORMAT_IN_VPS
   Int                     m_iBLSourceWidth;
-  Int                     m_iBLSourceHeight;  
+  Int                     m_iBLSourceHeight;
+#endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int                     m_numDirectRefLayers;
@@ -280,9 +282,11 @@ public:
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
   fstream*  getBLReconFile() { return m_pBLReconFile; }
+#if !REPN_FORMAT_IN_VPS
   Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
+#endif
 #endif
 #if REPN_FORMAT_IN_VPS
   Void      xInitILRP(TComSlice *slice);
