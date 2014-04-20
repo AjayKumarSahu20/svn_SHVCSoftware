@@ -5,4 +5,3 @@ TAppDecoder -b str/BasketballDrive.bin -ls 2 -o0 rec/BasketballDrive_l0_drec.yuv
 For AVC base layer tests the following should be used:
  cfg/layers_avcbase.cfg configuration file
  -ibl <BLrecon.yuv> option to specify the reconstructed base layer input
- Additionally for decoder, –wdt <BLwidth> –hgt <BLheight> to specify the base layer width and height
