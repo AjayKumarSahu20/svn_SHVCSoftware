@@ -162,7 +162,9 @@ Void TAppDecTop::decode()
     streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
+#if AVC_SYNTAX || !REPN_FORMAT_IN_VPS
   m_acTDecTop[0].setBLsize( m_iBLSourceWidth, m_iBLSourceHeight );
+#endif
   m_acTDecTop[0].setBLReconFile( &streamYUV );
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
