@@ -91,8 +91,10 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
                                                      "YUV writing is skipped if omitted")
 #if AVC_BASE
   ("BLReconFile,-ibl",    cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
+#if !REPN_FORMAT_IN_VPS
   ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
   ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
+#endif
 #if AVC_SYNTAX
   ("BLSyntaxFile,-ibs",    cfg_BLSyntaxFile,  string(""), "BL syntax input file name")  
 #endif

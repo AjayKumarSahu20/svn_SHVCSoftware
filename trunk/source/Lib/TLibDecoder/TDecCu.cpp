@@ -72,6 +72,13 @@ Void TDecCu::init(TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TComTrQuan
   {
     m_ppcCU     [ui]->setLayerId(layerId);
   }
+  
+#if LAYER_CTB
+  memcpy(g_auiLayerZscanToRaster[m_layerId], g_auiZscanToRaster, sizeof( g_auiZscanToRaster ) );
+  memcpy(g_auiLayerRasterToZscan[m_layerId], g_auiRasterToZscan, sizeof( g_auiRasterToZscan ) );
+  memcpy(g_auiLayerRasterToPelX[m_layerId],  g_auiRasterToPelX,  sizeof( g_auiRasterToPelX ) );
+  memcpy(g_auiLayerRasterToPelY[m_layerId],  g_auiRasterToPelY,  sizeof( g_auiRasterToPelY ) );
+#endif
 }
 #else
 Void TDecCu::init( TDecEntropy* pcEntropyDecoder, TComTrQuant* pcTrQuant, TComPrediction* pcPrediction)
@@ -714,7 +721,7 @@ Void
 TDecCu::xReconIntraQT( TComDataCU* pcCU, UInt uiDepth )
 {
   UInt  uiInitTrDepth = ( pcCU->getPartitionSize(0) == SIZE_2Nx2N ? 0 : 1 );
-  UInt  uiNumPart     = pcCU->getNumPartInter();
+  UInt  uiNumPart     = pcCU->getNumPartitions();
   UInt  uiNumQParts   = pcCU->getTotalNumPart() >> 2;
   
   if (pcCU->getIPCMFlag(0))

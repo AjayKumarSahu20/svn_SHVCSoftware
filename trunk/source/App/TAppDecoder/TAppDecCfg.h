@@ -73,8 +73,10 @@ protected:
   Int           m_tgtLayerId;                        ///< target layer ID
 #if AVC_BASE
   Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
+#if !REPN_FORMAT_IN_VPS
   Int           m_iBLSourceWidth;
   Int           m_iBLSourceHeight;
+#endif
 #if AVC_SYNTAX
   Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name  
 #endif
@@ -83,8 +85,10 @@ protected:
 
 #if SYNTAX_OUTPUT
   Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name
+#if !REPN_FORMAT_IN_VPS
   Int           m_iBLSourceWidth;
   Int           m_iBLSourceHeight;
+#endif
   Int           m_iBLFrames;
 #endif
 
@@ -107,7 +111,7 @@ public:
   , m_decodedPictureHashSEIEnabled(0)
 #if SVC_EXTENSION
   , m_tgtLayerId(0)
-#if AVC_BASE
+#if AVC_BASE && !REPN_FORMAT_IN_VPS
   , m_iBLSourceWidth(0)
   , m_iBLSourceHeight(0)
 #endif

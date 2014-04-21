@@ -47,11 +47,18 @@
 #include "TLibCommon/TComRom.h"
 #include "TEncEntropy.h"
 #include "SyntaxElementWriter.h"
+#if Q0048_CGS_3D_ASYMLUT
+#include "../TLibCommon/TCom3DAsymLUT.h"
+#include "TEnc3DAsymLUT.h"
+#endif
 
 //! \ingroup TLibEncoder
 //! \{
 
 class TEncTop;
+#if Q0048_CGS_3D_ASYMLUT
+class TCom3DAsymLUT;
+#endif
 
 // ====================================================================================================================
 // Class definition
@@ -89,7 +96,11 @@ public:
   Void  codeVPS                 ( TComVPS* pcVPS );
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
-  Void  codePPS                 ( TComPPS* pcPPS );
+  Void  codePPS                 ( TComPPS* pcPPS 
+#if Q0048_CGS_3D_ASYMLUT
+    , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codePTL                 ( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
   Void  codeProfileTier         ( ProfileTierLevel* ptl );
@@ -160,6 +171,11 @@ public:
 #endif
 #if VPS_DPB_SIZE_TABLE
   Void  codeVpsDpbSizeTable      (TComVPS *vps);
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+protected:
+  Void xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
+  Void xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
 #endif
 #endif //SVC_EXTENSION
 

@@ -338,6 +338,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_InputFile      [MAX_LAYERS];
   string* cfg_ReconFile      [MAX_LAYERS];
   Double* cfg_fQP            [MAX_LAYERS];
+#if Q0074_SEI_COLOR_MAPPING
+  string* cfg_seiColorMappingFile[MAX_LAYERS];
+#endif
 
 #if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
@@ -432,6 +435,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+#if Q0074_SEI_COLOR_MAPPING
+    cfg_seiColorMappingFile[layer] = &m_acLayerCfg[layer].m_cSeiColorMappingFile;
+#endif
 #if LAYER_CTB
     // coding unit (CU) definition
     cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
@@ -615,6 +621,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
+#if Q0074_SEI_COLOR_MAPPING
+  ("SEIColorMappingFile%d", cfg_seiColorMappingFile, string(""), MAX_LAYERS, "File Containing SEI Color Mapping data")
+#endif
 #else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
@@ -709,7 +718,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   ("IntraPeriod,-ip",         m_iIntraPeriod,              -1, "Intra period in frames, (-1: only first frame)")
 #endif
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR 3:RecPointSEI)")
+#else
   ("DecodingRefreshType,-dr", m_iDecodingRefreshType,       0, "Intra refresh type (0:none 1:CRA 2:IDR)")
+#endif
   ("GOPSize,g",               m_iGOPSize,                   1, "GOP size of temporal structure")
   // motion options
   ("FastSearch",              m_iFastSearch,                1, "0:Full search  1:Diamond  2:PMVFAST")
@@ -904,6 +917,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIToneMapTargetPivotValue",                      cfg_targetPivotValue,              string(""), "Array of pivot point")
   ("SEIToneMapCameraIsoSpeedIdc",                     m_cameraIsoSpeedIdc,                        0, "Indicates the camera ISO speed for daylight illumination")
   ("SEIToneMapCameraIsoSpeedValue",                   m_cameraIsoSpeedValue,                    400, "Specifies the camera ISO speed for daylight illumination of Extended_ISO")
+  ("SEIToneMapExposureIndexIdc",                      m_exposureIndexIdc,                         0, "Indicates the exposure index setting of the camera")
+  ("SEIToneMapExposureIndexValue",                    m_exposureIndexValue,                     400, "Specifies the exposure index setting of the cameran of Extended_ISO")
   ("SEIToneMapExposureCompensationValueSignFlag",     m_exposureCompensationValueSignFlag,        0, "Specifies the sign of ExposureCompensationValue")
   ("SEIToneMapExposureCompensationValueNumerator",    m_exposureCompensationValueNumerator,       0, "Specifies the numerator of ExposureCompensationValue")
   ("SEIToneMapExposureCompensationValueDenomIdc",     m_exposureCompensationValueDenomIdc,        2, "Specifies the denominator of ExposureCompensationValue")
@@ -953,6 +968,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  ("CGS",     m_nCGSFlag , 0, "whether CGS is enabled")
+  ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
+  ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
+  ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
 #endif
   ;
   
@@ -1201,7 +1222,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numSamplePredRefLayers )
         {
-          printf( "NumSamplePredRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumSamplePredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_samplePredRefLayerIds + i ) = atoi( samplePredRefLayerId );
@@ -1210,7 +1231,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numSamplePredRefLayers )
       {
-        printf( "NumSamplePredRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumSamplePredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }
@@ -1232,7 +1253,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numMotionPredRefLayers )
         {
-          printf( "NumMotionPredRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumMotionPredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_motionPredRefLayerIds + i ) = atoi( motionPredRefLayerId );
@@ -1241,7 +1262,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numMotionPredRefLayers )
       {
-        printf( "NumMotionPredRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumMotionPredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }
@@ -1271,7 +1292,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         if( i >= m_acLayerCfg[layer].m_numActiveRefLayers )
         {
-          printf( "NumActiveRefLayers: The number of columns whose width are defined is larger than the allowed number of columns.\n" );
+          printf( "NumActiveRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
         *( m_acLayerCfg[layer].m_predLayerIds + i ) = atoi( refLayerId );
@@ -1280,7 +1301,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       if( i < m_acLayerCfg[layer].m_numActiveRefLayers )
       {
-        printf( "NumActiveRefLayers: The width of some columns is not defined.\n" );
+        printf( "NumActiveRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
       }
     }
@@ -1473,6 +1494,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if (m_interLayerConstrainedTileSetsSEIEnabled)
   {
@@ -1586,7 +1608,15 @@ Void TAppEncCfg::xCheckParameter()
 #if !SVC_EXTENSION 
   xConfirmPara( (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0" );
 #endif
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 3,                   "Decoding Refresh Type must be comprised between 0 and 3 included" );
+  if(m_iDecodingRefreshType == 3)
+  {
+    xConfirmPara( !m_recoveryPointSEIEnabled,                                               "When using RecoveryPointSEI messages as RA points, recoveryPointSEI must be enabled" );
+  }
+#else
   xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                   "Decoding Refresh Type must be equal to 0, 1 or 2" );
+#endif
 #if !SVC_EXTENSION
   xConfirmPara( m_iQP <  -6 * (m_internalBitDepthY - 8) || m_iQP > 51,                    "QP exceeds supported range (-QpBDOffsety to 51)" );
 #endif
@@ -2159,6 +2189,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_toneMapTargetBitDepth < 1 || (m_toneMapTargetBitDepth > 16 && m_toneMapTargetBitDepth < 255) , "SEIToneMapTargetBitDepth must be in rage 1 to 16 or equal to 255");
     xConfirmPara( m_toneMapModelId < 0 || m_toneMapModelId > 4 , "SEIToneMapModelId must be in rage 0 to 4");
     xConfirmPara( m_cameraIsoSpeedValue == 0, "SEIToneMapCameraIsoSpeedValue shall not be equal to 0");
+    xConfirmPara( m_exposureIndexValue  == 0, "SEIToneMapExposureIndexValue shall not be equal to 0");
     xConfirmPara( m_extendedRangeWhiteLevel < 100, "SEIToneMapExtendedRangeWhiteLevel should be greater than or equal to 100");
     xConfirmPara( m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue, "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than SEIToneMapNominalBlackLevelLumaCodeValue");
     xConfirmPara( m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
@@ -2285,6 +2316,9 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layer].m_auxId > 0 && m_acLayerCfg[layer].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
   }
 #endif 
+#if Q0048_CGS_3D_ASYMLUT
+  xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
+#endif
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2543,6 +2577,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
 #endif
   printf("\n\n");
   

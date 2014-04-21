@@ -80,7 +80,11 @@ public:
 #else
   Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
 #endif
-  Void  parsePPS                  ( TComPPS* /*pcPPS*/ ) {}
+  Void  parsePPS                  ( TComPPS* /*pcPPS*/ 
+#if Q0048_CGS_3D_ASYMLUT
+    , TCom3DAsymLUT * /*pc3DAsymLUT*/ , Int /*nLayerID*/
+#endif
+    ) {}
 
   Void  parseSliceHeader          ( TComSlice*& /*rpcSlice*/, ParameterSetManagerDecoder* /*parameterSetManager*/) {}
   Void  parseTerminatingBit       ( UInt& ruiBit );

@@ -89,6 +89,9 @@ protected:
   Void xParseSEITemporalLevel0Index   (SEITemporalLevel0Index &sei, UInt payloadSize);
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
+#if Q0074_SEI_COLOR_MAPPING
+  Void xParseSEIColorMappingInfo      (SEIColorMappingInfo& sei, UInt payloadSize);
+#endif
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);

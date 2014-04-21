@@ -230,7 +230,7 @@ public:
 class TComPTL
 {
   ProfileTierLevel m_generalPTL;
-  ProfileTierLevel m_subLayerPTL    [MAX_TLAYER-1];      // max. value of max_sub_layers_minus1 is MAX_TLAYER-1 ( = 6 )
+  ProfileTierLevel m_subLayerPTL    [MAX_TLAYER-1];      // max. value of max_sub_layers_minus1 is MAX_TLAYER-1 (= 6)
   Bool m_subLayerProfilePresentFlag [MAX_TLAYER-1];
   Bool m_subLayerLevelPresentFlag   [MAX_TLAYER-1];
 
@@ -580,7 +580,7 @@ private:
 #endif 
 #if VPS_TSLAYERS
   Bool       m_maxTSLayersPresentFlag;
-  UInt       m_maxTSLayerMinus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+  UInt       m_maxTSLayerMinus1[MAX_LAYERS];
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
@@ -683,6 +683,7 @@ private:
 #if O0109_MOVE_VPS_VUI_FLAG
   Bool       m_vpsVuiPresentFlag;
 #endif
+  Bool       m_vpsExtensionFlag;
 
 #if O0164_MULTI_LAYER_HRD
   Bool       m_vpsVuiBspHrdPresentFlag;
@@ -1130,9 +1131,11 @@ Void      deriveNumberOfSubDpbs();
 #endif
 
 #if O0109_MOVE_VPS_VUI_FLAG
-  Bool   getVpsVuiPresentFlag()                                 { return m_vpsVuiPresentFlag; }
-  Void   setVpsVuiPresentFlag(Bool x)                           { m_vpsVuiPresentFlag = x; }
+  Bool   getVpsVuiPresentFlag()                        { return m_vpsVuiPresentFlag; }
+  Void   setVpsVuiPresentFlag(Bool x)                  { m_vpsVuiPresentFlag = x;    }
 #endif
+  Bool   getVpsExtensionFlag()                         { return m_vpsExtensionFlag;  }
+  Void   setVpsExtensionFlag(Bool x)                   { m_vpsExtensionFlag = x;     }
 
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
@@ -1740,6 +1743,11 @@ private:
 #if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int      m_nCGSFlag;
+  Int      m_nCGSOutputBitDepthY; // not for syntax
+  Int      m_nCGSOutputBitDepthC; // not for syntax
+#endif
 #endif
 
 public:
@@ -1881,6 +1889,14 @@ public:
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int     getCGSFlag()                { return m_nCGSFlag;  }
+  Void    setCGSFlag(Int n)           { m_nCGSFlag = n;     }
+  Int     getCGSOutputBitDepthY()     { return m_nCGSOutputBitDepthY;  }
+  Void    setCGSOutputBitDepthY(Int n){ m_nCGSOutputBitDepthY = n;     }
+  Int     getCGSOutputBitDepthC()     { return m_nCGSOutputBitDepthC;  }
+  Void    setCGSOutputBitDepthC(Int n){ m_nCGSOutputBitDepthC = n;     }
+#endif
 };
 
 typedef struct
@@ -1962,6 +1978,12 @@ private:
 #endif  
   UInt        m_colFromL0Flag;  // collocated picture from List0 flag
   
+#if SETTING_NO_OUT_PIC_PRIOR
+  Bool        m_noOutputPriorPicsFlag;
+  Bool        m_noRaslOutputFlag;
+  Bool        m_handleCraAsBlaFlag;
+#endif
+  
   UInt        m_colRefIdx;
   UInt        m_maxNumMergeCand;
 
@@ -2029,11 +2051,6 @@ private:
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool        m_bCrossLayerBLAFlag;
 #endif
-#if NO_OUTPUT_OF_PRIOR_PICS
-  Bool        m_noOutputOfPriorPicsFlag;
-  Bool        m_noRaslOutputFlag;
-  Bool        m_handleCraAsBlaFlag;
-#endif
 #if POC_RESET_IDC_SIGNALLING
   Int         m_pocResetIdc;
   Int         m_pocResetPeriodId;
@@ -2042,6 +2059,9 @@ private:
   Int         m_pocMsbVal;
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int        m_nCGSOverWritePPS;  // for optimization, not output to bitstream
 #endif
 #endif //SVC_EXTENSION
 
@@ -2129,14 +2149,11 @@ public:
   Void      setNalUnitType      ( NalUnitType e )               { m_eNalUnitType      = e;      }
   NalUnitType getNalUnitType    () const                        { return m_eNalUnitType;        }
   Bool      getRapPicFlag       ();  
-#if NO_OUTPUT_OF_PRIOR_PICS
-  Bool      getBlaPicFlag       ();
-  Bool      getCraPicFlag       ();
-#endif
   Bool      getIdrPicFlag       ()                              { return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP; }
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
 #if NO_CLRAS_OUTPUT_FLAG
+  Void      decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag );
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
 #else
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
@@ -2162,6 +2179,10 @@ public:
 
 #if SVC_EXTENSION
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
+#if Q0048_CGS_3D_ASYMLUT
+  Int       getCGSOverWritePPS()              { return m_nCGSOverWritePPS;    }
+  Void      setCGSOverWritePPS(Int n)         { m_nCGSOverWritePPS = n;       }
+#endif
 #else
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false );
 #endif
@@ -2202,11 +2223,27 @@ public:
   Void applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComReferencePictureSet *RPSList);
   Bool isTemporalLayerSwitchingPoint( TComList<TComPic*>& rcListPic );
   Bool isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic*>& rcListPic );
-  Int       checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
-  Void      createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  Int  checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0, Bool bUseRecoveryPoint = false);
+  Void createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess = 0, Bool bUseRecoveryPoint = false);
+#else
+  Int  checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
+  Void createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
+#endif
 
   Void setMaxNumMergeCand               (UInt val )         { m_maxNumMergeCand = val;                    }
   UInt getMaxNumMergeCand               ()                  { return m_maxNumMergeCand;                   }
+
+#if SETTING_NO_OUT_PIC_PRIOR
+  Void setNoOutputPriorPicsFlag         ( Bool val )        { m_noOutputPriorPicsFlag = val;                    }
+  Bool getNoOutputPriorPicsFlag         ()                  { return m_noOutputPriorPicsFlag;                   }
+
+  Void setNoRaslOutputFlag              ( Bool val )        { m_noRaslOutputFlag = val;                    }
+  Bool getNoRaslOutputFlag              ()                  { return m_noRaslOutputFlag;                   }
+
+  Void setHandleCraAsBlaFlag            ( Bool val )        { m_handleCraAsBlaFlag = val;                    }
+  Bool getHandleCraAsBlaFlag            ()                  { return m_handleCraAsBlaFlag;                   }
+#endif
 
   Void setSliceMode                     ( UInt uiMode )     { m_sliceMode = uiMode;                     }
   UInt getSliceMode                     ()                  { return m_sliceMode;                       }
@@ -2359,17 +2396,6 @@ public:
 #endif
 
   Void setILRPic(TComPic **pcIlpPic);
-#if NO_OUTPUT_OF_PRIOR_PICS
-  Void setNoOutputOfPriorPicsFlag(const Bool x)   { m_noOutputOfPriorPicsFlag = x;    }
-  Bool getNoOutputOfPriorPicsFlag()               { return m_noOutputOfPriorPicsFlag; }
-
-  Void setNoRaslOutputFlag    ( const Bool val )   { m_noRaslOutputFlag = val;  }
-  Bool getNoRaslOutputFlag    ()                   { return m_noRaslOutputFlag; }
-
-  Void setHandleCraAsBlaFlag  ( const Bool val )   { m_handleCraAsBlaFlag = val;  }
-  Bool getHandleCraAsBlaFlag  ()                   { return m_handleCraAsBlaFlag; }
-
-#endif
 #if POC_RESET_IDC_SIGNALLING
   Int       getPocResetIdc       ()                              { return m_pocResetIdc;       }
   Void      setPocResetIdc       (Int b)                         { m_pocResetIdc = b;          }
@@ -2385,6 +2411,11 @@ public:
   Void      setPocMsbValPresentFlag (Bool x)                     { m_pocMsbValPresentFlag = x; }
   Bool      getPocMsbValRequiredFlag ()                           { return m_pocMsbValRequiredFlag; }
   Void      setPocMsbValRequiredFlag (Bool x)                     { m_pocMsbValRequiredFlag = x; }
+#endif
+
+#if NO_OUTPUT_OF_PRIOR_PICS
+  Bool      getBlaPicFlag       ();
+  Bool      getCraPicFlag       ();
 #endif
 
 #endif //SVC_EXTENSION
