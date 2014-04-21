@@ -1678,10 +1678,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #if O0092_0094_DEPENDENCY_CONSTRAINT
-  for(i = 1; i < vps->getMaxLayers(); i++)
-  {
-    vps->setNumRefLayers(vps->getLayerIdInNuh(i));   // identify the number of direct and indirect reference layers of current layer and set recursiveRefLayersFlags
-  }
+  vps->setNumRefLayers();
+
   if(vps->getMaxLayers() > MAX_REF_LAYERS)
   {
     for(i = 1;i < vps->getMaxLayers(); i++)
