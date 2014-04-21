@@ -1319,10 +1319,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 
 #if O0092_0094_DEPENDENCY_CONSTRAINT
-  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    vps->setNumRefLayers(vps->getLayerIdInNuh(layerCtr));   // identify the number of direct and indirect reference layers of current layer and set recursiveRefLayersFlags
-  }
+  vps->setNumRefLayers();
+
   if(vps->getMaxLayers() > MAX_REF_LAYERS)
   {
     for(UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
