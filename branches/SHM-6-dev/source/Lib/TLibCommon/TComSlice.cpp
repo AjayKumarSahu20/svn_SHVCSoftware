@@ -549,9 +549,9 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                             );
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-        Int sameBitDepth = g_bitDepthYLayer[m_layerId] - g_bitDepthYLayer[refLayerId] + g_bitDepthCLayer[m_layerId] - g_bitDepthCLayer[refLayerId];
+        Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
-        if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepth 
+        if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepths 
 #if Q0048_CGS_3D_ASYMLUT
           || getPPS()->getCGSFlag()
 #endif
