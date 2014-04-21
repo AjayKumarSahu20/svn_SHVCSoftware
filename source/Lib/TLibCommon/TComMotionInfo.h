@@ -140,11 +140,6 @@ public:
   Void    setAllRefIdx ( Int iRefIdx,                 PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx=0 );
   Void    setAllMvField( TComMvField const & mvField, PartSize eMbMode, Int iPartAddr, UInt uiDepth, Int iPartIdx=0 );
 
-#if AVC_SYNTAX
-  Void           setMv    (TComMv cMv,  Int iIdx )         { m_pcMv    [iIdx] = cMv; }
-  Void           setRefIdx(Int iRefIdx, Int iIdx   )       { m_piRefIdx[iIdx] =  iRefIdx; }
-#endif
-
   Void setNumPartition( Int iNumPart )
   {
     m_uiNumPartition = iNumPart;
@@ -158,6 +153,11 @@ public:
   }
   
   Void compress(Char* pePredMode, Int scale); 
+
+#if AVC_SYNTAX
+  Void           setMv    (TComMv cMv,  Int iIdx )         { m_pcMv    [iIdx] = cMv; }
+  Void           setRefIdx(Int iRefIdx, Int iIdx   )       { m_piRefIdx[iIdx] =  iRefIdx; }
+#endif
 
 #if REF_IDX_MFM
   Void setMvField( TComMvField const& mvField, Int iIdx )

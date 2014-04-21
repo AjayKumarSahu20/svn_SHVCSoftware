@@ -48,6 +48,9 @@
 class TDecSbac;
 class TDecCavlc;
 class ParameterSetManagerDecoder;
+#if Q0048_CGS_3D_ASYMLUT
+class TCom3DAsymLUT;
+#endif
 
 //! \ingroup TLibDecoder
 //! \{
@@ -70,7 +73,11 @@ public:
 #else
   virtual Void  parseSPS                  ( TComSPS* pcSPS )                                      = 0;
 #endif
-  virtual Void  parsePPS                  ( TComPPS* pcPPS )                                      = 0;
+  virtual Void  parsePPS                  ( TComPPS* pcPPS 
+#if Q0048_CGS_3D_ASYMLUT
+    , TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID
+#endif
+    )                                      = 0;
 
   virtual Void parseSliceHeader          ( TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)       = 0;
 
@@ -137,7 +144,12 @@ public:
 #else
   Void    decodeSPS                   ( TComSPS* pcSPS     )    { m_pcEntropyDecoderIf->parseSPS(pcSPS);                    }
 #endif
-  Void    decodePPS                   ( TComPPS* pcPPS )    { m_pcEntropyDecoderIf->parsePPS(pcPPS);                    }
+
+#if Q0048_CGS_3D_ASYMLUT
+  Void    decodePPS                   ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT, Int nLayerID )    { m_pcEntropyDecoderIf->parsePPS(pcPPS, pc3DAsymLUT , nLayerID );                     }
+#else
+  Void    decodePPS                   ( TComPPS* pcPPS )    { m_pcEntropyDecoderIf->parsePPS(pcPPS );  }
+#endif
   Void    decodeSliceHeader           ( TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)  { m_pcEntropyDecoderIf->parseSliceHeader(rpcSlice, parameterSetManager);         }
 
   Void    decodeTerminatingBit        ( UInt& ruiIsLast )       { m_pcEntropyDecoderIf->parseTerminatingBit(ruiIsLast);     }

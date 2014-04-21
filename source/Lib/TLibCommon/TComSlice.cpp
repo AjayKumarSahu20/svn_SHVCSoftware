@@ -74,6 +74,11 @@ TComSlice::TComSlice()
 , m_pcPPS                         ( NULL )
 , m_pcPic                         ( NULL )
 , m_colFromL0Flag                 ( 1 )
+#if SETTING_NO_OUT_PIC_PRIOR
+, m_noOutputPriorPicsFlag         ( false )
+, m_noRaslOutputFlag              ( false )
+, m_handleCraAsBlaFlag            ( false )
+#endif
 , m_colRefIdx                     ( 0 )
 , m_uiTLayer                      ( 0 )
 , m_bTLayerSwitchingFlag          ( false )
@@ -109,11 +114,6 @@ TComSlice::TComSlice()
 , m_bDiscardableFlag              ( false )
 #if O0149_CROSS_LAYER_BLA_FLAG
 , m_bCrossLayerBLAFlag            ( false )
-#endif
-#if NO_OUTPUT_OF_PRIOR_PICS
-, m_noOutputOfPriorPicsFlag       ( false )
-, m_noRaslOutputFlag              ( false )
-, m_handleCraAsBlaFlag            ( false )
 #endif
 #if POC_RESET_IDC_SIGNALLING
 , m_pocResetIdc                   ( 0 )
@@ -535,9 +535,10 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       for( i=0; i < m_activeNumILRRefIdx; i++ )
       {
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
+        UInt refLayerId = m_pcVPS->getRefLayerId( m_layerId, refLayerIdc );
 #if RESAMPLING_CONSTRAINT_BUG_FIX
 #if O0098_SCALED_REF_LAYER_ID
-        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_pcVPS->getRefLayerId( m_layerId, m_interLayerPredLayerIdc[i] ));
+        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
 #endif
@@ -547,10 +548,20 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                              (scalEL.getWindowBottomOffset() == 0 ) 
                             );
 #endif
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        Int sameBitDepth = g_bitDepthYLayer[m_layerId] - g_bitDepthYLayer[refLayerId] + g_bitDepthCLayer[m_layerId] - g_bitDepthCLayer[refLayerId];
+
+        if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepth 
+#if Q0048_CGS_3D_ASYMLUT
+          || getPPS()->getCGSFlag()
+#endif
+          ) // ratio 1x
+#else
         if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
+#endif
         {
 #if MOTION_RESAMPLING_CONSTRAINT
-          UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, m_pcVPS->getRefLayerId( m_layerId, refLayerIdc ) ) + 1;
+          UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, refLayerId ) + 1;
 
           if( predType & 0x1 )
           {
@@ -595,12 +606,12 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   {
     // The variable NumPocTotalCurr is derived as specified in subclause 7.4.7.2. It is a requirement of bitstream conformance that the following applies to the value of NumPocTotalCurr:
 #if SVC_EXTENSION    // inter-layer prediction is allowed for BLA, CRA pictures of nuh_layer_id>0
-    // – If the current picture is a BLA or CRA picture with nuh_layer_id equal to 0, the value of NumPocTotalCurr shall be equal to 0.
-    // – Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
+    // - If the current picture is a BLA or CRA picture with nuh_layer_id equal to 0, the value of NumPocTotalCurr shall be equal to 0.
+    // - Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
     if (getRapPicFlag() && getLayerId()==0)
 #else
-    // – If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
-    // – Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
+    // - If the current picture is a BLA or CRA picture, the value of NumPocTotalCurr shall be equal to 0.
+    // - Otherwise, when the current picture contains a P or B slice, the value of NumPocTotalCurr shall not be equal to 0.
     if (getRapPicFlag())
 #endif
     {
@@ -1007,6 +1018,51 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
 #if NO_CLRAS_OUTPUT_FLAG
+Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag )
+{
+  if( !isIRAP() )
+  {
+    return;
+  }
+
+  Int pocCurr = getPOC();
+  TComPic* rpcPic = NULL;
+
+  // When the current picture is an IRAP picture with nuh_layer_id equal to 0 and NoClrasOutputFlag is equal to 1, 
+  // all reference pictures with any value of nuh_layer_id currently in the DPB (if any) are marked as "unused for reference".
+  if( m_layerId == 0 && noClrasOutputFlag )
+  {
+    // mark all pictures for all layers as not used for reference
+    TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+    while( iterPic != rcListPic.end() )
+    {
+      rpcPic = *(iterPic);
+      if( rpcPic->getPOC() != pocCurr )
+      {
+        rpcPic->getSlice(0)->setReferenced(false);
+      }
+      iterPic++;
+    }
+  }
+
+  // When the current picture is an IRAP picture with NoRaslOutputFlag equal to 1, 
+  // all reference pictures with nuh_layer_id equal to currPicLayerId currently in the DPB (if any) are marked as "unused for reference".
+  if( m_noRaslOutputFlag )
+  {
+    // mark all pictures of a current layer as not used for reference
+    TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+    while( iterPic != rcListPic.end() )
+    {
+      rpcPic = *(iterPic);
+      if( rpcPic->getPOC() != pocCurr && rpcPic->getLayerId() == m_layerId )
+      {
+        rpcPic->getSlice(0)->setReferenced(false);
+      }
+      iterPic++;
+    }
+  }
+}
+
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag)
 #else
 Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic)
@@ -1050,9 +1106,33 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
     {
       pocCRA = pocCurr;
     }
+#if EFFICIENT_FIELD_IRAP
+    bRefreshPending = true;
+#endif
   }
   else // CRA or No DR
   {
+#if EFFICIENT_FIELD_IRAP
+    if(getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_IDR_N_LP || getAssociatedIRAPType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
+    {
+      if (bRefreshPending==true && pocCurr > m_iLastIDR) // IDR reference marking pending 
+      {
+        TComList<TComPic*>::iterator        iterPic       = rcListPic.begin();
+        while (iterPic != rcListPic.end())
+        {
+          rpcPic = *(iterPic);
+          if (rpcPic->getPOC() != pocCurr && rpcPic->getPOC() != m_iLastIDR)
+          {
+            rpcPic->getSlice(0)->setReferenced(false);
+          }
+          iterPic++;
+        }
+        bRefreshPending = false; 
+      }
+    }
+    else
+    {
+#endif
     if (bRefreshPending==true && pocCurr > pocCRA) // CRA reference marking pending 
     {
       TComList<TComPic*>::iterator        iterPic       = rcListPic.begin();
@@ -1067,6 +1147,9 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
       }
       bRefreshPending = false; 
     }
+#if EFFICIENT_FIELD_IRAP
+    }
+#endif
     if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA ) // CRA picture found
     {
       bRefreshPending = true; 
@@ -1322,7 +1405,11 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
     // Any picture that has PicOutputFlag equal to 1 that precedes an IRAP picture
     // in decoding order shall precede the IRAP picture in output order.
     // (Note that any picture following in output order would be present in the DPB)
+#if !SETTING_NO_OUT_PIC_PRIOR
     if(rpcPic->getSlice(0)->getPicOutputFlag() == 1)
+#else
+    if(rpcPic->getSlice(0)->getPicOutputFlag() == 1 && !this->getNoOutputPriorPicsFlag())
+#endif
     {
       if(nalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP    ||
          nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP    ||
@@ -1501,8 +1588,16 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
+#if ALLOW_RECOVERY_POINT_AS_RAP
+Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess, Bool bUseRecoveryPoint)
+#else
 Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess)
+#endif
 {
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  Int atLeastOneUnabledByRecoveryPoint = 0;
+  Int atLeastOneFlushedByPreviousIDR = 0;
+#endif
   TComPic* rpcPic;
   Int i, isAvailable;
   Int atLeastOneLost = 0;
@@ -1523,7 +1618,18 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
       {
         if(rpcPic->getIsLongTerm() && (rpcPic->getPicSym()->getSlice(0)->getPOC()) == pReferencePictureSet->getPOC(i) && rpcPic->getSlice(0)->isReferenced())
         {
+#if ALLOW_RECOVERY_POINT_AS_RAP
+          if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess)
+          {
+            isAvailable = 0;
+          }
+          else
+          {
           isAvailable = 1;
+        }
+#else
+          isAvailable = 1;
+#endif
         }
       }
       else 
@@ -1533,7 +1639,18 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
         Int refPoc = pReferencePictureSet->getPOC(i) & (pocCycle-1);
         if(rpcPic->getIsLongTerm() && curPoc == refPoc && rpcPic->getSlice(0)->isReferenced())
         {
+#if ALLOW_RECOVERY_POINT_AS_RAP
+          if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess)
+          {
+            isAvailable = 0;
+          }
+          else
+          {
           isAvailable = 1;
+        }
+#else
+          isAvailable = 1;
+#endif
         }
       }
     }
@@ -1556,9 +1673,22 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
         
         if (rpcPic->getSlice(0)->isReferenced() && curPoc == refPoc)
         {
+#if ALLOW_RECOVERY_POINT_AS_RAP
+          if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess)
+          {
+            isAvailable = 0;
+          }
+          else
+          {
           isAvailable = 1;
           rpcPic->setIsLongTerm(1);
           break;
+        }
+#else
+          isAvailable = 1;
+          rpcPic->setIsLongTerm(1);
+          break;
+#endif
         }
       }
     }
@@ -1586,6 +1716,16 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
           iPocLost=this->getPOC() + pReferencePictureSet->getDeltaPOC(i);
         }
       }
+#if ALLOW_RECOVERY_POINT_AS_RAP
+      else if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess)
+      {
+        atLeastOneUnabledByRecoveryPoint = 1;
+      }
+      else if(bUseRecoveryPoint && (this->getAssociatedIRAPType()==NAL_UNIT_CODED_SLICE_IDR_N_LP || this->getAssociatedIRAPType()==NAL_UNIT_CODED_SLICE_IDR_W_RADL))
+      {
+        atLeastOneFlushedByPreviousIDR = 1;
+      }
+#endif
     }
   }  
   // loop through all short-term pictures in the Reference Picture Set
@@ -1601,7 +1741,18 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
 
       if(!rpcPic->getIsLongTerm() && rpcPic->getPicSym()->getSlice(0)->getPOC() == this->getPOC() + pReferencePictureSet->getDeltaPOC(i) && rpcPic->getSlice(0)->isReferenced())
       {
+#if ALLOW_RECOVERY_POINT_AS_RAP
+        if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess)
+        {
+          isAvailable = 0;
+        }
+        else
+        {
         isAvailable = 1;
+      }
+#else
+        isAvailable = 1;
+#endif
       }
     }
     // report that a picture is lost if it is in the Reference Picture Set
@@ -1628,8 +1779,24 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
           iPocLost=this->getPOC() + pReferencePictureSet->getDeltaPOC(i);
         }
       }
+#if ALLOW_RECOVERY_POINT_AS_RAP
+      else if(bUseRecoveryPoint && this->getPOC() > pocRandomAccess)
+      {
+        atLeastOneUnabledByRecoveryPoint = 1;
+      }
+      else if(bUseRecoveryPoint && (this->getAssociatedIRAPType()==NAL_UNIT_CODED_SLICE_IDR_N_LP || this->getAssociatedIRAPType()==NAL_UNIT_CODED_SLICE_IDR_W_RADL))
+      {
+        atLeastOneFlushedByPreviousIDR = 1;
+      }
+#endif
     }
+    }
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  if(atLeastOneUnabledByRecoveryPoint || atLeastOneFlushedByPreviousIDR)
+  {
+    return -1;
   }    
+#endif
   if(atLeastOneLost)
   {
     return iPocLost+1;
@@ -1646,7 +1813,11 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
 
 /** Function for constructing an explicit Reference Picture Set out of the available pictures in a referenced Reference Picture Set
 */
+#if ALLOW_RECOVERY_POINT_AS_RAP
+Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess, Bool bUseRecoveryPoint)
+#else
 Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP)
+#endif
 {
   TComPic* rpcPic;
   Int i, j;
@@ -1672,6 +1843,9 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
         // and should be added to the explicit Reference Picture Set
         pcRPS->setDeltaPOC(k, pReferencePictureSet->getDeltaPOC(i));
         pcRPS->setUsed(k, pReferencePictureSet->getUsed(i) && (!isRAP));
+#if ALLOW_RECOVERY_POINT_AS_RAP
+        pcRPS->setUsed(k, pcRPS->getUsed(k) && !(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess) ); 
+#endif
         if(pcRPS->getDeltaPOC(k) < 0)
         {
           nrOfNegativePictures++;
@@ -1684,13 +1858,37 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
       }
     }
   }
+#if EFFICIENT_FIELD_IRAP
+  Bool useNewRPS = false;
+  // if current picture is complimentary field associated to IRAP, add the IRAP to its RPS. 
+  if(m_pcPic->isField())
+  {
+    TComList<TComPic*>::iterator iterPic = rcListPic.begin();
+    while ( iterPic != rcListPic.end())
+    {
+      rpcPic = *(iterPic++);
+      if(rpcPic->getPicSym()->getSlice(0)->getPOC() == this->getAssociatedIRAPPOC() && this->getAssociatedIRAPPOC() == this->getPOC()+1)
+      {
+        pcRPS->setDeltaPOC(k, 1);
+        pcRPS->setUsed(k, true);
+        nrOfPositivePictures++;
+        k ++;
+        useNewRPS = true;
+      }
+    }
+  }
+#endif
   pcRPS->setNumberOfNegativePictures(nrOfNegativePictures);
   pcRPS->setNumberOfPositivePictures(nrOfPositivePictures);
   pcRPS->setNumberOfPictures(nrOfNegativePictures+nrOfPositivePictures);
   // This is a simplistic inter rps example. A smarter encoder will look for a better reference RPS to do the 
   // inter RPS prediction with.  Here we just use the reference used by pReferencePictureSet.
   // If pReferencePictureSet is not inter_RPS_predicted, then inter_RPS_prediction is for the current RPS also disabled.
-  if (!pReferencePictureSet->getInterRPSPrediction())
+  if (!pReferencePictureSet->getInterRPSPrediction()
+#if EFFICIENT_FIELD_IRAP
+    || useNewRPS
+#endif
+    )
   {
     pcRPS->setInterRPSPrediction(false);
     pcRPS->setNumRefIdc(0);
@@ -1887,7 +2085,14 @@ UInt TComSlice::getChromaFormatIdc()
 #if O0096_REP_FORMAT_INDEX
   if( layerId == 0 )
   {
-    retVal = sps->getChromaFormatIdc();
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
+    }
+    else
+    {
+      retVal = sps->getChromaFormatIdc();
+    }
   }
   else
   {
@@ -2033,7 +2238,11 @@ TComVPS::TComVPS()
 , m_picRatePresentVpsFlag     (false)
 #endif
 #if REPN_FORMAT_IN_VPS
+#if Q0195_REP_FORMAT_CLEANUP
+, m_repFormatIdxPresentFlag   (false)
+#else
 , m_repFormatIdxPresentFlag   (true)
+#endif
 , m_vpsNumRepFormats          (1)
 #endif
 #if VIEW_ID_RELATED_SIGNALING 
@@ -2305,26 +2514,26 @@ Void TComVPS::setWppNotInUseFlag(Bool x)
 #if O0092_0094_DEPENDENCY_CONSTRAINT
 Void TComVPS::setRefLayersFlags(Int currLayerId)
 {
-  for (Int i = 0; i < getNumDirectRefLayers(currLayerId); i++)
+  for (Int i = 0; i < m_numDirectRefLayers[currLayerId]; i++)
   {
     UInt refLayerId = getRefLayerId(currLayerId, i);
-    setRecursiveRefLayerFlag(currLayerId, refLayerId, true);
+    m_recursiveRefLayerFlag[currLayerId][refLayerId] = true;
     for (Int k = 0; k < MAX_NUM_LAYER_IDS; k++)
     {
-      setRecursiveRefLayerFlag(currLayerId, k, (getRecursiveRefLayerFlag(currLayerId, k) | getRecursiveRefLayerFlag(refLayerId, k)));
+      m_recursiveRefLayerFlag[currLayerId][k] = m_recursiveRefLayerFlag[currLayerId][k] | m_recursiveRefLayerFlag[refLayerId][k];
     }
   }
 }
 
 Void TComVPS::setNumRefLayers(Int currLayerId)
 {
-  for (Int i = 0; i <= getMaxLayers(); i++)
+  for (Int i = 0; i < m_uiMaxLayers; i++)
   {
-    UInt iNuhLId = getLayerIdInNuh(i);
+    UInt iNuhLId = m_layerIdInNuh[i];
     setRefLayersFlags(iNuhLId);
     for (UInt j = 0; j < MAX_NUM_LAYER_IDS; j++)
     {
-      m_numberRefLayers[iNuhLId] += (getRecursiveRefLayerFlag(iNuhLId, j) == true ? 1 : 0);
+      m_numberRefLayers[iNuhLId] += (m_recursiveRefLayerFlag[iNuhLId][j] == true ? 1 : 0);
     }
   }
 }
@@ -3525,14 +3734,21 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
     UInt refLayerIdc = m_interLayerPredLayerIdc[i];
 
     TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
+
     //set reference picture POC of each ILP reference 
     Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
     assert(thePoc == pcRefPicBL->getPOC());
 
     ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
 
-    //copy reference pictures marking from the reference layer
-    ilpPic[refLayerIdc]->getSlice(0)->copySliceInfo(pcRefPicBL->getSlice(0));
+    //copy layer id from the reference layer    
+    ilpPic[refLayerIdc]->setLayerId( pcRefPicBL->getLayerId() );
+
+    //copy slice type from the reference layer
+    ilpPic[refLayerIdc]->getSlice(0)->setSliceType( pcRefPicBL->getSlice(0)->getSliceType() );
+
+    //copy "used for reference"
+    ilpPic[refLayerIdc]->getSlice(0)->setReferenced( pcRefPicBL->getSlice(0)->isReferenced() );
 
     for( Int refList = 0; refList < 2; refList++ )
     {
@@ -3554,6 +3770,12 @@ Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
       { 
         ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
         ilpPic[refLayerIdc]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+      }
+
+      //copy reference pictures' marking from the reference layer
+      for(Int j = 0; j < MAX_NUM_REF + 1; j++)
+      {
+        ilpPic[refLayerIdc]->getSlice(0)->setIsUsedAsLongTerm(refList, j, pcRefPicBL->getSlice(0)->getIsUsedAsLongTerm(refList, j));
       }
     }
   }

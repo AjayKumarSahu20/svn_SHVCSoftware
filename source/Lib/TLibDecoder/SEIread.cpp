@@ -92,6 +92,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
+#if Q0074_SEI_COLOR_MAPPING
+  case SEI::COLOR_MAPPING_INFO:
+    fprintf( g_hTrace, "===========Color Mapping Info SEI message ===========\n");
+    break;
+#endif
   case SEI::SOP_DESCRIPTION:
     fprintf( g_hTrace, "=========== SOP Description SEI message ===========\n");
     break;
@@ -279,6 +284,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
+#if Q0074_SEI_COLOR_MAPPING
+    case SEI::COLOR_MAPPING_INFO:
+      sei = new SEIColorMappingInfo;
+      xParseSEIColorMappingInfo((SEIColorMappingInfo&) *sei, payloadSize);
+      break;
+#endif
     case SEI::SOP_DESCRIPTION:
       sei = new SEISOPDescription;
       xParseSEISOPDescription((SEISOPDescription&) *sei, payloadSize);
@@ -517,23 +528,18 @@ Void SEIReader::xParseSEIDecodedPictureHash(SEIDecodedPictureHash& sei, UInt /*p
 Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt /*payloadSize*/)
 {
   UInt val; 
-  READ_CODE(4, val, "active_vps_id");      sei.activeVPSId = val; 
-  READ_FLAG( val, "full_random_access_flag");  sei.m_fullRandomAccessFlag = val ? true : false;
-  READ_FLAG( val, "no_param_set_update_flag"); sei.m_noParamSetUpdateFlag = val ? true : false;
+  READ_CODE(4, val, "active_video_parameter_set_id");   sei.activeVPSId = val; 
+  READ_FLAG(   val, "self_contained_cvs_flag");         sei.m_selfContainedCvsFlag = val ? true : false;
+  READ_FLAG(   val, "no_parameter_set_update_flag");    sei.m_noParameterSetUpdateFlag = val ? true : false;
   READ_UVLC(   val, "num_sps_ids_minus1"); sei.numSpsIdsMinus1 = val;
 
-  sei.activeSeqParamSetId.resize(sei.numSpsIdsMinus1 + 1);
+  sei.activeSeqParameterSetId.resize(sei.numSpsIdsMinus1 + 1);
   for (Int i=0; i < (sei.numSpsIdsMinus1 + 1); i++)
   {
-    READ_UVLC(val, "active_seq_param_set_id");  sei.activeSeqParamSetId[i] = val; 
+    READ_UVLC(val, "active_seq_parameter_set_id");      sei.activeSeqParameterSetId[i] = val; 
   }
 
-  UInt uibits = m_pcBitstream->getNumBitsUntilByteAligned(); 
-  
-  while(uibits--)
-  {
-    READ_FLAG(val, "alignment_bit");
-  }
+  xParseByteAlign();
 }
 
 Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*payloadSize*/, TComSPS *sps)
@@ -811,10 +817,15 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
       }
     case 4:
       {
-        READ_CODE( 8, val, "camera_iso_speed_idc" );                     sei.m_cameraIsoSpeedValue = val;
-        if( sei.m_cameraIsoSpeedValue == 255) //Extended_ISO
+        READ_CODE( 8, val, "camera_iso_speed_idc" );                     sei.m_cameraIsoSpeedIdc = val;
+        if( sei.m_cameraIsoSpeedIdc == 255) //Extended_ISO
         {
           READ_CODE( 32,   val,   "camera_iso_speed_value" );            sei.m_cameraIsoSpeedValue = val;
+        }
+        READ_CODE( 8, val, "exposure_index_idc" );                       sei.m_exposureIndexIdc = val;
+        if( sei.m_exposureIndexIdc == 255) //Extended_ISO
+        {
+          READ_CODE( 32,   val,   "exposure_index_value" );              sei.m_exposureIndexValue = val;
         }
         READ_FLAG( val, "exposure_compensation_value_sign_flag" );       sei.m_exposureCompensationValueSignFlag = val;
         READ_CODE( 16, val, "exposure_compensation_value_numerator" );   sei.m_exposureCompensationValueNumerator = val;
@@ -836,6 +847,93 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
 
   xParseByteAlign();
 }
+
+#if Q0074_SEI_COLOR_MAPPING
+Void SEIReader::xParseSEIColorMappingInfo(SEIColorMappingInfo& sei, UInt /*payloadSize*/)
+{
+  UInt  uiVal;
+  Int   iVal;
+
+  READ_UVLC( uiVal, "colour_map_id" );          sei.m_colorMapId = uiVal;
+  READ_FLAG( uiVal, "colour_map_cancel_flag" ); sei.m_colorMapCancelFlag = uiVal;
+  if( !sei.m_colorMapCancelFlag ) 
+  {
+    READ_FLAG( uiVal, "colour_map_persistence_flag" );                sei.m_colorMapPersistenceFlag = uiVal;
+    READ_FLAG( uiVal, "colour_map_video_signal_type_present_flag" );  sei.m_colorMap_video_signal_type_present_flag = uiVal;
+    if ( sei.m_colorMap_video_signal_type_present_flag ) {
+      READ_FLAG( uiVal,     "colour_map_video_full_range_flag" );     sei.m_colorMap_video_full_range_flag = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_primaries" );                 sei.m_colorMap_primaries = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_transfer_characteristics" );  sei.m_colorMap_transfer_characteristics = uiVal;
+      READ_CODE( 8, uiVal,  "colour_map_matrix_coeffs" );             sei.m_colorMap_matrix_coeffs = uiVal;
+    }
+  }
+
+  READ_CODE( 5, uiVal,  "colour_map_coded_data_bit_depth" );  sei.m_colour_map_coded_data_bit_depth = uiVal;
+  READ_CODE( 5, uiVal,  "colour_map_target_bit_depth" );      sei.m_colour_map_target_bit_depth = uiVal;
+  READ_UVLC( uiVal, "colour_map_model_id" );                  sei.m_colorMapModelId = uiVal;
+
+  assert( sei.m_colorMapModelId == 0 );
+  
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    READ_CODE( 8, uiVal, "num_input_pivots_minus1[i]" ); sei.m_num_input_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
+    sei.m_coded_input_pivot_value[i]   = new Int[ sei.m_num_input_pivots[i] ];
+    sei.m_target_input_pivot_value[i]  = new Int[ sei.m_num_input_pivots[i] ];
+    if( uiVal > 0 )
+    {
+      for ( Int j=0 ; j<sei.m_num_input_pivots[i] ; j++ )
+      {
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_input_pivot_value[i][j]" );  sei.m_coded_input_pivot_value[i][j] = uiVal;
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_input_pivot_value[i][j]" ); sei.m_target_input_pivot_value[i][j] = uiVal;
+      }
+    }
+    else
+    {
+      sei.m_coded_input_pivot_value[i][0]  = 0;
+      sei.m_target_input_pivot_value[i][0] = 0;
+      sei.m_coded_input_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
+      sei.m_target_input_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
+    }
+  }
+
+  READ_FLAG( uiVal,           "matrix_flag" ); sei.m_matrix_flag = uiVal;
+  if( sei.m_matrix_flag )
+  {
+    READ_CODE( 4, uiVal,         "log2_matrix_denom" ); sei.m_log2_matrix_denom = uiVal;
+    for ( Int i=0 ; i<3 ; i++ )
+    {
+      for ( Int j=0 ; j<3 ; j++ )
+      {
+        READ_SVLC( iVal,        "matrix_coef[i][j]" ); sei.m_matrix_coef[i][j] = iVal;
+      }
+    }
+  }
+
+  for ( Int i=0 ; i<3 ; i++ )
+  {
+    READ_CODE( 8, uiVal, "num_output_pivots_minus1[i]" ); sei.m_num_output_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
+    sei.m_coded_output_pivot_value[i]   = new Int[ sei.m_num_output_pivots[i] ];
+    sei.m_target_output_pivot_value[i]  = new Int[ sei.m_num_output_pivots[i] ];
+    if( uiVal > 0 )
+    {
+      for ( Int j=0 ; j<sei.m_num_output_pivots[i] ; j++ )
+      {
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_output_pivot_value[i][j]" );  sei.m_coded_output_pivot_value[i][j] = uiVal;
+        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_output_pivot_value[i][j]" ); sei.m_target_output_pivot_value[i][j] = uiVal;
+      }
+    }
+    else
+    {
+      sei.m_coded_output_pivot_value[i][0]  = 0;
+      sei.m_target_output_pivot_value[i][0] = 0;
+      sei.m_coded_output_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
+      sei.m_target_output_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
+    }
+  }
+
+  xParseByteAlign();
+}
+#endif
 
 Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize)
 {

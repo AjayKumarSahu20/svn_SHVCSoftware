@@ -44,6 +44,9 @@
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/SEI.h"
+#if Q0048_CGS_3D_ASYMLUT
+#include "TLibCommon/TCom3DAsymLUT.h"
+#endif
 
 #include "TDecGop.h"
 #include "TDecEntropy.h"
@@ -59,6 +62,51 @@ struct InputNALUnit;
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
+
+#if Q0074_SEI_COLOR_MAPPING
+class TDecColorMapping
+{
+  Int   m_colorMapId;
+  Bool  m_colorMapCancelFlag;
+  Bool  m_colorMapPersistenceFlag;
+  Bool  m_colorMap_video_signal_type_present_flag;
+  Bool  m_colorMap_video_full_range_flag;
+  Int   m_colorMap_primaries;
+  Int   m_colorMap_transfer_characteristics;
+  Int   m_colorMap_matrix_coeffs;
+  Int   m_colorMapModelId;
+
+  Int   m_colour_map_coded_data_bit_depth;
+  Int   m_colour_map_target_bit_depth;
+
+  Int   m_num_input_pivots[3];
+  Int*  m_coded_input_pivot_value[3];
+  Int*  m_target_input_pivot_value[3];
+  
+  Bool  m_matrix_flag;
+  Int   m_log2_matrix_denom;
+  Int   m_matrix_coef[3][3];
+
+  Int   m_num_output_pivots[3];
+  Int*  m_coded_output_pivot_value[3];
+  Int*  m_target_output_pivot_value[3];
+
+  Bool  m_lut1d_computed[3];
+  Int*  m_lut1d_input[3];
+  Int*  m_lut1d_output[3];
+  TComPicYuv* m_pcColorMappingPic[2];
+
+public:
+  TDecColorMapping();
+  ~TDecColorMapping();
+
+  Bool        getColorMappingFlag()                     { return(!m_colorMapCancelFlag);};
+
+  Void        setColorMapping( SEIMessages m_SEIs );
+  Void        setColorMapping( Int bitDepthY, Int bitDepthC );
+  TComPicYuv* getColorMapping( TComPicYuv* pPicYuvRec, Int iTop=0, Int curlayerId=0 );
+};// END CLASS DEFINITION TDecColorMapping
+#endif
 
 /// decoder class
 class TDecTop
@@ -78,6 +126,10 @@ private:
 
   // functional classes
   TComPrediction          m_cPrediction;
+#if Q0048_CGS_3D_ASYMLUT
+  TCom3DAsymLUT           m_c3DAsymLUTPPS;
+  TComPicYuv*             m_pColorMappedPic;
+#endif
   TComTrQuant             m_cTrQuant;
   TDecGop                 m_cGopDecoder;
   TDecSlice               m_cSliceDecoder;
@@ -103,6 +155,12 @@ private:
 #endif
   Bool                    m_prevSliceSkipped;
   Int                     m_skippedPOC;
+#if SETTING_NO_OUT_PIC_PRIOR  
+  Bool                    m_bFirstSliceInBitstream;
+  Int                     m_lastPOCNoOutputPriorPics;
+  Bool                    m_isNoOutputPriorPics;
+  Bool                    m_craNoRaslOutputFlag;    //value of variable NoRaslOutputFlag of the last CRA pic
+#endif
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
@@ -113,8 +171,10 @@ private:
   TDecTop**               m_ppcTDecTop;
 #if AVC_BASE
   fstream*                m_pBLReconFile;
+#if !REPN_FORMAT_IN_VPS
   Int                     m_iBLSourceWidth;
-  Int                     m_iBLSourceHeight;  
+  Int                     m_iBLSourceHeight;
+#endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int                     m_numDirectRefLayers;
@@ -135,19 +195,20 @@ private:
   fstream*               m_pBLSyntaxFile;
 #endif
 
-#if NO_CLRAS_OUTPUT_FLAG
+#if NO_CLRAS_OUTPUT_FLAG  
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
-  Bool                    m_noOutputOfPriorPicsFlags;
-
-  Bool                   m_bRefreshPending;
 #endif
 #if RESOLUTION_BASED_DPB
-  Int                    m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
-                                          // When new VPS is activated, this should be re-initialized to -1
+  Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
+                                           // When new VPS is activated, this should be re-initialized to -1
 #endif
 public:
+#if Q0074_SEI_COLOR_MAPPING
+  TDecColorMapping* m_ColorMapping;
+#endif
+
   TDecTop();
   virtual ~TDecTop();
   
@@ -165,7 +226,17 @@ public:
   
   Void  deletePicBuffer();
 
+  
+  TComSPS* getActiveSPS() { return m_parameterSetManagerDecoder.getActiveSPS(); }
+
+
   Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+#if SETTING_NO_OUT_PIC_PRIOR  
+  Void  checkNoOutputPriorPics (TComList<TComPic*>*& rpcListPic);
+  Bool  getNoOutputPriorPicsFlag ()         { return m_isNoOutputPriorPics; }
+  Void  setNoOutputPriorPicsFlag (Bool val) { m_isNoOutputPriorPics = val; }
+#endif
+
 #if SVC_EXTENSION
 #if EARLY_REF_PIC_MARKING
   Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
@@ -211,9 +282,11 @@ public:
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
   fstream*  getBLReconFile() { return m_pBLReconFile; }
+#if !REPN_FORMAT_IN_VPS
   Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
   Int       getBLWidth() { return  m_iBLSourceWidth; }
   Int       getBLHeight() { return  m_iBLSourceHeight; }
+#endif
 #endif
 #if REPN_FORMAT_IN_VPS
   Void      xInitILRP(TComSlice *slice);
@@ -238,12 +311,6 @@ public:
   Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
   fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
-#if NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  Bool getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
-#endif
-#endif
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);
@@ -260,7 +327,11 @@ protected:
 #endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
-  Void      xDecodePPS();
+  Void      xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+    TCom3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if NO_CLRAS_OUTPUT_FLAG
@@ -270,10 +341,9 @@ protected:
   Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
-#if !NO_OUTPUT_OF_PRIOR_PICS
-  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+  Void initAsymLut(TComSlice *pcSlice);
 #endif
 };// END CLASS DEFINITION TDecTop
 

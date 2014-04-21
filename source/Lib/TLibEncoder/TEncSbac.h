@@ -91,12 +91,13 @@ public:
 
   Void  codeVPS                 ( TComVPS* pcVPS );
   Void  codeSPS                 ( TComSPS* pcSPS     );
-  Void  codePPS                 ( TComPPS* pcPPS     );
+  Void  codePPS                 ( TComPPS* pcPPS     
+#if Q0048_CGS_3D_ASYMLUT
+    , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+    );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
-#if POC_RESET_IDC_SIGNALLING
-  Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
-#endif
   Void  codeTerminatingBit      ( UInt uilsLast      );
   Void  codeSliceFinish         ();
   Void  codeSaoMaxUvlc    ( UInt code, UInt maxSymbol );
@@ -107,6 +108,9 @@ public:
   Void  codeScalingList      ( TComScalingList* /*scalingList*/     ){ assert (0);  return;};
 
 #if SVC_EXTENSION
+#if POC_RESET_IDC_SIGNALLING
+  Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
+#endif
   Void codeSAOOffsetParam(Int compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal);
   Void codeSAOBlkParam(SAOBlkParam& saoBlkParam
                     , UInt* saoMaxOffsetQVal

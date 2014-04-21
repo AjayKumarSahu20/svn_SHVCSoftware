@@ -41,7 +41,6 @@
 #define SVC_EXTENSION                    1
 
 #define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
-
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
@@ -49,7 +48,11 @@
 #define RANDOM_ACCESS_SEI_FIX            1
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define Q0200_CONFORMANCE_BL_SIZE        1       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
+#if P0312_VERT_PHASE_ADJ
+#define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
+#endif
 #define P0130_EOB                        1      ///< JCTVC-P0130, set layer Id of EOB NALU to be fixed to 0
 #define P0307_REMOVE_VPS_VUI_OFFSET      1      ///< JCTVC-P0307, remove implementation related to VPS VUI offset signalling
 #define P0307_VPS_NON_VUI_EXTENSION      1      ///< JCTVC-P0307, implementation related to NON VUI VPS Extension signalling
@@ -80,12 +83,18 @@
 #define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
 
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
+#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
 
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
 #define O0194_JOINT_US_BITSHIFT          1      ///< JCTVC-O0194: Joint Upsampling and bit-shift
 #endif
+#define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
+#if Q0048_CGS_3D_ASYMLUT
+#define O0194_WEIGHTED_PREDICTION_CGS    0
+#else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
+#endif
 #define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
 #define VPS_NUH_LAYER_ID                 1      ///< JCTVC-N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
 #define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
@@ -184,6 +193,7 @@
 #define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
+#define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
 #if REF_IDX_MFM
 #define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
 #endif
@@ -225,11 +235,17 @@
 #define O0096_REP_FORMAT_INDEX           1      ///< JCTVC-O0096: identify SPS rep_format() with an index into the lists of formats in VPS extension.
 #define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
+#define Q0195_REP_FORMAT_CLEANUP         1      ///< JCTVC-Q0195: restructureing of rep_format() signaling
+#define REP_FORMAT_FIX                   1      ///< update_rep_format_flag should be inferred to be equal to 0
+
 #define RESAMPLING_CONSTRAINT_BUG_FIX    1
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 
 #define O0153_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-O0153: alt output layer flag
 #define P0300_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-P0300: alt output layer flag
+
+#define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
+#define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_output_layer_set and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
@@ -263,10 +279,24 @@ enum ScalabilityType
 
 //! \ingroup TLibCommon
 //! \{
+#define HARMONIZE_GOP_FIRST_FIELD_COUPLE  1
+#define FIX_FIELD_DEPTH                 1
+#define EFFICIENT_FIELD_IRAP            1
+#define ALLOW_RECOVERY_POINT_AS_RAP     1
 #define BUGFIX_INTRAPERIOD 1
 #define SAO_ENCODE_ALLOW_USE_PREDEBLOCK 1
 
+#define SAO_SGN_FUNC 1
+
 #define FIX1172 1 ///< fix ticket #1172
+
+#define SETTING_PIC_OUTPUT_MARK     1
+#define SETTING_NO_OUT_PIC_PRIOR    1
+#define FIX_EMPTY_PAYLOAD_NAL       1
+#define FIX_WRITING_OUTPUT          1
+#define FIX_OUTPUT_EOS              1
+
+#define FIX_POC_CRA_NORASL_OUTPUT   1
 
 #define MAX_NUM_PICS_IN_SOP           1024
 

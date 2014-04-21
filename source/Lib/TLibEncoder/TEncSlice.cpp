@@ -224,7 +224,19 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   // depth computation based on GOP size
   Int depth;
   {
+#if FIX_FIELD_DEPTH    
+    Int poc = rpcSlice->getPOC();
+    if(isField)
+    {
+      poc = (poc/2)%(m_pcCfg->getGOPSize()/2);
+    }
+    else
+    {
+      poc = poc%m_pcCfg->getGOPSize();   
+    }
+#else
     Int poc = rpcSlice->getPOC()%m_pcCfg->getGOPSize();
+#endif
     if ( poc == 0 )
     {
       depth = 0;
@@ -247,13 +259,44 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
         depth++;
       }
     }
+#if FIX_FIELD_DEPTH  
+#if HARMONIZE_GOP_FIRST_FIELD_COUPLE
+    if(poc != 0)
+    {
+#endif
+    if(isField && rpcSlice->getPOC()%2 == 1)
+    {
+      depth ++;
+    }
+#if HARMONIZE_GOP_FIRST_FIELD_COUPLE
+  }
+#endif
+#endif
   }
 
   // slice type
   SliceType eSliceType;
 
   eSliceType=B_SLICE;
+#if EFFICIENT_FIELD_IRAP
+  if(!(isField && pocLast == 1))
+  {
+#endif // EFFICIENT_FIELD_IRAP
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  if(m_pcCfg->getDecodingRefreshType() == 3)
+  {
+    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0             || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+  }
+  else
+  {
   eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+  }
+#else
+  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+#endif
+#if EFFICIENT_FIELD_IRAP
+  }
+#endif
 
   rpcSlice->setSliceType    ( eSliceType );
 
@@ -422,7 +465,27 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 
 #if HB_LAMBDA_FOR_LDC
   // restore original slice type
+  
+#if EFFICIENT_FIELD_IRAP
+  if(!(isField && pocLast == 1))
+  {
+#endif // EFFICIENT_FIELD_IRAP
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  if(m_pcCfg->getDecodingRefreshType() == 3)
+  {
+    eSliceType = (pocLast == 0 || (pocCurr)           % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+
+  }
+  else
+  {
   eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+  }
+#else
+  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+#endif
+#if EFFICIENT_FIELD_IRAP
+  }
+#endif // EFFICIENT_FIELD_IRAP
 
 #if SVC_EXTENSION
   if( m_pcCfg->getLayerId() > 0 && m_pcCfg->getNumActiveRefLayers() > 0 )
@@ -543,7 +606,9 @@ Void TEncSlice::resetQP( TComPic* pic, Int sliceQP, Double lambda )
 
   // store lambda
   slice->setSliceQp( sliceQP );
+#if ADAPTIVE_QP_SELECTION
   slice->setSliceQpBase ( sliceQP );
+#endif
   m_pcRdCost ->setLambda( lambda );
   // for RDO
   // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
@@ -1040,7 +1105,9 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       }
 
       m_pcRateCtrl->setRCQP( estQP );
+#if ADAPTIVE_QP_SELECTION
       pcCU->getSlice()->setSliceQpBase( estQP );
+#endif
     }
 
     // run CU encoder

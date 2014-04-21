@@ -53,6 +53,9 @@
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
 #include "SEIwrite.h"
+#if Q0048_CGS_3D_ASYMLUT
+#include "TEnc3DAsymLUT.h"
+#endif
 
 #include "TEncAnalyze.h"
 #include "TEncRateCtrl.h"
@@ -81,6 +84,9 @@ private:
   Int                     m_iGopSize;
   Int                     m_iNumPicCoded;
   Bool                    m_bFirst;
+#if ALLOW_RECOVERY_POINT_AS_RAP
+  Int                     m_iLastRecoveryPicPOC;
+#endif
   
   //  Access channel
   TEncTop*                m_pcEncTop;
@@ -131,6 +137,22 @@ private:
 #if SVC_UPSAMPLING
   TEncSearch*             m_pcPredSearch;                       ///< encoder search class
 #endif  
+#if Q0048_CGS_3D_ASYMLUT
+  TEnc3DAsymLUT           m_Enc3DAsymLUTPicUpdate;
+  TEnc3DAsymLUT           m_Enc3DAsymLUTPPS;
+  TComPicYuv*             m_pColorMappedPic;
+
+  Int m_iTap;
+  const Int (*m_phase_filter)[13];
+  const Int (*m_phase_filter_luma)[13];
+  const Int (*m_phase_filter_chroma)[13];
+  Int m_iM, m_iN;
+  static const Int m_phase_filter_0_t0[4][13];
+  static const Int m_phase_filter_0_t1[4][13];
+  static const Int m_phase_filter_0_t1_chroma[4][13];
+  static const Int m_phase_filter_1[8][13];
+  Int   **m_temp;
+#endif
 #endif
   
 public:
@@ -186,6 +208,9 @@ protected:
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
+#if Q0074_SEI_COLOR_MAPPING
+  SEIColorMappingInfo*    xCreateSEIColorMappingInfo( Char* file );
+#endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
@@ -212,6 +237,25 @@ protected:
 #endif
 #if O0164_MULTI_LAYER_HRD
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
+  Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest);
+  Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
+  inline Short  xClip( Short x , Int bitdepth );
+  Void initDs(Int iWidth, Int iHeight, Int iType);
+  Void filterImg(
+    Pel           *src,
+    Int           iSrcStride,
+    Pel           *dst,
+    Int           iDstStride,
+    Int           height1,  
+    Int           width1,  
+    Int           shift,
+    Int           plane);
+
+  Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
+  Void free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX);
 #endif
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TEncGOP

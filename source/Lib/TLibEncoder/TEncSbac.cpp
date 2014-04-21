@@ -247,7 +247,11 @@ Void TEncSbac::codeSPS( TComSPS* pcSPS )
   return;
 }
 
-Void TEncSbac::codePPS( TComPPS* pcPPS )
+Void TEncSbac::codePPS( TComPPS* pcPPS 
+#if Q0048_CGS_3D_ASYMLUT
+  , TEnc3DAsymLUT * pc3DAsymLUT
+#endif
+  )
 {
   assert (0);
   return;

@@ -254,6 +254,8 @@ protected:
   Int       m_numPivots;
   Int       m_cameraIsoSpeedIdc;
   Int       m_cameraIsoSpeedValue;
+  Int       m_exposureIndexIdc;
+  Int       m_exposureIndexValue;
   Int       m_exposureCompensationValueSignFlag;
   Int       m_exposureCompensationValueNumerator;
   Int       m_exposureCompensationValueDenomIdc;
@@ -265,6 +267,9 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if Q0074_SEI_COLOR_MAPPING
+  Char*     m_pchSEIColorMappingFile;             ///< SEI Color Mapping File (initialized from external file)
+#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -391,6 +396,12 @@ protected:
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   Bool      m_useInterLayerWeightedPred;
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int  m_nCGSFlag;
+  Int  m_nCGSMaxOctantDepth;
+  Int  m_nCGSMaxYPartNumLog2;
+  Int  m_nCGSLUTBit;
 #endif
 public:
   TAppEncCfg();

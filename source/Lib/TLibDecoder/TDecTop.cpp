@@ -78,15 +78,26 @@ TDecTop::TDecTop()
 #endif
   m_prevSliceSkipped = false;
   m_skippedPOC = 0;
+#if SETTING_NO_OUT_PIC_PRIOR
+  m_bFirstSliceInBitstream  = true;
+  m_lastPOCNoOutputPriorPics = -1;
+  m_craNoRaslOutputFlag = false;
+  m_isNoOutputPriorPics = false;
+#endif
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
-  m_firstPicInLayerDecodedFlag = false;
-  m_noOutputOfPriorPicsFlags   = false;
-  m_bRefreshPending            = false;
+  m_firstPicInLayerDecodedFlag = false;  
 #endif
 #if RESOLUTION_BASED_DPB
   m_subDpbIdx = -1;
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  m_pColorMappedPic = NULL;
+#endif
+
+#if Q0074_SEI_COLOR_MAPPING
+  m_ColorMapping = new TDecColorMapping();
 #endif
 }
 
@@ -94,6 +105,17 @@ TDecTop::~TDecTop()
 {
 #if ENC_DEC_TRACE
   fclose( g_hTrace );
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  if(m_pColorMappedPic)
+  {
+    m_pColorMappedPic->destroy();
+    delete m_pColorMappedPic;
+    m_pColorMappedPic = NULL;
+  }
+#endif
+#if Q0074_SEI_COLOR_MAPPING
+  if ( m_ColorMapping )  delete m_ColorMapping;
 #endif
 }
 
@@ -352,7 +374,14 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, i);
         Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
-        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets || !sameBitDepths )
+        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets || !sameBitDepths
+#if Q0048_CGS_3D_ASYMLUT
+          || pcSlice->getPPS()->getCGSFlag() > 0
+#endif
+#if LAYER_CTB
+          || pcTDecTopBase->getActiveSPS()->getMaxCUWidth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUWidth() || pcTDecTopBase->getActiveSPS()->getMaxCUHeight() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUHeight() || pcTDecTopBase->getActiveSPS()->getMaxCUDepth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUDepth()
+#endif
+          )
 #else
         if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets )
 #endif
@@ -502,7 +531,6 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   TComPic*&   pcPic         = m_pcPic;
 
   // Execute Deblock + Cleanup
-
   m_cGopDecoder.filterPicture(pcPic);
 
 #if SYNTAX_OUTPUT
@@ -516,6 +544,24 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
 
   return;
 }
+
+#if SETTING_NO_OUT_PIC_PRIOR
+Void TDecTop::checkNoOutputPriorPics (TComList<TComPic*>*& rpcListPic)
+{
+  if (!rpcListPic || !m_isNoOutputPriorPics) return;
+
+  TComList<TComPic*>::iterator  iterPic   = rpcListPic->begin();
+
+  while (iterPic != rpcListPic->end())
+  {
+    TComPic*& pcPicTmp = *(iterPic++);
+    if (m_lastPOCNoOutputPriorPics != pcPicTmp->getPOC())
+    {
+      pcPicTmp->setOutputMark(false);
+    }
+  }
+}
+#endif
 
 #if EARLY_REF_PIC_MARKING
 Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdSet)
@@ -732,6 +778,51 @@ Void TDecTop::xActivateParameterSets()
   }
 #endif
 
+#if AVC_BASE
+  if( activeVPS->getAvcBaseLayerFlag() )
+  {
+    TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
+    if( m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
+    {
+      UInt refLayerId = 0;
+      RepFormat* repFormat = activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(refLayerId) );
+
+      Int  numReorderPics[MAX_TLAYER];
+      Window conformanceWindow;
+      Window defaultDisplayWindow;
+
+#if AUXILIARY_PICTURES
+#if SVC_UPSAMPLING
+#if AVC_SYNTAX
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#else
+#if SVC_UPSAMPLING
+#if AVC_SYNTAX
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
+#endif
+#endif
+      // it is needed where the VPS is accessed through the slice
+      pBLPic->getSlice(0)->setVPS( activeVPS );
+
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+      g_bitDepthYLayer[0] = repFormat->getBitDepthVpsLuma();
+      g_bitDepthCLayer[0] = repFormat->getBitDepthVpsChroma();
+#endif
+    }
+  }
+#endif
+
 #if P0312_VERT_PHASE_ADJ
   if( activeVPS->getVpsVuiVertPhaseInUseFlag() == 0 )
   {    
@@ -807,6 +898,13 @@ Void TDecTop::xActivateParameterSets()
   g_uiMaxCUDepth  = sps->getMaxCUDepth();
   g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() );
 
+#if Q0074_SEI_COLOR_MAPPING
+  for(Int compID=0; compID<3; compID++)
+  {
+    m_ColorMapping->setColorMapping( compID ? g_bitDepthC : g_bitDepthY, compID );
+  }
+#endif
+
   for (Int i = 0; i < sps->getLog2DiffMaxMinCodingBlockSize(); i++)
   {
     sps->setAMPAcc( i, sps->getUseAMP() );
@@ -842,11 +940,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
   TComPic*&   pcPic         = m_pcPic;
 #if SVC_EXTENSION
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  Bool bFirstSliceInSeq;
-#endif
-#endif
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
@@ -899,20 +992,59 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setAssociatedIRAPPOC(m_pocCRA);
   m_apcSlicePilot->setAssociatedIRAPType(m_associatedIRAPType);
 
-#if NO_OUTPUT_OF_PRIOR_PICS
-  // Infer the value of NoOutputOfPriorPicsFlag
-  if( m_apcSlicePilot->getRapPicFlag() )
+#if SETTING_NO_OUT_PIC_PRIOR
+  //For inference of NoOutputOfPriorPicsFlag
+  if (m_apcSlicePilot->getRapPicFlag())
   {
-    if ( m_apcSlicePilot->getBlaPicFlag() || m_apcSlicePilot->getIdrPicFlag()  || 
-        (m_apcSlicePilot->getCraPicFlag() && m_bFirstSliceInSequence) ||
-        (m_apcSlicePilot->getCraPicFlag() && m_apcSlicePilot->getHandleCraAsBlaFlag()))
+    if ((m_apcSlicePilot->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_apcSlicePilot->getNalUnitType() <= NAL_UNIT_CODED_SLICE_IDR_N_LP) || 
+        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_bFirstSliceInSequence) ||
+        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_apcSlicePilot->getHandleCraAsBlaFlag()))
     {
-      m_apcSlicePilot->setNoRaslOutputFlag( true );
+      m_apcSlicePilot->setNoRaslOutputFlag(true);
+    }
+    //the inference for NoOutputPriorPicsFlag
+    if (!m_bFirstSliceInBitstream && m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoRaslOutputFlag())
+    {
+      if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+      {
+        m_apcSlicePilot->setNoOutputPriorPicsFlag(true);
+      }
     }
     else
     {
-      m_apcSlicePilot->setNoRaslOutputFlag( false );
+      m_apcSlicePilot->setNoOutputPriorPicsFlag(false);
     }
+
+    if(m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+    {
+      m_craNoRaslOutputFlag = m_apcSlicePilot->getNoRaslOutputFlag();
+    }
+  }
+  if (m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoOutputPriorPicsFlag())
+  {
+    m_lastPOCNoOutputPriorPics = m_apcSlicePilot->getPOC();
+    m_isNoOutputPriorPics = true;
+  }
+  else
+  {
+    m_isNoOutputPriorPics = false;
+  }
+
+  //For inference of PicOutputFlag
+  if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)
+  {
+    if ( m_craNoRaslOutputFlag )
+    {
+      m_apcSlicePilot->setPicOutputFlag(false);
+    }
+  }
+#endif
+
+#if FIX_POC_CRA_NORASL_OUTPUT
+  if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_craNoRaslOutputFlag) //Reset POC MSB when CRA has NoRaslOutputFlag equal to 1
+  {
+    Int iMaxPOClsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+    m_apcSlicePilot->setPOC( m_apcSlicePilot->getPOC() & (iMaxPOClsb - 1) );
   }
 #endif
 
@@ -966,7 +1098,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     setNoClrasOutputFlag(false);
   }
 
-  m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
+  m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag );
 #endif
 
   // Derive the value of NoOutputOfPriorPicsFlag
@@ -974,17 +1106,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     if( m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA && m_apcSlicePilot->getNoRaslOutputFlag() )
     {
-      this->setNoOutputOfPriorPicsFlags( true );
+      this->setNoOutputPriorPicsFlag( true );
     }
     else if( m_apcSlicePilot->getRapPicFlag() && m_apcSlicePilot->getNoRaslOutputFlag() )
     {
-      this->setNoOutputOfPriorPicsFlags( m_apcSlicePilot->getNoOutputOfPriorPicsFlag() );
+      this->setNoOutputPriorPicsFlag( m_apcSlicePilot->getNoOutputPriorPicsFlag() );
     }
     else
     {
       if( this->m_ppcTDecTop[0]->getNoClrasOutputFlag() )
       {
-        this->setNoOutputOfPriorPicsFlags( true );
+        this->setNoOutputPriorPicsFlag( true );
       }
     }
   }
@@ -1005,7 +1137,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   }
 #else
   //we should only get a different poc for a new picture (with CTU address==0)
-  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (!m_apcSlicePilot->getSliceCurStartCUAddr()==0))
+  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCUAddr()!=0))
   {
     printf ("Warning, the first slice of a picture might have been lost!\n");
   }
@@ -1049,12 +1181,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_uiPrevLayerId = m_layerId;
 #endif
   }
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-  bFirstSliceInSeq = m_bFirstSliceInSequence;
-#endif
-#endif
   m_bFirstSliceInSequence = false;
+#if SETTING_NO_OUT_PIC_PRIOR  
+  m_bFirstSliceInBitstream  = false;
+#endif
 #if POC_RESET_FLAG
   // This operation would do the following:
   // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
@@ -1215,52 +1345,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 #endif
 
-#if !NO_OUTPUT_OF_PRIOR_PICS
-#if NO_CLRAS_OUTPUT_FLAG
-    if (m_layerId == 0 &&
-        (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
-      || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA))
-    {
-      if (bFirstSliceInSeq)
-      {
-        setNoClrasOutputFlag(true);
-      }
-      else if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
-            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
-            || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
-      {
-        setNoClrasOutputFlag(true);
-      }
-#if O0149_CROSS_LAYER_BLA_FLAG
-      else if ((m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) &&
-               m_apcSlicePilot->getCrossLayerBLAFlag())
-      {
-        setNoClrasOutputFlag(true);
-      }
-#endif
-      else
-      {
-        setNoClrasOutputFlag(false);
-      }
-      if (getNoClrasOutputFlag())
-      {
-        for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
-        {
-          m_ppcTDecTop[i]->setLayerInitializedFlag(false);
-          m_ppcTDecTop[i]->setFirstPicInLayerDecodedFlag(false);
-        }
-      }
-    }
-#endif
-
-#if NO_CLRAS_OUTPUT_FLAG
-    m_apcSlicePilot->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, m_cListPic, getNoClrasOutputFlag());
-#endif
-#else
+#if NO_OUTPUT_OF_PRIOR_PICS
     if ( m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() && getNoClrasOutputFlag() )
     {
       for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
@@ -1272,10 +1357,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff();
-#if !ALIGNED_BUMPING
-    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
-#else
+#if ALIGNED_BUMPING
     m_apcSlicePilot->checkLeadingPictureRestrictions(m_cListPic);
+#else
+    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
 #endif
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
@@ -1514,7 +1599,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
-
+#if Q0200_CONFORMANCE_BL_SIZE
+        Int chromaFormatIdc = pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+        const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
+        widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * TComSPS::getWinUnitX( chromaFormatIdc );
+        heightBL -= ( confBL.getWindowTopOffset() + confBL.getWindowBottomOffset() ) * TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 
@@ -1524,25 +1614,48 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 
+#if Q0048_CGS_3D_ASYMLUT 
+        TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+        if( pcSlice->getPPS()->getCGSFlag() )
+        {
+          if(!m_pColorMappedPic)
+          {
+            initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
+          }
+          m_c3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(),  m_pColorMappedPic );
+          pBaseColRec = m_pColorMappedPic;
+        }
+#endif
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {    
-/*#if O0098_SCALED_REF_LAYER_ID
-          Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
-#else
-          Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif*/
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
-          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+#else
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
+#endif
 #else
 #if O0194_JOINT_US_BITSHIFT
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+#else
           m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
+#else
+#if Q0048_CGS_3D_ASYMLUT 
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
           m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
         }
@@ -1754,7 +1867,11 @@ Void TDecTop::xDecodeSPS()
 #endif //SVC_EXTENSION
 }
 
-Void TDecTop::xDecodePPS()
+Void TDecTop::xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+  TCom3DAsymLUT * pc3DAsymLUT
+#endif
+  )
 {
   TComPPS* pps = new TComPPS();
 
@@ -1762,7 +1879,11 @@ Void TDecTop::xDecodePPS()
   pps->setLayerId( m_layerId );
 #endif
 
-  m_cEntropyDecoder.decodePPS( pps );
+  m_cEntropyDecoder.decodePPS( pps 
+#if Q0048_CGS_3D_ASYMLUT
+    , pc3DAsymLUT , m_layerId 
+#endif
+    );
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
@@ -1808,12 +1929,15 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
       m_parameterSetManagerDecoder.applyPrefetchedPS();
-      assert(seiAps->activeSeqParamSetId.size()>0);
-      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParamSetId[0] ) )
+      assert(seiAps->activeSeqParameterSetId.size()>0);
+      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
     }
+#if Q0074_SEI_COLOR_MAPPING
+    m_ColorMapping->setColorMapping( m_SEIs );
+#endif
   }
 #else
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
@@ -1836,8 +1960,8 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
       m_parameterSetManagerDecoder.applyPrefetchedPS();
-      assert(seiAps->activeSeqParamSetId.size()>0);
-      if (! m_parameterSetManagerDecoder.activateSPSWithSEI(seiAps->activeSeqParamSetId[0] ))
+      assert(seiAps->activeSeqParameterSetId.size()>0);
+      if (! m_parameterSetManagerDecoder.activateSPSWithSEI(seiAps->activeSeqParameterSetId[0] ))
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
@@ -1896,51 +2020,14 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       
     case NAL_UNIT_SPS:
       xDecodeSPS();
-#if AVC_BASE
-      if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
-      {
-        TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
-        if( nalu.m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
-        {
-          // using EL SPS with spsId = 1
-          TComSPS* sps = m_parameterSetManagerDecoder.getPrefetchedSPS(1);
-          Int  numReorderPics[MAX_TLAYER];
-          Window &conformanceWindow = sps->getConformanceWindow();
-          Window defaultDisplayWindow = sps->getVuiParametersPresentFlag() ? sps->getVuiParameters()->getDefaultDisplayWindow() : Window();
-#if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
-#if AVC_SYNTAX
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
-#endif
-#else
-#if SVC_UPSAMPLING
-#if AVC_SYNTAX
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, sps, true);
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
-#else
-          pBLPic->create( m_ppcTDecTop[0]->getBLWidth(), m_ppcTDecTop[0]->getBLHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), onformanceWindow, defaultDisplayWindow, numReorderPics, true);
-#endif
-#endif
-
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-          // set AVC BL bit depth, can be an input parameter from the command line
-          g_bitDepthYLayer[0] = 8;
-          g_bitDepthCLayer[0] = 8;
-#endif
-        }
-      }
-#endif
       return false;
 
     case NAL_UNIT_PPS:
-      xDecodePPS();
+      xDecodePPS(
+#if Q0048_CGS_3D_ASYMLUT
+        &m_c3DAsymLUTPPS
+#endif
+        );
       return false;
       
     case NAL_UNIT_PREFIX_SEI:
@@ -1996,6 +2083,8 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
       return false;
       
+    case NAL_UNIT_FILLER_DATA:
+      return false;
       
     case NAL_UNIT_RESERVED_VCL_N10:
     case NAL_UNIT_RESERVED_VCL_R11:
@@ -2016,7 +2105,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_RESERVED_VCL30:
     case NAL_UNIT_RESERVED_VCL31:
       
-    case NAL_UNIT_FILLER_DATA:
     case NAL_UNIT_RESERVED_NVCL41:
     case NAL_UNIT_RESERVED_NVCL42:
     case NAL_UNIT_RESERVED_NVCL43:
@@ -2303,5 +2391,325 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
   }
 }
 #endif
+
+#if Q0048_CGS_3D_ASYMLUT
+Void TDecTop::initAsymLut(TComSlice *pcSlice)
+{
+  if(m_layerId>0)
+  {
+    if(!m_pColorMappedPic)
+    {
+      Int picWidth    = pcSlice->getPicWidthInLumaSamples();
+      Int picHeight   = pcSlice->getPicHeightInLumaSamples();
+      m_pColorMappedPic = new TComPicYuv;
+      m_pColorMappedPic->create( picWidth, picHeight, pcSlice->getChromaFormatIdc()/*CHROMA_420*/, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    }
+  }
+}
+#endif
+
 #endif //SVC_EXTENSION
+
+#if Q0074_SEI_COLOR_MAPPING
+TDecColorMapping::TDecColorMapping()
+{
+  m_pcColorMappingPic[0]   = NULL;
+  m_pcColorMappingPic[1]   = NULL;
+
+  m_colorMapCancelFlag  = true;
+
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    m_lut1d_computed[i]             = false;
+    m_lut1d_input[i]                = NULL;
+    m_coded_input_pivot_value[i]    = NULL;
+    m_target_input_pivot_value[i]   = NULL;
+  }
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    m_lut1d_output[i]               = NULL;
+    m_coded_output_pivot_value[i]   = NULL;
+    m_target_output_pivot_value[i]  = NULL;
+  }
+}
+
+TDecColorMapping::~TDecColorMapping()
+{
+  if ( m_pcColorMappingPic[0] )  delete m_pcColorMappingPic[0];
+  if ( m_pcColorMappingPic[1] )  delete m_pcColorMappingPic[1];
+
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    if ( m_lut1d_input[i] )               delete  m_lut1d_input[i];
+    if ( m_coded_input_pivot_value[i] )   delete  m_coded_input_pivot_value[i];
+    if ( m_target_input_pivot_value[i] )  delete  m_target_input_pivot_value[i];
+  }
+  for( Int i=0 ; i<3 ; i++ )
+  {
+    if ( m_lut1d_output[i] )               delete  m_lut1d_output[i];
+    if ( m_coded_output_pivot_value[i] )   delete  m_coded_output_pivot_value[i];
+    if ( m_target_output_pivot_value[i] )  delete  m_target_output_pivot_value[i];
+  }
+}
+
+Void  TDecColorMapping::setColorMapping( SEIMessages m_SEIs )
+{
+  SEIMessages colorMappingInfo = getSeisByType(m_SEIs, SEI::COLOR_MAPPING_INFO) ;
+  SEIColorMappingInfo *seiColorMappingInfo = NULL;
+  if (colorMappingInfo.size() !=0)
+  {
+    seiColorMappingInfo = (SEIColorMappingInfo*)(*colorMappingInfo.begin());
+
+    m_colorMapId                              = seiColorMappingInfo->m_colorMapId;
+    m_colorMapCancelFlag                      = seiColorMappingInfo->m_colorMapCancelFlag;
+    if( !m_colorMapCancelFlag )
+    {
+      m_colorMapPersistenceFlag                 = seiColorMappingInfo->m_colorMapPersistenceFlag;
+      m_colorMap_video_signal_type_present_flag = seiColorMappingInfo->m_colorMap_video_signal_type_present_flag;
+      m_colorMap_video_full_range_flag          = seiColorMappingInfo->m_colorMap_video_full_range_flag;
+      m_colorMap_primaries                      = seiColorMappingInfo->m_colorMap_primaries;
+      m_colorMap_transfer_characteristics       = seiColorMappingInfo->m_colorMap_transfer_characteristics;
+      m_colorMap_matrix_coeffs                  = seiColorMappingInfo->m_colorMap_matrix_coeffs;
+      m_colorMapModelId                         = seiColorMappingInfo->m_colorMapModelId;
+
+      m_colour_map_coded_data_bit_depth         = seiColorMappingInfo->m_colour_map_coded_data_bit_depth;
+      m_colour_map_target_bit_depth             = seiColorMappingInfo->m_colour_map_target_bit_depth;
+
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        m_num_input_pivots[i]                 = seiColorMappingInfo->m_num_input_pivots[i];
+        if ( m_coded_input_pivot_value[i] )   delete  m_coded_input_pivot_value[i];
+        if ( m_target_input_pivot_value[i] )  delete  m_target_input_pivot_value[i];
+        m_coded_input_pivot_value[i]          = new Int[ m_num_input_pivots[i] ];
+        m_target_input_pivot_value[i]         = new Int[ m_num_input_pivots[i] ];
+        for( Int j=0 ; j<m_num_input_pivots[i] ; j++ )
+        {
+          m_coded_input_pivot_value[i][j]     = seiColorMappingInfo->m_coded_input_pivot_value[i][j];
+          m_target_input_pivot_value[i][j]    = seiColorMappingInfo->m_target_input_pivot_value[i][j];
+        }
+      }
+
+      m_matrix_flag       = seiColorMappingInfo->m_matrix_flag;
+      m_log2_matrix_denom = m_matrix_flag ? (seiColorMappingInfo->m_log2_matrix_denom) : (0) ;
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        for( Int j=0 ; j<3 ; j++ )
+        {
+          m_matrix_coef[i][j]  = seiColorMappingInfo->m_matrix_coef[i][j];
+        }
+      }
+
+      for( Int i=0 ; i<3 ; i++ )
+      {
+        m_num_output_pivots[i]                 = seiColorMappingInfo->m_num_output_pivots[i];
+        if ( m_coded_output_pivot_value[i] )   delete  m_coded_output_pivot_value[i];
+        if ( m_target_output_pivot_value[i] )  delete  m_target_output_pivot_value[i];
+        m_coded_output_pivot_value[i]          = new Int[ m_num_output_pivots[i] ];
+        m_target_output_pivot_value[i]         = new Int[ m_num_output_pivots[i] ];
+        for( Int j=0 ; j<m_num_output_pivots[i] ; j++ )
+        {
+          m_coded_output_pivot_value[i][j]     = seiColorMappingInfo->m_coded_output_pivot_value[i][j];
+          m_target_output_pivot_value[i][j]    = seiColorMappingInfo->m_target_output_pivot_value[i][j];
+        }
+      }
+
+      memset( m_lut1d_computed, 0, sizeof( m_lut1d_computed ) );
+    }
+  }
+
+}
+
+Void  TDecColorMapping::setColorMapping( Int bitDepth, Int iComp )
+{
+  if( !m_colorMapCancelFlag && !m_lut1d_computed[iComp] )
+  {
+
+    if ( m_lut1d_input[iComp] )   delete m_lut1d_input[iComp];
+    if ( m_lut1d_output[iComp] )  delete m_lut1d_output[iComp];
+
+    m_lut1d_input[iComp]  = new Int[ 1 << bitDepth ];
+    m_lut1d_output[iComp] = new Int[ 1 << bitDepth ];
+
+    Int iShift      = (m_colour_map_coded_data_bit_depth >= bitDepth) ? (m_colour_map_coded_data_bit_depth - bitDepth) : (0);
+    Int iShiftPivot = (m_colour_map_coded_data_bit_depth >= bitDepth) ? (0) : (bitDepth - m_colour_map_coded_data_bit_depth);
+
+    for( Int k=0 ; k<(1<<bitDepth) ; k++ )
+    {
+      Int iSample = k << iShift ;
+      if( m_num_input_pivots[iComp] > 1 )
+      {
+        for( Int iPivot=0 ; iPivot<m_num_input_pivots[iComp] ; iPivot++ )
+        {
+          Int iCodedPrev  = m_coded_input_pivot_value[iComp][iPivot]     << iShiftPivot;
+          Int iCodedNext  = m_coded_input_pivot_value[iComp][iPivot+1]   << iShiftPivot;
+          Int iTargetPrev = m_target_input_pivot_value[iComp][iPivot]    << iShiftPivot;
+          Int iTargetNext = m_target_input_pivot_value[iComp][iPivot+1]  << iShiftPivot;
+          if ( iCodedPrev <= iSample && iSample < iCodedNext )
+          {
+            Float fInterpol = (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) / (Float)(iCodedNext - iCodedPrev) ;
+            m_lut1d_input[iComp][k]  = (Int)( 0.5 + fInterpol );
+            iPivot = m_num_input_pivots[iComp]; // stop
+          }
+        }
+      }
+      else
+      {
+        m_lut1d_input[iComp][k]  = k;
+      }
+    }
+
+    iShift      = ( (m_colour_map_coded_data_bit_depth >= bitDepth) ? (m_colour_map_coded_data_bit_depth - bitDepth) : (0) );
+    Int iOffset = iShift ? (1 << (iShift - 1)) : (0) ;
+    iShiftPivot = (m_colour_map_target_bit_depth >= bitDepth) ? (0) : (bitDepth - m_colour_map_target_bit_depth) ;
+    for( Int k=0 ; k<(1<<bitDepth) ; k++ )
+    {
+      Int iSample = k << iShift;
+      if ( m_num_output_pivots[iComp]>1 )
+      {
+        for( Int iPivot=0 ; iPivot<m_num_output_pivots[iComp] ; iPivot++ )
+        {
+          Int iCodedPrev  = m_coded_output_pivot_value[iComp][iPivot]     << iShiftPivot;
+          Int iCodedNext  = m_coded_output_pivot_value[iComp][iPivot+1]   << iShiftPivot;
+          Int iTargetPrev = m_target_output_pivot_value[iComp][iPivot]    << iShiftPivot;
+          Int iTargetNext = m_target_output_pivot_value[iComp][iPivot+1]  << iShiftPivot;
+          if ( iCodedPrev <= iSample && iSample < iCodedNext )
+          {
+            Float fInterpol =  (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) / (Float)(iCodedNext - iCodedPrev) ;
+            m_lut1d_output[iComp][k]  = ( (Int)(0.5 + fInterpol) + iOffset ) >> iShift ;
+            iPivot = m_num_output_pivots[iComp]; // stop
+          }
+        }
+      }
+      else
+      {
+        m_lut1d_output[iComp][k]  = k;
+      }
+    }
+
+    m_lut1d_computed[iComp] = true;
+  }
+
+}
+
+TComPicYuv* TDecColorMapping::getColorMapping( TComPicYuv* pPicYuvRec, Int iTop, Int curlayerId )
+{
+  if( !m_colorMapCancelFlag )
+  {
+    if( !m_pcColorMappingPic[iTop] )
+    {
+      m_pcColorMappingPic[iTop] = new TComPicYuv;
+#if SVC_EXTENSION
+      m_pcColorMappingPic[iTop]->create( pPicYuvRec->getWidth(), pPicYuvRec->getHeight(), pPicYuvRec->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#else
+      m_pcColorMappingPic[iTop]->create( pPicYuvRec->getWidth(), pPicYuvRec->getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif
+    }
+
+    Int iHeight   = pPicYuvRec->getHeight();
+    Int iWidth    = pPicYuvRec->getWidth();
+    Int iStride   = pPicYuvRec->getStride();
+    Int iCStride  = pPicYuvRec->getCStride();
+
+    Pel* Lum0   = pPicYuvRec->getLumaAddr();
+    Pel* Cb0    = pPicYuvRec->getCbAddr();
+    Pel* Cr0    = pPicYuvRec->getCrAddr();
+    Pel* Lum1   = m_pcColorMappingPic[iTop]->getLumaAddr();
+    Pel* Cb1    = m_pcColorMappingPic[iTop]->getCbAddr();
+    Pel* Cr1    = m_pcColorMappingPic[iTop]->getCrAddr();
+
+#if SVC_EXTENSION
+    Int bitDepthY = g_bitDepthYLayer[curlayerId];
+    Int bitDepthC = g_bitDepthCLayer[curlayerId];
+
+    assert( g_bitDepthY == bitDepthY );
+    assert( g_bitDepthC == bitDepthC );
+#else
+    Int bitDepthY = g_bitDepthY;
+    Int bitDepthC = g_bitDepthC;
+#endif
+
+    Int iYShift = (m_colour_map_target_bit_depth >= bitDepthY) ? (m_colour_map_target_bit_depth - bitDepthY) : (0) ;
+    Int iCShift = (m_colour_map_target_bit_depth >= bitDepthC) ? (m_colour_map_target_bit_depth - bitDepthC) : (0) ;
+    Int offsetY = (1 << (m_log2_matrix_denom+iYShift - 1));
+    Int offsetC = (1 << (m_log2_matrix_denom+iCShift - 1));
+
+    Int   cShift  = 1 ;
+
+    //Pel*  LumPrev0 = Lum0;
+    for( Int y = 0; y < iHeight ; y++ )
+    {
+      Bool  bDoChroma = (y % 2);
+      for( Int x = 0; x < iWidth ; x++ )
+      {
+        Int s1Y = m_lut1d_input[0][ Lum0[x]   ];
+        Int s1U = m_lut1d_input[1][ Cb0[x>>1] ];
+        Int s1V = m_lut1d_input[2][ Cr0[x>>1] ];
+
+        Int s2Y, s2U, s2V;
+        if( m_matrix_flag )
+        {
+          s2Y = ( m_matrix_coef[0][0]*s1Y + m_matrix_coef[0][1]*s1U + m_matrix_coef[0][2]*s1V + offsetY ) >> ( m_log2_matrix_denom + iYShift );
+          //s2Y = ClipBD( s2Y , bitDepthY );
+          s2Y = ClipY( s2Y );
+          Lum1[x]   = m_lut1d_output[0][ s2Y ];
+        }
+        else
+        {
+          s1Y       = ( s1Y + offsetY ) >> iYShift ;
+          //s1Y = ClipBD( s1Y , bitDepthY );
+          s1Y = ClipY( s1Y );
+          Lum1[x]   = m_lut1d_output[0][ s1Y ];
+        }
+
+        if( bDoChroma && (x%2) )
+        {
+          if( m_matrix_flag )
+          {
+            //s1Y = ( m_lut1d_input[0][ Lum0[x] ] + m_lut1d_input[0][ Lum0[x+1] ] + m_lut1d_input[0][ LumPrev0[x] ] + m_lut1d_input[0][ LumPrev0[x+1] ] + 2 ) >> 2 ; 
+            //s1Y = m_lut1d_input[0][ (Lum0[x] + Lum0[x+1] + LumPrev0[x] + LumPrev0[x+1] + 2)>>2 ] ; 
+            s1Y = m_lut1d_input[0][ Lum0[x] ];
+
+            s2U = ( m_matrix_coef[1][0]*s1Y + m_matrix_coef[1][1]*s1U + m_matrix_coef[1][2]*s1V + offsetC ) >> ( m_log2_matrix_denom + iCShift ) ;
+            s2V = ( m_matrix_coef[2][0]*s1Y + m_matrix_coef[2][1]*s1U + m_matrix_coef[2][2]*s1V + offsetC ) >> ( m_log2_matrix_denom + iCShift ) ;
+            //s2U = ClipBD( s2U , bitDepthC );
+            //s2V = ClipBD( s2V , bitDepthC );
+            s2U = ClipC( s2U );
+            s2V = ClipC( s2V );
+            Cb1[x>>cShift] = m_lut1d_output[1][ s2U ];
+            Cr1[x>>cShift] = m_lut1d_output[2][ s2V ];
+          }
+          else
+          {
+            s1U       = ( s1U + offsetC ) >> iCShift ;
+            s1V       = ( s1V + offsetC ) >> iCShift ;
+            //s1U = ClipBD( s1U , bitDepthC );
+            //s1V = ClipBD( s1V , bitDepthC );
+            s1U = ClipC( s1U );
+            s1V = ClipC( s1V );
+            Cb1[x>>cShift] = m_lut1d_output[1][ s1U ];
+            Cr1[x>>cShift] = m_lut1d_output[2][ s1V ];
+          }
+        }
+
+      }
+
+      //LumPrev0 = Lum0;
+      Lum0  += iStride;
+      Lum1  += iStride;
+      if( bDoChroma )
+      {
+        Cb0 += iCStride;
+        Cr0 += iCStride;
+        Cb1 += iCStride;
+        Cr1 += iCStride;
+      }
+    }
+
+    return m_pcColorMappingPic[iTop];
+  }
+
+  return pPicYuvRec; 
+}
+#endif
+
 //! \}

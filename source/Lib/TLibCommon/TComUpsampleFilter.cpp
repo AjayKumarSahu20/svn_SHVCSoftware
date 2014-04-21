@@ -98,9 +98,9 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
-Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
 #else
-Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, bool phaseAlignFlag )
+Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag )
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
@@ -115,9 +115,18 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
   Int i, j;
 
-  //========== Y component upsampling ===========
-  const Window &scalEL = window;
+#if O0194_JOINT_US_BITSHIFT
+  UInt currLayerId = currSlice->getLayerId();
+  UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
+#endif
 
+#if O0098_SCALED_REF_LAYER_ID
+  const Window &scalEL = currSlice->getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
+#else
+  const Window &scalEL = currSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
+#endif
+
+  //========== Y component upsampling ===========
   Int widthBL   = pcBasePic->getWidth ();
   Int heightBL  = pcBasePic->getHeight();
   Int strideBL  = pcBasePic->getStride();
@@ -126,6 +135,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride();
 
+#if Q0200_CONFORMANCE_BL_SIZE
+  Int chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+  const Window &confBL = currSlice->getBaseColPic(refLayerIdc)->getConformanceWindow();
+  Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+  Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
 #if P0312_VERT_PHASE_ADJ
   Bool vertPhasePositionEnableFlag = scalEL.getVertPhasePositionEnableFlag();
   Bool vertPhasePositionFlag = currSlice->getVertPhasePositionFlag( refLayerIdc );
@@ -158,11 +173,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int scaleX = g_posScalingFactor[refLayerIdc][0];
   Int scaleY = g_posScalingFactor[refLayerIdc][1];
 
-#if O0194_JOINT_US_BITSHIFT
-  UInt currLayerId = currSlice->getLayerId();
-  UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
-#endif
-
   // non-normative software optimization for certain simple resampling cases
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
   {
@@ -171,6 +181,13 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if O0194_JOINT_US_BITSHIFT
     Int shift = g_bitDepthYLayer[currLayerId] - g_bitDepthYLayer[refLayerId];
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift = g_bitDepthYLayer[currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthY();
+    }
+    assert( shift >= 0 );
+#endif
 #endif
 
     for( i = 0; i < heightBL; i++ )
@@ -204,6 +221,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
 #if O0194_JOINT_US_BITSHIFT
     shift = g_bitDepthCLayer[currLayerId] - g_bitDepthCLayer[refLayerId];
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift = g_bitDepthCLayer[currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthC();
+    }
+#endif
 #endif
 
     for( i = 0; i < heightBL; i++ )
@@ -253,49 +276,72 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0215_PHASE_ALIGNMENT //for Luma, if Phase 0, then both PhaseX  and PhaseY should be 0. If symmetric: both PhaseX and PhaseY should be 2
     Int   phaseX = 2*phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int   phaseY = 2*phaseAlignFlag;
+#else
     Int   phaseY = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( 2 * phaseAlignFlag );
+#endif
 #else
     Int   phaseY = 2*phaseAlignFlag;
 #endif
 #else
     Int   phaseX = 0;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int   phaseY = 0;
+#else
     Int   phaseY = (vertPhasePositionEnableFlag?(vertPhasePositionFlag *4):(0));
+#endif
 #else
     Int   phaseY = 0;
 #endif
 #endif
-
+ 
 #if ROUNDING_OFFSET
     Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
     Int   addY = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
 #else
-    Int   addX       = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    Int   addY       = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
+    Int   addX = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
+    Int   addY = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
-    Int   deltaX     = 4 * phaseX;
-    Int   deltaY     = 4 * phaseY;
+#if Q0120_PHASE_CALCULATION
+    Int   deltaX = (Int)phaseAlignFlag <<3;
+    Int   deltaY = (((Int)phaseAlignFlag <<3)>>(Int)vertPhasePositionEnableFlag) + ((Int)vertPhasePositionFlag<<3);
+#else
+    Int   deltaX = 4 * phaseX;
+    Int   deltaY = 4 * phaseY;
+#endif
+
+#if Q0200_CONFORMANCE_BL_SIZE
+    deltaX -= ( confBL.getWindowLeftOffset() * xScal ) << 4;
+    deltaY -= ( confBL.getWindowTopOffset() * yScal ) << 4;
+#endif
 
     Int shiftXM4 = shiftX - 4;
     Int shiftYM4 = shiftY - 4;
 
-    widthEL   = pcUsPic->getWidth ();
-    heightEL  = pcUsPic->getHeight();
+    widthEL  = pcUsPic->getWidth ();
+    heightEL = pcUsPic->getHeight();
 
-    widthBL   = pcBasePic->getWidth ();
-    heightBL  = min<Int>( pcBasePic->getHeight(), heightEL );
+    widthBL  = pcBasePic->getWidth ();
+    heightBL = min<Int>( pcBasePic->getHeight(), heightEL );
 
     Int leftStartL = scalEL.getWindowLeftOffset();
     Int rightEndL  = pcUsPic->getWidth() - scalEL.getWindowRightOffset();
     Int topStartL  = scalEL.getWindowTopOffset();
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
-
 #if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthYLayer[refLayerId] - 8;
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift1 = currSlice->getPPS()->getCGSOutputBitDepthY() - 8;
+    }
+#endif
 #else
     Int shift1 = g_bitDepthY - 8;
 #endif
@@ -379,7 +425,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
     widthBL   = pcBasePic->getWidth ();
     heightBL  = pcBasePic->getHeight();
-
     widthEL   = pcUsPic->getWidth () - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
     heightEL  = pcUsPic->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 
@@ -399,21 +444,28 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int topStartC  = scalEL.getWindowTopOffset() >> 1;
     Int bottomEndC = (pcUsPic->getHeight() >> 1) - (scalEL.getWindowBottomOffset() >> 1);
     leftOffset = leftStartC > 0 ? leftStartC : 0;
-
     shiftX = 16;
     shiftY = 16;
 
 #if O0215_PHASE_ALIGNMENT
     Int phaseXC = phaseAlignFlag;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int phaseYC = phaseAlignFlag + 1;
+#else
     Int phaseYC = vertPhasePositionEnableFlag ? ( vertPhasePositionFlag * 4 ) : ( phaseAlignFlag + 1 );
+#endif
 #else
     Int phaseYC = phaseAlignFlag + 1;
 #endif
 #else
     Int phaseXC = 0;
 #if P0312_VERT_PHASE_ADJ
+#if Q0120_PHASE_CALCULATION
+    Int phaseYC = 1;
+#else
     Int phaseYC = vertPhasePositionEnableFlag ? (vertPhasePositionFlag * 4): 1;
+#endif
 #else
     Int phaseYC = 1;
 #endif
@@ -427,8 +479,18 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     addY       = ( ( ( heightBL * (phaseYC) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
 #endif
 
+#if Q0120_PHASE_CALCULATION
+    deltaX     = (Int)phaseAlignFlag << 2;
+    deltaY     = ((( (Int)phaseAlignFlag +1)<<2)>>(Int)vertPhasePositionEnableFlag)+((Int)vertPhasePositionFlag<<3);
+#else
     deltaX     = 4 * phaseXC;
     deltaY     = 4 * phaseYC;
+#endif
+
+#if Q0200_CONFORMANCE_BL_SIZE
+    deltaX -= ( ( confBL.getWindowLeftOffset() * xScal ) >> 1 ) << 4;
+    deltaY  -= ( ( confBL.getWindowTopOffset() * yScal ) >> 1 ) << 4;
+#endif
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
@@ -443,6 +505,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthCLayer[refLayerId] - 8;
+#if Q0048_CGS_3D_ASYMLUT
+    if( currSlice->getPPS()->getCGSFlag() )
+    {
+      shift1 = currSlice->getPPS()->getCGSOutputBitDepthC() - 8;
+    }
+#endif
 #else
     shift1 = g_bitDepthC - 8;
 #endif

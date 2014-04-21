@@ -71,6 +71,9 @@ protected:
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+#if Q0074_SEI_COLOR_MAPPING
+  Void xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
+#endif
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComVPS *vps, TComSPS *sps);

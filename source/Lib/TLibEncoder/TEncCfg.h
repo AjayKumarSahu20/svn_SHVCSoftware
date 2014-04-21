@@ -234,6 +234,8 @@ protected:
   Int       m_numPivots;
   Int       m_cameraIsoSpeedIdc;
   Int       m_cameraIsoSpeedValue;
+  Int       m_exposureIndexIdc;
+  Int       m_exposureIndexValue;
   Int       m_exposureCompensationValueSignFlag;
   Int       m_exposureCompensationValueNumerator;
   Int       m_exposureCompensationValueDenomIdc;
@@ -245,6 +247,9 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if Q0074_SEI_COLOR_MAPPING
+  Char*     m_seiColorMappingFile;
+#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -361,6 +366,12 @@ protected:
   UInt      m_topLeftTileIndex[1024];
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Int  m_nCGSFlag;
+  Int  m_nCGSMaxOctantDepth;
+  Int  m_nCGSMaxYPartNumLog2;
+  Int  m_nCGSLUTBit;
 #endif
 #endif //SVC_EXTENSION
 
@@ -638,6 +649,10 @@ public:
   Int   getTMISEICameraIsoSpeedIdc()                         {  return m_cameraIsoSpeedIdc;  }
   Void  setTMISEICameraIsoSpeedValue(Int b)                  {  m_cameraIsoSpeedValue = b;  }
   Int   getTMISEICameraIsoSpeedValue()                       {  return m_cameraIsoSpeedValue;  }
+  Void  setTMISEIExposureIndexIdc(Int b)                     {  m_exposureIndexIdc = b;  }
+  Int   getTMISEIExposurIndexIdc()                           {  return m_exposureIndexIdc;  }
+  Void  setTMISEIExposureIndexValue(Int b)                   {  m_exposureIndexValue = b;  }
+  Int   getTMISEIExposurIndexValue()                         {  return m_exposureIndexValue;  }
   Void  setTMISEIExposureCompensationValueSignFlag(Int b)    {  m_exposureCompensationValueSignFlag = b;  }
   Int   getTMISEIExposureCompensationValueSignFlag()         {  return m_exposureCompensationValueSignFlag;  }
   Void  setTMISEIExposureCompensationValueNumerator(Int b)   {  m_exposureCompensationValueNumerator = b;  }
@@ -654,6 +669,10 @@ public:
   Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue;  }
   Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue =b;  }
   Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue;  }
+#if Q0074_SEI_COLOR_MAPPING
+  Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
+  Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }
+#endif
   Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
   Int   getFramePackingArrangementSEIEnabled()           { return m_framePackingSEIEnabled; }
   Void  setFramePackingArrangementSEIType(Int b)         { m_framePackingSEIType = b; }
@@ -896,6 +915,16 @@ public:
     }
   }
   UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  Void      setCGSFlag(Int n)             { m_nCGSFlag = n;    }
+  Int       getCGSFlag()                  { return m_nCGSFlag; }
+  Void      setCGSMaxOctantDepth(Int n)   { m_nCGSMaxOctantDepth = n;    }
+  Int       getCGSMaxOctantDepth()        { return m_nCGSMaxOctantDepth; }
+  Void      setCGSMaxYPartNumLog2(Int n)  { m_nCGSMaxYPartNumLog2 = n;    }
+  Int       getCGSMaxYPartNumLog2()       { return m_nCGSMaxYPartNumLog2; }
+  Void      setCGSLUTBit(Int n)           { m_nCGSLUTBit = n;    }
+  Int       getCGSLUTBit()                { return m_nCGSLUTBit; }
 #endif
 #endif
 };
