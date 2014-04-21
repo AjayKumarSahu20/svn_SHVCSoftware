@@ -2525,8 +2525,10 @@ Void TComVPS::setRefLayersFlags(Int currLayerId)
   }
 }
 
-Void TComVPS::setNumRefLayers(Int currLayerId)
+Void TComVPS::setNumRefLayers()
 {
+  memset( m_numberRefLayers, 0, sizeof( m_numberRefLayers ) );
+
   for (Int i = 0; i < m_uiMaxLayers; i++)
   {
     UInt iNuhLId = m_layerIdInNuh[i];

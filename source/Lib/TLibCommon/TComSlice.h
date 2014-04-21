@@ -797,7 +797,7 @@ Void      deriveNumberOfSubDpbs();
   Bool    getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId)              { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
   Void    setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)      { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
   Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
-  Void    setNumRefLayers(Int currLayerId);
+  Void    setNumRefLayers();
 #endif
 #if VPS_RENAME
   UInt    getMaxLayerId()                                       { return m_maxLayerId; }
