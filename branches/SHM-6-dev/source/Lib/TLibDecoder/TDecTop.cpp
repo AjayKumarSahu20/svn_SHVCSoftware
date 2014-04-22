@@ -2272,8 +2272,9 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
       }
     }
   }
-  for ( Int i = 1, mIdx = 0, sIdx = 0; i < m_numLayer; i++ )
+  for( Int i = 1; i < m_numLayer; i++ )
   {
+    Int mIdx = 0, sIdx = 0;
     Int iNuhLId = vps->getLayerIdInNuh(i);
     TDecTop *decTop = (TDecTop *)getLayerDec(iNuhLId);
     for ( Int j = 0; j < i; j++ )
