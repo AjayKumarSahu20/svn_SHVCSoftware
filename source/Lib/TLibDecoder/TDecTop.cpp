@@ -1762,7 +1762,19 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
-#endif 
+#endif
+
+    if( m_layerId > 0 && pcSlice->getEnableTMVPFlag() )
+    {
+      TComPic* refPic = pcSlice->getRefPic(RefPicList(1 - pcSlice->getColFromL0Flag()), pcSlice->getColRefIdx());
+
+      // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
+      // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
+      if( refPic->isILR(pcSlice->getLayerId()) )
+      {
+        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag(refPic->getLayerId()) );
+      }
+    }
 #endif //SVC_EXTENSION
     
     // For generalized B

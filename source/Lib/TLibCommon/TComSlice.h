@@ -883,6 +883,7 @@ Void      deriveNumberOfSubDpbs();
   UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
   Bool   isSamplePredictionType(Int currLayerId, Int refLayerId)                { assert(currLayerId != refLayerId); return ( ( m_directDependencyType[currLayerId][refLayerId] + 1 ) & 1 ) ? true : false; }
+  Bool   isMotionPredictionType(Int currLayerId, Int refLayerId)                { assert(currLayerId != refLayerId); return ( ( ( m_directDependencyType[currLayerId][refLayerId] + 1 ) & 2 ) >> 1 ) ? true : false; }
 #endif
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
