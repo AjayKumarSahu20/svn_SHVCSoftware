@@ -190,6 +190,8 @@ Void TAppEncTop::xInitLibCfg()
   delete [] mapIdxToLayer;
 #endif
 
+  assert( m_numLayers <= MAX_LAYERS );
+
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
