@@ -125,11 +125,10 @@ protected:
   UInt            m_auiMVPIdxCost[AMVP_MAX_NUM_CANDS+1][AMVP_MAX_NUM_CANDS+1]; //th array bounds
 
 #if SVC_EXTENSION
-  TEncTop**       m_ppcTEncTop;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool            m_disableILP;
 #endif
-#endif //SVC_EXTENAION
+#endif //SVC_EXTENSION
 
 public:
   TEncSearch();

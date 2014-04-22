@@ -1542,8 +1542,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       for( i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = i;
+        UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
 #if AVC_BASE
-        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
+        if( refLayerId == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
         {          
           TComPic* pic = *m_ppcTDecTop[0]->getListPic()->begin();
 
@@ -1592,7 +1593,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #if O0098_SCALED_REF_LAYER_ID
-        const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
+        const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 #endif
@@ -1628,36 +1629,40 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 #if SVC_UPSAMPLING
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
-        {    
+        {
+          // check for the sample prediction picture type
+          if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
+          {
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
-          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT 
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
-          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
-          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT 
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
-          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
 #endif
 #endif
 #endif
+          }
         }
         else
         {

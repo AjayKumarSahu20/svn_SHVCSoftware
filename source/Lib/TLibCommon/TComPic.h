@@ -201,7 +201,7 @@ public:
   Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
   TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
 #if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-  Bool          isILR( UInt currLayerId )   { return ( getIsLongTerm() && m_layerId < currLayerId ); }
+  Bool          isILR( UInt currLayerId )   { return ( m_bIsLongTerm && m_layerId < currLayerId ); }
 #endif
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );

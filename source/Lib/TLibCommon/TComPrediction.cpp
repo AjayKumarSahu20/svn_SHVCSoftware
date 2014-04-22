@@ -486,8 +486,15 @@ Void TComPrediction::xPredInterUni ( TComDataCU* pcCU, UInt uiPartAddr, Int iWid
   TComMv      cMv         = pcCU->getCUMvField( eRefPicList )->getMv( uiPartAddr );
   pcCU->clipMv(cMv);
 
+#if SVC_EXTENSION
+  TComPic* refPic = pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx);
+
+  // ILRP has to be for the sample prediction type
+  assert( ( refPic->isILR(pcCU->getLayerId()) && pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerId(), refPic->getLayerId() ) ) || refPic->isILR(pcCU->getLayerId()) == false );
+
 #if REF_IDX_ME_ZEROMV
-  assert( ( pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(pcCU->getLayerId()) && cMv.getHor() == 0 && cMv.getVer() == 0 ) || pcCU->getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(pcCU->getLayerId()) == false );
+  assert( ( refPic->isILR(pcCU->getLayerId()) && cMv.getHor() == 0 && cMv.getVer() == 0 ) || refPic->isILR(pcCU->getLayerId()) == false );
+#endif
 #endif
 
   xPredInterLumaBlk  ( pcCU, pcCU->getSlice()->getRefPic( eRefPicList, iRefIdx )->getPicYuvRec(), uiPartAddr, &cMv, iWidth, iHeight, rpcYuvPred, bi );
