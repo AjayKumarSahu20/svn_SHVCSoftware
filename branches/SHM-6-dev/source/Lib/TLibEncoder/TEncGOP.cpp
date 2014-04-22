@@ -1556,10 +1556,15 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         UInt ColRefIdx     = pcSlice->getColRefIdx();
 
         for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
-        { 
-          if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
+        {
+          RefPicList refList = RefPicList(1 - ColFromL0Flag);
+          TComPic* refPic = pcSlice->getRefPic(refList, colIdx);
+
+          // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
+          // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
+          if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
 #if MFM_ENCCONSTRAINT
-            && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+            && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
             ) 
           { 
@@ -1573,10 +1578,15 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           ColFromL0Flag = 1 - ColFromL0Flag;
           for(Int colIdx = 0; colIdx < pcSlice->getNumRefIdx( RefPicList(1 - ColFromL0Flag) ); colIdx++) 
-          { 
-            if( pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->isILR(m_layerId) 
+          {
+            RefPicList refList = RefPicList(1 - ColFromL0Flag);
+            TComPic* refPic = pcSlice->getRefPic(refList, colIdx);
+
+            // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
+            // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
+            if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
 #if MFM_ENCCONSTRAINT
-              && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getRefPic( RefPicList(1 - ColFromL0Flag), colIdx)->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+              && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
               ) 
             { 
