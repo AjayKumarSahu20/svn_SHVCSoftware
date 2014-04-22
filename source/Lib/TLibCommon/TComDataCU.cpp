@@ -3636,17 +3636,29 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
   if(uhInterDir&0x1)  //list0
   {
     Int refIdxL0 = cMvFieldL0.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->isILR(m_layerId))
+    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_0, refIdxL0);
+
+    if(refPic->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+
+      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
     }
   }
   if(uhInterDir&0x2)  //list1
   {
     Int refIdxL1  = cMvFieldL1.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->isILR(m_layerId))
+    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_1, refIdxL1);
+
+    if(refPic->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+
+      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
     }
   }
 
