@@ -307,6 +307,9 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
       Int numDirectRefLayers = 0;
+
+      assert( layer < MAX_LAYERS );
+
       for (Int i = 0; i < layer; i++)
       {
         if (m_acTEncTop[layer].getSamplePredEnabledFlag(i) || m_acTEncTop[layer].getMotionPredEnabledFlag(i))
