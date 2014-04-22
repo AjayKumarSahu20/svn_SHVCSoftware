@@ -835,8 +835,8 @@ Void      deriveNumberOfSubDpbs();
   Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
 #endif
 #if ILP_SSH_SIG
-    Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
-    Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
+  Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
+  Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
 #endif
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
@@ -882,6 +882,7 @@ Void      deriveNumberOfSubDpbs();
 #endif
   UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
   Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
+  Bool   isSamplePredictionType(Int currLayerId, Int refLayerId)                { assert(currLayerId != refLayerId); return ( ( m_directDependencyType[currLayerId][refLayerId] + 1 ) & 1 ) ? true : false; }
 #endif
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }

@@ -1011,12 +1011,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
-    Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
-    Int activeNumILRRefIdxTmp = 0;
+      Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+      Int activeNumILRRefIdxTmp = 0;
 
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
+        UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
 #if VPS_EXTN_DIRECT_REF_LAYERS
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(refLayerIdc)->getListPic();
 #else
@@ -1040,7 +1041,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
 
 #if O0098_SCALED_REF_LAYER_ID
-        const Window &scalEL = m_pcEncTop->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
+        const Window &scalEL = m_pcEncTop->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = m_pcEncTop->getScaledRefLayerWindow(refLayerIdc);
 #endif
@@ -1088,44 +1089,48 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
 #endif
 #if SVC_UPSAMPLING
-        if( pcPic->isSpatialEnhLayer(refLayerIdc))
+        if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
-#if P0312_VERT_PHASE_ADJ
-          //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
-          if( scalEL.getVertPhasePositionEnableFlag() )
+          // check for the sample prediction picture type
+          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
           {
-            pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
-          }
+#if P0312_VERT_PHASE_ADJ
+            //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
+            if( scalEL.getVertPhasePositionEnableFlag() )
+            {
+              pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
+            }
 #endif
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
-          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+            m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
-          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
-          m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT 
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+            m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
-          m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+            m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
 #endif
 #endif
 #endif
+          }
         }
         else
         {
@@ -1153,7 +1158,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // No valid inter-layer pictures -> disable inter-layer prediction
         pcSlice->setInterLayerPredEnabledFlag(false);
       }
-      
+
       if( pocCurr % m_pcCfg->getIntraPeriod() == 0 )
       {
 #if N0147_IRAP_ALIGN_FLAG
@@ -1172,7 +1177,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         else
 #endif 
-        pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
 
 #if IDR_ALIGNMENT
         TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
@@ -1187,7 +1192,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
 #endif 
       }
-      
+
       if( pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
         pcSlice->setSliceType(I_SLICE);
@@ -1195,12 +1200,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       else if( !m_pcEncTop->getElRapSliceTypeB() )
       {
         if( (pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
-           (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) &&
-           pcSlice->getSliceType() == B_SLICE )
+          (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) &&
+          pcSlice->getSliceType() == B_SLICE )
         {
           pcSlice->setSliceType(P_SLICE);
         }
-      }
+      }      
     }
 #endif //#if SVC_EXTENSION
     if(pcSlice->getTemporalLayerNonReferenceFlag())
@@ -1470,6 +1475,26 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
+      // check for the reference pictures whether there is at least one either temporal picture or ILRP with sample prediction type
+      if( pcSlice->getNumRefIdx( REF_PIC_LIST_0 ) == 0 && pcSlice->getNumRefIdx( REF_PIC_LIST_1 ) == 0 )
+      {
+        Bool foundSamplePredPicture = false;
+
+        for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+        {
+          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, pcSlice->getInterLayerPredLayerIdc(i) ) ) )
+          {
+            foundSamplePredPicture = true;
+            break;
+          }
+        }
+
+        if( !foundSamplePredPicture )
+        {
+          pcSlice->setSliceType(I_SLICE);
+        }
+      }
+
 #if POC_RESET_FLAG
       if ( pocCurr > 0          && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #else
@@ -1566,6 +1591,58 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           pcSlice->setColFromL0Flag(ColFromL0Flag);
           pcSlice->setColRefIdx(ColRefIdx);
+
+          // remove motion only ILRP from the end of the ColFromL0Flag reference picture list
+          RefPicList refList = RefPicList(ColFromL0Flag);
+          Int numRefIdx = pcSlice->getNumRefIdx(refList);
+
+          if( numRefIdx > 0 )
+          {
+            for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx >= pcSlice->getNumRefIdx(refList) - pcSlice->getActiveNumILRRefIdx(); refIdx-- )
+            {
+              TComPic* ilrp = pcSlice->getRefPic(refList, refIdx);
+
+              assert( ilrp->isILR(m_layerId) );
+
+              if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( ilrp->getLayerId() ) )
+              {
+                break;
+              }
+              else
+              {
+                assert( numRefIdx > 1 );
+                numRefIdx--;              
+              }
+            }
+
+            pcSlice->setNumRefIdx( refList, numRefIdx );
+          }
+
+          // remove motion only ILRP from the end of the (1-ColFromL0Flag) reference picture list up to ColRefIdx
+          refList = RefPicList(1 - ColFromL0Flag);
+          numRefIdx = pcSlice->getNumRefIdx(refList);
+
+          if( numRefIdx > 0 )
+          {
+            for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx >= pcSlice->getNumRefIdx(refList) - pcSlice->getActiveNumILRRefIdx() && refIdx > ColRefIdx; refIdx-- )
+            {
+              TComPic* ilrp = pcSlice->getRefPic(refList, refIdx);
+
+              assert( ilrp->isILR(m_layerId) );
+
+              if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( ilrp->getLayerId() ) )
+              {
+                break;
+              }
+              else
+              {
+                assert( numRefIdx > 1 );
+                numRefIdx--;              
+              }
+            }
+
+            pcSlice->setNumRefIdx( refList, numRefIdx );
+          }
         }
       }
 #endif
