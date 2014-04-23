@@ -1723,7 +1723,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
           {
             break;
           }
@@ -1747,7 +1747,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
           {
             break;
           }
