@@ -1475,26 +1475,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
-      // check for the reference pictures whether there is at least one either temporal picture or ILRP with sample prediction type
-      if( pcSlice->getNumRefIdx( REF_PIC_LIST_0 ) == 0 && pcSlice->getNumRefIdx( REF_PIC_LIST_1 ) == 0 )
-      {
-        Bool foundSamplePredPicture = false;
-
-        for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-        {
-          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, pcSlice->getInterLayerPredLayerIdc(i) ) ) )
-          {
-            foundSamplePredPicture = true;
-            break;
-          }
-        }
-
-        if( !foundSamplePredPicture )
-        {
-          pcSlice->setSliceType(I_SLICE);
-        }
-      }
-
 #if POC_RESET_FLAG
       if ( pocCurr > 0          && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #else
@@ -1513,6 +1493,28 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+pcSlice->getActiveNumILRRefIdx());
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+pcSlice->getActiveNumILRRefIdx());
+      }
+
+      // check for the reference pictures whether there is at least one either temporal picture or ILRP with sample prediction type
+      if( pcSlice->getNumRefIdx( REF_PIC_LIST_0 ) - pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNumRefIdx( REF_PIC_LIST_1 ) - pcSlice->getActiveNumILRRefIdx() == 0 )
+      {
+        Bool foundSamplePredPicture = false;                
+
+        for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+        {
+          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, pcSlice->getInterLayerPredLayerIdc(i) ) ) )
+          {
+            foundSamplePredPicture = true;
+            break;
+          }
+        }
+
+        if( !foundSamplePredPicture )
+        {
+          pcSlice->setSliceType(I_SLICE);
+          pcSlice->setInterLayerPredEnabledFlag(0);
+          pcSlice->setActiveNumILRRefIdx(0);
+        }
       }
     }
 #endif //SVC_EXTENSION
@@ -1544,7 +1546,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #else
       //  Set reference list
       pcSlice->setRefPicList ( rcListPic );
-#endif //SVC_EXTENSION
+#endif
       pcSlice->setRefPicListModificationSvc();
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
@@ -1601,58 +1603,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           pcSlice->setColFromL0Flag(ColFromL0Flag);
           pcSlice->setColRefIdx(ColRefIdx);
-
-          // remove motion only ILRP from the end of the ColFromL0Flag reference picture list
-          RefPicList refList = RefPicList(ColFromL0Flag);
-          Int numRefIdx = pcSlice->getNumRefIdx(refList);
-
-          if( numRefIdx > 0 )
-          {
-            for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx >= pcSlice->getNumRefIdx(refList) - pcSlice->getActiveNumILRRefIdx(); refIdx-- )
-            {
-              TComPic* ilrp = pcSlice->getRefPic(refList, refIdx);
-
-              assert( ilrp->isILR(m_layerId) );
-
-              if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( ilrp->getLayerId() ) )
-              {
-                break;
-              }
-              else
-              {
-                assert( numRefIdx > 1 );
-                numRefIdx--;              
-              }
-            }
-
-            pcSlice->setNumRefIdx( refList, numRefIdx );
-          }
-
-          // remove motion only ILRP from the end of the (1-ColFromL0Flag) reference picture list up to ColRefIdx
-          refList = RefPicList(1 - ColFromL0Flag);
-          numRefIdx = pcSlice->getNumRefIdx(refList);
-
-          if( numRefIdx > 0 )
-          {
-            for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx >= pcSlice->getNumRefIdx(refList) - pcSlice->getActiveNumILRRefIdx() && refIdx > ColRefIdx; refIdx-- )
-            {
-              TComPic* ilrp = pcSlice->getRefPic(refList, refIdx);
-
-              assert( ilrp->isILR(m_layerId) );
-
-              if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( ilrp->getLayerId() ) )
-              {
-                break;
-              }
-              else
-              {
-                assert( numRefIdx > 1 );
-                numRefIdx--;              
-              }
-            }
-
-            pcSlice->setNumRefIdx( refList, numRefIdx );
-          }
         }
       }
 #endif
@@ -1736,6 +1686,85 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->getSPS()->setTMVPFlagsPresent(0);
       pcSlice->setEnableTMVPFlag(0);
     }
+
+#if SVC_EXTENSION
+    if( m_layerId > 0 && !pcSlice->isIntra() )
+    {
+      Int colFromL0Flag = 1;
+      Int colRefIdx = 0;
+
+      // check whether collocated picture is valid
+      if( pcSlice->getEnableTMVPFlag() )
+      {
+        colFromL0Flag = pcSlice->getColFromL0Flag();
+        colRefIdx = pcSlice->getColRefIdx();
+
+        TComPic* refPic = pcSlice->getRefPic(RefPicList(1-colFromL0Flag), colRefIdx);
+
+        assert( refPic );
+
+        // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
+        // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
+        if( refPic->isILR(m_layerId) && !m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag(refPic->getLayerId()) )
+        {
+          pcSlice->setEnableTMVPFlag(false);
+          pcSlice->setMFMEnabledFlag(false);
+          colRefIdx = 0;
+        }
+      }
+
+      // remove motion only ILRP from the end of the colFromL0Flag reference picture list
+      RefPicList refList = RefPicList(colFromL0Flag);
+      Int numRefIdx = pcSlice->getNumRefIdx(refList);
+
+      if( numRefIdx > 0 )
+      {
+        for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx > 0; refIdx-- )
+        {
+          TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
+
+          if( !refPic->isILR(m_layerId) || refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) )
+          {
+            break;
+          }
+          else
+          {
+            assert( numRefIdx > 1 );
+            numRefIdx--;              
+          }
+        }
+
+        pcSlice->setNumRefIdx( refList, numRefIdx );
+      }
+
+      // remove motion only ILRP from the end of the (1-colFromL0Flag) reference picture list up to colRefIdx
+      refList = RefPicList(1 - colFromL0Flag);
+      numRefIdx = pcSlice->getNumRefIdx(refList);
+
+      if( numRefIdx > 0 )
+      {
+        for( Int refIdx = pcSlice->getNumRefIdx(refList) - 1; refIdx > colRefIdx; refIdx-- )
+        {
+          TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
+
+          if( !refPic->isILR(m_layerId) || refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) )
+          {
+            break;
+          }
+          else
+          {
+            assert( numRefIdx > 1 );
+            numRefIdx--;              
+          }
+        }
+
+        pcSlice->setNumRefIdx( refList, numRefIdx );
+      }
+
+      assert( pcSlice->getNumRefIdx(REF_PIC_LIST_0) > 0 && ( pcSlice->isInterP() || (pcSlice->isInterB() && pcSlice->getNumRefIdx(REF_PIC_LIST_1) > 0) ) );
+    }
+#endif
+
     /////////////////////////////////////////////////////////////////////////////////////////////////// Compress a slice
     //  Slice compression
     if (m_pcCfg->getUseASR())
