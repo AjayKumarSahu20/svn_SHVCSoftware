@@ -695,7 +695,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           // speedup for inter frames
 #if (ENCODER_FAST_MODE)
         if( rpcBestCU->getSlice()->getSliceType() == I_SLICE || 
-          rpcBestCU->getPredictionMode(0) == SIZE_NONE ||  // if there is no valid inter prediction
+          rpcBestCU->getPredictionMode(0) == MODE_NONE ||  // if there is no valid inter prediction
           !testInter ||
           rpcBestCU->getCbf( 0, TEXT_LUMA     ) != 0   ||
           rpcBestCU->getCbf( 0, TEXT_CHROMA_U ) != 0   ||
