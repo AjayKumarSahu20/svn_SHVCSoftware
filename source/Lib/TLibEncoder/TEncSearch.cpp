@@ -3101,10 +3101,18 @@ Void TEncSearch::xRestrictBipredMergeCand( TComDataCU* pcCU, UInt puIdx, TComMvF
  * \param bUseRes
  * \returns Void
  */
+#if SVC_EXTENSION
+#if AMP_MRG
+Bool TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG )
+#else
+Bool TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes )
+#endif
+#else
 #if AMP_MRG
 Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes, Bool bUseMRG )
 #else
 Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*& rpcPredYuv, TComYuv*& rpcResiYuv, TComYuv*& rpcRecoYuv, Bool bUseRes )
+#endif
 #endif
 {
   m_acYuvPred[0].clear();
@@ -3214,6 +3222,10 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
     {
 #endif
 
+#if SVC_EXTENSION
+      Bool doneUniPred = false;
+#endif
+
     //  Uni-directional prediction
     for ( Int iRefList = 0; iRefList < iNumPredDir; iRefList++ )
     {
@@ -3242,6 +3254,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
           continue;
         }
 #endif
+        doneUniPred = true;
 #endif
 
         uiBitsTemp = uiMbBits[iRefList];
@@ -3350,6 +3363,15 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
         }
       }
     }
+
+#if SVC_EXTENSION
+    if( pcCU->getLayerId() && !doneUniPred )
+    {
+      // there is no valid reference pictures for inter prediction
+      return false;
+    }
+#endif
+
     //  Bi-directional prediction
 #if REF_IDX_ME_ZEROMV
     if ( (pcCU->getSlice()->isInterB()) && (pcCU->isBipredRestriction(iPartIdx) == false) && !(pcCU->getSlice()->getMvdL1ZeroFlag() && bestBiPDist == MAX_INT) )
@@ -3796,7 +3818,11 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv*&
 
   setWpScalingDistParam( pcCU, -1, REF_PIC_LIST_X );
 
+#if SVC_EXTENSION
+  return true;
+#else
   return;
+#endif
 }
 
 // AMVP

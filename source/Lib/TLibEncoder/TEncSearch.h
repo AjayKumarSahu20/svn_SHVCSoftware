@@ -192,7 +192,11 @@ public:
   
   
   /// encoder estimation - inter prediction (non-skip)
+#if SVC_EXTENSION
+  Bool predInterSearch          ( TComDataCU* pcCU,
+#else
   Void predInterSearch          ( TComDataCU* pcCU,
+#endif
                                   TComYuv*    pcOrgYuv,
                                   TComYuv*&   rpcPredYuv,
                                   TComYuv*&   rpcResiYuv,

@@ -784,7 +784,7 @@ Void TComSlice::setRefPicListModificationSvc()
 
   //set L0 inter-layer reference picture modification
 #if RPL_INIT_N0316_N0082
-  Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
+  Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] >= (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
 #else
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
 #endif
@@ -798,9 +798,10 @@ Void TComSlice::setRefPicListModificationSvc()
     {
       refPicListModification->setRefPicSetIdxL0(i, i);
     }
+
     if(m_aiNumRefIdx[REF_PIC_LIST_0] > numberOfRpsCurrTempList)
     {
-        // repeat last ref pic when the number of active ref idx are more than RPS entries
+      // repeat last ref pic when the number of active ref idx are more than RPS entries
       for (Int i = numberOfRpsCurrTempList; i < m_aiNumRefIdx[REF_PIC_LIST_0]; i ++)
       {
         refPicListModification->setRefPicSetIdxL0(i, numberOfRpsCurrTempList - 1);
@@ -808,7 +809,10 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-      for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
+      // number of ILRPs included into the reference picture list with the list modification
+      Int inlucdeNumILRP = min(m_aiNumRefIdx[REF_PIC_LIST_0]-numberOfPocBeforeCurr, m_activeNumILRRefIdx);
+
+      for(Int i = inlucdeNumILRP; i > 0; i-- )
       {
 #if RPL_INIT_N0316_N0082
         if((numberOfPocBeforeCurr) >= m_aiNumRefIdx[REF_PIC_LIST_0])
@@ -820,7 +824,8 @@ Void TComSlice::setRefPicListModificationSvc()
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr);
           for (Int j = numberOfPocBeforeCurr; j < (m_aiNumRefIdx[REF_PIC_LIST_0] - i); j++)
           {
-            refPicListModification->setRefPicSetIdxL0(j, j + m_activeNumILRRefIdx);
+            assert( j + inlucdeNumILRP < numberOfRpsCurrTempList );
+            refPicListModification->setRefPicSetIdxL0(j, j + inlucdeNumILRP);
           }
         }
 #else
@@ -831,7 +836,7 @@ Void TComSlice::setRefPicListModificationSvc()
   }
 
   //set L1 inter-layer reference picture modification
-  hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] == numberOfRpsCurrTempList) ? false : true;
+  hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] >= numberOfRpsCurrTempList) ? false : true;
 #if N0147_IRAP_ALIGN_FLAG
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_1] > 1 );
 #endif
@@ -853,7 +858,9 @@ Void TComSlice::setRefPicListModificationSvc()
     }
     else
     {
-      for(Int i = m_activeNumILRRefIdx; i > 0; i-- )
+      Int inlucdeNumILRP = min(m_aiNumRefIdx[REF_PIC_LIST_1], m_activeNumILRRefIdx);
+
+      for(Int i = inlucdeNumILRP; i > 0; i-- )
       {
         refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
       }

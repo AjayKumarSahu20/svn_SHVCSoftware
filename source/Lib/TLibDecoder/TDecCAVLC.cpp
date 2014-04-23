@@ -2989,7 +2989,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     {
 #if SVC_EXTENSION && REF_IDX_MFM
       // set motion mapping flag
-      rpcSlice->setMFMEnabledFlag( ( rpcSlice->getNumMotionPredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() ) ? true : false );
+      rpcSlice->setMFMEnabledFlag( ( rpcSlice->getNumMotionPredRefLayers() > 0 && rpcSlice->getActiveNumILRRefIdx() && !rpcSlice->isIntra() ) ? true : false );
 #endif
       if ( rpcSlice->getSliceType() == B_SLICE )
       {
