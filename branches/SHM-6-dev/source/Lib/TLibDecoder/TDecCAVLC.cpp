@@ -338,7 +338,12 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
   pcPPS->setSliceHeaderExtensionPresentFlag(uiCode);
 
   READ_FLAG( uiCode, "pps_extension_flag");
+#if POC_RESET_INFO_INFERENCE
+  Bool ppsExtensionFlag = uiCode ? true : false;
+  if( ppsExtensionFlag )
+#else
   if (uiCode)
+#endif  
   {
 #if P0166_MODIFIED_PPS_EXTENSION
     UInt ppsExtensionTypeFlag[8];
@@ -366,6 +371,12 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
 #endif
 #endif
     }
+#if POC_RESET_INFO_INFERENCE
+    else  // Extension type 0 absent
+    {
+      pcPPS->setPocResetInfoPresentFlag( false );
+    }
+#endif
     if (ppsExtensionTypeFlag[7])
     {
 #endif
@@ -378,6 +389,12 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
     }
 #endif
   }
+#if POC_RESET_INFO_INFERENCE
+  if( !ppsExtensionFlag )
+  {
+    pcPPS->setPocResetInfoPresentFlag( false );
+  }
+#endif
 }
 
 Void  TDecCavlc::parseVUI(TComVUI* pcVUI, TComSPS *pcSPS)
