@@ -3146,17 +3146,17 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   }
 
 #if POC_RESET_IDC_SIGNALLING
-  Int sliceHederExtensionLength = 0;
+  Int sliceHeaderExtensionLength = 0;
   if(pps->getSliceHeaderExtensionPresentFlag())
   {
-    READ_UVLC( uiCode, "slice_header_extension_length"); sliceHederExtensionLength = uiCode;
+    READ_UVLC( uiCode, "slice_header_extension_length"); sliceHeaderExtensionLength = uiCode;
   }
   else
   {
-    sliceHederExtensionLength = 0;
+    sliceHeaderExtensionLength = 0;
   }
   UInt startBits = m_pcBitstream->getNumBitsRead();     // Start counter of # SH Extn bits
-  if( sliceHederExtensionLength > 0 )
+  if( sliceHeaderExtensionLength > 0 )
   {
     if( rpcSlice->getPPS()->getPocResetInfoPresentFlag() )
     {
@@ -3193,7 +3193,15 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     }
     else
     {
+#if POC_MSB_VAL_PRESENT_FLAG_SEM
+      if( sliceHeaderExtensionLength == 0 )
+      {
+        rpcSlice->setPocMsbValPresentFlag( false );
+      }
+      else if( rpcSlice->getPocMsbValRequiredFlag() )
+#else
       if( rpcSlice->getPocMsbValRequiredFlag() )
+#endif
       {
         rpcSlice->setPocMsbValPresentFlag( true );
       }
