@@ -1645,7 +1645,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         }
         if (vps->getNumBitstreamPartitions(h))
         {
+#if Q0182_MULTI_LAYER_HRD_UPDATE
+          WRITE_UVLC(vps->getNumBspSchedCombinations(h) - 1, "num_bsp_sched_combinations_minus1[h]");
+#else
           WRITE_UVLC( vps->getNumBspSchedCombinations(h), "num_bsp_sched_combinations[h]");
+#endif
           for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
           {
             for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
