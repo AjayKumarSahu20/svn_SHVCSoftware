@@ -2031,7 +2031,14 @@ UInt TComSlice::getPicWidthInLumaSamples()
 #if O0096_REP_FORMAT_INDEX
   if ( layerId == 0 )
   {
-    retVal = sps->getPicWidthInLumaSamples();
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
+    }
+    else
+    {
+      retVal = sps->getPicWidthInLumaSamples();
+    }
   }
   else
   {
@@ -2057,7 +2064,14 @@ UInt TComSlice::getPicHeightInLumaSamples()
 #if O0096_REP_FORMAT_INDEX
   if( layerId == 0 )
   {
-    retVal = sps->getPicHeightInLumaSamples();
+    if( vps->getAvcBaseLayerFlag() )
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
+    }
+    else
+    {
+      retVal = sps->getPicHeightInLumaSamples();
+    }
   }
   else
   {
