@@ -4402,34 +4402,36 @@ Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest)
     Int iHeight =pcYuvSrc->getHeight(); 
 
     if(!m_temp)
+    {
       initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1);
+    }
 
     filterImg(pcYuvSrc->getLumaAddr(), pcYuvSrc->getStride(), pcYuvDest->getLumaAddr(), pcYuvDest->getStride(), iHeight, iWidth,  inputBitDepth-outputBitDepth, 0);
     filterImg(pcYuvSrc->getCbAddr(), pcYuvSrc->getCStride(), pcYuvDest->getCbAddr(), pcYuvDest->getCStride(), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 1);
     filterImg(pcYuvSrc->getCrAddr(), pcYuvSrc->getCStride(), pcYuvDest->getCrAddr(), pcYuvDest->getCStride(), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 2);  
   }
 }
-const int TEncGOP::m_phase_filter_0_t0[4][13]={
+const Int TEncGOP::m_phase_filter_0_t0[4][13]={
   {0,  2,  -3,  -9,   6,  39,  58,  39,   6,  -9,  -3,  2,  0},  
   {0, 0,  0,  -2,  8,-20, 116, 34, -10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
   {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
   {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
 };
 
-const int TEncGOP::m_phase_filter_0_t1[4][13]={
+const Int TEncGOP::m_phase_filter_0_t1[4][13]={
   {0,  4,  0,  -12, 0,  40,  64,  40, 0, -12,  0,  4,  0},
   {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
   {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
   {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
 };
-const int TEncGOP::m_phase_filter_0_t1_chroma[4][13]={
+const Int TEncGOP::m_phase_filter_0_t1_chroma[4][13]={
   {0,  0,  0,   0,  0,   0,  128, 0,  0,  0,  0,  0,  0},
   {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
   {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
   {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
 };
 
-const int TEncGOP::m_phase_filter_1[8][13]={
+const Int TEncGOP::m_phase_filter_1[8][13]={
   {0,   0,  5,  -6,  -10,37,  76,  37,-10,   -6, 5,  0,   0},    
   {0,  -1,  5,  -3,  -12,29,  75,  45,  -7,   -8, 5,  0,   0},    
   {0,  -1,  4,  -1,  -13,22,  73,  52,  -3,  -10, 4,  1,   0},    
@@ -4492,9 +4494,13 @@ Void TEncGOP::filterImg(
 
   // pad temp (vertical)
   for (k=-(length>>1); k<0; k++)
-    memcpy(m_temp[k], m_temp[0], width2*sizeof(int));
+  {
+    memcpy(m_temp[k], m_temp[0], width2*sizeof(Int));
+  }
   for (k=height1; k<(height1+(length>>1)); k++)
-    memcpy(m_temp[k], m_temp[k-1], (width2)* sizeof(int));
+  {
+    memcpy(m_temp[k], m_temp[k-1], (width2)* sizeof(Int));
+  }
 
   // vertical filtering
   j0 = (plane == 0) ? -m_iN : -(m_iN-1);
@@ -4515,7 +4521,7 @@ Void TEncGOP::filterImg(
         iSum += p_temp[k][i1] * p_filter[k];
       }
       iSum=((iSum + shift_round) >> shift2);
-      *p_dst++ = (short)(iSum > iMax ? iMax : (iSum < 0 ? 0 : iSum));
+      *p_dst++ = (Short)(iSum > iMax ? iMax : (iSum < 0 ? 0 : iSum));
     }
     p_dst_line += iDstStride;
   }
@@ -4570,9 +4576,13 @@ Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
   if (array2D)
   {
     if (*array2D)
+    {
       xFree(array2D[-iPadY]-iPadX);
+    }
     else 
+    {
       printf("free_mem2DintWithPad: trying to free unused memory\r\nPress Any Key\r\n");
+    }
 
     free (&array2D[-iPadY]);
   } 
