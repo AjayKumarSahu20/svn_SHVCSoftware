@@ -2439,6 +2439,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     rpcSlice->setSliceCurEndCUAddr(numCTUs*maxParts);
   }
 
+#if Q0142_POC_LSB_NOT_PRESENT
+#if SHM_FIX7
+    Int iPOClsb = 0;
+#endif
+#endif
+
   if(!rpcSlice->getDependentSliceSegmentFlag())
   {
 #if SVC_EXTENSION
@@ -2511,8 +2517,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       rpcSlice->setRPS(rps);
     }
 #if N0065_LAYER_POC_ALIGNMENT
+#if !Q0142_POC_LSB_NOT_PRESENT
 #if SHM_FIX7
     Int iPOClsb = 0;
+#endif
 #endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( ( rpcSlice->getLayerId() > 0 && !rpcSlice->getVPS()->getPocLsbNotPresentFlag( rpcSlice->getVPS()->getLayerIdInVps(rpcSlice->getLayerId())) ) || !rpcSlice->getIdrPicFlag())
@@ -3179,6 +3187,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     {
       rpcSlice->setPocResetIdc( 0 );
     }
+#if Q0142_POC_LSB_NOT_PRESENT
+    if ( rpcSlice->getVPS()->getPocLsbNotPresentFlag(rpcSlice->getLayerId()) && iPOClsb > 0 )
+    {
+      assert( rpcSlice->getPocResetIdc() != 2 );
+    }
+#endif
     if( rpcSlice->getPocResetIdc() > 0 )
     {
       READ_CODE(6, uiCode,      "poc_reset_period_id"); rpcSlice->setPocResetPeriodId(uiCode);
@@ -3193,6 +3207,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     {
       READ_FLAG( uiCode,        "full_poc_reset_flag"); rpcSlice->setFullPocResetFlag((uiCode == 1) ? true : false);
       READ_CODE(rpcSlice->getSPS()->getBitsForPOC(), uiCode,"poc_lsb_val"); rpcSlice->setPocLsbVal(uiCode);
+#if Q0142_POC_LSB_NOT_PRESENT
+      if ( rpcSlice->getVPS()->getPocLsbNotPresentFlag(rpcSlice->getLayerId()) && rpcSlice->getFullPocResetFlag() )
+      {
+        assert( rpcSlice->getPocLsbVal() == 0 );
+      }
+#endif
     }
 
     // Derive the value of PocMsbValRequiredFlag
