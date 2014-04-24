@@ -184,7 +184,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     if(!m_pColorMappedPic)
     {
       m_pColorMappedPic = new TComPicYuv;
-      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), CHROMA_420, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), m_ppcTEncTop[0]->getChromaFormatIDC(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
     }
   }
 #endif
