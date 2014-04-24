@@ -1300,47 +1300,100 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
       pBLPic->getSlice(0)->setReferenced(true);
       fstream* pFile  = m_ppcTDecTop[0]->getBLReconFile();
-      UInt uiWidth    = pBLPic->getPicYuvRec()->getWidth();
-      UInt uiHeight   = pBLPic->getPicYuvRec()->getHeight();
 
       if( pFile->good() )
       {
+        Bool is16bit  = g_bitDepthYLayer[0] > 8 || g_bitDepthCLayer[0] > 8;
+        UInt uiWidth  = pBLPic->getPicYuvRec()->getWidth();
+        UInt uiHeight = pBLPic->getPicYuvRec()->getHeight();
+
+        Int len = uiWidth * (is16bit ? 2 : 1);
+        UChar *buf = new UChar[len];
+
         UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
 
         pFile->seekg((UInt)uiPos, ios::beg );
 
+        // read Y component
         Pel* pPel = pBLPic->getPicYuvRec()->getLumaAddr();
         UInt uiStride = pBLPic->getPicYuvRec()->getStride();
         for( Int i = 0; i < uiHeight; i++ )
         {
-          for( Int j = 0; j < uiWidth; j++ )
+          pFile->read(reinterpret_cast<Char*>(buf), len);
+
+          if( !is16bit )
           {
-            pPel[j] = pFile->get();
+            for (Int x = 0; x < uiWidth; x++)
+            {
+              pPel[x] = buf[x];
+            }
           }
+          else
+          {
+            for (Int x = 0; x < uiWidth; x++)
+            {
+              pPel[x] = (buf[2*x+1] << 8) | buf[2*x];
+            }
+          }
+     
           pPel += uiStride;
         }
 
+        len >>= 1;
+        uiWidth >>= 1;
+        uiHeight >>= 1;
+
+        // read Cb component
         pPel = pBLPic->getPicYuvRec()->getCbAddr();
         uiStride = pBLPic->getPicYuvRec()->getCStride();
-        for( Int i = 0; i < uiHeight/2; i++ )
+        for( Int i = 0; i < uiHeight; i++ )
         {
-          for( Int j = 0; j < uiWidth/2; j++ )
+          pFile->read(reinterpret_cast<Char*>(buf), len);
+
+          if( !is16bit )
           {
-            pPel[j] = pFile->get();
+            for( Int x = 0; x < uiWidth; x++ )
+            {
+              pPel[x] = buf[x];
+            }
           }
+          else
+          {
+            for( Int x = 0; x < uiWidth; x++ )
+            {
+              pPel[x] = (buf[2*x+1] << 8) | buf[2*x];
+            }
+          }
+     
           pPel += uiStride;
         }
 
+        // read Cr component
         pPel = pBLPic->getPicYuvRec()->getCrAddr();
         uiStride = pBLPic->getPicYuvRec()->getCStride();
-        for( Int i = 0; i < uiHeight/2; i++ )
+        for( Int i = 0; i < uiHeight; i++ )
         {
-          for( Int j = 0; j < uiWidth/2; j++ )
+          pFile->read(reinterpret_cast<Char*>(buf), len);
+
+          if( !is16bit )
           {
-            pPel[j] = pFile->get();
+            for( Int x = 0; x < uiWidth; x++ )
+            {
+              pPel[x] = buf[x];
+            }
           }
+          else
+          {
+            for( Int x = 0; x < uiWidth; x++ )
+            {
+              pPel[x] = (buf[2*x+1] << 8) | buf[2*x];
+            }
+          }
+     
           pPel += uiStride;
         }
+
+        delete[] buf;
       }
     }
 #endif
