@@ -810,18 +810,18 @@ Void TComSlice::setRefPicListModificationSvc()
     else
     {
       // number of ILRPs included into the reference picture list with the list modification
-      Int includeNumILRP = min(m_aiNumRefIdx[REF_PIC_LIST_0]-numberOfPocBeforeCurr, m_activeNumILRRefIdx);
+      Int includeNumILRP = min( max(1, m_aiNumRefIdx[REF_PIC_LIST_0]-numberOfPocBeforeCurr), m_activeNumILRRefIdx);
 
       for(Int i = includeNumILRP; i > 0; i-- )
       {
 #if RPL_INIT_N0316_N0082
         if((numberOfPocBeforeCurr) >= m_aiNumRefIdx[REF_PIC_LIST_0])
         {
-          refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr);
+          refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + includeNumILRP - i);
         }
         else
         {
-          refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr);
+          refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + includeNumILRP - i);
           for (Int j = numberOfPocBeforeCurr; j < (m_aiNumRefIdx[REF_PIC_LIST_0] - i); j++)
           {
             assert( j + includeNumILRP < numberOfRpsCurrTempList );
