@@ -2325,7 +2325,11 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
         }
         if (vps->getNumBitstreamPartitions(h))
         {
+#if Q0182_MULTI_LAYER_HRD_UPDATE
+          READ_UVLC( uiCode, "num_bsp_sched_combinations_minus1[h]"); vps->setNumBspSchedCombinations(h, uiCode + 1);
+#else
           READ_UVLC( uiCode, "num_bsp_sched_combinations[h]"); vps->setNumBspSchedCombinations(h, uiCode);
+#endif
           for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
           {
             for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
