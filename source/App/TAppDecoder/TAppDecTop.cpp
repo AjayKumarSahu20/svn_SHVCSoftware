@@ -1291,7 +1291,11 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
   else
   {
     targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
+#if RESOLUTION_BASED_DPB
     subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
+#else
+    subDpbIdx = layerIdx;
+#endif
   }
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
   while( ifInvokeBumpingBeforeDecoding(dpbStatus, maxDpbLimit, layerIdx, subDpbIdx) )
@@ -1436,8 +1440,12 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     }
     for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
     {
+#if RESOUTION_BASED_DPB
       maxDpbLimit.m_numPicsInLayer[i] = vps->getMaxVpsLayerDecPicBuffMinus1( targetOutputLsIdx, i, highestTId ) + 1;
       maxDpbLimit.m_numPicsInSubDpb[vps->getSubDpbAssigned( targetLsIdx, i )] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, vps->getSubDpbAssigned( targetLsIdx, i ), highestTId) + 1;
+#else
+      maxDpbLimit.m_numPicsInSubDpb[i] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, i, highestTId) + 1;
+#endif
     }
     // -------------------------------------
   }
@@ -1471,8 +1479,10 @@ Bool TAppDecTop::ifInvokeBumpingBeforeDecoding( const DpbStatus &dpbStatus, cons
   // Number of pictures in each sub-DPB
   retVal |= ( dpbStatus.m_numPicsInSubDpb[subDpbIdx] >= dpbLimit.m_numPicsInSubDpb[subDpbIdx] );
   
+#if RESOLUTION_BASED_DPB
   // Number of pictures in each layer
   retVal |= ( dpbStatus.m_numPicsInLayer[layerIdx] >= dpbLimit.m_numPicsInLayer[layerIdx]);
+#endif
 
   return retVal;
 }
@@ -1549,7 +1559,11 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
   {
     dpbStatus.m_numPicsNotDisplayedInLayer[i] = listOfPocsInEachLayer[i].size();
+#if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInSubDpb[vps->getSubDpbAssigned(targetLsIdx,i)] += dpbStatus.m_numPicsInLayer[i];
+#else
+    dpbStatus.m_numPicsInSubDpb[i] += dpbStatus.m_numPicsInLayer[i];
+#endif
   }
   assert( dpbStatus.m_numAUsNotDisplayed != -1 );
 

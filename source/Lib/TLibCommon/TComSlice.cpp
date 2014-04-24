@@ -2709,6 +2709,7 @@ Int  TComVPS::findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId )
   }
   return -1;  // Layer not found
 }
+#endif
 #if O0164_MULTI_LAYER_HRD
 Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess )
 {
@@ -2788,6 +2789,7 @@ Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt
   }
 }
 #endif
+#if RESOLUTION_BASED_DPB
 // RepFormat Assignment operator
 RepFormat& RepFormat::operator= (const RepFormat &other)
 {
