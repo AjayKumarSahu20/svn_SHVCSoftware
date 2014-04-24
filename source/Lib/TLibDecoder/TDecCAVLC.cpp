@@ -601,6 +601,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #endif
 #endif
 
+#if !Q0177_SPS_TEMP_NESTING_FIX   //This part is not needed anymore as it is already covered by implementation in TDecTop::xActivateParameterSets()
   if ( pcSPS->getMaxTLayers() == 1 )
   {
     // sps_temporal_id_nesting_flag must be 1 when sps_max_sub_layers_minus1 is 0
@@ -612,6 +613,8 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     assert( uiCode == 1 );
 #endif
   }
+#endif
+
 #ifdef SPS_PTL_FIX
   if ( pcSPS->getLayerId() == 0)
   {
