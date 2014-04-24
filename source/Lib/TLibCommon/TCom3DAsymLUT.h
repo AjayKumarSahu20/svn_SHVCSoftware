@@ -99,12 +99,16 @@ Void TCom3DAsymLUT::xAllocate3DArray( T *** &p , Int xSize , Int ySize , Int zSi
   p = new T**[xSize];
   p[0] = new T*[xSize*ySize];
   for( Int x = 1 ; x < xSize ; x++ )
+  {
     p[x] = p[x-1] + ySize;
+  }
   p[0][0] = new T[xSize*ySize*zSize];
   for( Int x = 0 ; x < xSize ; x++ )
   {
     for( Int y = 0 ; y < ySize ; y++ )
+    {
       p[x][y] = p[0][0] + x * ySize * zSize + y * zSize;
+    }
   }
 }
 
@@ -116,7 +120,9 @@ Void TCom3DAsymLUT::xFree3DArray( T *** &p )
     if( p[0] != NULL )
     {
       if( p[0][0] != NULL )
+      {
         delete [] p[0][0];
+      }
       delete [] p[0];
     }
     delete [] p;
