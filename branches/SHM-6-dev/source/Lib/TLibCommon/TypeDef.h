@@ -50,6 +50,7 @@
 
 #define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
+#define Q0146_SSH_EXT_DATA_BIT           1      ///< JCTVC-Q0146; Bug-fix -- the SSH_EXT_DATA_BIT can have any value -- not required to be 1
 
 #define Q0200_CONFORMANCE_BL_SIZE        1       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
