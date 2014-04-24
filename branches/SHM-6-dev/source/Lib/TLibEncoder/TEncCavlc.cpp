@@ -1406,7 +1406,11 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
 #if CHANGE_NUMSUBDPB_IDX
+#if RESOLUTION_BASED_DPB
         for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#else
+        for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
+#endif
 #else
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
 #endif
