@@ -513,6 +513,10 @@ private:
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
+#if BITRATE_PICRATE_SIGNALLING
+  UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
+    
 #if ILP_SSH_SIG
   Bool       m_ilpSshSignalingEnabledFlag;
 #endif
@@ -833,6 +837,10 @@ Void      deriveNumberOfSubDpbs();
 
   UInt   getLayerIdInVps(Int id)                                { return m_layerIdInVps[id];       }
   Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
+#endif
+#if BITRATE_PICRATE_SIGNALLING
+    UInt   getMaxSLayersInLayerSetMinus1(Int ls)                { return m_maxSLInLayerSetMinus1[ls];    }
+    Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)         { m_maxSLInLayerSetMinus1[ls] = x;       }
 #endif
 #if ILP_SSH_SIG
   Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
