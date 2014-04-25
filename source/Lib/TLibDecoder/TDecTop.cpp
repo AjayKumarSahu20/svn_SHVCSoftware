@@ -1321,6 +1321,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         UChar *buf = new UChar[len];
 
         UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
+        if( is16bit )
+        {
+            uiPos <<= 1;
+        }
 
         pFile->seekg((UInt)uiPos, ios::beg );
 
