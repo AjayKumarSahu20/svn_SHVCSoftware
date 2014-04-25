@@ -1281,8 +1281,10 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 
   // Find DPB-information from the VPS
   DpbStatus maxDpbLimit;
+#if RESOLUTION_BASED_DPB
   Int targetLsIdx, subDpbIdx;
   TComVPS *vps = findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
+
   if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
   {
     targetLsIdx = 0;
@@ -1291,12 +1293,12 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
   else
   {
     targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
-#if RESOLUTION_BASED_DPB
     subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
-#else
-    subDpbIdx = layerIdx;
-#endif
   }
+#else
+  Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 ? 0 : layerIdx;
+  TComVPS *vps = findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
+#endif
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
   while( ifInvokeBumpingBeforeDecoding(dpbStatus, maxDpbLimit, layerIdx, subDpbIdx) )
   {
