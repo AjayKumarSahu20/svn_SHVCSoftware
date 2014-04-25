@@ -161,6 +161,9 @@ private:
   Bool                    m_isNoOutputPriorPics;
   Bool                    m_craNoRaslOutputFlag;    //value of variable NoRaslOutputFlag of the last CRA pic
 #endif
+#if Q0177_EOS_CHECKS
+  Bool                    m_isLastNALWasEos;
+#endif
 
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
