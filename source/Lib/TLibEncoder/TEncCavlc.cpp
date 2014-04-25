@@ -1370,8 +1370,13 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
 #if DPB_PARAMS_MAXTLAYERS
+#if BITRATE_PICRATE_SIGNALLING
+    Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumLayerSets()];
+    for(Int i = 0; i < vps->getNumLayerSets(); i++)
+#else
     Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumOutputLayerSets()];
     for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+#endif
     {
         UInt maxSLMinus1 = 0;
 #if CHANGE_NUMSUBDPB_IDX
@@ -1379,13 +1384,20 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #else
         Int optLsIdx = i;
 #endif
+#if BITRATE_PICRATE_SIGNALLING
+        optLsIdx = i;
+#endif
         for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
             Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
             maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdInVps(lId)));
         }
         MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
+#if BITRATE_PICRATE_SIGNALLING
+        vps->setMaxSLayersInLayerSetMinus1(i,MaxSubLayersInLayerSetMinus1[ i ]);
+#endif
     }
 #endif
+    
     
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
@@ -1394,7 +1406,11 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
     WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");
 #if DPB_PARAMS_MAXTLAYERS
+#if BITRATE_PICRATE_SIGNALLING
+    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ vps->getOutputLayerSetIdx( i ) ]; j++)
+#else
     for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
+#endif
 #else
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
 #endif
@@ -1462,7 +1478,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   {
     for( i = 0; i < vps->getNumLayerSets(); i++ )
     {
+#if BITRATE_PICRATE_SIGNALLING
+      for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
+#else
       for( j = 0; j < vps->getMaxTLayers(); j++ )
+#endif
       {
         if( vps->getBitRatePresentVpsFlag() )
         {

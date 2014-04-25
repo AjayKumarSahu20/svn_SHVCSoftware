@@ -272,6 +272,7 @@
 
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag
+#define BITRATE_PICRATE_SIGNALLING       1      ///< JCTVC-Q0102 Proposal 3 signal bitrate, picrate only up to the maximum temporal sub-layers in the corresponding layer set
 
 #if VIEW_ID_RELATED_SIGNALING
 /// scalability types
