@@ -860,8 +860,11 @@ Void TDecTop::xActivateParameterSets()
     {
       // to avoid compiler warning "array subscript is above array bounds"
       assert( i < MAX_TLAYER );
-
+#if LAYER_DECPICBUFF_PARAM && RESOLUTION_BASED_DPB
+      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
+#else
       sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
+#endif
     }
   }
 #endif
