@@ -130,6 +130,10 @@
 		71AD603911EBC28500F5F1FE /* libTLibCommon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6767959411AD61BB00421804 /* libTLibCommon.a */; };
 		71AD603A11EBC28D00F5F1FE /* libTLibEncoder.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6767961911AD626F00421804 /* libTLibEncoder.a */; };
 		71AD603B11EBC29600F5F1FE /* libTLibVideoIO.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6767964B11AD629200421804 /* libTLibVideoIO.a */; };
+		C3D5A69A190AD6DA005E0EBE /* TCom3DAsymLUT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3D5A698190AD6DA005E0EBE /* TCom3DAsymLUT.cpp */; };
+		C3D5A69B190AD6DA005E0EBE /* TCom3DAsymLUT.h in Headers */ = {isa = PBXBuildFile; fileRef = C3D5A699190AD6DA005E0EBE /* TCom3DAsymLUT.h */; };
+		C3D5A69E190AD6F8005E0EBE /* TEnc3DAsymLUT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3D5A69C190AD6F8005E0EBE /* TEnc3DAsymLUT.cpp */; };
+		C3D5A69F190AD6F8005E0EBE /* TEnc3DAsymLUT.h in Headers */ = {isa = PBXBuildFile; fileRef = C3D5A69D190AD6F8005E0EBE /* TEnc3DAsymLUT.h */; };
 		DB7795C213F1226500C92469 /* TEncPic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DB7795BE13F1226500C92469 /* TEncPic.cpp */; };
 		DB7795C313F1226500C92469 /* TEncPic.h in Headers */ = {isa = PBXBuildFile; fileRef = DB7795BF13F1226500C92469 /* TEncPic.h */; };
 		DB7795C413F1226500C92469 /* TEncPreanalyzer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DB7795C013F1226500C92469 /* TEncPreanalyzer.cpp */; };
@@ -339,6 +343,10 @@
 		712FAEB51379BA6600DB5314 /* NALread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NALread.h; path = source/Lib/TLibDecoder/NALread.h; sourceTree = "<group>"; };
 		7184647513FAE75800747BF9 /* program_options_lite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = program_options_lite.cpp; path = source/Lib/TAppCommon/program_options_lite.cpp; sourceTree = "<group>"; };
 		7184647613FAE75800747BF9 /* program_options_lite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = program_options_lite.h; path = source/Lib/TAppCommon/program_options_lite.h; sourceTree = "<group>"; };
+		C3D5A698190AD6DA005E0EBE /* TCom3DAsymLUT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TCom3DAsymLUT.cpp; path = source/Lib/TLibCommon/TCom3DAsymLUT.cpp; sourceTree = "<group>"; };
+		C3D5A699190AD6DA005E0EBE /* TCom3DAsymLUT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TCom3DAsymLUT.h; path = source/Lib/TLibCommon/TCom3DAsymLUT.h; sourceTree = "<group>"; };
+		C3D5A69C190AD6F8005E0EBE /* TEnc3DAsymLUT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TEnc3DAsymLUT.cpp; path = source/Lib/TLibEncoder/TEnc3DAsymLUT.cpp; sourceTree = "<group>"; };
+		C3D5A69D190AD6F8005E0EBE /* TEnc3DAsymLUT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TEnc3DAsymLUT.h; path = source/Lib/TLibEncoder/TEnc3DAsymLUT.h; sourceTree = "<group>"; };
 		DB7795BE13F1226500C92469 /* TEncPic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TEncPic.cpp; path = source/Lib/TLibEncoder/TEncPic.cpp; sourceTree = "<group>"; };
 		DB7795BF13F1226500C92469 /* TEncPic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TEncPic.h; path = source/Lib/TLibEncoder/TEncPic.h; sourceTree = "<group>"; };
 		DB7795C013F1226500C92469 /* TEncPreanalyzer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TEncPreanalyzer.cpp; path = source/Lib/TLibEncoder/TEncPreanalyzer.cpp; sourceTree = "<group>"; };
@@ -463,6 +471,8 @@
 		6767959711AD61D700421804 /* TLibCommon */ = {
 			isa = PBXGroup;
 			children = (
+				C3D5A698190AD6DA005E0EBE /* TCom3DAsymLUT.cpp */,
+				C3D5A699190AD6DA005E0EBE /* TCom3DAsymLUT.h */,
 				6B635E7516E5EAB60057B313 /* TComUpsampleFilter.h */,
 				6B635E7616E5EAB60057B313 /* TComUpsampleFilter.cpp */,
 				712FAEA81379BA2F00DB5314 /* AccessUnit.h */,
@@ -562,6 +572,8 @@
 		6767961411AD624B00421804 /* TLibEncoder */ = {
 			isa = PBXGroup;
 			children = (
+				C3D5A69C190AD6F8005E0EBE /* TEnc3DAsymLUT.cpp */,
+				C3D5A69D190AD6F8005E0EBE /* TEnc3DAsymLUT.h */,
 				71206CD916066EDD00A354E7 /* SyntaxElementWriter.cpp */,
 				71206CDA16066EDD00A354E7 /* SyntaxElementWriter.h */,
 				712FAEAC1379BA4900DB5314 /* AnnexBwrite.h */,
@@ -669,6 +681,7 @@
 				676795D111AD61FC00421804 /* TComDataCU.h in Headers */,
 				676795D211AD61FC00421804 /* TComList.h in Headers */,
 				676795D411AD61FC00421804 /* TComLoopFilter.h in Headers */,
+				C3D5A69B190AD6DA005E0EBE /* TCom3DAsymLUT.h in Headers */,
 				676795D611AD61FC00421804 /* TComMotionInfo.h in Headers */,
 				676795D911AD61FC00421804 /* TComPattern.h in Headers */,
 				676795DB11AD61FC00421804 /* TComPic.h in Headers */,
@@ -684,6 +697,7 @@
 				671E0D4A11B6AD8C00F3747B /* ContextModel.h in Headers */,
 				671E0D4C11B6AD8C00F3747B /* ContextModel3DBuffer.h in Headers */,
 				671E0D4F11B6AD8C00F3747B /* TComBitCounter.h in Headers */,
+				C3D5A69F190AD6F8005E0EBE /* TEnc3DAsymLUT.h in Headers */,
 				671E0D5111B6AD8C00F3747B /* TComCABACTables.h in Headers */,
 				671E0D5211B6AD8C00F3747B /* TComMv.h in Headers */,
 				65EA1B88135744C400988950 /* libmd5.h in Headers */,
@@ -931,6 +945,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3D5A69E190AD6F8005E0EBE /* TEnc3DAsymLUT.cpp in Sources */,
 				676795CE11AD61FC00421804 /* TComBitStream.cpp in Sources */,
 				676795D011AD61FC00421804 /* TComDataCU.cpp in Sources */,
 				676795D311AD61FC00421804 /* TComLoopFilter.cpp in Sources */,
@@ -938,6 +953,7 @@
 				676795D811AD61FC00421804 /* TComPattern.cpp in Sources */,
 				676795DA11AD61FC00421804 /* TComPic.cpp in Sources */,
 				676795DC11AD61FC00421804 /* TComPicSym.cpp in Sources */,
+				C3D5A69A190AD6DA005E0EBE /* TCom3DAsymLUT.cpp in Sources */,
 				676795DE11AD61FC00421804 /* TComPicYuv.cpp in Sources */,
 				676795E211AD61FC00421804 /* TComPrediction.cpp in Sources */,
 				676795E411AD61FC00421804 /* TComRdCost.cpp in Sources */,
@@ -1097,7 +1113,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = source/Lib;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -1111,7 +1127,7 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = source/Lib;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Release;
 		};
