@@ -198,6 +198,7 @@ public:
   ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
   Void convertToMonochrome();
 #endif
+  Void dump( Char* pFileName, Bool bAdd, Int bitDepth );
 #endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TComPicYuv
