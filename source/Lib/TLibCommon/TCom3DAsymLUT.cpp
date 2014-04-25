@@ -43,7 +43,9 @@ Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
   assert( m_nYSize > 0 && m_nUSize > 0 && m_nVSize > 0 );
 
   if( m_pCuboid != NULL )
+  {
     destroy();
+  }
   xAllocate3DArray( m_pCuboid , m_nYSize , m_nUSize , m_nVSize );
 }
 
