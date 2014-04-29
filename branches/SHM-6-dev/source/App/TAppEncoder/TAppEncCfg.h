@@ -72,9 +72,7 @@ protected:
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
-#if N0120_MAX_TID_REF_CFG
   Bool      m_maxTidRefPresentFlag; 
-#endif 
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file

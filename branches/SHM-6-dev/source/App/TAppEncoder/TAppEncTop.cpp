@@ -260,12 +260,12 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
-#if N0120_MAX_TID_REF_CFG
-    if (layer<m_numLayers-1)
+
+    if( layer < m_numLayers - 1 )
     {
        m_acTEncTop[layer].setMaxTidIlRefPicsPlus1 ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1());
     }
-#endif
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
@@ -1101,21 +1101,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if VPS_TSLAYERS
     vps->setMaxTSLayersPresentFlag(true);
+
     for( i = 0; i < vps->getMaxLayers(); i++ )
     {
       vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
 #endif
-#if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
-#else
-  vps->setMaxTidRefPresentFlag(true);
-#endif
   if (vps->getMaxTidRefPresentFlag())
   {
     for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
-#if N0120_MAX_TID_REF_CFG
 #if O0225_MAX_TID_FOR_REF_LAYERS
       for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
@@ -1124,16 +1120,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #else
       vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
 #endif 
-#else
-#if O0225_MAX_TID_FOR_REF_LAYERS
-      for( Int j = i+1; j < vps->getMaxLayers(); j++)
-      {
-        vps->setMaxTidIlRefPicsPlus1(i, j, vps->getMaxTLayers()+1);
-      }
-#else
-      vps->setMaxTidIlRefPicsPlus1(i, vps->getMaxTLayers()+1);
-#endif
-#endif
     }
   }
   else
