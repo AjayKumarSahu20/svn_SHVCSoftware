@@ -102,13 +102,13 @@ TEncGOP::TEncGOP()
   m_associatedIRAPType = NAL_UNIT_CODED_SLICE_IDR_N_LP;
   m_associatedIRAPPOC  = 0;
 #endif
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
   m_pcPredSearch        = NULL;
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   m_temp = NULL;
   m_pColorMappedPic = NULL;
 #endif
+#endif //SVC_EXTENSION
   return;
 }
 
@@ -172,10 +172,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 
 #if SVC_EXTENSION
   m_ppcTEncTop           = pcTEncTop->getLayerEnc();
-#endif
-#if SVC_UPSAMPLING
   m_pcPredSearch         = pcTEncTop->getPredSearch();                       ///< encoder search class
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   if( pcTEncTop->getLayerId() )
   {
@@ -188,6 +185,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     }
   }
 #endif
+#endif //SVC_EXTENSION
 }
 
 SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (TComSPS *sps)
@@ -1088,7 +1086,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pBaseColRec = m_pColorMappedPic;
         }
 #endif
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
@@ -1141,7 +1139,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         }
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
-#endif
+#endif //SVC_EXTENSION
       }
 
       // Update the list of active inter-layer pictures

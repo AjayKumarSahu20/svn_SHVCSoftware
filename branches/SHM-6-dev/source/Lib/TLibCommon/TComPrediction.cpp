@@ -780,7 +780,7 @@ Void TComPrediction::xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, I
   return;
 }
 
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
@@ -806,5 +806,5 @@ Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TCo
 }
 #endif
 #endif
-#endif
+#endif //SVC_EXTENSION
 //! \}
