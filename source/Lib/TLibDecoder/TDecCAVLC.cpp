@@ -2067,60 +2067,58 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     vps->setCrossLayerIrapAlignFlag(true);
   }
 #endif
-#if VPS_VUI_BITRATE_PICRATE
+
   READ_FLAG( uiCode,        "bit_rate_present_vps_flag" );  vps->setBitRatePresentVpsFlag( uiCode ? true : false );
   READ_FLAG( uiCode,        "pic_rate_present_vps_flag" );  vps->setPicRatePresentVpsFlag( uiCode ? true : false );
 
   Bool parseFlag = vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag();
+
+  for( i = 0; i < vps->getNumLayerSets(); i++ )
   {
-    for( i = 0; i < vps->getNumLayerSets(); i++ )
-    {
 #if BITRATE_PICRATE_SIGNALLING
-      for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
+    for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
 #else
-      for( j = 0; j < vps->getMaxTLayers(); j++ )
+    for( j = 0; j < vps->getMaxTLayers(); j++ )
 #endif
+    {
+      if( parseFlag && vps->getBitRatePresentVpsFlag() )
       {
-        if( parseFlag && vps->getBitRatePresentVpsFlag() )
-        {
-          READ_FLAG( uiCode,        "bit_rate_present_flag[i][j]" );  vps->setBitRatePresentFlag( i, j, uiCode ? true : false );
-        }
-        else
-        {
-          vps->setBitRatePresentFlag( i, j, false );
-        }
-        if( parseFlag && vps->getPicRatePresentVpsFlag() )
-        {
-          READ_FLAG( uiCode,        "pic_rate_present_flag[i][j]" );  vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
-        }
-        else
-        {
-          vps->setPicRatePresentFlag( i, j, false );
-        }
-        if( parseFlag && vps->getBitRatePresentFlag(i, j) )
-        {
-          READ_CODE( 16, uiCode,    "avg_bit_rate[i][j]" ); vps->setAvgBitRate( i, j, uiCode );
-          READ_CODE( 16, uiCode,    "max_bit_rate[i][j]" ); vps->setMaxBitRate( i, j, uiCode );
-        }
-        else
-        {
-          vps->setAvgBitRate( i, j, 0 );
-          vps->setMaxBitRate( i, j, 0 );
-        }
-        if( parseFlag && vps->getPicRatePresentFlag(i, j) )
-        {
-          READ_CODE( 2 , uiCode,    "constant_pic_rate_idc[i][j]" ); vps->setConstPicRateIdc( i, j, uiCode );
-          READ_CODE( 16, uiCode,    "avg_pic_rate[i][j]"          ); vps->setAvgPicRate( i, j, uiCode );
-        }
-        else
-        {
-          vps->setConstPicRateIdc( i, j, 0 );
-          vps->setAvgPicRate     ( i, j, 0 );
-        }
+        READ_FLAG( uiCode,        "bit_rate_present_flag[i][j]" );  vps->setBitRatePresentFlag( i, j, uiCode ? true : false );
+      }
+      else
+      {
+        vps->setBitRatePresentFlag( i, j, false );
+      }
+      if( parseFlag && vps->getPicRatePresentVpsFlag() )
+      {
+        READ_FLAG( uiCode,        "pic_rate_present_flag[i][j]" );  vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
+      }
+      else
+      {
+        vps->setPicRatePresentFlag( i, j, false );
+      }
+      if( parseFlag && vps->getBitRatePresentFlag(i, j) )
+      {
+        READ_CODE( 16, uiCode,    "avg_bit_rate[i][j]" ); vps->setAvgBitRate( i, j, uiCode );
+        READ_CODE( 16, uiCode,    "max_bit_rate[i][j]" ); vps->setMaxBitRate( i, j, uiCode );
+      }
+      else
+      {
+        vps->setAvgBitRate( i, j, 0 );
+        vps->setMaxBitRate( i, j, 0 );
+      }
+      if( parseFlag && vps->getPicRatePresentFlag(i, j) )
+      {
+        READ_CODE( 2 , uiCode,    "constant_pic_rate_idc[i][j]" ); vps->setConstPicRateIdc( i, j, uiCode );
+        READ_CODE( 16, uiCode,    "avg_pic_rate[i][j]"          ); vps->setAvgPicRate( i, j, uiCode );
+      }
+      else
+      {
+        vps->setConstPicRateIdc( i, j, 0 );
+        vps->setAvgPicRate     ( i, j, 0 );
       }
     }
   }
-#endif
 #if VPS_VUI_VIDEO_SIGNAL_MOVE
   READ_FLAG( uiCode, "video_signal_info_idx_present_flag" ); vps->setVideoSigPresentVpsFlag( uiCode == 1 );
   if (vps->getVideoSigPresentVpsFlag())

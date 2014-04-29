@@ -1454,7 +1454,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
 #endif
-#if VPS_VUI_BITRATE_PICRATE
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
 
@@ -1489,7 +1488,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       }
     }
   }
-#endif
 #if VPS_VUI_VIDEO_SIGNAL_MOVE
   WRITE_FLAG( vps->getVideoSigPresentVpsFlag(), "video_signal_info_idx_present_flag" );
   if (vps->getVideoSigPresentVpsFlag())

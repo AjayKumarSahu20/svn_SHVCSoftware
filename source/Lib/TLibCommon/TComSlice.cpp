@@ -2245,10 +2245,8 @@ TComVPS::TComVPS()
 , m_defaultOneTargetOutputLayerFlag    (false)
 #endif
 #endif
-#if VPS_VUI_BITRATE_PICRATE
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
-#endif
 #if REPN_FORMAT_IN_VPS
 #if Q0195_REP_FORMAT_CLEANUP
 , m_repFormatIdxPresentFlag   (false)
@@ -2370,14 +2368,12 @@ TComVPS::TComVPS()
     m_vpsMatCoeff[i] = 2;
   }
 #endif
-#if VPS_VUI_BITRATE_PICRATE  
   ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));
   ::memset(m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag));
   ::memset(m_avgBitRate        , 0, sizeof(m_avgBitRate)        );
   ::memset(m_maxBitRate        , 0, sizeof(m_maxBitRate)        );
   ::memset(m_constPicRateIdc   , 0, sizeof(m_constPicRateIdc)   );
   ::memset(m_avgPicRate        , 0, sizeof(m_avgPicRate)        );
-#endif
 #if REPN_FORMAT_IN_VPS
   ::memset( m_vpsRepFormatIdx, 0, sizeof(m_vpsRepFormatIdx) );
 #endif

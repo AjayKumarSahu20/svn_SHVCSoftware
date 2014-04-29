@@ -615,8 +615,8 @@ private:
   Int        m_vpsColorPrimaries[16];
   Int        m_vpsTransChar[16];
   Int        m_vpsMatCoeff[16];
-#endif 
-#if VPS_VUI_BITRATE_PICRATE
+#endif
+
   Bool       m_bitRatePresentVpsFlag;
   Bool       m_picRatePresentVpsFlag;
   Bool       m_bitRatePresentFlag  [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
@@ -625,7 +625,6 @@ private:
   Int        m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-#endif
   
 #if P0312_VERT_PHASE_ADJ
   Bool       m_vpsVuiVertPhaseInUseFlag;
@@ -1002,7 +1001,6 @@ Void      deriveNumberOfSubDpbs();
   Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
   Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
 #endif
-#if VPS_VUI_BITRATE_PICRATE
   Bool   getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
   Void   setBitRatePresentVpsFlag(Bool x) { m_bitRatePresentVpsFlag = x;    }
   Bool   getPicRatePresentVpsFlag()       { return m_picRatePresentVpsFlag; }
@@ -1022,7 +1020,6 @@ Void      deriveNumberOfSubDpbs();
   Void   setConstPicRateIdc(Int i, Int j, Int x)   { m_constPicRateIdc[i][j] = x;    }
   Int    getAvgPicRate(Int i, Int j)          { return m_avgPicRate[i][j]; }
   Void   setAvgPicRate(Int i, Int j, Int x)   { m_avgPicRate[i][j] = x;    }
-#endif
 #if O0164_MULTI_LAYER_HRD
   Bool     getVpsVuiBspHrdPresentFlag()                         { return m_vpsVuiBspHrdPresentFlag;      }
   Void     setVpsVuiBspHrdPresentFlag(Bool x)                   { m_vpsVuiBspHrdPresentFlag = x;         }
