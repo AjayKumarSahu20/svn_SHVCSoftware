@@ -568,9 +568,7 @@ private:
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool       m_crossLayerPictureTypeAlignFlag;
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   Bool       m_crossLayerIrapAlignFlag;
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool       m_crossLayerAlignedIdrOnlyFlag;
 #endif
@@ -930,10 +928,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getCrossLayerAlignedIdrOnlyFlag()                                    { return m_crossLayerAlignedIdrOnlyFlag;                      }
   Void   setCrossLayerAlignedIdrOnlyFlag(Bool x)                              { m_crossLayerAlignedIdrOnlyFlag = x;                         }
 #endif 
-#if N0147_IRAP_ALIGN_FLAG
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
-#endif 
 #if O0225_MAX_TID_FOR_REF_LAYERS
   UInt   getMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId)                     { return m_maxTidIlRefPicsPlus1[layerId][refLayerId];           }
   Void   setMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId][refLayerId] = maxSublayer;    }

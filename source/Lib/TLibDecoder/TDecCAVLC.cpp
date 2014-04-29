@@ -1630,10 +1630,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG( uiCode, "cross_layer_phase_alignment_flag"); vps->setPhaseAlignFlag( uiCode == 1 ? true : false );
 #endif
 
-#if N0147_IRAP_ALIGN_FLAG && !IRAP_ALIGN_FLAG_IN_VPS_VUI
   READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
   vps->setCrossLayerIrapAlignFlag(uiCode);
-#endif
 
 #if VPS_DPB_SIZE_TABLE
   parseVpsDpbSizeTable(vps);
@@ -1828,10 +1826,8 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
 
 Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
 {
-#if N0147_IRAP_ALIGN_FLAG
   // When not present, the value of all_layers_idr_aligned_flag is inferred to be equal to 0.
   vps->setCrossLayerIrapAlignFlag( false );
-#endif
 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   // When single_layer_for_non_irap_flag is not present, it is inferred to be equal to 0.

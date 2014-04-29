@@ -1199,7 +1199,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if O0215_PHASE_ALIGNMENT
   WRITE_FLAG(vps->getPhaseAlignFlag(), "cross_layer_phase_alignment_flag" );
 #endif
-#if N0147_IRAP_ALIGN_FLAG && !IRAP_ALIGN_FLAG_IN_VPS_VUI
+#if !IRAP_ALIGN_FLAG_IN_VPS_VUI
   WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if VPS_DPB_SIZE_TABLE

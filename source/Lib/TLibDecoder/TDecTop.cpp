@@ -1108,7 +1108,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   // actual decoding starts here
   xActivateParameterSets();
-#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS && N0147_IRAP_ALIGN_FLAG
+#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS
   //Note setting O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS to 0 may cause decoder to crash.
   //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
   if(!m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
@@ -1762,7 +1762,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 #endif
     
-#if N0147_IRAP_ALIGN_FLAG
     if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() )
     {
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
@@ -1778,7 +1777,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
-#endif
 
     if( m_layerId > 0 && !pcSlice->isIntra() && pcSlice->getEnableTMVPFlag() )
     {

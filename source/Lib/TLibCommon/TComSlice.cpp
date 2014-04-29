@@ -774,13 +774,8 @@ Void TComSlice::setRefPicListModificationSvc()
   Int numberOfPocBeforeCurr = this->getNumNegativeRpsCurrTempList();  // number of negative temporal ref pics 
 #endif
 
-#if N0147_IRAP_ALIGN_FLAG
   assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 0);
   assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 0);
-#else
-  assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 1);
-  assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 1);
-#endif
 
   //set L0 inter-layer reference picture modification
 #if RPL_INIT_N0316_N0082
@@ -788,9 +783,7 @@ Void TComSlice::setRefPicListModificationSvc()
 #else
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
-#endif
   refPicListModification->setRefPicListModificationFlagL0(hasModification);
   if(hasModification)
   { 
@@ -837,9 +830,7 @@ Void TComSlice::setRefPicListModificationSvc()
 
   //set L1 inter-layer reference picture modification
   hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] >= numberOfRpsCurrTempList) ? false : true;
-#if N0147_IRAP_ALIGN_FLAG
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_1] > 1 );
-#endif
 
   refPicListModification->setRefPicListModificationFlagL1(hasModification);
   if(hasModification)
@@ -2331,9 +2322,7 @@ TComVPS::TComVPS()
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   m_crossLayerPictureTypeAlignFlag = true;
 #endif 
-#if N0147_IRAP_ALIGN_FLAG
   m_crossLayerIrapAlignFlag = true;
-#endif 
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   m_crossLayerAlignedIdrOnlyFlag = false;
 #endif

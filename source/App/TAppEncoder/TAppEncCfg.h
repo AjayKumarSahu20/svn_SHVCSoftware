@@ -360,6 +360,7 @@ protected:
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
+#if SVC_EXTENSION
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
@@ -383,9 +384,7 @@ protected:
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool      m_crossLayerPictureTypeAlignFlag;
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   Bool      m_crossLayerIrapAlignFlag;
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
 #endif
@@ -401,6 +400,7 @@ protected:
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
 #endif
+#endif //SVC_EXTENSION
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();
