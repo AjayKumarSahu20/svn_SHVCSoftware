@@ -1219,11 +1219,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
        }
 #else
       READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i]" ); vps->setMaxTidIlRefPicsPlus1(i, uiCode);
-#if N0120_MAX_TID_REF_CFG
       assert( uiCode <= vps->getMaxTLayers());
-#else
-      assert( uiCode <= vps->getMaxTLayers()+ 1 );
-#endif
 #endif 
     }
   }

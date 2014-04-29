@@ -347,9 +347,7 @@ protected:
   Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int       m_maxTidIlRefPicsPlus1;
-#endif 
 #if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatIDC;
 #endif
@@ -876,10 +874,8 @@ public:
   Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
   Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
   Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
-#endif 
 #if LAYERS_NOT_PRESENT_SEI
   Void  setLayersNotPresentSEIEnabled(Int b)             { m_layersNotPresentSEIEnabled = b; }
   Int   getLayersNotPresentSEIEnabled()                  { return m_layersNotPresentSEIEnabled; }

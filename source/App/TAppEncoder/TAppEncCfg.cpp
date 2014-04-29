@@ -68,9 +68,7 @@ TAppEncCfg::TAppEncCfg()
 #if AVC_BASE
 , m_avcBaseLayerFlag(0)
 #endif
-#if N0120_MAX_TID_REF_CFG
 , m_maxTidRefPresentFlag(1)
-#endif 
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
@@ -419,9 +417,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_OutputBitDepthY   [MAX_LAYERS];
   Int*    cfg_OutputBitDepthC   [MAX_LAYERS];
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
-#endif 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -490,9 +486,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   cfg_OutputBitDepthY  [layer] = &m_acLayerCfg[layer].m_outputBitDepthY;
   cfg_OutputBitDepthC  [layer] = &m_acLayerCfg[layer].m_outputBitDepthC;
 #endif
-#if N0120_MAX_TID_REF_CFG
-    cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
-#endif 
+  cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
@@ -597,10 +591,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepth%d",      cfg_OutputBitDepthY,   0, MAX_LAYERS, "Bit-depth of output file (default:InternalBitDepth)")
   ("OutputBitDepthC%d",     cfg_OutputBitDepthC,   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 #endif
-#if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
-#endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
 #endif
@@ -2233,6 +2225,8 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5 , "SEIFramePackingType must be in rage 3 to 5");
   }
+
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
   xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
@@ -2303,12 +2297,10 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
 #endif
-#if N0120_MAX_TID_REF_CFG
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
     xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
-#endif 
 #if AUXILIARY_PICTURES
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
@@ -2319,6 +2311,7 @@ Void TAppEncCfg::xCheckParameter()
 #if Q0048_CGS_3D_ASYMLUT
   xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
 #endif
+#endif //SVC_EXTENSION
 #undef xConfirmPara
   if (check_failed)
   {
