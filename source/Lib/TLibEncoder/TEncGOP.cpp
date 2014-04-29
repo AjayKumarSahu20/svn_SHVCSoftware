@@ -1176,19 +1176,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         else
 #endif 
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
-
-#if IDR_ALIGNMENT
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
-        TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
-        if( picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || picLayer0->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP )
-        {
-          pcSlice->setNalUnitType(picLayer0->getSlice(0)->getNalUnitType());
-        }
-        else
-        {
-          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
-        }
-#endif 
       }
 
       if( pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
