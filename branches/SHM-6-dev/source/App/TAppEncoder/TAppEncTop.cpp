@@ -1106,7 +1106,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
 #if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
 #else
@@ -1151,7 +1150,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif 
     }
   }
-#endif
 #if ILP_SSH_SIG
 #if ILP_SSH_SIG_FIX
     vps->setIlpSshSignalingEnabledFlag(false);

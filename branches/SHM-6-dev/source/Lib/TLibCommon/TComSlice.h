@@ -579,9 +579,7 @@ private:
 #else
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool       m_maxTidRefPresentFlag;
-#endif 
 #if VPS_TSLAYERS
   Bool       m_maxTSLayersPresentFlag;
   UInt       m_maxTSLayerMinus1[MAX_LAYERS];
@@ -943,10 +941,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getMaxTidIlRefPicsPlus1(Int layerId)                     { return m_maxTidIlRefPicsPlus1[layerId];                   }
   Void   setMaxTidIlRefPicsPlus1(Int layerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId] = maxSublayer;            }
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
   Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
-#endif 
 #if VPS_TSLAYERS
   Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
   Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
