@@ -1203,7 +1203,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
   READ_FLAG( uiCode, "max_tid_ref_present_flag"); vps->setMaxTidRefPresentFlag(uiCode ? true : false);
   if (vps->getMaxTidRefPresentFlag())
   {
@@ -1242,24 +1241,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
     }
   }
-#else
-  for(i = 0; i < vps->getMaxLayers() - 1; i++)
-  {
-#if O0225_MAX_TID_FOR_REF_LAYERS
-       for( j = i+1; j <= vps->getMaxLayers() - 1; j++)
-       {
-         if(vps->getDirectDependencyFlag(j, i))
-         {
-           READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i][j]" ); vps->setMaxTidIlRefPicsPlus1(i, j, uiCode);
-           assert( uiCode <= vps->getMaxTLayers() );
-         }
-       }
-#else
-    READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i]" ); vps->setMaxTidIlRefPicsPlus1(i, uiCode);
-    assert( uiCode <= vps->getMaxTLayers() );
-#endif   
-  }
-#endif
 #if ILP_SSH_SIG
     READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
 #endif
