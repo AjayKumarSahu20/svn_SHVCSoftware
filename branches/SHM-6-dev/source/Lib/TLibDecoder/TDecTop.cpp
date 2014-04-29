@@ -1089,38 +1089,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_uiPrevLayerId = m_layerId;
     return true;
   }
-#else
-  //we should only get a different poc for a new picture (with CTU address==0)
-  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCUAddr()!=0))
-  {
-    printf ("Warning, the first slice of a picture might have been lost!\n");
-  }
-  // exit when a new picture is found
-  if (m_apcSlicePilot->isNextSlice() && (m_apcSlicePilot->getSliceCurStartCUAddr() == 0 && !m_bFirstSliceInPicture) && !m_bFirstSliceInSequence )
-  {
-    if (m_prevPOC >= m_pocRandomAccess)
-    {
-      m_prevPOC = m_apcSlicePilot->getPOC();
-      return true;
-    }
-    m_prevPOC = m_apcSlicePilot->getPOC();
-  }
-#endif
+
   // actual decoding starts here
   xActivateParameterSets();
-#if !O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS
-  //Note setting O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS to 0 may cause decoder to crash.
-  //When cross_layer_irap_aligned_flag is equal to 0, num_extra_slice_header_bits >=1 
-  if(!m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
-  {
-    assert( m_apcSlicePilot->getPPS()->getNumExtraSliceHeaderBits() > 0);
-  }
-  //When cross_layer_irap_aligned_flag is equal to 1, the value of poc_reset_flag shall be equal to 0  
-  if( m_apcSlicePilot->getVPS()->getCrossLayerIrapAlignFlag() )
-  {
-    assert( m_apcSlicePilot->getPocResetFlag() == 0);
-  }
-#endif 
+
 #if REPN_FORMAT_IN_VPS
   // Initialize ILRP if needed, only for the current layer  
   // ILRP intialization should go along with activation of parameters sets, 
@@ -1130,10 +1102,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (m_apcSlicePilot->isNextSlice()) 
   {
     m_prevPOC = m_apcSlicePilot->getPOC();
-#if SVC_EXTENSION
     curLayerId = m_layerId;
     m_uiPrevLayerId = m_layerId;
-#endif
   }
   m_bFirstSliceInSequence = false;
 #if SETTING_NO_OUT_PIC_PRIOR  
@@ -1240,6 +1210,32 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
   }
 #endif
+#else //SVC_EXTENSION
+  //we should only get a different poc for a new picture (with CTU address==0)
+  if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCUAddr()!=0))
+  {
+    printf ("Warning, the first slice of a picture might have been lost!\n");
+  }
+  // exit when a new picture is found
+  if (m_apcSlicePilot->isNextSlice() && (m_apcSlicePilot->getSliceCurStartCUAddr() == 0 && !m_bFirstSliceInPicture) && !m_bFirstSliceInSequence )
+  {
+    if (m_prevPOC >= m_pocRandomAccess)
+    {
+      m_prevPOC = m_apcSlicePilot->getPOC();
+      return true;
+    }
+    m_prevPOC = m_apcSlicePilot->getPOC();
+  }
+
+  // actual decoding starts here
+  xActivateParameterSets();
+
+  if (m_apcSlicePilot->isNextSlice()) 
+  {
+    m_prevPOC = m_apcSlicePilot->getPOC();
+  }
+  m_bFirstSliceInSequence = false;
+#endif //SVC_EXTENSION
   //detect lost reference picture and insert copy of earlier frame.
   Int lostPoc;
   while((lostPoc=m_apcSlicePilot->checkThatAllRefPicsAreAvailable(m_cListPic, m_apcSlicePilot->getRPS(), true, m_pocRandomAccess)) > 0)
