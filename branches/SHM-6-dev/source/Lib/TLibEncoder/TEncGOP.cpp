@@ -2083,11 +2083,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if ( m_bSeqFirst )
     {
 #if SVC_EXTENSION
-#if VPS_NUH_LAYER_ID
-      OutputNALUnit nalu(NAL_UNIT_VPS, 0, 0        ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
-#else
-      OutputNALUnit nalu(NAL_UNIT_VPS, 0, m_layerId);
-#endif
+      OutputNALUnit nalu( NAL_UNIT_VPS, 0, 0 ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #if AVC_BASE
       if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) )
 #else
