@@ -2019,7 +2019,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   switch (nalu.m_nalUnitType)
   {
     case NAL_UNIT_VPS:
-#if VPS_NUH_LAYER_ID
+#if SVC_EXTENSION
       assert( nalu.m_layerId == 0 ); // Non-conforming bitstream. The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #endif
       xDecodeVPS();
