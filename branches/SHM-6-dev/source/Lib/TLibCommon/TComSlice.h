@@ -1737,6 +1737,7 @@ private:
   Int m_numExtraSliceHeaderBits;
 
 #if SVC_EXTENSION
+  Bool     m_extensionFlag;
 #if SCALINGLIST_INFERRING
   UInt     m_layerId;
   Bool     m_inferScalingListFlag;
@@ -1863,15 +1864,6 @@ public:
   Void     setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
 #if SCALINGLIST_INFERRING
-  UInt     getLayerId() { return m_layerId; }
-  Void     setLayerId( UInt layerId ) { m_layerId = layerId;            }
-  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
-  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
-  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
-  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
-#endif
-
-#if SCALINGLIST_INFERRING
   Void     setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
 #else
   Void     setScalingList      ( TComScalingList *scalingList);
@@ -1887,6 +1879,17 @@ public:
   Bool      getLoopFilterAcrossSlicesEnabledFlag ()                    { return m_loopFilterAcrossSlicesEnabledFlag;   } 
   Bool getSliceHeaderExtensionPresentFlag   ()                    { return m_sliceHeaderExtensionPresentFlag; }
   Void setSliceHeaderExtensionPresentFlag   (Bool val)            { m_sliceHeaderExtensionPresentFlag = val; }
+#if SVC_EXTENSION
+  Int     getExtensionFlag()                { return m_extensionFlag;  }
+  Void    setExtensionFlag(Int n)           { m_extensionFlag = n;     }
+#if SCALINGLIST_INFERRING
+  UInt     getLayerId() { return m_layerId; }
+  Void     setLayerId( UInt layerId ) { m_layerId = layerId;            }
+  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
+#endif
 #if POC_RESET_IDC
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
@@ -1899,6 +1902,7 @@ public:
   Int     getCGSOutputBitDepthC()     { return m_nCGSOutputBitDepthC;  }
   Void    setCGSOutputBitDepthC(Int n){ m_nCGSOutputBitDepthC = n;     }
 #endif
+#endif //SVC_EXTENSION
 };
 
 typedef struct

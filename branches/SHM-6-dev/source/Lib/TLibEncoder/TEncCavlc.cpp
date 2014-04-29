@@ -255,8 +255,9 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
   WRITE_FLAG( pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
 #if P0166_MODIFIED_PPS_EXTENSION
-  WRITE_FLAG( 1, "pps_extension_flag" );
-  if( 1 ) //pps_extension_flag
+  WRITE_FLAG( pcPPS->getExtensionFlag() ? 1 : 0, "pps_extension_flag" );
+
+  if( pcPPS->getExtensionFlag() )
   {
 #if !POC_RESET_IDC
     UInt ppsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };

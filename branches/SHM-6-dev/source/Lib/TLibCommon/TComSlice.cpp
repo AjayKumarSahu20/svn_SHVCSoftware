@@ -3072,7 +3072,10 @@ TComPPS::TComPPS()
 , m_loopFilterAcrossSlicesEnabledFlag (false)
 , m_listsModificationPresentFlag(  0)
 , m_numExtraSliceHeaderBits(0)
+#if SVC_EXTENSION
+, m_extensionFlag(false)
 #if SCALINGLIST_INFERRING
+, m_layerId(0)
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
 #endif
@@ -3084,6 +3087,7 @@ TComPPS::TComPPS()
 , m_nCGSOutputBitDepthY(0)
 , m_nCGSOutputBitDepthC(0)
 #endif
+#endif //SVC_EXTENSION
 {
   m_scalingList = new TComScalingList;
 }
