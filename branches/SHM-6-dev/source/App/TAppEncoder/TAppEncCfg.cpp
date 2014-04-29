@@ -596,9 +596,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   ("CrossLayerAlignedIdrOnlyFlag", m_crossLayerAlignedIdrOnlyFlag, true, "only idr for IRAP across layers" )  
 #endif
@@ -2411,9 +2409,7 @@ Void TAppEncCfg::xPrintParameter()
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   printf("Align picture type            : %d\n", m_crossLayerPictureTypeAlignFlag );
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   printf("IDR only for IRAP             : %d\n", m_crossLayerAlignedIdrOnlyFlag );
 #endif

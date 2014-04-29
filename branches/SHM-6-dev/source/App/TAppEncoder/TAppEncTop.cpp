@@ -1335,7 +1335,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
     vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
 #endif
-#if N0147_IRAP_ALIGN_FLAG
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
@@ -1351,7 +1350,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         }
       }
     }
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif 
