@@ -1071,10 +1071,6 @@ Void TEncTop::xInitSPS()
 
 Void TEncTop::xInitPPS()
 {
-#if SCALINGLIST_INFERRING
-  m_cPPS.setLayerId( m_layerId );
-#endif
-
   m_cPPS.setConstrainedIntraPred( m_bUseConstrainedIntraPred );
   Bool bUseDQP = (getMaxCuDQPDepth() > 0)? true : false;
 
@@ -1170,6 +1166,10 @@ Void TEncTop::xInitPPS()
     }
   }
 #if SVC_EXTENSION
+#if SCALINGLIST_INFERRING
+  m_cPPS.setLayerId( m_layerId );
+#endif
+
   if( m_layerId > 0 )
   {
     m_cPPS.setListsModificationPresentFlag(true);

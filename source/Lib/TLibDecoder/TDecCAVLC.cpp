@@ -460,7 +460,7 @@ Void  TDecCavlc::parseVUI(TComVUI* pcVUI, TComSPS *pcSPS)
   }
   TimingInfo *timingInfo = pcVUI->getTimingInfo();
   READ_FLAG(       uiCode, "vui_timing_info_present_flag");         timingInfo->setTimingInfoPresentFlag      (uiCode ? true : false);
-#if TIMING_INFO_NONZERO_LAYERID_SPS
+#if SVC_EXTENSION
   if( pcSPS->getLayerId() > 0 )
   {
     assert( timingInfo->getTimingInfoPresentFlag() == false );
