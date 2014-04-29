@@ -339,8 +339,9 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
 
   READ_FLAG( uiCode, "pps_extension_flag");
 #if POC_RESET_INFO_INFERENCE
-  Bool ppsExtensionFlag = uiCode ? true : false;
-  if( ppsExtensionFlag )
+  pcPPS->setExtensionFlag( uiCode ? true : false );
+
+  if( pcPPS->getExtensionFlag() )
 #else
   if (uiCode)
 #endif  
@@ -390,7 +391,7 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
 #endif
   }
 #if POC_RESET_INFO_INFERENCE
-  if( !ppsExtensionFlag )
+  if( !pcPPS->getExtensionFlag() )
   {
     pcPPS->setPocResetInfoPresentFlag( false );
   }

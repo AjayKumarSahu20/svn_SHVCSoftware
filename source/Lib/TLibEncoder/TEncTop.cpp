@@ -1170,18 +1170,19 @@ Void TEncTop::xInitPPS()
     }
   }
 #if SVC_EXTENSION
-  if (!m_layerId)
+  if( m_layerId > 0 )
   {
-    m_cPPS.setListsModificationPresentFlag(false);
+    m_cPPS.setListsModificationPresentFlag(true);
+    m_cPPS.setExtensionFlag(true);
   }
   else
   {
-    m_cPPS.setListsModificationPresentFlag(true);
+    m_cPPS.setListsModificationPresentFlag(false);
+    m_cPPS.setExtensionFlag(false);
   }
 
-  m_cPPS.setPPSId         ( m_iPPSIdCnt         );
-  m_cPPS.setSPSId         ( m_iSPSIdCnt         );
-#endif
+  m_cPPS.setPPSId( m_iPPSIdCnt );
+  m_cPPS.setSPSId( m_iSPSIdCnt );
 #if POC_RESET_FLAG
   m_cPPS.setNumExtraSliceHeaderBits( 2 );
 #endif
@@ -1194,6 +1195,7 @@ Void TEncTop::xInitPPS()
 #if Q0048_CGS_3D_ASYMLUT
   m_cPPS.setCGSFlag( m_nCGSFlag );
 #endif
+#endif //SVC_EXTENSION
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
