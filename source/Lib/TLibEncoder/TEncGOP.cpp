@@ -1282,7 +1282,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       if(pcSlice->isTemporalLayerSwitchingPoint(rcListPic) || pcSlice->getSPS()->getTemporalIdNestingFlag())
       {
-#if ALIGN_TSA_STSA_PICS
+#if SVC_EXTENSION
+        // Alignment of TSA pictures across AU
         if( pcSlice->getLayerId() > 0 )
         {
           Bool oneRefLayerTSA = false, oneRefLayerNotTSA = false;
@@ -1338,7 +1339,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             }
           }
         }
-#else
+#else  //SVC_EXTENSION
         if(pcSlice->getTemporalLayerNonReferenceFlag())
         {
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_N);
@@ -1347,7 +1348,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TSA_R);
         }
-#endif
+#endif //SVC_EXTENSION
       }
       else if(pcSlice->isStepwiseTemporalLayerSwitchingPointCandidate(rcListPic))
       {
@@ -1381,7 +1382,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         if(isSTSA==true)
         {    
-#if ALIGN_TSA_STSA_PICS
+#if SVC_EXTENSION
+          // Alignment of STSA pictures across AU
           if( pcSlice->getLayerId() > 0 )
           {
             Bool oneRefLayerSTSA = false, oneRefLayerNotSTSA = false;
@@ -1437,7 +1439,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
               }
             }
           }
-#else
+#else  //SVC_EXTENSION
           if(pcSlice->getTemporalLayerNonReferenceFlag())
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
@@ -1446,7 +1448,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
           }
-#endif
+#endif //SVC_EXTENSION
         }
       }
     }

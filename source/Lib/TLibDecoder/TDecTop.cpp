@@ -1172,7 +1172,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_apcSlicePilot->setPOC( 0 );
   }
 #endif
-#if ALIGN_TSA_STSA_PICS
+
+  // Alignment of TSA and STSA pictures across AU
   if( m_apcSlicePilot->getLayerId() > 0 )
   {
     // Check for TSA alignment
@@ -1209,7 +1210,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
   }
-#endif
+
 #else //SVC_EXTENSION
   //we should only get a different poc for a new picture (with CTU address==0)
   if (m_apcSlicePilot->isNextSlice() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCUAddr()!=0))
