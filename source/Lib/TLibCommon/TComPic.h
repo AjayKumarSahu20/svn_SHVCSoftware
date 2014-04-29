@@ -96,23 +96,19 @@ public:
   TComPic();
   virtual ~TComPic();
   
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
 #else
-  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
-                        Int *numReorderPics, Bool bIsVirtual = false );                        
-#endif
-#else
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
+#endif
 #else
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
-                        Int *numReorderPics, Bool bIsVirtual = false );                        
-#endif
-#endif
+                        Int *numReorderPics, Bool bIsVirtual = false ); 
+#endif //SVC_EXTENSION 
+
   virtual Void  destroy();
   
   UInt          getTLayer()                { return m_uiTLayer;   }

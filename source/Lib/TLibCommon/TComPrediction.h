@@ -47,7 +47,7 @@
 #include "TComInterpolationFilter.h"
 #include "TComWeightPrediction.h"
 
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #include "TComUpsampleFilter.h"
 #endif
 //! \ingroup TLibCommon
@@ -71,10 +71,6 @@ protected:
   TComYuv m_filteredBlockTmp[4];
   
   TComInterpolationFilter m_if;
-  
-#if SVC_UPSAMPLING
-  TComUpsampleFilter      m_cUsf;
-#endif
 
   Pel*   m_pLumaRecBuffer;       ///< array for downsampled reconstructed luma sample 
   Int    m_iLumaRecStride;       ///< stride of #m_pLumaRecBuffer array
@@ -93,6 +89,10 @@ protected:
 
   Void xDCPredFiltering( Int* pSrc, Int iSrcStride, Pel*& rpDst, Int iDstStride, Int iWidth, Int iHeight );
   Bool xCheckIdenticalMotion    ( TComDataCU* pcCU, UInt PartAddr);
+  
+#if SVC_EXTENSION
+  TComUpsampleFilter      m_cUsf;
+#endif
 
 public:
   TComPrediction();
@@ -117,7 +117,6 @@ public:
   Int  getPredicBufHeight()       { return m_iYuvExtHeight; }
 
 #if SVC_EXTENSION
-#if SVC_UPSAMPLING
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
   Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag );
@@ -129,7 +128,6 @@ public:
   Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
 #else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
-#endif
 #endif
 #endif
 #endif //SVC_EXTENSION

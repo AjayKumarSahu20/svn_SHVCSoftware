@@ -1534,7 +1534,7 @@ Void TAppEncTop::encode()
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
     {
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -1554,7 +1554,7 @@ Void TAppEncTop::encode()
     }
     else
     {
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -1993,7 +1993,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );

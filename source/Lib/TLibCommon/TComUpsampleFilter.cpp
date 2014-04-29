@@ -1,8 +1,7 @@
-
-#include "TComUpsampleFilter.h"
 #include "TypeDef.h"
+#if SVC_EXTENSION
+#include "TComUpsampleFilter.h"
 
-#if SVC_UPSAMPLING
 #define CNU -1 ///< Coefficients Not Used
 
 const Int TComUpsampleFilter::m_lumaFixedFilter[16][NTAPS_US_LUMA] =

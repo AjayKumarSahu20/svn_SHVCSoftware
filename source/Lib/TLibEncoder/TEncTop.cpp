@@ -819,23 +819,18 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
-      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#else
-#if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
-#else
+#endif
+#else  //SVC_EXTENSION
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#endif
+#endif //SVC_EXTENSION
       rpcPic = pcEPic;
     }
     else
@@ -888,23 +883,18 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       }
 #endif
 
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
-      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#else
-#if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
-#else
+#endif
+#else  //SVC_EXTENSION
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#endif
+#endif //SVC_EXTENSION
     }
     m_cListPic.pushBack( rpcPic );
   }
@@ -1581,14 +1571,10 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numLayer; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
         m_cIlpPic[j] = new  TComPic;
-#if SVC_UPSAMPLING
 #if AUXILIARY_PICTURES
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#endif
-#else
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
@@ -1648,14 +1634,10 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new  TComPic;
-#if SVC_UPSAMPLING
 #if AUXILIARY_PICTURES
         m_cIlpPic[j]->create(picWidth, picHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
 #else
         m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#endif
-#else
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {

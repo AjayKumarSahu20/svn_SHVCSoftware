@@ -134,9 +134,7 @@ private:
 #if SVC_EXTENSION
   UInt                    m_layerId;      
   TEncTop**               m_ppcTEncTop;
-#if SVC_UPSAMPLING
   TEncSearch*             m_pcPredSearch;                       ///< encoder search class
-#endif  
 #if Q0048_CGS_3D_ASYMLUT
   TEnc3DAsymLUT           m_Enc3DAsymLUTPicUpdate;
   TEnc3DAsymLUT           m_Enc3DAsymLUTPPS;

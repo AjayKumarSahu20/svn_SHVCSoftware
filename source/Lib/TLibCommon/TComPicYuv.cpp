@@ -66,24 +66,21 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {
 }
+
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
 #else
-Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
-#endif
-#else
-#if SVC_UPSAMPLING
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
+#endif
 #else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
-#endif
 #endif
 {
   m_iPicWidth       = iPicWidth;
   m_iPicHeight      = iPicHeight;
   
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
   if(pcSps != NULL)
   {
     m_conformanceWindow = pcSps->getConformanceWindow();
