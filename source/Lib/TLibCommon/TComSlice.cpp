@@ -3092,6 +3092,11 @@ TComPPS::TComPPS()
 #if POC_RESET_IDC
 , m_pocResetInfoPresentFlag   (false)
 #endif
+#if Q0048_CGS_3D_ASYMLUT
+, m_nCGSFlag(0)
+, m_nCGSOutputBitDepthY(0)
+, m_nCGSOutputBitDepthC(0)
+#endif
 {
   m_scalingList = new TComScalingList;
 }
