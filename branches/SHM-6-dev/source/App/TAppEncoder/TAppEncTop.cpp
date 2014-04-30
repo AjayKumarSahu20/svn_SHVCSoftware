@@ -1975,7 +1975,6 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -1988,9 +1987,6 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
 #else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #endif
-#endif
-#else
-    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif
 
   }
@@ -2016,6 +2012,12 @@ Void TAppEncTop::xDeleteBuffer( )
 
 Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 {
+#if REPN_FORMAT_IN_VPS
+  ChromaFormat chromaFormatIdc = m_acLayerCfg[layer].getChromaFormatIDC();
+  Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+  Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
+
   if (m_isField)
   {
     //Reinterlace fields
@@ -2038,7 +2040,12 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       if (!m_acLayerCfg[layer].getReconFile().empty())
 #endif
       {
+#if REPN_FORMAT_IN_VPS
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfLeft() * xScal, m_acLayerCfg[layer].getConfRight() * xScal, 
+          m_acLayerCfg[layer].getConfTop() * yScal, m_acLayerCfg[layer].getConfBottom() * yScal, m_isTopFieldFirst );
+#else
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom(), m_isTopFieldFirst );
+#endif
       }
     }
   }
@@ -2062,8 +2069,13 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       if (!m_acLayerCfg[layer].getReconFile().empty())
 #endif
       {
+#if REPN_FORMAT_IN_VPS
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft() * xScal, m_acLayerCfg[layer].getConfRight() * xScal,
+          m_acLayerCfg[layer].getConfTop() * yScal, m_acLayerCfg[layer].getConfBottom() * yScal );
+#else
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(),
           m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom() );
+#endif
       }
     }
   }
