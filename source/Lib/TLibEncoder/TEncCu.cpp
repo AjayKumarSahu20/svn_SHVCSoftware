@@ -739,9 +739,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         if(pcPic->getLayerId() > 0)
 #endif
         {
-          for(Int refLayer = 0; refLayer < pcSlice->getActiveNumILRRefIdx(); refLayer++)
+          for(Int refLayerIdc = 0; refLayerIdc < pcSlice->getActiveNumILRRefIdx(); refLayerIdc++)
           {  
-            xCheckRDCostILRUni( rpcBestCU, rpcTempCU, pcSlice->getInterLayerPredLayerIdc(refLayer));
+            xCheckRDCostILRUni( rpcBestCU, rpcTempCU, pcSlice->getVPS()->getRefLayerId( pcSlice->getLayerId(), refLayerIdc ) );
             rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
           }
         }
