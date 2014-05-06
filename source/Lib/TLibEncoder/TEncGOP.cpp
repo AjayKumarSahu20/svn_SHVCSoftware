@@ -4425,6 +4425,14 @@ const Int TEncGOP::m_phase_filter_1[8][13]={
   {0,   0,  0,   5,   -8,-7,  45,  75,  29,  -12,-3,  5,  -1}    
 };
 
+#if CGS_GCC_NO_VECTORIZATION  
+#ifdef __GNUC__
+#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#if GCC_VERSION > 40600
+__attribute__((optimize("no-tree-vectorize")))
+#endif
+#endif
+#endif
 Void TEncGOP::filterImg(
     Pel           *src,
     Int           iSrcStride,
