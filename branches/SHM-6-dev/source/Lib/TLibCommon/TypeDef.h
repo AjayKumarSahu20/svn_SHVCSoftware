@@ -99,6 +99,7 @@
 #endif
 #define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
 #if Q0048_CGS_3D_ASYMLUT
+#define CGS_GCC_NO_VECTORIZATION         1
 #define O0194_WEIGHTED_PREDICTION_CGS    0
 #else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
