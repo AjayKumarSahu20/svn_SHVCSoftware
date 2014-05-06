@@ -89,19 +89,8 @@ Void TCom3DAsymLUT::colorMapping( TComPicYuv * pcPic, TComPicYuv * pcPicDst )
   Pel *pVNext = pV+nStrideC;
 
   // alignment padding
-  pU += (nWidth>>1);
-  pV += (nWidth>>1);
-  for( Int y = 0 ; y < (nHeight>>1) ; y ++ )
-  {
-    *pU = pU[-1];
-    *pV = pV[-1];
-    pU += nStrideC;
-    pV += nStrideC;
-  }
-  memcpy(pU-(nWidth>>1), pU-(nWidth>>1)-nStrideC, ((nWidth>>1)+1)*sizeof(Pel));
-  memcpy(pV-(nWidth>>1), pV-(nWidth>>1)-nStrideC, ((nWidth>>1)+1)*sizeof(Pel));
-  pU = pcPic->getCbAddr();
-  pV = pcPic->getCrAddr();
+  pcPic->setBorderExtension( false );
+  pcPic->extendPicBorder();
 
   Pel iMaxValY = (1<<getOutputBitDepthY())-1;
   Pel iMaxValC = (1<<getOutputBitDepthC())-1;
