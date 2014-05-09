@@ -2053,10 +2053,10 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
     vps->setCrossLayerIrapAlignFlag(uiCode);
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-    if (uiCode)
+    if( uiCode )
     {
-      READ_FLAG(uiCode, "all_layers_idr_aligned_flag" );
-      vps->setCrossLayerIrapAlignFlag(uiCode);
+      READ_FLAG( uiCode, "all_layers_idr_aligned_flag" );
+      vps->setCrossLayerAlignedIdrOnlyFlag(uiCode);
     }
 #endif
 #endif
