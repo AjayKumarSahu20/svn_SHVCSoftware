@@ -893,14 +893,16 @@ Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEISca
     for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
     {
 #if HRD_BPB
-        UInt nl=0;
-     for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-     {
-            if (sei.m_layerIdIncludedFlag[lsIdx][j])
-                nl++;
-     }
-     for (UInt j = 0; j < nl; j++)
-     {
+      UInt nl=0;
+      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
+      {
+        if (sei.m_layerIdIncludedFlag[lsIdx][j])
+        {
+          nl++;
+        }
+      }
+      for (UInt j = 0; j < nl; j++)
+      {
 #else
       for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
       {

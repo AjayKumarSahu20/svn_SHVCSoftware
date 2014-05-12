@@ -734,10 +734,10 @@ public:
   }
 #endif
 #if HRD_BPB
-    Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
-    {
-        return m_bspHrd->getCpbCntMinus1(sl);
-    }
+  Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
+  {
+    return m_bspHrd->getCpbCntMinus1(sl);
+  }
 #endif
 
   TComHRD* getHrdParameters   ( UInt i )             { return &m_hrdParameters[ i ]; }
