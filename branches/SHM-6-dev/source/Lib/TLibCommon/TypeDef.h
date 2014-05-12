@@ -262,6 +262,7 @@
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag
 #define BITRATE_PICRATE_SIGNALLING       1      ///< JCTVC-Q0102 Proposal 3 signal bitrate, picrate only up to the maximum temporal sub-layers in the corresponding layer set
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
+#define HRD_BPB                         1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #if VIEW_ID_RELATED_SIGNALING
 /// scalability types
 enum ScalabilityType

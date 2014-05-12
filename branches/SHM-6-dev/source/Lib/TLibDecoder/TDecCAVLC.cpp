@@ -2309,6 +2309,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
       {
         READ_UVLC( uiCode, "num_bitstream_partitions[i]"); vps->setNumBitstreamPartitions(h, uiCode);
+#if HRD_BPB
+          Int chkPart=0;
+#endif
         for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
         {
           for( j = 0; j <= (vps->getMaxLayers()-1); j++ )
@@ -2318,7 +2321,28 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
               READ_FLAG( uiCode, "layer_in_bsp_flag[h][i][j]" ); vps->setLayerInBspFlag(h, i, j, uiCode);
             }
           }
+#if HRD_BPB
+            chkPart+=vps->getLayerInBspFlag(h, i, j);
+#endif
         }
+#if HRD_BPB
+          assert(chkPart<=1);
+#endif
+#if HRD_BPB
+          if(vps->getNumBitstreamPartitions(h)==1)
+          {
+              Int chkPartition1=0; Int chkPartition2=0;
+              for( j = 0; j <= (vps->getMaxLayers()-1); j++ )
+              {
+                  if( vps->getLayerIdIncludedFlag(h, j) )
+                  {
+                      chkPartition1+=vps->getLayerInBspFlag(h, 0, j);
+                      chkPartition2++;
+                  }
+              }
+              assert(chkPartition1!=chkPartition2);
+          }
+#endif
         if (vps->getNumBitstreamPartitions(h))
         {
 #if Q0182_MULTI_LAYER_HRD_UPDATE
@@ -2331,7 +2355,14 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
             for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
             {
               READ_UVLC( uiCode, "bsp_comb_hrd_idx[h][i][j]"); vps->setBspCombHrdIdx(h, i, j, uiCode);
+#if HRD_BPB
+                assert(uiCode <= vps->getVpsNumBspHrdParametersMinus1());
+#endif
+                
               READ_UVLC( uiCode, "bsp_comb_sched_idx[h][i][j]"); vps->setBspCombSchedIdx(h, i, j, uiCode);
+#if HRD_BPB
+                assert(uiCode <= vps->getBspHrdParamBufferCpbCntMinus1(uiCode,vps->getMaxTLayers()-1));
+#endif
             }
           }
         }

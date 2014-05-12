@@ -892,13 +892,26 @@ Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEISca
     WRITE_UVLC( sei.m_seiNumBitstreamPartitionsMinus1[lsIdx], "num_sei_bitstream_partitions_minus1[i]");
     for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
     {
+#if HRD_BPB
+        UInt nl=0;
+     for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
+     {
+            if (sei.m_layerIdIncludedFlag[lsIdx][j])
+                nl++;
+     }
+     for (UInt j = 0; j < nl; j++)
+     {
+#else
       for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
       {
         if (sei.m_layerIdIncludedFlag[lsIdx][j])
         {
+#endif
           WRITE_FLAG( sei.m_seiLayerInBspFlag[lsIdx][i][j], "sei_layer_in_bsp_flag[lsIdx][i][j]" );
         }
+#if !HRD_BPB
       }
+#endif
     }
     WRITE_UVLC( sei.m_seiNumBspSchedCombinationsMinus1[lsIdx], "sei_num_bsp_sched_combinations_minus1[i]");
     for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
