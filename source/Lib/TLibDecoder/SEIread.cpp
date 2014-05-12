@@ -1209,19 +1209,21 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
     UInt lsIdx = nestingSei.m_nestingOpIdx[h];
     READ_UVLC( uiCode, "num_sei_bitstream_partitions_minus1[i]"); sei.m_seiNumBitstreamPartitionsMinus1[lsIdx] = uiCode;
 #if HRD_BPB
-      Int chkPart=0;
+    Int chkPart=0;
 #endif
-      UInt i;
-    for (i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
+    UInt i;
+    for(i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
     {
 #if HRD_BPB
-        UInt nl=0; UInt j;
-    for (j = 0 ; j < sei.m_vpsMaxLayers; j++)
+      UInt nl=0; UInt j;
+      for(j = 0; j < sei.m_vpsMaxLayers; j++)
       {
-          if (sei.m_layerIdIncludedFlag[lsIdx][j])
-              nl++;
+        if (sei.m_layerIdIncludedFlag[lsIdx][j])
+        {
+          nl++;
+        }
       }
-    for (j = 0; j < nl; j++)
+      for (j = 0; j < nl; j++)
       {
 #else
       for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
@@ -1235,40 +1237,40 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
       }
 #endif
 #if HRD_BPB
-        chkPart+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
+      chkPart+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
 #endif
     }
 #if HRD_BPB
-      assert(chkPart<=1);
+    assert(chkPart<=1);
 #endif
 #if HRD_BPB
-      if(sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]==0)
+    if(sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]==0)
+    {
+      Int chkPartition1=0; Int chkPartition2=0;
+      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
       {
-          Int chkPartition1=0; Int chkPartition2=0;
-          for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-          {
-              if( sei.m_layerIdIncludedFlag[lsIdx][j] )
-              {
-                  chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
-                  chkPartition2++;
-              }
-          }
-          assert(chkPartition1!=chkPartition2);
+        if( sei.m_layerIdIncludedFlag[lsIdx][j] )
+        {
+          chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
+          chkPartition2++;
+        }
       }
+      assert(chkPartition1!=chkPartition2);
+    }
 #endif
       
     READ_UVLC( uiCode, "sei_num_bsp_sched_combinations_minus1[i]"); sei.m_seiNumBspSchedCombinationsMinus1[lsIdx] = uiCode;
-    for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
+    for (i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
     {
       for (UInt j = 0; j <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; j++)
       {
         READ_UVLC( uiCode, "sei_bsp_comb_hrd_idx[lsIdx][i][j]"); sei.m_seiBspCombHrdIdx[lsIdx][i][j] = uiCode;
 #if HRD_BPB
-          assert(uiCode <= sei.m_seiNumBspHrdParametersMinus1);
+        assert(uiCode <= sei.m_seiNumBspHrdParametersMinus1);
 #endif
         READ_UVLC( uiCode, "sei_bsp_comb_sched_idx[lsIdx][i][j]"); sei.m_seiBspCombScheddx[lsIdx][i][j] = uiCode;
 #if HRD_BPB
-          assert(uiCode <=  sei.hrd->getCpbCntMinus1( sps->getMaxTLayers()-1 ));
+        assert(uiCode <= sei.hrd->getCpbCntMinus1( sps->getMaxTLayers()-1 ));
 #endif
 
       }
