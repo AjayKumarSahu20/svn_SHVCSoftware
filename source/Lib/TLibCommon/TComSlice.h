@@ -733,6 +733,12 @@ public:
 //    m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
   }
 #endif
+#if HRD_BPB
+    Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
+    {
+        return m_bspHrd->getCpbCntMinus1(sl);
+    }
+#endif
 
   TComHRD* getHrdParameters   ( UInt i )             { return &m_hrdParameters[ i ]; }
   UInt    getHrdOpSetIdx      ( UInt i )             { return m_hrdOpSetIdx[ i ]; }
