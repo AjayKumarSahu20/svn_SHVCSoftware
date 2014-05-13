@@ -1251,7 +1251,7 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
       {
         if( sei.m_layerIdIncludedFlag[lsIdx][j] )
         {
-          chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
+          chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][0][j];
           chkPartition2++;
         }
       }
