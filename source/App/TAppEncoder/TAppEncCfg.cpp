@@ -512,6 +512,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_startOfCodedInterval;
   string cfg_codedPivotValue;
   string cfg_targetPivotValue;
+#if P0050_KNEE_FUNCTION_SEI
+  string cfg_kneeSEIInputKneePointValue;
+  string cfg_kneeSEIOutputKneePointValue;
+#endif
   po::Options opts;
   opts.addOptions()
   ("help", do_help, false, "this help text")
@@ -942,6 +946,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,              0, "Control generation of SOP description SEI messages")
   ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
+#if P0050_KNEE_FUNCTION_SEI
+  ("SEIKneeFunctionInfo",                 m_kneeSEIEnabled,               false, "Control generation of Knee function SEI messages")
+  ("SEIKneeFunctionId",                   m_kneeSEIId,                        0, "Specifies Id of Knee function SEI message for a given session")
+  ("SEIKneeFunctionCancelFlag",           m_kneeSEICancelFlag,            false, "Indicates that Knee function SEI message cancels the persistance or follows")
+  ("SEIKneeFunctionPersistenceFlag",      m_kneeSEIPersistenceFlag,        true, "Specifies the persistence of the Knee function SEI message")
+  ("SEIKneeFunctionMappingFlag",          m_kneeSEIMappingFlag,           false, "Specifies the mapping mode of the Knee function SEI message")
+  ("SEIKneeFunctionInputDrange",          m_kneeSEIInputDrange,            1000, "Specifies the peak luminance level for the input picture of Knee function SEI messages")
+  ("SEIKneeFunctionInputDispLuminance",   m_kneeSEIInputDispLuminance,      100, "Specifies the expected display brightness for the input picture of Knee function SEI messages")
+  ("SEIKneeFunctionOutputDrange",         m_kneeSEIOutputDrange,           4000, "Specifies the peak luminance level for the output picture of Knee function SEI messages")
+  ("SEIKneeFunctionOutputDispLuminance",  m_kneeSEIOutputDispLuminance,     800, "Specifies the expected display brightness for the output picture of Knee function SEI messages")
+  ("SEIKneeFunctionNumKneePointsMinus1",  m_kneeSEINumKneePointsMinus1,       2, "Specifies the number of knee points - 1")
+  ("SEIKneeFunctionInputKneePointValue",  cfg_kneeSEIInputKneePointValue,     string("600 800 900"), "Array of input knee point")
+  ("SEIKneeFunctionOutputKneePointValue", cfg_kneeSEIOutputKneePointValue,    string("100 250 450"), "Array of output knee point")
+#endif
+
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
@@ -1484,6 +1503,32 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+#if P0050_KNEE_FUNCTION_SEI
+  if( m_kneeSEIEnabled && !m_kneeSEICancelFlag )
+  {
+    Char* pcInputKneePointValue  = cfg_kneeSEIInputKneePointValue.empty()  ? NULL : strdup(cfg_kneeSEIInputKneePointValue.c_str());
+    Char* pcOutputKneePointValue = cfg_kneeSEIOutputKneePointValue.empty() ? NULL : strdup(cfg_kneeSEIOutputKneePointValue.c_str());
+    assert ( m_kneeSEINumKneePointsMinus1 >= 0 && m_kneeSEINumKneePointsMinus1 < 999 );
+    m_kneeSEIInputKneePoint = new Int[m_kneeSEINumKneePointsMinus1+1];
+    m_kneeSEIOutputKneePoint = new Int[m_kneeSEINumKneePointsMinus1+1];
+    char *InputVal = strtok(pcInputKneePointValue, " .,");
+    Int i=0;
+    while( InputVal && i<(m_kneeSEINumKneePointsMinus1+1) )
+    {
+      m_kneeSEIInputKneePoint[i] = (UInt) atoi( InputVal );
+      InputVal = strtok(NULL, " .,");
+      i++;
+    }
+    char *OutputVal = strtok(pcOutputKneePointValue, " .,");
+    i=0;
+    while( OutputVal && i<(m_kneeSEINumKneePointsMinus1+1) )
+    {
+      m_kneeSEIOutputKneePoint[i] = (UInt) atoi( OutputVal );
+      OutputVal = strtok(NULL, " .,");
+      i++;
+    }
+  }
+#endif
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if (m_interLayerConstrainedTileSetsSEIEnabled)
@@ -2184,6 +2229,20 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue, "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than SEIToneMapNominalBlackLevelLumaCodeValue");
     xConfirmPara( m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
   }
+#if P0050_KNEE_FUNCTION_SEI
+  if (m_kneeSEIEnabled && !m_kneeSEICancelFlag)
+  {
+    xConfirmPara( m_kneeSEINumKneePointsMinus1 < 0 || m_kneeSEINumKneePointsMinus1 > 998, "SEIKneeFunctionNumKneePointsMinus1 must be in the range of 0 to 998");
+    for ( UInt i=0; i<=m_kneeSEINumKneePointsMinus1; i++ ){
+      xConfirmPara( m_kneeSEIInputKneePoint[i] < 1 || m_kneeSEIInputKneePoint[i] > 999, "SEIKneeFunctionInputKneePointValue must be in the range of 1 to 999");
+      xConfirmPara( m_kneeSEIOutputKneePoint[i] < 0 || m_kneeSEIOutputKneePoint[i] > 1000, "SEIKneeFunctionInputKneePointValue must be in the range of 0 to 1000");
+      if ( i > 0 )
+      {
+        xConfirmPara( m_kneeSEIInputKneePoint[i-1] >= m_kneeSEIInputKneePoint[i],  "The i-th SEIKneeFunctionInputKneePointValue must be greather than the (i-1)-th value");
+      }
+    }
+  }
+#endif
 
 #if RC_SHVC_HARMONIZATION
   for ( Int layer=0; layer<m_numLayers; layer++ )

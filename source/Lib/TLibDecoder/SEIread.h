@@ -89,6 +89,9 @@ protected:
   Void xParseSEITemporalLevel0Index   (SEITemporalLevel0Index &sei, UInt payloadSize);
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
+#if P0050_KNEE_FUNCTION_SEI
+  Void xParseSEIKneeFunctionInfo      (SEIKneeFunctionInfo& sei, UInt payloadSize);
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void xParseSEIColorMappingInfo      (SEIColorMappingInfo& sei, UInt payloadSize);
 #endif
