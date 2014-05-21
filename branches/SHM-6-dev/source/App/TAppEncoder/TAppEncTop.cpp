@@ -484,6 +484,20 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
     m_acTEncTop[layer].setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
     m_acTEncTop[layer].setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
+#if P0050_KNEE_FUNCTION_SEI
+    m_acTEncTop[layer].setKneeSEIEnabled                            ( m_kneeSEIEnabled );
+    m_acTEncTop[layer].setKneeSEIId                                 ( m_kneeSEIId );
+    m_acTEncTop[layer].setKneeSEICancelFlag                         ( m_kneeSEICancelFlag );
+    m_acTEncTop[layer].setKneeSEIPersistenceFlag                    ( m_kneeSEIPersistenceFlag );
+    m_acTEncTop[layer].setKneeSEIMappingFlag                        ( m_kneeSEIMappingFlag );
+    m_acTEncTop[layer].setKneeSEIInputDrange                        ( m_kneeSEIInputDrange );
+    m_acTEncTop[layer].setKneeSEIInputDispLuminance                 ( m_kneeSEIInputDispLuminance );
+    m_acTEncTop[layer].setKneeSEIOutputDrange                       ( m_kneeSEIOutputDrange );
+    m_acTEncTop[layer].setKneeSEIOutputDispLuminance                ( m_kneeSEIOutputDispLuminance );
+    m_acTEncTop[layer].setKneeSEINumKneePointsMinus1                ( m_kneeSEINumKneePointsMinus1 );
+    m_acTEncTop[layer].setKneeSEIInputKneePoint                     ( m_kneeSEIInputKneePoint );
+    m_acTEncTop[layer].setKneeSEIOutputKneePoint                    ( m_kneeSEIOutputKneePoint );
+#endif
 #if Q0074_SEI_COLOR_MAPPING
     m_acTEncTop[layer].setColorMappingInfoSEIFile                   ( m_acLayerCfg[layer].m_cSeiColorMappingFile.empty() ? NULL : const_cast<Char *>(m_acLayerCfg[layer].m_cSeiColorMappingFile.c_str()) );
 #endif
@@ -803,6 +817,20 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
   m_cTEncTop.setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
   m_cTEncTop.setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
+#if P0050_KNEE_FUNCTION_SEI
+  m_cTEncTop.setKneeSEIEnabled              ( m_kneeSEIEnabled );
+  m_cTEncTop.setKneeSEIId                   ( m_kneeSEIId );
+  m_cTEncTop.setKneeSEICancelFlag           ( m_kneeSEICancelFlag );
+  m_cTEncTop.setKneeSEIPersistenceFlag      ( m_kneeSEIPersistenceFlag );
+  m_cTEncTop.setKneeSEIMappingFlag          ( m_kneeSEIMappingFlag );
+  m_cTEncTop.setKneeSEIInputDrange          ( m_kneeSEIInputDrange );
+  m_cTEncTop.setKneeSEIInputDispLuminance   ( m_kneeSEIInputDispLuminance );
+  m_cTEncTop.setKneeSEIOutputDrange         ( m_kneeSEIOutputDrange );
+  m_cTEncTop.setKneeSEIOutputDispLuminance  ( m_kneeSEIOutputDispLuminance );
+  m_cTEncTop.setKneeSEINumKneePointsMinus1  ( m_kneeSEINumKneePointsMinus1 );
+  m_cTEncTop.setKneeSEIInputKneePoint       ( m_kneeSEIInputKneePoint );
+  m_cTEncTop.setKneeSEIOutputKneePoint      ( m_kneeSEIOutputKneePoint );
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   m_cTEncTop.setColorMappingInfoSEIFile                   ( m_pchSEIColorMappingFile );
 #endif

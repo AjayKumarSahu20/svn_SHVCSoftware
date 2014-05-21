@@ -71,6 +71,9 @@ protected:
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+#if P0050_KNEE_FUNCTION_SEI
+  Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
 #endif

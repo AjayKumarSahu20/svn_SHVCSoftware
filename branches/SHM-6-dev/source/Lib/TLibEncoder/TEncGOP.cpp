@@ -324,6 +324,39 @@ SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
   return seiToneMappingInfo;
 }
 
+#if P0050_KNEE_FUNCTION_SEI
+SEIKneeFunctionInfo* TEncGOP::xCreateSEIKneeFunctionInfo()
+{
+  SEIKneeFunctionInfo *seiKneeFunctionInfo = new SEIKneeFunctionInfo();
+  seiKneeFunctionInfo->m_kneeId = m_pcCfg->getKneeSEIId();
+  seiKneeFunctionInfo->m_kneeCancelFlag = m_pcCfg->getKneeSEICancelFlag();
+  if ( !seiKneeFunctionInfo->m_kneeCancelFlag )
+  {
+    seiKneeFunctionInfo->m_kneePersistenceFlag = m_pcCfg->getKneeSEIPersistenceFlag();
+    seiKneeFunctionInfo->m_kneeMappingFlag = m_pcCfg->getKneeSEIMappingFlag();
+    seiKneeFunctionInfo->m_kneeInputDrange = m_pcCfg->getKneeSEIInputDrange();
+    seiKneeFunctionInfo->m_kneeInputDispLuminance = m_pcCfg->getKneeSEIInputDispLuminance();
+    seiKneeFunctionInfo->m_kneeOutputDrange = m_pcCfg->getKneeSEIOutputDrange();
+    seiKneeFunctionInfo->m_kneeOutputDispLuminance = m_pcCfg->getKneeSEIOutputDispLuminance();
+
+    seiKneeFunctionInfo->m_kneeNumKneePointsMinus1 = m_pcCfg->getKneeSEINumKneePointsMinus1();
+    Int* piInputKneePoint  = m_pcCfg->getKneeSEIInputKneePoint();
+    Int* piOutputKneePoint = m_pcCfg->getKneeSEIOutputKneePoint();
+    if(piInputKneePoint&&piOutputKneePoint)
+    {
+      seiKneeFunctionInfo->m_kneeInputKneePoint.resize(seiKneeFunctionInfo->m_kneeNumKneePointsMinus1+1);
+      seiKneeFunctionInfo->m_kneeOutputKneePoint.resize(seiKneeFunctionInfo->m_kneeNumKneePointsMinus1+1);
+      for(Int i=0; i<=seiKneeFunctionInfo->m_kneeNumKneePointsMinus1; i++)
+      {
+        seiKneeFunctionInfo->m_kneeInputKneePoint[i] = piInputKneePoint[i];
+        seiKneeFunctionInfo->m_kneeOutputKneePoint[i] = piOutputKneePoint[i];
+       }
+    }
+  }
+  return seiKneeFunctionInfo;
+}
+#endif
+
 #if Q0074_SEI_COLOR_MAPPING
 SEIColorMappingInfo*  TEncGOP::xCreateSEIColorMappingInfo( Char* file )
 {
@@ -474,6 +507,23 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     accessUnit.push_back(new NALUnitEBSP(nalu));
     delete sei;
   }
+#if P0050_KNEE_FUNCTION_SEI
+  if(m_pcCfg->getKneeSEIEnabled())
+  {
+    SEIKneeFunctionInfo *sei = xCreateSEIKneeFunctionInfo();
+
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
+#else
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   if(m_pcCfg->getColorMappingInfoSEIFile())
   {

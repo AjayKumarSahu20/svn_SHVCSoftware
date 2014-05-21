@@ -247,6 +247,20 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if P0050_KNEE_FUNCTION_SEI
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Bool      m_kneeSEIMappingFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Char*     m_seiColorMappingFile;
 #endif
@@ -667,6 +681,32 @@ public:
   Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue;  }
   Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue =b;  }
   Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue;  }
+#if P0050_KNEE_FUNCTION_SEI
+  Void  setKneeSEIEnabled(Int b)                             { m_kneeSEIEnabled = b; }
+  Bool  getKneeSEIEnabled()                                  { return m_kneeSEIEnabled; }
+  Void  setKneeSEIId(Int b)                                  { m_kneeSEIId = b; }
+  Int   getKneeSEIId()                                       { return m_kneeSEIId; }
+  Void  setKneeSEICancelFlag(Bool b)                         { m_kneeSEICancelFlag=b; }
+  Bool  getKneeSEICancelFlag()                               { return m_kneeSEICancelFlag; }
+  Void  setKneeSEIPersistenceFlag(Bool b)                    { m_kneeSEIPersistenceFlag = b; }
+  Bool  getKneeSEIPersistenceFlag()                          { return m_kneeSEIPersistenceFlag; }
+  Void  setKneeSEIMappingFlag(Bool b)                        { m_kneeSEIMappingFlag = b; }
+  Bool  getKneeSEIMappingFlag()                              { return m_kneeSEIMappingFlag; }
+  Void  setKneeSEIInputDrange(Int b)                         { m_kneeSEIInputDrange = b; }
+  Int   getKneeSEIInputDrange()                              { return m_kneeSEIInputDrange; }
+  Void  setKneeSEIInputDispLuminance(Int b)                  { m_kneeSEIInputDispLuminance = b; }
+  Int   getKneeSEIInputDispLuminance()                       { return m_kneeSEIInputDispLuminance; }
+  Void  setKneeSEIOutputDrange(Int b)                        { m_kneeSEIOutputDrange = b; }
+  Int   getKneeSEIOutputDrange()                             { return m_kneeSEIOutputDrange; }
+  Void  setKneeSEIOutputDispLuminance(Int b)                 { m_kneeSEIOutputDispLuminance = b; }
+  Int   getKneeSEIOutputDispLuminance()                      { return m_kneeSEIOutputDispLuminance; }
+  Void  setKneeSEINumKneePointsMinus1(Int b)                 { m_kneeSEINumKneePointsMinus1 = b; }
+  Int   getKneeSEINumKneePointsMinus1()                      { return m_kneeSEINumKneePointsMinus1; }
+  Void  setKneeSEIInputKneePoint(Int *p)                     { m_kneeSEIInputKneePoint = p; }
+  Int*  getKneeSEIInputKneePoint()                           { return m_kneeSEIInputKneePoint; }
+  Void  setKneeSEIOutputKneePoint(Int *p)                    { m_kneeSEIOutputKneePoint = p; }
+  Int*  getKneeSEIOutputKneePoint()                          { return m_kneeSEIOutputKneePoint; }
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
   Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }

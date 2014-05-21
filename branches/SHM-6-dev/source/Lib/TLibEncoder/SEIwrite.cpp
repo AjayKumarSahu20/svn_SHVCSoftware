@@ -86,6 +86,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Color Mapping Info SEI message ===========\n");
@@ -176,6 +181,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::TONE_MAPPING_INFO:
     xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    xWriteSEIKneeFunctionInfo(*static_cast<const SEIKneeFunctionInfo*>(&sei));
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     xWriteSEIColorMappingInfo(*static_cast<const SEIColorMappingInfo*>(&sei));
@@ -574,7 +584,29 @@ Void SEIWriter::xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei)
 
   xWriteByteAlign();
 }
-
+#if P0050_KNEE_FUNCTION_SEI
+Void SEIWriter::xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei)
+{
+  WRITE_UVLC( sei.m_kneeId, "knee_function_id" );
+  WRITE_FLAG( sei.m_kneeCancelFlag, "knee_function_cancel_flag" ); 
+  if ( !sei.m_kneeCancelFlag )
+  {
+    WRITE_FLAG( sei.m_kneePersistenceFlag, "knee_function_persistence_flag" );
+    WRITE_FLAG( sei.m_kneeMappingFlag, "mapping_flag" );
+    WRITE_CODE( (UInt)sei.m_kneeInputDrange , 32,  "input_d_range" );
+    WRITE_CODE( (UInt)sei.m_kneeInputDispLuminance, 32,  "input_disp_luminance" );
+    WRITE_CODE( (UInt)sei.m_kneeOutputDrange, 32,  "output_d_range" );
+    WRITE_CODE( (UInt)sei.m_kneeOutputDispLuminance, 32,  "output_disp_luminance" );
+    WRITE_UVLC( sei.m_kneeNumKneePointsMinus1, "num_knee_points_minus1" );
+    for(Int i = 0; i <= sei.m_kneeNumKneePointsMinus1; i++ )
+    {
+      WRITE_CODE( (UInt)sei.m_kneeInputKneePoint[i], 10,"input_knee_point" );
+      WRITE_CODE( (UInt)sei.m_kneeOutputKneePoint[i], 10, "output_knee_point" );
+    }
+  }
+  xWriteByteAlign();
+}
+#endif
 #if Q0074_SEI_COLOR_MAPPING
 Void SEIWriter::xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei)
 {

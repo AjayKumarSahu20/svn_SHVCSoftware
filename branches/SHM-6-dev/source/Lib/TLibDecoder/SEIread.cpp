@@ -92,6 +92,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     fprintf( g_hTrace, "===========Color Mapping Info SEI message ===========\n");
@@ -284,6 +289,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
+#if P0050_KNEE_FUNCTION_SEI
+    case SEI::KNEE_FUNCTION_INFO:
+      sei = new SEIKneeFunctionInfo;
+      xParseSEIKneeFunctionInfo((SEIKneeFunctionInfo&) *sei, payloadSize);
+      break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
     case SEI::COLOR_MAPPING_INFO:
       sei = new SEIColorMappingInfo;
@@ -847,6 +858,33 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
 
   xParseByteAlign();
 }
+
+#if P0050_KNEE_FUNCTION_SEI
+Void SEIReader::xParseSEIKneeFunctionInfo(SEIKneeFunctionInfo& sei, UInt /*payloadSize*/){
+  Int i;
+  UInt val;
+  READ_UVLC( val, "knee_function_id" );                   sei.m_kneeId = val;
+  READ_FLAG( val, "knee_function_cancel_flag" );          sei.m_kneeCancelFlag = val;
+  if ( !sei.m_kneeCancelFlag )
+  {
+    READ_FLAG( val, "knee_function_persistence_flag" );   sei.m_kneePersistenceFlag = val;
+    READ_FLAG( val, "mapping_flag" );                     sei.m_kneeMappingFlag = val;
+    READ_CODE( 32, val, "input_d_range" );                sei.m_kneeInputDrange = val;
+    READ_CODE( 32, val, "input_disp_luminance" );         sei.m_kneeInputDispLuminance = val;
+    READ_CODE( 32, val, "output_d_range" );               sei.m_kneeOutputDrange = val;
+    READ_CODE( 32, val, "output_disp_luminance" );        sei.m_kneeOutputDispLuminance = val;
+    READ_UVLC( val, "num_knee_points_minus1" );           sei.m_kneeNumKneePointsMinus1 = val;
+    assert( sei.m_kneeNumKneePointsMinus1 > 0 );
+    sei.m_kneeInputKneePoint.resize(sei.m_kneeNumKneePointsMinus1+1);
+    sei.m_kneeOutputKneePoint.resize(sei.m_kneeNumKneePointsMinus1+1);
+    for(i = 0; i <= sei.m_kneeNumKneePointsMinus1; i++ )
+    {
+      READ_CODE( 10, val, "input_knee_point" );           sei.m_kneeInputKneePoint[i] = val;
+      READ_CODE( 10, val, "output_knee_point" );          sei.m_kneeOutputKneePoint[i] = val;
+    }
+  }
+}
+#endif
 
 #if Q0074_SEI_COLOR_MAPPING
 Void SEIReader::xParseSEIColorMappingInfo(SEIColorMappingInfo& sei, UInt /*payloadSize*/)

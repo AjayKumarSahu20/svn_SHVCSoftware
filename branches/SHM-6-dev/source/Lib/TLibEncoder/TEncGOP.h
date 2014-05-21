@@ -206,6 +206,9 @@ protected:
   SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
 
   SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
+#if P0050_KNEE_FUNCTION_SEI
+  SEIKneeFunctionInfo*    xCreateSEIKneeFunctionInfo();
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   SEIColorMappingInfo*    xCreateSEIColorMappingInfo( Char* file );
 #endif
