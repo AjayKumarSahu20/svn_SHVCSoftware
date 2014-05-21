@@ -2704,6 +2704,37 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         offset += rps->getNumberOfLongtermPictures();
         rps->setNumberOfPictures(offset);
       }
+#if DPB_CONSTRAINTS
+          if(rpcSlice->getVPS()->getVpsExtensionFlag()==1)
+          {
+              for (Int ii=1; ii< rpcSlice->getVPS()->getNumOutputLayerSets(); ii++ )
+              {
+                  Int layerSetIdxForOutputLayerSet = rpcSlice->getVPS()->getOutputLayerSetIdx( ii );
+                  Int chkAssert=0;
+                  for(Int kk = 0; kk < rpcSlice->getVPS()->getNumLayersInIdList(layerSetIdxForOutputLayerSet); kk++)
+                  {
+                      if(rpcSlice->getLayerId()==rpcSlice->getVPS()->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, kk))
+                      {
+                          chkAssert=1;
+                      }
+                  }
+                  if(chkAssert)
+                  {
+                      assert(rps->getNumberOfNegativePictures() <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));
+                      assert(rps->getNumberOfPositivePictures() <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)) - rps->getNumberOfNegativePictures());
+                      assert((rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures() + rps->getNumberOfLongtermPictures()) <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));
+                  }
+              }
+              
+              
+          }
+          if(rpcSlice->getLayerId() == 0)
+          {
+              assert(rps->getNumberOfNegativePictures() <= rpcSlice->getSPS()->getMaxDecPicBuffering(rpcSlice->getSPS()->getMaxTLayers()-1) );
+              assert(rps->getNumberOfPositivePictures() <= rpcSlice->getSPS()->getMaxDecPicBuffering(rpcSlice->getSPS()->getMaxTLayers()-1) -rps->getNumberOfNegativePictures());
+              assert((rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures() + rps->getNumberOfLongtermPictures()) <= rpcSlice->getSPS()->getMaxDecPicBuffering(rpcSlice->getSPS()->getMaxTLayers()-1));
+          }
+#endif
       if ( rpcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
         || rpcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
         || rpcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP )
