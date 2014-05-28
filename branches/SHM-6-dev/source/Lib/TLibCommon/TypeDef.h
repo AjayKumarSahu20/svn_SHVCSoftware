@@ -246,6 +246,8 @@
 #define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
 #define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_output_layer_set and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
 
+#define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
+
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
 #define OUTPUT_LAYER_SET_INDEX           1      ///< JCTVC-O0217: DPB operations: Inference/input of output layer set index

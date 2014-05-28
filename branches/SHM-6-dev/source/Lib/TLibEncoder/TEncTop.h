@@ -153,6 +153,9 @@ private:
 #if O0194_WEIGHTED_PREDICTION_CGS
   Bool                    m_interLayerWeightedPredFlag;
 #endif
+#if Q0078_ADD_LAYER_SETS
+  int                     m_numAddLayerSets;
+#endif
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -266,6 +269,10 @@ public:
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
   Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
   Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  Void setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
+  Int  getNumAddLayerSets()                  { return m_numAddLayerSets; }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,

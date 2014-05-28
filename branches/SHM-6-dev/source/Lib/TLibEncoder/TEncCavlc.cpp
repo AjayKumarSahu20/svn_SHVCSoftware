@@ -999,6 +999,25 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
+#if Q0078_ADD_LAYER_SETS
+  if (vps->getNumIndependentLayers() > 1)
+  {
+    WRITE_UVLC( vps->getNumAddLayerSets(), "num_add_layer_sets" );
+    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        int len = 1;
+        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        {
+          len++;
+        }
+        WRITE_CODE(vps->getHighestLayerIdxPlus1(i, j), len, "highest_layer_idx_plus1[i][j]");
+      }
+    }
+  }
+#endif
+
 #if !VPS_EXTN_UEV_CODING
   Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
   WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 

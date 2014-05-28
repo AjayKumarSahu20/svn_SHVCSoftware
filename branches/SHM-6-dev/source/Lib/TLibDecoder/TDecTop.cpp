@@ -106,6 +106,38 @@ TDecTop::TDecTop()
 
 TDecTop::~TDecTop()
 {
+#if Q0078_ADD_LAYER_SETS
+  for (Int psId = 0; psId < MAX_NUM_SPS; psId++)
+  {
+    TComSPS* sps = m_parameterSetManagerDecoder.getSPS(psId);
+    if (sps != NULL)
+    {
+      // Remove parameter set from other layers to prevent multiple deletes of the same object
+      for (Int lId = 0; lId < m_numLayer; lId++)
+      {
+        if (m_ppcTDecTop[lId] != this)
+        {
+          m_parameterSetManagerDecoder.removeSPS(psId);
+        }
+      }
+    }
+  }
+  for (Int psId = 0; psId < MAX_NUM_PPS; psId++)
+  {
+    TComPPS* pps = m_parameterSetManagerDecoder.getPPS(psId);
+    if (pps != NULL)
+    {
+      // Remove parameter set from other layers to prevent multiple deletes of the same object
+      for (Int lId = 0; lId < m_numLayer; lId++)
+      {
+        if (m_ppcTDecTop[lId] != this)
+        {
+          m_parameterSetManagerDecoder.removePPS(psId);
+        }
+      }
+    }
+  }
+#endif
 #if ENC_DEC_TRACE
   fclose( g_hTrace );
 #endif
@@ -1885,6 +1917,16 @@ Void TDecTop::xDecodeSPS()
   m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder );
 #endif
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
+#if Q0078_ADD_LAYER_SETS
+  // Store SPS for all layers
+  for (Int lId = 0; lId < m_numLayer; lId++)
+  {
+    if (m_ppcTDecTop[lId] != this)
+    {
+      m_ppcTDecTop[lId]->getParameterSetManager()->storePrefetchedSPS(sps);
+    }
+  }
+#endif
 #if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
   if(m_numLayer>0)
   {
@@ -1915,6 +1957,16 @@ Void TDecTop::xDecodePPS(
 #endif
     );
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
+#if Q0078_ADD_LAYER_SETS
+  // Store PPS for all layers
+  for (Int lId = 0; lId < m_numLayer; lId++)
+  {
+    if (m_ppcTDecTop[lId] != this)
+    {
+      m_ppcTDecTop[lId]->getParameterSetManager()->storePrefetchedPPS(pps);
+    }
+  }
+#endif
 
   if( pps->getDependentSliceSegmentsEnabledFlag() )
   {

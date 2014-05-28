@@ -73,6 +73,14 @@ protected:
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
   Bool      m_maxTidRefPresentFlag; 
+#if Q0078_ADD_LAYER_SETS
+  Int       m_numLayerSets;
+  Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_numAddLayerSets;
+  Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file

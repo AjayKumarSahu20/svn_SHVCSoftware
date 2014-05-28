@@ -139,7 +139,10 @@ public:
   virtual ~TComRPSList();
   
   Void  create  (Int numberOfEntries);
-  Void  destroy ();
+#if Q0078_ADD_LAYER_SETS
+  Void  copy(TComRPSList& a);
+#endif
+  Void  destroy();
 
 
   TComReferencePictureSet* getReferencePictureSet(Int referencePictureSetNum);
@@ -494,7 +497,11 @@ private:
 #if VPS_RENAME
   UInt        m_maxLayerId;
   UInt        m_numLayerSets;
+#if Q0078_ADD_LAYER_SETS
+  Bool        m_layerIdIncludedFlag[2*MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#else
   Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #endif
 
   // ------------------------------------------
@@ -660,6 +667,15 @@ private:
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
+#if Q0078_ADD_LAYER_SETS
+  Int        m_numAddLayerSets;
+  UInt       m_highestLayerIdxPlus1[MAX_VPS_LAYER_SETS_PLUS1][MAX_NUM_LAYER_IDS];
+  UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][64];
+  UInt       m_numPredictedLayers[MAX_NUM_LAYER_IDS];
+  Int        m_numIndependentLayers;
+  Int        m_numLayersInTreePartition[MAX_NUM_LAYER_IDS];
+  UInt       m_treePartitionLayerIdList[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
+#endif
 #if SPS_DPB_PARAMS
   Int        m_TolsIdx;
 #endif
@@ -803,6 +819,24 @@ Void      deriveNumberOfSubDpbs();
   Void    setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)      { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
   Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
   Void    setNumRefLayers();
+#endif
+#if Q0078_ADD_LAYER_SETS
+  UInt    getNumAddLayerSets()                                                   { return m_numAddLayerSets; }
+  Void    setNumAddLayerSets(UInt x)                                             { m_numAddLayerSets = x; }
+  UInt    getHighestLayerIdxPlus1(UInt set, UInt idx)                             { return m_highestLayerIdxPlus1[set][idx]; }
+  Void    setHighestLayerIdxPlus1(UInt set, UInt idx, UInt layerIdx)              { m_highestLayerIdxPlus1[set][idx] = layerIdx; }
+  Void    setPredictedLayerIds();
+  UInt    getPredictedLayerId(UInt layerIdx, UInt predIdx)                       { return m_predictedLayerId[layerIdx][predIdx]; }
+  Void    setPredictedLayerId(UInt layerIdx, UInt predIdx, UInt x)               { m_predictedLayerId[layerIdx][predIdx] = x; }
+  UInt    getNumPredictedLayers(UInt layerId)                                    { return m_numPredictedLayers[layerId]; }
+  Void    setNumPredictedLayers(UInt layerId, UInt x)                            { m_numPredictedLayers[layerId] = x; }
+  Void    setTreePartitionLayerIdList();
+  Int     getNumIndependentLayers()                                              { return m_numIndependentLayers; }
+  Void    setNumIndependentLayers(Int x)                                         { m_numIndependentLayers = x; }
+  Int     getNumLayersInTreePartition(Int idx)                                   { return m_numLayersInTreePartition[idx]; }
+  Void    setNumLayersInTreePartition(Int idx, Int x)                            { m_numLayersInTreePartition[idx] = x; }
+  UInt    getTreePartitionLayerId(Int idx, Int layerIdx)                         { return m_treePartitionLayerIdList[idx][layerIdx]; }
+  Void    setTreePartitionLayerId(Int idx, Int layerIdx, UInt layerId)           { m_treePartitionLayerIdList[idx][layerIdx] = layerId; }
 #endif
 #if VPS_RENAME
   UInt    getMaxLayerId()                                       { return m_maxLayerId; }
@@ -2480,6 +2514,18 @@ public:
     return (m_paramsetMap.begin() == m_paramsetMap.end() ) ? NULL : m_paramsetMap.begin()->second;
   }
 
+#if Q0078_ADD_LAYER_SETS
+  Void removePS(Int psId)
+  {
+    assert(psId < m_maxId);
+    if (m_paramsetMap.find(psId) != m_paramsetMap.end())
+    {
+      m_paramsetMap.erase(psId);
+    }
+  }
+#endif
+
+
 private:
   std::map<Int,T *> m_paramsetMap;
   Int               m_maxId;
@@ -2502,12 +2548,18 @@ public:
   //! get pointer to existing sequence parameter set  
   TComSPS* getSPS(Int spsId)  { return m_spsMap.getPS(spsId); };
   TComSPS* getFirstSPS()      { return m_spsMap.getFirstPS(); };
+#if Q0078_ADD_LAYER_SETS
+  Void     removeSPS(Int spsId) { m_spsMap.removePS(spsId); };
+#endif
 
   //! store picture parameter set and take ownership of it 
   Void storePPS(TComPPS *pps) { m_ppsMap.storePS( pps->getPPSId(), pps); };
   //! get pointer to existing picture parameter set  
   TComPPS* getPPS(Int ppsId)  { return m_ppsMap.getPS(ppsId); };
   TComPPS* getFirstPPS()      { return m_ppsMap.getFirstPS(); };
+#if Q0078_ADD_LAYER_SETS
+  Void     removePPS(Int ppsId) { m_ppsMap.removePS(ppsId); };
+#endif
 
   //! activate a SPS from a active parameter sets SEI message
   //! \returns true, if activation is successful

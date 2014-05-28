@@ -118,6 +118,14 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
   Void xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
 #endif
+#if Q0078_ADD_LAYER_SETS
+#if LAYERS_NOT_PRESENT_SEI
+  Void xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
+#else
+  Void xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps);
+#endif
+  Void xParseSEIVPSRewriting(SEIVPSRewriting &sei);
+#endif
   Void xParseByteAlign();
 };
 

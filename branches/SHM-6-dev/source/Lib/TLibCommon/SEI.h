@@ -36,6 +36,10 @@
 #include <vector>
 #include <cstring>
 
+#if Q0078_ADD_LAYER_SETS
+#include "TLibCommon/NAL.h"
+#endif
+
 //! \ingroup TLibCommon
 //! \{
 class TComSPS;
@@ -93,6 +97,10 @@ public:
 #endif
 #if Q0074_SEI_COLOR_MAPPING
     COLOR_MAPPING_INFO                   = 143,
+#endif
+#if Q0078_ADD_LAYER_SETS
+    OUTPUT_LAYER_SET_NESTING             = 144,
+    VPS_REWRITING                        = 145,
 #endif
   };
   
@@ -604,5 +612,39 @@ public:
   Bool  m_callerOwnsSEIs;
   SEIMessages m_nestedSEIs;
 };
+
+#if Q0078_ADD_LAYER_SETS
+class SEIOutputLayerSetNesting : public SEI
+{
+public:
+  PayloadType payloadType() const { return OUTPUT_LAYER_SET_NESTING; }
+
+  SEIOutputLayerSetNesting() {}
+  virtual ~SEIOutputLayerSetNesting()
+  {
+    if (!m_callerOwnsSEIs)
+    {
+      deleteSEIs(m_nestedSEIs);
+    }
+  }
+
+  Bool m_olsFlag;
+  UInt m_numOlsIndicesMinus1;
+  UInt m_olsIdx[1024];
+  Bool  m_callerOwnsSEIs;
+  SEIMessages m_nestedSEIs;
+};
+
+class SEIVPSRewriting : public SEI
+{
+public:
+  PayloadType payloadType() const { return VPS_REWRITING; }
+
+  SEIVPSRewriting() {}
+  virtual ~SEIVPSRewriting() {}
+
+  NALUnit* nalu;
+};
+#endif
 
 //! \}
