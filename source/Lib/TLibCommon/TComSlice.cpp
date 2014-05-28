@@ -2550,6 +2550,60 @@ Void TComVPS::setNumRefLayers()
 }
 #endif
 
+#if Q0078_ADD_LAYER_SETS
+Void TComVPS::setPredictedLayerIds()
+{
+  for (UInt i = 0; i < getMaxLayers() - 1; i++)
+  {
+    UInt iNuhLId = getLayerIdInNuh(i);
+    UInt predIdx = 0;
+    for (UInt j = iNuhLId + 1; j < 63; j++)
+    {
+      if (getRecursiveRefLayerFlag(j, iNuhLId))
+      {
+        setPredictedLayerId(i, predIdx, j);
+        predIdx++;
+      }
+    }
+    setNumPredictedLayers(iNuhLId, predIdx);
+  }
+}
+
+Void TComVPS::setTreePartitionLayerIdList()
+{
+  Bool countedLayerIdxFlag[MAX_NUM_LAYER_IDS];
+
+  for (UInt i = 0; i <= getMaxLayers() - 1; i++)
+  {
+    countedLayerIdxFlag[i] = false;
+  }
+
+  Int numIndependentLayers = 0;
+
+  for (UInt i = 0; i <= getMaxLayers() - 1; i++)
+  {
+    UInt iNuhLId = getLayerIdInNuh(i);
+    if (getNumDirectRefLayers(iNuhLId) == 0)
+    {
+      setTreePartitionLayerId(numIndependentLayers, 0, iNuhLId);
+      setNumLayersInTreePartition(numIndependentLayers, 1);
+      for (UInt j = 0; j < getNumPredictedLayers(iNuhLId); j++)
+      {
+        if (!countedLayerIdxFlag[getLayerIdInVps(iNuhLId)])
+        {
+          setTreePartitionLayerId(numIndependentLayers, getNumLayersInTreePartition(numIndependentLayers), getPredictedLayerId(iNuhLId, j));
+          setNumLayersInTreePartition(numIndependentLayers, getNumLayersInTreePartition(numIndependentLayers) + 1);
+          countedLayerIdxFlag[getLayerIdInVps(getPredictedLayerId(iNuhLId, j))] = true;
+        }
+      }
+      numIndependentLayers++;
+    }
+  }
+
+  setNumIndependentLayers(numIndependentLayers);
+}
+#endif
+
 #if VIEW_ID_RELATED_SIGNALING 
 Int TComVPS::getNumViews()
 {

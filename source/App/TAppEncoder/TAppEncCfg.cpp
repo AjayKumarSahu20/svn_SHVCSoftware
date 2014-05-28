@@ -491,6 +491,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
   }
+#if Q0078_ADD_LAYER_SETS
+  Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  string cfg_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  string* cfg_layerSetLayerIdListPtr[MAX_VPS_LAYER_SETS_PLUS1];
+  Int* cfg_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  string cfg_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  string* cfg_highestLayerIdxPtr[MAX_VPS_LAYER_SETS_PLUS1];
+  for (UInt i = 0; i < MAX_VPS_LAYER_SETS_PLUS1; i++)
+  {
+    cfg_numLayerInIdList[i] = &m_numLayerInIdList[i];
+    cfg_layerSetLayerIdListPtr[i] = &cfg_layerSetLayerIdList[i];
+    cfg_highestLayerIdxPtr[i] = &cfg_highestLayerIdx[i];
+    cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
+  }
+#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
@@ -545,6 +560,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
+#if Q0078_ADD_LAYER_SETS
+  ("NumLayerSets",            m_numLayerSets, 0, "Number of layer sets")
+  ("NumLayerInIdList%d",      cfg_numLayerInIdList, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of layers in the set")
+  ("LayerSetLayerIdList%d",   cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set")
+  ("NumAddLayerSets",         m_numAddLayerSets, 0, "Number of additional layer sets")
+  ("NumHighestLayerIdx%d",    cfg_numHighestLayerIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of highest layer idx")
+  ("HighestLayerIdx%d",       cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Highest layer idx for an additional layer set")
+#endif
 #if AUXILIARY_PICTURES
   ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
   ("ChromaFormatIDC%d,-cf",   cfg_tmpChromaFormatIDC,    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
@@ -1317,6 +1340,48 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     else
     {
       m_acLayerCfg[layer].m_predLayerIds = NULL;
+    }
+  }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  for (Int layerSet = 0; layerSet < m_numLayerSets; layerSet++)
+  {
+    if (m_numLayerInIdList[layerSet] > 0)
+    {
+      Char* layerSetLayerIdListDup = cfg_layerSetLayerIdList[layerSet].empty() ? NULL : strdup(cfg_layerSetLayerIdList[layerSet].c_str());
+      Int  i = 0;
+      char *layerId = strtok(layerSetLayerIdListDup, " ,-");
+      while (layerId != NULL)
+      {
+        if (i >= m_numLayerInIdList[layerSet])
+        {
+          printf("NumLayerInIdList%d: The number of layers in the set is larger than the allowed number of layers.\n", layerSet);
+          exit(EXIT_FAILURE);
+        }
+        m_layerSetLayerIdList[layerSet][i] = atoi(layerId);
+        layerId = strtok(NULL, " ,-");
+        i++;
+      }
+    }
+  }
+  for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
+  {
+    if (m_numHighestLayerIdx[addLayerSet] > 0)
+    {
+      Char* highestLayrIdxListDup = cfg_highestLayerIdx[addLayerSet].empty() ? NULL : strdup(cfg_highestLayerIdx[addLayerSet].c_str());
+      Int  i = 0;
+      char *layerIdx = strtok(highestLayrIdxListDup, " ,-");
+      while (layerIdx != NULL)
+      {
+        if (i >= m_numLayerInIdList[addLayerSet])
+        {
+          printf("NumLayerInIdList%d: The number of layer idx's in the highest layer idx list is larger than the allowed number of idx's.\n", addLayerSet);
+          exit(EXIT_FAILURE);
+        }
+        m_highestLayerIdx[addLayerSet][i] = atoi(layerIdx);
+        layerIdx = strtok(NULL, " ,-");
+        i++;
+      }
     }
   }
 #endif

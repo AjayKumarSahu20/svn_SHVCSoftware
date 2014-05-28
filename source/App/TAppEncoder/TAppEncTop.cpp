@@ -632,6 +632,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setCGSMaxYPartNumLog2( m_nCGSMaxYPartNumLog2 );
     m_acTEncTop[layer].setCGSLUTBit( m_nCGSLUTBit );
 #endif
+#if Q0078_ADD_LAYER_SETS
+    m_acTEncTop[layer].setNumAddLayerSets( m_numAddLayerSets );
+#endif
   }
 }
 #else //SVC_EXTENSION
@@ -1035,29 +1038,79 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
-  vps->setNumLayerSets(m_numLayers);
-  for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+#if Q0078_ADD_LAYER_SETS
+  if (m_numLayerSets > 0)
   {
-    for(Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+    vps->setNumLayerSets(m_numLayerSets+1);
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-      //4
-      g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
-      g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
-
-      g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
-      g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
-#endif
-      if( layerId <= setId )
-      {
-        vps->setLayerIdIncludedFlag(true, setId, layerId);
-      }
-      else
+      for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
       {
         vps->setLayerIdIncludedFlag(false, setId, layerId);
       }
     }
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+    {
+      for (Int i = 0; i < m_numLayerInIdList[setId-1]; i++)
+      {
+        Int layerId = m_layerSetLayerIdList[setId-1][i];
+
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        //4
+        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+
+        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+#endif
+
+        vps->setLayerIdIncludedFlag(true, setId, layerId);
+      }
+    }
   }
+  else
+  {
+    // Default layer sets
+#endif
+    vps->setNumLayerSets(m_numLayers);
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+    {
+      for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+      {
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        //4
+        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+
+        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+#endif
+        if (layerId <= setId)
+        {
+          vps->setLayerIdIncludedFlag(true, setId, layerId);
+        }
+        else
+        {
+          vps->setLayerIdIncludedFlag(false, setId, layerId);
+        }
+      }
+    }
+#if Q0078_ADD_LAYER_SETS
+  }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  vps->setNumAddLayerSets(m_numAddLayerSets);
+  if (m_numAddLayerSets > 0)
+  {
+    for (Int setId = 0; setId < m_numAddLayerSets; setId++)
+    {
+      for (Int j = 0; j < m_numHighestLayerIdx[setId]; j++)
+      {
+        vps->setHighestLayerIdxPlus1(setId, j + 1, m_highestLayerIdx[setId][j] + 1);
+      }
+    }
+  }
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, dimIdLen = 0;
 #if AVC_BASE
@@ -1346,6 +1399,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+#if Q0078_ADD_LAYER_SETS
+  vps->setPredictedLayerIds();
+  vps->setTreePartitionLayerIdList();
+#endif
 #endif
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
@@ -1353,7 +1410,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
       {
+#if Q0078_ADD_LAYER_SETS
+        vps->setPocLsbNotPresentFlag(i, true); // make independedent layers base-layer compliant
+#else
         vps->setPocLsbNotPresentFlag(i, false);
+#endif
       }
     }
 #endif

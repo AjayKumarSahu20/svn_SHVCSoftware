@@ -1186,6 +1186,21 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setNumDirectRefLayers(layerCtr, numDirectRefLayers);
   }
 #endif
+#if Q0078_ADD_LAYER_SETS
+#if O0092_0094_DEPENDENCY_CONSTRAINT // Moved here
+  vps->setNumRefLayers();
+
+  if (vps->getMaxLayers() > MAX_REF_LAYERS)
+  {
+    for (i = 1; i < vps->getMaxLayers(); i++)
+    {
+      assert(vps->getNumRefLayers(vps->getLayerIdInNuh(i)) <= MAX_REF_LAYERS);
+    }
+  }
+#endif
+  vps->setPredictedLayerIds();
+  vps->setTreePartitionLayerIdList();
+#endif
 #if VPS_TSLAYERS
   READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
 
@@ -1270,6 +1285,48 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
     }
     parsePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+  }
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+  if (vps->getNumIndependentLayers() > 1)
+  {
+    READ_UVLC(uiCode, "num_add_layer_sets"); vps->setNumAddLayerSets(uiCode);
+    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        int len = 1;
+        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        {
+          len++;
+        }
+        READ_CODE(len, uiCode, "highest_layer_idx_plus1[i][j]"); vps->setHighestLayerIdxPlus1(i, j, uiCode);
+      }
+    }
+
+    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        Int layerNum = 0;
+        Int lsIdx = vps->getNumLayerSets() + i;
+        for (Int layerId = 0; layerId <= 62; layerId++)
+        {
+          vps->setLayerIdIncludedFlag(false, lsIdx, layerId);
+          for (Int treeIdx = 1; treeIdx < vps->getNumIndependentLayers(); treeIdx++)
+          {
+            for (Int layerCnt = 0; layerCnt < vps->getHighestLayerIdxPlus1(i, j); layerCnt++)
+            {
+              vps->setLayerSetLayerIdList(lsIdx, layerNum, vps->getTreePartitionLayerId(treeIdx, layerCnt));
+              vps->setLayerIdIncludedFlag(true, lsIdx, vps->getTreePartitionLayerId(treeIdx, layerCnt));
+              layerNum++;
+            }
+          }
+        }
+        vps->setNumLayersInIdList(lsIdx, layerNum);
+      }
+    }
   }
 #endif
 
@@ -1675,7 +1732,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 #endif
-#if O0092_0094_DEPENDENCY_CONSTRAINT
+#if !Q0078_ADD_LAYER_SETS
+#if O0092_0094_DEPENDENCY_CONSTRAINT // Moved up
   vps->setNumRefLayers();
 
   if(vps->getMaxLayers() > MAX_REF_LAYERS)
@@ -1685,6 +1743,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       assert( vps->getNumRefLayers(vps->getLayerIdInNuh(i)) <= MAX_REF_LAYERS);
     }
   }
+#endif
 #endif
 
 #if P0307_VPS_NON_VUI_EXTENSION

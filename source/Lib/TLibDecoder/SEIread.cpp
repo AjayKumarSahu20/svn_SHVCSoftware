@@ -135,6 +135,14 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
     break;
 #endif
+#if Q0078_ADD_LAYER_SETS
+  case SEI::OUTPUT_LAYER_SET_NESTING:
+    fprintf(g_hTrace, "=========== Output layer set nesting SEI message ===========\n");
+    break;
+  case SEI::VPS_REWRITING:
+    fprintf(g_hTrace, "=========== VPS rewriting SEI message ===========\n");
+    break;
+#endif
 #endif //SVC_EXTENSION
   default:
     fprintf( g_hTrace, "=========== Unknown SEI message ===========\n");
@@ -355,6 +363,20 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
    case SEI::BSP_HRD:
      sei = new SEIBspHrd;
      xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei);
+     break;
+#endif
+#if Q0078_ADD_LAYER_SETS
+   case SEI::OUTPUT_LAYER_SET_NESTING:
+     sei = new SEIOutputLayerSetNesting;
+#if LAYERS_NOT_PRESENT_SEI
+     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, vps, sps);
+#else
+     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, sps);
+#endif
+     break;
+   case SEI::VPS_REWRITING:
+     sei = new SEIVPSRewriting;
+     xParseSEIVPSRewriting((SEIVPSRewriting&)*sei);
      break;
 #endif
 #endif //SVC_EXTENSION
@@ -1390,6 +1412,59 @@ Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UIn
     }
   }
 }
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
+#else
+Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps)
+#endif
+{
+  UInt uiCode;
+  SEIMessages seis;
+
+  READ_FLAG(uiCode, "ols_flag"); sei.m_olsFlag = uiCode;
+  READ_UVLC(uiCode, "num_ols_indices_minus1"); sei.m_numOlsIndicesMinus1 = uiCode;
+
+  for (Int i = 0; i <= sei.m_numOlsIndicesMinus1; i++)
+  {
+    READ_UVLC(uiCode, "ols_idx[i]"); sei.m_olsIdx[i] = uiCode;
+  }
+
+  // byte alignment
+  while (m_pcBitstream->getNumBitsRead() % 8 != 0)
+  {
+    UInt code;
+    READ_FLAG(code, "ols_nesting_zero_bit");
+  }
+
+  sei.m_callerOwnsSEIs = false;
+
+  // read nested SEI messages
+  do {
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
+#else
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
+#endif
+  } while (m_pcBitstream->getNumBitsLeft() > 8);
+
+}
+
+Void SEIReader::xParseSEIVPSRewriting(SEIVPSRewriting &sei)
+{
+}
+
 #endif
 
 #endif //SVC_EXTENSION

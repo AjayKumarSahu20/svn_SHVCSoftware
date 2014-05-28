@@ -911,7 +911,18 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
+#if Q0078_ADD_LAYER_SETS
+  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
+  {
+    m_cSPS.setLayerId(0); // layer ID 0 for independent layers
+  }
+  else
+  {
+    m_cSPS.setLayerId(m_layerId);
+  }
+#else
   m_cSPS.setLayerId(m_layerId);
+#endif
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
@@ -1168,6 +1179,13 @@ Void TEncTop::xInitPPS()
 #if SVC_EXTENSION
 #if SCALINGLIST_INFERRING
   m_cPPS.setLayerId( m_layerId );
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
+  {
+    m_cPPS.setLayerId(0); // layer ID 0 for independent layers
+  }
 #endif
 
   if( m_layerId > 0 )

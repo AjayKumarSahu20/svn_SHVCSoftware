@@ -100,6 +100,10 @@ protected:
   Void xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
 #endif
+#if Q0078_ADD_LAYER_SETS
+  Void xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps);
+  Void xWriteSEIVPSRewriting(const SEIVPSRewriting &sei);
+#endif
 #endif //SVC_EXTENSION
 };
 
