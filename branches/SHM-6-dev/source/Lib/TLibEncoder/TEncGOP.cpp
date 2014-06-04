@@ -2315,6 +2315,27 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       writeSOP = false;
     }
+#if Q0189_TMVP_CONSTRAINTS
+   if( m_pcEncTop->getTMVPConstraintsSEIEnabled() == 1 &&
+      (m_pcEncTop->getTMVPModeId() == 1 || m_pcEncTop->getTMVPModeId() == 2) &&
+      pcSlice->getLayerId() >0 && 
+      (pcSlice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_N_LP))
+   {
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
+      SEITMVPConstrains seiTMVPConstrains;
+      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+      seiTMVPConstrains.no_intra_layer_col_pic_flag = 1;
+      seiTMVPConstrains.prev_pics_not_used_flag = 1;
+#if   O0164_MULTI_LAYER_HRD
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiTMVPConstrains, m_pcEncTop->getVPS(), pcSlice->getSPS() );
+#else
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiTMVPConstrains, pcSlice->getSPS() );
+#endif
+      writeRBSPTrailingBits(nalu.m_Bitstream);
+      accessUnit.push_back(new NALUnitEBSP(nalu));
+   }
+#endif
 
     if( ( m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled() ) &&
         ( pcSlice->getSPS()->getVuiParametersPresentFlag() ) &&

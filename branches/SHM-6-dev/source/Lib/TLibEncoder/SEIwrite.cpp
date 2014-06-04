@@ -244,6 +244,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      xWriteSEIVPSRewriting(*static_cast<const SEIVPSRewriting*>(&sei));
      break;
 #endif
+#if Q0189_TMVP_CONSTRAINTS
+   case SEI::TMVP_CONSTRAINTS:
+     xWriteSEITMVPConstraints(*static_cast<const SEITMVPConstrains*>(&sei));
+     break;
+#endif
 #endif //SVC_EXTENSION
   default:
     assert(!"Unhandled SEI message");
@@ -858,6 +863,15 @@ Void SEIWriter::xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei
     WRITE_CODE( sei.m_avgBitRate[i],            16, "avg_bit_rate[i]"                 );
     WRITE_CODE( sei.m_maxBitRate[i],            16, "max_bit_rate[i]"                 );
   }
+  xWriteByteAlign();
+}
+#endif
+
+#if Q0189_TMVP_CONSTRAINTS 
+Void SEIWriter::xWriteSEITMVPConstraints (const SEITMVPConstrains &sei)
+{
+  WRITE_UVLC( sei.prev_pics_not_used_flag ,    "prev_pics_not_used_flag"  );
+  WRITE_UVLC( sei.no_intra_layer_col_pic_flag ,    "no_intra_layer_col_pic_flag"  ); 
   xWriteByteAlign();
 }
 #endif

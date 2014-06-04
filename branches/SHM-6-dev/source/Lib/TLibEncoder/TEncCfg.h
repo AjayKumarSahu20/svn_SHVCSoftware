@@ -275,6 +275,9 @@ protected:
   Int       m_decodingUnitInfoSEIEnabled;
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
+#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -732,7 +735,13 @@ public:
   Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
+#if Q0189_TMVP_CONSTRAINTS
+  void setTMVPConstraintsSEIEnabled(Int b)                { m_TMVPConstraintsSEIEnabled = b; }
+#endif
   Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
+#if Q0189_TMVP_CONSTRAINTS
+  Int   getTMVPConstraintsSEIEnabled()                {  return m_TMVPConstraintsSEIEnabled; }
+#endif
   Void      setUseWP               ( Bool b )    { m_useWeightedPred   = b;    }
   Void      setWPBiPred            ( Bool b )    { m_useWeightedBiPred = b;    }
   Bool      getUseWP               ()            { return m_useWeightedPred;   }

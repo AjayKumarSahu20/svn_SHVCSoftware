@@ -102,6 +102,9 @@ public:
     OUTPUT_LAYER_SET_NESTING             = 144,
     VPS_REWRITING                        = 145,
 #endif
+#if Q0189_TMVP_CONSTRAINTS
+    TMVP_CONSTRAINTS                     = 146,
+#endif
   };
   
   SEI() {}
@@ -513,6 +516,25 @@ public:
   Int  m_highestSublayerId      [MAX_SUB_STREAMS];
   Int  m_avgBitRate             [MAX_SUB_STREAMS];
   Int  m_maxBitRate             [MAX_SUB_STREAMS];
+};
+#endif
+
+#if Q0189_TMVP_CONSTRAINTS
+class SEITMVPConstrains : public SEI
+{
+public:
+  PayloadType payloadType() const { return TMVP_CONSTRAINTS; }
+
+  SEITMVPConstrains()
+    : prev_pics_not_used_flag(0),no_intra_layer_col_pic_flag(0)
+    {}
+
+  virtual ~SEITMVPConstrains()
+  {
+  }
+
+  UInt prev_pics_not_used_flag;
+  UInt no_intra_layer_col_pic_flag;
 };
 #endif
 
