@@ -2336,6 +2336,24 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       accessUnit.push_back(new NALUnitEBSP(nalu));
    }
 #endif
+#if Q0247_FRAME_FIELD_INFO
+    if(  pcSlice->getLayerId()> 0 &&
+     ( (m_pcCfg->getProgressiveSourceFlag() && m_pcCfg->getInterlacedSourceFlag()) || m_pcCfg->getFrameFieldInfoPresentFlag()))
+    {
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
+      SEIFrameFieldInfo seiFFInfo;
+      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+      seiFFInfo.m_ffinfo_picStruct = (isField && pcSlice->getPic()->isTopField())? 1 : isField? 2 : 0;
+#if   O0164_MULTI_LAYER_HRD
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiFFInfo, m_pcEncTop->getVPS(), pcSlice->getSPS() );
+#else
+      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiFFInfo, pcSlice->getSPS() );
+#endif
+      writeRBSPTrailingBits(nalu.m_Bitstream);
+      accessUnit.push_back(new NALUnitEBSP(nalu));
+    }
+#endif
 
     if( ( m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled() ) &&
         ( pcSlice->getSPS()->getVuiParametersPresentFlag() ) &&

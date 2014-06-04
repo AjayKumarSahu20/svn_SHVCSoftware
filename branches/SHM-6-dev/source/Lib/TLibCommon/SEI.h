@@ -105,6 +105,9 @@ public:
 #if Q0189_TMVP_CONSTRAINTS
     TMVP_CONSTRAINTS                     = 146,
 #endif
+#if Q0247_FRAME_FIELD_INFO
+    FRAME_FIELD_INFO                     = 147,
+#endif
   };
   
   SEI() {}
@@ -536,6 +539,27 @@ public:
   UInt prev_pics_not_used_flag;
   UInt no_intra_layer_col_pic_flag;
 };
+#endif
+
+#if Q0247_FRAME_FIELD_INFO 
+class SEIFrameFieldInfo: public SEI
+{
+public:
+  PayloadType payloadType() const { return FRAME_FIELD_INFO; }
+
+  SEIFrameFieldInfo()
+    : m_ffinfo_picStruct(0),m_ffinfo_sourceScanType(0), m_ffinfo_duplicateFlag(false)
+    {}
+
+  virtual ~SEIFrameFieldInfo()
+  {
+  }
+
+  UInt  m_ffinfo_picStruct;
+  UInt  m_ffinfo_sourceScanType;
+  Bool  m_ffinfo_duplicateFlag;
+};
+
 #endif
 
 typedef std::list<SEI*> SEIMessages;

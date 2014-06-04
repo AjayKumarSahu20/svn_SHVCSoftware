@@ -97,6 +97,9 @@ protected:
 #if Q0189_TMVP_CONSTRAINTS 
 Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
 #endif
+#if Q0247_FRAME_FIELD_INFO
+  Void xWriteSEIFrameFieldInfo  (const SEIFrameFieldInfo &sei);
+#endif
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);

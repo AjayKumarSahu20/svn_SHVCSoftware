@@ -130,7 +130,9 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
 #if Q0189_TMVP_CONSTRAINTS 
   Void xParseSEITMVPConstraints    (SEITMVPConstrains& sei, UInt payloadSize);
 #endif
-
+#if Q0247_FRAME_FIELD_INFO
+  Void xParseSEIFrameFieldInfo    (SEIFrameFieldInfo& sei, UInt payloadSize);
+#endif
   Void xParseByteAlign();
 };
 
