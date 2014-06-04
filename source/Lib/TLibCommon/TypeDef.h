@@ -269,7 +269,7 @@
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
 #define Q0189_TMVP_CONSTRAINTS           1
-
+#define Q0247_FRAME_FIELD_INFO           1
 #if VIEW_ID_RELATED_SIGNALING
 /// scalability types
 enum ScalabilityType

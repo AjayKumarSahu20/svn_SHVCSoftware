@@ -249,6 +249,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      xWriteSEITMVPConstraints(*static_cast<const SEITMVPConstrains*>(&sei));
      break;
 #endif
+#if Q0247_FRAME_FIELD_INFO
+   case SEI::FRAME_FIELD_INFO:
+     xWriteSEIFrameFieldInfo(*static_cast<const SEIFrameFieldInfo*>(&sei));
+     break;
+#endif
 #endif //SVC_EXTENSION
   default:
     assert(!"Unhandled SEI message");
@@ -872,6 +877,16 @@ Void SEIWriter::xWriteSEITMVPConstraints (const SEITMVPConstrains &sei)
 {
   WRITE_UVLC( sei.prev_pics_not_used_flag ,    "prev_pics_not_used_flag"  );
   WRITE_UVLC( sei.no_intra_layer_col_pic_flag ,    "no_intra_layer_col_pic_flag"  ); 
+  xWriteByteAlign();
+}
+#endif
+
+#if Q0247_FRAME_FIELD_INFO
+Void SEIWriter::xWriteSEIFrameFieldInfo  (const SEIFrameFieldInfo &sei)
+{
+  WRITE_CODE( sei.m_ffinfo_picStruct , 4,             "ffinfo_pic_struct" );
+  WRITE_CODE( sei.m_ffinfo_sourceScanType, 2,         "ffinfo_source_scan_type" );
+  WRITE_FLAG( sei.m_ffinfo_duplicateFlag ? 1 : 0,     "ffinfo_duplicate_flag" );
   xWriteByteAlign();
 }
 #endif

@@ -385,6 +385,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      xParseSEITMVPConstraints((SEITMVPConstrains&) *sei, payloadSize);
      break;
 #endif
+#if Q0247_FRAME_FIELD_INFO
+   case SEI::FRAME_FIELD_INFO:
+     sei =  new SEIFrameFieldInfo;
+     xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize); 
+     break;
+#endif
 #endif //SVC_EXTENSION
       break;
     default:
@@ -1031,6 +1037,17 @@ Void SEIReader::xParseSEITMVPConstraints   (SEITMVPConstrains& sei, UInt payload
   UInt uiCode;
   READ_UVLC( uiCode,           "prev_pics_not_used_flag"              ); sei.prev_pics_not_used_flag = uiCode;
   READ_UVLC( uiCode,           "no_intra_layer_col_pic_flag"            ); sei.no_intra_layer_col_pic_flag = uiCode;
+  xParseByteAlign();
+}
+#endif
+
+#if Q0247_FRAME_FIELD_INFO
+Void SEIReader::xParseSEIFrameFieldInfo    (SEIFrameFieldInfo& sei, UInt payloadSize)
+{
+  UInt code;
+  READ_CODE( 4, code, "ffinfo_pic_struct" );             sei.m_ffinfo_picStruct            = code;
+  READ_CODE( 2, code, "ffinfo_source_scan_type" );       sei.m_ffinfo_sourceScanType = code;
+  READ_FLAG(    code, "ffinfo_duplicate_flag" );         sei.m_ffinfo_duplicateFlag    = ( code == 1 ? true : false );
   xParseByteAlign();
 }
 #endif
