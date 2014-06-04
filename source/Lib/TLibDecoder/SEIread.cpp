@@ -379,6 +379,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      xParseSEIVPSRewriting((SEIVPSRewriting&)*sei);
      break;
 #endif
+#if Q0189_TMVP_CONSTRAINTS
+   case SEI::TMVP_CONSTRAINTS:
+     sei =  new SEITMVPConstrains;
+     xParseSEITMVPConstraints((SEITMVPConstrains&) *sei, payloadSize);
+     break;
+#endif
 #endif //SVC_EXTENSION
       break;
     default:
@@ -1018,6 +1024,16 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 
   xParseByteAlign();
 }
+
+#if Q0189_TMVP_CONSTRAINTS 
+Void SEIReader::xParseSEITMVPConstraints   (SEITMVPConstrains& sei, UInt payloadSize)
+{
+  UInt uiCode;
+  READ_UVLC( uiCode,           "prev_pics_not_used_flag"              ); sei.prev_pics_not_used_flag = uiCode;
+  READ_UVLC( uiCode,           "no_intra_layer_col_pic_flag"            ); sei.no_intra_layer_col_pic_flag = uiCode;
+  xParseByteAlign();
+}
+#endif
 
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)

@@ -515,6 +515,9 @@ Void TAppEncTop::xInitLibCfg()
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
+#if Q0189_TMVP_CONSTRAINTS
+    m_acTEncTop[layer].setTMVPConstraintsSEIEnabled( m_TMVPConstraintsSEIEnabled);           
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     m_acTEncTop[layer].setInterLayerConstrainedTileSetsSEIEnabled( m_interLayerConstrainedTileSetsSEIEnabled );
     m_acTEncTop[layer].setIlNumSetsInMessage( m_ilNumSetsInMessage );

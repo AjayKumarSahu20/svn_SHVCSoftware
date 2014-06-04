@@ -126,6 +126,11 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
 #endif
   Void xParseSEIVPSRewriting(SEIVPSRewriting &sei);
 #endif
+
+#if Q0189_TMVP_CONSTRAINTS 
+  Void xParseSEITMVPConstraints    (SEITMVPConstrains& sei, UInt payloadSize);
+#endif
+
   Void xParseByteAlign();
 };
 
