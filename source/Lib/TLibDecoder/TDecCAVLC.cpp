@@ -1101,6 +1101,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_CODE( 3, uiCode, "dimension_id_len_minus1[j]" ); vps->setDimensionIdLen(j, uiCode + 1);
   }
 
+  // The value of dimBitOffset[ NumScalabilityTypes ] is set equal to 6.
   if(vps->getSplittingFlag())
   {
     UInt numBits = 0;
