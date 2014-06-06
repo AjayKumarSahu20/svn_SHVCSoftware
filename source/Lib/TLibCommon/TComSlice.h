@@ -596,9 +596,7 @@ private:
   Bool       m_tilesInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif 
-#if TILE_BOUNDARY_ALIGNED_FLAG
   Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#endif 
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
   Bool       m_wppNotInUseFlag;
   Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
@@ -991,10 +989,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getLoopFilterNotAcrossTilesFlag(Int currLayerId)    { return m_loopFilterNotAcrossTilesFlag[currLayerId]; }
   Void   setLoopFilterNotAcrossTilesFlag(Int currLayerId, Bool x)    { m_loopFilterNotAcrossTilesFlag[currLayerId] = x; } 
 #endif 
-#if TILE_BOUNDARY_ALIGNED_FLAG  
   Bool   getTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId)           { return m_tileBoundariesAlignedFlag[currLayerId][refLayerId]; }
   Void   setTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId, Bool x)   { m_tileBoundariesAlignedFlag[currLayerId][refLayerId] = x; } 
-#endif 
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG  
   Bool   getWppNotInUseFlag()         { return m_wppNotInUseFlag; }
   Void   setWppNotInUseFlag(Bool x); 

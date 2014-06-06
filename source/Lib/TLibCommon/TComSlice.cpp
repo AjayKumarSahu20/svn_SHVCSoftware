@@ -2341,9 +2341,7 @@ TComVPS::TComVPS()
   ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
   ::memset(m_loopFilterNotAcrossTilesFlag,  0, sizeof(m_loopFilterNotAcrossTilesFlag));
 #endif
-#if TILE_BOUNDARY_ALIGNED_FLAG
   ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
-#endif 
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
   m_wppNotInUseFlag = true;
   ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
@@ -2488,7 +2486,7 @@ Void TComVPS::setTilesNotInUseFlag(Bool x)
       m_tilesInUseFlag[i] = m_loopFilterNotAcrossTilesFlag[i] = m_tilesNotInUseFlag;
     }
   }
-#if TILE_BOUNDARY_ALIGNED_FLAG  
+
   if (m_tilesNotInUseFlag)
   {
     for (int i = 1; i < getMaxLayers(); i++)
@@ -2499,9 +2497,9 @@ Void TComVPS::setTilesNotInUseFlag(Bool x)
       }
     }
   }
-#endif
 }
 #endif
+
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
 Void TComVPS::setWppNotInUseFlag(Bool x)
 {
