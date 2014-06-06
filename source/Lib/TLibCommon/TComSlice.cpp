@@ -511,11 +511,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       m_activeNumILRRefIdx = numInterLayerRPSPics;
     }
 #if MAX_ONE_RESAMPLING_DIRECT_LAYERS
-#if SCALABILITY_MASK_E0104
-    if( m_pcVPS->getScalabilityMask(2) )
-#else
-    if( m_pcVPS->getScalabilityMask(1) )
-#endif
+    if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) )
     {
       Int numResampler = 0;
 #if MOTION_RESAMPLING_CONSTRAINT

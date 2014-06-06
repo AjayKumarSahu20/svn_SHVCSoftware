@@ -112,7 +112,6 @@
 
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
 #define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
-#define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
 #if POC_RESET_FLAG
 #define PREVTID0_POC_RESET               1      ///< JCTVC-O0117 Modification of the PicOrderCntVal of prevTid0Pic
 #define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
@@ -220,14 +219,14 @@
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define Q0189_TMVP_CONSTRAINTS           1
 #define Q0247_FRAME_FIELD_INFO           1
-#if VIEW_ID_RELATED_SIGNALING
+
 /// scalability types
 enum ScalabilityType
 {
   VIEW_ORDER_INDEX  = 1,
-  SCALABILITY_ID = 2,
+  SCALABILITY_ID    = 2,
+  AUX_ID            = 3,
 };
-#endif
 
 /// normative encoder constraints --------
 #define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping

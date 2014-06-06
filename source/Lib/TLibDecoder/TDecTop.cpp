@@ -412,11 +412,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
           rpcPic->setSpatialEnhLayerFlag( i, true );
 
           //only for scalable extension
-#if SCALABILITY_MASK_E0104
-          assert( pcSlice->getVPS()->getScalabilityMask(2) == true );
-#else
-          assert( pcSlice->getVPS()->getScalabilityMask(1) == true );
-#endif
+          assert( pcSlice->getVPS()->getScalabilityMask( SCALABILITY_ID ) == true );
         }
       }
     }
