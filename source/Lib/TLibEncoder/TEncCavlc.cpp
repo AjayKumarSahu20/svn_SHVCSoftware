@@ -798,7 +798,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       codeHrdParameters(pcVPS->getHrdParameters(i), pcVPS->getCprmsPresentFlag( i ), pcVPS->getMaxTLayers() - 1);
     }
   }
-#if VPS_EXTNS
+#if SVC_EXTENSION
   // When MaxLayersMinus1 is greater than 0, vps_extension_flag shall be equal to 1.
   if( pcVPS->getMaxLayers() > 1 )
   {
@@ -832,7 +832,6 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTNS
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
@@ -1325,7 +1324,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif // 0109_MOVE_VPS_FLAG
 }
-#endif
+
 #if REPN_FORMAT_IN_VPS
 Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 {

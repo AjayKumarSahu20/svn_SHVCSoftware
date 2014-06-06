@@ -124,9 +124,6 @@
 #define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
 #endif
 
-#define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
-#define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
-#if VPS_EXTNS
 #define VPS_EXTN_MASK_AND_DIM_INFO       1      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES    16
@@ -151,8 +148,6 @@
 #endif 
 #define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
 #endif //VPS_VUI
-
-#endif
 
 #define P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED        1   ///< JCTVC-P0125 -- Keep it as a reserved FFFF value --- The following two macros (VPS_EXTN_OFFSET & VPS_EXTN_OFFSET_CALC) will have no effect when this macro is set to 1.
 #define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element
