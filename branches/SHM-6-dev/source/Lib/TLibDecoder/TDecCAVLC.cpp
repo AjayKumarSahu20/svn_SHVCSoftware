@@ -1015,7 +1015,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
     }
   }
 
-#if VPS_EXTNS
+#if SVC_EXTENSION
   READ_FLAG( uiCode,  "vps_extension_flag" );      pcVPS->setVpsExtensionFlag( uiCode ? true : false );
 
   // When MaxLayersMinus1 is greater than 0, vps_extension_flag shall be equal to 1.
@@ -1060,7 +1060,6 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTNS
 Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {
   UInt uiCode;
@@ -1900,7 +1899,6 @@ Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
   vps->setHigherLayerIrapSkipFlag( false );
 #endif
 }
-#endif
 
 #if REPN_FORMAT_IN_VPS
 Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev )

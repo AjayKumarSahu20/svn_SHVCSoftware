@@ -75,10 +75,8 @@ public:
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
 #if SPS_EXTENSION
-#if VPS_EXTNS
   Void  parseVPSExtension   ( TComVPS* pcVPS );
   Void  defaultVPSExtension ( TComVPS* pcVPS );
-#endif
 
 #if VPS_VUI
   Void  parseVPSVUI   ( TComVPS* pcVPS );

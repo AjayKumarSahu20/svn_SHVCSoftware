@@ -159,18 +159,16 @@ public:
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
 
 #if SPS_EXTENSION
-  Void codeSPSExtension         ( TComSPS* pcSPS );
-#if VPS_EXTNS
-  Void  codeVPSExtension        ( TComVPS* pcVPS );
-#endif
+  Void codeSPSExtension        ( TComSPS* pcSPS );
+  Void codeVPSExtension        ( TComVPS* pcVPS );
 #if VPS_VUI
-  Void codeVPSVUI               (TComVPS *vps);
+  Void codeVPSVUI              (TComVPS *vps);
 #endif
 #if REPN_FORMAT_IN_VPS
-  Void  codeRepFormat           ( RepFormat *repFormat );
+  Void  codeRepFormat          ( RepFormat *repFormat );
 #endif
 #if VPS_DPB_SIZE_TABLE
-  Void  codeVpsDpbSizeTable      (TComVPS *vps);
+  Void  codeVpsDpbSizeTable    (TComVPS *vps);
 #endif
 #if Q0048_CGS_3D_ASYMLUT
 protected:
