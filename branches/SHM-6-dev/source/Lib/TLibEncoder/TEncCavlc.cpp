@@ -703,7 +703,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
-#if VPS_RENAME
+#if SVC_EXTENSION
   WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );            
 #else
   WRITE_CODE( 0,                                    6,        "vps_reserved_zero_6bits" );
@@ -734,7 +734,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     }
   }
 
-#if VPS_RENAME
+#if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_ID_PLUS1 );
 #if !VPS_EXTN_OP_LAYER_SETS     // num layer sets set in TAppEncTop.cpp

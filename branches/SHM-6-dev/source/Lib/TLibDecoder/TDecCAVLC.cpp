@@ -919,7 +919,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 
   READ_CODE( 4,  uiCode,  "vps_video_parameter_set_id" );         pcVPS->setVPSId( uiCode );
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
-#if VPS_RENAME
+#if SVC_EXTENSION
 #if O0137_MAX_LAYERID
   READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( min( 62u, uiCode) + 1 );
 #else
@@ -961,7 +961,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
     }
   }
 
-#if VPS_RENAME
+#if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() < MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_ID_PLUS1 );
   READ_CODE( 6, uiCode, "vps_max_layer_id" );           pcVPS->setMaxLayerId( uiCode );
