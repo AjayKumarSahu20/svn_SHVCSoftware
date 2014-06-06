@@ -1987,12 +1987,10 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
 #if SVC_EXTENSION
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
   {
-#if RANDOM_ACCESS_SEI_FIX
     if (m_prevSliceSkipped) // No need to decode SEI messages of a skipped access unit
     {
       return;
     }
-#endif
 #if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS() );
 #else
