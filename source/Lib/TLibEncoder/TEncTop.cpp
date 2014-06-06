@@ -911,6 +911,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
+  m_cSPS.setExtensionFlag( m_layerId > 0 ? true : false );
+
 #if Q0078_ADD_LAYER_SETS
   if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
   {

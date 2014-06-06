@@ -1492,6 +1492,7 @@ private:
 
 #if SVC_EXTENSION
   UInt        m_layerId;
+  Bool        m_extensionFlag;
   UInt        m_numScaledRefLayerOffsets;
 #if P0312_VERT_PHASE_ADJ
  Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
@@ -1650,6 +1651,8 @@ public:
 #if SVC_EXTENSION
   Void     setLayerId(UInt layerId)            { m_layerId = layerId; }
   UInt     getLayerId()                        { return m_layerId;    }
+  Int      getExtensionFlag()                  { return m_extensionFlag;  }
+  Void     setExtensionFlag(Int n)             { m_extensionFlag = n;     }
   UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
 #if P0312_VERT_PHASE_ADJ

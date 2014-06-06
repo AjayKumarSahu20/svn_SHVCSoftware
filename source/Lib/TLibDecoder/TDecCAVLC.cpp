@@ -847,10 +847,12 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   }
 
   READ_FLAG( uiCode, "sps_extension_flag");
-  if (uiCode)
-  {
-#if SPS_EXTENSION
 
+#if SVC_EXTENSION
+  pcSPS->setExtensionFlag( uiCode ? true : false );
+
+  if( pcSPS->getExtensionFlag() )
+  {
 #if O0142_CONDITIONAL_SPS_EXTENSION
     UInt spsExtensionTypeFlag[8];
     for (UInt i = 0; i < 8; i++)
@@ -869,19 +871,24 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     if(uiCode)
     {
 #endif
-
-#endif
       while ( xMoreRbspData() )
       {
         READ_FLAG( uiCode, "sps_extension_data_flag");
       }
-#if SPS_EXTENSION
     }
-#endif
   }
+#else
+  if (uiCode)
+  {
+    while ( xMoreRbspData() )
+    {
+      READ_FLAG( uiCode, "sps_extension_data_flag");
+    }
+  }
+#endif
 }
 
-#if SPS_EXTENSION
+#if SVC_EXTENSION
 Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
 {
   UInt uiCode;

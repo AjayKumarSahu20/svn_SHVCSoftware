@@ -111,10 +111,7 @@
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
-#define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
-#if SPS_EXTENSION
 #define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
-#endif
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
 #if POC_RESET_FLAG
 #define PREVTID0_POC_RESET               1      ///< JCTVC-O0117 Modification of the PicOrderCntVal of prevTid0Pic

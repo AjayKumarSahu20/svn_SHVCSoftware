@@ -638,9 +638,10 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
 
-#if SPS_EXTENSION
-  WRITE_FLAG( 1, "sps_extension_flag" );
-  if( 1 )   // if( sps_extension_flag )
+#if SVC_EXTENSION
+  WRITE_FLAG( pcSPS->getExtensionFlag() ? 1 : 0, "sps_extension_flag" );
+
+  if( pcSPS->getExtensionFlag() )
   {
 #if O0142_CONDITIONAL_SPS_EXTENSION
     UInt spsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
@@ -661,7 +662,8 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( 0, "sps_extension_flag" );
 #endif
 }
-#if SPS_EXTENSION
+
+#if SVC_EXTENSION
 Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
@@ -688,7 +690,8 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
     }
   }
 }
-#endif
+#endif //SVC_EXTENSION
+
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
