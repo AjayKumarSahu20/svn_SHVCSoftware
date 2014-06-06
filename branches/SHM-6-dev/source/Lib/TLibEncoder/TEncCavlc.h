@@ -158,7 +158,7 @@ public:
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
 
-#if SPS_EXTENSION
+#if SVC_EXTENSION
   Void codeSPSExtension        ( TComSPS* pcSPS );
   Void codeVPSExtension        ( TComVPS* pcVPS );
   Void codeVPSVUI              ( TComVPS *vps   );

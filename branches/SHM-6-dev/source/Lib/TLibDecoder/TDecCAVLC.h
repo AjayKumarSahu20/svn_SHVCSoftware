@@ -74,7 +74,7 @@ public:
   Void  parseQtCbf          ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth, UInt uiDepth );
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
-#if SPS_EXTENSION
+#if SVC_EXTENSION
   Void  parseVPSExtension   ( TComVPS* pcVPS );
   Void  defaultVPSExtension ( TComVPS* pcVPS );
   Void  parseVPSVUI         ( TComVPS* pcVPS );

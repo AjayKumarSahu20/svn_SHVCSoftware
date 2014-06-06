@@ -2912,6 +2912,7 @@ TComSPS::TComSPS()
 , m_vuiParameters             ()
 #if SVC_EXTENSION
 , m_layerId                   ( 0 )
+, m_extensionFlag             ( false )
 , m_numScaledRefLayerOffsets  ( 0 )
 #if REPN_FORMAT_IN_VPS
 , m_updateRepFormatFlag       (false)
