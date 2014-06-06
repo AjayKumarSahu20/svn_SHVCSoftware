@@ -1533,7 +1533,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       }
     }
 #endif
-#if TILE_BOUNDARY_ALIGNED_FLAG
+
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
@@ -1548,7 +1548,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #endif
       }
     }  
-#endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   }
 #endif
