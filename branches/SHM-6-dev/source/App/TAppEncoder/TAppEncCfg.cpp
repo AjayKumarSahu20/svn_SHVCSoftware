@@ -574,15 +574,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("AuxId%d",                 cfg_auxId,                 0,   MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-#if SCALABILITY_MASK_E0104
   ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
 #if AUXILIARY_PICTURES
   ("ScalabilityMask3",        m_scalabilityMask[3], 0, "scalability_mask[3] (auxiliary pictures)" )
-#endif
-#else
-  ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
-  ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
 #endif
   ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
 #if !O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -2513,18 +2508,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
 #if SVC_EXTENSION  
   printf("Total number of layers        : %d\n", m_numLayers       );
-#if SCALABILITY_MASK_E0104
-  printf("Multiview                     : %d\n", m_scalabilityMask[1] );
-  printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+  printf("Multiview                     : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
+  printf("Scalable                      : %d\n", m_scalabilityMask[SCALABILITY_ID] );
 #if AVC_BASE
   printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
 #endif
 #if AUXILIARY_PICTURES
-  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
-#endif
-#else
-  printf("Multiview                     : %d\n", m_scalabilityMask[0] );
-  printf("Scalable                      : %d\n", m_scalabilityMask[1] );
+  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[AUX_ID] );
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
