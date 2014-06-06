@@ -524,9 +524,7 @@ private:
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
     
-#if ILP_SSH_SIG
   Bool       m_ilpSshSignalingEnabledFlag;
-#endif
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
@@ -877,10 +875,8 @@ Void      deriveNumberOfSubDpbs();
     UInt   getMaxSLayersInLayerSetMinus1(Int ls)                { return m_maxSLInLayerSetMinus1[ls];    }
     Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)         { m_maxSLInLayerSetMinus1[ls] = x;       }
 #endif
-#if ILP_SSH_SIG
   Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
   Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
-#endif
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }

@@ -975,9 +975,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif 
      }
    }
-#if ILP_SSH_SIG
-    WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
-#endif
+   WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
 #if !VPS_EXTN_UEV_CODING
@@ -1968,15 +1966,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     }
 
 #if SVC_EXTENSION
-#if ILP_SSH_SIG
-#if ILP_SSH_SIG_FIX
     if((pcSlice->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
-#else
-    if((pcSlice->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
-#endif
-#else
-    if((pcSlice->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
-#endif
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
       if( pcSlice->getInterLayerPredEnabledFlag())

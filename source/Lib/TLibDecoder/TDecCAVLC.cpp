@@ -1253,9 +1253,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
     }
   }
-#if ILP_SSH_SIG
-    READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
-#endif
+  READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
 #if !VPS_EXTN_UEV_CODING
@@ -2822,15 +2820,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 
 #if SVC_EXTENSION
     rpcSlice->setActiveNumILRRefIdx(0);
-#if ILP_SSH_SIG
-#if ILP_SSH_SIG_FIX
     if((rpcSlice->getLayerId() > 0) && !(rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (rpcSlice->getNumILRRefIdx() > 0) )
-#else
-    if((rpcSlice->getLayerId() > 0) && rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (rpcSlice->getNumILRRefIdx() > 0) )
-#endif
-#else
-    if((rpcSlice->getLayerId() > 0)  &&  (rpcSlice->getNumILRRefIdx() > 0) )
-#endif
     {
       READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
       rpcSlice->setInterLayerPredEnabledFlag(uiCode);
@@ -2909,12 +2899,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
         }
       }
     }
-#if ILP_SSH_SIG
-#if ILP_SSH_SIG_FIX
     else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == true &&  (rpcSlice->getLayerId() > 0 ))
-#else
-    else if( rpcSlice->getVPS()->getIlpSshSignalingEnabledFlag() == false )
-#endif
     {
       rpcSlice->setInterLayerPredEnabledFlag(true);
 
@@ -2948,8 +2933,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
 #endif 
     }
-#endif
-#endif
 #if P0312_VERT_PHASE_ADJ
     for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ ) 
     {
@@ -2960,6 +2943,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
     }
 #endif
+#endif //SVC_EXTENSION
 
     if(sps->getUseSAO())
     {
