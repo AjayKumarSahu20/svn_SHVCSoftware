@@ -879,7 +879,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getDimensionIdLen(j) - 1, 3,      "dimension_id_len_minus1[j]" );
   }
 
-#if SPL_FLG_CHK
+  // The value of dimBitOffset[ NumScalabilityTypes ] is set equal to 6.
   if(vps->getSplittingFlag())
   {
     UInt splDimSum=0;
@@ -889,7 +889,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
     assert(splDimSum<=6);
   }
-#endif
 
   WRITE_FLAG( vps->getNuhLayerIdPresentFlag(),         "vps_nuh_layer_id_present_flag" );
   for(i = 1; i < vps->getMaxLayers(); i++)
