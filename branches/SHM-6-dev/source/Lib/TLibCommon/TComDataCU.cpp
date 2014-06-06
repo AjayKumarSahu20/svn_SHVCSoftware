@@ -3516,7 +3516,8 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #endif
 
-#if N0139_POSITION_ROUNDING_OFFSET
+#if REF_IDX_MFM
+  // offset for collocated block in the motion mapping
   if( iMotionMapping == 1 )
   {
     // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.

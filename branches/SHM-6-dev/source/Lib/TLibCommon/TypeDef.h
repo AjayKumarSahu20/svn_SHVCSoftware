@@ -193,9 +193,6 @@
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
 #define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
-#if REF_IDX_MFM
-#define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
-#endif
 
 #define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
 
@@ -258,7 +255,7 @@
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag
 #define BITRATE_PICRATE_SIGNALLING       1      ///< JCTVC-Q0102 Proposal 3 signal bitrate, picrate only up to the maximum temporal sub-layers in the corresponding layer set
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
-#define HRD_BPB                         1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
+#define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
 #define Q0189_TMVP_CONSTRAINTS           1
