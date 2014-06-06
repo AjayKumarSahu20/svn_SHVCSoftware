@@ -471,7 +471,7 @@ private:
   UInt        m_uiMaxLatencyIncrease[MAX_TLAYER]; // Really max latency increase plus 1 (value 0 expresses no limit)
 
   UInt        m_numHrdParameters;
-#if !VPS_RENAME
+#if !SVC_EXTENSION
   UInt        m_maxNuhReservedZeroLayerId;
 #endif
   TComHRD*    m_hrdParameters;
@@ -494,14 +494,12 @@ private:
   UInt        m_extensionOffset;
 #endif
 #endif
-#if VPS_RENAME
   UInt        m_maxLayerId;
   UInt        m_numLayerSets;
 #if Q0078_ADD_LAYER_SETS
   Bool        m_layerIdIncludedFlag[2*MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #else
   Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#endif
 #endif
 
   // ------------------------------------------
@@ -836,13 +834,10 @@ Void      deriveNumberOfSubDpbs();
   UInt    getTreePartitionLayerId(Int idx, Int layerIdx)                         { return m_treePartitionLayerIdList[idx][layerIdx]; }
   Void    setTreePartitionLayerId(Int idx, Int layerIdx, UInt layerId)           { m_treePartitionLayerIdList[idx][layerIdx] = layerId; }
 #endif
-#if VPS_RENAME
-  UInt    getMaxLayerId()                                       { return m_maxLayerId; }
-  Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;    }
-
+  UInt    getMaxLayerId()                                       { return m_maxLayerId;   }
+  Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;      }
   UInt    getNumLayerSets()                                     { return m_numLayerSets; }
   Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
-#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
   Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
@@ -872,11 +867,11 @@ Void      deriveNumberOfSubDpbs();
   Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
 #endif
 #if BITRATE_PICRATE_SIGNALLING
-    UInt   getMaxSLayersInLayerSetMinus1(Int ls)                { return m_maxSLInLayerSetMinus1[ls];    }
-    Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)         { m_maxSLInLayerSetMinus1[ls] = x;       }
+  UInt   getMaxSLayersInLayerSetMinus1(Int ls)                  { return m_maxSLInLayerSetMinus1[ls]; }
+  Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)           { m_maxSLInLayerSetMinus1[ls] = x;    }
 #endif
-  Bool   getIlpSshSignalingEnabledFlag()                      { return m_ilpSshSignalingEnabledFlag;}
-  Void   setIlpSshSignalingEnabledFlag(Bool x)                { m_ilpSshSignalingEnabledFlag = x;}
+  Bool   getIlpSshSignalingEnabledFlag()                        { return m_ilpSshSignalingEnabledFlag;}
+  Void   setIlpSshSignalingEnabledFlag(Bool x)                  { m_ilpSshSignalingEnabledFlag = x;}
 #if VPS_EXTN_PROFILE_INFO
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }

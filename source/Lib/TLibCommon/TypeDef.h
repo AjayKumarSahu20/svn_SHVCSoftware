@@ -296,7 +296,7 @@ enum ScalabilityType
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#if VPS_RENAME
+#if SVC_EXTENSION
 #define MAX_VPS_OP_LAYER_SETS_PLUS1               (MAX_LAYERS+1)
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
 #define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
