@@ -69,11 +69,6 @@
 #define RESOLUTION_BASED_DPB             0      ///< JCTVC-Q0154 - remove sharing of sub-DPB across layers
                                                 ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
-#define MAX_SUBDPBS                      MAX_LAYERS
-#define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
-#if SUB_BITSTREAM_PROPERTY_SEI
-#define MAX_SUB_STREAMS                  1024
-#endif
 #define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
@@ -90,8 +85,6 @@
 
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 #define Q0182_MULTI_LAYER_HRD_UPDATE     1      ///< JCTVC-Q0182: On bitstream partition buffering
-
-#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
 
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -207,8 +200,6 @@
 #define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
-#define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
-#define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
 
 #define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
@@ -257,7 +248,6 @@
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
-#define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
 #define Q0189_TMVP_CONSTRAINTS           1
 #define Q0247_FRAME_FIELD_INFO           1
 #if VIEW_ID_RELATED_SIGNALING
@@ -268,6 +258,17 @@ enum ScalabilityType
   SCALABILITY_ID = 2,
 };
 #endif
+
+// SEI messages
+#define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
+#define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
+#if SUB_BITSTREAM_PROPERTY_SEI
+#define MAX_SUB_STREAMS                  1024
+#endif
+#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
+#define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
+#define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
+
 
 #else
 #define SYNTAX_OUTPUT                    0
