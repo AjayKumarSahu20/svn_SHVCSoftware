@@ -162,7 +162,6 @@
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
-#define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214: support base layer input more than 8 bits
 #define ARBITRARY_SPATIAL_RATIO          1      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
 
 #define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
