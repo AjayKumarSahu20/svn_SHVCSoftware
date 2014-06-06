@@ -91,13 +91,11 @@
 #endif
 #define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
 #if Q0048_CGS_3D_ASYMLUT
-
 #define CGS_GCC_NO_VECTORIZATION         1
 #define O0194_WEIGHTED_PREDICTION_CGS    0
 #else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
 #endif
-#define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
 #define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation - eventually will replace POC_RESET_FLAG
 #if POC_RESET_IDC
@@ -118,7 +116,6 @@
 #define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
 #endif
 #define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
-#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
 #if POC_RESET_FLAG
 #define PREVTID0_POC_RESET               1      ///< JCTVC-O0117 Modification of the PicOrderCntVal of prevTid0Pic
 #define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
@@ -153,15 +150,11 @@
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
-#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
 #define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
 #endif
 
-#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
-#define ENCODER_FAST_MODE                1      ///< JCTVC-L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
@@ -179,12 +172,6 @@
 #define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
 
 #define IRAP_ALIGN_FLAG_IN_VPS_VUI       1       ///< Move IRAP align flag to VPS VUI 
-#define FAST_INTRA_SHVC                  1      ///< JCTVC-M0115: reduction number of intra modes in the EL (encoder only)
-#if FAST_INTRA_SHVC
-#define NB_REMAIN_MODES                  2      ///< JCTVC-M0115: nb of remaining modes
-#endif
-
-#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define N0065_LAYER_POC_ALIGNMENT        1
@@ -246,7 +233,21 @@ enum ScalabilityType
 };
 #endif
 
-// SEI messages
+/// normative encoder constraints --------
+#define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
+#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
+
+/// encoder settings ---------------------
+#define FAST_INTRA_SHVC                  1      ///< JCTVC-M0115: reduction number of intra modes in the EL (encoder only)
+#if FAST_INTRA_SHVC
+#define NB_REMAIN_MODES                  2      ///< JCTVC-M0115: nb of remaining modes
+#endif
+#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
+#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
+#define ENCODER_FAST_MODE                1      ///< JCTVC-L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
+#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
+
+/// SEI messages -------------------------
 #define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
 #define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
 #if SUB_BITSTREAM_PROPERTY_SEI
