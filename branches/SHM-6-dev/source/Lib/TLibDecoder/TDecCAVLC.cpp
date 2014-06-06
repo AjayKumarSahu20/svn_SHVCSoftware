@@ -2860,7 +2860,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
             rpcSlice->setActiveNumILRRefIdx(1);
 #endif 
           }
-#if ILP_NUM_REF_CHK
+
           if( rpcSlice->getActiveNumILRRefIdx() == rpcSlice->getNumILRRefIdx() )
           {
             for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
@@ -2870,15 +2870,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
           }
           else
           {
-#endif
-          for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
-          {
-            READ_CODE( numBits,uiCode,"inter_layer_pred_layer_idc[i]" );
-            rpcSlice->setInterLayerPredLayerIdc(uiCode,i);
+            for(Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
+            {
+              READ_CODE( numBits,uiCode,"inter_layer_pred_layer_idc[i]" );
+              rpcSlice->setInterLayerPredLayerIdc(uiCode,i);
+            }
           }
-#if ILP_NUM_REF_CHK
-          }
-#endif
         }
         else
         {
