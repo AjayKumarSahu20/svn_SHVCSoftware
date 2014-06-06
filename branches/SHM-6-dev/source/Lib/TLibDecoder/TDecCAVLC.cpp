@@ -1292,9 +1292,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if (vps->getNumIndependentLayers() > 1)
   {
     READ_UVLC(uiCode, "num_add_layer_sets"); vps->setNumAddLayerSets(uiCode);
-    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
     {
-      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
       {
         int len = 1;
         while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
@@ -1305,9 +1305,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
 
-    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
     {
-      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
       {
         Int layerNum = 0;
         Int lsIdx = vps->getNumLayerSets() + i;
