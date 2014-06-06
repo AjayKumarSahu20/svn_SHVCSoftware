@@ -1981,17 +1981,14 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           {
             WRITE_CODE(pcSlice->getActiveNumILRRefIdx() - 1, numBits,"num_inter_layer_ref_pics_minus1");
           }       
-#if ILP_NUM_REF_CHK
+
           if( pcSlice->getNumILRRefIdx() != pcSlice->getActiveNumILRRefIdx() )
           {
-#endif
-          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-          {
-            WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+            for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+            {
+              WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+            }
           }
-#if ILP_NUM_REF_CHK
-          }
-#endif
         }
       }
     }     
