@@ -1784,13 +1784,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if (uiCode)
 #endif
   {
-#if VPS_VUI
     while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
     {
       READ_FLAG( uiCode, "vps_vui_alignment_bit_equal_to_one"); assert(uiCode == 1);
     }
     parseVPSVUI(vps);
-#endif
   }
   else
   {
@@ -2094,7 +2092,7 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
   }
 }
 #endif
-#if VPS_VUI
+
 Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
   UInt i,j;
@@ -2441,7 +2439,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
 #endif
 }
-#endif
 #endif //SVC_EXTENSION
 
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)

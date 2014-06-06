@@ -161,9 +161,7 @@ public:
 #if SPS_EXTENSION
   Void codeSPSExtension        ( TComSPS* pcSPS );
   Void codeVPSExtension        ( TComVPS* pcVPS );
-#if VPS_VUI
-  Void codeVPSVUI              (TComVPS *vps);
-#endif
+  Void codeVPSVUI              ( TComVPS *vps   );
 #if REPN_FORMAT_IN_VPS
   Void  codeRepFormat          ( RepFormat *repFormat );
 #endif

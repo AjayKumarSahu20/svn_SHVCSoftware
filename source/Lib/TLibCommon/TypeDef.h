@@ -132,9 +132,7 @@
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
-#define VPS_VUI                          1      ///< Include function structure for VPS VUI
 
-#if VPS_VUI
 #define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
@@ -147,7 +145,6 @@
 #define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
 #endif 
 #define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
-#endif //VPS_VUI
 
 #define P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED        1   ///< JCTVC-P0125 -- Keep it as a reserved FFFF value --- The following two macros (VPS_EXTN_OFFSET & VPS_EXTN_OFFSET_CALC) will have no effect when this macro is set to 1.
 #define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element

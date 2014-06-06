@@ -845,13 +845,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if O0109_MOVE_VPS_VUI_FLAG
-#if !VPS_VUI
-  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
-  vps->setVpsVuiPresentFlag(false);
-#else
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );
   vps->setVpsVuiPresentFlag(true);
-#endif
   if ( vps->getVpsVuiPresentFlag() ) 
   {
 #if VPS_VUI_OFFSET
@@ -1284,9 +1279,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if !O0109_MOVE_VPS_VUI_FLAG
-#if !VPS_VUI
-  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
-#else
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );
   if(1)   // Should be conditioned on the value of vps_vui_present_flag
   {
@@ -1301,7 +1293,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
     codeVPSVUI(vps);  
   }
-#endif 
 #else
 #if P0307_REMOVE_VPS_VUI_OFFSET
   vps->setVpsVuiPresentFlag(true);
@@ -1448,7 +1439,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
   }
 }
 #endif
-#if VPS_VUI
+
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
@@ -1697,7 +1688,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
 #endif
 }
-#endif
 #endif //SVC_EXTENSION
 
 Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
