@@ -91,7 +91,9 @@ private:
 #if Q0048_CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
 #endif
-
+#if POC_RESET_IDC_DECODER
+  Bool                  m_currAuFlag;
+#endif
 public:
   TComPic();
   virtual ~TComPic();
@@ -221,6 +223,10 @@ public:
 #if Q0048_CGS_3D_ASYMLUT
   Void  setFrameBit( Int n )  { m_nFrameBit = n;    }
   Int   getFrameBit()         { return m_nFrameBit; }
+#endif
+#if POC_RESET_IDC_DECODER
+  Bool isCurrAu() { return m_currAuFlag; }
+  Void setCurrAuFlag(Bool x) {m_currAuFlag = x; }
 #endif
 };// END CLASS DEFINITION TComPic
 

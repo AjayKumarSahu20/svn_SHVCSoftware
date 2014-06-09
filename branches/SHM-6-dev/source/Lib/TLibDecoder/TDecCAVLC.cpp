@@ -2615,6 +2615,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #endif
     {
       READ_CODE(sps->getBitsForPOC(), uiCode, "pic_order_cnt_lsb");
+#if POC_RESET_IDC_DECODER
+      rpcSlice->setPicOrderCntLsb( uiCode );
+#endif
 #if SHM_FIX7
       iPOClsb = uiCode;
 #else
@@ -2649,6 +2652,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if N0065_LAYER_POC_ALIGNMENT
 #if SHM_FIX7
       }
+#endif
+#if POC_RESET_IDC_DECODER
+    else
+    {
+      rpcSlice->setPicOrderCntLsb( 0 );
+    }
 #endif
       if( !rpcSlice->getIdrPicFlag() )
       {
@@ -3341,10 +3350,14 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
       }
     }
 
+#if !POC_RESET_IDC_DECODER
     Int maxPocLsb  = 1 << rpcSlice->getSPS()->getBitsForPOC();
+#endif
     if( rpcSlice->getPocMsbValPresentFlag() )
     {
       READ_UVLC( uiCode,    "poc_msb_val");             rpcSlice->setPocMsbVal( uiCode );
+
+#if !POC_RESET_IDC_DECODER
       // Update POC of the slice based on this MSB val
       Int pocLsb     = rpcSlice->getPOC() % maxPocLsb;
       rpcSlice->setPOC((rpcSlice->getPocMsbVal() * maxPocLsb) + pocLsb);
@@ -3352,6 +3365,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     else
     {
       rpcSlice->setPocMsbVal( rpcSlice->getPOC() / maxPocLsb );
+#endif
     }
 
     // Read remaining bits in the slice header extension.

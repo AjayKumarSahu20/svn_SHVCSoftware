@@ -96,10 +96,14 @@
 #else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
 #endif
-#define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
+#define POC_RESET_FLAG                   0      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation - eventually will replace POC_RESET_FLAG
 #if POC_RESET_IDC
 #define POC_RESET_IDC_SIGNALLING         1      ///< JCTVC-P0041: Include signalling for poc_reset related syntax elements
+#define POC_RESET_IDC_ENCODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the encoder
+#define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
+#define ALIGN_IRAP_BUGFIX               1
+#define UNAVAILABLE_PIC_BUGFIX          1
 #endif
 #define POC_MSB_VAL_PRESENT_FLAG_SEM     1      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present

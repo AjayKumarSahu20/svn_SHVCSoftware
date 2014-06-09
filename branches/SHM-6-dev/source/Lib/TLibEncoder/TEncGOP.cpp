@@ -91,6 +91,10 @@ TEncGOP::TEncGOP()
   
   m_bRefreshPending     = 0;
   m_pocCRA            = 0;
+#if POC_RESET_IDC_ENCODER
+  m_pocCraWithoutReset = 0;
+  m_associatedIrapPocBeforeReset = 0;
+#endif
   m_numLongTermRefPicSPS = 0;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
@@ -107,6 +111,9 @@ TEncGOP::TEncGOP()
 #if Q0048_CGS_3D_ASYMLUT
   m_temp = NULL;
   m_pColorMappedPic = NULL;
+#endif
+#if POC_RESET_IDC_ENCODER
+  m_lastPocPeriodId = -1;
 #endif
 #endif //SVC_EXTENSION
   return;
@@ -902,6 +909,36 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setPOC( 0 );
     }
 #endif
+#if POC_RESET_IDC_ENCODER
+    pcSlice->setPocValueBeforeReset( pocCurr );
+    // Check if the current picture is to be assigned as a reset picture
+    determinePocResetIdc(pocCurr, pcSlice);
+
+    // If reset, do the following steps:
+    if( pcSlice->getPocResetIdc() )
+    {
+      updatePocValuesOfPics(pocCurr, pcSlice);
+    }
+    else
+    {
+      // Check the base layer picture is IDR. If so, just set current POC equal to 0 (alignment of POC)
+      if( ( m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshType() == 2) && ( pocCurr % m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshInterval() == 0 ) )        
+      {
+        m_pcEncTop->setPocAdjustmentValue( pocCurr );
+      }
+      // else
+      {
+        // Just subtract POC by the current cumulative POC delta
+        pcSlice->setPOC( pocCurr - m_pcEncTop->getPocAdjustmentValue() );
+      }
+
+      Int maxPocLsb = 1 << pcSlice->getSPS()->getBitsForPOC();
+      pcSlice->setPocMsbVal( pcSlice->getPOC() - ( pcSlice->getPOC() & (maxPocLsb-1) ) );
+    }
+    // Update the POC of current picture, pictures in the DPB, including references inside the reference pictures
+
+#endif
+
 #if O0149_CROSS_LAYER_BLA_FLAG
     if( m_layerId == 0 && (getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_N_LP) )
     {
@@ -1224,7 +1261,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         else
         {
+#if ALIGN_IRAP_BUGFIX
+#if 0
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
+#endif
+#endif
         }
       }
 
@@ -1271,10 +1312,16 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA )  // IRAP picture
     {
       m_associatedIRAPType = pcSlice->getNalUnitType();
+#if POC_RESET_IDC_ENCODER
+      m_associatedIRAPPOC = pcSlice->getPOC();
+      m_associatedIrapPocBeforeReset = pocCurr;
+#else
       m_associatedIRAPPOC = pocCurr;
+#endif
     }
     pcSlice->setAssociatedIRAPType(m_associatedIRAPType);
     pcSlice->setAssociatedIRAPPOC(m_associatedIRAPPOC);
+    pcSlice->setAssociatedIrapPocBeforeReset(m_associatedIrapPocBeforeReset);
 #endif
 #endif
     // Do decoding refresh marking if any 
@@ -1282,6 +1329,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, rcListPic, m_pcEncTop->getNoClrasOutputFlag());
 #else
     pcSlice->decodingRefreshMarking(m_pocCRA, m_bRefreshPending, rcListPic);
+#endif
+#if POC_RESET_IDC_ENCODER
+    // m_pocCRA may have been update here; update m_pocCraWithoutReset
+    m_pocCraWithoutReset = m_pocCRA + m_pcEncTop->getPocAdjustmentValue();
 #endif
     m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
     pcSlice->getRPS()->setNumberOfLongtermPictures(0);
@@ -1319,7 +1370,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #endif
 #if ALIGNED_BUMPING
+#if POC_RESET_IDC_ENCODER
+    pcSlice->checkLeadingPictureRestrictions(rcListPic, true);
+#else
     pcSlice->checkLeadingPictureRestrictions(rcListPic);
+#endif
 #endif
     pcSlice->applyReferencePictureSet(rcListPic, pcSlice->getRPS());
 
@@ -1512,7 +1567,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
       if ( pocCurr > 0          && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #else
       if (pcSlice->getPOC()>0  && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
@@ -1852,7 +1907,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       estimatedBits = m_pcRateCtrl->getRCPic()->getTargetBits();
 
       Int sliceQP = m_pcCfg->getInitialQP();
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
       if ( ( pocCurr == 0 && m_pcCfg->getInitialQP() > 0 ) || ( frameLevel == 0 && m_pcCfg->getForceIntraQP() ) ) // QP is specified
 #else
       if ( ( pcSlice->getPOC() == 0 && m_pcCfg->getInitialQP() > 0 ) || ( frameLevel == 0 && m_pcCfg->getForceIntraQP() ) ) // QP is specified
@@ -2384,7 +2439,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
       pictureTimingSEI.m_auCpbRemovalDelay = std::min<Int>(std::max<Int>(1, m_totalCoded - m_lastBPSEI), static_cast<Int>(pow(2, static_cast<double>(pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getCpbRemovalDelayLengthMinus1()+1)))); // Syntax element signalled as minus, hence the .
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
       pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pocCurr - m_totalCoded;
 #else
       pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pcSlice->getPOC() - m_totalCoded;
@@ -2512,7 +2567,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       SEIRecoveryPoint sei_recovery_point;
       sei_recovery_point.m_recoveryPocCnt    = 0;
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
       sei_recovery_point.m_exactMatchingFlag = ( pocCurr == 0 ) ? (true) : (false);
 #else
       sei_recovery_point.m_exactMatchingFlag = ( pcSlice->getPOC() == 0 ) ? (true) : (false);
@@ -3268,6 +3323,199 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 }
 
+#if POC_RESET_IDC_ENCODER
+Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
+{
+  // If one picture in the AU is IDR, and another picture is not IDR, set the poc_reset_idc to 1 or 2
+  // If BL picture in the AU is IDR, and another picture is not IDR, set the poc_reset_idc to 2
+  // If BL picture is IRAP, and another picture is non-IRAP, then the poc_reset_idc is equal to 1 or 2.
+  if( slice->getSliceIdx() == 0 ) // First slice - compute, copy for other slices
+  {
+    Int needReset = false;
+    Int resetDueToBL = false;
+    if( slice->getVPS()->getMaxLayers() > 1 )
+    {
+      // If IRAP is refreshed in this access unit for base layer
+      if( (m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshType() == 1 || m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshType() == 2)
+        && ( pocCurr % m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
+        )
+      {
+        // Check if the IRAP refresh interval of any layer does not match that of the base layer
+        for(Int i = 1; i < slice->getVPS()->getMaxLayers(); i++)
+        {
+          Bool refreshIntervalFlag = ( pocCurr % m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshInterval() == 0 );
+          Bool refreshTypeFlag     = ( m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshType() == m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshType() );
+          if( !(refreshIntervalFlag && refreshTypeFlag) )
+          {
+            needReset = true;
+            resetDueToBL = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    if( !needReset )// No need reset due to base layer IRAP
+    {
+      // Check if EL IDRs results in POC Reset
+      for(Int i = 1; i < slice->getVPS()->getMaxLayers() && !needReset; i++)
+      {
+        Bool idrFlag = ( (m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshType() == 2) 
+                        && ( pocCurr % m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
+                        );
+        for(Int j = 0; j < slice->getVPS()->getMaxLayers(); j++)
+        {
+          if( j == i )
+          {
+            continue;
+          }
+          Bool idrOtherPicFlag = ( (m_ppcTEncTop[j]->getGOPEncoder()->getIntraRefreshType() == 2) 
+                                  && ( pocCurr % m_ppcTEncTop[j]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
+                                  );
+
+          if( idrFlag != idrOtherPicFlag )
+          {
+            needReset = true;
+            break;
+          }
+        }
+      }
+    }
+    if( needReset )
+    {
+      if( m_ppcTEncTop[0]->getGOPEncoder()->getIntraRefreshType() == 2 )  // BL IDR refresh, assuming BL picture present
+      {
+        if( resetDueToBL )
+        {
+          slice->setPocResetIdc( 2 ); // Full reset needed
+        }
+        else
+        {
+          slice->setPocResetIdc( 1 ); // Due to IDR in EL
+        }
+      }
+      else
+      {
+        slice->setPocResetIdc( 1 ); // Only MSB reset
+      }
+
+      // Start a new POC reset period
+      if (m_layerId == 0)   // Assuming BL picture is always present at encoder; for other AU structures, need to change this
+      {
+        Int periodId = rand() % 64;
+        m_lastPocPeriodId = (periodId == m_lastPocPeriodId) ? (periodId + 1) % 64 : periodId ;
+      }
+      else
+      {
+        m_lastPocPeriodId = m_ppcTEncTop[0]->getGOPEncoder()->getLastPocPeriodId();
+      }
+      slice->setPocResetPeriodId(m_lastPocPeriodId);
+    }
+    else
+    {
+      slice->setPocResetIdc( 0 );
+    }
+  }
+}
+
+Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
+{
+
+  Int pocAdjustValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
+
+  // New POC reset period
+  Int maxPocLsb, pocLsbVal, pocMsbDelta, pocLsbDelta, deltaPocVal;
+
+  maxPocLsb   = 1 << slice->getSPS()->getBitsForPOC();
+  pocLsbVal   = (slice->getPocResetIdc() == 3)
+                ? slice->getPocLsbVal()
+                : pocAdjustValue % maxPocLsb; 
+  pocMsbDelta = pocAdjustValue - pocLsbVal;
+  pocLsbDelta = (slice->getPocResetIdc() == 2 || ( slice->getPocResetIdc() == 3 && slice->getFullPocResetFlag() )) 
+                ? pocLsbVal 
+                : 0; 
+  deltaPocVal = pocMsbDelta  + pocLsbDelta;
+  
+  // Decrement value of associatedIrapPoc of the TEncGop object
+  this->m_associatedIRAPPOC -= deltaPocVal;
+
+  // Decrememnt the value of m_pocCRA
+  this->m_pocCRA -= deltaPocVal;
+
+  // Iterate through all pictures in the DPB
+  TComList<TComPic*>::iterator  iterPic = getListPic()->begin();  
+  while( iterPic != getListPic()->end() )
+  {
+    TComPic *dpbPic = *iterPic;
+    
+    if( dpbPic->getReconMark() )
+    {
+      for(Int i = dpbPic->getNumAllocatedSlice() - 1; i >= 0; i--)
+      {
+        TComSlice *dpbPicSlice = dpbPic->getSlice( i );
+        TComReferencePictureSet *dpbPicRps = dpbPicSlice->getRPS();
+
+        // Decrement POC of slice
+        dpbPicSlice->setPOC( dpbPicSlice->getPOC() - deltaPocVal );
+
+        // Decrement POC value stored in the RPS of each such slice
+        for( Int j = dpbPicRps->getNumberOfPictures() - 1; j >= 0; j-- )
+        {
+          dpbPicRps->setPOC( j, dpbPicRps->getPOC(j) - deltaPocVal );
+        }
+
+        // Decrement value of refPOC
+        dpbPicSlice->decrementRefPocValues( deltaPocVal );
+
+        // Update value of associatedIrapPoc of each slice
+        dpbPicSlice->setAssociatedIRAPPOC( dpbPicSlice->getAssociatedIRAPPOC() - deltaPocVal );
+      }
+    }
+    iterPic++;
+  }
+  
+  // Actual POC value before reset
+  Int adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
+
+  // Set MSB value before reset
+  Int tempLsbVal = adjustedPocValue & (maxPocLsb - 1);
+  slice->setPocMsbVal( adjustedPocValue - tempLsbVal);
+
+  // Set LSB value before reset - this is needed in the case of resetIdc = 2
+  slice->setPicOrderCntLsb( tempLsbVal );
+
+  // Cumulative delta
+  m_pcEncTop->setPocAdjustmentValue( m_pcEncTop->getPocAdjustmentValue() + deltaPocVal );
+
+  // New LSB value, after reset
+  adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
+  Int newLsbVal = adjustedPocValue & (maxPocLsb - 1);
+
+  // Set value of POC current picture after RESET
+  if( slice->getPocResetIdc() == 1 )
+  {
+    slice->setPOC( newLsbVal );
+  }
+  else if( slice->getPocResetIdc() == 2 )
+  {
+    slice->setPOC( 0 );
+  }
+  else if( slice->getPocResetIdc() == 3 )
+  {
+    Int picOrderCntMsb = slice->getCurrMsb( newLsbVal, 
+                                        slice->getFullPocResetFlag() ? 0 : slice->getPocLsbVal(), 
+                                        0,
+                                        maxPocLsb );
+    slice->setPOC( picOrderCntMsb + newLsbVal );
+  }
+  else
+  {
+    assert(0);
+  }
+}
+#endif
+
+
 #if !SVC_EXTENSION
 Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField)
 {
@@ -3715,11 +3963,19 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 #if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR(m_layerId) )
       {
+#if POC_RESET_IDC_ENCODER
+        printf( "%d(%d)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
+#else
         printf( "%d(%d)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR(), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
+#endif
       }
       else
       {
+#if POC_RESET_IDC_ENCODER
+        printf ("%d", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex));
+#else
         printf ("%d", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR());
+#endif
       }
 #endif
       if( pcSlice->getEnableTMVPFlag() && iRefList == 1 - pcSlice->getColFromL0Flag() && iRefIndex == pcSlice->getColRefIdx() )
@@ -3946,9 +4202,16 @@ NalUnitType TEncGOP::getNalUnitType(Int pocCurr, Int lastIDR, Bool isField)
       return NAL_UNIT_CODED_SLICE_IDR_W_RADL;
     }
   }
+
+#if POC_RESET_IDC_ENCODER
+  if(m_pocCraWithoutReset > 0 && this->m_associatedIRAPType == NAL_UNIT_CODED_SLICE_CRA)
+  {
+    if(pocCurr < m_pocCraWithoutReset)
+#else
   if(m_pocCRA>0)
   {
     if(pocCurr<m_pocCRA)
+#endif
     {
       // All leading pictures are being marked as TFD pictures here since current encoder uses all 
       // reference pictures while encoding leading pictures. An encoder can ensure that a leading 

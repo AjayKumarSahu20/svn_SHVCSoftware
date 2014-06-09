@@ -106,10 +106,16 @@ protected:
   Void flushAllPictures(Int layerId, Bool outputPictures);
 
   Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerID, Int &pocLastDisplay, DpbStatus &dpbStatus);
+#if POC_RESET_IDC_DECODER
+  Void outputAllPictures(Int layerId, Bool notOutputCurrAu);
+#endif
   Void xFindDPBStatus( std::vector<Int> &listOfPocs
                             , std::vector<Int> *listOfPocsInEachLayer
                             , std::vector<Int> *listOfPocsPositionInEachLayer
                             , DpbStatus &dpbStatus
+#if POC_RESET_IDC_DECODER
+                            , Bool notOutputCurrAu = true
+#endif
                             );
 
   Bool ifInvokeBumpingBeforeDecoding( const DpbStatus &dpbStatus, const DpbStatus &dpbLimit, const Int layerIdx, const Int subDpbIdx );

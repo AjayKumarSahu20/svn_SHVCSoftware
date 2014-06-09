@@ -141,7 +141,7 @@ private:
 #if P0312_VERT_PHASE_ADJ
   Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   Int                     m_pocAdjustmentValue;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
@@ -256,7 +256,7 @@ public:
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif
