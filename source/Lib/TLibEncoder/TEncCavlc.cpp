@@ -997,9 +997,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   if (vps->getNumIndependentLayers() > 1)
   {
     WRITE_UVLC( vps->getNumAddLayerSets(), "num_add_layer_sets" );
-    for (Int i = 0; i < vps->getNumAddLayerSets(); i++)
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
     {
-      for (Int j = 1; j < vps->getNumIndependentLayers(); j++)
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
       {
         int len = 1;
         while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
@@ -1827,7 +1827,19 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         picOrderCntLSB = (pcSlice->getPocValueBeforeReset()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
       }
 #else
+#if POC_RESET_IDC_ENCODER
+      Int picOrderCntLSB;
+      if( pcSlice->getPocResetIdc() == 2 )  // i.e. the LSB is reset
+      {
+        picOrderCntLSB = pcSlice->getPicOrderCntLsb();  // This will be the LSB value w.r.t to the previous POC reset period.
+      }
+      else
+      {
+        picOrderCntLSB = (pcSlice->getPOC() + (1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+      }
+#else
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+#endif
 #endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
 
@@ -2299,6 +2311,7 @@ Void  TEncCavlc::codeTilesWPPEntryPoint( TComSlice* pSlice )
 Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow )
 {
   Int tmpBitsBeforeWriting = getNumberOfWrittenBits();
+  Int maxPocLsb = 1 << slice->getSPS()->getBitsForPOC();
   if(slice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     // Derive the value of PocMsbValRequiredFlag
@@ -2341,7 +2354,7 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     if( slice->getPocMsbValPresentFlag() )
     {
       UInt lengthVal = 1;
-      UInt tempVal = slice->getPocMsbVal() + 1;
+      UInt tempVal = (slice->getPocMsbVal() / maxPocLsb) + 1;
       assert ( tempVal );
       while( 1 != tempVal )
       {
@@ -2378,7 +2391,8 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     }
     if( slice->getPocMsbValPresentFlag() )
     {
-      WRITE_UVLC( slice->getPocMsbVal(),                                      "poc_msb_val" );
+      assert( slice->getPocMsbVal() % maxPocLsb == 0 );
+      WRITE_UVLC( slice->getPocMsbVal() / maxPocLsb,                                      "poc_msb_val" );
     }
     for (Int i = 0; i < shExtnAdditionalBits; i++)
     {

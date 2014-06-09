@@ -95,6 +95,11 @@ TDecTop::TDecTop()
 #if RESOLUTION_BASED_DPB
   m_subDpbIdx = -1;
 #endif
+#if POC_RESET_IDC_DECODER
+  m_parseIdc = -1;
+  m_lastPocPeriodId = -1;
+  m_prevPicOrderCnt = 0;
+#endif
 #if Q0048_CGS_3D_ASYMLUT
   m_pColorMappedPic = NULL;
 #endif
@@ -1103,14 +1108,213 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
   }
 #endif
+#if POC_RESET_IDC_DECODER
+  if( m_parseIdc != -1 ) // Second pass for a POC resetting picture
+  {
+    m_parseIdc++; // Proceed to POC decoding and RPS derivation
+  }
+  
+  if( m_parseIdc == 2 )
+  {
+    bNewPOC = false;
+  }
+
+  if( (bNewPOC || m_layerId!=m_uiPrevLayerId) && (m_parseIdc == -1) ) // Will be true at the first pass
+  {
+  //if (bNewPOC || m_layerId!=m_uiPrevLayerId)
+  // Check if new reset period has started - this is needed just so that the SHM decoder which calls slice header decoding twice 
+  // does not invoke the output twice
+  //if( m_lastPocPeriodId[m_apcSlicePilot->getLayerId()] == m_apcSlicePilot->getPocResetPeriodId() )
+    // Update CurrAU marking
+    if(( m_layerId < m_uiPrevLayerId) ||( ( m_layerId == m_uiPrevLayerId) && bNewPOC)) // Decoding a lower layer than or same layer as previous - mark all earlier pictures as not in current AU
+    {
+      markAllPicsAsNoCurrAu();
+    }
+
+    if( m_apcSlicePilot->getPocResetIdc() && m_apcSlicePilot->getSliceIdx() == 0 )
+    {
+      Int pocResetPeriodId = m_apcSlicePilot->getPocResetPeriodId();
+      if ( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 ||
+        ( m_apcSlicePilot->getPocResetIdc() == 3 && pocResetPeriodId != getLastPocPeriodId() ) )
+      {
+        setLastPocPeriodId(pocResetPeriodId);
+        m_parseIdc = 0;
+      }
+    }
+    else
+    {
+      m_parseIdc = 3; // Proceed to decoding POC and RPS
+    }  
+  }
+#endif
 
 #if ALIGNED_BUMPING
+#if POC_RESET_IDC_DECODER
+  //if(  (bNewPOC || m_layerId != m_uiPrevLayerId) && ( m_parseIdc != 1) )
+  if( m_parseIdc == 1 )
+  {
+
+    // Invoke output of pictures if the current picture is a POC reset picture
+    bNewPOC = true;
+    /* Include reset of all POCs in the layer */
+
+  // This operation would do the following:
+  // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
+  // 2. Update the value of m_pocCRA.
+  // 3. Reset the POC values at the decoder for the current picture to be zero - will be done later
+  // 4. update value of POCLastDisplay
+      
+  //Do the reset stuff here
+    Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+    Int pocLsbVal;
+    if( m_apcSlicePilot->getPocResetIdc() == 3 )
+    {
+      pocLsbVal = m_apcSlicePilot->getPocLsbVal() ;
+    }
+    else
+    {
+      pocLsbVal = (m_apcSlicePilot->getPOC() % maxPocLsb);
+    }
+
+    Int pocMsbDelta = 0;
+    if ( m_apcSlicePilot->getPocMsbValPresentFlag() ) 
+    {
+      pocMsbDelta = m_apcSlicePilot->getPocMsbVal() * maxPocLsb;
+    }
+    else
+    {
+      //This MSB derivation can be made into one function. Item to do next.
+      Int prevPoc     = this->getPrevPicOrderCnt();
+      Int prevPocLsb  = prevPoc & (maxPocLsb - 1);
+      Int prevPocMsb  = prevPoc - prevPocLsb;
+
+      pocMsbDelta = m_apcSlicePilot->getCurrMsb( pocLsbVal, prevPocLsb, prevPocMsb, maxPocLsb );
+    }
+
+    Int pocLsbDelta;
+    if( m_apcSlicePilot->getPocResetIdc() == 2 ||  ( m_apcSlicePilot->getPocResetIdc() == 3 && m_apcSlicePilot->getFullPocResetFlag() ))
+    {
+      pocLsbDelta = pocLsbVal;
+    }
+    else
+    {
+      pocLsbDelta = 0; 
+    }
+
+    Int deltaPocVal  =  pocMsbDelta + pocLsbDelta;
+
+    //Reset all POC for DPB -> basically do it for each slice in the picutre
+    TComList<TComPic*>::iterator  iterPic = m_cListPic.begin();  
+
+    // Iterate through all picture in DPB
+    while( iterPic != m_cListPic.end() )
+    {
+      TComPic *dpbPic = *iterPic;
+      // Check if the picture pointed to by iterPic is either used for reference or
+      // needed for output, are in the same layer, and not the current picture.
+      if( /*  ( ( dpbPic->getSlice(0)->isReferenced() ) || ( dpbPic->getOutputMark() ) )
+          &&*/ ( dpbPic->getLayerId() == m_apcSlicePilot->getLayerId() )
+            && ( dpbPic->getReconMark() ) && ( dpbPic->getPicSym()->getSlice(0)->getPicOutputFlag() ))
+      {
+        for(Int i = dpbPic->getNumAllocatedSlice()-1; i >= 0; i--)
+        {
+
+          TComSlice *slice = dpbPic->getSlice(i);
+          TComReferencePictureSet *rps = slice->getRPS();
+          slice->setPOC( slice->getPOC() - deltaPocVal );
+
+          // Also adjust the POC value stored in the RPS of each such slice
+          for(Int j = rps->getNumberOfPictures(); j >= 0; j--)
+          {
+            rps->setPOC( j, rps->getPOC(j) - deltaPocVal );
+          }
+          // Also adjust the value of refPOC
+          for(Int k = 0; k < 2; k++)  // For List 0 and List 1
+          {
+            RefPicList list = (k == 1) ? REF_PIC_LIST_1 : REF_PIC_LIST_0;
+            for(Int j = 0; j < slice->getNumRefIdx(list); j++)
+            {
+              slice->setRefPOC( slice->getRefPOC(list, j) - deltaPocVal, list, j);
+            }
+          }
+        }
+      }
+      iterPic++;
+    }
+    // Update the value of pocCRA
+    m_pocCRA -= deltaPocVal;
+
+    // Update value of POCLastDisplay
+    iPOCLastDisplay -= deltaPocVal;
+  }
+  Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+  Int slicePicOrderCntLsb = m_apcSlicePilot->getPicOrderCntLsb();
+
+  if( m_parseIdc == 1 || m_parseIdc == 2 ) // TODO This should be replaced by pocResettingFlag.
+  {
+    // Set poc for current slice
+    if( m_apcSlicePilot->getPocResetIdc() == 1 )
+    {        
+      m_apcSlicePilot->setPOC( slicePicOrderCntLsb );
+    }
+    else if( m_apcSlicePilot->getPocResetIdc() == 2 )
+    {
+      m_apcSlicePilot->setPOC( 0 );
+    }
+    else 
+    {
+      Int picOrderCntMsb = m_apcSlicePilot->getCurrMsb( slicePicOrderCntLsb, m_apcSlicePilot->getFullPocResetFlag() ? 0 : m_apcSlicePilot->getPocLsbVal(), 0 , maxPocLsb );
+      m_apcSlicePilot->setPOC( picOrderCntMsb + slicePicOrderCntLsb );
+    }
+  }
+  else if (m_parseIdc == 3)
+  {
+    Int picOrderCntMsb = 0;
+    if( m_apcSlicePilot->getPocMsbValPresentFlag() )
+    {
+      picOrderCntMsb = m_apcSlicePilot->getPocMsbVal() * maxPocLsb;
+    }
+    else if( m_apcSlicePilot->getIdrPicFlag() )
+    {
+      picOrderCntMsb = 0;
+    }
+    else
+    {
+      Int prevPicOrderCntLsb = this->getPrevPicOrderCnt() & ( maxPocLsb - 1);
+      Int prevPicOrderCntMsb  = this->getPrevPicOrderCnt() - prevPicOrderCntLsb;
+      picOrderCntMsb = m_apcSlicePilot->getCurrMsb(slicePicOrderCntLsb, prevPicOrderCntLsb, prevPicOrderCntMsb, maxPocLsb );
+    }
+    m_apcSlicePilot->setPOC( picOrderCntMsb + slicePicOrderCntLsb );
+  }
+
+  if( m_parseIdc == 1 || m_parseIdc == 3)
+  {
+    // Adjust prevPicOrderCnt
+    if(    !m_apcSlicePilot->getRaslPicFlag() 
+        && !m_apcSlicePilot->getRadlPicFlag()
+        && (m_apcSlicePilot->getNalUnitType() % 2 == 1)
+        && ( nalu.m_temporalId == 0 )
+        && !m_apcSlicePilot->getDiscardableFlag() )
+    {
+      this->setPrevPicOrderCnt( m_apcSlicePilot->getPOC() );
+    }
+    else if ( m_apcSlicePilot->getPocResetIdc() == 3 )
+    {
+      this->setPrevPicOrderCnt( m_apcSlicePilot->getFullPocResetFlag() 
+                                            ? 0 : m_apcSlicePilot->getPocLsbVal() );
+    }
+#else
   if (bNewPOC || m_layerId!=m_uiPrevLayerId)
   {
+#endif
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
   }
 #endif
+#if POC_RESET_IDC_DECODER
+  if (m_apcSlicePilot->isNextSlice() && (bNewPOC || m_layerId!=m_uiPrevLayerId || m_parseIdc == 1) && !m_bFirstSliceInSequence )
+#else
   if (m_apcSlicePilot->isNextSlice() && (bNewPOC || m_layerId!=m_uiPrevLayerId) && !m_bFirstSliceInSequence )
+#endif
   {
     m_prevPOC = m_apcSlicePilot->getPOC();
     curLayerId = m_uiPrevLayerId; 
@@ -1118,8 +1322,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     return true;
   }
 
+#if POC_RESET_IDC_DECODER
+  m_parseIdc = -1;
+#endif
+
   // actual decoding starts here
-  xActivateParameterSets();
+    xActivateParameterSets();
 
 #if REPN_FORMAT_IN_VPS
   // Initialize ILRP if needed, only for the current layer  
@@ -1200,7 +1408,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_apcSlicePilot->setPOC( 0 );
   }
 #endif
-
   // Alignment of TSA and STSA pictures across AU
   if( m_apcSlicePilot->getLayerId() > 0 )
   {
@@ -1400,6 +1607,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
+
+#if POC_RESET_IDC_DECODER
+  pcPic->setCurrAuFlag( true );
+#endif
 
     Bool isField = false;
     Bool isTff = false;
@@ -2504,7 +2715,22 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
   }
 }
 #endif
-
+#if POC_RESET_IDC_DECODER
+Void TDecTop::markAllPicsAsNoCurrAu()
+{
+  for(Int i = 0; i < MAX_LAYERS; i++)
+  {
+    TComList<TComPic*>* listPic = this->getLayerDec(i)->getListPic();
+    TComList<TComPic*>::iterator  iterPic = listPic->begin();
+    while ( iterPic != listPic->end() )
+    {
+      TComPic *pcPic = *(iterPic);
+      pcPic->setCurrAuFlag( false );
+      iterPic++;
+    }
+  }
+}
+#endif
 #if Q0048_CGS_3D_ASYMLUT
 Void TDecTop::initAsymLut(TComSlice *pcSlice)
 {

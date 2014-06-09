@@ -1967,6 +1967,10 @@ private:
   Int         m_iPOC;
   Int         m_iLastIDR;
   Int         m_iAssociatedIRAP;
+#if POC_RESET_IDC_ENCODER
+  Int                     m_associatedIrapPocBeforeReset;
+#endif
+
   NalUnitType m_iAssociatedIRAPType;
   static Int  m_prevTid0POC;
   TComReferencePictureSet *m_pcRPS;
@@ -2093,6 +2097,12 @@ private:
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
 #endif
+#if POC_RESET_IDC_ENCODER
+  Int         m_pocValueBeforeReset;
+#endif
+#if POC_RESET_IDC_DECODER
+  Int         m_picOrderCntLsb;
+#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int        m_nCGSOverWritePPS;  // for optimization, not output to bitstream
 #endif
@@ -2138,11 +2148,20 @@ public:
 #if PREVTID0_POC_RESET
     Void     adjustPrevTid0POC      (Int adj)             { m_prevTid0POC=m_prevTid0POC-adj; }
 #endif
+#if POC_RESET_IDC_DECODER
+  Void      setPrevTid0POC( Int x ) { m_prevTid0POC = x; }
+#endif
+
   TComRefPicListModification* getRefPicListModification() { return &m_RefPicListModification; }
   Void      setLastIDR(Int iIDRPOC)                       { m_iLastIDR = iIDRPOC; }
   Int       getLastIDR()                                  { return m_iLastIDR; }
   Void      setAssociatedIRAPPOC(Int iAssociatedIRAPPOC)             { m_iAssociatedIRAP = iAssociatedIRAPPOC; }
   Int       getAssociatedIRAPPOC()                        { return m_iAssociatedIRAP; }
+#if POC_RESET_IDC_ENCODER
+  Void setAssociatedIrapPocBeforeReset(Int x) { m_associatedIrapPocBeforeReset = x; }
+  Int  getAssociatedIrapPocBeforeReset(     ) { return m_associatedIrapPocBeforeReset; }
+#endif
+
   Void      setAssociatedIRAPType(NalUnitType associatedIRAPType)    { m_iAssociatedIRAPType = associatedIRAPType; }
   NalUnitType getAssociatedIRAPType()                        { return m_iAssociatedIRAPType; }
   SliceType getSliceType    ()                          { return  m_eSliceType;         }
@@ -2252,7 +2271,11 @@ public:
 
   Void setTLayerInfo( UInt uiTLayer );
   Void decodingMarking( TComList<TComPic*>& rcListPic, Int iGOPSIze, Int& iMaxRefPicNum ); 
+#if POC_RESET_IDC_ENCODER
+  Void checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic, Bool usePocBeforeReset = false);
+#else
   Void checkLeadingPictureRestrictions( TComList<TComPic*>& rcListPic );
+#endif
   Void applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComReferencePictureSet *RPSList);
   Bool isTemporalLayerSwitchingPoint( TComList<TComPic*>& rcListPic );
   Bool isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic*>& rcListPic );
@@ -2450,6 +2473,20 @@ public:
   Bool      getBlaPicFlag       ();
   Bool      getCraPicFlag       ();
 #endif
+#if POC_RESET_IDC_DECODER
+  Bool      getRaslPicFlag      ();
+  Bool      getRadlPicFlag      ();
+  Int       getPicOrderCntLsb() { return m_picOrderCntLsb; }
+  Void      setPicOrderCntLsb(Int x) { m_picOrderCntLsb = x; }
+#endif
+
+#if POC_RESET_IDC_ENCODER
+  Int       getPocValueBeforeReset ()                        { return m_pocValueBeforeReset; }
+  Void      setPocValueBeforeReset (Int x)                   { m_pocValueBeforeReset = x ;   }
+  Void      decrementRefPocValues(Int const decrementValue);
+  Int       getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal );
+#endif
+
 
 #endif //SVC_EXTENSION
 protected:

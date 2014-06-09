@@ -203,6 +203,11 @@ private:
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
 #endif
+#if POC_RESET_IDC_DECODER
+  Int                     m_parseIdc;
+  Int                     m_lastPocPeriodId;
+  Int                     m_prevPicOrderCnt;
+#endif
 #if RESOLUTION_BASED_DPB
   Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
                                            // When new VPS is activated, this should be re-initialized to -1
@@ -243,6 +248,17 @@ public:
 #if SVC_EXTENSION
 #if EARLY_REF_PIC_MARKING
   Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
+#endif
+#if POC_RESET_IDC_DECODER
+  Int getParseIdc() { return m_parseIdc;}
+  Void        setParseIdc(Int x) { m_parseIdc = x;}
+  Void        markAllPicsAsNoCurrAu();
+
+  Int   getLastPocPeriodId() { return m_lastPocPeriodId; }
+  Void  setLastPocPeriodId(Int x)    { m_lastPocPeriodId = x; }
+
+  Int   getPrevPicOrderCnt() { return m_prevPicOrderCnt; }
+  Void  setPrevPicOrderCnt(Int const x) { m_prevPicOrderCnt = x; }
 #endif
   UInt      getLayerId            () { return m_layerId;              }
   Void      setLayerId            (UInt layer) { m_layerId = layer; }

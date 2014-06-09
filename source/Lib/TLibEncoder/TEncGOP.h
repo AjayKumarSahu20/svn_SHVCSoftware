@@ -112,6 +112,10 @@ private:
   // clean decoding refresh
   Bool                    m_bRefreshPending;
   Int                     m_pocCRA;
+#if POC_RESET_IDC_ENCODER
+  Int                     m_pocCraWithoutReset;
+  Int                     m_associatedIrapPocBeforeReset;
+#endif
   std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
   std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
 #if FIX1172
@@ -151,6 +155,9 @@ private:
   static const Int m_phase_filter_1[8][13];
   Int   **m_temp;
 #endif
+#if POC_RESET_IDC_ENCODER
+  Int   m_lastPocPeriodId;
+#endif
 #endif
   
 public:
@@ -169,6 +176,15 @@ public:
   Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
 #else
   Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
+#endif
+#if POC_RESET_IDC_ENCODER
+  Void  determinePocResetIdc( Int const pocCurr, TComSlice *const slice);
+  Int   getIntraRefreshInterval()  { return m_pcCfg->getIntraPeriod(); }
+  Int   getIntraRefreshType()      { return m_pcCfg->getDecodingRefreshType(); }
+  // Int   getIntraRefreshInterval ()  { return (m_pcCfg) ? m_pcCfg->getIntraPeriod() : 0;  }
+  Int   getLastPocPeriodId()      { return m_lastPocPeriodId; }
+  Void  setLastPocPeriodId(Int x) { m_lastPocPeriodId = x;    }
+  Void  updatePocValuesOfPics( Int const pocCurr, TComSlice *const slice);
 #endif
   Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
