@@ -2665,7 +2665,7 @@ Void TComVPS::setPredictedLayerIds()
   {
     UInt iNuhLId = getLayerIdInNuh(i);
     UInt predIdx = 0;
-    for (UInt j = iNuhLId + 1; j < 63; j++)
+    for (UInt j = iNuhLId + 1; j < MAX_NUM_LAYER_IDS; j++)
     {
       if (getRecursiveRefLayerFlag(j, iNuhLId))
       {

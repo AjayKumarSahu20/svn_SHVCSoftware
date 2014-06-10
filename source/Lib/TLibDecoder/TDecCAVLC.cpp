@@ -1316,17 +1316,17 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         Int layerNum = 0;
         Int lsIdx = vps->getNumLayerSets() + i;
-        for (Int layerId = 0; layerId <= 62; layerId++)
+        for (Int layerId = 0; layerId < MAX_VPS_LAYER_ID_PLUS1; layerId++)
         {
           vps->setLayerIdIncludedFlag(false, lsIdx, layerId);
-          for (Int treeIdx = 1; treeIdx < vps->getNumIndependentLayers(); treeIdx++)
+        }
+        for (Int treeIdx = 1; treeIdx < vps->getNumIndependentLayers(); treeIdx++)
+        {
+          for (Int layerCnt = 0; layerCnt < vps->getHighestLayerIdxPlus1(i, j); layerCnt++)
           {
-            for (Int layerCnt = 0; layerCnt < vps->getHighestLayerIdxPlus1(i, j); layerCnt++)
-            {
-              vps->setLayerSetLayerIdList(lsIdx, layerNum, vps->getTreePartitionLayerId(treeIdx, layerCnt));
-              vps->setLayerIdIncludedFlag(true, lsIdx, vps->getTreePartitionLayerId(treeIdx, layerCnt));
-              layerNum++;
-            }
+            vps->setLayerSetLayerIdList(lsIdx, layerNum, vps->getTreePartitionLayerId(treeIdx, layerCnt));
+            vps->setLayerIdIncludedFlag(true, lsIdx, vps->getTreePartitionLayerId(treeIdx, layerCnt));
+            layerNum++;
           }
         }
         vps->setNumLayersInIdList(lsIdx, layerNum);
