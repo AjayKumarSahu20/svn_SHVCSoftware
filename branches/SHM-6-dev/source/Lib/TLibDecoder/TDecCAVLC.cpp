@@ -1352,7 +1352,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( vps->getNumLayerSets() > 1 )
   {
-    READ_UVLC( uiCode, "num_add_output_layer_sets" );            vps->setNumAddOutputLayerSets( uiCode );
+    READ_UVLC( uiCode, "num_add_olss" );            vps->setNumAddOutputLayerSets( uiCode );
     READ_CODE( 2, uiCode, "default_target_output_layer_idc" );   vps->setDefaultTargetOutputLayerIdc( uiCode );
   }
   else
@@ -1363,7 +1363,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_UVLC( uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
 #endif
 
-  // The value of num_add_output_layer_sets shall be in the range of 0 to 1023, inclusive.
+  // The value of num_add_olss shall be in the range of 0 to 1023, inclusive.
   assert( vps->getNumAddOutputLayerSets() >= 0 && vps->getNumAddOutputLayerSets() < 1024 );
 
   Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
@@ -1835,8 +1835,8 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
 #endif
   }
   
-  // When not present, the value of num_add_output_layer_sets is inferred to be equal to 0.
-  // NumOutputLayerSets = num_add_output_layer_sets + vps_num_layer_sets_minus1 + 1
+  // When not present, the value of num_add_olss is inferred to be equal to 0.
+  // NumOutputLayerSets = num_add_olss + NumLayerSets
   vps->setNumOutputLayerSets( vps->getNumLayerSets() );
 
   // For i in the range of 0 to NumOutputLayerSets-1, inclusive, the variable LayerSetIdxForOutputLayerSet[ i ] is derived as specified in the following: 
