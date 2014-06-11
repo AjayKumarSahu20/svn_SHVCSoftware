@@ -1387,7 +1387,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         numBits++;
       }
-      READ_CODE( numBits, uiCode, "output_layer_set_idx_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
+      READ_CODE( numBits, uiCode, "layer_set_idx_for_ols_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
     }
     else
     {
@@ -1840,7 +1840,7 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
   vps->setNumOutputLayerSets( vps->getNumLayerSets() );
 
   // For i in the range of 0 to NumOutputLayerSets-1, inclusive, the variable LayerSetIdxForOutputLayerSet[ i ] is derived as specified in the following: 
-  // LayerSetIdxForOutputLayerSet[ i ] = ( i <= vps_number_layer_sets_minus1 ) ? i : output_layer_set_idx_minus1[ i ] + 1
+  // LayerSetIdxForOutputLayerSet[ i ] = ( i <= vps_number_layer_sets_minus1 ) ? i : layer_set_idx_for_ols_minus1[ i ] + 1
   for( i = 1; i < vps->getNumOutputLayerSets(); i++ )
   {
     vps->setOutputLayerSetIdx( i, i );
