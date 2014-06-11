@@ -1030,7 +1030,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   if( vps->getNumLayerSets() > 1 )
   {
     WRITE_UVLC( numAddOutputLayerSets, "num_add_olss" );
-    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_target_output_layer_idc" );
+    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_output_layer_idc" );
   }
 #else
   WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );

@@ -1353,7 +1353,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if( vps->getNumLayerSets() > 1 )
   {
     READ_UVLC( uiCode, "num_add_olss" );            vps->setNumAddOutputLayerSets( uiCode );
-    READ_CODE( 2, uiCode, "default_target_output_layer_idc" );   vps->setDefaultTargetOutputLayerIdc( uiCode );
+    READ_CODE( 2, uiCode, "default_output_layer_idc" );   vps->setDefaultTargetOutputLayerIdc( uiCode );
   }
   else
   {
