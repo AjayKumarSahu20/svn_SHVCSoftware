@@ -1061,7 +1061,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       {
         numBits++;
       }
-      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1"); 
+      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "layer_set_idx_for_ols_minus1"); 
 #if P0295_DEFAULT_OUT_LAYER_IDC
     }
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
