@@ -239,9 +239,20 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setIntraPeriod                  ( m_acLayerCfg[layer].m_iIntraPeriod );
     m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
     m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
+#if Q0108_TSA_STSA
+    if(layer == 0)
+      m_acTEncTop[layer].setGopList                      ( m_GOPList );
+    else
+      m_acTEncTop[layer].setGopList                      ( m_EH_GOPList[layer] );
+#else
     m_acTEncTop[layer].setGopList                      ( m_GOPList );
+#endif
 
+#if !Q0108_TSA_STSA
     m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs );
+#else
+    m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs[layer] );
+#endif
     for(Int i = 0; i < MAX_TLAYER; i++)
     {
       m_acTEncTop[layer].setNumReorderPics             ( m_numReorderPics[i], i );
@@ -254,8 +265,18 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setQP                           ( m_acLayerCfg[layer].getIntQP() );
 
     m_acTEncTop[layer].setPad                          ( m_acLayerCfg[layer].getPad() );
-
+#if !Q0108_TSA_STSA
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+#else
+    if (layer== 0)
+    {
+      m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+    }
+    else
+    {
+      m_acTEncTop[layer].setMaxTempLayer                 ( m_EH_maxTempLayer[layer] );
+    }
+#endif
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
 
     if( layer < m_numLayers - 1 )
