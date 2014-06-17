@@ -744,8 +744,13 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   pcVPS->setNumLayerSets(1);
 #endif
   WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
+#if Q0078_ADD_LAYER_SETS
+  WRITE_UVLC(pcVPS->getVpsNumLayerSetsMinus1(),                "vps_num_layer_sets_minus1");
+  for (UInt opsIdx = 1; opsIdx <= pcVPS->getVpsNumLayerSetsMinus1(); opsIdx++)
+#else
   WRITE_UVLC( pcVPS->getNumLayerSets() - 1,                 "vps_num_layer_sets_minus1" );
-  for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
+  for (UInt opsIdx = 1; opsIdx <= (pcVPS->getNumLayerSets() - 1); opsIdx++)
+#endif
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
@@ -1064,7 +1069,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "layer_set_idx_for_ols_minus1"); 
 #if P0295_DEFAULT_OUT_LAYER_IDC
     }
+#if Q0078_ADD_LAYER_SETS
+    if ( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
+#else
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
+#endif
     {
 #endif
       Int lsIdx = vps->getOutputLayerSetIdx(i);
@@ -1468,7 +1477,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 
   if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
   {
+#if Q0078_ADD_LAYER_SETS
+    for( i = 0; i <= vps->getVpsNumLayerSetsMinus1(); i++ )
+#else
     for( i = 0; i < vps->getNumLayerSets(); i++ )
+#endif
     {
 #if BITRATE_PICRATE_SIGNALLING
       for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
@@ -1640,7 +1653,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         }
         codeHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
       }
+#if Q0078_ADD_LAYER_SETS
+      for( UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++ )
+#else
       for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
+#endif
       {
         WRITE_UVLC( vps->getNumBitstreamPartitions(h), "num_bitstream_partitions[i]");
         for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )

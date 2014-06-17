@@ -2710,6 +2710,33 @@ Void TComVPS::setTreePartitionLayerIdList()
 
   setNumIndependentLayers(numIndependentLayers);
 }
+
+void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
+{
+  for (UInt i = 0; i < getNumAddLayerSets(); i++)
+  {
+    for (UInt j = 1; j < getNumIndependentLayers(); j++)
+    {
+      Int layerNum = 0;
+      Int lsIdx = getVpsNumLayerSetsMinus1() + 1 + i;
+      for (Int layerId = 0; layerId < MAX_VPS_LAYER_ID_PLUS1; layerId++)
+      {
+        setLayerIdIncludedFlag(false, lsIdx, layerId);
+      }
+      for (Int treeIdx = 1; treeIdx < getNumIndependentLayers(); treeIdx++)
+      {
+        for (Int layerCnt = 0; layerCnt < getHighestLayerIdxPlus1(i, j); layerCnt++)
+        {
+          setLayerSetLayerIdList(lsIdx, layerNum, getTreePartitionLayerId(treeIdx, layerCnt));
+          setLayerIdIncludedFlag(true, lsIdx, getTreePartitionLayerId(treeIdx, layerCnt));
+          layerNum++;
+        }
+      }
+      setNumLayersInIdList(lsIdx, layerNum);
+    }
+  }
+}
+
 #endif
 
 #if VIEW_ID_RELATED_SIGNALING 

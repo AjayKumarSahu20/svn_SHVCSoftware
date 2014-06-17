@@ -1118,7 +1118,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #if Q0078_ADD_LAYER_SETS
+  vps->setVpsNumLayerSetsMinus1(vps->getNumLayerSets() - 1);
   vps->setNumAddLayerSets(m_numAddLayerSets);
+  vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
   if (m_numAddLayerSets > 0)
   {
     for (Int setId = 0; setId < m_numAddLayerSets; setId++)
@@ -1246,6 +1248,77 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
   }
 #endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // Direct reference layers
+  UInt maxDirectRefLayers = 0;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool isDefaultDirectDependencyTypeSet = false;
+#endif
+  for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    vps->setNumDirectRefLayers(layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers());
+    maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerCtr));
+
+    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setRefLayerId(layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i));
+    }
+    // Set direct dependency flag
+    // Initialize flag to 0
+    for (Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      vps->setDirectDependencyFlag(layerCtr, refLayerCtr, false);
+    }
+    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setDirectDependencyFlag(layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
+    }
+    // prediction indications
+    vps->setDirectDepTypeLen(2); // sample and motion types are encoded
+    for (Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      if (vps->getDirectDependencyFlag(layerCtr, refLayerCtr))
+      {
+        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
+        vps->setDirectDependencyType(layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
+          (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+        if (!isDefaultDirectDependencyTypeSet)
+        {
+          vps->setDefaultDirectDependecyTypeFlag(1);
+          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
+          isDefaultDirectDependencyTypeSet = true;
+        }
+        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
+        {
+          vps->setDefaultDirectDependecyTypeFlag(0);
+        }
+#endif
+      }
+      else
+      {
+        vps->setDirectDependencyType(layerCtr, refLayerCtr, 0);
+      }
+    }
+  }
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  vps->setNumRefLayers();
+
+  if (vps->getMaxLayers() > MAX_REF_LAYERS)
+  {
+    for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    {
+      assert(vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
+    }
+  }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  vps->setPredictedLayerIds();
+  vps->setTreePartitionLayerIdList();
+  vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
+#endif
   // Target output layer
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
@@ -1286,7 +1359,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
       {
+#if !Q0078_ADD_LAYER_SETS  // the following condition is incorrect and is not needed anyway
         if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
+#endif
         {        
           vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
         }
@@ -1346,76 +1421,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->determineSubDpbInfoFlags();
     }
   }
-#endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  // Direct reference layers
-  UInt maxDirectRefLayers = 0;
-#if O0096_DEFAULT_DEPENDENCY_TYPE
-  Bool isDefaultDirectDependencyTypeSet = false;
-#endif
-  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
-    maxDirectRefLayers = max<UInt>( maxDirectRefLayers, vps->getNumDirectRefLayers( layerCtr ) );
-
-    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
-    {
-      vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
-    }
-    // Set direct dependency flag
-    // Initialize flag to 0
-    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      vps->setDirectDependencyFlag( layerCtr, refLayerCtr, false );
-    }
-    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
-    {
-      vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
-    }
-    // prediction indications
-    vps->setDirectDepTypeLen(2); // sample and motion types are encoded
-    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
-      {
-        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
-        vps->setDirectDependencyType( layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
-                                                              (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
-#if O0096_DEFAULT_DEPENDENCY_TYPE
-        if (!isDefaultDirectDependencyTypeSet)
-        {
-          vps->setDefaultDirectDependecyTypeFlag(1);
-          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
-          isDefaultDirectDependencyTypeSet = true;
-        }
-        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
-        {
-          vps->setDefaultDirectDependecyTypeFlag(0);
-        }
-#endif
-      }
-      else
-      {
-        vps->setDirectDependencyType( layerCtr, refLayerCtr, 0 );
-      }
-    }
-  }
-
-#if O0092_0094_DEPENDENCY_CONSTRAINT
-  vps->setNumRefLayers();
-
-  if(vps->getMaxLayers() > MAX_REF_LAYERS)
-  {
-    for(UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-    {
-      assert( vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
-    }
-  }
-#endif
-#if Q0078_ADD_LAYER_SETS
-  vps->setPredictedLayerIds();
-  vps->setTreePartitionLayerIdList();
-#endif
 #endif
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
@@ -1504,7 +1509,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   if( pcCfg->getBufferingPeriodSEIEnabled() )
   {
     vps->setVpsVuiBspHrdPresentFlag(true);
+#if Q0078_ADD_LAYER_SETS
+    vps->setVpsNumBspHrdParametersMinus1(vps->getVpsNumLayerSetsMinus1() - 1); 
+#else
     vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
+#endif
     vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
     for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
     {
@@ -1537,7 +1546,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->getBspHrd(i)->setNumDU( numDU );
       vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
     }
+#if Q0078_ADD_LAYER_SETS
+    for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
+#else
     for(UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+#endif
     {
       vps->setNumBitstreamPartitions(h, 1);
       for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )

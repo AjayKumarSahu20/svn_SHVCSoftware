@@ -139,9 +139,6 @@ public:
   virtual ~TComRPSList();
   
   Void  create  (Int numberOfEntries);
-#if Q0078_ADD_LAYER_SETS
-  Void  copy(TComRPSList& a);
-#endif
   Void  destroy();
 
 
@@ -486,8 +483,13 @@ private:
 
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
+#if Q0078_ADD_LAYER_SETS
+  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
+#else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #endif
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
 #if VPS_EXTN_OFFSET
@@ -497,7 +499,8 @@ private:
   UInt        m_maxLayerId;
   UInt        m_numLayerSets;
 #if Q0078_ADD_LAYER_SETS
-  Bool        m_layerIdIncludedFlag[2*MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  UInt        m_vpsNumLayerSetsMinus1;
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
 #else
   Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
@@ -519,7 +522,11 @@ private:
   UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
 #if BITRATE_PICRATE_SIGNALLING
+#if Q0078_ADD_LAYER_SETS
+  UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
+#else
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #endif
     
   Bool       m_ilpSshSignalingEnabledFlag;
@@ -535,8 +542,13 @@ private:
   // .. More declarations here
   // Target output layer signalling related
   UInt       m_numOutputLayerSets;
+#if Q0078_ADD_LAYER_SETS
+  UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
+  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
+#else
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
@@ -632,7 +644,11 @@ private:
 #endif
 
 #if P0300_ALT_OUTPUT_LAYER_FLAG
+#if Q0078_ADD_LAYER_SETS
+  Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
+#else
   Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #else
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool       m_altOutputLayerFlag;
@@ -663,8 +679,8 @@ private:
 #endif
 #if Q0078_ADD_LAYER_SETS
   Int        m_numAddLayerSets;
-  UInt       m_highestLayerIdxPlus1[MAX_VPS_LAYER_SETS_PLUS1][MAX_NUM_LAYER_IDS];
-  UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][64];
+  UInt       m_highestLayerIdxPlus1[MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
+  UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
   UInt       m_numPredictedLayers[MAX_NUM_LAYER_IDS];
   Int        m_numIndependentLayers;
   Int        m_numLayersInTreePartition[MAX_NUM_LAYER_IDS];
@@ -683,7 +699,11 @@ private:
   Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
 #if CHANGE_NUMSUBDPB_IDX
+#if Q0078_ADD_LAYER_SETS
+  Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
+#else
   Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1];
+#endif
 #else
   Int        m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
@@ -815,10 +835,13 @@ Void      deriveNumberOfSubDpbs();
   Void    setNumRefLayers();
 #endif
 #if Q0078_ADD_LAYER_SETS
+  void    setLayerIdIncludedFlagsForAddLayerSets();
+  UInt    getVpsNumLayerSetsMinus1()                                             { return m_vpsNumLayerSetsMinus1; }
+  Void    setVpsNumLayerSetsMinus1(UInt x)                                       { m_vpsNumLayerSetsMinus1 = x; }
   UInt    getNumAddLayerSets()                                                   { return m_numAddLayerSets; }
   Void    setNumAddLayerSets(UInt x)                                             { m_numAddLayerSets = x; }
-  UInt    getHighestLayerIdxPlus1(UInt set, UInt idx)                             { return m_highestLayerIdxPlus1[set][idx]; }
-  Void    setHighestLayerIdxPlus1(UInt set, UInt idx, UInt layerIdx)              { m_highestLayerIdxPlus1[set][idx] = layerIdx; }
+  UInt    getHighestLayerIdxPlus1(UInt set, UInt idx)                            { return m_highestLayerIdxPlus1[set][idx]; }
+  Void    setHighestLayerIdxPlus1(UInt set, UInt idx, UInt layerIdx)             { m_highestLayerIdxPlus1[set][idx] = layerIdx; }
   Void    setPredictedLayerIds();
   UInt    getPredictedLayerId(UInt layerIdx, UInt predIdx)                       { return m_predictedLayerId[layerIdx][predIdx]; }
   Void    setPredictedLayerId(UInt layerIdx, UInt predIdx, UInt x)               { m_predictedLayerId[layerIdx][predIdx] = x; }
