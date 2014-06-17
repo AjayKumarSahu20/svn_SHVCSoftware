@@ -972,8 +972,14 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   assert( pcVPS->getNumHrdParameters() < MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_ID_PLUS1 );
   READ_CODE( 6, uiCode, "vps_max_layer_id" );           pcVPS->setMaxLayerId( uiCode );
+#if Q0078_ADD_LAYER_SETS
+  READ_UVLC(uiCode, "vps_num_layer_sets_minus1");  pcVPS->setVpsNumLayerSetsMinus1(uiCode);
+  pcVPS->setNumLayerSets(pcVPS->getVpsNumLayerSetsMinus1() + 1);
+  for (UInt opsIdx = 1; opsIdx <= pcVPS->getVpsNumLayerSetsMinus1(); opsIdx++)
+#else
   READ_UVLC(    uiCode, "vps_num_layer_sets_minus1" );  pcVPS->setNumLayerSets( uiCode + 1 );
   for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
+#endif
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
@@ -1309,29 +1315,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         READ_CODE(len, uiCode, "highest_layer_idx_plus1[i][j]"); vps->setHighestLayerIdxPlus1(i, j, uiCode);
       }
     }
-
-    for (i = 0; i < vps->getNumAddLayerSets(); i++)
-    {
-      for (j = 1; j < vps->getNumIndependentLayers(); j++)
-      {
-        Int layerNum = 0;
-        Int lsIdx = vps->getNumLayerSets() + i;
-        for (Int layerId = 0; layerId < MAX_VPS_LAYER_ID_PLUS1; layerId++)
-        {
-          vps->setLayerIdIncludedFlag(false, lsIdx, layerId);
-        }
-        for (Int treeIdx = 1; treeIdx < vps->getNumIndependentLayers(); treeIdx++)
-        {
-          for (Int layerCnt = 0; layerCnt < vps->getHighestLayerIdxPlus1(i, j); layerCnt++)
-          {
-            vps->setLayerSetLayerIdList(lsIdx, layerNum, vps->getTreePartitionLayerId(treeIdx, layerCnt));
-            vps->setLayerIdIncludedFlag(true, lsIdx, vps->getTreePartitionLayerId(treeIdx, layerCnt));
-            layerNum++;
-          }
-        }
-        vps->setNumLayersInIdList(lsIdx, layerNum);
-      }
-    }
+    vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
+    vps->setLayerIdIncludedFlagsForAddLayerSets();
   }
 #endif
 
@@ -1393,7 +1378,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       vps->setOutputLayerSetIdx( i, i );
     }
+#if Q0078_ADD_LAYER_SETS
+    if ( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 )
+#else
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 )
+#endif
     {
       Int lsIdx = vps->getOutputLayerSetIdx(i);
 #if NUM_OL_FLAGS
@@ -2134,7 +2123,11 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 
   Bool parseFlag = vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag();
 
+#if Q0078_ADD_LAYER_SETS
+  for( i = 0; i <= vps->getVpsNumLayerSetsMinus1(); i++ )
+#else
   for( i = 0; i < vps->getNumLayerSets(); i++ )
+#endif
   {
 #if BITRATE_PICRATE_SIGNALLING
     for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
@@ -2366,7 +2359,11 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
         }
         parseHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
       }
+#if Q0078_ADD_LAYER_SETS
+      for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
+#else
       for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
+#endif
       {
         READ_UVLC( uiCode, "num_bitstream_partitions[i]"); vps->setNumBitstreamPartitions(h, uiCode);
 #if HRD_BPB
@@ -2775,7 +2772,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if DPB_CONSTRAINTS
           if(rpcSlice->getVPS()->getVpsExtensionFlag()==1)
           {
+#if Q0078_ADD_LAYER_SETS
+              for (Int ii = 1; ii < (rpcSlice->getVPS()->getVpsNumLayerSetsMinus1() + 1); ii++)  // prevent assert error when num_add_layer_sets > 0
+#else
               for (Int ii=1; ii< rpcSlice->getVPS()->getNumOutputLayerSets(); ii++ )
+#endif
               {
                   Int layerSetIdxForOutputLayerSet = rpcSlice->getVPS()->getOutputLayerSetIdx( ii );
                   Int chkAssert=0;
@@ -2788,6 +2789,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
                   }
                   if(chkAssert)
                   {
+                      // There may be something wrong here (layer id assumed to be layer idx?)
                       assert(rps->getNumberOfNegativePictures() <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));
                       assert(rps->getNumberOfPositivePictures() <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)) - rps->getNumberOfNegativePictures());
                       assert((rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures() + rps->getNumberOfLongtermPictures()) <= rpcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii , rpcSlice->getLayerId() , rpcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));
