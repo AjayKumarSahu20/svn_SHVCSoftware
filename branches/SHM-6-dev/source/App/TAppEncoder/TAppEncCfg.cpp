@@ -1874,11 +1874,9 @@ Void TAppEncCfg::xCheckParameter()
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
 #if SVC_EXTENSION
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+#if Q0108_TSA_STSA
+  if( m_acLayerCfg[0].m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1 )
   {
-    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
-#endif
-  if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
     m_GOPList[0] = GOPEntry();
     m_GOPList[0].m_QPFactor = 1;
     m_GOPList[0].m_betaOffsetDiv2 = 0;
@@ -1886,7 +1884,40 @@ Void TAppEncCfg::xCheckParameter()
     m_GOPList[0].m_POC = 1;
     m_GOPList[0].m_numRefPicsActive = 4;
   }
-#if SVC_EXTENSION
+
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if (m_acLayerCfg[layer].m_iIntraPeriod == 1 && m_EhGOPList[layer][0].m_POC == -1) {
+      m_EhGOPList[layer][0] = GOPEntry();
+      m_EhGOPList[layer][0].m_QPFactor = 1;
+      m_EhGOPList[layer][0].m_betaOffsetDiv2 = 0;
+      m_EhGOPList[layer][0].m_tcOffsetDiv2 = 0;
+      m_EhGOPList[layer][0].m_POC = 1;
+      m_EhGOPList[layer][0].m_numRefPicsActive = 4;
+    }
+  }
+#else
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+    if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
+      m_GOPList[0] = GOPEntry();
+      m_GOPList[0].m_QPFactor = 1;
+      m_GOPList[0].m_betaOffsetDiv2 = 0;
+      m_GOPList[0].m_tcOffsetDiv2 = 0;
+      m_GOPList[0].m_POC = 1;
+      m_GOPList[0].m_numRefPicsActive = 4;
+    }
+  }
+#endif
+#else
+  if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
+    m_GOPList[0] = GOPEntry();
+    m_GOPList[0].m_QPFactor = 1;
+    m_GOPList[0].m_betaOffsetDiv2 = 0;
+    m_GOPList[0].m_tcOffsetDiv2 = 0;
+    m_GOPList[0].m_POC = 1;
+    m_GOPList[0].m_numRefPicsActive = 4;
   }
 #endif
 
