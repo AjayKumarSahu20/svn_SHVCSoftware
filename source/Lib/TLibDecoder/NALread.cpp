@@ -113,7 +113,7 @@ Void readNalUnitHeader(InputNALUnit& nalu)
 
   if ( nalu.m_temporalId )
   {
-#if    !Q0108_TSA_STSA
+#if !Q0108_TSA_STSA
     assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA_W_LP
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA_W_RADL
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_BLA_N_LP
@@ -138,7 +138,7 @@ Void readNalUnitHeader(InputNALUnit& nalu)
   }
   else
   {
-#if    !Q0108_TSA_STSA
+#if !Q0108_TSA_STSA
     assert( nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_TSA_R
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_TSA_N
          && nalu.m_nalUnitType != NAL_UNIT_CODED_SLICE_STSA_R
