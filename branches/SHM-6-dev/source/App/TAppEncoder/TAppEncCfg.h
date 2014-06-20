@@ -128,12 +128,12 @@ protected:
 #if !Q0108_TSA_STSA
   Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
 #else
-  Int       m_extraRPSs[MAX_LAYERS];                                      ///< extra RPSs added to handle CRA
+  Int       m_extraRPSs[MAX_LAYERS];                          ///< extra RPSs added to handle CRA
 #endif
 
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
 #if Q0108_TSA_STSA
-  GOPEntry  m_EH_GOPList[MAX_LAYERS][MAX_GOP];                ///< the enhancement layer coding structure entries from the config file
+  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
   Int       m_inheritCodingStruct[MAX_LAYERS];
 #endif
 
@@ -165,7 +165,7 @@ protected:
   
   Int       m_maxTempLayer;                                  ///< Max temporal layer
 #if Q0108_TSA_STSA
-  Int       m_EH_maxTempLayer[MAX_LAYERS];                                  ///< Max temporal layer
+  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
 #endif
 
 #if !LAYER_CTB

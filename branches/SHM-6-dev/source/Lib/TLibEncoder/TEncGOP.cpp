@@ -609,7 +609,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   TEncSbac* pcSbacCoders = NULL;
   TComOutputBitstream* pcSubstreamsOut = NULL;
 #if Q0108_TSA_STSA
-  Int b_TSTA_flag = 0;
+  Int flagTSTA = 0;
 #endif
 
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut, isField );
@@ -1558,7 +1558,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
     }
-#if    Q0108_TSA_STSA
+#if Q0108_TSA_STSA
     else if( ( pcSlice->getTLayer() == 0 && pcSlice->getLayerId() > 0)    // only for enhancement layer and with temporal layer 0
        && !( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N     
           || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R
@@ -1571,27 +1571,29 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         )
     {
         Bool isSTSA=true;
-        for(Int ii=iGOPid+1;(ii<m_pcCfg->getGOPSize() && isSTSA==true);ii++)
+        for(Int ii=iGOPid+1; ii < m_pcCfg->getGOPSize() && isSTSA; ii++)
         {
           Int lTid= m_pcCfg->getGOPEntry(ii).m_temporalId;
           if(lTid==pcSlice->getTLayer()) 
           {
             TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0;jj<nRPS->getNumberOfPictures();jj++)
+            for(Int jj=0; jj<nRPS->getNumberOfPictures(); jj++)
             {
               if(nRPS->getUsed(jj)) 
               {
                 Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
                 Int kk=0;
-                for(kk=0;kk<m_pcCfg->getGOPSize();kk++)
+                for(kk=0; kk<m_pcCfg->getGOPSize(); kk++)
                 {
                   if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
+                  {
                     break;
+                  }
                 }
                 Int tTid=m_pcCfg->getGOPEntry(kk).m_temporalId;
                 if(tTid >= pcSlice->getTLayer())
                 {
-                  isSTSA=false;
+                  isSTSA = false;
                   break;
                 }
               }
@@ -1660,12 +1662,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if(pcSlice->getTemporalLayerNonReferenceFlag())
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
-            b_TSTA_flag = 1;
+            flagTSTA = 1;
           }
           else
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
-            b_TSTA_flag = 1;
+            flagTSTA = 1;
           }
 #endif
         }
@@ -1683,7 +1685,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
 #if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
-      if ( pocCurr > 0          && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
+      if ( pocCurr > 0 && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #else
       if (pcSlice->getPOC()>0  && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #endif
@@ -1691,8 +1693,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setActiveNumILRRefIdx(0);
         pcSlice->setInterLayerPredEnabledFlag(0);
       }
-#if   Q0108_TSA_STSA
-     if( (pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA ) || b_TSTA_flag == 1)
+#if Q0108_TSA_STSA
+     if( ( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA ) || flagTSTA == 1 )
 #else
      if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
 #endif

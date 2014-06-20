@@ -1017,10 +1017,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
 #if Q0108_TSA_STSA
   for (Int i=1; i<MAX_LAYERS; i++)
-  for(Int j=1; j<MAX_GOP+1; j++){ 
-    std::ostringstream cOSS;
-    cOSS<<"Layer"<<i<<"Frame"<<j;
-    opts.addOptions()(cOSS.str(), m_EH_GOPList[i][j-1], GOPEntry());
+  {
+    for(Int j=1; j<MAX_GOP+1; j++)
+    { 
+      std::ostringstream cOSS;
+      cOSS<<"Layer"<<i<<"Frame"<<j;
+      opts.addOptions()(cOSS.str(), m_EhGOPList[i][j-1], GOPEntry());
+    }
   }
 #endif 
 
@@ -1034,14 +1037,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       for(Int j=1; j<MAX_GOP+1; j++)
       { 
-        m_EH_GOPList[i][j-1] = m_GOPList[j-1];
+        m_EhGOPList[i][j-1] = m_GOPList[j-1];
       }
     }
     else if( m_inheritCodingStruct[i] > 0)
     {
       for(Int j=1; j<MAX_GOP+1; j++)
       {
-        m_EH_GOPList[i][j-1] = m_EH_GOPList[m_inheritCodingStruct[i]][j-1];
+        m_EhGOPList[i][j-1] = m_EhGOPList[m_inheritCodingStruct[i]][j-1];
       }
     }
   }
@@ -1886,7 +1889,6 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-  
 
   Bool verifiedGOP=false;
   Bool errorGOP=false;
@@ -1919,7 +1921,6 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
-
   
   // it can be updated after AVC BL support will be added to the WD
   if( m_avcBaseLayerFlag )
@@ -1959,10 +1960,7 @@ Void TAppEncCfg::xCheckParameter()
 #if !Q0108_TSA_STSA
    m_extraRPSs = 0;                                      
 #else
-   for (Int i = 0; i< MAX_LAYERS; i++)
-   {
-     m_extraRPSs[i] = 0;
-   }
+  memset( m_extraRPSs, 0, sizeof( m_extraRPSs ) );
 #endif
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
@@ -2230,254 +2228,245 @@ Void TAppEncCfg::xCheckParameter()
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
 
-#if Q0108_TSA_STSA
-  for ( Int layer_index = 1; layer_index<m_numLayers; layer_index++)
+#if SVC_EXTENSION && Q0108_TSA_STSA
+  for ( Int layerId = 1; layerId < m_numLayers; layerId++ )
   {
     verifiedGOP=false;
     errorGOP=false;
     checkGOP=1;
     numRefs = m_isField ? 2 : 1;
     refList[0]=0;
+
     if(m_isField)
     {
       refList[1] = 1;
     }
-    for(Int i=0; i<MAX_GOP; i++) 
-    {
-      isOK[i]=false;
-    }
+
+    memset( isOK, 0, sizeof( isOK ) );
     numOK=0;
-#if !SVC_EXTENSION
-    xConfirmPara( m_iIntraPeriod >=0&&(m_iIntraPeriod%m_iGOPSize!=0), "Intra period must be a multiple of GOPSize, or -1" );
-#endif
 
-  for(Int i=0; i<m_iGOPSize; i++)
-  {
-    if(m_EH_GOPList[layer_index][i].m_POC==m_iGOPSize)
-    {
-      xConfirmPara( m_EH_GOPList[layer_index][i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
-    }
-  }
-
-#if SVC_EXTENSION
-  xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
-  m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
-
-  // verify layer configuration parameters
-  for(UInt layer=0; layer<m_numLayers; layer++)
-  {
-    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
-#endif
-  if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
-  {
     for(Int i=0; i<m_iGOPSize; i++)
     {
-      xConfirmPara( (m_EH_GOPList[layer_index][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_EH_GOPList[layer_index][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
-      xConfirmPara( (m_EH_GOPList[layer_index][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_EH_GOPList[layer_index][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
-    }
-  }
-#if SVC_EXTENSION
-  }
-#endif
-
-  //start looping through frames in coding order until we can verify that the GOP structure is correct.
-  while(!verifiedGOP&&!errorGOP) 
-  {
-    Int curGOP = (checkGOP-1)%m_iGOPSize;
-    Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + m_EH_GOPList[layer_index][curGOP].m_POC;    
-    if(m_EH_GOPList[layer_index][curGOP].m_POC<0) 
-    {
-      printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
-      errorGOP=true;
-    }
-    else 
-    {
-      //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
-      Bool beforeI = false;
-      for(Int i = 0; i< m_EH_GOPList[layer_index][curGOP].m_numRefPics; i++) 
+      if(m_EhGOPList[layerId][i].m_POC==m_iGOPSize)
       {
-        Int absPOC = curPOC+m_EH_GOPList[layer_index][curGOP].m_referencePics[i];
-        if(absPOC < 0)
+        xConfirmPara( m_EhGOPList[layerId][i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
+      }
+    }
+
+    xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
+    m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
+
+    // verify layer configuration parameters
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+      if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
+      {
+        for(Int i=0; i<m_iGOPSize; i++)
         {
-          beforeI=true;
-        }
-        else 
-        {
-          Bool found=false;
-          for(Int j=0; j<numRefs; j++) 
-          {
-            if(refList[j]==absPOC) 
-            {
-              found=true;
-              for(Int k=0; k<m_iGOPSize; k++)
-              {
-                if(absPOC%m_iGOPSize == m_EH_GOPList[layer_index][k].m_POC%m_iGOPSize)
-                {
-                  if(m_EH_GOPList[layer_index][k].m_temporalId==m_EH_GOPList[layer_index][curGOP].m_temporalId)
-                  {
-                    m_EH_GOPList[layer_index][k].m_refPic = true;
-                  }
-                  m_EH_GOPList[layer_index][curGOP].m_usedByCurrPic[i]=m_EH_GOPList[layer_index][k].m_temporalId<=m_EH_GOPList[layer_index][curGOP].m_temporalId;
-                }
-              }
-            }
-          }
-          if(!found)
-          {
-            printf("\nError: ref pic %d is not available for GOP frame %d\n",m_EH_GOPList[layer_index][curGOP].m_referencePics[i],curGOP+1);
-            errorGOP=true;
-          }
+          xConfirmPara( (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
+          xConfirmPara( (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
         }
       }
-      if(!beforeI&&!errorGOP)
+    }
+
+    //start looping through frames in coding order until we can verify that the GOP structure is correct.
+    while(!verifiedGOP&&!errorGOP) 
+    {
+      Int curGOP = (checkGOP-1)%m_iGOPSize;
+      Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][curGOP].m_POC;    
+      if(m_EhGOPList[layerId][curGOP].m_POC<0) 
       {
-        //all ref frames were present
-        if(!isOK[curGOP]) 
-        {
-          numOK++;
-          isOK[curGOP]=true;
-          if(numOK==m_iGOPSize)
-          {
-            verifiedGOP=true;
-          }
-        }
+        printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
+        errorGOP=true;
       }
       else 
       {
-        //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
- 
-        m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]]=m_EH_GOPList[layer_index][curGOP];
-        Int newRefs=0;
-        for(Int i = 0; i< m_EH_GOPList[layer_index][curGOP].m_numRefPics; i++) 
+        //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
+        Bool beforeI = false;
+        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
         {
-          Int absPOC = curPOC+m_EH_GOPList[layer_index][curGOP].m_referencePics[i];
-          if(absPOC>=0)
+          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          if(absPOC < 0)
           {
-            m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[newRefs]=m_EH_GOPList[layer_index][curGOP].m_referencePics[i];
-            m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_usedByCurrPic[newRefs]=m_EH_GOPList[layer_index][curGOP].m_usedByCurrPic[i];
-            newRefs++;
+            beforeI=true;
           }
-        }
-        Int numPrefRefs = m_EH_GOPList[layer_index][curGOP].m_numRefPicsActive;
-        
-        for(Int offset = -1; offset>-checkGOP; offset--)
-        {
-          //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
-          Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
-          Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + m_EH_GOPList[layer_index][offGOP].m_POC;
-          if(offPOC>=0&&m_EH_GOPList[layer_index][offGOP].m_temporalId<=m_EH_GOPList[layer_index][curGOP].m_temporalId)
+          else 
           {
-            Bool newRef=false;
-            for(Int i=0; i<numRefs; i++)
+            Bool found=false;
+            for(Int j=0; j<numRefs; j++) 
             {
-              if(refList[i]==offPOC)
+              if(refList[j]==absPOC) 
               {
-                newRef=true;
-              }
-            }
-            for(Int i=0; i<newRefs; i++) 
-            {
-              if(m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[i]==offPOC-curPOC)
-              {
-                newRef=false;
-              }
-            }
-            if(newRef) 
-            {
-              Int insertPoint=newRefs;
-              //this picture can be added, find appropriate place in list and insert it.
-              if(m_EH_GOPList[layer_index][offGOP].m_temporalId==m_EH_GOPList[layer_index][curGOP].m_temporalId)
-              {
-                m_EH_GOPList[layer_index][offGOP].m_refPic = true;
-              }
-              for(Int j=0; j<newRefs; j++)
-              {
-                if(m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[j]<offPOC-curPOC||m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[j]>0)
+                found=true;
+                for(Int k=0; k<m_iGOPSize; k++)
                 {
-                  insertPoint = j;
-                  break;
+                  if(absPOC%m_iGOPSize == m_EhGOPList[layerId][k].m_POC%m_iGOPSize)
+                  {
+                    if(m_EhGOPList[layerId][k].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                    {
+                      m_EhGOPList[layerId][k].m_refPic = true;
+                    }
+                    m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i]=m_EhGOPList[layerId][k].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                  }
                 }
               }
-              Int prev = offPOC-curPOC;
-              Int prevUsed = m_EH_GOPList[layer_index][offGOP].m_temporalId<=m_EH_GOPList[layer_index][curGOP].m_temporalId;
-              for(Int j=insertPoint; j<newRefs+1; j++)
-              {
-                Int newPrev = m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[j];
-                Int newUsed = m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_usedByCurrPic[j];
-                m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[j]=prev;
-                m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_usedByCurrPic[j]=prevUsed;
-                prevUsed=newUsed;
-                prev=newPrev;
-              }
+            }
+            if(!found)
+            {
+              printf("\nError: ref pic %d is not available for GOP frame %d\n",m_EhGOPList[layerId][curGOP].m_referencePics[i],curGOP+1);
+              errorGOP=true;
+            }
+          }
+        }
+        if(!beforeI&&!errorGOP)
+        {
+          //all ref frames were present
+          if(!isOK[curGOP]) 
+          {
+            numOK++;
+            isOK[curGOP]=true;
+            if(numOK==m_iGOPSize)
+            {
+              verifiedGOP=true;
+            }
+          }
+        }
+        else 
+        {
+          //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
+
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]]=m_EhGOPList[layerId][curGOP];
+          Int newRefs=0;
+          for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+          {
+            Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+            if(absPOC>=0)
+            {
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[newRefs]=m_EhGOPList[layerId][curGOP].m_referencePics[i];
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[newRefs]=m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i];
               newRefs++;
             }
           }
-          if(newRefs>=numPrefRefs)
+          Int numPrefRefs = m_EhGOPList[layerId][curGOP].m_numRefPicsActive;
+
+          for(Int offset = -1; offset>-checkGOP; offset--)
           {
-            break;
-          }
-        }
-        m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_numRefPics=newRefs;
-        m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_POC = curPOC;
-        if (m_extraRPSs[layer_index] == 0)
-        {
-          m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_interRPSPrediction = 0;
-          m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_numRefIdc = 0;
-        }
-        else
-        {
-          Int rIdx =  m_iGOPSize + m_extraRPSs[layer_index] - 1;
-          Int refPOC = m_EH_GOPList[layer_index][rIdx].m_POC;
-          Int refPics = m_EH_GOPList[layer_index][rIdx].m_numRefPics;
-          Int newIdc=0;
-          for(Int i = 0; i<= refPics; i++) 
-          {
-            Int deltaPOC = ((i != refPics)? m_EH_GOPList[layer_index][rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
-            Int absPOCref = refPOC+deltaPOC;
-            Int refIdc = 0;
-            for (Int j = 0; j < m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_numRefPics; j++)
+            //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
+            Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
+            Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][offGOP].m_POC;
+            if(offPOC>=0&&m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId)
             {
-              if ( (absPOCref - curPOC) == m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_referencePics[j])
+              Bool newRef=false;
+              for(Int i=0; i<numRefs; i++)
               {
-                if (m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_usedByCurrPic[j])
+                if(refList[i]==offPOC)
                 {
-                  refIdc = 1;
-                }
-                else
-                {
-                  refIdc = 2;
+                  newRef=true;
                 }
               }
+              for(Int i=0; i<newRefs; i++) 
+              {
+                if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[i]==offPOC-curPOC)
+                {
+                  newRef=false;
+                }
+              }
+              if(newRef) 
+              {
+                Int insertPoint=newRefs;
+                //this picture can be added, find appropriate place in list and insert it.
+                if(m_EhGOPList[layerId][offGOP].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                {
+                  m_EhGOPList[layerId][offGOP].m_refPic = true;
+                }
+                for(Int j=0; j<newRefs; j++)
+                {
+                  if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]<offPOC-curPOC||m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]>0)
+                  {
+                    insertPoint = j;
+                    break;
+                  }
+                }
+                Int prev = offPOC-curPOC;
+                Int prevUsed = m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                for(Int j=insertPoint; j<newRefs+1; j++)
+                {
+                  Int newPrev = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j];
+                  Int newUsed = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j];
+                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]=prev;
+                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j]=prevUsed;
+                  prevUsed=newUsed;
+                  prev=newPrev;
+                }
+                newRefs++;
+              }
             }
-            m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_refIdc[newIdc]=refIdc;
-            newIdc++;
+            if(newRefs>=numPrefRefs)
+            {
+              break;
+            }
           }
-          m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_interRPSPrediction = 1;  
-          m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_numRefIdc = newIdc;
-          m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_deltaRPS = refPOC - m_EH_GOPList[layer_index][m_iGOPSize+m_extraRPSs[layer_index]].m_POC; 
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics=newRefs;
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC = curPOC;
+          if (m_extraRPSs[layerId] == 0)
+          {
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 0;
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = 0;
+          }
+          else
+          {
+            Int rIdx =  m_iGOPSize + m_extraRPSs[layerId] - 1;
+            Int refPOC = m_EhGOPList[layerId][rIdx].m_POC;
+            Int refPics = m_EhGOPList[layerId][rIdx].m_numRefPics;
+            Int newIdc=0;
+            for(Int i = 0; i<= refPics; i++) 
+            {
+              Int deltaPOC = ((i != refPics)? m_EhGOPList[layerId][rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
+              Int absPOCref = refPOC+deltaPOC;
+              Int refIdc = 0;
+              for (Int j = 0; j < m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics; j++)
+              {
+                if ( (absPOCref - curPOC) == m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j])
+                {
+                  if (m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j])
+                  {
+                    refIdc = 1;
+                  }
+                  else
+                  {
+                    refIdc = 2;
+                  }
+                }
+              }
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_refIdc[newIdc]=refIdc;
+              newIdc++;
+            }
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 1;  
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = newIdc;
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_deltaRPS = refPOC - m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC; 
+          }
+          curGOP=m_iGOPSize+m_extraRPSs[layerId];
+          m_extraRPSs[layerId]++;
         }
-        curGOP=m_iGOPSize+m_extraRPSs[layer_index];
-        m_extraRPSs[layer_index]++;
-      }
-      numRefs=0;
-      for(Int i = 0; i< m_EH_GOPList[layer_index][curGOP].m_numRefPics; i++) 
-      {
-        Int absPOC = curPOC+m_EH_GOPList[layer_index][curGOP].m_referencePics[i];
-        if(absPOC >= 0) 
+        numRefs=0;
+        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
         {
-          refList[numRefs]=absPOC;
-          numRefs++;
+          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          if(absPOC >= 0) 
+          {
+            refList[numRefs]=absPOC;
+            numRefs++;
+          }
         }
+        refList[numRefs]=curPOC;
+        numRefs++;
       }
-      refList[numRefs]=curPOC;
-      numRefs++;
+      checkGOP++;
     }
-    checkGOP++;
-  }
-  xConfirmPara(errorGOP,"Invalid GOP structure given");
+    xConfirmPara(errorGOP,"Invalid GOP structure given");
   }
 #endif 
-
 
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
@@ -2490,14 +2479,14 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if Q0108_TSA_STSA
-  for ( Int layer_index = 1; layer_index<m_numLayers; layer_index++)
+  for ( Int layerId = 1; layerId < m_numLayers; layerId++)
   {
-    m_EH_maxTempLayer[layer_index] = 1;
+    m_EhMaxTempLayer[layerId] = 1;
     for(Int i=0; i<m_iGOPSize; i++) 
     {
-      if(m_EH_GOPList[layer_index][i].m_temporalId >= m_EH_maxTempLayer[layer_index] )
+      if(m_EhGOPList[layerId][i].m_temporalId >= m_EhMaxTempLayer[layerId] )
       {
-        m_EH_maxTempLayer[layer_index] = m_EH_GOPList[layer_index][i].m_temporalId;
+        m_EhMaxTempLayer[layerId] = m_EhGOPList[layerId][i].m_temporalId;
       }
       xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
     }

@@ -240,10 +240,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
     m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
 #if Q0108_TSA_STSA
-    if(layer == 0)
-      m_acTEncTop[layer].setGopList                      ( m_GOPList );
-    else
-      m_acTEncTop[layer].setGopList                      ( m_EH_GOPList[layer] );
+    m_acTEncTop[layer].setGopList                      ( layer ? m_EhGOPList[layer] : m_GOPList );
 #else
     m_acTEncTop[layer].setGopList                      ( m_GOPList );
 #endif
@@ -274,7 +271,7 @@ Void TAppEncTop::xInitLibCfg()
     }
     else
     {
-      m_acTEncTop[layer].setMaxTempLayer                 ( m_EH_maxTempLayer[layer] );
+      m_acTEncTop[layer].setMaxTempLayer                 ( m_EhMaxTempLayer[layer] );
     }
 #endif
     m_acTEncTop[layer].setUseAMP( m_enableAMP );

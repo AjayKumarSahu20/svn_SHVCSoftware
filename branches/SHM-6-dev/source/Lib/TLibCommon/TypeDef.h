@@ -40,21 +40,20 @@
 
 #define SVC_EXTENSION                    1
 
-#define Q0108_TSA_STSA                   1      
-
-#define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
+#define SYNTAX_BYTES                     10     ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
 #define Q0146_SSH_EXT_DATA_BIT           1      ///< JCTVC-Q0146; Bug-fix -- the SSH_EXT_DATA_BIT can have any value -- not required to be 1
 
-#define Q0200_CONFORMANCE_BL_SIZE        1       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
+#define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
 #if P0312_VERT_PHASE_ADJ
 #define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
@@ -104,8 +103,8 @@
 #define POC_RESET_IDC_SIGNALLING         1      ///< JCTVC-P0041: Include signalling for poc_reset related syntax elements
 #define POC_RESET_IDC_ENCODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the encoder
 #define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
-#define ALIGN_IRAP_BUGFIX               1
-#define UNAVAILABLE_PIC_BUGFIX          1
+#define ALIGN_IRAP_BUGFIX                1
+#define UNAVAILABLE_PIC_BUGFIX           1
 #endif
 #define POC_MSB_VAL_PRESENT_FLAG_SEM     1      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
@@ -168,11 +167,11 @@
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
 #define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
 
-#define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
+#define O0223_PICTURE_TYPES_ALIGN_FLAG   1      ///< a flag to indicatate whether picture types are aligned across layers.
 
 #define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
 
-#define IRAP_ALIGN_FLAG_IN_VPS_VUI       1       ///< Move IRAP align flag to VPS VUI 
+#define IRAP_ALIGN_FLAG_IN_VPS_VUI       1      ///< Move IRAP align flag to VPS VUI 
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define N0065_LAYER_POC_ALIGNMENT        1
