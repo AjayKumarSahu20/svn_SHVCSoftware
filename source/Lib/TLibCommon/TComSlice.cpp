@@ -124,7 +124,7 @@ TComSlice::TComSlice()
 , m_pocMsbValRequiredFlag         ( false )
 , m_pocMsbValPresentFlag          ( false )
 #endif
-#if POC_RESET_IDC_DECODER
+#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
 , m_picOrderCntLsb (0)
 #endif
 #endif //SVC_EXTENSION
@@ -211,7 +211,7 @@ Void TComSlice::initSlice()
   m_pocMsbValRequiredFlag         = false;
   m_pocMsbValPresentFlag          = false;
 #endif
-#if POC_RESET_IDC_DECODER
+#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   m_picOrderCntLsb = 0;
 #endif
 }
@@ -1869,10 +1869,8 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
     // but not available as reference picture
     if(isAvailable == 0)    
     {            
-#if UNAVAILABLE_PIC_BUGFIX
-#if 0
+#if !UNAVAILABLE_PIC_BUGFIX
       if (this->getPOC() + pReferencePictureSet->getDeltaPOC(i) >= pocRandomAccess)
-#endif
 #endif
       {
         if(!pReferencePictureSet->getUsed(i) )
@@ -3924,7 +3922,8 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
   
   return true;
 #else
-  setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC())); 
+  setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC()));
+  return true;
 #endif
 }
 

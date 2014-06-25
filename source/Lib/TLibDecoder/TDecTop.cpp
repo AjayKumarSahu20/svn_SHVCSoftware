@@ -1153,7 +1153,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   //if(  (bNewPOC || m_layerId != m_uiPrevLayerId) && ( m_parseIdc != 1) )
   if( m_parseIdc == 1 )
   {
-
     // Invoke output of pictures if the current picture is a POC reset picture
     bNewPOC = true;
     /* Include reset of all POCs in the layer */

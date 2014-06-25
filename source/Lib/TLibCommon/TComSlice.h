@@ -1991,7 +1991,7 @@ private:
   Int         m_iLastIDR;
   Int         m_iAssociatedIRAP;
 #if POC_RESET_IDC_ENCODER
-  Int                     m_associatedIrapPocBeforeReset;
+  Int         m_associatedIrapPocBeforeReset;
 #endif
 
   NalUnitType m_iAssociatedIRAPType;
@@ -2123,7 +2123,7 @@ private:
 #if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
 #endif
-#if POC_RESET_IDC_DECODER
+#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   Int         m_picOrderCntLsb;
 #endif
 #if Q0048_CGS_3D_ASYMLUT
@@ -2499,6 +2499,8 @@ public:
 #if POC_RESET_IDC_DECODER
   Bool      getRaslPicFlag      ();
   Bool      getRadlPicFlag      ();
+#endif
+#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   Int       getPicOrderCntLsb() { return m_picOrderCntLsb; }
   Void      setPicOrderCntLsb(Int x) { m_picOrderCntLsb = x; }
 #endif

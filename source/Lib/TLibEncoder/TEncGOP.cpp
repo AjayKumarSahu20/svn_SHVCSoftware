@@ -1324,7 +1324,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     pcSlice->setAssociatedIRAPType(m_associatedIRAPType);
     pcSlice->setAssociatedIRAPPOC(m_associatedIRAPPOC);
+#if POC_RESET_IDC_ENCODER
     pcSlice->setAssociatedIrapPocBeforeReset(m_associatedIrapPocBeforeReset);
+#endif
 #endif
 #endif
     // Do decoding refresh marking if any 
