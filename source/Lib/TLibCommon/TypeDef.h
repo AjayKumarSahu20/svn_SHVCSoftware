@@ -47,7 +47,7 @@
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
-#define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
+#define Q0108_TSA_STSA                   0      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
@@ -225,8 +225,6 @@
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
-#define Q0189_TMVP_CONSTRAINTS           1
-#define Q0247_FRAME_FIELD_INFO           1
 
 /// scalability types
 enum ScalabilityType
@@ -259,6 +257,8 @@ enum ScalabilityType
 #define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
 #define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
+#define Q0189_TMVP_CONSTRAINTS           1      ///< JCTVC-Q0189: indicate constraints on TMVP
+#define Q0247_FRAME_FIELD_INFO           1      ///< JCTVC-Q0247: field_frame_info SEI message
 
 
 #else
