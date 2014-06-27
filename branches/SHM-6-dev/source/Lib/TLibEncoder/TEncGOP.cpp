@@ -1264,10 +1264,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         else
         {
-#if ALIGN_IRAP_BUGFIX
-#if 0
+#if !ALIGN_IRAP_BUGFIX
           pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
-#endif
 #endif
         }
       }
@@ -1290,7 +1288,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if(pcSlice->getTemporalLayerNonReferenceFlag())
     {
       if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_R &&
+#if SVC_EXTENSION
+        ( m_iGopSize != 1 || m_ppcTEncTop[m_layerId]->getIntraPeriod() > 1 ) )
+#else
           !(m_iGopSize == 1 && pcSlice->getSliceType() == I_SLICE))
+#endif
         // Add this condition to avoid POC issues with encoder_intra_main.cfg configuration (see #1127 in bug tracker)
       {
         pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_TRAIL_N);
