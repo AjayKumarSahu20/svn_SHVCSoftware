@@ -1264,7 +1264,11 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
     DpbStatus dpbStatus;
 
     // Find the status of the DPB
+#if POC_RESET_IDC_DECODER
+    xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus, false);
+#else
     xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus);
+#endif
 
     while( dpbStatus.m_numAUsNotDisplayed )
     {
