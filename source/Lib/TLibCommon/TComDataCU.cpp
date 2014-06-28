@@ -3520,9 +3520,19 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   // offset for collocated block in the motion mapping
   if( iMotionMapping == 1 )
   {
+    Bool unequalPictureSizeFlag = g_posScalingFactor[refLayerIdc][0] != 65536 || g_posScalingFactor[refLayerIdc][1] != 65536; //the condition should be updated according to the WD.
+
     // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
-    iBX = ( ( iBX + 4 ) >> 4 ) << 4;
-    iBY = ( ( iBY + 4 ) >> 4 ) << 4;
+    if( unequalPictureSizeFlag )
+    {
+      iBX = ( ( iBX + 4 ) >> 4 ) << 4;
+      iBY = ( ( iBY + 4 ) >> 4 ) << 4;
+    }
+    else
+    {
+      iBX += 4;
+      iBY += 4;
+    }
   }
 #endif
 
