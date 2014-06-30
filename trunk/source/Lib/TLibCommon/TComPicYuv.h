@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include "CommonDef.h"
 #include "TComRom.h"
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #include "TComSlice.h"
 #endif
 //! \ingroup TLibCommon
@@ -93,9 +93,7 @@ private:
 #if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatIDC; ////< Chroma Format
 #endif
-#if SVC_UPSAMPLING
   Window  m_conformanceWindow;
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool    m_isReconstructed;
 #endif
@@ -111,19 +109,15 @@ public:
   // ------------------------------------------------------------------------------------------------
   //  Memory management
   // ------------------------------------------------------------------------------------------------
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
   Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
 #else
-  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
-#endif  
-#else
-#if SVC_UPSAMPLING
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
+#endif
 #else
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
-#endif  
-#endif
+#endif //SVC_EXTENSION
   
   Void  destroy     ();
   
@@ -186,10 +180,8 @@ public:
   
 #if SVC_EXTENSION
   Void   setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
-#if SVC_UPSAMPLING
   Window& getConformanceWindow()                           { return  m_conformanceWindow;             }
   Void    setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void  setReconstructed(Bool x) { m_isReconstructed = x;    }
   Bool  isReconstructed()        { return m_isReconstructed; }
@@ -198,6 +190,7 @@ public:
   ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
   Void convertToMonochrome();
 #endif
+  Void dump( Char* pFileName, Bool bAdd, Int bitDepth );
 #endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TComPicYuv

@@ -66,24 +66,21 @@ TComPicYuv::TComPicYuv()
 TComPicYuv::~TComPicYuv()
 {
 }
+
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
 #else
-Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
-#endif
-#else
-#if SVC_UPSAMPLING
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
+#endif
 #else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
-#endif
 #endif
 {
   m_iPicWidth       = iPicWidth;
   m_iPicHeight      = iPicHeight;
   
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
   if(pcSps != NULL)
   {
     m_conformanceWindow = pcSps->getConformanceWindow();
@@ -368,5 +365,71 @@ Void TComPicYuv::dump (Char* pFileName, Bool bAdd)
   fclose(pFile);
 }
 
+#if SVC_EXTENSION
+Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
+{
+  FILE* pFile;
+  if (!bAdd)
+  {
+    pFile = fopen (pFileName, "wb");
+  }
+  else
+  {
+    pFile = fopen (pFileName, "ab");
+  }
+
+  if( bitDepth == 8 )
+  {
+    dump( pFileName, bAdd );
+    return;
+  }
+  
+  Int   x, y;
+  UChar uc;
+  
+  Pel*  piY   = getLumaAddr();
+  Pel*  piCb  = getCbAddr();
+  Pel*  piCr  = getCrAddr();
+  
+  for ( y = 0; y < m_iPicHeight; y++ )
+  {
+    for ( x = 0; x < m_iPicWidth; x++ )
+    {
+      uc = piY[x] & 0xff;      
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+      uc = (piY[x] >> 8) & 0xff;      
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+    }
+    piY += getStride();
+  }
+  
+  for ( y = 0; y < m_iPicHeight >> 1; y++ )
+  {
+    for ( x = 0; x < m_iPicWidth >> 1; x++ )
+    {
+      uc = piCb[x] & 0xff;
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+      uc = (piCb[x] >> 8) & 0xff;
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+    }
+    piCb += getCStride();
+  }
+  
+  for ( y = 0; y < m_iPicHeight >> 1; y++ )
+  {
+    for ( x = 0; x < m_iPicWidth >> 1; x++ )
+    {
+      uc = piCr[x] & 0xff;
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+      uc = (piCr[x] >> 8) & 0xff;
+      fwrite( &uc, sizeof(UChar), 1, pFile );
+    }
+    piCr += getCStride();
+  }
+  
+  fclose(pFile);
+}
+
+#endif
 
 //! \}

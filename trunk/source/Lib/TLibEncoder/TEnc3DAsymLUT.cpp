@@ -275,38 +275,38 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
   Pel * pIRLV = pRecPic->getCrAddr();
   Int nStrideILRY = pRecPic->getStride();
   Int nStrideILRC = pRecPic->getCStride();
-  Int nWidth = m_pDsOrigPic->getWidth();   //should exclude the padding;
-  Int nHeight= m_pDsOrigPic->getHeight();
   xReset3DArray( m_pColorInfo , xGetYSize() , xGetUSize() , xGetVSize() );
   xReset3DArray( m_pColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
 
   //alignment padding
-  Pel *pU = pRecPic->getCbAddr();
-  Pel *pV = pRecPic->getCrAddr();
-  pU[(nWidth>>1)] = pU[(nWidth>>1)-1];
-  pV[(nWidth>>1)] = pV[(nWidth>>1)-1];
-  memcpy(pU-nStrideILRC, pU, ((nWidth>>1)+1)*sizeof(Pel));
-  memcpy(pV-nStrideILRC, pV, ((nWidth>>1)+1)*sizeof(Pel));
-  pU += nStrideILRC+ (nWidth>>1);
-  pV += nStrideILRC+ (nWidth>>1);
+  pRecPic->setBorderExtension( false );
+  pRecPic->extendPicBorder();
 
-  for( Int y = 1 ; y < (nHeight>>1) ; y ++ )
-  {
-    *pU = pU[-1];
-    *pV = pV[-1];
-    pU += nStrideILRC;
-    pV += nStrideILRC;
-  }
-  memcpy(pU-(nWidth>>1), pU-(nWidth>>1)-nStrideILRC, ((nWidth>>1)+1)*sizeof(Pel));
-  memcpy(pV-(nWidth>>1), pV-(nWidth>>1)-nStrideILRC, ((nWidth>>1)+1)*sizeof(Pel));
+  TComSlice * pSlice = pCurPic->getSlice(pCurPic->getCurrSliceIdx());
+  UInt refLayerId = pSlice->getVPS()->getRefLayerId(pSlice->getLayerId(), refLayerIdc);
+  const Window &scalEL = pSlice->getSPS()->getScaledRefLayerWindowForLayer(refLayerId); 
+  TComPicYuv *pcRecPicBL = pSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+  // borders of down-sampled picture
+  Int leftDS =  (scalEL.getWindowLeftOffset()*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16;
+  Int rightDS = pcRecPicBL->getWidth() - 1 + (((scalEL.getWindowRightOffset())*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16);
+  Int topDS = (((scalEL.getWindowTopOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
+  Int bottomDS = pcRecPicBL->getHeight() - 1 + (((scalEL.getWindowBottomOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
+  // overlapped region
+  Int left = max( 0 , leftDS );
+  Int right = min( pcRecPicBL->getWidth() - 1 , rightDS );
+  Int top = max( 0 , topDS );
+  Int bottom = min( pcRecPicBL->getHeight() - 1 , bottomDS );
+  // since we do data collection only for overlapped region, the border extension is good enough
 
-  for( Int i = 0 ; i < nHeight ; i++ )
+  for( Int i = top ; i <= bottom ; i++ )
   {
-    Int posSrcY = i * nStrideSrcY;
-    Int posIRLY = i * nStrideILRY;
-    Int posSrcUV = ( i >> 1 ) * nStrideSrcC;
-    Int posIRLUV = ( i >> 1 ) * nStrideILRC;
-    for( Int j = 0 ; j < nWidth ; j++ , posSrcY++ , posIRLY++ , posSrcUV += !( j & 0x01 ) , posIRLUV += !( j & 0x01 ) )
+    Int iDS = i-topDS;
+    Int jDS = left-leftDS;
+    Int posSrcY = iDS * nStrideSrcY + jDS;
+    Int posIRLY = i * nStrideILRY + left;
+    Int posSrcUV = ( iDS >> 1 ) * nStrideSrcC + (jDS>>1);
+    Int posIRLUV = ( i >> 1 ) * nStrideILRC + (left>>1);
+    for( Int j = left ; j <= right ; j++ , posSrcY++ , posIRLY++ , posSrcUV += !( j & 0x01 ) , posIRLUV += !( j & 0x01 ) )
     {
       Int Y = pSrcY[posSrcY];
       Int y = pIRLY[posIRLY];

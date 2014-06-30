@@ -695,28 +695,29 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           // speedup for inter frames
 #if (ENCODER_FAST_MODE)
         if( rpcBestCU->getSlice()->getSliceType() == I_SLICE || 
+          rpcBestCU->getPredictionMode(0) == MODE_NONE ||  // if there is no valid inter prediction
           !testInter ||
           rpcBestCU->getCbf( 0, TEXT_LUMA     ) != 0   ||
           rpcBestCU->getCbf( 0, TEXT_CHROMA_U ) != 0   ||
           rpcBestCU->getCbf( 0, TEXT_CHROMA_V ) != 0     ) // avoid very complex intra if it is unlikely
 #else
-          if( rpcBestCU->getSlice()->getSliceType() == I_SLICE || 
-            rpcBestCU->getCbf( 0, TEXT_LUMA     ) != 0   ||
-            rpcBestCU->getCbf( 0, TEXT_CHROMA_U ) != 0   ||
-            rpcBestCU->getCbf( 0, TEXT_CHROMA_V ) != 0     ) // avoid very complex intra if it is unlikely
+        if( rpcBestCU->getSlice()->getSliceType() == I_SLICE || 
+          rpcBestCU->getCbf( 0, TEXT_LUMA     ) != 0   ||
+          rpcBestCU->getCbf( 0, TEXT_CHROMA_U ) != 0   ||
+          rpcBestCU->getCbf( 0, TEXT_CHROMA_V ) != 0     ) // avoid very complex intra if it is unlikely
 #endif
-          {
-            xCheckRDCostIntra( rpcBestCU, rpcTempCU, SIZE_2Nx2N );
+        {
+          xCheckRDCostIntra( rpcBestCU, rpcTempCU, SIZE_2Nx2N );
           rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
-            if( uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth )
+          if( uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth )
+          {
+            if( rpcTempCU->getWidth(0) > ( 1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize() ) )
             {
-              if( rpcTempCU->getWidth(0) > ( 1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize() ) )
-              {
-                xCheckRDCostIntra( rpcBestCU, rpcTempCU, SIZE_NxN   );
+              xCheckRDCostIntra( rpcBestCU, rpcTempCU, SIZE_NxN   );
               rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
-              }
             }
           }
+        }
 
         // test PCM
         if(pcPic->getSlice(0)->getSPS()->getUsePCM()
@@ -733,17 +734,17 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         }
 #if (ENCODER_FAST_MODE)
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-      if(pcPic->getLayerId() > 0 && !m_disableILP)
+        if(pcPic->getLayerId() > 0 && !m_disableILP)
 #else
-      if(pcPic->getLayerId() > 0)
+        if(pcPic->getLayerId() > 0)
 #endif
-      {
-        for(Int refLayer = 0; refLayer < pcSlice->getActiveNumILRRefIdx(); refLayer++)
-        {  
-           xCheckRDCostILRUni( rpcBestCU, rpcTempCU, pcSlice->getInterLayerPredLayerIdc(refLayer));
-           rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
+        {
+          for(Int refLayer = 0; refLayer < pcSlice->getActiveNumILRRefIdx(); refLayer++)
+          {  
+            xCheckRDCostILRUni( rpcBestCU, rpcTempCU, pcSlice->getVPS()->getRefLayerId( pcSlice->getLayerId(), pcSlice->getInterLayerPredLayerIdc(refLayer) ) );
+            rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
+          }
         }
-      }
 #endif
 
         if (bIsLosslessMode)
@@ -820,9 +821,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
   }
 
   if ( m_pcEncCfg->getCUTransquantBypassFlagForceValue() )
-    {
+  {
     iMaxQP = iMinQP; // If all blocks are forced into using transquant bypass, do not loop here.
-    }
+  }
 
   for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)
   {
@@ -1475,11 +1476,25 @@ Void TEncCu::xCheckRDCostInter( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, 
   rpcTempCU->setPartSizeSubParts  ( ePartSize,  0, uhDepth );
   rpcTempCU->setPredModeSubParts  ( MODE_INTER, 0, uhDepth );
   
+#if SVC_EXTENSION
+#if AMP_MRG
+  rpcTempCU->setMergeAMP (true);
+  Bool ret = m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], false, bUseMRG );
+#else  
+  Bool ret = m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] );
+#endif
+
+  if( !ret )
+  {
+    return;
+  }
+#else
 #if AMP_MRG
   rpcTempCU->setMergeAMP (true);
   m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth], false, bUseMRG );
 #else  
   m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] );
+#endif
 #endif
 
 #if AMP_MRG

@@ -190,7 +190,6 @@ Void TAppDecTop::decode()
     vector<uint8_t> nalUnit;
     InputNALUnit nalu;
     byteStreamNALUnit(bytestream, nalUnit, stats);
-
     // call actual decoding function
     Bool bNewPicture = false;
     Bool bNewPOC = false;
@@ -214,7 +213,11 @@ Void TAppDecTop::decode()
       else
       {
         bNewPicture = m_acTDecTop[nalu.m_layerId].decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_layerId], curLayerId, bNewPOC);
+#if POC_RESET_IDC_DECODER
+        if ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) )
+#else
         if (bNewPicture)
+#endif
         {
           bitstreamFile.clear();
           /* location points to the current nalunit payload[1] due to the
@@ -224,10 +227,24 @@ Void TAppDecTop::decode()
           bitstreamFile.seekg(location-streamoff(3));
           bytestream.reset();
         }
+#if POC_RESET_IDC_DECODER
+        else if(m_acTDecTop[nalu.m_layerId].getParseIdc() == 1) 
+        {
+          bitstreamFile.clear();
+          // This is before third parse of the NAL unit, and 
+          // location points to correct beginning of the NALU
+          bitstreamFile.seekg(location);
+          bytestream.reset();
+        }
+#endif
       }
     }
 
+#if POC_RESET_IDC_DECODER
+    if ((bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS)
+#else
     if (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS)
+#endif
     {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
       //Bug fix: The bit depth was not set correctly for each layer when doing DBF
@@ -243,6 +260,13 @@ Void TAppDecTop::decode()
       m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
 #endif
     }
+
+#if POC_RESET_IDC_DECODER
+    if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 )
+    {
+      outputAllPictures( nalu.m_layerId, true );
+    }
+#endif
 
     if( pcListPic )
     {
@@ -268,7 +292,13 @@ Void TAppDecTop::decode()
       {
         flushAllPictures( nalu.m_layerId, outputPicturesFlag );       
       }
+
+#if POC_RESET_IDC_DECODER
+      if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() != 0 )
+      // New picture, slice header parsed but picture not decoded
+#else
       if( bNewPicture ) // New picture, slice header parsed but picture not decoded
+#endif
       {
 #if NO_OUTPUT_OF_PRIOR_PICS
         if( 
@@ -1234,7 +1264,11 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
     DpbStatus dpbStatus;
 
     // Find the status of the DPB
+#if POC_RESET_IDC_DECODER
+    xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus, false);
+#else
     xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus);
+#endif
 
     while( dpbStatus.m_numAUsNotDisplayed )
     {
@@ -1281,8 +1315,10 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 
   // Find DPB-information from the VPS
   DpbStatus maxDpbLimit;
+#if RESOLUTION_BASED_DPB
   Int targetLsIdx, subDpbIdx;
   TComVPS *vps = findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
+
   if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
   {
     targetLsIdx = 0;
@@ -1293,6 +1329,10 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
     targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
     subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
   }
+#else
+  Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 ? 0 : layerIdx;
+  findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
+#endif
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
   while( ifInvokeBumpingBeforeDecoding(dpbStatus, maxDpbLimit, layerIdx, subDpbIdx) )
   {
@@ -1436,8 +1476,12 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     }
     for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
     {
+#if RESOUTION_BASED_DPB
       maxDpbLimit.m_numPicsInLayer[i] = vps->getMaxVpsLayerDecPicBuffMinus1( targetOutputLsIdx, i, highestTId ) + 1;
       maxDpbLimit.m_numPicsInSubDpb[vps->getSubDpbAssigned( targetLsIdx, i )] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, vps->getSubDpbAssigned( targetLsIdx, i ), highestTId) + 1;
+#else
+      maxDpbLimit.m_numPicsInSubDpb[i] = vps->getMaxVpsDecPicBufferingMinus1( targetOutputLsIdx, i, highestTId) + 1;
+#endif
     }
     // -------------------------------------
   }
@@ -1471,8 +1515,10 @@ Bool TAppDecTop::ifInvokeBumpingBeforeDecoding( const DpbStatus &dpbStatus, cons
   // Number of pictures in each sub-DPB
   retVal |= ( dpbStatus.m_numPicsInSubDpb[subDpbIdx] >= dpbLimit.m_numPicsInSubDpb[subDpbIdx] );
   
+#if RESOLUTION_BASED_DPB
   // Number of pictures in each layer
   retVal |= ( dpbStatus.m_numPicsInLayer[layerIdx] >= dpbLimit.m_numPicsInLayer[layerIdx]);
+#endif
 
   return retVal;
 }
@@ -1491,6 +1537,9 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
                             , std::vector<Int> *listOfPocsInEachLayer
                             , std::vector<Int> *listOfPocsPositionInEachLayer
                             , DpbStatus &dpbStatus
+#if POC_RESET_IDC_DECODER
+                            , Bool notOutputCurrAu
+#endif
                             )
 {
   TComVPS *vps = NULL;
@@ -1515,22 +1564,28 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
         {
           vps = pic->getSlice(0)->getVPS();
         }
-
-        std::vector<Int>::iterator it;
-        if( pic->getOutputMark() ) // && pic->getPOC() > m_aiPOCLastDisplay[i])
+#if POC_RESET_IDC_DECODER
+        if( !(pic->isCurrAu() && notOutputCurrAu ) )
         {
-          it = find( listOfPocs.begin(), listOfPocs.end(), pic->getPOC() ); // Check if already included
-          if( it == listOfPocs.end() )  // New POC value - i.e. new AU - add to the list
+#endif
+          std::vector<Int>::iterator it;
+          if( pic->getOutputMark() ) // && pic->getPOC() > m_aiPOCLastDisplay[i])
           {
-            listOfPocs.push_back( pic->getPOC() );
+            it = find( listOfPocs.begin(), listOfPocs.end(), pic->getPOC() ); // Check if already included
+            if( it == listOfPocs.end() )  // New POC value - i.e. new AU - add to the list
+            {
+              listOfPocs.push_back( pic->getPOC() );
+            }
+            listOfPocsInEachLayer         [i].push_back( pic->getPOC()    );    // POC to be output in each layer
+            listOfPocsPositionInEachLayer [i].push_back( picPositionInList  );  // For ease of access
           }
-          listOfPocsInEachLayer         [i].push_back( pic->getPOC()    );    // POC to be output in each layer
-          listOfPocsPositionInEachLayer [i].push_back( picPositionInList  );  // For ease of access
+          if( pic->getSlice(0)->isReferenced() || pic->getOutputMark() )
+          {
+            dpbStatus.m_numPicsInLayer[i]++;  // Count pictures that are "used for reference" or "needed for output"
+          }
+#if POC_RESET_IDC_DECODER
         }
-        if( pic->getSlice(0)->isReferenced() || pic->getOutputMark() )
-        {
-          dpbStatus.m_numPicsInLayer[i]++;  // Count pictures that are "used for reference" or "needed for output"
-        }
+#endif
       }
       iterPic++;
       picPositionInList++;
@@ -1549,11 +1604,36 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
   {
     dpbStatus.m_numPicsNotDisplayedInLayer[i] = listOfPocsInEachLayer[i].size();
+#if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInSubDpb[vps->getSubDpbAssigned(targetLsIdx,i)] += dpbStatus.m_numPicsInLayer[i];
+#else
+    dpbStatus.m_numPicsInSubDpb[i] += dpbStatus.m_numPicsInLayer[i];
+#endif
   }
   assert( dpbStatus.m_numAUsNotDisplayed != -1 );
-
-
 }  
+
+#if POC_RESET_IDC_DECODER
+Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
+{
+  { // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
+    std::vector<Int>  listOfPocs;
+    std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+    DpbStatus dpbStatus;
+
+    // Find the status of the DPB
+    xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus, notOutputCurrPic);
+
+    if( listOfPocs.size() )
+    {
+      while( listOfPocsInEachLayer[layerId].size() )    // As long as there picture in the layer to be output
+      {
+        bumpingProcess( listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus );
+      }
+    }
+  }
+}
+#endif
 #endif
 //! \}

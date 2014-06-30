@@ -247,6 +247,20 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
+#if P0050_KNEE_FUNCTION_SEI
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Bool      m_kneeSEIMappingFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Char*     m_seiColorMappingFile;
 #endif
@@ -261,6 +275,9 @@ protected:
   Int       m_decodingUnitInfoSEIEnabled;
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
+#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -347,9 +364,7 @@ protected:
   Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int       m_maxTidIlRefPicsPlus1;
-#endif 
 #if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatIDC;
 #endif
@@ -669,6 +684,32 @@ public:
   Int   getTMISEINominalWhiteLevelLumaCodeValue()            {  return m_nominalWhiteLevelLumaCodeValue;  }
   Void  setTMISEIExtendedWhiteLevelLumaCodeValue(Int b)      {  m_extendedWhiteLevelLumaCodeValue =b;  }
   Int   getTMISEIExtendedWhiteLevelLumaCodeValue()           {  return m_extendedWhiteLevelLumaCodeValue;  }
+#if P0050_KNEE_FUNCTION_SEI
+  Void  setKneeSEIEnabled(Int b)                             { m_kneeSEIEnabled = b; }
+  Bool  getKneeSEIEnabled()                                  { return m_kneeSEIEnabled; }
+  Void  setKneeSEIId(Int b)                                  { m_kneeSEIId = b; }
+  Int   getKneeSEIId()                                       { return m_kneeSEIId; }
+  Void  setKneeSEICancelFlag(Bool b)                         { m_kneeSEICancelFlag=b; }
+  Bool  getKneeSEICancelFlag()                               { return m_kneeSEICancelFlag; }
+  Void  setKneeSEIPersistenceFlag(Bool b)                    { m_kneeSEIPersistenceFlag = b; }
+  Bool  getKneeSEIPersistenceFlag()                          { return m_kneeSEIPersistenceFlag; }
+  Void  setKneeSEIMappingFlag(Bool b)                        { m_kneeSEIMappingFlag = b; }
+  Bool  getKneeSEIMappingFlag()                              { return m_kneeSEIMappingFlag; }
+  Void  setKneeSEIInputDrange(Int b)                         { m_kneeSEIInputDrange = b; }
+  Int   getKneeSEIInputDrange()                              { return m_kneeSEIInputDrange; }
+  Void  setKneeSEIInputDispLuminance(Int b)                  { m_kneeSEIInputDispLuminance = b; }
+  Int   getKneeSEIInputDispLuminance()                       { return m_kneeSEIInputDispLuminance; }
+  Void  setKneeSEIOutputDrange(Int b)                        { m_kneeSEIOutputDrange = b; }
+  Int   getKneeSEIOutputDrange()                             { return m_kneeSEIOutputDrange; }
+  Void  setKneeSEIOutputDispLuminance(Int b)                 { m_kneeSEIOutputDispLuminance = b; }
+  Int   getKneeSEIOutputDispLuminance()                      { return m_kneeSEIOutputDispLuminance; }
+  Void  setKneeSEINumKneePointsMinus1(Int b)                 { m_kneeSEINumKneePointsMinus1 = b; }
+  Int   getKneeSEINumKneePointsMinus1()                      { return m_kneeSEINumKneePointsMinus1; }
+  Void  setKneeSEIInputKneePoint(Int *p)                     { m_kneeSEIInputKneePoint = p; }
+  Int*  getKneeSEIInputKneePoint()                           { return m_kneeSEIInputKneePoint; }
+  Void  setKneeSEIOutputKneePoint(Int *p)                    { m_kneeSEIOutputKneePoint = p; }
+  Int*  getKneeSEIOutputKneePoint()                          { return m_kneeSEIOutputKneePoint; }
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
   Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }
@@ -694,7 +735,13 @@ public:
   Void  setSOPDescriptionSEIEnabled(Int b)                { m_SOPDescriptionSEIEnabled = b; }
   Int   getSOPDescriptionSEIEnabled()                     { return m_SOPDescriptionSEIEnabled; }
   Void  setScalableNestingSEIEnabled(Int b)                { m_scalableNestingSEIEnabled = b; }
+#if Q0189_TMVP_CONSTRAINTS
+  void setTMVPConstraintsSEIEnabled(Int b)                { m_TMVPConstraintsSEIEnabled = b; }
+#endif
   Int   getScalableNestingSEIEnabled()                     { return m_scalableNestingSEIEnabled; }
+#if Q0189_TMVP_CONSTRAINTS
+  Int   getTMVPConstraintsSEIEnabled()                {  return m_TMVPConstraintsSEIEnabled; }
+#endif
   Void      setUseWP               ( Bool b )    { m_useWeightedPred   = b;    }
   Void      setWPBiPred            ( Bool b )    { m_useWeightedBiPred = b;    }
   Bool      getUseWP               ()            { return m_useWeightedPred;   }
@@ -876,10 +923,8 @@ public:
   Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
   Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
   Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
-#endif 
 #if LAYERS_NOT_PRESENT_SEI
   Void  setLayersNotPresentSEIEnabled(Int b)             { m_layersNotPresentSEIEnabled = b; }
   Int   getLayersNotPresentSEIEnabled()                  { return m_layersNotPresentSEIEnabled; }

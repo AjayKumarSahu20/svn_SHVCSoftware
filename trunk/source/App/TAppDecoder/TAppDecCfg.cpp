@@ -145,6 +145,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   m_tgtLayerId = nLayerNum - 1;
   assert( m_tgtLayerId >= 0 );
+  assert( m_tgtLayerId < MAX_LAYERS );
 #if O0137_MAX_LAYERID
   assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
 #endif

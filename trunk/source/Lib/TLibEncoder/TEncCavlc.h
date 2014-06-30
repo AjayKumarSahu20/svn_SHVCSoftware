@@ -158,19 +158,15 @@ public:
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
 
-#if SPS_EXTENSION
-  Void codeSPSExtension         ( TComSPS* pcSPS );
-#if VPS_EXTNS
-  Void  codeVPSExtension        ( TComVPS* pcVPS );
-#endif
-#if VPS_VUI
-  Void codeVPSVUI               (TComVPS *vps);
-#endif
+#if SVC_EXTENSION
+  Void codeSPSExtension        ( TComSPS* pcSPS );
+  Void codeVPSExtension        ( TComVPS* pcVPS );
+  Void codeVPSVUI              ( TComVPS *vps   );
 #if REPN_FORMAT_IN_VPS
-  Void  codeRepFormat           ( RepFormat *repFormat );
+  Void  codeRepFormat          ( RepFormat *repFormat );
 #endif
 #if VPS_DPB_SIZE_TABLE
-  Void  codeVpsDpbSizeTable      (TComVPS *vps);
+  Void  codeVpsDpbSizeTable    (TComVPS *vps);
 #endif
 #if Q0048_CGS_3D_ASYMLUT
 protected:

@@ -81,9 +81,6 @@ Void TAppEncTop::xInitLibCfg()
   {
     vps->setTemporalNestingFlag(true);
   }
-#if !VPS_RENAME
-  vps.setMaxLayers                        ( 1 );
-#endif
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
     vps->setNumReorderPics                 ( m_numReorderPics[i], i );
@@ -190,6 +187,8 @@ Void TAppEncTop::xInitLibCfg()
   delete [] mapIdxToLayer;
 #endif
 
+  assert( m_numLayers <= MAX_LAYERS );
+
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -240,9 +239,17 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setIntraPeriod                  ( m_acLayerCfg[layer].m_iIntraPeriod );
     m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
     m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
+#if Q0108_TSA_STSA
+    m_acTEncTop[layer].setGopList                      ( layer ? m_EhGOPList[layer] : m_GOPList );
+#else
     m_acTEncTop[layer].setGopList                      ( m_GOPList );
+#endif
 
+#if !Q0108_TSA_STSA
     m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs );
+#else
+    m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs[layer] );
+#endif
     for(Int i = 0; i < MAX_TLAYER; i++)
     {
       m_acTEncTop[layer].setNumReorderPics             ( m_numReorderPics[i], i );
@@ -255,15 +262,25 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setQP                           ( m_acLayerCfg[layer].getIntQP() );
 
     m_acTEncTop[layer].setPad                          ( m_acLayerCfg[layer].getPad() );
-
+#if !Q0108_TSA_STSA
     m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+#else
+    if (layer== 0)
+    {
+      m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+    }
+    else
+    {
+      m_acTEncTop[layer].setMaxTempLayer                 ( m_EhMaxTempLayer[layer] );
+    }
+#endif
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
-#if N0120_MAX_TID_REF_CFG
-    if (layer<m_numLayers-1)
+
+    if( layer < m_numLayers - 1 )
     {
        m_acTEncTop[layer].setMaxTidIlRefPicsPlus1 ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1());
     }
-#endif
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
@@ -305,6 +322,9 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
       Int numDirectRefLayers = 0;
+
+      assert( layer < MAX_LAYERS );
+
       for (Int i = 0; i < layer; i++)
       {
         if (m_acTEncTop[layer].getSamplePredEnabledFlag(i) || m_acTEncTop[layer].getMotionPredEnabledFlag(i))
@@ -479,6 +499,20 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
     m_acTEncTop[layer].setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
     m_acTEncTop[layer].setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
+#if P0050_KNEE_FUNCTION_SEI
+    m_acTEncTop[layer].setKneeSEIEnabled                            ( m_kneeSEIEnabled );
+    m_acTEncTop[layer].setKneeSEIId                                 ( m_kneeSEIId );
+    m_acTEncTop[layer].setKneeSEICancelFlag                         ( m_kneeSEICancelFlag );
+    m_acTEncTop[layer].setKneeSEIPersistenceFlag                    ( m_kneeSEIPersistenceFlag );
+    m_acTEncTop[layer].setKneeSEIMappingFlag                        ( m_kneeSEIMappingFlag );
+    m_acTEncTop[layer].setKneeSEIInputDrange                        ( m_kneeSEIInputDrange );
+    m_acTEncTop[layer].setKneeSEIInputDispLuminance                 ( m_kneeSEIInputDispLuminance );
+    m_acTEncTop[layer].setKneeSEIOutputDrange                       ( m_kneeSEIOutputDrange );
+    m_acTEncTop[layer].setKneeSEIOutputDispLuminance                ( m_kneeSEIOutputDispLuminance );
+    m_acTEncTop[layer].setKneeSEINumKneePointsMinus1                ( m_kneeSEINumKneePointsMinus1 );
+    m_acTEncTop[layer].setKneeSEIInputKneePoint                     ( m_kneeSEIInputKneePoint );
+    m_acTEncTop[layer].setKneeSEIOutputKneePoint                    ( m_kneeSEIOutputKneePoint );
+#endif
 #if Q0074_SEI_COLOR_MAPPING
     m_acTEncTop[layer].setColorMappingInfoSEIFile                   ( m_acLayerCfg[layer].m_cSeiColorMappingFile.empty() ? NULL : const_cast<Char *>(m_acLayerCfg[layer].m_cSeiColorMappingFile.c_str()) );
 #endif
@@ -496,6 +530,9 @@ Void TAppEncTop::xInitLibCfg()
 #endif
     m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
     m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
+#if Q0189_TMVP_CONSTRAINTS
+    m_acTEncTop[layer].setTMVPConstraintsSEIEnabled( m_TMVPConstraintsSEIEnabled);           
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     m_acTEncTop[layer].setInterLayerConstrainedTileSetsSEIEnabled( m_interLayerConstrainedTileSetsSEIEnabled );
     m_acTEncTop[layer].setIlNumSetsInMessage( m_ilNumSetsInMessage );
@@ -612,6 +649,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setCGSMaxOctantDepth( m_nCGSMaxOctantDepth );
     m_acTEncTop[layer].setCGSMaxYPartNumLog2( m_nCGSMaxYPartNumLog2 );
     m_acTEncTop[layer].setCGSLUTBit( m_nCGSLUTBit );
+#endif
+#if Q0078_ADD_LAYER_SETS
+    m_acTEncTop[layer].setNumAddLayerSets( m_numAddLayerSets );
 #endif
   }
 }
@@ -798,6 +838,20 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
   m_cTEncTop.setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
   m_cTEncTop.setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
+#if P0050_KNEE_FUNCTION_SEI
+  m_cTEncTop.setKneeSEIEnabled              ( m_kneeSEIEnabled );
+  m_cTEncTop.setKneeSEIId                   ( m_kneeSEIId );
+  m_cTEncTop.setKneeSEICancelFlag           ( m_kneeSEICancelFlag );
+  m_cTEncTop.setKneeSEIPersistenceFlag      ( m_kneeSEIPersistenceFlag );
+  m_cTEncTop.setKneeSEIMappingFlag          ( m_kneeSEIMappingFlag );
+  m_cTEncTop.setKneeSEIInputDrange          ( m_kneeSEIInputDrange );
+  m_cTEncTop.setKneeSEIInputDispLuminance   ( m_kneeSEIInputDispLuminance );
+  m_cTEncTop.setKneeSEIOutputDrange         ( m_kneeSEIOutputDrange );
+  m_cTEncTop.setKneeSEIOutputDispLuminance  ( m_kneeSEIOutputDispLuminance );
+  m_cTEncTop.setKneeSEINumKneePointsMinus1  ( m_kneeSEINumKneePointsMinus1 );
+  m_cTEncTop.setKneeSEIInputKneePoint       ( m_kneeSEIInputKneePoint );
+  m_cTEncTop.setKneeSEIOutputKneePoint      ( m_kneeSEIOutputKneePoint );
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   m_cTEncTop.setColorMappingInfoSEIFile                   ( m_pchSEIColorMappingFile );
 #endif
@@ -993,38 +1047,88 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     m_acTEncTop[layer].getVPS()->setPPSId(layer, m_acTEncTop[layer].getPPS()->getPPSId());
 #endif
   }
-#if VPS_RENAME
   m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
-#endif
 #if VPS_EXTN_OP_LAYER_SETS
   TComVPS* vps = m_acTEncTop[0].getVPS();
   vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
 
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
-  vps->setNumLayerSets(m_numLayers);
-  for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+#if Q0078_ADD_LAYER_SETS
+  if (m_numLayerSets > 0)
   {
-    for(Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+    vps->setNumLayerSets(m_numLayerSets+1);
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-      //4
-      g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
-      g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
-
-      g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
-      g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
-#endif
-      if( layerId <= setId )
-      {
-        vps->setLayerIdIncludedFlag(true, setId, layerId);
-      }
-      else
+      for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
       {
         vps->setLayerIdIncludedFlag(false, setId, layerId);
       }
     }
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+    {
+      for (Int i = 0; i < m_numLayerInIdList[setId-1]; i++)
+      {
+        Int layerId = m_layerSetLayerIdList[setId-1][i];
+
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        //4
+        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+
+        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+#endif
+
+        vps->setLayerIdIncludedFlag(true, setId, layerId);
+      }
+    }
   }
+  else
+  {
+    // Default layer sets
+#endif
+    vps->setNumLayerSets(m_numLayers);
+    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+    {
+      for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+      {
+#if O0194_DIFFERENT_BITDEPTH_EL_BL
+        //4
+        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+
+        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
+        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+#endif
+        if (layerId <= setId)
+        {
+          vps->setLayerIdIncludedFlag(true, setId, layerId);
+        }
+        else
+        {
+          vps->setLayerIdIncludedFlag(false, setId, layerId);
+        }
+      }
+    }
+#if Q0078_ADD_LAYER_SETS
+  }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  vps->setVpsNumLayerSetsMinus1(vps->getNumLayerSets() - 1);
+  vps->setNumAddLayerSets(m_numAddLayerSets);
+  vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
+  if (m_numAddLayerSets > 0)
+  {
+    for (Int setId = 0; setId < m_numAddLayerSets; setId++)
+    {
+      for (Int j = 0; j < m_numHighestLayerIdx[setId]; j++)
+      {
+        vps->setHighestLayerIdxPlus1(setId, j + 1, m_highestLayerIdx[setId][j] + 1);
+      }
+    }
+  }
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, dimIdLen = 0;
 #if AVC_BASE
@@ -1096,22 +1200,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if VPS_TSLAYERS
     vps->setMaxTSLayersPresentFlag(true);
+
     for( i = 0; i < vps->getMaxLayers(); i++ )
     {
       vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
-#if N0120_MAX_TID_REF_CFG
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
-#else
-  vps->setMaxTidRefPresentFlag(true);
-#endif
   if (vps->getMaxTidRefPresentFlag())
   {
     for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
-#if N0120_MAX_TID_REF_CFG
 #if O0225_MAX_TID_FOR_REF_LAYERS
       for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
@@ -1120,16 +1219,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #else
       vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
 #endif 
-#else
-#if O0225_MAX_TID_FOR_REF_LAYERS
-      for( Int j = i+1; j < vps->getMaxLayers(); j++)
-      {
-        vps->setMaxTidIlRefPicsPlus1(i, j, vps->getMaxTLayers()+1);
-      }
-#else
-      vps->setMaxTidIlRefPicsPlus1(i, vps->getMaxTLayers()+1);
-#endif
-#endif
     }
   }
   else
@@ -1146,14 +1235,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif 
     }
   }
-#endif
-#if ILP_SSH_SIG
-#if ILP_SSH_SIG_FIX
     vps->setIlpSshSignalingEnabledFlag(false);
-#else
-    vps->setIlpSshSignalingEnabledFlag(true);
-#endif
-#endif
 #if VPS_EXTN_PROFILE_INFO
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
   for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
@@ -1162,6 +1244,77 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // Note - may need to be changed for other layer structures.
     *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
   }
+#endif
+#if VPS_EXTN_DIRECT_REF_LAYERS
+  // Direct reference layers
+  UInt maxDirectRefLayers = 0;
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+  Bool isDefaultDirectDependencyTypeSet = false;
+#endif
+  for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    vps->setNumDirectRefLayers(layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers());
+    maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerCtr));
+
+    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setRefLayerId(layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i));
+    }
+    // Set direct dependency flag
+    // Initialize flag to 0
+    for (Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      vps->setDirectDependencyFlag(layerCtr, refLayerCtr, false);
+    }
+    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    {
+      vps->setDirectDependencyFlag(layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
+    }
+    // prediction indications
+    vps->setDirectDepTypeLen(2); // sample and motion types are encoded
+    for (Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+    {
+      if (vps->getDirectDependencyFlag(layerCtr, refLayerCtr))
+      {
+        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
+        vps->setDirectDependencyType(layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
+          (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+#if O0096_DEFAULT_DEPENDENCY_TYPE
+        if (!isDefaultDirectDependencyTypeSet)
+        {
+          vps->setDefaultDirectDependecyTypeFlag(1);
+          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
+          isDefaultDirectDependencyTypeSet = true;
+        }
+        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
+        {
+          vps->setDefaultDirectDependecyTypeFlag(0);
+        }
+#endif
+      }
+      else
+      {
+        vps->setDirectDependencyType(layerCtr, refLayerCtr, 0);
+      }
+    }
+  }
+
+#if O0092_0094_DEPENDENCY_CONSTRAINT
+  vps->setNumRefLayers();
+
+  if (vps->getMaxLayers() > MAX_REF_LAYERS)
+  {
+    for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    {
+      assert(vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
+    }
+  }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  vps->setPredictedLayerIds();
+  vps->setTreePartitionLayerIdList();
+  vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
 #endif
   // Target output layer
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
@@ -1195,7 +1348,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   // derive OutputLayerFlag[i][j] 
   if( vps->getDefaultTargetOutputLayerIdc() == 1 )
   {
-    // default_target_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
+    // default_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
     // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
 
     // Include the highest layer as output layer for each layer set
@@ -1203,7 +1356,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
       {
+#if !Q0078_ADD_LAYER_SETS  // the following condition is incorrect and is not needed anyway
         if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
+#endif
         {        
           vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
         }
@@ -1212,8 +1367,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
   else
   {
-    // cases when default_target_output_layer_idc is not equal to 1
-    assert(!"default_target_output_layer_idc not equal to 1 is not yet supported");
+    // cases when default_output_layer_idc is not equal to 1
+    assert(!"default_output_layer_idc not equal to 1 is not yet supported");
   }
 
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
@@ -1264,81 +1419,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  // Direct reference layers
-  UInt maxDirectRefLayers = 0;
-#if O0096_DEFAULT_DEPENDENCY_TYPE
-  Bool isDefaultDirectDependencyTypeSet = false;
-#endif
-  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    vps->setNumDirectRefLayers( layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers() );
-    maxDirectRefLayers = max<UInt>( maxDirectRefLayers, vps->getNumDirectRefLayers( layerCtr ) );
-
-    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
-    {
-      vps->setRefLayerId( layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i) );
-    }
-    // Set direct dependency flag
-    // Initialize flag to 0
-    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      vps->setDirectDependencyFlag( layerCtr, refLayerCtr, false );
-    }
-    for(i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
-    {
-      vps->setDirectDependencyFlag( layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
-    }
-    // prediction indications
-    vps->setDirectDepTypeLen(2); // sample and motion types are encoded
-    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
-    {
-      if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
-      {
-        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
-        vps->setDirectDependencyType( layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
-                                                              (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
-#if O0096_DEFAULT_DEPENDENCY_TYPE
-        if (!isDefaultDirectDependencyTypeSet)
-        {
-          vps->setDefaultDirectDependecyTypeFlag(1);
-          vps->setDefaultDirectDependecyType(vps->getDirectDependencyType(layerCtr, refLayerCtr));
-          isDefaultDirectDependencyTypeSet = true;
-        }
-        else if (vps->getDirectDependencyType(layerCtr, refLayerCtr) != vps->getDefaultDirectDependencyType())
-        {
-          vps->setDefaultDirectDependecyTypeFlag(0);
-        }
-#endif
-      }
-      else
-      {
-        vps->setDirectDependencyType( layerCtr, refLayerCtr, 0 );
-      }
-    }
-  }
-
-#if O0092_0094_DEPENDENCY_CONSTRAINT
-  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-  {
-    vps->setNumRefLayers(vps->getLayerIdInNuh(layerCtr));   // identify the number of direct and indirect reference layers of current layer and set recursiveRefLayersFlags
-  }
-  if(vps->getMaxLayers() > MAX_REF_LAYERS)
-  {
-    for(UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
-    {
-      assert( vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
-    }
-  }
-#endif
-#endif
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     for(i = 1; i< vps->getMaxLayers(); i++)
     {
       if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
       {
+#if Q0078_ADD_LAYER_SETS
+        vps->setPocLsbNotPresentFlag(i, true); // make independedent layers base-layer compliant
+#else
         vps->setPocLsbNotPresentFlag(i, false);
+#endif
       }
     }
 #endif
@@ -1348,7 +1439,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
     vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
 #endif
-#if N0147_IRAP_ALIGN_FLAG
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
@@ -1364,7 +1454,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         }
       }
     }
-#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif 
@@ -1417,7 +1506,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   if( pcCfg->getBufferingPeriodSEIEnabled() )
   {
     vps->setVpsVuiBspHrdPresentFlag(true);
+#if Q0078_ADD_LAYER_SETS
+    vps->setVpsNumBspHrdParametersMinus1(vps->getVpsNumLayerSetsMinus1() - 1); 
+#else
     vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
+#endif
     vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
     for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
     {
@@ -1450,7 +1543,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->getBspHrd(i)->setNumDU( numDU );
       vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
     }
+#if Q0078_ADD_LAYER_SETS
+    for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
+#else
     for(UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
+#endif
     {
       vps->setNumBitstreamPartitions(h, 1);
       for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
@@ -1531,7 +1628,7 @@ Void TAppEncTop::encode()
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
     {
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -1551,7 +1648,7 @@ Void TAppEncTop::encode()
     }
     else
     {
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -1990,7 +2087,6 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-#if SVC_UPSAMPLING
 #if LAYER_CTB
 #if AUXILIARY_PICTURES
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
@@ -2003,9 +2099,6 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
 #else
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #endif
-#endif
-#else
-    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 #endif
 
   }
@@ -2031,6 +2124,12 @@ Void TAppEncTop::xDeleteBuffer( )
 
 Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 {
+#if REPN_FORMAT_IN_VPS
+  ChromaFormat chromaFormatIdc = m_acLayerCfg[layer].getChromaFormatIDC();
+  Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+  Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
+
   if (m_isField)
   {
     //Reinterlace fields
@@ -2053,7 +2152,12 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       if (!m_acLayerCfg[layer].getReconFile().empty())
 #endif
       {
+#if REPN_FORMAT_IN_VPS
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfLeft() * xScal, m_acLayerCfg[layer].getConfRight() * xScal, 
+          m_acLayerCfg[layer].getConfTop() * yScal, m_acLayerCfg[layer].getConfBottom() * yScal, m_isTopFieldFirst );
+#else
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(), m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom(), m_isTopFieldFirst );
+#endif
       }
     }
   }
@@ -2077,8 +2181,13 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       if (!m_acLayerCfg[layer].getReconFile().empty())
 #endif
       {
+#if REPN_FORMAT_IN_VPS
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft() * xScal, m_acLayerCfg[layer].getConfRight() * xScal,
+          m_acLayerCfg[layer].getConfTop() * yScal, m_acLayerCfg[layer].getConfBottom() * yScal );
+#else
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfLeft(), m_acLayerCfg[layer].getConfRight(),
           m_acLayerCfg[layer].getConfTop(), m_acLayerCfg[layer].getConfBottom() );
+#endif
       }
     }
   }

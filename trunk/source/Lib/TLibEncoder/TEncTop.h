@@ -141,7 +141,7 @@ private:
 #if P0312_VERT_PHASE_ADJ
   Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   Int                     m_pocAdjustmentValue;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
@@ -152,6 +152,9 @@ private:
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   Bool                    m_interLayerWeightedPredFlag;
+#endif
+#if Q0078_ADD_LAYER_SETS
+  int                     m_numAddLayerSets;
 #endif
 #endif //SVC_EXTENSION
 protected:
@@ -253,7 +256,7 @@ public:
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif
@@ -266,6 +269,10 @@ public:
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
   Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
   Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+#endif
+#if Q0078_ADD_LAYER_SETS
+  Void setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
+  Int  getNumAddLayerSets()                  { return m_numAddLayerSets; }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
