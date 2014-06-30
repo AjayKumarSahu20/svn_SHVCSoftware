@@ -40,15 +40,20 @@
 
 #define SVC_EXTENSION                    1
 
-#define SYNTAX_BYTES                     10      ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
+#define SYNTAX_BYTES                     10     ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
-#define RANDOM_ACCESS_SEI_FIX            1
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
-#define Q0200_CONFORMANCE_BL_SIZE        1       ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
+#define Q0108_TSA_STSA                   0      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
+#define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
+#define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
+#define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
+#define Q0146_SSH_EXT_DATA_BIT           1      ///< JCTVC-Q0146; Bug-fix -- the SSH_EXT_DATA_BIT can have any value -- not required to be 1
+
+#define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
 #define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
 #if P0312_VERT_PHASE_ADJ
 #define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
@@ -61,13 +66,9 @@
 #define DISCARDABLE_PIC_RPS              1      ///< JCTVC-P0130: Inter-layer RPS and temporal RPS should not contain picture with discardable_flag equal to 1
 #define VPS_EXTN_UEV_CODING              1      ///< JCTVC-P0306: Code some syntax elements as ue(v), and remove some syntax elements that duplicate behaviour
 #define CHANGE_NUMSUBDPB_IDX             1      ///< Change index of NumSubDpb from output layer set to layer set, to be more aligned with the Spec
-#define RESOLUTION_BASED_DPB             1      ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
+#define RESOLUTION_BASED_DPB             0      ///< JCTVC-Q0154 - remove sharing of sub-DPB across layers
+                                                ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
-#define MAX_SUBDPBS                      MAX_LAYERS
-#define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
-#if SUB_BITSTREAM_PROPERTY_SEI
-#define MAX_SUB_STREAMS                  1024
-#endif
 #define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
@@ -76,14 +77,14 @@
 #define O0109_PROF_REF_MINUS1            1      ///< JCTVC-O0109: constraint that profile_ref_minus1[i] shall be less than or equal to i
 #endif
 
-#define P0295_DEFAULT_OUT_LAYER_IDC      1      ///< JCTVC-P0295: modifify default_one_target_output_layer_idc to default_target_output_layer_idc
+#define P0295_DEFAULT_OUT_LAYER_IDC      1      ///< JCTVC-P0295: modifify default_one_target_output_layer_idc to default_output_layer_idc
 #define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
 #define O0109_MOVE_VPS_VUI_FLAG          1      ///< JCTVC-O0109: move vps_vui_present_flag before vps_vui_offset
 
 #define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
 
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
-#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
+#define Q0182_MULTI_LAYER_HRD_UPDATE     1      ///< JCTVC-Q0182: On bitstream partition buffering
 
 #define O0194_DIFFERENT_BITDEPTH_EL_BL   1      ///< JCTVC-O0194: Support for different bitdepth values for BL and EL, add required configuration parameters (and Some bugfixes when REPN_FORMAT_IN_VPS (JCTVC-N0092) is enabled)
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -91,48 +92,36 @@
 #endif
 #define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
 #if Q0048_CGS_3D_ASYMLUT
+#define CGS_GCC_NO_VECTORIZATION         1
 #define O0194_WEIGHTED_PREDICTION_CGS    0
 #else
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
 #endif
-#define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
-#define VPS_NUH_LAYER_ID                 1      ///< JCTVC-N0085: Assert that the nuh_layer_id of VPS NAL unit should be 0
-#define POC_RESET_FLAG                   1      ///< JCTVC-N0244: POC reset flag for  layer pictures.
+#define POC_RESET_FLAG                   0      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation - eventually will replace POC_RESET_FLAG
 #if POC_RESET_IDC
 #define POC_RESET_IDC_SIGNALLING         1      ///< JCTVC-P0041: Include signalling for poc_reset related syntax elements
+#define POC_RESET_IDC_ENCODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the encoder
+#define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
+#define ALIGN_IRAP_BUGFIX                1
+#define UNAVAILABLE_PIC_BUGFIX           1
 #endif
+#define POC_MSB_VAL_PRESENT_FLAG_SEM     1      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
+#define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
 #define NO_OUTPUT_OF_PRIOR_PICS          1      ///< Use no_output_of_prior_pics_flag
-#define ALIGN_TSA_STSA_PICS              1      ///< JCTVC-N0084: Alignment of TSA and STSA pictures across AU.
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
 #if REPN_FORMAT_IN_VPS
 #define REPN_FORMAT_CONTROL_FLAG         1      ///< JCTVC-O0179: Add control flag in representation format to control sending of chroma and bitdepth parameters
 #endif 
-#define TIMING_INFO_NONZERO_LAYERID_SPS  1      ///< JCTVC-N0085: Semantics of vui_timing_info_present_flag to always set that flag to zero for non-zero layer ID SPS 
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
-#define SPS_EXTENSION                    1      ///< Define sps_extension() syntax structure
-#if SPS_EXTENSION
 #define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
-#endif
-#define SCALABILITY_MASK_E0104           1      ///< JCT3V-E0104: scalability mask for depth
-#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
 #if POC_RESET_FLAG
 #define PREVTID0_POC_RESET               1      ///< JCTVC-O0117 Modification of the PicOrderCntVal of prevTid0Pic
 #define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
 #endif
 
-#define ILP_SSH_SIG                      1      ///< JCTVC-N0195 proposal 2, JCTVC-N0118: add presence flag in VPS ext to condition inter-layer prediction signaling in slice segment header
-#if ILP_SSH_SIG
-#define ILP_SSH_SIG_FIX                  1      ///< fix for SHM ticket #5
-#endif 
-#define SPL_FLG_CHK                      1      ///< JCTVC-N0195 proposal 5, JCTVC-N0085: constrain sum of lengths to be less than or equal to 6
-#define ILP_NUM_REF_CHK                  1      ///< JCTVC-N0195 proposal 1, JCTVC-N0081, JCTVC-N0154, JCTVC-N0217: a condition on signaling inter_layer_pred_layer_idc[ i ], to avoid sending when NumDirectRefLayers equals NumActiveRefLayerPics, and instead infer values
-
-#define VPS_RENAME                       1      ///< Rename variables max_layer_id and num_layer_sets_minus1 in VPS
-#define VPS_EXTNS                        1      ///< Include function structure for VPS extensions
-#if VPS_EXTNS
 #define VPS_EXTN_MASK_AND_DIM_INFO       1      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES    16
@@ -141,14 +130,10 @@
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 #define VPS_EXTN_DIRECT_REF_LAYERS       1      ///< Include indication of direct dependency of layers in VPS extension
 #define M0040_ADAPTIVE_RESOLUTION_CHANGE 1
-#define VPS_VUI                          1      ///< Include function structure for VPS VUI
 
-#if VPS_VUI
 #define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
-#define TILE_BOUNDARY_ALIGNED_FLAG       1      ///< JCTVC-N0160/JCTVC-N0199 proposal 2 variant 2: VPS VUI flag to indicate tile boundary alignment
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
-#define VPS_VUI_BITRATE_PICRATE          1      ///< JCTVC-N0085: Signal bit rate and picture in VPS VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
 #define HIGHER_LAYER_IRAP_SKIP_FLAG      1      ///< JCTVC-O0199: Indication that higher layer IRAP picture uses skip blocks only
 #endif
@@ -157,9 +142,6 @@
 #define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
 #endif 
 #define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
-#endif //VPS_VUI
-
-#endif
 
 #define P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED        1   ///< JCTVC-P0125 -- Keep it as a reserved FFFF value --- The following two macros (VPS_EXTN_OFFSET & VPS_EXTN_OFFSET_CALC) will have no effect when this macro is set to 1.
 #define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element
@@ -168,58 +150,30 @@
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
-#define SVC_UPSAMPLING                   1      ///< upsampling filters
-#define ROUNDING_OFFSET                  1      ///< JCTVC-N0111: upsampling rounding offset using scalling factors
-#define N0214_INTERMEDIATE_BUFFER_16BITS 1      ///< JCTVC-N0214: support base layer input more than 8 bits
-#define ARBITRARY_SPATIAL_RATIO          1      ///< JCTVC-N0219, JCTVC-N0273: Support arbitrary spatial ratio
-
-#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #if AVC_BASE
 #define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
 #endif
 
-#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
-#define ENCODER_FAST_MODE                1      ///< JCTVC-L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
 #define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
-#define EARLY_REF_PIC_MARKING            1      ///< Decoded picture marking of sub-layer non-reference pictures
-#define N0120_MAX_TID_REF_PRESENT_FLAG   1      ///< JCTVC-N0120: max_tid_ref_pics_plus1_present_flag
-#define N0120_MAX_TID_REF_CFG            1      ///< set max_tid_il_ref_pics_plus1 and max_tid_ref_present_flag in the config. file (configuration setting)
+#define EARLY_REF_PIC_MARKING            0      ///< Valencia meeting - remove early marking of inter-layer reference pictures
+                                                ///< Decoded picture marking of sub-layer non-reference pictures
 #define O0225_MAX_TID_FOR_REF_LAYERS     1
 #define O0225_TID_BASED_IL_RPS_DERIV     1
 #define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
 #define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
-#if REF_IDX_MFM
-#define N0139_POSITION_ROUNDING_OFFSET   1      ///< JCTVC-N0139: offset for collocated block in motion mapping
-#endif
 
-#define O0223_PICTURE_TYPES_ALIGN_FLAG   1  ///< a flag to indicatate whether picture types are aligned across layers.
+#define O0223_PICTURE_TYPES_ALIGN_FLAG   1      ///< a flag to indicatate whether picture types are aligned across layers.
 
 #define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
 
-#define N0147_IRAP_ALIGN_FLAG            1      ///< a flag to indicatate whether IRAPs are aligned across layers
-#if N0147_IRAP_ALIGN_FLAG
-#define O0223_O0139_IRAP_ALIGN_NO_CONTRAINTS  1  ///< Remove IRAP align depedency constraints on poc_Reset_flag.
-#define IRAP_ALIGN_FLAG_IN_VPS_VUI       1       ///< Move IRAP align flag to VPS VUI 
-#endif 
-#if !N0147_IRAP_ALIGN_FLAG
-#define IDR_ALIGNMENT                    1      ///< align IDR picures across layers : As per JCTVC-N0373, IDR are not required to be aligned.
-#endif
-#define FAST_INTRA_SHVC                  1      ///< JCTVC-M0115: reduction number of intra modes in the EL (encoder only)
-#if FAST_INTRA_SHVC
-#define NB_REMAIN_MODES                  2      ///< JCTVC-M0115: nb of remaining modes
-#endif
-
-#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
+#define IRAP_ALIGN_FLAG_IN_VPS_VUI       1      ///< Move IRAP align flag to VPS VUI 
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
-#define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
-#define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define N0065_LAYER_POC_ALIGNMENT        1
 
 #define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
@@ -245,7 +199,12 @@
 #define P0300_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-P0300: alt output layer flag
 
 #define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
-#define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_output_layer_set and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
+#define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_olss and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
+
+#define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
+#if Q0078_ADD_LAYER_SETS
+#define MAX_NUM_ADD_LAYER_SETS           1023
+#endif
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
@@ -262,15 +221,45 @@
 
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag
+#define BITRATE_PICRATE_SIGNALLING       1      ///< JCTVC-Q0102 Proposal 3 signal bitrate, picrate only up to the maximum temporal sub-layers in the corresponding layer set
+#define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
+#define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
+#define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 
-#if VIEW_ID_RELATED_SIGNALING
 /// scalability types
 enum ScalabilityType
 {
   VIEW_ORDER_INDEX  = 1,
-  SCALABILITY_ID = 2,
+  SCALABILITY_ID    = 2,
+  AUX_ID            = 3,
 };
+
+/// normative encoder constraints --------
+#define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
+#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
+
+/// encoder settings ---------------------
+#define FAST_INTRA_SHVC                  1      ///< JCTVC-M0115: reduction number of intra modes in the EL (encoder only)
+#if FAST_INTRA_SHVC
+#define NB_REMAIN_MODES                  2      ///< JCTVC-M0115: nb of remaining modes
 #endif
+#define RC_SHVC_HARMONIZATION            1      ///< JCTVC-M0037: rate control for SHVC
+#define JCTVC_M0259_LAMBDAREFINEMENT     1      ///< JCTVC-M0259: lambda refinement (encoder only optimization)
+#define ENCODER_FAST_MODE                1      ///< JCTVC-L0174: enable encoder fast mode. TestMethod 1 is enabled by setting to 1 and TestMethod 2 is enable by setting to 2. By default it is set to 1.
+#define LAYER_CTB                        0      ///< enable layer-specific CTB structure
+
+/// SEI messages -------------------------
+#define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
+#define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
+#if SUB_BITSTREAM_PROPERTY_SEI
+#define MAX_SUB_STREAMS                  1024
+#endif
+#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
+#define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
+#define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
+#define Q0189_TMVP_CONSTRAINTS           1      ///< JCTVC-Q0189: indicate constraints on TMVP
+#define Q0247_FRAME_FIELD_INFO           1      ///< JCTVC-Q0247: field_frame_info SEI message
+
 
 #else
 #define SYNTAX_OUTPUT                    0
@@ -303,8 +292,8 @@ enum ScalabilityType
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
 
-#if VPS_RENAME
-#define MAX_VPS_OP_LAYER_SETS_PLUS1               3
+#if SVC_EXTENSION
+#define MAX_VPS_OP_LAYER_SETS_PLUS1               (MAX_LAYERS+1)
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
 #define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
 #else

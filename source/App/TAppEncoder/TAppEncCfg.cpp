@@ -68,9 +68,7 @@ TAppEncCfg::TAppEncCfg()
 #if AVC_BASE
 , m_avcBaseLayerFlag(0)
 #endif
-#if N0120_MAX_TID_REF_CFG
 , m_maxTidRefPresentFlag(1)
-#endif 
 , m_pColumnWidth()
 , m_pRowHeight()
 , m_scalingListFile()
@@ -419,9 +417,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_OutputBitDepthY   [MAX_LAYERS];
   Int*    cfg_OutputBitDepthC   [MAX_LAYERS];
 #endif
-#if N0120_MAX_TID_REF_CFG
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
-#endif 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -490,13 +486,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   cfg_OutputBitDepthY  [layer] = &m_acLayerCfg[layer].m_outputBitDepthY;
   cfg_OutputBitDepthC  [layer] = &m_acLayerCfg[layer].m_outputBitDepthC;
 #endif
-#if N0120_MAX_TID_REF_CFG
-    cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
-#endif 
+  cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1; 
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
   }
+#if Q0078_ADD_LAYER_SETS
+  Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  string cfg_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  string* cfg_layerSetLayerIdListPtr[MAX_VPS_LAYER_SETS_PLUS1];
+  Int* cfg_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  string cfg_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  string* cfg_highestLayerIdxPtr[MAX_VPS_LAYER_SETS_PLUS1];
+  for (UInt i = 0; i < MAX_VPS_LAYER_SETS_PLUS1; i++)
+  {
+    cfg_numLayerInIdList[i] = &m_numLayerInIdList[i];
+    cfg_layerSetLayerIdListPtr[i] = &cfg_layerSetLayerIdList[i];
+    cfg_highestLayerIdxPtr[i] = &cfg_highestLayerIdx[i];
+    cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
+  }
+#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
@@ -518,6 +527,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_startOfCodedInterval;
   string cfg_codedPivotValue;
   string cfg_targetPivotValue;
+#if P0050_KNEE_FUNCTION_SEI
+  string cfg_kneeSEIInputKneePointValue;
+  string cfg_kneeSEIOutputKneePointValue;
+#endif
   po::Options opts;
   opts.addOptions()
   ("help", do_help, false, "this help text")
@@ -547,21 +560,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PredLayerIds%d",          cfg_predLayerIdsPtr, string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
+#if Q0078_ADD_LAYER_SETS
+  ("NumLayerSets",            m_numLayerSets, 0, "Number of layer sets")
+  ("NumLayerInIdList%d",      cfg_numLayerInIdList, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of layers in the set")
+  ("LayerSetLayerIdList%d",   cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set")
+  ("NumAddLayerSets",         m_numAddLayerSets, 0, "Number of additional layer sets")
+  ("NumHighestLayerIdx%d",    cfg_numHighestLayerIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of highest layer idx")
+  ("HighestLayerIdx%d",       cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Highest layer idx for an additional layer set")
+#endif
 #if AUXILIARY_PICTURES
   ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
   ("ChromaFormatIDC%d,-cf",   cfg_tmpChromaFormatIDC,    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
   ("AuxId%d",                 cfg_auxId,                 0,   MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
   ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-#if SCALABILITY_MASK_E0104
   ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
 #if AUXILIARY_PICTURES
   ("ScalabilityMask3",        m_scalabilityMask[3], 0, "scalability_mask[3] (auxiliary pictures)" )
-#endif
-#else
-  ("ScalabilityMask0",        m_scalabilityMask[0], 0, "scalability_mask[0] (multiview)")
-  ("ScalabilityMask1",        m_scalabilityMask[1], 1, "scalability_mask[1] (scalable)" )
 #endif
   ("BitstreamFile,b",         cfg_BitstreamFile, string(""), "Bitstream output file name")
 #if !O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -597,16 +613,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepth%d",      cfg_OutputBitDepthY,   0, MAX_LAYERS, "Bit-depth of output file (default:InternalBitDepth)")
   ("OutputBitDepthC%d",     cfg_OutputBitDepthC,   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 #endif
-#if N0120_MAX_TID_REF_CFG
   ("MaxTidRefPresentFlag", m_maxTidRefPresentFlag, true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
   ("MaxTidIlRefPicsPlus1%d", cfg_maxTidIlRefPicsPlus1, 1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
-#endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   ("CrossLayerPictureTypeAlignFlag", m_crossLayerPictureTypeAlignFlag, true, "align picture type across layers" )  
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   ("CrossLayerIrapAlignFlag", m_crossLayerIrapAlignFlag, true, "align IRAP across layers" )  
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   ("CrossLayerAlignedIdrOnlyFlag", m_crossLayerAlignedIdrOnlyFlag, true, "only idr for IRAP across layers" )  
 #endif
@@ -952,6 +964,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("SEISOPDescription",              m_SOPDescriptionSEIEnabled,              0, "Control generation of SOP description SEI messages")
   ("SEIScalableNesting",             m_scalableNestingSEIEnabled,              0, "Control generation of scalable nesting SEI messages")
+#if P0050_KNEE_FUNCTION_SEI
+  ("SEIKneeFunctionInfo",                 m_kneeSEIEnabled,               false, "Control generation of Knee function SEI messages")
+  ("SEIKneeFunctionId",                   m_kneeSEIId,                        0, "Specifies Id of Knee function SEI message for a given session")
+  ("SEIKneeFunctionCancelFlag",           m_kneeSEICancelFlag,            false, "Indicates that Knee function SEI message cancels the persistance or follows")
+  ("SEIKneeFunctionPersistenceFlag",      m_kneeSEIPersistenceFlag,        true, "Specifies the persistence of the Knee function SEI message")
+  ("SEIKneeFunctionMappingFlag",          m_kneeSEIMappingFlag,           false, "Specifies the mapping mode of the Knee function SEI message")
+  ("SEIKneeFunctionInputDrange",          m_kneeSEIInputDrange,            1000, "Specifies the peak luminance level for the input picture of Knee function SEI messages")
+  ("SEIKneeFunctionInputDispLuminance",   m_kneeSEIInputDispLuminance,      100, "Specifies the expected display brightness for the input picture of Knee function SEI messages")
+  ("SEIKneeFunctionOutputDrange",         m_kneeSEIOutputDrange,           4000, "Specifies the peak luminance level for the output picture of Knee function SEI messages")
+  ("SEIKneeFunctionOutputDispLuminance",  m_kneeSEIOutputDispLuminance,     800, "Specifies the expected display brightness for the output picture of Knee function SEI messages")
+  ("SEIKneeFunctionNumKneePointsMinus1",  m_kneeSEINumKneePointsMinus1,       2, "Specifies the number of knee points - 1")
+  ("SEIKneeFunctionInputKneePointValue",  cfg_kneeSEIInputKneePointValue,     string("600 800 900"), "Array of input knee point")
+  ("SEIKneeFunctionOutputKneePointValue", cfg_kneeSEIOutputKneePointValue,    string("100 250 450"), "Array of output knee point")
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+  ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
+#endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
@@ -975,6 +1004,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
   ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
 #endif
+#if Q0108_TSA_STSA
+  ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
+#endif
   ;
   
   for(Int i=1; i<MAX_GOP+1; i++) {
@@ -982,8 +1014,41 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cOSS<<"Frame"<<i;
     opts.addOptions()(cOSS.str(), m_GOPList[i-1], GOPEntry());
   }
+
+#if Q0108_TSA_STSA
+  for (Int i=1; i<MAX_LAYERS; i++)
+  {
+    for(Int j=1; j<MAX_GOP+1; j++)
+    { 
+      std::ostringstream cOSS;
+      cOSS<<"Layer"<<i<<"Frame"<<j;
+      opts.addOptions()(cOSS.str(), m_EhGOPList[i][j-1], GOPEntry());
+    }
+  }
+#endif 
+
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
+
+#if Q0108_TSA_STSA
+  for (Int i=1; i<MAX_LAYERS; i++)
+  {
+    if(m_inheritCodingStruct[i] == 0)
+    {
+      for(Int j=1; j<MAX_GOP+1; j++)
+      { 
+        m_EhGOPList[i][j-1] = m_GOPList[j-1];
+      }
+    }
+    else if( m_inheritCodingStruct[i] > 0)
+    {
+      for(Int j=1; j<MAX_GOP+1; j++)
+      {
+        m_EhGOPList[i][j-1] = m_EhGOPList[m_inheritCodingStruct[i]][j-1];
+      }
+    }
+  }
+#endif 
 
   if(m_isField)
   {
@@ -1311,6 +1376,48 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #endif
+#if Q0078_ADD_LAYER_SETS
+  for (Int layerSet = 0; layerSet < m_numLayerSets; layerSet++)
+  {
+    if (m_numLayerInIdList[layerSet] > 0)
+    {
+      Char* layerSetLayerIdListDup = cfg_layerSetLayerIdList[layerSet].empty() ? NULL : strdup(cfg_layerSetLayerIdList[layerSet].c_str());
+      Int  i = 0;
+      char *layerId = strtok(layerSetLayerIdListDup, " ,-");
+      while (layerId != NULL)
+      {
+        if (i >= m_numLayerInIdList[layerSet])
+        {
+          printf("NumLayerInIdList%d: The number of layers in the set is larger than the allowed number of layers.\n", layerSet);
+          exit(EXIT_FAILURE);
+        }
+        m_layerSetLayerIdList[layerSet][i] = atoi(layerId);
+        layerId = strtok(NULL, " ,-");
+        i++;
+      }
+    }
+  }
+  for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
+  {
+    if (m_numHighestLayerIdx[addLayerSet] > 0)
+    {
+      Char* highestLayrIdxListDup = cfg_highestLayerIdx[addLayerSet].empty() ? NULL : strdup(cfg_highestLayerIdx[addLayerSet].c_str());
+      Int  i = 0;
+      char *layerIdx = strtok(highestLayrIdxListDup, " ,-");
+      while (layerIdx != NULL)
+      {
+        if (i >= m_numLayerInIdList[addLayerSet])
+        {
+          printf("NumLayerInIdList%d: The number of layer idx's in the highest layer idx list is larger than the allowed number of idx's.\n", addLayerSet);
+          exit(EXIT_FAILURE);
+        }
+        m_highestLayerIdx[addLayerSet][i] = atoi(layerIdx);
+        layerIdx = strtok(NULL, " ,-");
+        i++;
+      }
+    }
+  }
+#endif
 #endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
@@ -1494,6 +1601,32 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_targetPivotValue = NULL;
     }
   }
+#if P0050_KNEE_FUNCTION_SEI
+  if( m_kneeSEIEnabled && !m_kneeSEICancelFlag )
+  {
+    Char* pcInputKneePointValue  = cfg_kneeSEIInputKneePointValue.empty()  ? NULL : strdup(cfg_kneeSEIInputKneePointValue.c_str());
+    Char* pcOutputKneePointValue = cfg_kneeSEIOutputKneePointValue.empty() ? NULL : strdup(cfg_kneeSEIOutputKneePointValue.c_str());
+    assert ( m_kneeSEINumKneePointsMinus1 >= 0 && m_kneeSEINumKneePointsMinus1 < 999 );
+    m_kneeSEIInputKneePoint = new Int[m_kneeSEINumKneePointsMinus1+1];
+    m_kneeSEIOutputKneePoint = new Int[m_kneeSEINumKneePointsMinus1+1];
+    char *InputVal = strtok(pcInputKneePointValue, " .,");
+    Int i=0;
+    while( InputVal && i<(m_kneeSEINumKneePointsMinus1+1) )
+    {
+      m_kneeSEIInputKneePoint[i] = (UInt) atoi( InputVal );
+      InputVal = strtok(NULL, " .,");
+      i++;
+    }
+    char *OutputVal = strtok(pcOutputKneePointValue, " .,");
+    i=0;
+    while( OutputVal && i<(m_kneeSEINumKneePointsMinus1+1) )
+    {
+      m_kneeSEIOutputKneePoint[i] = (UInt) atoi( OutputVal );
+      OutputVal = strtok(NULL, " .,");
+      i++;
+    }
+  }
+#endif
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if (m_interLayerConstrainedTileSetsSEIEnabled)
@@ -1741,10 +1874,43 @@ Void TAppEncCfg::xCheckParameter()
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
 #if SVC_EXTENSION
+#if Q0108_TSA_STSA
+  if( m_acLayerCfg[0].m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1 )
+  {
+    m_GOPList[0] = GOPEntry();
+    m_GOPList[0].m_QPFactor = 1;
+    m_GOPList[0].m_betaOffsetDiv2 = 0;
+    m_GOPList[0].m_tcOffsetDiv2 = 0;
+    m_GOPList[0].m_POC = 1;
+    m_GOPList[0].m_numRefPicsActive = 4;
+  }
+
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if (m_acLayerCfg[layer].m_iIntraPeriod == 1 && m_EhGOPList[layer][0].m_POC == -1) {
+      m_EhGOPList[layer][0] = GOPEntry();
+      m_EhGOPList[layer][0].m_QPFactor = 1;
+      m_EhGOPList[layer][0].m_betaOffsetDiv2 = 0;
+      m_EhGOPList[layer][0].m_tcOffsetDiv2 = 0;
+      m_EhGOPList[layer][0].m_POC = 1;
+      m_EhGOPList[layer][0].m_numRefPicsActive = 4;
+    }
+  }
+#else
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+    if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
+      m_GOPList[0] = GOPEntry();
+      m_GOPList[0].m_QPFactor = 1;
+      m_GOPList[0].m_betaOffsetDiv2 = 0;
+      m_GOPList[0].m_tcOffsetDiv2 = 0;
+      m_GOPList[0].m_POC = 1;
+      m_GOPList[0].m_numRefPicsActive = 4;
+    }
+  }
 #endif
+#else
   if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
     m_GOPList[0] = GOPEntry();
     m_GOPList[0].m_QPFactor = 1;
@@ -1753,10 +1919,7 @@ Void TAppEncCfg::xCheckParameter()
     m_GOPList[0].m_POC = 1;
     m_GOPList[0].m_numRefPicsActive = 4;
   }
-#if SVC_EXTENSION
-  }
 #endif
-  
 
   Bool verifiedGOP=false;
   Bool errorGOP=false;
@@ -1789,7 +1952,6 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
-
   
   // it can be updated after AVC BL support will be added to the WD
   if( m_avcBaseLayerFlag )
@@ -1826,7 +1988,11 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
 
-  m_extraRPSs=0;
+#if !Q0108_TSA_STSA
+   m_extraRPSs = 0;                                      
+#else
+  memset( m_extraRPSs, 0, sizeof( m_extraRPSs ) );
+#endif
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP) 
   {
@@ -1892,15 +2058,24 @@ Void TAppEncCfg::xCheckParameter()
       else 
       {
         //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
+#if !Q0108_TSA_STSA
         m_GOPList[m_iGOPSize+m_extraRPSs]=m_GOPList[curGOP];
+#else
+        m_GOPList[m_iGOPSize+m_extraRPSs[0]]=m_GOPList[curGOP];
+#endif
         Int newRefs=0;
         for(Int i = 0; i< m_GOPList[curGOP].m_numRefPics; i++) 
         {
           Int absPOC = curPOC+m_GOPList[curGOP].m_referencePics[i];
           if(absPOC>=0)
           {
+#if !Q0108_TSA_STSA
             m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[newRefs]=m_GOPList[curGOP].m_referencePics[i];
             m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[newRefs]=m_GOPList[curGOP].m_usedByCurrPic[i];
+#else
+            m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[newRefs]=m_GOPList[curGOP].m_referencePics[i];
+            m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[newRefs]=m_GOPList[curGOP].m_usedByCurrPic[i];
+#endif
             newRefs++;
           }
         }
@@ -1923,7 +2098,11 @@ Void TAppEncCfg::xCheckParameter()
             }
             for(Int i=0; i<newRefs; i++) 
             {
+#if !Q0108_TSA_STSA
               if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[i]==offPOC-curPOC)
+#else
+              if(m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[i]==offPOC-curPOC)
+#endif
               {
                 newRef=false;
               }
@@ -1938,7 +2117,11 @@ Void TAppEncCfg::xCheckParameter()
               }
               for(Int j=0; j<newRefs; j++)
               {
+#if !Q0108_TSA_STSA
                 if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]<offPOC-curPOC||m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]>0)
+#else
+                if(m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]<offPOC-curPOC||m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]>0)
+#endif
                 {
                   insertPoint = j;
                   break;
@@ -1948,10 +2131,18 @@ Void TAppEncCfg::xCheckParameter()
               Int prevUsed = m_GOPList[offGOP].m_temporalId<=m_GOPList[curGOP].m_temporalId;
               for(Int j=insertPoint; j<newRefs+1; j++)
               {
+#if !Q0108_TSA_STSA
                 Int newPrev = m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j];
                 Int newUsed = m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j];
                 m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]=prev;
                 m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j]=prevUsed;
+#else
+                Int newPrev = m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j];
+                Int newUsed = m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[j];
+                m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]=prev;
+                m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[j]=prevUsed;
+#endif
+
                 prevUsed=newUsed;
                 prev=newPrev;
               }
@@ -1963,16 +2154,34 @@ Void TAppEncCfg::xCheckParameter()
             break;
           }
         }
+#if !Q0108_TSA_STSA
         m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics=newRefs;
         m_GOPList[m_iGOPSize+m_extraRPSs].m_POC = curPOC;
+#else
+        m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefPics=newRefs;
+        m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_POC = curPOC;
+#endif
+#if !Q0108_TSA_STSA
         if (m_extraRPSs == 0)
+#else
+        if (m_extraRPSs[0] == 0)
+#endif
         {
+#if !Q0108_TSA_STSA
           m_GOPList[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 0;
           m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefIdc = 0;
+#else
+          m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_interRPSPrediction = 0;
+          m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefIdc = 0;
+#endif
         }
         else
         {
+#if !Q0108_TSA_STSA
           Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
+#else
+          Int rIdx =  m_iGOPSize + m_extraRPSs[0] - 1;
+#endif
           Int refPOC = m_GOPList[rIdx].m_POC;
           Int refPics = m_GOPList[rIdx].m_numRefPics;
           Int newIdc=0;
@@ -1981,6 +2190,7 @@ Void TAppEncCfg::xCheckParameter()
             Int deltaPOC = ((i != refPics)? m_GOPList[rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
             Int absPOCref = refPOC+deltaPOC;
             Int refIdc = 0;
+#if !Q0108_TSA_STSA
             for (Int j = 0; j < m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics; j++)
             {
               if ( (absPOCref - curPOC) == m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j])
@@ -2005,6 +2215,33 @@ Void TAppEncCfg::xCheckParameter()
         curGOP=m_iGOPSize+m_extraRPSs;
         m_extraRPSs++;
       }
+#else
+            for (Int j = 0; j < m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefPics; j++)
+            {
+              if ( (absPOCref - curPOC) == m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j])
+              {
+                if (m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[j])
+                {
+                  refIdc = 1;
+                }
+                else
+                {
+                  refIdc = 2;
+                }
+              }
+            }
+            m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_refIdc[newIdc]=refIdc;
+            newIdc++;
+          }
+          m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_interRPSPrediction = 1;  
+          m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefIdc = newIdc;
+          m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_deltaRPS = refPOC - m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_POC; 
+        }
+        curGOP=m_iGOPSize+m_extraRPSs[0];
+        m_extraRPSs[0]++;
+      }
+#endif
+
       numRefs=0;
       for(Int i = 0; i< m_GOPList[curGOP].m_numRefPics; i++) 
       {
@@ -2021,6 +2258,247 @@ Void TAppEncCfg::xCheckParameter()
     checkGOP++;
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
+
+#if SVC_EXTENSION && Q0108_TSA_STSA
+  for ( Int layerId = 1; layerId < m_numLayers; layerId++ )
+  {
+    verifiedGOP=false;
+    errorGOP=false;
+    checkGOP=1;
+    numRefs = m_isField ? 2 : 1;
+    refList[0]=0;
+
+    if(m_isField)
+    {
+      refList[1] = 1;
+    }
+
+    memset( isOK, 0, sizeof( isOK ) );
+    numOK=0;
+
+    for(Int i=0; i<m_iGOPSize; i++)
+    {
+      if(m_EhGOPList[layerId][i].m_POC==m_iGOPSize)
+      {
+        xConfirmPara( m_EhGOPList[layerId][i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
+      }
+    }
+
+    xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
+    m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
+
+    // verify layer configuration parameters
+    for(UInt layer=0; layer<m_numLayers; layer++)
+    {
+      Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
+      if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
+      {
+        for(Int i=0; i<m_iGOPSize; i++)
+        {
+          xConfirmPara( (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
+          xConfirmPara( (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
+        }
+      }
+    }
+
+    //start looping through frames in coding order until we can verify that the GOP structure is correct.
+    while(!verifiedGOP&&!errorGOP) 
+    {
+      Int curGOP = (checkGOP-1)%m_iGOPSize;
+      Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][curGOP].m_POC;    
+      if(m_EhGOPList[layerId][curGOP].m_POC<0) 
+      {
+        printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
+        errorGOP=true;
+      }
+      else 
+      {
+        //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
+        Bool beforeI = false;
+        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+        {
+          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          if(absPOC < 0)
+          {
+            beforeI=true;
+          }
+          else 
+          {
+            Bool found=false;
+            for(Int j=0; j<numRefs; j++) 
+            {
+              if(refList[j]==absPOC) 
+              {
+                found=true;
+                for(Int k=0; k<m_iGOPSize; k++)
+                {
+                  if(absPOC%m_iGOPSize == m_EhGOPList[layerId][k].m_POC%m_iGOPSize)
+                  {
+                    if(m_EhGOPList[layerId][k].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                    {
+                      m_EhGOPList[layerId][k].m_refPic = true;
+                    }
+                    m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i]=m_EhGOPList[layerId][k].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                  }
+                }
+              }
+            }
+            if(!found)
+            {
+              printf("\nError: ref pic %d is not available for GOP frame %d\n",m_EhGOPList[layerId][curGOP].m_referencePics[i],curGOP+1);
+              errorGOP=true;
+            }
+          }
+        }
+        if(!beforeI&&!errorGOP)
+        {
+          //all ref frames were present
+          if(!isOK[curGOP]) 
+          {
+            numOK++;
+            isOK[curGOP]=true;
+            if(numOK==m_iGOPSize)
+            {
+              verifiedGOP=true;
+            }
+          }
+        }
+        else 
+        {
+          //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
+
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]]=m_EhGOPList[layerId][curGOP];
+          Int newRefs=0;
+          for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+          {
+            Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+            if(absPOC>=0)
+            {
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[newRefs]=m_EhGOPList[layerId][curGOP].m_referencePics[i];
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[newRefs]=m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i];
+              newRefs++;
+            }
+          }
+          Int numPrefRefs = m_EhGOPList[layerId][curGOP].m_numRefPicsActive;
+
+          for(Int offset = -1; offset>-checkGOP; offset--)
+          {
+            //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
+            Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
+            Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][offGOP].m_POC;
+            if(offPOC>=0&&m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId)
+            {
+              Bool newRef=false;
+              for(Int i=0; i<numRefs; i++)
+              {
+                if(refList[i]==offPOC)
+                {
+                  newRef=true;
+                }
+              }
+              for(Int i=0; i<newRefs; i++) 
+              {
+                if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[i]==offPOC-curPOC)
+                {
+                  newRef=false;
+                }
+              }
+              if(newRef) 
+              {
+                Int insertPoint=newRefs;
+                //this picture can be added, find appropriate place in list and insert it.
+                if(m_EhGOPList[layerId][offGOP].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                {
+                  m_EhGOPList[layerId][offGOP].m_refPic = true;
+                }
+                for(Int j=0; j<newRefs; j++)
+                {
+                  if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]<offPOC-curPOC||m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]>0)
+                  {
+                    insertPoint = j;
+                    break;
+                  }
+                }
+                Int prev = offPOC-curPOC;
+                Int prevUsed = m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                for(Int j=insertPoint; j<newRefs+1; j++)
+                {
+                  Int newPrev = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j];
+                  Int newUsed = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j];
+                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]=prev;
+                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j]=prevUsed;
+                  prevUsed=newUsed;
+                  prev=newPrev;
+                }
+                newRefs++;
+              }
+            }
+            if(newRefs>=numPrefRefs)
+            {
+              break;
+            }
+          }
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics=newRefs;
+          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC = curPOC;
+          if (m_extraRPSs[layerId] == 0)
+          {
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 0;
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = 0;
+          }
+          else
+          {
+            Int rIdx =  m_iGOPSize + m_extraRPSs[layerId] - 1;
+            Int refPOC = m_EhGOPList[layerId][rIdx].m_POC;
+            Int refPics = m_EhGOPList[layerId][rIdx].m_numRefPics;
+            Int newIdc=0;
+            for(Int i = 0; i<= refPics; i++) 
+            {
+              Int deltaPOC = ((i != refPics)? m_EhGOPList[layerId][rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
+              Int absPOCref = refPOC+deltaPOC;
+              Int refIdc = 0;
+              for (Int j = 0; j < m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics; j++)
+              {
+                if ( (absPOCref - curPOC) == m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j])
+                {
+                  if (m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j])
+                  {
+                    refIdc = 1;
+                  }
+                  else
+                  {
+                    refIdc = 2;
+                  }
+                }
+              }
+              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_refIdc[newIdc]=refIdc;
+              newIdc++;
+            }
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 1;  
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = newIdc;
+            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_deltaRPS = refPOC - m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC; 
+          }
+          curGOP=m_iGOPSize+m_extraRPSs[layerId];
+          m_extraRPSs[layerId]++;
+        }
+        numRefs=0;
+        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+        {
+          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          if(absPOC >= 0) 
+          {
+            refList[numRefs]=absPOC;
+            numRefs++;
+          }
+        }
+        refList[numRefs]=curPOC;
+        numRefs++;
+      }
+      checkGOP++;
+    }
+    xConfirmPara(errorGOP,"Invalid GOP structure given");
+  }
+#endif 
+
   m_maxTempLayer = 1;
   for(Int i=0; i<m_iGOPSize; i++) 
   {
@@ -2030,6 +2508,22 @@ Void TAppEncCfg::xCheckParameter()
     }
     xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
   }
+
+#if Q0108_TSA_STSA
+  for ( Int layerId = 1; layerId < m_numLayers; layerId++)
+  {
+    m_EhMaxTempLayer[layerId] = 1;
+    for(Int i=0; i<m_iGOPSize; i++) 
+    {
+      if(m_EhGOPList[layerId][i].m_temporalId >= m_EhMaxTempLayer[layerId] )
+      {
+        m_EhMaxTempLayer[layerId] = m_EhGOPList[layerId][i].m_temporalId;
+      }
+      xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
+    }
+  }
+#endif
+
   for(Int i=0; i<MAX_TLAYER; i++)
   {
     m_numReorderPics[i] = 0;
@@ -2194,6 +2688,20 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_nominalBlackLevelLumaCodeValue >= m_nominalWhiteLevelLumaCodeValue, "SEIToneMapNominalWhiteLevelLumaCodeValue shall be greater than SEIToneMapNominalBlackLevelLumaCodeValue");
     xConfirmPara( m_extendedWhiteLevelLumaCodeValue < m_nominalWhiteLevelLumaCodeValue, "SEIToneMapExtendedWhiteLevelLumaCodeValue shall be greater than or equal to SEIToneMapNominalWhiteLevelLumaCodeValue");
   }
+#if P0050_KNEE_FUNCTION_SEI
+  if (m_kneeSEIEnabled && !m_kneeSEICancelFlag)
+  {
+    xConfirmPara( m_kneeSEINumKneePointsMinus1 < 0 || m_kneeSEINumKneePointsMinus1 > 998, "SEIKneeFunctionNumKneePointsMinus1 must be in the range of 0 to 998");
+    for ( UInt i=0; i<=m_kneeSEINumKneePointsMinus1; i++ ){
+      xConfirmPara( m_kneeSEIInputKneePoint[i] < 1 || m_kneeSEIInputKneePoint[i] > 999, "SEIKneeFunctionInputKneePointValue must be in the range of 1 to 999");
+      xConfirmPara( m_kneeSEIOutputKneePoint[i] < 0 || m_kneeSEIOutputKneePoint[i] > 1000, "SEIKneeFunctionInputKneePointValue must be in the range of 0 to 1000");
+      if ( i > 0 )
+      {
+        xConfirmPara( m_kneeSEIInputKneePoint[i-1] >= m_kneeSEIInputKneePoint[i],  "The i-th SEIKneeFunctionInputKneePointValue must be greather than the (i-1)-th value");
+      }
+    }
+  }
+#endif
 
 #if RC_SHVC_HARMONIZATION
   for ( Int layer=0; layer<m_numLayers; layer++ )
@@ -2233,6 +2741,8 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara(m_framePackingSEIType < 3 || m_framePackingSEIType > 5 , "SEIFramePackingType must be in rage 3 to 5");
   }
+
+#if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
   xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
@@ -2303,12 +2813,10 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
 #endif
-#if N0120_MAX_TID_REF_CFG
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
     xConfirmPara(m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
-#endif 
 #if AUXILIARY_PICTURES
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
@@ -2319,6 +2827,7 @@ Void TAppEncCfg::xCheckParameter()
 #if Q0048_CGS_3D_ASYMLUT
   xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
 #endif
+#endif //SVC_EXTENSION
 #undef xConfirmPara
   if (check_failed)
   {
@@ -2396,18 +2905,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
 #if SVC_EXTENSION  
   printf("Total number of layers        : %d\n", m_numLayers       );
-#if SCALABILITY_MASK_E0104
-  printf("Multiview                     : %d\n", m_scalabilityMask[1] );
-  printf("Scalable                      : %d\n", m_scalabilityMask[2] );
+  printf("Multiview                     : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
+  printf("Scalable                      : %d\n", m_scalabilityMask[SCALABILITY_ID] );
 #if AVC_BASE
   printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
 #endif
 #if AUXILIARY_PICTURES
-  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[3] );
-#endif
-#else
-  printf("Multiview                     : %d\n", m_scalabilityMask[0] );
-  printf("Scalable                      : %d\n", m_scalabilityMask[1] );
+  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[AUX_ID] );
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
@@ -2418,9 +2922,7 @@ Void TAppEncCfg::xPrintParameter()
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   printf("Align picture type            : %d\n", m_crossLayerPictureTypeAlignFlag );
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
-#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   printf("IDR only for IRAP             : %d\n", m_crossLayerAlignedIdrOnlyFlag );
 #endif

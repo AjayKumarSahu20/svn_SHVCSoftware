@@ -3516,12 +3516,23 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
   Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #endif
 
-#if N0139_POSITION_ROUNDING_OFFSET
+#if REF_IDX_MFM
+  // offset for collocated block in the motion mapping
   if( iMotionMapping == 1 )
   {
+    Bool unequalPictureSizeFlag = g_posScalingFactor[refLayerIdc][0] != 65536 || g_posScalingFactor[refLayerIdc][1] != 65536; //the condition should be updated according to the WD.
+
     // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
-    iBX = ( ( iBX + 4 ) >> 4 ) << 4;
-    iBY = ( ( iBY + 4 ) >> 4 ) << 4;
+    if( unequalPictureSizeFlag )
+    {
+      iBX = ( ( iBX + 4 ) >> 4 ) << 4;
+      iBY = ( ( iBY + 4 ) >> 4 ) << 4;
+    }
+    else
+    {
+      iBX += 4;
+      iBY += 4;
+    }
   }
 #endif
 
@@ -3636,17 +3647,29 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
   if(uhInterDir&0x1)  //list0
   {
     Int refIdxL0 = cMvFieldL0.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_0, refIdxL0)->isILR(m_layerId))
+    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_0, refIdxL0);
+
+    if(refPic->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+
+      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
     }
   }
   if(uhInterDir&0x2)  //list1
   {
     Int refIdxL1  = cMvFieldL1.getRefIdx();
-    if(getSlice()->getRefPic(REF_PIC_LIST_1, refIdxL1)->isILR(m_layerId))
+    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_1, refIdxL1);
+
+    if(refPic->isILR(m_layerId))
     {
       checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+
+      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
     }
   }
 

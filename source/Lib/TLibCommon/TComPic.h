@@ -91,28 +91,26 @@ private:
 #if Q0048_CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
 #endif
-
+#if POC_RESET_IDC_DECODER
+  Bool                  m_currAuFlag;
+#endif
 public:
   TComPic();
   virtual ~TComPic();
   
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
 #else
-  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
-                        Int *numReorderPics, Bool bIsVirtual = false );                        
-#endif
-#else
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
                         Int *numReorderPics, TComSPS* pcSps = NULL, Bool bIsVirtual = false );
+#endif
 #else
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow, 
-                        Int *numReorderPics, Bool bIsVirtual = false );                        
-#endif
-#endif
+                        Int *numReorderPics, Bool bIsVirtual = false ); 
+#endif //SVC_EXTENSION 
+
   virtual Void  destroy();
   
   UInt          getTLayer()                { return m_uiTLayer;   }
@@ -201,7 +199,7 @@ public:
   Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
   TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
 #if REF_IDX_ME_ZEROMV || ENCODER_FAST_MODE || REF_IDX_MFM
-  Bool          isILR( UInt currLayerId )   { return ( getIsLongTerm() && m_layerId < currLayerId ); }
+  Bool          isILR( UInt currLayerId )   { return ( m_bIsLongTerm && m_layerId < currLayerId ); }
 #endif
 #if REF_IDX_MFM
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
@@ -225,6 +223,10 @@ public:
 #if Q0048_CGS_3D_ASYMLUT
   Void  setFrameBit( Int n )  { m_nFrameBit = n;    }
   Int   getFrameBit()         { return m_nFrameBit; }
+#endif
+#if POC_RESET_IDC_DECODER
+  Bool isCurrAu() { return m_currAuFlag; }
+  Void setCurrAuFlag(Bool x) {m_currAuFlag = x; }
 #endif
 };// END CLASS DEFINITION TComPic
 

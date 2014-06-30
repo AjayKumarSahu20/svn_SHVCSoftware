@@ -36,6 +36,10 @@
 #include <vector>
 #include <cstring>
 
+#if Q0078_ADD_LAYER_SETS
+#include "TLibCommon/NAL.h"
+#endif
+
 //! \ingroup TLibCommon
 //! \{
 class TComSPS;
@@ -65,6 +69,9 @@ public:
     FILM_GRAIN_CHARACTERISTICS           = 19,
     POST_FILTER_HINT                     = 22,
     TONE_MAPPING_INFO                    = 23,
+#if P0050_KNEE_FUNCTION_SEI
+    KNEE_FUNCTION_INFO                   = 24,
+#endif
     FRAME_PACKING                        = 45,
     DISPLAY_ORIENTATION                  = 47,
     SOP_DESCRIPTION                      = 128,
@@ -90,6 +97,16 @@ public:
 #endif
 #if Q0074_SEI_COLOR_MAPPING
     COLOR_MAPPING_INFO                   = 143,
+#endif
+#if Q0078_ADD_LAYER_SETS
+    OUTPUT_LAYER_SET_NESTING             = 144,
+    VPS_REWRITING                        = 145,
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+    TMVP_CONSTRAINTS                     = 146,
+#endif
+#if Q0247_FRAME_FIELD_INFO
+    FRAME_FIELD_INFO                     = 147,
 #endif
   };
   
@@ -406,7 +423,27 @@ public:
   Int    m_nominalWhiteLevelLumaCodeValue;
   Int    m_extendedWhiteLevelLumaCodeValue;
 };
+#if P0050_KNEE_FUNCTION_SEI
+class SEIKneeFunctionInfo : public SEI
+{
+public:
+  PayloadType payloadType() const { return KNEE_FUNCTION_INFO; }
+  SEIKneeFunctionInfo() {}
+  virtual ~SEIKneeFunctionInfo() {}
 
+  Int   m_kneeId;
+  Bool  m_kneeCancelFlag;
+  Bool  m_kneePersistenceFlag;
+  Bool  m_kneeMappingFlag;
+  Int   m_kneeInputDrange;
+  Int   m_kneeInputDispLuminance;
+  Int   m_kneeOutputDrange;
+  Int   m_kneeOutputDispLuminance;
+  Int   m_kneeNumKneePointsMinus1;
+  std::vector<Int> m_kneeInputKneePoint;
+  std::vector<Int> m_kneeOutputKneePoint;
+};
+#endif
 #if Q0074_SEI_COLOR_MAPPING
 class SEIColorMappingInfo : public SEI
 {
@@ -483,6 +520,46 @@ public:
   Int  m_avgBitRate             [MAX_SUB_STREAMS];
   Int  m_maxBitRate             [MAX_SUB_STREAMS];
 };
+#endif
+
+#if Q0189_TMVP_CONSTRAINTS
+class SEITMVPConstrains : public SEI
+{
+public:
+  PayloadType payloadType() const { return TMVP_CONSTRAINTS; }
+
+  SEITMVPConstrains()
+    : prev_pics_not_used_flag(0),no_intra_layer_col_pic_flag(0)
+    {}
+
+  virtual ~SEITMVPConstrains()
+  {
+  }
+
+  UInt prev_pics_not_used_flag;
+  UInt no_intra_layer_col_pic_flag;
+};
+#endif
+
+#if Q0247_FRAME_FIELD_INFO 
+class SEIFrameFieldInfo: public SEI
+{
+public:
+  PayloadType payloadType() const { return FRAME_FIELD_INFO; }
+
+  SEIFrameFieldInfo()
+    : m_ffinfo_picStruct(0),m_ffinfo_sourceScanType(0), m_ffinfo_duplicateFlag(false)
+    {}
+
+  virtual ~SEIFrameFieldInfo()
+  {
+  }
+
+  UInt  m_ffinfo_picStruct;
+  UInt  m_ffinfo_sourceScanType;
+  Bool  m_ffinfo_duplicateFlag;
+};
+
 #endif
 
 typedef std::list<SEI*> SEIMessages;
@@ -581,5 +658,39 @@ public:
   Bool  m_callerOwnsSEIs;
   SEIMessages m_nestedSEIs;
 };
+
+#if Q0078_ADD_LAYER_SETS
+class SEIOutputLayerSetNesting : public SEI
+{
+public:
+  PayloadType payloadType() const { return OUTPUT_LAYER_SET_NESTING; }
+
+  SEIOutputLayerSetNesting() {}
+  virtual ~SEIOutputLayerSetNesting()
+  {
+    if (!m_callerOwnsSEIs)
+    {
+      deleteSEIs(m_nestedSEIs);
+    }
+  }
+
+  Bool m_olsFlag;
+  UInt m_numOlsIndicesMinus1;
+  UInt m_olsIdx[1024];
+  Bool  m_callerOwnsSEIs;
+  SEIMessages m_nestedSEIs;
+};
+
+class SEIVPSRewriting : public SEI
+{
+public:
+  PayloadType payloadType() const { return VPS_REWRITING; }
+
+  SEIVPSRewriting() {}
+  virtual ~SEIVPSRewriting() {}
+
+  NALUnit* nalu;
+};
+#endif
 
 //! \}

@@ -71,6 +71,9 @@ protected:
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
+#if P0050_KNEE_FUNCTION_SEI
+  Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
 #endif
@@ -91,11 +94,21 @@ protected:
 #if SUB_BITSTREAM_PROPERTY_SEI
   Void xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei);
 #endif
+#if Q0189_TMVP_CONSTRAINTS 
+Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
+#endif
+#if Q0247_FRAME_FIELD_INFO
+  Void xWriteSEIFrameFieldInfo  (const SEIFrameFieldInfo &sei);
+#endif
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
   Void xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
+#endif
+#if Q0078_ADD_LAYER_SETS
+  Void xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps);
+  Void xWriteSEIVPSRewriting(const SEIVPSRewriting &sei);
 #endif
 #endif //SVC_EXTENSION
 };

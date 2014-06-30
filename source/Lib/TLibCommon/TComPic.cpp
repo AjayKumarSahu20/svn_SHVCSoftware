@@ -71,7 +71,7 @@ TComPic::TComPic()
 TComPic::~TComPic()
 {
 }
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
 Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
@@ -183,7 +183,7 @@ Void TComPic::destroy()
   }
   
   deleteSEIs(m_SEIs);
-#if SVC_EXTENSION && SVC_UPSAMPLING
+#if SVC_EXTENSION
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
     if( m_bSpatialEnhLayer[i] )

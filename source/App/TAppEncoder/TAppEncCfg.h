@@ -72,9 +72,15 @@ protected:
 #if AVC_SYNTAX
   Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
-#if N0120_MAX_TID_REF_CFG
   Bool      m_maxTidRefPresentFlag; 
-#endif 
+#if Q0078_ADD_LAYER_SETS
+  Int       m_numLayerSets;
+  Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_numAddLayerSets;
+  Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
+  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -118,8 +124,19 @@ protected:
 #endif
   Int       m_iDecodingRefreshType;                           ///< random access type
   Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
+
+#if !Q0108_TSA_STSA
   Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
+#else
+  Int       m_extraRPSs[MAX_LAYERS];                          ///< extra RPSs added to handle CRA
+#endif
+
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
+#if Q0108_TSA_STSA
+  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
+  Int       m_inheritCodingStruct[MAX_LAYERS];
+#endif
+
   Int       m_numReorderPics[MAX_TLAYER];                     ///< total number of reorder pictures
   Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of pictures in the decoded picture buffer
   Bool      m_useTransformSkip;                               ///< flag for enabling intra transform skipping
@@ -147,6 +164,9 @@ protected:
   Int       m_iQPAdaptationRange;                             ///< dQP range by QP adaptation
   
   Int       m_maxTempLayer;                                  ///< Max temporal layer
+#if Q0108_TSA_STSA
+  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
+#endif
 
 #if !LAYER_CTB
   // coding unit (CU) definition
@@ -284,6 +304,9 @@ protected:
 #endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
+#endif
   // weighted prediction
   Bool      m_useWeightedPred;                    ///< Use of weighted prediction in P slices
   Bool      m_useWeightedBiPred;                  ///< Use of bi-directional weighted prediction in B slices
@@ -362,6 +385,7 @@ protected:
   Void  xCheckParameter ();                                   ///< check validity of configuration values
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
+#if SVC_EXTENSION
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
@@ -385,8 +409,20 @@ protected:
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool      m_crossLayerPictureTypeAlignFlag;
 #endif
-#if N0147_IRAP_ALIGN_FLAG
   Bool      m_crossLayerIrapAlignFlag;
+#if P0050_KNEE_FUNCTION_SEI
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Bool      m_kneeSEIMappingFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
 #endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
@@ -403,6 +439,7 @@ protected:
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
 #endif
+#endif //SVC_EXTENSION
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();

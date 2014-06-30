@@ -92,6 +92,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "===========Tone Mapping Info SEI message ===========\n");
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     fprintf( g_hTrace, "===========Color Mapping Info SEI message ===========\n");
@@ -128,6 +133,14 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     break;
   case SEI::BSP_HRD:
     fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
+    break;
+#endif
+#if Q0078_ADD_LAYER_SETS
+  case SEI::OUTPUT_LAYER_SET_NESTING:
+    fprintf(g_hTrace, "=========== Output layer set nesting SEI message ===========\n");
+    break;
+  case SEI::VPS_REWRITING:
+    fprintf(g_hTrace, "=========== VPS rewriting SEI message ===========\n");
     break;
 #endif
 #endif //SVC_EXTENSION
@@ -284,6 +297,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       sei = new SEIToneMappingInfo;
       xParseSEIToneMappingInfo((SEIToneMappingInfo&) *sei, payloadSize);
       break;
+#if P0050_KNEE_FUNCTION_SEI
+    case SEI::KNEE_FUNCTION_INFO:
+      sei = new SEIKneeFunctionInfo;
+      xParseSEIKneeFunctionInfo((SEIKneeFunctionInfo&) *sei, payloadSize);
+      break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
     case SEI::COLOR_MAPPING_INFO:
       sei = new SEIColorMappingInfo;
@@ -344,6 +363,32 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
    case SEI::BSP_HRD:
      sei = new SEIBspHrd;
      xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei);
+     break;
+#endif
+#if Q0078_ADD_LAYER_SETS
+   case SEI::OUTPUT_LAYER_SET_NESTING:
+     sei = new SEIOutputLayerSetNesting;
+#if LAYERS_NOT_PRESENT_SEI
+     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, vps, sps);
+#else
+     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, sps);
+#endif
+     break;
+   case SEI::VPS_REWRITING:
+     sei = new SEIVPSRewriting;
+     xParseSEIVPSRewriting((SEIVPSRewriting&)*sei);
+     break;
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+   case SEI::TMVP_CONSTRAINTS:
+     sei =  new SEITMVPConstrains;
+     xParseSEITMVPConstraints((SEITMVPConstrains&) *sei, payloadSize);
+     break;
+#endif
+#if Q0247_FRAME_FIELD_INFO
+   case SEI::FRAME_FIELD_INFO:
+     sei =  new SEIFrameFieldInfo;
+     xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize); 
      break;
 #endif
 #endif //SVC_EXTENSION
@@ -848,6 +893,33 @@ Void SEIReader::xParseSEIToneMappingInfo(SEIToneMappingInfo& sei, UInt /*payload
   xParseByteAlign();
 }
 
+#if P0050_KNEE_FUNCTION_SEI
+Void SEIReader::xParseSEIKneeFunctionInfo(SEIKneeFunctionInfo& sei, UInt /*payloadSize*/){
+  Int i;
+  UInt val;
+  READ_UVLC( val, "knee_function_id" );                   sei.m_kneeId = val;
+  READ_FLAG( val, "knee_function_cancel_flag" );          sei.m_kneeCancelFlag = val;
+  if ( !sei.m_kneeCancelFlag )
+  {
+    READ_FLAG( val, "knee_function_persistence_flag" );   sei.m_kneePersistenceFlag = val;
+    READ_FLAG( val, "mapping_flag" );                     sei.m_kneeMappingFlag = val;
+    READ_CODE( 32, val, "input_d_range" );                sei.m_kneeInputDrange = val;
+    READ_CODE( 32, val, "input_disp_luminance" );         sei.m_kneeInputDispLuminance = val;
+    READ_CODE( 32, val, "output_d_range" );               sei.m_kneeOutputDrange = val;
+    READ_CODE( 32, val, "output_disp_luminance" );        sei.m_kneeOutputDispLuminance = val;
+    READ_UVLC( val, "num_knee_points_minus1" );           sei.m_kneeNumKneePointsMinus1 = val;
+    assert( sei.m_kneeNumKneePointsMinus1 > 0 );
+    sei.m_kneeInputKneePoint.resize(sei.m_kneeNumKneePointsMinus1+1);
+    sei.m_kneeOutputKneePoint.resize(sei.m_kneeNumKneePointsMinus1+1);
+    for(i = 0; i <= sei.m_kneeNumKneePointsMinus1; i++ )
+    {
+      READ_CODE( 10, val, "input_knee_point" );           sei.m_kneeInputKneePoint[i] = val;
+      READ_CODE( 10, val, "output_knee_point" );          sei.m_kneeOutputKneePoint[i] = val;
+    }
+  }
+}
+#endif
+
 #if Q0074_SEI_COLOR_MAPPING
 Void SEIReader::xParseSEIColorMappingInfo(SEIColorMappingInfo& sei, UInt /*payloadSize*/)
 {
@@ -958,6 +1030,27 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 
   xParseByteAlign();
 }
+
+#if Q0189_TMVP_CONSTRAINTS 
+Void SEIReader::xParseSEITMVPConstraints   (SEITMVPConstrains& sei, UInt payloadSize)
+{
+  UInt uiCode;
+  READ_UVLC( uiCode,           "prev_pics_not_used_flag"              ); sei.prev_pics_not_used_flag = uiCode;
+  READ_UVLC( uiCode,           "no_intra_layer_col_pic_flag"            ); sei.no_intra_layer_col_pic_flag = uiCode;
+  xParseByteAlign();
+}
+#endif
+
+#if Q0247_FRAME_FIELD_INFO
+Void SEIReader::xParseSEIFrameFieldInfo    (SEIFrameFieldInfo& sei, UInt payloadSize)
+{
+  UInt code;
+  READ_CODE( 4, code, "ffinfo_pic_struct" );             sei.m_ffinfo_picStruct            = code;
+  READ_CODE( 2, code, "ffinfo_source_scan_type" );       sei.m_ffinfo_sourceScanType = code;
+  READ_FLAG(    code, "ffinfo_duplicate_flag" );         sei.m_ffinfo_duplicateFlag    = ( code == 1 ? true : false );
+  xParseByteAlign();
+}
+#endif
 
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps)
@@ -1208,23 +1301,71 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
   {
     UInt lsIdx = nestingSei.m_nestingOpIdx[h];
     READ_UVLC( uiCode, "num_sei_bitstream_partitions_minus1[i]"); sei.m_seiNumBitstreamPartitionsMinus1[lsIdx] = uiCode;
-    for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
+#if HRD_BPB
+    Int chkPart=0;
+#endif
+    UInt i;
+    for(i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
     {
+#if HRD_BPB
+      UInt nl=0; UInt j;
+      for(j = 0; j < sei.m_vpsMaxLayers; j++)
+      {
+        if (sei.m_layerIdIncludedFlag[lsIdx][j])
+        {
+          nl++;
+        }
+      }
+      for (j = 0; j < nl; j++)
+      {
+#else
       for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
       {
         if (sei.m_layerIdIncludedFlag[lsIdx][j])
         {
+#endif
           READ_FLAG( uiCode, "sei_layer_in_bsp_flag[lsIdx][i][j]" ); sei.m_seiLayerInBspFlag[lsIdx][i][j] = uiCode;
         }
+#if !HRD_BPB
       }
+#endif
+#if HRD_BPB
+      chkPart+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
+#endif
     }
+#if HRD_BPB
+    assert(chkPart<=1);
+#endif
+#if HRD_BPB
+    if(sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]==0)
+    {
+      Int chkPartition1=0; Int chkPartition2=0;
+      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
+      {
+        if( sei.m_layerIdIncludedFlag[lsIdx][j] )
+        {
+          chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][0][j];
+          chkPartition2++;
+        }
+      }
+      assert(chkPartition1!=chkPartition2);
+    }
+#endif
+      
     READ_UVLC( uiCode, "sei_num_bsp_sched_combinations_minus1[i]"); sei.m_seiNumBspSchedCombinationsMinus1[lsIdx] = uiCode;
-    for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
+    for (i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
     {
       for (UInt j = 0; j <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; j++)
       {
         READ_UVLC( uiCode, "sei_bsp_comb_hrd_idx[lsIdx][i][j]"); sei.m_seiBspCombHrdIdx[lsIdx][i][j] = uiCode;
+#if HRD_BPB
+        assert(uiCode <= sei.m_seiNumBspHrdParametersMinus1);
+#endif
         READ_UVLC( uiCode, "sei_bsp_comb_sched_idx[lsIdx][i][j]"); sei.m_seiBspCombScheddx[lsIdx][i][j] = uiCode;
+#if HRD_BPB
+        assert(uiCode <= sei.hrd->getCpbCntMinus1( sps->getMaxTLayers()-1 ));
+#endif
+
       }
     }
   }
@@ -1304,6 +1445,59 @@ Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UIn
     }
   }
 }
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+
+#if LAYERS_NOT_PRESENT_SEI
+Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps)
+#else
+Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps)
+#endif
+{
+  UInt uiCode;
+  SEIMessages seis;
+
+  READ_FLAG(uiCode, "ols_flag"); sei.m_olsFlag = uiCode;
+  READ_UVLC(uiCode, "num_ols_indices_minus1"); sei.m_numOlsIndicesMinus1 = uiCode;
+
+  for (Int i = 0; i <= sei.m_numOlsIndicesMinus1; i++)
+  {
+    READ_UVLC(uiCode, "ols_idx[i]"); sei.m_olsIdx[i] = uiCode;
+  }
+
+  // byte alignment
+  while (m_pcBitstream->getNumBitsRead() % 8 != 0)
+  {
+    UInt code;
+    READ_FLAG(code, "ols_nesting_zero_bit");
+  }
+
+  sei.m_callerOwnsSEIs = false;
+
+  // read nested SEI messages
+  do {
+#if O0164_MULTI_LAYER_HRD
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
+#else
+#if LAYERS_NOT_PRESENT_SEI
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps);
+#else
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps);
+#endif
+#endif
+  } while (m_pcBitstream->getNumBitsLeft() > 8);
+
+}
+
+Void SEIReader::xParseSEIVPSRewriting(SEIVPSRewriting &sei)
+{
+}
+
 #endif
 
 #endif //SVC_EXTENSION

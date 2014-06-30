@@ -89,6 +89,9 @@ protected:
   Void xParseSEITemporalLevel0Index   (SEITemporalLevel0Index &sei, UInt payloadSize);
   Void xParseSEIGradualDecodingRefreshInfo (SEIGradualDecodingRefreshInfo &sei, UInt payloadSize);
   Void xParseSEIToneMappingInfo       (SEIToneMappingInfo& sei, UInt payloadSize);
+#if P0050_KNEE_FUNCTION_SEI
+  Void xParseSEIKneeFunctionInfo      (SEIKneeFunctionInfo& sei, UInt payloadSize);
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   Void xParseSEIColorMappingInfo      (SEIColorMappingInfo& sei, UInt payloadSize);
 #endif
@@ -114,6 +117,21 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
   Void xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
   Void xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
+#endif
+#if Q0078_ADD_LAYER_SETS
+#if LAYERS_NOT_PRESENT_SEI
+  Void xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps);
+#else
+  Void xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps);
+#endif
+  Void xParseSEIVPSRewriting(SEIVPSRewriting &sei);
+#endif
+
+#if Q0189_TMVP_CONSTRAINTS 
+  Void xParseSEITMVPConstraints    (SEITMVPConstrains& sei, UInt payloadSize);
+#endif
+#if Q0247_FRAME_FIELD_INFO
+  Void xParseSEIFrameFieldInfo    (SEIFrameFieldInfo& sei, UInt payloadSize);
 #endif
   Void xParseByteAlign();
 };

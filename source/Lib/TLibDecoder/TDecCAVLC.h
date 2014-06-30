@@ -74,16 +74,11 @@ public:
   Void  parseQtCbf          ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth, UInt uiDepth );
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
-#if SPS_EXTENSION
-#if VPS_EXTNS
+#if SVC_EXTENSION
   Void  parseVPSExtension   ( TComVPS* pcVPS );
   Void  defaultVPSExtension ( TComVPS* pcVPS );
-#endif
-
-#if VPS_VUI
-  Void  parseVPSVUI   ( TComVPS* pcVPS );
-  Void  defaultVPSVUI ( TComVPS* pcVPS );
-#endif 
+  Void  parseVPSVUI         ( TComVPS* pcVPS );
+  Void  defaultVPSVUI       ( TComVPS* pcVPS );
 #if REPN_FORMAT_IN_VPS
   Void  parseRepFormat      ( RepFormat *repFormat, RepFormat *repFormatPrev );
 #endif

@@ -86,6 +86,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::TONE_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Tone Mapping Info SEI message ===========\n");
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     fprintf( g_hTrace, "=========== Color Mapping Info SEI message ===========\n");
@@ -122,6 +127,14 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     break;
   case SEI::BSP_HRD:
     fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
+    break;
+#endif
+#if Q0078_ADD_LAYER_SETS
+  case SEI::OUTPUT_LAYER_SET_NESTING:
+    fprintf(g_hTrace, "=========== Output layer set nesting SEI message ===========\n");
+    break;
+  case SEI::VPS_REWRITING:
+    fprintf(g_hTrace, "=========== VPS rewriting SEI message ===========\n");
     break;
 #endif
 #endif //SVC_EXTENSION
@@ -176,6 +189,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::TONE_MAPPING_INFO:
     xWriteSEIToneMappingInfo(*static_cast<const SEIToneMappingInfo*>(&sei));
     break;
+#if P0050_KNEE_FUNCTION_SEI
+  case SEI::KNEE_FUNCTION_INFO:
+    xWriteSEIKneeFunctionInfo(*static_cast<const SEIKneeFunctionInfo*>(&sei));
+    break;
+#endif
 #if Q0074_SEI_COLOR_MAPPING
   case SEI::COLOR_MAPPING_INFO:
     xWriteSEIColorMappingInfo(*static_cast<const SEIColorMappingInfo*>(&sei));
@@ -216,6 +234,24 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      break;
    case SEI::BSP_HRD:
      xWriteSEIBspHrd(*static_cast<const SEIBspHrd*>(&sei), sps, nestingSei);
+     break;
+#endif
+#if Q0078_ADD_LAYER_SETS
+   case SEI::OUTPUT_LAYER_SET_NESTING:
+     xWriteSEIOutputLayerSetNesting(bs, *static_cast<const SEIOutputLayerSetNesting*>(&sei), vps, sps);
+     break;
+   case SEI::VPS_REWRITING:
+     xWriteSEIVPSRewriting(*static_cast<const SEIVPSRewriting*>(&sei));
+     break;
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+   case SEI::TMVP_CONSTRAINTS:
+     xWriteSEITMVPConstraints(*static_cast<const SEITMVPConstrains*>(&sei));
+     break;
+#endif
+#if Q0247_FRAME_FIELD_INFO
+   case SEI::FRAME_FIELD_INFO:
+     xWriteSEIFrameFieldInfo(*static_cast<const SEIFrameFieldInfo*>(&sei));
      break;
 #endif
 #endif //SVC_EXTENSION
@@ -574,7 +610,29 @@ Void SEIWriter::xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei)
 
   xWriteByteAlign();
 }
-
+#if P0050_KNEE_FUNCTION_SEI
+Void SEIWriter::xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei)
+{
+  WRITE_UVLC( sei.m_kneeId, "knee_function_id" );
+  WRITE_FLAG( sei.m_kneeCancelFlag, "knee_function_cancel_flag" ); 
+  if ( !sei.m_kneeCancelFlag )
+  {
+    WRITE_FLAG( sei.m_kneePersistenceFlag, "knee_function_persistence_flag" );
+    WRITE_FLAG( sei.m_kneeMappingFlag, "mapping_flag" );
+    WRITE_CODE( (UInt)sei.m_kneeInputDrange , 32,  "input_d_range" );
+    WRITE_CODE( (UInt)sei.m_kneeInputDispLuminance, 32,  "input_disp_luminance" );
+    WRITE_CODE( (UInt)sei.m_kneeOutputDrange, 32,  "output_d_range" );
+    WRITE_CODE( (UInt)sei.m_kneeOutputDispLuminance, 32,  "output_disp_luminance" );
+    WRITE_UVLC( sei.m_kneeNumKneePointsMinus1, "num_knee_points_minus1" );
+    for(Int i = 0; i <= sei.m_kneeNumKneePointsMinus1; i++ )
+    {
+      WRITE_CODE( (UInt)sei.m_kneeInputKneePoint[i], 10,"input_knee_point" );
+      WRITE_CODE( (UInt)sei.m_kneeOutputKneePoint[i], 10, "output_knee_point" );
+    }
+  }
+  xWriteByteAlign();
+}
+#endif
 #if Q0074_SEI_COLOR_MAPPING
 Void SEIWriter::xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei)
 {
@@ -814,6 +872,25 @@ Void SEIWriter::xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei
 }
 #endif
 
+#if Q0189_TMVP_CONSTRAINTS 
+Void SEIWriter::xWriteSEITMVPConstraints (const SEITMVPConstrains &sei)
+{
+  WRITE_UVLC( sei.prev_pics_not_used_flag ,    "prev_pics_not_used_flag"  );
+  WRITE_UVLC( sei.no_intra_layer_col_pic_flag ,    "no_intra_layer_col_pic_flag"  ); 
+  xWriteByteAlign();
+}
+#endif
+
+#if Q0247_FRAME_FIELD_INFO
+Void SEIWriter::xWriteSEIFrameFieldInfo  (const SEIFrameFieldInfo &sei)
+{
+  WRITE_CODE( sei.m_ffinfo_picStruct , 4,             "ffinfo_pic_struct" );
+  WRITE_CODE( sei.m_ffinfo_sourceScanType, 2,         "ffinfo_source_scan_type" );
+  WRITE_FLAG( sei.m_ffinfo_duplicateFlag ? 1 : 0,     "ffinfo_duplicate_flag" );
+  xWriteByteAlign();
+}
+#endif
+
 #if O0164_MULTI_LAYER_HRD
 Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei)
 {
@@ -892,13 +969,28 @@ Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEISca
     WRITE_UVLC( sei.m_seiNumBitstreamPartitionsMinus1[lsIdx], "num_sei_bitstream_partitions_minus1[i]");
     for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
     {
+#if HRD_BPB
+      UInt nl=0;
       for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
       {
         if (sei.m_layerIdIncludedFlag[lsIdx][j])
         {
-          WRITE_FLAG( sei.m_seiLayerInBspFlag[lsIdx][i][j], "sei_layer_in_bsp_flag[lsIdx][i][j]" );
+          nl++;
         }
       }
+      for (UInt j = 0; j < nl; j++)
+      {
+#else
+      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
+      {
+        if (sei.m_layerIdIncludedFlag[lsIdx][j])
+        {
+#endif
+          WRITE_FLAG( sei.m_seiLayerInBspFlag[lsIdx][i][j], "sei_layer_in_bsp_flag[lsIdx][i][j]" );
+        }
+#if !HRD_BPB
+      }
+#endif
     }
     WRITE_UVLC( sei.m_seiNumBspSchedCombinationsMinus1[lsIdx], "sei_num_bsp_sched_combinations_minus1[i]");
     for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
@@ -983,6 +1075,37 @@ Void SEIWriter::xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UIn
       }
     }
   }
+}
+
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+
+Void SEIWriter::xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps)
+{
+  WRITE_FLAG(sei.m_olsFlag, "ols_flag");
+  WRITE_UVLC(sei.m_numOlsIndicesMinus1, "num_ols_indices_minus1");
+
+  for (Int i = 0; i <= sei.m_numOlsIndicesMinus1; i++)
+  {
+    WRITE_UVLC(sei.m_olsIdx[i], "ols_idx[i]");
+  }
+
+  while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
+  {
+    WRITE_FLAG(0, "ols_nesting_zero_bit");
+  }
+
+  // write nested SEI messages
+  for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
+  {
+    writeSEImessage(bs, *(*it), vps, sps);
+  }
+}
+
+Void SEIWriter::xWriteSEIVPSRewriting(const SEIVPSRewriting &sei)
+{
+  //sei.nalu->
 }
 
 #endif

@@ -1,91 +1,45 @@
-
-#include "TComUpsampleFilter.h"
 #include "TypeDef.h"
-
-#if SVC_UPSAMPLING
-#define CNU -1 ///< Coefficients Not Used
+#if SVC_EXTENSION
+#include "TComUpsampleFilter.h"
 
 const Int TComUpsampleFilter::m_lumaFixedFilter[16][NTAPS_US_LUMA] =
 {
-  {  0,  0,  0, 64,  0,  0,  0,  0}, //
-#if ARBITRARY_SPATIAL_RATIO
-  {  0,  1, -3, 63,  4, -2,  1,  0},
-  { -1,  2, -5, 62,  8, -3,  1,  0},
-  { -1,  3, -8, 60, 13, -4,  1,  0},
-  { -1,  4,-10, 58, 17, -5,  1,  0},
-#else
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-#endif
-  { -1, 4, -11, 52, 26,  -8,  3, -1}, // <-> actual phase shift 1/3, used for spatial scalability x1.5
-#if ARBITRARY_SPATIAL_RATIO
-  { -1, 3,  -9, 47, 31, -10,  4, -1},
-  { -1, 4, -11, 45, 34, -10,  4, -1},
-#else
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-#endif
-  { -1, 4, -11, 40, 40, -11,  4, -1}, // <-> actual phase shift 1/2, equal to HEVC MC, used for spatial scalability x2
-#if ARBITRARY_SPATIAL_RATIO
-  { -1,  4, -10, 34, 45, -11,  4, -1},
-  { -1,  4, -10, 31, 47,  -9,  3, -1},
-#else
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-#endif
-  { -1, 3,  -8, 26, 52, -11, 4, -1}, // <-> actual phase shift 2/3, used for spatial scalability x1.5
-#if ARBITRARY_SPATIAL_RATIO
-  { 0,  1,  -5, 17, 58, -10,  4, -1},
-  { 0,  1,  -4, 13, 60,  -8,  3, -1},
-  { 0,  1,  -3,  8, 62,  -5,  2, -1},
-  { 0,  1,  -2,  4, 63,  -3,  1,  0}
-#else
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}, //
-  {CNU,CNU,CNU,CNU,CNU,CNU,CNU,CNU}  //
-#endif
+  {  0, 0,   0, 64,  0,   0,  0,  0 },
+  {  0, 1,  -3, 63,  4,  -2,  1,  0 },
+  { -1, 2,  -5, 62,  8,  -3,  1,  0 },
+  { -1, 3,  -8, 60, 13,  -4,  1,  0 },
+  { -1, 4, -10, 58, 17,  -5,  1,  0 },
+  { -1, 4, -11, 52, 26,  -8,  3, -1 }, // <-> actual phase shift 1/3, used for spatial scalability x1.5
+  { -1, 3,  -9, 47, 31, -10,  4, -1 },
+  { -1, 4, -11, 45, 34, -10,  4, -1 },
+  { -1, 4, -11, 40, 40, -11,  4, -1 }, // <-> actual phase shift 1/2, equal to HEVC MC, used for spatial scalability x2
+  { -1, 4, -10, 34, 45, -11,  4, -1 },
+  { -1, 4, -10, 31, 47,  -9,  3, -1 },
+  { -1, 3,  -8, 26, 52, -11,  4, -1 }, // <-> actual phase shift 2/3, used for spatial scalability x1.5
+  {  0, 1,  -5, 17, 58, -10,  4, -1 },
+  {  0, 1,  -4, 13, 60,  -8,  3, -1 },
+  {  0, 1,  -3,  8, 62,  -5,  2, -1 },
+  {  0, 1,  -2,  4, 63,  -3,  1,  0 }
 };
 
 const Int TComUpsampleFilter::m_chromaFixedFilter[16][NTAPS_US_CHROMA] =
 {
-  {  0, 64,  0,  0},//
-#if ARBITRARY_SPATIAL_RATIO
-  { -2, 62,  4,  0},
-  { -2, 58, 10, -2},
-  { -4, 56, 14, -2},
-#else
-  {CNU,CNU,CNU,CNU},//
-  {CNU,CNU,CNU,CNU},//
-  {CNU,CNU,CNU,CNU},//
-#endif
-  { -4, 54, 16, -2},// <-> actual phase shift 1/4,equal to HEVC MC, used for spatial scalability x1.5 (only for accurate Chroma alignement)
-  { -6, 52, 20, -2},// <-> actual phase shift 1/3, used for spatial scalability x1.5
-  { -6, 46, 28, -4},// <-> actual phase shift 3/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)
-#if ARBITRARY_SPATIAL_RATIO
-  { -4, 42, 30, -4},
-#else
-  {CNU,CNU,CNU,CNU},//
-#endif
-  { -4, 36, 36, -4},// <-> actual phase shift 1/2,equal to HEVC MC, used for spatial scalability x2
-  { -4, 30, 42, -4},// <-> actual phase shift 7/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
-#if ARBITRARY_SPATIAL_RATIO
-  { -4, 28, 46, -6},
-#else
-  {CNU,CNU,CNU,CNU},//
-#endif
-  { -2, 20, 52, -6},// <-> actual phase shift 2/3, used for spatial scalability x1.5
-#if ARBITRARY_SPATIAL_RATIO
-  {-2, 16, 54, -4},
-  {-2, 14, 56, -4},
-#else
-  {CNU,CNU,CNU,CNU},//
-  {CNU,CNU,CNU,CNU},//
-#endif
-  { -2, 10, 58, -2},// <-> actual phase shift 7/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)
-  {  0,  4, 62, -2} // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+  {  0, 64,  0,  0 },
+  { -2, 62,  4,  0 },
+  { -2, 58, 10, -2 },
+  { -4, 56, 14, -2 },
+  { -4, 54, 16, -2 }, // <-> actual phase shift 1/4,equal to HEVC MC, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+  { -6, 52, 20, -2 }, // <-> actual phase shift 1/3, used for spatial scalability x1.5
+  { -6, 46, 28, -4 }, // <-> actual phase shift 3/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)
+  { -4, 42, 30, -4 },
+  { -4, 36, 36, -4 }, // <-> actual phase shift 1/2,equal to HEVC MC, used for spatial scalability x2
+  { -4, 30, 42, -4 }, // <-> actual phase shift 7/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
+  { -4, 28, 46, -6 },
+  { -2, 20, 52, -6 }, // <-> actual phase shift 2/3, used for spatial scalability x1.5
+  { -2, 16, 54, -4 },
+  { -2, 14, 56, -4 },
+  { -2, 10, 58, -2 }, // <-> actual phase shift 7/8,equal to HEVC MC, used for spatial scalability x2 (only for accurate Chroma alignement)
+  {  0,  4, 62, -2 }  // <-> actual phase shift 11/12, used for spatial scalability x1.5 (only for accurate Chroma alignement)
 };
 
 TComUpsampleFilter::TComUpsampleFilter(void)
@@ -259,13 +213,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
       memcpy( m_chromaFilter[i], m_chromaFixedFilter[i], sizeof(Int) * NTAPS_US_CHROMA );
     }
 
-#if ARBITRARY_SPATIAL_RATIO
     assert ( widthEL >= widthBL );
     assert ( heightEL >= heightBL );
-#else
-    assert ( widthEL == widthBL || widthEL == 2*widthBL || 2*widthEL == 3*widthBL );
-    assert ( heightEL == heightBL || heightEL == 2*heightBL || 2*heightEL == 3*heightBL );
-#endif
 
     pcBasePic->setBorderExtension(false);
     pcBasePic->extendPicBorder(); // extend the border.
@@ -297,13 +246,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
 #endif
  
-#if ROUNDING_OFFSET
     Int   addX = ( ( phaseX * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
     Int   addY = ( ( phaseY * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
-#else
-    Int   addX = ( ( ( widthBL * phaseX ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    Int   addY = ( ( ( heightBL * phaseY ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
-#endif
 
 #if Q0120_PHASE_CALCULATION
     Int   deltaX = (Int)phaseAlignFlag <<3;
@@ -332,7 +276,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     Int topStartL  = scalEL.getWindowTopOffset();
     Int bottomEndL = pcUsPic->getHeight() - scalEL.getWindowBottomOffset();
     Int leftOffset = leftStartL > 0 ? leftStartL : 0;
-#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthYLayer[refLayerId] - 8;
@@ -344,7 +287,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
 #else
     Int shift1 = g_bitDepthY - 8;
-#endif
 #endif
 
     //========== horizontal upsampling ===========
@@ -361,11 +303,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
-#if N0214_INTERMEDIATE_BUFFER_16BITS
         *piDstY = sumLumaHor(piSrcY, coeff) >> shift1;
-#else
-        *piDstY = sumLumaHor(piSrcY, coeff);
-#endif
         piSrcY += strideBL;
         piDstY += strideEL;
       }
@@ -377,14 +315,10 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL);
 
-#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     Int nShift = 20 - g_bitDepthYLayer[currLayerId];
 #else
     Int nShift = US_FILTER_PREC*2 - shift1;
-#endif
-#else
-    const Int nShift = US_FILTER_PREC*2;
 #endif
     Int iOffset = 1 << (nShift - 1);
 
@@ -471,13 +405,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
 #endif
     
-#if ROUNDING_OFFSET
     addX       = ( ( phaseXC * scaleX + 2 ) >> 2 ) + ( 1 << ( shiftX - 5 ) );
     addY       = ( ( phaseYC * scaleY + 2 ) >> 2 ) + ( 1 << ( shiftY - 5 ) );
-#else
-    addX       = ( ( ( widthBL * (phaseXC) ) << ( shiftX - 2 ) ) + ( widthEL >> 1 ) ) / widthEL + ( 1 << ( shiftX - 5 ) );
-    addY       = ( ( ( heightBL * (phaseYC) ) << ( shiftY - 2 ) ) + ( heightEL >> 1 ) ) / heightEL+ ( 1 << ( shiftY - 5 ) );
-#endif
 
 #if Q0120_PHASE_CALCULATION
     deltaX     = (Int)phaseAlignFlag << 2;
@@ -501,7 +430,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     widthBL   = pcBasePic->getWidth () >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight() >> 1, heightEL );
 
-#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthCLayer[refLayerId] - 8;
@@ -513,7 +441,6 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #endif
 #else
     shift1 = g_bitDepthC - 8;
-#endif
 #endif
 
     //========== horizontal upsampling ===========
@@ -532,13 +459,8 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 
       for( j = 0; j < heightBL ; j++ )
       {
-#if N0214_INTERMEDIATE_BUFFER_16BITS
         *piDstU = sumChromaHor(piSrcU, coeff) >> shift1;
         *piDstV = sumChromaHor(piSrcV, coeff) >> shift1;
-#else
-        *piDstU = sumChromaHor(piSrcU, coeff);
-        *piDstV = sumChromaHor(piSrcV, coeff);
-#endif
 
         piSrcU += strideBL;
         piSrcV += strideBL;
@@ -553,14 +475,12 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL << 1);
 
-#if N0214_INTERMEDIATE_BUFFER_16BITS
 #if O0194_JOINT_US_BITSHIFT
     nShift = 20 - g_bitDepthCLayer[currLayerId];
 #else
     nShift = US_FILTER_PREC*2 - shift1;
 #endif
     iOffset = 1 << (nShift - 1);
-#endif
 
     for( j = 0; j < pcTempPic->getHeight() >> 1; j++ )
     {

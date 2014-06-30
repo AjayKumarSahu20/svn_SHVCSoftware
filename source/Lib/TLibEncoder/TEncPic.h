@@ -40,7 +40,7 @@
 
 #include "TLibCommon/CommonDef.h"
 #include "TLibCommon/TComPic.h"
-#if SVC_UPSAMPLING
+#if SVC_EXTENSION
 #include "TLibCommon/TComSlice.h"
 #endif
 //! \ingroup TLibEncoder
@@ -104,24 +104,19 @@ public:
   TEncPic();
   virtual ~TEncPic();
 
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
                       Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual=false );
 #else
-  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
-                          Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
-
-#endif
-#else
-#if SVC_UPSAMPLING
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,   
                         Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual = false );
-#else
+#endif
+#else  //SVC_EXTENSION
   Void          create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,   
                         Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
-#endif
-#endif
+#endif //SVC_EXTENSION
+
   virtual Void  destroy();
 
   TEncPicQPAdaptationLayer* getAQLayer( UInt uiDepth )  { return &m_acAQLayer[uiDepth]; }

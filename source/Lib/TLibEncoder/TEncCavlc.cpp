@@ -255,8 +255,9 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
   WRITE_FLAG( pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
 #if P0166_MODIFIED_PPS_EXTENSION
-  WRITE_FLAG( 1, "pps_extension_flag" );
-  if( 1 ) //pps_extension_flag
+  WRITE_FLAG( pcPPS->getExtensionFlag() ? 1 : 0, "pps_extension_flag" );
+
+  if( pcPPS->getExtensionFlag() )
   {
 #if !POC_RESET_IDC
     UInt ppsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
@@ -637,9 +638,10 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
       codeVUI(pcSPS->getVuiParameters(), pcSPS);
   }
 
-#if SPS_EXTENSION
-  WRITE_FLAG( 1, "sps_extension_flag" );
-  if( 1 )   // if( sps_extension_flag )
+#if SVC_EXTENSION
+  WRITE_FLAG( pcSPS->getExtensionFlag() ? 1 : 0, "sps_extension_flag" );
+
+  if( pcSPS->getExtensionFlag() )
   {
 #if O0142_CONDITIONAL_SPS_EXTENSION
     UInt spsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
@@ -660,7 +662,8 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( 0, "sps_extension_flag" );
 #endif
 }
-#if SPS_EXTENSION
+
+#if SVC_EXTENSION
 Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 {
   // more syntax elements to be written here
@@ -687,7 +690,8 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
     }
   }
 }
-#endif
+#endif //SVC_EXTENSION
+
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
 #if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
@@ -702,7 +706,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
-#if VPS_RENAME
+#if SVC_EXTENSION
   WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );            
 #else
   WRITE_CODE( 0,                                    6,        "vps_reserved_zero_6bits" );
@@ -733,15 +737,20 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     }
   }
 
-#if VPS_RENAME
+#if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_ID_PLUS1 );
 #if !VPS_EXTN_OP_LAYER_SETS     // num layer sets set in TAppEncTop.cpp
   pcVPS->setNumLayerSets(1);
 #endif
   WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
+#if Q0078_ADD_LAYER_SETS
+  WRITE_UVLC(pcVPS->getVpsNumLayerSetsMinus1(),                "vps_num_layer_sets_minus1");
+  for (UInt opsIdx = 1; opsIdx <= pcVPS->getVpsNumLayerSetsMinus1(); opsIdx++)
+#else
   WRITE_UVLC( pcVPS->getNumLayerSets() - 1,                 "vps_num_layer_sets_minus1" );
-  for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getNumLayerSets() - 1 ); opsIdx ++ )
+  for (UInt opsIdx = 1; opsIdx <= (pcVPS->getNumLayerSets() - 1); opsIdx++)
+#endif
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
@@ -797,7 +806,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       codeHrdParameters(pcVPS->getHrdParameters(i), pcVPS->getCprmsPresentFlag( i ), pcVPS->getMaxTLayers() - 1);
     }
   }
-#if VPS_EXTNS
+#if SVC_EXTENSION
   // When MaxLayersMinus1 is greater than 0, vps_extension_flag shall be equal to 1.
   if( pcVPS->getMaxLayers() > 1 )
   {
@@ -831,7 +840,6 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTNS
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   // ... More syntax elements to be written here
@@ -845,13 +853,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if O0109_MOVE_VPS_VUI_FLAG
-#if !VPS_VUI
-  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
-  vps->setVpsVuiPresentFlag(false);
-#else
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );
   vps->setVpsVuiPresentFlag(true);
-#endif
   if ( vps->getVpsVuiPresentFlag() ) 
   {
 #if VPS_VUI_OFFSET
@@ -878,7 +881,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     WRITE_CODE( vps->getDimensionIdLen(j) - 1, 3,      "dimension_id_len_minus1[j]" );
   }
 
-#if SPL_FLG_CHK
+  // The value of dimBitOffset[ NumScalabilityTypes ] is set equal to 6.
   if(vps->getSplittingFlag())
   {
     UInt splDimSum=0;
@@ -888,7 +891,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
     assert(splDimSum<=6);
   }
-#endif
 
   WRITE_FLAG( vps->getNuhLayerIdPresentFlag(),         "vps_nuh_layer_id_present_flag" );
   for(i = 1; i < vps->getMaxLayers(); i++)
@@ -956,7 +958,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         }
     }
 #endif
-#if N0120_MAX_TID_REF_PRESENT_FLAG
    WRITE_FLAG( vps->getMaxTidRefPresentFlag(), "max_tid_ref_present_flag");
    if (vps->getMaxTidRefPresentFlag())
    {
@@ -975,25 +976,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif 
      }
    }
-#else
-  for( i = 0; i < vps->getMaxLayers() - 1; i++)
-  {
-#if O0225_MAX_TID_FOR_REF_LAYERS
-       for( j = i+1; j <= vps->getMaxLayers() - 1; j++)
-       {
-         if(vps->getDirectDependencyFlag(j, i))
-         {
-           WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i,j), 3, "max_tid_il_ref_pics_plus1[i][j]" );
-         }
-       }
-#else
-    WRITE_CODE(vps->getMaxTidIlRefPicsPlus1(i), 3, "max_tid_il_ref_pics_plus1[i]" );
-#endif 
-  }
-#endif
-#if ILP_SSH_SIG
-    WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
-#endif
+   WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
 #if !VPS_EXTN_UEV_CODING
@@ -1015,6 +998,25 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
+#if Q0078_ADD_LAYER_SETS
+  if (vps->getNumIndependentLayers() > 1)
+  {
+    WRITE_UVLC( vps->getNumAddLayerSets(), "num_add_layer_sets" );
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        int len = 1;
+        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        {
+          len++;
+        }
+        WRITE_CODE(vps->getHighestLayerIdxPlus1(i, j), len, "highest_layer_idx_plus1[i][j]");
+      }
+    }
+  }
+#endif
+
 #if !VPS_EXTN_UEV_CODING
   Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
   WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 
@@ -1026,14 +1028,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   Int numOutputLayerSets = vps->getNumOutputLayerSets();
   Int numAddOutputLayerSets = numOutputLayerSets - (Int)vps->getNumLayerSets();
 
-  // The value of num_add_output_layer_sets shall be in the range of 0 to 1023, inclusive.
+  // The value of num_add_olss shall be in the range of 0 to 1023, inclusive.
   assert( numAddOutputLayerSets >= 0 && numAddOutputLayerSets < 1024 );
 
 #if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( vps->getNumLayerSets() > 1 )
   {
-    WRITE_UVLC( numAddOutputLayerSets, "num_add_output_layer_sets" );
-    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_target_output_layer_idc" );
+    WRITE_UVLC( numAddOutputLayerSets, "num_add_olss" );
+    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_output_layer_idc" );
   }
 #else
   WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
@@ -1064,10 +1066,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       {
         numBits++;
       }
-      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "output_layer_set_idx_minus1"); 
+      WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "layer_set_idx_for_ols_minus1"); 
 #if P0295_DEFAULT_OUT_LAYER_IDC
     }
+#if Q0078_ADD_LAYER_SETS
+    if ( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
+#else
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
+#endif
     {
 #endif
       Int lsIdx = vps->getOutputLayerSetIdx(i);
@@ -1216,7 +1222,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if O0215_PHASE_ALIGNMENT
   WRITE_FLAG(vps->getPhaseAlignFlag(), "cross_layer_phase_alignment_flag" );
 #endif
-#if N0147_IRAP_ALIGN_FLAG && !IRAP_ALIGN_FLAG_IN_VPS_VUI
+#if !IRAP_ALIGN_FLAG_IN_VPS_VUI
   WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
 #if VPS_DPB_SIZE_TABLE
@@ -1285,9 +1291,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
 #if !O0109_MOVE_VPS_VUI_FLAG
-#if !VPS_VUI
-  WRITE_FLAG( 0,                     "vps_vui_present_flag" );
-#else
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );
   if(1)   // Should be conditioned on the value of vps_vui_present_flag
   {
@@ -1302,7 +1305,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
     codeVPSVUI(vps);  
   }
-#endif 
 #else
 #if P0307_REMOVE_VPS_VUI_OFFSET
   vps->setVpsVuiPresentFlag(true);
@@ -1325,7 +1327,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif // 0109_MOVE_VPS_FLAG
 }
-#endif
+
 #if REPN_FORMAT_IN_VPS
 Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 {
@@ -1370,8 +1372,13 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
 #if DPB_PARAMS_MAXTLAYERS
+#if BITRATE_PICRATE_SIGNALLING
+    Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumLayerSets()];
+    for(Int i = 0; i < vps->getNumLayerSets(); i++)
+#else
     Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumOutputLayerSets()];
     for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+#endif
     {
         UInt maxSLMinus1 = 0;
 #if CHANGE_NUMSUBDPB_IDX
@@ -1379,13 +1386,20 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #else
         Int optLsIdx = i;
 #endif
+#if BITRATE_PICRATE_SIGNALLING
+        optLsIdx = i;
+#endif
         for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
             Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
             maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdInVps(lId)));
         }
         MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
+#if BITRATE_PICRATE_SIGNALLING
+        vps->setMaxSLayersInLayerSetMinus1(i,MaxSubLayersInLayerSetMinus1[ i ]);
+#endif
     }
 #endif
+    
     
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
@@ -1394,7 +1408,11 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
     WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");
 #if DPB_PARAMS_MAXTLAYERS
+#if BITRATE_PICRATE_SIGNALLING
+    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ vps->getOutputLayerSetIdx( i ) ]; j++)
+#else
     for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
+#endif
 #else
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
 #endif
@@ -1406,7 +1424,11 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
 #if CHANGE_NUMSUBDPB_IDX
+#if RESOLUTION_BASED_DPB
         for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
+#else
+        for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
+#endif
 #else
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
 #endif
@@ -1429,7 +1451,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
   }
 }
 #endif
-#if VPS_VUI
+
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
@@ -1450,15 +1472,22 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
 #endif
-#if VPS_VUI_BITRATE_PICRATE
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
 
   if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
   {
+#if Q0078_ADD_LAYER_SETS
+    for( i = 0; i <= vps->getVpsNumLayerSetsMinus1(); i++ )
+#else
     for( i = 0; i < vps->getNumLayerSets(); i++ )
+#endif
     {
+#if BITRATE_PICRATE_SIGNALLING
+      for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
+#else
       for( j = 0; j < vps->getMaxTLayers(); j++ )
+#endif
       {
         if( vps->getBitRatePresentVpsFlag() )
         {
@@ -1481,7 +1510,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       }
     }
   }
-#endif
 #if VPS_VUI_VIDEO_SIGNAL_MOVE
   WRITE_FLAG( vps->getVideoSigPresentVpsFlag(), "video_signal_info_idx_present_flag" );
   if (vps->getVideoSigPresentVpsFlag())
@@ -1518,7 +1546,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       }
     }
 #endif
-#if TILE_BOUNDARY_ALIGNED_FLAG
+
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
@@ -1533,7 +1561,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #endif
       }
     }  
-#endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   }
 #endif
@@ -1626,7 +1653,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         }
         codeHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
       }
+#if Q0078_ADD_LAYER_SETS
+      for( UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++ )
+#else
       for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
+#endif
       {
         WRITE_UVLC( vps->getNumBitstreamPartitions(h), "num_bitstream_partitions[i]");
         for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
@@ -1641,7 +1672,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         }
         if (vps->getNumBitstreamPartitions(h))
         {
+#if Q0182_MULTI_LAYER_HRD_UPDATE
+          WRITE_UVLC(vps->getNumBspSchedCombinations(h) - 1, "num_bsp_sched_combinations_minus1[h]");
+#else
           WRITE_UVLC( vps->getNumBspSchedCombinations(h), "num_bsp_sched_combinations[h]");
+#endif
           for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
           {
             for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
@@ -1672,7 +1707,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
 #endif
 }
-#endif
 #endif //SVC_EXTENSION
 
 Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
@@ -1810,7 +1844,19 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         picOrderCntLSB = (pcSlice->getPocValueBeforeReset()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
       }
 #else
+#if POC_RESET_IDC_ENCODER
+      Int picOrderCntLSB;
+      if( pcSlice->getPocResetIdc() == 2 )  // i.e. the LSB is reset
+      {
+        picOrderCntLSB = pcSlice->getPicOrderCntLsb();  // This will be the LSB value w.r.t to the previous POC reset period.
+      }
+      else
+      {
+        picOrderCntLSB = (pcSlice->getPOC() + (1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+      }
+#else
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
+#endif
 #endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
 
@@ -1939,15 +1985,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     }
 
 #if SVC_EXTENSION
-#if ILP_SSH_SIG
-#if ILP_SSH_SIG_FIX
     if((pcSlice->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
-#else
-    if((pcSlice->getLayerId() > 0) && pcSlice->getVPS()->getIlpSshSignalingEnabledFlag() && (pcSlice->getNumILRRefIdx() > 0) )
-#endif
-#else
-    if((pcSlice->getLayerId() > 0)  &&  (pcSlice->getNumILRRefIdx() > 0) )
-#endif
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
       if( pcSlice->getInterLayerPredEnabledFlag())
@@ -1963,17 +2001,14 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           {
             WRITE_CODE(pcSlice->getActiveNumILRRefIdx() - 1, numBits,"num_inter_layer_ref_pics_minus1");
           }       
-#if ILP_NUM_REF_CHK
+
           if( pcSlice->getNumILRRefIdx() != pcSlice->getActiveNumILRRefIdx() )
           {
-#endif
-          for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-          {
-            WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+            for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
+            {
+              WRITE_CODE(pcSlice->getInterLayerPredLayerIdc(i),numBits,"inter_layer_pred_layer_idc[i]");   
+            }
           }
-#if ILP_NUM_REF_CHK
-          }
-#endif
         }
       }
     }     
@@ -2293,6 +2328,7 @@ Void  TEncCavlc::codeTilesWPPEntryPoint( TComSlice* pSlice )
 Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow )
 {
   Int tmpBitsBeforeWriting = getNumberOfWrittenBits();
+  Int maxPocLsb = 1 << slice->getSPS()->getBitsForPOC();
   if(slice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     // Derive the value of PocMsbValRequiredFlag
@@ -2335,7 +2371,7 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     if( slice->getPocMsbValPresentFlag() )
     {
       UInt lengthVal = 1;
-      UInt tempVal = slice->getPocMsbVal() + 1;
+      UInt tempVal = (slice->getPocMsbVal() / maxPocLsb) + 1;
       assert ( tempVal );
       while( 1 != tempVal )
       {
@@ -2372,11 +2408,16 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     }
     if( slice->getPocMsbValPresentFlag() )
     {
-      WRITE_UVLC( slice->getPocMsbVal(),                                      "poc_msb_val" );
+      assert( slice->getPocMsbVal() % maxPocLsb == 0 );
+      WRITE_UVLC( slice->getPocMsbVal() / maxPocLsb,                                      "poc_msb_val" );
     }
     for (Int i = 0; i < shExtnAdditionalBits; i++)
     {
+#if Q0146_SSH_EXT_DATA_BIT 
+      WRITE_FLAG( 1, "slice_segment_header_extension_data_bit");
+#else
       WRITE_FLAG( 1, "slice_segment_header_extension_reserved_bit");
+#endif
     }
   }
   shBitsWrittenTillNow += ( getNumberOfWrittenBits() - tmpBitsBeforeWriting );

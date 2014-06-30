@@ -88,7 +88,7 @@ TEncTop::TEncTop()
   m_bMFMEnabledFlag = false;
 #endif
   m_numScaledRefLayerOffsets = 0;
-#if POC_RESET_FLAG
+#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   m_pocAdjustmentValue     = 0;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
@@ -809,33 +809,24 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             pcEPic->setSpatialEnhLayerFlag( i, true );
 
             //only for scalable extension
-#if SCALABILITY_MASK_E0104
-            assert( m_cVPS.getScalabilityMask(2) == true );
-#else
-            assert( m_cVPS.getScalabilityMask(1) == true );
-#endif
+            assert( m_cVPS.getScalabilityMask( SCALABILITY_ID ) == true );
           }
         }
       }
 #endif
 
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
-      pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#else
-#if SVC_UPSAMPLING
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
-#else
+#endif
+#else  //SVC_EXTENSION
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#endif
+#endif //SVC_EXTENSION
       rpcPic = pcEPic;
     }
     else
@@ -878,33 +869,24 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             rpcPic->setSpatialEnhLayerFlag( i, true );
 
             //only for scalable extension
-#if SCALABILITY_MASK_E0104
-            assert( m_cVPS.getScalabilityMask(2) == true );
-#else
-            assert( m_cVPS.getScalabilityMask(1) == true );
-#endif
+            assert( m_cVPS.getScalabilityMask( SCALABILITY_ID ) == true );
           }
         }
       }
 #endif
 
+#if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-#if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else
-      rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
-                      m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#else
-#if SVC_UPSAMPLING
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
-#else
+#endif
+#else  //SVC_EXTENSION
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, 
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics);
-#endif
-#endif
+#endif //SVC_EXTENSION
     }
     m_cListPic.pushBack( rpcPic );
   }
@@ -921,7 +903,20 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
+  m_cSPS.setExtensionFlag( m_layerId > 0 ? true : false );
+
+#if Q0078_ADD_LAYER_SETS
+  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
+  {
+    m_cSPS.setLayerId(0); // layer ID 0 for independent layers
+  }
+  else
+  {
+    m_cSPS.setLayerId(m_layerId);
+  }
+#else
   m_cSPS.setLayerId(m_layerId);
+#endif
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
@@ -1081,10 +1076,6 @@ Void TEncTop::xInitSPS()
 
 Void TEncTop::xInitPPS()
 {
-#if SCALINGLIST_INFERRING
-  m_cPPS.setLayerId( m_layerId );
-#endif
-
   m_cPPS.setConstrainedIntraPred( m_bUseConstrainedIntraPred );
   Bool bUseDQP = (getMaxCuDQPDepth() > 0)? true : false;
 
@@ -1180,18 +1171,30 @@ Void TEncTop::xInitPPS()
     }
   }
 #if SVC_EXTENSION
-  if (!m_layerId)
+#if SCALINGLIST_INFERRING
+  m_cPPS.setLayerId( m_layerId );
+#endif
+
+#if Q0078_ADD_LAYER_SETS
+  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
   {
-    m_cPPS.setListsModificationPresentFlag(false);
+    m_cPPS.setLayerId(0); // layer ID 0 for independent layers
+  }
+#endif
+
+  if( m_layerId > 0 )
+  {
+    m_cPPS.setListsModificationPresentFlag(true);
+    m_cPPS.setExtensionFlag(true);
   }
   else
   {
-    m_cPPS.setListsModificationPresentFlag(true);
+    m_cPPS.setListsModificationPresentFlag(false);
+    m_cPPS.setExtensionFlag(false);
   }
 
-  m_cPPS.setPPSId         ( m_iPPSIdCnt         );
-  m_cPPS.setSPSId         ( m_iSPSIdCnt         );
-#endif
+  m_cPPS.setPPSId( m_iPPSIdCnt );
+  m_cPPS.setSPSId( m_iSPSIdCnt );
 #if POC_RESET_FLAG
   m_cPPS.setNumExtraSliceHeaderBits( 2 );
 #endif
@@ -1204,6 +1207,12 @@ Void TEncTop::xInitPPS()
 #if Q0048_CGS_3D_ASYMLUT
   m_cPPS.setCGSFlag( m_nCGSFlag );
 #endif
+#if POC_RESET_IDC_ENCODER
+  m_cPPS.setPocResetInfoPresentFlag( true );
+  m_cPPS.setExtensionFlag( true );
+  m_cPPS.setSliceHeaderExtensionPresentFlag( true );
+#endif
+#endif //SVC_EXTENSION
 }
 
 //Function for initializing m_RPSList, a list of TComReferencePictureSet, based on the GOPEntry objects read from the config file.
@@ -1581,14 +1590,10 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numLayer; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
       {
         m_cIlpPic[j] = new  TComPic;
-#if SVC_UPSAMPLING
 #if AUXILIARY_PICTURES
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
 #else
         m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#endif
-#else
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
@@ -1648,14 +1653,10 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new  TComPic;
-#if SVC_UPSAMPLING
 #if AUXILIARY_PICTURES
         m_cIlpPic[j]->create(picWidth, picHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
 #else
         m_cIlpPic[j]->create(picWidth, picHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#endif
-#else
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, true);
 #endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
         {
