@@ -608,9 +608,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   UInt                  uiOneBitstreamPerSliceLength = 0;
   TEncSbac* pcSbacCoders = NULL;
   TComOutputBitstream* pcSubstreamsOut = NULL;
-#if Q0108_TSA_STSA
-  Int flagTSTA = 0;
-#endif
 
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut, isField );
 
@@ -1562,121 +1559,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
     }
-#if Q0108_TSA_STSA
-    else if( ( pcSlice->getTLayer() == 0 && pcSlice->getLayerId() > 0)    // only for enhancement layer and with temporal layer 0
-       && !( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N     
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R 
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
-          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA
-          )
-        )
-    {
-        Bool isSTSA=true;
-        for(Int ii=iGOPid+1; ii < m_pcCfg->getGOPSize() && isSTSA; ii++)
-        {
-          Int lTid= m_pcCfg->getGOPEntry(ii).m_temporalId;
-          if(lTid==pcSlice->getTLayer()) 
-          {
-            TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0; jj<nRPS->getNumberOfPictures(); jj++)
-            {
-              if(nRPS->getUsed(jj)) 
-              {
-                Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
-                Int kk=0;
-                for(kk=0; kk<m_pcCfg->getGOPSize(); kk++)
-                {
-                  if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
-                  {
-                    break;
-                  }
-                }
-                Int tTid=m_pcCfg->getGOPEntry(kk).m_temporalId;
-                if(tTid >= pcSlice->getTLayer())
-                {
-                  isSTSA = false;
-                  break;
-                }
-              }
-            }
-          }
-        }
-        if(isSTSA==true)
-        {    
-#if !Q0108_TSA_STSA
-          if( pcSlice->getLayerId() > 0 )
-          {
-            Bool oneRefLayerSTSA = false, oneRefLayerNotSTSA = false;
-            for( Int i = 0; i < pcSlice->getLayerId(); i++)
-            {
-              TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
-              TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
-              if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerId(), i) )
-              {
-                if( ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_N ) ||
-                    ( lowerLayerPic->getSlice(0)->getNalUnitType() == NAL_UNIT_CODED_SLICE_STSA_R ) 
-                  )
-                {
-                  if(pcSlice->getTemporalLayerNonReferenceFlag() )
-                  {
-                    pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
-                  }
-                  else
-                  {
-                    pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R );
-                  }
-                  oneRefLayerSTSA = true;
-                }
-                else
-                {
-                  oneRefLayerNotSTSA = true;
-                }
-              }
-            }
-            assert( !( oneRefLayerNotSTSA && oneRefLayerSTSA ) ); // Only one variable should be true - failure of this assert means
-                                                                  // that two independent reference layers that are not dependent on
-                                                                  // each other, but are reference for current layer have inconsistency
-            if( oneRefLayerNotSTSA /*&& !oneRefLayerSTSA*/ )          // No reference layer is STSA - set current as TRAIL
-            {
-              if(pcSlice->getTemporalLayerNonReferenceFlag() )
-              {
-                pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_N );
-              }
-              else
-              {
-                pcSlice->setNalUnitType( NAL_UNIT_CODED_SLICE_TRAIL_R );
-              }
-            }
-            else  // This means there is no reference layer picture for current picture in this AU
-            {
-              if(pcSlice->getTemporalLayerNonReferenceFlag() )
-              {
-                pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
-              }
-              else
-              {
-                pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R );
-              }
-            }
-          }
-#else
-          if(pcSlice->getTemporalLayerNonReferenceFlag())
-          {
-            pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
-            flagTSTA = 1;
-          }
-          else
-          {
-            pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
-            flagTSTA = 1;
-          }
-#endif
-        }
-    }
-#endif
 
     arrangeLongtermPicturesInRPS(pcSlice, rcListPic);
     TComRefPicListModification* refPicListModification = pcSlice->getRefPicListModification();
@@ -1697,11 +1579,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setActiveNumILRRefIdx(0);
         pcSlice->setInterLayerPredEnabledFlag(0);
       }
-#if Q0108_TSA_STSA
-     if( ( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA ) || flagTSTA == 1 )
-#else
-     if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
-#endif
+      if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
         pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getActiveNumILRRefIdx());
         pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getActiveNumILRRefIdx());
@@ -1735,6 +1613,77 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 #endif //SVC_EXTENSION
+
+#if Q0108_TSA_STSA
+   if( ( pcSlice->getTLayer() == 0 && pcSlice->getLayerId() > 0  )    // only for enhancement layer and with temporal layer 0
+     && !( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N     
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R 
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
+          || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA
+          )
+        )
+    {
+        Bool isSTSA=true;
+        Bool isIntra=false;
+
+        for( Int i = 0; i < pcSlice->getLayerId(); i++)
+        {
+          TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
+          TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
+          if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerId(), i) )
+          {
+            if( lowerLayerPic->getSlice(0)->getSliceType() == I_SLICE)
+            { 
+              isIntra = true;
+            }
+          }
+        }
+
+        for(Int ii=iGOPid+1; ii < m_pcCfg->getGOPSize() && isSTSA; ii++)
+        {
+          Int lTid= m_pcCfg->getGOPEntry(ii).m_temporalId;
+          if(lTid==pcSlice->getTLayer()) 
+          {
+            TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
+            for(Int jj=0; jj<nRPS->getNumberOfPictures(); jj++)
+            {
+              if(nRPS->getUsed(jj)) 
+              {
+                Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
+                Int kk=0;
+                for(kk=0; kk<m_pcCfg->getGOPSize(); kk++)
+                {
+                  if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
+                  {
+                    break;
+                  }
+                }
+                Int tTid=m_pcCfg->getGOPEntry(kk).m_temporalId;
+                if(tTid >= pcSlice->getTLayer())
+                {
+                  isSTSA = false;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if(isSTSA==true && isIntra == false)
+        {    
+          if(pcSlice->getTemporalLayerNonReferenceFlag())
+          {
+            pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_N);
+          }
+          else
+          {
+            pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
+          }
+        }
+    }
+#endif
 
 #if ADAPTIVE_QP_SELECTION
     pcSlice->setTrQuant( m_pcEncTop->getTrQuant() );
