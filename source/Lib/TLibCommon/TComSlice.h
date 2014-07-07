@@ -2406,10 +2406,6 @@ public:
   Void        setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
   TComPicYuv* getFullPelBaseRec   (UInt refLayerIdc)               { return  m_pcFullPelBaseRec[refLayerIdc];  }
 
-#if AVC_SYNTAX
-  Void      initBaseLayerRPL( TComSlice *pcSlice );
-#endif
-
   Void      setRefPicListModificationSvc();
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
 

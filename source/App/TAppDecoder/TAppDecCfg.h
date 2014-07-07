@@ -77,19 +77,7 @@ protected:
   Int           m_iBLSourceWidth;
   Int           m_iBLSourceHeight;
 #endif
-#if AVC_SYNTAX
-  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name  
 #endif
-#endif
-#endif
-
-#if SYNTAX_OUTPUT
-  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name
-#if !REPN_FORMAT_IN_VPS
-  Int           m_iBLSourceWidth;
-  Int           m_iBLSourceHeight;
-#endif
-  Int           m_iBLFrames;
 #endif
 
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
@@ -114,11 +102,6 @@ public:
 #if AVC_BASE && !REPN_FORMAT_IN_VPS
   , m_iBLSourceWidth(0)
   , m_iBLSourceHeight(0)
-#endif
-#if SYNTAX_OUTPUT
-  , m_iBLSourceWidth(0)
-  , m_iBLSourceHeight(0)
-  , m_iBLFrames(0)
 #endif
 #endif
   , m_respectDefDispWindow(0)

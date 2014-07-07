@@ -77,9 +77,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #else
   string cfg_ReconFile;
 #endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  string cfg_BLSyntaxFile;
-#endif
+
   string cfg_TargetDecLayerIdSetFile;
 
   po::Options opts;
@@ -95,19 +93,10 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
   ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
 #endif
-#if AVC_SYNTAX
-  ("BLSyntaxFile,-ibs",    cfg_BLSyntaxFile,  string(""), "BL syntax input file name")  
-#endif
 #endif
 #else
   ("ReconFile,o",     cfg_ReconFile,     string(""), "reconstructed YUV output file name\n"
                                                      "YUV writing is skipped if omitted")
-#endif
-#if SYNTAX_OUTPUT
-  ("BLSyntaxFile,-ibs",    cfg_BLSyntaxFile,  string(""), "BL syntax input file name")
-  ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
-  ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
-  ("BLFrames,-fr",          m_iBLFrames,       0, "BL number of frames")
 #endif
   ("SkipFrames,s", m_iSkipFrame, 0, "number of frames to skip before random access")
   ("OutputBitDepth,d", m_outputBitDepthY, 0, "bit depth of YUV output luma component (default: use 0 for native depth)")
@@ -162,9 +151,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #else
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
-#endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  m_pchBLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
 #endif
 
   if (!m_pchBitstreamFile)

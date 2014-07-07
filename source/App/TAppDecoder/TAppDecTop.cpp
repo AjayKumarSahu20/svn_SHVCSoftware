@@ -101,13 +101,6 @@ Void TAppDecTop::destroy()
     m_pchReconFile = NULL;
   }
 #endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  if( m_pchBLSyntaxFile )
-  {
-    free ( m_pchBLSyntaxFile );
-    m_pchBLSyntaxFile = NULL;
-  }
-#endif
 }
 
 // ====================================================================================================================
@@ -162,20 +155,9 @@ Void TAppDecTop::decode()
     streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
-#if AVC_SYNTAX || !REPN_FORMAT_IN_VPS
-  m_acTDecTop[0].setBLsize( m_iBLSourceWidth, m_iBLSourceHeight );
-#endif
   m_acTDecTop[0].setBLReconFile( &streamYUV );
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
-#if AVC_SYNTAX
-  fstream streamSyntaxFile;
-  if( m_pchBLSyntaxFile )
-  {
-    streamSyntaxFile.open( m_pchBLSyntaxFile, fstream::in | fstream::binary );
-  }
-  m_acTDecTop[0].setBLSyntaxFile( &streamSyntaxFile );
-#endif
 #endif
 
   while (!!bitstreamFile)
@@ -362,12 +344,6 @@ Void TAppDecTop::decode()
   {
     streamYUV.close();
   }
-#if AVC_SYNTAX
-  if( streamSyntaxFile.is_open() )
-  {
-    streamSyntaxFile.close();
-  }
-#endif
   pcBLPic.destroy();
 
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
@@ -404,27 +380,6 @@ Void TAppDecTop::decode()
   // main decoder loop
   Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
   Bool loopFiltered = false;
-
-#if SYNTAX_OUTPUT
-  if( !m_pchBLSyntaxFile )
-  {
-    printf( "Wrong base layer syntax file\n" );
-    exit(EXIT_FAILURE);
-  }
-  fstream streamSyntaxFile( m_pchBLSyntaxFile, fstream::out | fstream::binary );
-  if( !streamSyntaxFile.good() )
-  {
-    printf( "Base layer syntax input reading error\n" );
-    exit(EXIT_FAILURE);
-  }
-  m_cTDecTop.setBLSyntaxFile( &streamSyntaxFile );
-
-  for( Int i = m_iBLFrames * m_iBLSourceWidth * m_iBLSourceHeight * SYNTAX_BYTES / 16; i >= 0; i-- )
-  {
-    streamSyntaxFile.put( 0 );
-  }
-  streamSyntaxFile.seekp( 0 );
-#endif
 
   while (!!bitstreamFile)
   {
@@ -541,13 +496,6 @@ Void TAppDecTop::decode()
       }
     }
   }
-
-#if SYNTAX_OUTPUT
-  if( streamSyntaxFile.is_open() )
-  {
-    streamSyntaxFile.close();
-  }
-#endif
 
   xFlushOutput( pcListPic );
   // delete buffers
@@ -872,22 +820,13 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
 #else
         if ( m_pchReconFile )
         {
-#if SYNTAX_OUTPUT
-          TComPicYuv* pPicCYuvRec = pcPic->getPicYuvRec();
-#if Q0074_SEI_COLOR_MAPPING
-          if( m_acTDecTop[layerIdx].m_ColorMapping->getColorMappingFlag() )
-          {
-            pPicCYuvRec = m_acTDecTop[layerIdx].m_ColorMapping->getColorMapping( pPicCYuvRec, 0, layerIdx );
-          }
-#endif
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
-          m_cTVideoIOYuvReconFile.write( pPicCYuvRec,
-            conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-#endif
+          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
+                                        conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
+                                        conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
+                                        conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
+                                        conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
         }
 
         // update POC of display order

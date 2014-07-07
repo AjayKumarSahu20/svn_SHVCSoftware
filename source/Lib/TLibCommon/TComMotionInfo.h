@@ -154,11 +154,6 @@ public:
   
   Void compress(Char* pePredMode, Int scale); 
 
-#if AVC_SYNTAX
-  Void           setMv    (TComMv cMv,  Int iIdx )         { m_pcMv    [iIdx] = cMv; }
-  Void           setRefIdx(Int iRefIdx, Int iIdx   )       { m_piRefIdx[iIdx] =  iRefIdx; }
-#endif
-
 #if REF_IDX_MFM
   Void setMvField( TComMvField const& mvField, Int iIdx )
   {

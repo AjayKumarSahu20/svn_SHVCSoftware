@@ -160,11 +160,6 @@ public:
   UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
   UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
 #endif
-#if AVC_SYNTAX
-  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
-  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
-  UInt        getMaxDepth()             { return m_uhTotalDepth;               }
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void         setTileSetIdxMap( Int i, Int tileSetIdx, UChar setType, Bool skipFlag )
   {

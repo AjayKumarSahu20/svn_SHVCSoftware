@@ -69,9 +69,6 @@ protected:
 #if AVC_BASE
   Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
 #endif
-#if AVC_SYNTAX
-  Char*     m_BLSyntaxFile;                                   ///< input syntax file
-#endif
   Bool      m_maxTidRefPresentFlag; 
 #if Q0078_ADD_LAYER_SETS
   Int       m_numLayerSets;
@@ -469,9 +466,6 @@ public:
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
   Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
-#if AVC_SYNTAX
-  Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
-#endif
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
