@@ -73,9 +73,6 @@ TDecTop::TDecTop()
 #endif
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
 #endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  m_pBLSyntaxFile = NULL;
-#endif
   m_prevSliceSkipped = false;
   m_skippedPOC = 0;
 #if SETTING_NO_OUT_PIC_PRIOR
@@ -521,9 +518,6 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   // Execute Deblock + Cleanup
   m_cGopDecoder.filterPicture(pcPic);
 
-#if SYNTAX_OUTPUT
-  pcPic->wrireBLSyntax( getBLSyntaxFile(), SYNTAX_BYTES );
-#endif
   TComSlice::sortPicList( m_cListPic ); // sorting for application output
   poc                 = pcPic->getSlice(m_uiSliceIdx-1)->getPOC();
   rpcListPic          = &m_cListPic;  
@@ -780,17 +774,9 @@ Void TDecTop::xActivateParameterSets()
       Window defaultDisplayWindow;
 
 #if AUXILIARY_PICTURES
-#if AVC_SYNTAX
-      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
-#else
       pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
-#else
-#if AVC_SYNTAX
-      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, activeSPS, true);
 #else
       pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
-#endif
 #endif
       // it is needed where the VPS is accessed through the slice
       pBLPic->getSlice(0)->setVPS( activeVPS );
@@ -1804,18 +1790,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           {
             continue;
           }
-#if AVC_SYNTAX
-          TComPic* pBLPic = pcSlice->getBaseColPic(refLayerIdc);
-          if( pcSlice->getPOC() == 0 )
-          {
-            // initialize partition order.
-            UInt* piTmp = &g_auiZscanToRaster[0];
-            initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
-            initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
-          }      
-          pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
-          pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
-#endif
         }
         else
         {
@@ -1930,18 +1904,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
         {
           pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
-#if AVC_SYNTAX
-          TComPic* pBLPic = pcSlice->getBaseColPic(refLayerIdc);
-          if( pcSlice->getPOC() == 0 )
-          {
-            // initialize partition order.
-            UInt* piTmp = &g_auiZscanToRaster[0];
-            initZscanToRaster( pBLPic->getPicSym()->getMaxDepth() + 1, 1, 0, piTmp );
-            initRasterToZscan( pBLPic->getPicSym()->getMaxCUWidth(), pBLPic->getPicSym()->getMaxCUHeight(), pBLPic->getPicSym()->getMaxDepth() + 1 );
-          }      
-          pBLPic->getSlice( 0 )->initBaseLayerRPL( pcSlice );
-          pBLPic->readBLSyntax( m_ppcTDecTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
-#endif
         }
         else
         {
@@ -2293,13 +2255,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
           printf( "Base layer YUV input reading error\n" );
           exit(EXIT_FAILURE);
         }        
-#if AVC_SYNTAX
-        if( !m_ppcTDecTop[0]->getBLSyntaxFile()->good() )
-        {
-          printf( "Base layer syntax input reading error\n" );
-          exit(EXIT_FAILURE);
-        }
-#endif
       }
       else
       {

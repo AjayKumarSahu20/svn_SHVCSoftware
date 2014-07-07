@@ -40,7 +40,6 @@
 
 #define SVC_EXTENSION                    1
 
-#define SYNTAX_BYTES                     10     ///< number of bytes taken by syntaxes per 4x4 block [RefIdxL0(1byte), RefIdxL1(1byte), MVxL0(2bytes), MVyL0(2bytes), MVxL1(2bytes), MVyL1(2bytes)]
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
@@ -151,9 +150,6 @@
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
-#if AVC_BASE
-#define AVC_SYNTAX                       0      ///< Syntax reading for AVC base
-#endif
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define MAX_ONE_RESAMPLING_DIRECT_LAYERS 1      ///< Allow maximum of one resampling process for direct reference layers
@@ -261,8 +257,6 @@ enum ScalabilityType
 #define Q0247_FRAME_FIELD_INFO           1      ///< JCTVC-Q0247: field_frame_info SEI message
 
 
-#else
-#define SYNTAX_OUTPUT                    0
 #endif // SVC_EXTENSION
 
 

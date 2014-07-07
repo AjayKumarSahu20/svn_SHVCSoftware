@@ -509,9 +509,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
-#if AVC_SYNTAX
-  string  cfg_BLSyntaxFile;
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   string  cfg_tileSets;
 #endif
@@ -628,9 +625,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AVC_BASE
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
-#if AVC_SYNTAX
-  ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
-#endif
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
 #if Q0074_SEI_COLOR_MAPPING
@@ -1094,9 +1088,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
   m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
-#if AVC_SYNTAX
-  m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
-#endif
 #else //SVC_EXTENSION
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
@@ -2932,22 +2923,18 @@ Void TAppEncCfg::xPrintParameter()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
-#if AVC_SYNTAX
-    m_acLayerCfg[layer].xPrintParameter( layer );
-#else
     m_acLayerCfg[layer].xPrintParameter();
-#endif
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
   printf("Bitstream      File          : %s\n", m_pBitstreamFile      );
-#else
+#else //SVC_EXTENSION
   printf("Input          File          : %s\n", m_pchInputFile          );
   printf("Bitstream      File          : %s\n", m_pchBitstreamFile      );
   printf("Reconstruction File          : %s\n", m_pchReconFile          );
   printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
   printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
-#endif
+#endif //SVC_EXTENSION
   if (m_isField)
   {
     printf("Frame/Field          : Field based coding\n");

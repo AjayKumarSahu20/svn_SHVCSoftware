@@ -124,9 +124,6 @@ private:
 #if SVC_EXTENSION
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
-#if AVC_SYNTAX
-  fstream*                m_pBLSyntaxFile;
-#endif
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
@@ -244,10 +241,6 @@ public:
 #if O0194_WEIGHTED_PREDICTION_CGS
   Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
   Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
-#endif
-#if AVC_SYNTAX
-  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
-  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
   Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );

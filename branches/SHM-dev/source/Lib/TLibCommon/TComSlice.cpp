@@ -3853,50 +3853,6 @@ Void TComPTL::copyProfileInfo(TComPTL *ptl)
 #endif
 
 #if SVC_EXTENSION
-#if AVC_SYNTAX
-Void TComSlice::initBaseLayerRPL( TComSlice *pcSlice )
-{
-// Assumed that RPL of the base layer is same to the EL, otherwise this information should be also dumped and read from the metadata file
-  setPOC( pcSlice->getPOC() );
-  if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
-  {
-    setSliceType( I_SLICE );
-  }
-  else
-  {
-    setSliceType( pcSlice->getSliceType() );
-  }
-
-  if( this->isIntra() )
-  {
-    return;
-  }
-
-  //initialize reference POC of BL
-  for( Int iRefPicList = 0; iRefPicList < 2; iRefPicList++ )
-  {
-    RefPicList eRefPicList = RefPicList( iRefPicList );
-
-    assert( pcSlice->getNumRefIdx( eRefPicList) >= 0 );
-    setNumRefIdx( eRefPicList, pcSlice->getNumRefIdx( eRefPicList ) - 1 );
-    assert( getNumRefIdx( eRefPicList) <= MAX_NUM_REF);
-
-    for(Int refIdx = 0; refIdx < getNumRefIdx( eRefPicList ); refIdx++) 
-    {
-      setRefPOC( pcSlice->getRefPic( eRefPicList, refIdx )->getPOC(), eRefPicList, refIdx );
-      setRefPic( pcSlice->getRefPic( eRefPicList, refIdx ), eRefPicList, refIdx );
-      /*
-      // should be set if the base layer has its own instance of the reference picture lists, currently EL RPL is reused.
-      getRefPic( eRefPicList, refIdx )->setLayerId( 0 );
-      getRefPic( eRefPicList, refIdx )->setIsLongTerm( pcSlice->getRefPic( eRefPicList, refIdx )->getIsLongTerm() );      
-      */
-
-    }
-  }  
-  return;
-}
-#endif
-
 Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc )
 {  
   if(m_layerId == 0)

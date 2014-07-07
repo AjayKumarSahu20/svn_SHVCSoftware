@@ -225,7 +225,7 @@ Void TAppEncTop::xInitLibCfg()
 
 #if REF_IDX_MFM
 #if AVC_BASE
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? AVC_SYNTAX : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
 #endif
@@ -1668,25 +1668,6 @@ Void TAppEncTop::encode()
     }
   }
 
-#if AVC_SYNTAX
-  fstream streamSyntaxFile;
-  if( m_acTEncTop[0].getVPS()->getAvcBaseLayerFlag() )
-  {
-    if( !m_BLSyntaxFile )
-    {
-      printf( "Wrong base layer syntax input file\n" );
-      exit(EXIT_FAILURE);
-    }
-    streamSyntaxFile.open( m_BLSyntaxFile, fstream::in | fstream::binary );
-    if( !streamSyntaxFile.good() )
-    {
-      printf( "Base layer syntax input reading error\n" );
-      exit(EXIT_FAILURE);
-    }
-    m_acTEncTop[0].setBLSyntaxFile( &streamSyntaxFile );
-  }
-#endif
-
   Bool bFirstFrame = true;
   while ( !bEos )
   {
@@ -1883,13 +1864,6 @@ Void TAppEncTop::encode()
     // delete used buffers in encoder class
     m_acTEncTop[layer].deletePicBuffer();
   }
-
-#if AVC_SYNTAX
-  if( streamSyntaxFile.is_open() )
-  {
-    streamSyntaxFile.close();
-  }
-#endif
 
   // delete buffers & classes
   xDeleteBuffer();
@@ -2323,9 +2297,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
       if (m_pchReconFile)
       {
-#if SYNTAX_OUTPUT
         m_cTVideoIOYuvReconFile.write( pcPicYuvRec, m_confLeft, m_confRight, m_confTop, m_confBottom );
-#endif
       }
 
       const AccessUnit& au = *(iterBitstream++);

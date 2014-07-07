@@ -194,10 +194,6 @@ private:
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    m_commonDecoderParams;
 #endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  fstream*               m_pBLSyntaxFile;
-#endif
-
 #if NO_CLRAS_OUTPUT_FLAG  
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
@@ -326,10 +322,7 @@ public:
   Void assignSubDpbs(TComVPS *vps);
 #endif
 #endif //SVC_EXTENSION
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
-  fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
-#endif
+
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);

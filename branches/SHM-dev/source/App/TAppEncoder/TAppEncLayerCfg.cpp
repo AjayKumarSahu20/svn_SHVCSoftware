@@ -156,20 +156,10 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   return true;
 }
 
-#if AVC_SYNTAX
-Void TAppEncLayerCfg::xPrintParameter( UInt layerId )
-#else
 Void TAppEncLayerCfg::xPrintParameter()
-#endif
 {
   printf("Input File                    : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
-#if AVC_SYNTAX
-  if( layerId == 0 )
-  {
-    printf("Base layer syntax file        : %s\n", m_cAppEncCfg->getBLSyntaxFile() );
-  }
-#endif
 #if REPN_FORMAT_IN_VPS
   printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confLeft + m_confRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confTop + m_confBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
 #else

@@ -2173,9 +2173,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         m_pcSliceEncoder->estimateILWpParam( pcSlice );
       }
 #endif
-#if AVC_SYNTAX
-      pcPic->readBLSyntax( m_ppcTEncTop[0]->getBLSyntaxFile(), SYNTAX_BYTES );
-#endif
       return;
     }
 #endif

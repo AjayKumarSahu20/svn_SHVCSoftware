@@ -44,7 +44,7 @@
 #include "TComPicYuv.h"
 #include "TComBitStream.h"
 #include "SEI.h"
-#if AVC_BASE || SYNTAX_OUTPUT
+#if AVC_BASE
 #include <fstream>
 #endif
 
@@ -212,12 +212,6 @@ public:
   ChromaFormat  getChromaFormat() const { return m_apcPicYuv[1]->getChromaFormat(); }
 #endif
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
-#if AVC_SYNTAX
-  Void readBLSyntax( fstream* filestream, UInt numBytes );
-#endif
-#endif
-#if SYNTAX_OUTPUT
-  Void wrireBLSyntax( fstream* filestream, UInt numBytes );
 #endif
 
 #if Q0048_CGS_3D_ASYMLUT
