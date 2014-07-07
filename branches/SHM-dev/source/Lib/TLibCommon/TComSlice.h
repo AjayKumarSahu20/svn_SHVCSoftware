@@ -2541,6 +2541,9 @@ public:
     assert ( psId < m_maxId );
     if ( m_paramsetMap.find(psId) != m_paramsetMap.end() )
     {
+#if Q0078_ADD_LAYER_SETS
+      m_paramsetMap.erase(psId);
+#endif
       delete m_paramsetMap[psId];
     }
     m_paramsetMap[psId] = ps; 
@@ -2573,6 +2576,9 @@ public:
     if (m_paramsetMap.find(psId) != m_paramsetMap.end())
     {
       m_paramsetMap.erase(psId);
+#if Q0078_ADD_LAYER_SETS
+      delete m_paramsetMap[psId];
+#endif
     }
   }
 #endif
