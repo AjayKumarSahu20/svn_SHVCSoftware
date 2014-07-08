@@ -259,10 +259,10 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 #if REF_IDX_MFM
 Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
 {
-  UInt numPartitions   = 1<<(g_uiMaxCUDepth<<1);
-  UInt widthMinPU      = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
-  UInt heightMinPU     = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
-  Int  unitNum         = max (1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
+  UInt numPartitions = 1<<(g_uiMaxCUDepth<<1);
+  UInt widthMinPU    = g_uiMaxCUWidth/(1<<g_uiMaxCUDepth);
+  UInt heightMinPU   = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
+  Int  unitNum       = max (1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
 
   for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
   {
@@ -276,7 +276,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
       UInt baseCUAddr, baseAbsPartIdx;
 
       TComDataCU *pcColCU = 0;
-      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX + 8, pelY + 8, baseCUAddr, baseAbsPartIdx, 1);
+      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX, pelY, baseCUAddr, baseAbsPartIdx, true);
 
       if( pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
       {
@@ -305,7 +305,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
         pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx));
       }
     }
-    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(Char)*numPartitions);
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(Char)*numPartitions );
   }
 }
 

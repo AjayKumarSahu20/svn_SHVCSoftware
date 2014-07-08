@@ -3480,20 +3480,20 @@ UInt TComDataCU::getSCUAddr()
 }
 
 #if SVC_EXTENSION
-TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
+TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping )
 {
   UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
   UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
 
-  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase, iMotionMapping );
+  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase, motionMapping );
 }
 
-TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int iMotionMapping )
+TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping )
 {
   TComPic* baseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
-  uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth() - 1, uiPelX);
-  uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, uiPelY);
+  UInt uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth()  - 1, pelX + 8);
+  UInt uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, pelY + 8);
 
 #if !LAYER_CTB
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
@@ -3518,20 +3518,19 @@ TComDataCU*  TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiPelX, UInt uiPel
 
 #if REF_IDX_MFM
   // offset for collocated block in the motion mapping
-  if( iMotionMapping == 1 )
+  if( motionMapping )
   {
-    Bool unequalPictureSizeFlag = g_posScalingFactor[refLayerIdc][0] != 65536 || g_posScalingFactor[refLayerIdc][1] != 65536; //the condition should be updated according to the WD.
-
     // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
-    if( unequalPictureSizeFlag )
+    if( m_pcPic->isSpatialEnhLayer(refLayerIdc) )
     {
       iBX = ( ( iBX + 4 ) >> 4 ) << 4;
       iBY = ( ( iBY + 4 ) >> 4 ) << 4;
     }
     else
     {
-      iBX += 4;
-      iBY += 4;
+      // copy motion field from the top left sample for 1x scaling ratio
+      iBX = pelX;
+      iBY = pelY;
     }
   }
 #endif
@@ -3586,9 +3585,9 @@ Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, T
 Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes )
 {
   // check BL mode
-  UInt          uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
+  UInt uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
   // the right reference layerIdc should be specified, currently it is set to m_layerId-1
-  TComDataCU*   pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, 0 );
+  TComDataCU* pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, false );
 
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
   {

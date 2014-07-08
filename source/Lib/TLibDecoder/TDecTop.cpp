@@ -184,7 +184,7 @@ Void TDecTop::destroy()
       delete m_cIlpPic[i];
       m_cIlpPic[i] = NULL;
     }
-  }    
+  }
 #endif
 }
 
@@ -1596,7 +1596,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     xGetNewPicBuffer (m_apcSlicePilot, pcPic);
 
 #if POC_RESET_IDC_DECODER
-  pcPic->setCurrAuFlag( true );
+    pcPic->setCurrAuFlag( true );
 #endif
 
     Bool isField = false;
