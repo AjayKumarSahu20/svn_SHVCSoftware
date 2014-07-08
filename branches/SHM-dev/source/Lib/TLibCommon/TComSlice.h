@@ -2409,10 +2409,6 @@ public:
   Void      setRefPicListModificationSvc();
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
 
-#if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic** pcRefPicRL);
-#endif
-
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 

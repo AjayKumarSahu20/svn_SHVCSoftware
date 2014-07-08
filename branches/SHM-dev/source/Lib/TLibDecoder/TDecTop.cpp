@@ -1931,10 +1931,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       pcSlice->setILRPic( m_cIlpPic );
 
 #if REF_IDX_MFM
-      if( pcSlice->getMFMEnabledFlag() )
-      {
-        pcSlice->setRefPOCListILP(m_ppcTDecTop[m_layerId]->m_cIlpPic, pcSlice->getBaseColPic());
-      }
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE

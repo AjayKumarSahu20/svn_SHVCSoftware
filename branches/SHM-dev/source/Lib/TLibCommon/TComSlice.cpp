@@ -515,32 +515,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   }
 #endif
 
-#if SVC_EXTENSION
-  for( i = 0; i < m_activeNumILRRefIdx; i++ )
-  {
-    UInt refLayerIdc = m_interLayerPredLayerIdc[i];
-    //inter-layer reference picture
-#if O0225_MAX_TID_FOR_REF_LAYERS
-    Int maxTidIlRefPicsPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId(),m_layerId) : 0;
-#else
-    Int maxTidIlRefPicsPlus1 = ( m_layerId > 0 && m_activeNumILRRefIdx > 0)? m_pcVPS->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerId()) : 0;
-#endif 
-    if( m_layerId > 0 && m_activeNumILRRefIdx > 0 && ( ( (Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=  maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )  ) 
-    {
-#if REF_IDX_MFM
-      if(!(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) && getMFMEnabledFlag())
-      { 
-        ilpPic[refLayerIdc]->copyUpsampledMvField( refLayerIdc, m_pcBaseColPic[refLayerIdc] );
-      }
-      else
-      {
-        ilpPic[refLayerIdc]->initUpsampledMvField();
-      }
-#endif
-      ilpPic[refLayerIdc]->setIsLongTerm(1);
-    }
-  }
-#endif
   // ref_pic_list_init
   TComPic*  rpsCurrList0[MAX_NUM_REF+1];
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
@@ -3894,63 +3868,6 @@ TComPic* TComSlice::getBaseColPic(  TComList<TComPic*>& rcListPic )
 }
 #endif
 
-#if REF_IDX_MFM
-Void TComSlice::setRefPOCListILP( TComPic** ilpPic, TComPic** pcRefPicRL )
-{
-  for( UInt i = 0; i < m_activeNumILRRefIdx; i++ )
-  {
-    UInt refLayerIdc = m_interLayerPredLayerIdc[i];
-
-    TComPic* pcRefPicBL = pcRefPicRL[refLayerIdc];
-
-    //set reference picture POC of each ILP reference 
-    Int thePoc = ilpPic[refLayerIdc]->getPOC(); 
-    assert(thePoc == pcRefPicBL->getPOC());
-
-    ilpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
-
-    //copy layer id from the reference layer    
-    ilpPic[refLayerIdc]->setLayerId( pcRefPicBL->getLayerId() );
-
-    //copy slice type from the reference layer
-    ilpPic[refLayerIdc]->getSlice(0)->setSliceType( pcRefPicBL->getSlice(0)->getSliceType() );
-
-    //copy "used for reference"
-    ilpPic[refLayerIdc]->getSlice(0)->setReferenced( pcRefPicBL->getSlice(0)->isReferenced() );
-
-    for( Int refList = 0; refList < 2; refList++ )
-    {
-      RefPicList refPicList = RefPicList( refList );
-
-      //set reference POC of ILP
-      ilpPic[refLayerIdc]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
-      assert(ilpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) >= 0);
-      assert(ilpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF);
-
-      //initialize reference POC of ILP
-      for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++)
-      {
-        ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx);
-        ilpPic[refLayerIdc]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx);
-      }
-
-      for(Int refIdx = pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx < MAX_NUM_REF; refIdx++) 
-      { 
-        ilpPic[refLayerIdc]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
-        ilpPic[refLayerIdc]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
-      }
-
-      //copy reference pictures' marking from the reference layer
-      for(Int j = 0; j < MAX_NUM_REF + 1; j++)
-      {
-        ilpPic[refLayerIdc]->getSlice(0)->setIsUsedAsLongTerm(refList, j, pcRefPicBL->getSlice(0)->getIsUsedAsLongTerm(refList, j));
-      }
-    }
-  }
-  return;
-}
-#endif
-
 Void TComSlice::setILRPic(TComPic **pcIlpPic)
 {
   for( Int i = 0; i < m_activeNumILRRefIdx; i++ )
@@ -3959,19 +3876,87 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
 
     if( pcIlpPic[refLayerIdc] )
     {
-      pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );
+      TComPic* pcRefPicBL = m_pcBaseColPic[refLayerIdc];
+
+      pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );      
+      pcIlpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
+
+      //set reference picture POC of each ILP reference 
       pcIlpPic[refLayerIdc]->getSlice(0)->setPOC( m_iPOC );
-      pcIlpPic[refLayerIdc]->setLayerId( m_pcBaseColPic[refLayerIdc]->getLayerId() ); //set reference layerId
+
+      //set temporal Id 
+      pcIlpPic[refLayerIdc]->getSlice(0)->setTLayer( m_uiTLayer );
+
+      //copy layer id from the reference layer 
+      pcIlpPic[refLayerIdc]->setLayerId( pcRefPicBL->getLayerId() );
+
       pcIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension( false );
       pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
       for (Int j=0; j<pcIlpPic[refLayerIdc]->getPicSym()->getNumberOfCUsInFrame(); j++)    // set reference CU layerId
       {
         pcIlpPic[refLayerIdc]->getPicSym()->getCU(j)->setLayerId( pcIlpPic[refLayerIdc]->getLayerId() );
       }
+      pcIlpPic[refLayerIdc]->setIsLongTerm(1);
+
+#if REF_IDX_MFM
+      if( m_bMFMEnabledFlag && !(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) )
+      {
+        //set reference picture POC of each ILP reference 
+        assert( pcIlpPic[refLayerIdc]->getPOC() == pcRefPicBL->getPOC() );
+
+        //copy slice type from the reference layer
+        pcIlpPic[refLayerIdc]->getSlice(0)->setSliceType( pcRefPicBL->getSlice(0)->getSliceType() );
+
+        //copy "used for reference"
+        pcIlpPic[refLayerIdc]->getSlice(0)->setReferenced( pcRefPicBL->getSlice(0)->isReferenced() );
+
+        for( Int refList = 0; refList < 2; refList++ )
+        {
+          RefPicList refPicList = RefPicList( refList );
+
+          //set reference POC of ILP
+          pcIlpPic[refLayerIdc]->getSlice(0)->setNumRefIdx(refPicList, pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList));
+          assert(pcIlpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) >= 0);
+          assert(pcIlpPic[refLayerIdc]->getSlice(0)->getNumRefIdx(refPicList) <= MAX_NUM_REF);
+
+          //initialize reference POC of ILP
+          for(Int refIdx = 0; refIdx < pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx++)
+          {
+            pcIlpPic[refLayerIdc]->getSlice(0)->setRefPOC(pcRefPicBL->getSlice(0)->getRefPOC(refPicList, refIdx), refPicList, refIdx);
+            pcIlpPic[refLayerIdc]->getSlice(0)->setRefPic(pcRefPicBL->getSlice(0)->getRefPic(refPicList, refIdx), refPicList, refIdx);
+          }
+
+          for(Int refIdx = pcRefPicBL->getSlice(0)->getNumRefIdx(refPicList); refIdx < MAX_NUM_REF; refIdx++) 
+          { 
+            pcIlpPic[refLayerIdc]->getSlice(0)->setRefPOC(0, refPicList, refIdx); 
+            pcIlpPic[refLayerIdc]->getSlice(0)->setRefPic(NULL, refPicList, refIdx); 
+          }
+
+          //copy reference pictures' marking from the reference layer
+          for(Int j = 0; j < MAX_NUM_REF + 1; j++)
+          {
+            pcIlpPic[refLayerIdc]->getSlice(0)->setIsUsedAsLongTerm(refList, j, pcRefPicBL->getSlice(0)->getIsUsedAsLongTerm(refList, j));
+          }
+        }
+
+        pcIlpPic[refLayerIdc]->copyUpsampledMvField( refLayerIdc, m_pcBaseColPic[refLayerIdc] );
+      }
+      else
+      {
+        pcIlpPic[refLayerIdc]->initUpsampledMvField();
+      }
+#endif
+
+#if O0225_MAX_TID_FOR_REF_LAYERS
+      Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1( pcIlpPic[refLayerIdc]->getSlice(0)->getLayerId(), m_layerId );
+#else
+      Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1( pcIlpPic[refLayerIdc]->getSlice(0)->getLayerId() );
+#endif
+      assert( (Int)pcIlpPic[refLayerIdc]->getSlice(0)->getTLayer() < maxTidIlRefPicsPlus1 || ( !maxTidIlRefPicsPlus1 && pcIlpPic[refLayerIdc]->getSlice(0)->getRapPicFlag() ) );
+
     }
   }
 }
-
 #endif //SVC_EXTENSION
 
 //! \}
