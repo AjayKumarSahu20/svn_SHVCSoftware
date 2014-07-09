@@ -1449,6 +1449,13 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       }
     }
   }
+
+#if BITRATE_PICRATE_SIGNALLING
+  if( MaxSubLayersInLayerSetMinus1 )
+  {
+    delete [] MaxSubLayersInLayerSetMinus1;
+  }
+#endif
 }
 #endif
 
