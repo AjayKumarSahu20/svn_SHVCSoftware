@@ -34,10 +34,10 @@ protected:
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
   Int       m_conformanceMode;
-  Int       m_confLeft;
-  Int       m_confRight;
-  Int       m_confTop;
-  Int       m_confBottom;
+  Int       m_confWinLeft;
+  Int       m_confWinRight;
+  Int       m_confWinTop;
+  Int       m_confWinBottom;
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
@@ -135,10 +135,10 @@ public:
   Int     getConformanceMode()        { return m_conformanceMode; }
   Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }
-  Int     getConfLeft()               {return m_confLeft;         }
-  Int     getConfRight()              {return m_confRight;        }
-  Int     getConfTop()                {return m_confTop;          }
-  Int     getConfBottom()             {return m_confBottom;       }
+  Int     getConfWinLeft()            {return m_confWinLeft;         }
+  Int     getConfWinRight()           {return m_confWinRight;        }
+  Int     getConfWinTop()             {return m_confWinTop;          }
+  Int     getConfWinBottom()          {return m_confWinBottom;       }
 #if AUXILIARY_PICTURES
   ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
   ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }

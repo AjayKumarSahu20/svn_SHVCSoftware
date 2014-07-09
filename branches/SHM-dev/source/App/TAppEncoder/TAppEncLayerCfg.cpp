@@ -49,7 +49,7 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 , m_repFormatIdx (-1)
 #endif
 {
-  m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
+  m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
   m_numScaledRefLayerOffsets = 0;
 #if O0098_SCALED_REF_LAYER_ID
@@ -113,10 +113,14 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
     ("InputChromaFormat",     tmpInputChromaFormat,  420, "InputChromaFormatIDC")
     ("ChromaFormatIDC",       tmpChromaFormat,    420, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
 #endif
-    ("CropLeft",              m_confLeft,      0, "Left cropping/padding for cropping mode 3")
-    ("CropRight",             m_confRight,     0, "Right cropping/padding for cropping mode 3")
-    ("CropTop",               m_confTop,       0, "Top cropping/padding for cropping mode 3")
-    ("CropBottom",            m_confBottom,    0, "Bottom cropping/padding for cropping mode 3")
+    ("ConfLeft",              m_confWinLeft,            0, "Deprecated alias of ConfWinLeft")
+    ("ConfRight",             m_confWinRight,           0, "Deprecated alias of ConfWinRight")
+    ("ConfTop",               m_confWinTop,             0, "Deprecated alias of ConfWinTop")
+    ("ConfBottom",            m_confWinBottom,          0, "Deprecated alias of ConfWinBottom")
+    ("ConfWinLeft",           m_confWinLeft,            0, "Left offset for window conformance mode 3")
+    ("ConfWinRight",          m_confWinRight,           0, "Right offset for window conformance mode 3")
+    ("ConfWinTop",            m_confWinTop,             0, "Top offset for window conformance mode 3")
+    ("ConfWinBottom",         m_confWinBottom,          0, "Bottom offset for window conformance mode 3")
     ("HorizontalPadding,-pdx",m_aiPad[0],      0, "horizontal source padding for cropping mode 2")
     ("VerticalPadding,-pdy",  m_aiPad[1],      0, "vertical source padding for cropping mode 2")
     ("IntraPeriod,-ip",       m_iIntraPeriod,  -1, "intra period in frames, (-1: only first frame)")
@@ -161,9 +165,9 @@ Void TAppEncLayerCfg::xPrintParameter()
   printf("Input File                    : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
 #if REPN_FORMAT_IN_VPS
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confLeft + m_confRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confTop + m_confBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
+  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
 #else
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
+  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
 #endif
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -206,7 +210,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   case 0:
     {
       // no cropping or padding
-      m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
+      m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
       m_aiPad[1] = m_aiPad[0] = 0;
       break;
     }
@@ -220,23 +224,23 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
 #endif
       if (m_iSourceWidth % minCuSize)
       {
-        m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
-        m_iSourceWidth  += m_confRight;
+        m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
+        m_iSourceWidth  += m_confWinRight;
 #if REPN_FORMAT_IN_VPS
-        m_confRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+        m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
 #endif
       }
       if (m_iSourceHeight % minCuSize)
       {
-        m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
-        m_iSourceHeight += m_confBottom;
+        m_aiPad[1] = m_confWinBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
+        m_iSourceHeight += m_confWinBottom;
         if ( isField )
         {
-          m_iSourceHeightOrg += m_confBottom << 1;
-          m_aiPad[1] = m_confBottom << 1;
+          m_iSourceHeightOrg += m_confWinBottom << 1;
+          m_aiPad[1] = m_confWinBottom << 1;
         }
 #if REPN_FORMAT_IN_VPS
-        m_confBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+        m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
 #endif
       }
       break;
@@ -246,18 +250,18 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
-      m_confRight  = m_aiPad[0];
-      m_confBottom = m_aiPad[1];
+      m_confWinRight  = m_aiPad[0];
+      m_confWinBottom = m_aiPad[1];
 #if REPN_FORMAT_IN_VPS
-      m_confRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
-      m_confBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+      m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+      m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
 #endif
       break;
     }
   case 3:
     {
       // conformance
-      if ((m_confLeft == 0) && (m_confRight == 0) && (m_confTop == 0) && (m_confBottom == 0))
+      if ((m_confWinLeft == 0) && (m_confWinRight == 0) && (m_confWinTop == 0) && (m_confWinBottom == 0))
       {
         fprintf(stderr, "Warning: Cropping enabled, but all cropping parameters set to zero\n");
       }

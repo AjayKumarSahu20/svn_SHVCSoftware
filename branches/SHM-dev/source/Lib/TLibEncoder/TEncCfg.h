@@ -106,7 +106,6 @@ protected:
   Int       m_FrameSkip;
   Int       m_iSourceWidth;
   Int       m_iSourceHeight;
-  Int       m_conformanceMode;
   Window    m_conformanceWindow;
   Int       m_framesToBeEncoded;
   Double    m_adLambdaModifier[ MAX_TLAYER ];
@@ -207,11 +206,11 @@ protected:
   UInt      m_uiPCMBitDepthChroma;
   Bool      m_bPCMFilterDisableFlag;
   Bool      m_loopFilterAcrossTilesEnabledFlag;
-  Int       m_iUniformSpacingIdr;
+  Bool      m_tileUniformSpacingFlag;
   Int       m_iNumColumnsMinus1;
-  UInt*     m_puiColumnWidth;
   Int       m_iNumRowsMinus1;
-  UInt*     m_puiRowHeight;
+  std::vector<Int> m_tileColumnWidth;
+  std::vector<Int> m_tileRowHeight;
 
   Int       m_iWaveFrontSynchro;
   Int       m_iWaveFrontSubstreams;
@@ -247,23 +246,6 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
-#if P0050_KNEE_FUNCTION_SEI
-  Bool      m_kneeSEIEnabled;
-  Int       m_kneeSEIId;
-  Bool      m_kneeSEICancelFlag;
-  Bool      m_kneeSEIPersistenceFlag;
-  Bool      m_kneeSEIMappingFlag;
-  Int       m_kneeSEIInputDrange;
-  Int       m_kneeSEIInputDispLuminance;
-  Int       m_kneeSEIOutputDrange;
-  Int       m_kneeSEIOutputDispLuminance;
-  Int       m_kneeSEINumKneePointsMinus1;
-  Int*      m_kneeSEIInputKneePoint;
-  Int*      m_kneeSEIOutputKneePoint;
-#endif
-#if Q0074_SEI_COLOR_MAPPING
-  Char*     m_seiColorMappingFile;
-#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -275,9 +257,6 @@ protected:
   Int       m_decodingUnitInfoSEIEnabled;
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
-#if Q0189_TMVP_CONSTRAINTS
-  Int       m_TMVPConstraintsSEIEnabled;
-#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -388,19 +367,36 @@ protected:
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
 #endif
+#if P0050_KNEE_FUNCTION_SEI
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Bool      m_kneeSEIMappingFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
+#endif
+#if Q0074_SEI_COLOR_MAPPING
+  Char*     m_seiColorMappingFile;
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
+#endif
 #endif //SVC_EXTENSION
 
 public:
   TEncCfg()
-  : m_puiColumnWidth()
-  , m_puiRowHeight()
+  : m_tileColumnWidth()
+  , m_tileRowHeight()
   {}
 
   virtual ~TEncCfg()
-  {
-    delete[] m_puiColumnWidth;
-    delete[] m_puiRowHeight;
-  }
+  {}
   
   Void setProfile(Profile::Name profile) { m_profile = profile; }
   Void setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
@@ -436,7 +432,7 @@ public:
   Int       getMaxRefPicNum                 ()                              { return m_iMaxRefPicNum;           }
   Void      setMaxRefPicNum                 ( Int iMaxRefPicNum )           { m_iMaxRefPicNum = iMaxRefPicNum;  }
 
-  Bool      getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
+  Int       getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
   Void      setMaxTempLayer                 ( Int maxTempLayer )            { m_maxTempLayer = maxTempLayer;      }
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
@@ -581,42 +577,16 @@ public:
   Bool  getSaoLcuBoundary              ()              { return m_saoLcuBoundary; }
   Void  setLFCrossTileBoundaryFlag               ( Bool   val  )       { m_loopFilterAcrossTilesEnabledFlag = val; }
   Bool  getLFCrossTileBoundaryFlag               ()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
-  Void  setUniformSpacingIdr           ( Int i )           { m_iUniformSpacingIdr = i; }
-  Int   getUniformSpacingIdr           ()                  { return m_iUniformSpacingIdr; }
+  Void  setTileUniformSpacingFlag      ( Bool b )          { m_tileUniformSpacingFlag = b; }
+  Bool  getTileUniformSpacingFlag      ()                  { return m_tileUniformSpacingFlag; }
   Void  setNumColumnsMinus1            ( Int i )           { m_iNumColumnsMinus1 = i; }
   Int   getNumColumnsMinus1            ()                  { return m_iNumColumnsMinus1; }
-  Void  setColumnWidth ( UInt* columnWidth )
-  {
-    if( m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0 )
-    {
-      Int  m_iWidthInCU = ( m_iSourceWidth%g_uiMaxCUWidth ) ? m_iSourceWidth/g_uiMaxCUWidth + 1 : m_iSourceWidth/g_uiMaxCUWidth;
-      m_puiColumnWidth = new UInt[ m_iNumColumnsMinus1 ];
-
-      for(Int i=0; i<m_iNumColumnsMinus1; i++)
-      {
-        m_puiColumnWidth[i] = columnWidth[i];
-        printf("col: m_iWidthInCU= %4d i=%4d width= %4d\n",m_iWidthInCU,i,m_puiColumnWidth[i]); //AFU
-      }
-    }
-  }
-  UInt  getColumnWidth                 ( UInt columnidx )  { return *( m_puiColumnWidth + columnidx ); }
+  Void  setColumnWidth ( const std::vector<Int>& columnWidth ) { m_tileColumnWidth = columnWidth; }
+  UInt  getColumnWidth                 ( UInt columnIdx )      { return m_tileColumnWidth[columnIdx]; }
   Void  setNumRowsMinus1               ( Int i )           { m_iNumRowsMinus1 = i; }
   Int   getNumRowsMinus1               ()                  { return m_iNumRowsMinus1; }
-  Void  setRowHeight (UInt* rowHeight)
-  {
-    if( m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0 )
-    {
-      Int  m_iHeightInCU = ( m_iSourceHeight%g_uiMaxCUHeight ) ? m_iSourceHeight/g_uiMaxCUHeight + 1 : m_iSourceHeight/g_uiMaxCUHeight;
-      m_puiRowHeight = new UInt[ m_iNumRowsMinus1 ];
-
-      for(Int i=0; i<m_iNumRowsMinus1; i++)
-      {
-        m_puiRowHeight[i] = rowHeight[i];
-        printf("row: m_iHeightInCU=%4d i=%4d height=%4d\n",m_iHeightInCU,i,m_puiRowHeight[i]); //AFU
-      }
-    }
-  }
-  UInt  getRowHeight                   ( UInt rowIdx )     { return *( m_puiRowHeight + rowIdx ); }
+  Void  setRowHeight ( const std::vector<Int>& rowHeight)      { m_tileRowHeight = rowHeight; }
+  UInt  getRowHeight                   ( UInt rowIdx )         { return m_tileRowHeight[rowIdx]; }
   Void  xCheckGSParameters();
   Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_iWaveFrontSynchro = iWaveFrontSynchro; }
   Int   getWaveFrontsynchro()                            { return m_iWaveFrontSynchro; }
@@ -864,7 +834,6 @@ public:
   Void      setLayerId            (UInt layer) { m_layerId = layer; }
   UInt      getNumLayer           () { return m_numLayer;             }  
   Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
-  Void      setConformanceMode    (Int mode)     { m_conformanceMode = mode; }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
   Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
   Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
