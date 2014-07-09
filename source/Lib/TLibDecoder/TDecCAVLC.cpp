@@ -2062,6 +2062,13 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
     }
   }
 
+#if BITRATE_PICRATE_SIGNALLING
+  if( MaxSubLayersInLayerSetMinus1 )
+  {
+    delete [] MaxSubLayersInLayerSetMinus1;
+  }
+#endif
+
   // Infer values when not signalled
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
