@@ -434,7 +434,10 @@ protected:
   Int  m_nCGSMaxOctantDepth;
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Int  m_nCGSAdaptiveChroma;
 #endif
+#endif 
 #endif //SVC_EXTENSION
 public:
   TAppEncCfg();

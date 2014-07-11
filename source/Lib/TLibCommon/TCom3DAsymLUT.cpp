@@ -16,6 +16,9 @@ TCom3DAsymLUT::TCom3DAsymLUT()
 {
   m_pCuboid = NULL;
   m_nResQuanBit = 0;
+#if R0164_CGS_LUT_BUGFIX
+  m_pCuboidExplicit = NULL;
+#endif
 }
 
 TCom3DAsymLUT::~TCom3DAsymLUT()
@@ -23,7 +26,11 @@ TCom3DAsymLUT::~TCom3DAsymLUT()
   destroy();
 }
 
-Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 )
+Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
+#endif
+  )
 {
   m_nMaxOctantDepth = nMaxOctantDepth;
   m_nInputBitDepthY = nInputBitDepth;
@@ -35,7 +42,11 @@ Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
   m_nMaxYPartNumLog2 = nMaxYPartNumLog2;
   m_nMaxPartNumLog2 = 3 * m_nMaxOctantDepth + m_nMaxYPartNumLog2;
 
-  xUpdatePartitioning( nMaxOctantDepth , nMaxYPartNumLog2 );
+  xUpdatePartitioning( nMaxOctantDepth , nMaxYPartNumLog2 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+    , nAdaptCThresholdU , nAdaptCThresholdV
+#endif
+    );
 
   m_nYSize = 1 << ( m_nMaxOctantDepth + m_nMaxYPartNumLog2 );
   m_nUSize = 1 << m_nMaxOctantDepth;
@@ -47,14 +58,25 @@ Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
     destroy();
   }
   xAllocate3DArray( m_pCuboid , m_nYSize , m_nUSize , m_nVSize );
+
+#if R0164_CGS_LUT_BUGFIX
+  xAllocate3DArray( m_pCuboidExplicit , m_nYSize , m_nUSize , m_nVSize );
+#endif
 }
 
 Void TCom3DAsymLUT::destroy()
 {
   xFree3DArray( m_pCuboid );
+#if R0164_CGS_LUT_BUGFIX
+  xFree3DArray( m_pCuboidExplicit  );
+#endif
 }
 
-Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 )
+Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
+#endif
+  )
 {
   assert( nCurOctantDepth <= m_nMaxOctantDepth );
   assert( nCurYPartNumLog2 <= m_nMaxYPartNumLog2 );
@@ -63,7 +85,13 @@ Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumL
   m_nCurYPartNumLog2 = nCurYPartNumLog2;
   m_nYShift2Idx = m_nInputBitDepthY - m_nCurOctantDepth - m_nCurYPartNumLog2;
   m_nUShift2Idx = m_nVShift2Idx = m_nInputBitDepthC - m_nCurOctantDepth;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  m_nMappingShift = 10 + m_nInputBitDepthY - m_nOutputBitDepthY; 
+  m_nAdaptCThresholdU = nAdaptCThresholdU;
+  m_nAdaptCThresholdV = nAdaptCThresholdV;
+#else
   m_nMappingShift = m_nYShift2Idx + m_nUShift2Idx;
+#endif
   m_nMappingOffset = 1 << ( m_nMappingShift - 1 );
 }
 
@@ -158,9 +186,19 @@ SYUVP TCom3DAsymLUT::xGetCuboidVertexPredA( Int yIdx , Int uIdx , Int vIdx , Int
   assert( nVertexIdx < 4 );
   
   SYUVP sPred;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  sPred.Y = sPred.U = sPred.V = 0;
+  if( nVertexIdx == 0 )
+    sPred.Y = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
+  else if( nVertexIdx == 1 )
+    sPred.U = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
+  else if( nVertexIdx == 2 )
+    sPred.V = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
+#else
   sPred.Y = ( yIdx + m_nVertexIdxOffset[nVertexIdx][0] ) << ( m_nYShift2Idx + m_nDeltaBitDepth );
   sPred.U = ( uIdx + m_nVertexIdxOffset[nVertexIdx][1] ) << ( m_nUShift2Idx + m_nDeltaBitDepthC );
   sPred.V = ( vIdx + m_nVertexIdxOffset[nVertexIdx][2] ) << ( m_nVShift2Idx + m_nDeltaBitDepthC );
+#endif
   return( sPred );
 }
 
@@ -168,6 +206,19 @@ SYUVP  TCom3DAsymLUT::xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , 
 {
   SCuboid***  pCuboid = pCurCuboid ? pCurCuboid : m_pCuboid ;
 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  SYUVP sPred;
+  if( yIdx == 0 )
+  {
+    sPred.Y = nVertexIdx == 0 ? 1024 : 0;
+    sPred.U = nVertexIdx == 1 ? 1024 : 0;
+    sPred.V = nVertexIdx == 2 ? 1024 : 0;
+  }
+  else
+  {
+    sPred = pCuboid[yIdx-1][uIdx][vIdx].P[nVertexIdx];
+  }
+#else
   // PredA
   SYUVP sPredA = xGetCuboidVertexPredA( yIdx , uIdx , vIdx , nVertexIdx );
 
@@ -195,7 +246,7 @@ SYUVP  TCom3DAsymLUT::xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , 
   sPred.Y = sPredA.Y + sPredB.Y;
   sPred.U = sPredA.U + sPredB.U;
   sPred.V = sPredA.V + sPredB.V;
-
+#endif
   return sPred ;
 }
 
@@ -219,10 +270,20 @@ Void TCom3DAsymLUT::setCuboidVertexResTree( Int yIdx , Int uIdx , Int vIdx , Int
   rYUVP.Y = sPred.Y + ( deltaY << m_nResQuanBit );
   rYUVP.U = sPred.U + ( deltaU << m_nResQuanBit );
   rYUVP.V = sPred.V + ( deltaV << m_nResQuanBit );
+#if R0150_CGS_SIGNAL_CONSTRAINTS
+  // LUT coefficients are less than 12-bit
+  assert( -2048 <= rYUVP.Y && rYUVP.Y <= 2047 );
+  assert( -2048 <= rYUVP.U && rYUVP.U <= 2047 );
+  assert( -2048 <= rYUVP.V && rYUVP.V <= 2047 );
+#endif
 }
 
 Pel TCom3DAsymLUT::xMapY( Pel y , Pel u , Pel v )
 {
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  const SCuboid & rCuboid = m_pCuboid[xGetYIdx(y)][xGetUIdx(u)][xGetVIdx(v)];
+  Pel dstY = ( ( rCuboid.P[0].Y * y + rCuboid.P[1].Y * u + rCuboid.P[2].Y * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].Y;
+#else
   const SCuboid & rCuboid = m_pCuboid[y>>m_nYShift2Idx][u>>m_nUShift2Idx][v>>m_nVShift2Idx];
   Pel dstY = rCuboid.P[0].Y;
   Int deltaY = y - ( y >> m_nYShift2Idx << m_nYShift2Idx );
@@ -232,11 +293,19 @@ Pel TCom3DAsymLUT::xMapY( Pel y , Pel u , Pel v )
                    + ( ( deltaU * ( rCuboid.P[1].Y - rCuboid.P[0].Y ) ) << m_nYShift2Idx )
                    + ( ( deltaV * ( rCuboid.P[2].Y - rCuboid.P[1].Y ) ) << m_nYShift2Idx ) 
                    + m_nMappingOffset ) >> m_nMappingShift );
+#endif
   return( dstY );
 }
 
 SYUVP TCom3DAsymLUT::xMapUV( Pel y , Pel u , Pel v )
 {
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  const SCuboid & rCuboid = m_pCuboid[xGetYIdx(y)][xGetUIdx(u)][xGetVIdx(v)];
+  SYUVP dst;
+  dst.Y = 0;
+  dst.U = ( ( rCuboid.P[0].U * y + rCuboid.P[1].U * u + rCuboid.P[2].U * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].U;
+  dst.V = ( ( rCuboid.P[0].V * y + rCuboid.P[1].V * u + rCuboid.P[2].V * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].V;
+#else
   const SCuboid & rCuboid = m_pCuboid[y>>m_nYShift2Idx][u>>m_nUShift2Idx][v>>m_nVShift2Idx];
   SYUVP dst = rCuboid.P[0];
   Int deltaY = y - ( y >> m_nYShift2Idx << m_nYShift2Idx );
@@ -250,6 +319,7 @@ SYUVP TCom3DAsymLUT::xMapUV( Pel y , Pel u , Pel v )
                     + ( ( deltaU * ( rCuboid.P[1].V - rCuboid.P[0].V ) ) << m_nYShift2Idx )
                     + ( ( deltaV * ( rCuboid.P[2].V - rCuboid.P[1].V ) ) << m_nYShift2Idx ) 
                     + m_nMappingOffset ) >> m_nMappingShift );
+#endif
   return( dst );
 }
 
@@ -261,10 +331,84 @@ Void TCom3DAsymLUT::xSaveCuboids( SCuboid *** pSrcCuboid )
 Void TCom3DAsymLUT::copy3DAsymLUT( TCom3DAsymLUT * pSrc )
 {
   assert( pSrc->getMaxOctantDepth() == getMaxOctantDepth() && pSrc->getMaxYPartNumLog2() == getMaxYPartNumLog2() );
-  xUpdatePartitioning( pSrc->getCurOctantDepth() , pSrc->getCurYPartNumLog2() );
+  xUpdatePartitioning( pSrc->getCurOctantDepth() , pSrc->getCurYPartNumLog2() 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+    , pSrc->getAdaptChromaThresholdU() , pSrc->getAdaptChromaThresholdV()
+#endif
+    );
   setResQuantBit( pSrc->getResQuantBit() );
   xSaveCuboids( pSrc->m_pCuboid );
 }
+
+#if R0164_CGS_LUT_BUGFIX
+Void TCom3DAsymLUT::xInitCuboids( )
+{
+  // All vertices are initialized as non-exlicitly-encoded
+  for( Int yIdx = 0 ; yIdx < m_nYSize ; yIdx++ )
+  {
+    for( Int uIdx = 0 ; uIdx < m_nUSize ; uIdx++ )
+    {
+      for( Int vIdx = 0 ; vIdx < m_nVSize ; vIdx++ )
+      { 
+        m_pCuboidExplicit[yIdx][uIdx][vIdx] = false;
+      }
+    }
+  }
+}
+
+Void TCom3DAsymLUT::xCuboidsExplicitCheck( Int yIdx , Int uIdx , Int vIdx )
+{
+  if ( m_pCuboidExplicit[yIdx][uIdx][vIdx] == false )
+  {
+    if( yIdx > 0) 
+      assert ( m_pCuboidExplicit[yIdx-1][uIdx][vIdx] );
+
+    for ( Int nVertexIdx=0 ; nVertexIdx<4 ; nVertexIdx++ )
+      m_pCuboid[yIdx][uIdx][vIdx].P[nVertexIdx] = yIdx == 0 ? xGetCuboidVertexPredA( yIdx , uIdx , vIdx , nVertexIdx ): xGetCuboidVertexPredAll( yIdx , uIdx , vIdx , nVertexIdx );
+
+    m_pCuboidExplicit[yIdx][uIdx][vIdx] = true ;
+  }
+}
+
+
+Void TCom3DAsymLUT::xCuboidsExplicitCheck( Bool bDecode )
+{
+  Int ySize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
+  Int uSize = 1 << getCurOctantDepth();
+  Int vSize = 1 << getCurOctantDepth();
+  for( Int yIdx = 0 ; yIdx < ySize ; yIdx++ )
+  {
+    for( Int uIdx = 0 ; uIdx < uSize ; uIdx++ )
+    {
+      for( Int vIdx = 0 ; vIdx < vSize ; vIdx++ )
+      { 
+        if ( bDecode )
+          xCuboidsExplicitCheck( yIdx , uIdx , vIdx );
+
+        assert( m_pCuboidExplicit[yIdx][uIdx][vIdx] );
+      }
+    }
+  }
+
+}
+#endif
+
+#if R0150_CGS_SIGNAL_CONSTRAINTS
+Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
+{
+  Bool bIsRefLayer = false;
+  for( UInt i = 0 ; i < m_vRefLayerId.size() ; i++ )
+  {
+    if( m_vRefLayerId[i] == uiRefLayerId )
+    {
+      bIsRefLayer = true;
+      break;
+    }
+  }
+
+  return( bIsRefLayer );
+}
+#endif
 
 #endif
 

@@ -77,19 +77,28 @@ protected:
   TComPicYuv* m_pDsOrigPic;
   SCuboid *** m_pEncCuboid;
   SCuboid *** m_pBestEncCuboid;
-  Int   m_nPrevFrameBit[3][MAX_TLAYER];                  // base + enhancement layer
-  Int   m_nPrevFrameCGSBit[3][MAX_TLAYER];
-  Int   m_nPrevFrameCGSPartNumLog2[3][MAX_TLAYER];
-  Int   m_nPrevFrameOverWritePPS[3][MAX_TLAYER];
+  Int   m_nAccuFrameBit;                  // base + enhancement layer
+  Int   m_nAccuFrameCGSBit;
+  Int   m_nPrevFrameCGSPartNumLog2;
   Double m_dTotalFrameBit;
   Int   m_nTotalCGSBit;
   Int   m_nPPSBit;
   Int   m_nLUTBitDepth;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Double m_dSumU;
+  Double m_dSumV;
+  Int    m_nNChroma;
+#endif
 
 private:
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Double  xxDeriveVertexPerColor( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
+    Pel & rP0 , Pel & rP1 , Pel & rP3 , Pel & rP7 , Int nResQuantBit );
+#else
   Double  xxDeriveVertexPerColor( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
     Int y0 , Int u0 , Int v0 , Int nLengthY , Int nLengthUV ,
     Pel & rP0 , Pel & rP1 , Pel & rP3 , Pel & rP7 , Int nResQuantBit );
+#endif
   Void    xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , Int & rOctantDepth , Int & rYPartNumLog2 , Bool bSignalPPS , Bool bElRapSliceTypeB );
   Void    xxMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDepth , Int & rYPartNumLog2 );
   Int     xxCoeff2Vertex( Double a , Double b , Double c , Double d , Int y , Int u , Int v ) { return ( ( Int )( a * y + b * u + c * v + d + 0.5 ) ); }
@@ -99,6 +108,10 @@ private:
     Int y0 , Int u0 , Int v0 , Int nLengthY , Int nLengthUV , Pel nP0 , Pel nP1 , Pel nP3 , Pel nP7 );
   inline Double  xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
     Double a , Double b , Double c , Double d );
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  inline Double  xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
+    Pel nP0 , Pel nP1 , Pel nP3 , Pel nP7 );
+#endif
 };
 
 Double TEnc3DAsymLUT::xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
@@ -117,6 +130,21 @@ Double TEnc3DAsymLUT::xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu
   Double dError = N * d * d + 2 * b * c * uv + 2 * a * c * yv + 2 * a * b * yu - 2 * c * Yv - 2 * b * Yu - 2 * a * Yy + 2 * c * d * vs + 2 * b * d * us + 2 * a * d * ys + a * a * yy + c * c * vv + b * b * uu - 2 * d * Ys + YY;
   return( dError );
 };
+
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+Double TEnc3DAsymLUT::xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
+  Pel nP0 , Pel nP1 , Pel nP3 , Pel nP7 )
+{
+  const Int nOne = xGetNormCoeffOne();
+  Double a = 1.0 * nP0 / nOne;
+  Double b = 1.0 * nP1 / nOne;
+  Double c = 1.0 * nP3 / nOne;
+  Double d = nP7;
+  Double dError = N * d * d + 2 * b * c * uv + 2 * a * c * yv + 2 * a * b * yu - 2 * c * Yv - 2 * b * Yu - 2 * a * Yy + 2 * c * d * vs + 2 * b * d * us + 2 * a * d * ys + a * a * yy + c * c * vv + b * b * uu - 2 * d * Ys + YY;
+  return( dError );
+};
+#endif
+
 #endif
 
 #endif

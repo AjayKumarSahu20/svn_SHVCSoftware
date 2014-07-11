@@ -142,6 +142,9 @@ protected:
 #if Q0048_CGS_3D_ASYMLUT
   Void xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
   Void xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Void xReadParam( Int& param );
+#endif
 #endif
 };
 

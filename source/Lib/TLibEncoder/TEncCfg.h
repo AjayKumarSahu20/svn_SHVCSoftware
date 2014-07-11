@@ -366,6 +366,9 @@ protected:
   Int  m_nCGSMaxOctantDepth;
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Int  m_nCGSAdaptiveChroma;
+#endif
 #endif
 #if P0050_KNEE_FUNCTION_SEI
   Bool      m_kneeSEIEnabled;
@@ -939,6 +942,10 @@ public:
   Int       getCGSMaxYPartNumLog2()       { return m_nCGSMaxYPartNumLog2; }
   Void      setCGSLUTBit(Int n)           { m_nCGSLUTBit = n;    }
   Int       getCGSLUTBit()                { return m_nCGSLUTBit; }
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Void      setCGSAdaptChroma(Int n)      { m_nCGSAdaptiveChroma = n;  }
+  Int       getCGSAdaptChroma()           { return m_nCGSAdaptiveChroma; }
+#endif
 #endif
 #endif
 };

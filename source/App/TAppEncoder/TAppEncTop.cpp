@@ -649,6 +649,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setCGSMaxOctantDepth( m_nCGSMaxOctantDepth );
     m_acTEncTop[layer].setCGSMaxYPartNumLog2( m_nCGSMaxYPartNumLog2 );
     m_acTEncTop[layer].setCGSLUTBit( m_nCGSLUTBit );
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+    m_acTEncTop[layer].setCGSAdaptChroma( m_nCGSAdaptiveChroma );
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
     m_acTEncTop[layer].setNumAddLayerSets( m_numAddLayerSets );
