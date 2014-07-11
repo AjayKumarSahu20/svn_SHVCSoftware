@@ -92,10 +92,11 @@
 #define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
 #if Q0048_CGS_3D_ASYMLUT
 #define CGS_GCC_NO_VECTORIZATION         1
-#define O0194_WEIGHTED_PREDICTION_CGS    0
-#else
-#define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
+#define R0150_CGS_SIGNAL_CONSTRAINTS     1      ///< JCTVC-R0150: CGS signaling improvement and constraints
+#define R0151_CGS_3D_ASYMLUT_IMPROVE     1      ///< JCTVC-R0151: Non-uniform chroma partitioning and improved LUT coefficient coding
+#define R0164_CGS_LUT_BUGFIX             1      ///< JCTVC-R0164: Bug fix with LUT syntax
 #endif
+#define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
 #define POC_RESET_FLAG                   0      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation - eventually will replace POC_RESET_FLAG
 #if POC_RESET_IDC

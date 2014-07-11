@@ -1002,6 +1002,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
   ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
   ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  ("CGSAdaptC",     m_nCGSAdaptiveChroma , 1, "adaptive chroma partition (only for the case of two chroma partitions)")
+#endif
 #endif
 #if Q0108_TSA_STSA
   ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
@@ -3085,6 +3088,9 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
+#endif
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  printf("CGSAdaptC:%d " , m_nCGSAdaptiveChroma );
 #endif
   printf("\n\n");
   

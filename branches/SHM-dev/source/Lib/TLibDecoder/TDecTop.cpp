@@ -1778,8 +1778,18 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if Q0048_CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
-        if( pcSlice->getPPS()->getCGSFlag() )
+        if( pcSlice->getPPS()->getCGSFlag() 
+#if R0150_CGS_SIGNAL_CONSTRAINTS
+          && m_c3DAsymLUTPPS.isRefLayer( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) )
+#endif
+          )
         {
+#if R0150_CGS_SIGNAL_CONSTRAINTS
+          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepthY() == m_c3DAsymLUTPPS.getInputBitDepthY() );
+          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepthC() == m_c3DAsymLUTPPS.getInputBitDepthC() );
+          assert( pcSlice->getBitDepthY() >= m_c3DAsymLUTPPS.getOutputBitDepthY() );
+          assert( pcSlice->getBitDepthY() >= m_c3DAsymLUTPPS.getOutputBitDepthC() );
+#endif
           if(!m_pColorMappedPic)
           {
             initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
