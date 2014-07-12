@@ -43,6 +43,11 @@ public:
   Int   getOutputBitDepthC()  { return m_nOutputBitDepthC;  }
   Int   getResQuantBit()     { return m_nResQuanBit; }
   Void  setResQuantBit(Int n){ m_nResQuanBit = n; }
+#if R0300_CGS_RES_COEFF_CODING 
+  Int   getMappingShift()     { return m_nMappingShift; }
+  Int   getDeltaBits()        { return m_nDeltaBits; }
+  Void  setDeltaBits(Int n)   { m_nDeltaBits = n; }
+#endif 
   Int   getMaxYPartNumLog2() { return m_nMaxYPartNumLog2; }
   Int   getCurYPartNumLog2() { return m_nCurYPartNumLog2; }
 #if R0150_CGS_SIGNAL_CONSTRAINTS
@@ -96,6 +101,9 @@ private:
   Int   m_nMappingShift;
   Int   m_nMappingOffset;
   Int   m_nResQuanBit;
+#if R0300_CGS_RES_COEFF_CODING
+  Int   m_nDeltaBits;
+#endif
   SCuboid *** m_pCuboid;
   const static Int m_nVertexIdxOffset[4][3];
 #if R0150_CGS_SIGNAL_CONSTRAINTS

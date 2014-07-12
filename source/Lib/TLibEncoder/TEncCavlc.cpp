@@ -2788,6 +2788,11 @@ Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 #endif
   assert( pc3DAsymLUT->getResQuantBit() < 4 );
   WRITE_CODE( pc3DAsymLUT->getResQuantBit() , 2 , "cm_res_quant_bit" );
+#if R0300_CGS_RES_COEFF_CODING
+  xFindDeltaBits( pc3DAsymLUT );
+  assert(pc3DAsymLUT->getDeltaBits() >=1 && pc3DAsymLUT->getDeltaBits() <= 4);
+  WRITE_CODE( pc3DAsymLUT->getDeltaBits()-1 , 2 , "cm_delta_bit" );
+#endif 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   if( pc3DAsymLUT->getCurOctantDepth() == 1 )
   {
@@ -2827,6 +2832,10 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
   }
   else
   {
+#if R0300_CGS_RES_COEFF_CODING
+    Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
+    nFLCbits = nFLCbits >= 0 ? nFLCbits : 0;
+#endif
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
 #if R0164_CGS_LUT_BUGFIX      
@@ -2844,9 +2853,15 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
         if( uiCodeVertex )
         {
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0300_CGS_RES_COEFF_CODING
+          xWriteParam( sRes.Y, nFLCbits );
+          xWriteParam( sRes.U, nFLCbits );
+          xWriteParam( sRes.V, nFLCbits );
+#else
           xWriteParam( sRes.Y );
           xWriteParam( sRes.U );
           xWriteParam( sRes.V );
+#endif
 #else
           WRITE_SVLC( sRes.Y , "resY" );
           WRITE_SVLC( sRes.U , "resU" );
@@ -2862,14 +2877,112 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
 }
 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0300_CGS_RES_COEFF_CODING
+Void TEncCavlc::xWriteParam( Int param, UInt rParam)
+#else
 Void TEncCavlc::xWriteParam( Int param)
+#endif
 {
+#if !R0300_CGS_RES_COEFF_CODING
   const UInt rParam = 7;
+#endif
   Int codeNumber = abs(param);
   WRITE_UVLC(codeNumber / (1 << rParam), "quotient");
   WRITE_CODE((codeNumber % (1 << rParam)), rParam, "remainder");
   if (abs(param))
     WRITE_FLAG( param <0, "sign");
+}
+#endif
+
+#if R0300_CGS_RES_COEFF_CODING
+Void TEncCavlc::xFindDeltaBits( TCom3DAsymLUT * pc3DAsymLUT )
+{
+  Int nDeltaBits; 
+  Int nBestDeltaBits = -1; 
+  Int nBestBits = MAX_INT; 
+  for( nDeltaBits = 1; nDeltaBits < 5; nDeltaBits++)
+  {
+    Int nCurBits = 0;
+    xTally3DAsymLUTOctantBits( pc3DAsymLUT , 0 , 0 , 0 , 0 , 1 << pc3DAsymLUT->getCurOctantDepth(), nDeltaBits, nCurBits );
+    //printf("%d, %d, %d\n", nDeltaBits, nCurBits, nBestBits); 
+    if(nCurBits < nBestBits)
+    {
+      nBestDeltaBits = nDeltaBits; 
+      nBestBits = nCurBits;
+    }
+  }
+
+  assert(nBestDeltaBits >=1 && nBestDeltaBits < 5);
+  pc3DAsymLUT->setDeltaBits(nBestDeltaBits); 
+}
+
+Void TEncCavlc::xTally3DAsymLUTOctantBits( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength, Int nDeltaBits, Int& nCurBits )
+{
+  UInt uiOctantSplit = nDepth < pc3DAsymLUT->getCurOctantDepth();
+  if( nDepth < pc3DAsymLUT->getCurOctantDepth() )
+    nCurBits ++; 
+  Int nYPartNum = 1 << pc3DAsymLUT->getCurYPartNumLog2();
+  if( uiOctantSplit )
+  {
+    Int nHalfLength = nLength >> 1;
+    for( Int l = 0 ; l < 2 ; l++ )
+    {
+      for( Int m = 0 ; m < 2 ; m++ )
+      {
+        for( Int n = 0 ; n < 2 ; n++ )
+        {
+          xTally3DAsymLUTOctantBits( pc3DAsymLUT , nDepth + 1 , yIdx + l * nHalfLength * nYPartNum , uIdx + m * nHalfLength , vIdx + n * nHalfLength , nHalfLength, nDeltaBits, nCurBits );
+        }
+      }
+    }
+  }
+  else
+  {
+    Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-nDeltaBits ; 
+    nFLCbits = nFLCbits >= 0 ? nFLCbits:0;
+    //printf("nFLCbits = %d\n", nFLCbits);
+
+    for( Int l = 0 ; l < nYPartNum ; l++ )
+    {
+      for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+      {
+        SYUVP sRes = pc3DAsymLUT->getCuboidVertexResTree( yIdx + l , uIdx , vIdx , nVertexIdx );
+
+        UInt uiCodeVertex = sRes.Y != 0 || sRes.U != 0 || sRes.V != 0;
+        nCurBits++;
+        if( uiCodeVertex )
+        {
+          xCheckParamBits( sRes.Y, nFLCbits, nCurBits );
+          xCheckParamBits( sRes.U, nFLCbits, nCurBits );
+          xCheckParamBits( sRes.V, nFLCbits, nCurBits );
+        }
+      }
+    }
+  }
+}
+
+Void TEncCavlc::xCheckParamBits( Int param, Int rParam, Int &nBits)
+{
+  Int codeNumber = abs(param);
+  Int codeQuotient = codeNumber >> rParam;
+  Int qLen; 
+
+  UInt uiLength = 1;
+  UInt uiTemp = ++codeQuotient;
+    
+  while( 1 != uiTemp )
+  {
+    uiTemp >>= 1;
+    uiLength += 2;
+  }
+
+  qLen  = (uiLength >> 1);
+  qLen += ((uiLength+1) >> 1);
+
+  nBits += qLen; 
+  nBits += rParam; 
+  if (abs(param))
+    nBits++; 
 }
 #endif
 
