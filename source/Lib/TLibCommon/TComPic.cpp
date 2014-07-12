@@ -186,7 +186,7 @@ Void TComPic::destroy()
 #if SVC_EXTENSION
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
-    if( m_bSpatialEnhLayer[i] )
+    if( m_bSpatialEnhLayer[i] && m_pcFullPelBaseRec[i] )
     {
       m_pcFullPelBaseRec[i]->destroy();
       delete m_pcFullPelBaseRec[i];

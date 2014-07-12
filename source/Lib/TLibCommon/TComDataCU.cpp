@@ -3492,8 +3492,17 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
 {
   TComPic* baseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
-  UInt uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth()  - 1, pelX + 8);
-  UInt uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, pelY + 8);
+  UInt uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth()  - 1, pelX);
+  UInt uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight() - 1, pelY);
+
+#if REF_IDX_MFM
+  // centre of the collocated 16x16 block for motion mapping
+  if( motionMapping )
+  {
+    uiPelX += 8;
+    uiPelY += 8;
+  }
+#endif
 
 #if !LAYER_CTB
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
