@@ -3934,6 +3934,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   }
 #endif
   UInt uiCurOctantDepth , uiCurPartNumLog2 , uiInputBitDepthM8 , uiOutputBitDepthM8 , uiResQaunBit;
+#if R0300_CGS_RES_COEFF_CODING
+  UInt uiDeltaBits; 
+#endif 
   READ_CODE( 2 , uiCurOctantDepth , "cm_octant_depth" ); 
   READ_CODE( 2 , uiCurPartNumLog2 , "cm_y_part_num_log2" );     
 #if R0150_CGS_SIGNAL_CONSTRAINTS
@@ -3951,6 +3954,11 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   READ_SVLC(iOutputBitDepthCDelta, "cm_output_bit_depth_chroma_delta");
 #endif
   READ_CODE( 2 , uiResQaunBit , "cm_res_quant_bit" );
+#if R0300_CGS_RES_COEFF_CODING
+  READ_CODE( 2 , uiDeltaBits , "cm_flc_bits" );
+  pc3DAsymLUT->setDeltaBits(uiDeltaBits + 1);
+#endif
+
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0150_CGS_SIGNAL_CONSTRAINTS
   Int nAdaptCThresholdU = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
@@ -4019,6 +4027,10 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
   }
   else
   {
+#if R0300_CGS_RES_COEFF_CODING
+    Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
+    nFLCbits = nFLCbits >= 0 ? nFLCbits:0;
+#endif
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
 #if R0164_CGS_LUT_BUGFIX
@@ -4032,9 +4044,15 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
         if( uiCodeVertex )
         {
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0300_CGS_RES_COEFF_CODING
+          xReadParam( deltaY, nFLCbits );
+          xReadParam( deltaU, nFLCbits );
+          xReadParam( deltaV, nFLCbits );
+#else
           xReadParam( deltaY );
           xReadParam( deltaU );
           xReadParam( deltaV );
+#endif
 #else
           READ_SVLC( deltaY , "resY" );
           READ_SVLC( deltaU , "resU" );
@@ -4055,9 +4073,15 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
 }
 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0300_CGS_RES_COEFF_CODING
+Void TDecCavlc::xReadParam( Int& param, Int rParam )
+#else
 Void TDecCavlc::xReadParam( Int& param )
+#endif
 {
+#if !R0300_CGS_RES_COEFF_CODING
   const UInt rParam = 7;
+#endif
   UInt prefix;
   UInt codeWord ;
   UInt rSymbol;

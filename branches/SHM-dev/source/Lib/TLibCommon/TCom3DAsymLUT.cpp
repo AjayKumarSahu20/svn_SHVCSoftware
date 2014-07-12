@@ -79,7 +79,11 @@ Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumL
   )
 {
   assert( nCurOctantDepth <= m_nMaxOctantDepth );
+#if R0179_CGS_SIZE_8x1x1
+  assert( nCurYPartNumLog2 + nCurOctantDepth <= m_nMaxYPartNumLog2 + m_nMaxOctantDepth );
+#else
   assert( nCurYPartNumLog2 <= m_nMaxYPartNumLog2 );
+#endif 
 
   m_nCurOctantDepth = nCurOctantDepth;
   m_nCurYPartNumLog2 = nCurYPartNumLog2;
