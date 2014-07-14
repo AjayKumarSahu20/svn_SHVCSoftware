@@ -906,7 +906,7 @@ Void TEncTop::xInitSPS()
   m_cSPS.setExtensionFlag( m_layerId > 0 ? true : false );
 
 #if Q0078_ADD_LAYER_SETS
-  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
+  if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
     m_cSPS.setLayerId(0); // layer ID 0 for independent layers
   }
@@ -1176,7 +1176,7 @@ Void TEncTop::xInitPPS()
 #endif
 
 #if Q0078_ADD_LAYER_SETS
-  if (getNumDirectRefLayers() == 0 && getNumAddLayerSets() > 0)
+  if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
     m_cPPS.setLayerId(0); // layer ID 0 for independent layers
   }

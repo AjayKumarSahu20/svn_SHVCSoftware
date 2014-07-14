@@ -351,6 +351,11 @@ Void TAppEncTop::xInitLibCfg()
         }
       }
     }
+    else
+    {
+      assert( layer == 0 );
+      m_acTEncTop[layer].setNumDirectRefLayers(0);
+    }
 #endif //VPS_EXTN_DIRECT_REF_LAYERS
     //===== Slice ========
 
