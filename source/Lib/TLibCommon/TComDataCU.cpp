@@ -3499,8 +3499,8 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   // centre of the collocated 16x16 block for motion mapping
   if( motionMapping )
   {
-    uiPelX += 8;
-    uiPelY += 8;
+    uiPelX = pelX + 8;
+    uiPelY = pelY + 8;
   }
 #endif
 
