@@ -96,7 +96,11 @@ TAppEncCfg::TAppEncCfg()
 TAppEncCfg::~TAppEncCfg()
 {
 #if SVC_EXTENSION
-  free(m_pBitstreamFile);
+  if( m_pBitstreamFile )
+  {
+    free(m_pBitstreamFile);
+    m_pBitstreamFile = NULL;
+  }
 #else  
   if ( m_aidQP )
   {
@@ -1162,6 +1166,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     m_tileRowHeight.clear();
   }
 #if SVC_EXTENSION
+  if( pColumnWidth )
+  {
+    free( pColumnWidth );
+    pColumnWidth = NULL;
+  }
+
+  if( pRowHeight )
+  {
+    free( pRowHeight );
+    pRowHeight = NULL;
+  }
+
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
@@ -1304,6 +1320,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_acLayerCfg[layer].m_samplePredRefLayerIds = NULL;
     }
+
+    if( pSamplePredRefLayerIds )
+    {
+      free( pSamplePredRefLayerIds );
+      pSamplePredRefLayerIds = NULL;
+    }
   }
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -1334,6 +1356,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     else
     {
       m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
+    }
+
+    if( pMotionPredRefLayerIds )
+    {
+      free( pMotionPredRefLayerIds );
+      pMotionPredRefLayerIds = NULL;
     }
   }
 
@@ -1374,6 +1402,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_acLayerCfg[layer].m_predLayerIds = NULL;
     }
+
+    if( pPredLayerIds )
+    {
+      free( pPredLayerIds );
+      pPredLayerIds = NULL;
+    }
   }
 #endif
 #if Q0078_ADD_LAYER_SETS
@@ -1395,6 +1429,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         layerId = strtok(NULL, " ,-");
         i++;
       }
+
+      if( layerSetLayerIdListDup )
+      {
+        free( layerSetLayerIdListDup );
+        layerSetLayerIdListDup = NULL;
+      }
     }
   }
   for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
@@ -1414,6 +1454,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         m_highestLayerIdx[addLayerSet][i] = atoi(layerIdx);
         layerIdx = strtok(NULL, " ,-");
         i++;
+      }
+
+      if( highestLayrIdxListDup )
+      {
+        free( highestLayrIdxListDup );
+        highestLayrIdxListDup = NULL;
       }
     }
   }
@@ -1600,6 +1646,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_codedPivotValue = NULL;
       m_targetPivotValue = NULL;
     }
+
+    if( pcStartOfCodedInterval )
+    {
+      free( pcStartOfCodedInterval );
+      pcStartOfCodedInterval = NULL;
+    }
+
+    if( pcCodedPivotValue )
+    {
+      free( pcCodedPivotValue );
+      pcCodedPivotValue = NULL;
+    }
+
+    if( pcTargetPivotValue )
+    {
+      free( pcTargetPivotValue );
+      pcTargetPivotValue = NULL;
+    }
   }
 #if P0050_KNEE_FUNCTION_SEI
   if( m_kneeSEIEnabled && !m_kneeSEICancelFlag )
@@ -1624,6 +1688,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_kneeSEIOutputKneePoint[i] = (UInt) atoi( OutputVal );
       OutputVal = strtok(NULL, " .,");
       i++;
+    }
+
+    if( pcInputKneePointValue )
+    {
+      free( pcInputKneePointValue );
+      pcInputKneePointValue = NULL;
+    }
+
+    if( pcOutputKneePointValue )
+    {
+      free( pcOutputKneePointValue );
+      pcOutputKneePointValue = NULL;
     }
   }
 #endif
@@ -1670,6 +1746,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       exit( EXIT_FAILURE );
     }
     m_skippedTileSetPresentFlag = false;
+
+    if( pTileSets )
+    {
+      free( pTileSets );
+      pTileSets = NULL;
+    }
   }
 #endif
   // check validity of input parameters
@@ -3137,6 +3219,12 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
   else
   {
     *arr = NULL;
+  }
+
+  if( tempChar )
+  {
+    free( tempChar );
+    tempChar = NULL;
   }
 }
 
