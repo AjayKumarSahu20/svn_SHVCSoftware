@@ -1223,12 +1223,28 @@ Void TAppDecTop::markAllPicturesAsErased()
 {
   for(Int i = 0; i < MAX_LAYERS; i++)
   {
-    m_acTDecTop[i].getListPic()->clear();
+    markAllPicturesAsErased(i);
   }
 }
 
 Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
 {
+  TComList<TComPic*>::iterator  iterPic = m_acTDecTop[layerIdx].getListPic()->begin();
+  Int iSize = Int( m_acTDecTop[layerIdx].getListPic()->size() );
+  
+  for (Int i = 0; i < iSize; i++ )
+  {
+    TComPic* pcPic = *(iterPic++);
+
+    if( pcPic )
+    {
+      pcPic->destroy();
+
+      delete pcPic;
+      pcPic = NULL;
+    }
+  }
+
   m_acTDecTop[layerIdx].getListPic()->clear();
 }
 
