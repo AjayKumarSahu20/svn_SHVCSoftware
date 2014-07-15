@@ -41,7 +41,9 @@
 //! \{
 
 #if SVC_EXTENSION
-  ParameterSetMap<TComVPS> ParameterSetManagerDecoder::m_vpsBuffer(MAX_NUM_VPS);
+ParameterSetMap<TComVPS> ParameterSetManagerDecoder::m_vpsBuffer(MAX_NUM_VPS);
+ParameterSetMap<TComSPS> ParameterSetManagerDecoder::m_spsBuffer(MAX_NUM_SPS);
+ParameterSetMap<TComPPS> ParameterSetManagerDecoder::m_ppsBuffer(MAX_NUM_PPS);
 #endif
 
 //////////////////////////////////////////////////////////////////////
@@ -396,10 +398,7 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic*& rp
 }
 
 ParameterSetManagerDecoder::ParameterSetManagerDecoder()
-#if SVC_EXTENSION
-: m_spsBuffer(MAX_NUM_SPS)
-, m_ppsBuffer(MAX_NUM_PPS)
-#else
+#if !SVC_EXTENSION
 : m_vpsBuffer(MAX_NUM_VPS)
 , m_spsBuffer(MAX_NUM_SPS)
 , m_ppsBuffer(MAX_NUM_PPS)

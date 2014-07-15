@@ -46,6 +46,8 @@
 
 #if SVC_EXTENSION
 ParameterSetMap<TComVPS> ParameterSetManager::m_vpsMap(MAX_NUM_VPS);
+ParameterSetMap<TComSPS> ParameterSetManager::m_spsMap(MAX_NUM_SPS);
+ParameterSetMap<TComPPS> ParameterSetManager::m_ppsMap(MAX_NUM_PPS);
 Int ParameterSetManager::m_activeVPSId = -1;
 #endif
 
@@ -3678,9 +3680,7 @@ Void TComScalingList::checkDcOfMatrix()
 
 ParameterSetManager::ParameterSetManager()
 #if SVC_EXTENSION
-: m_spsMap(MAX_NUM_SPS)
-, m_ppsMap(MAX_NUM_PPS)
-, m_activeSPSId(-1)
+: m_activeSPSId(-1)
 , m_activePPSId(-1)
 #else
 : m_vpsMap(MAX_NUM_VPS)
