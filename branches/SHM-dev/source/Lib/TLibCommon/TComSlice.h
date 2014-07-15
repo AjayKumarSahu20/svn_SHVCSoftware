@@ -2513,9 +2513,6 @@ public:
     assert ( psId < m_maxId );
     if ( m_paramsetMap.find(psId) != m_paramsetMap.end() )
     {
-#if Q0078_ADD_LAYER_SETS
-      m_paramsetMap.erase(psId);
-#endif
       delete m_paramsetMap[psId];
     }
     m_paramsetMap[psId] = ps; 
@@ -2541,21 +2538,6 @@ public:
     return (m_paramsetMap.begin() == m_paramsetMap.end() ) ? NULL : m_paramsetMap.begin()->second;
   }
 
-#if Q0078_ADD_LAYER_SETS
-  Void removePS(Int psId)
-  {
-    assert(psId < m_maxId);
-    if (m_paramsetMap.find(psId) != m_paramsetMap.end())
-    {
-      m_paramsetMap.erase(psId);
-#if Q0078_ADD_LAYER_SETS
-      delete m_paramsetMap[psId];
-#endif
-    }
-  }
-#endif
-
-
 private:
   std::map<Int,T *> m_paramsetMap;
   Int               m_maxId;
@@ -2578,18 +2560,12 @@ public:
   //! get pointer to existing sequence parameter set  
   TComSPS* getSPS(Int spsId)  { return m_spsMap.getPS(spsId); };
   TComSPS* getFirstSPS()      { return m_spsMap.getFirstPS(); };
-#if Q0078_ADD_LAYER_SETS
-  Void     removeSPS(Int spsId) { m_spsMap.removePS(spsId); };
-#endif
 
   //! store picture parameter set and take ownership of it 
   Void storePPS(TComPPS *pps) { m_ppsMap.storePS( pps->getPPSId(), pps); };
   //! get pointer to existing picture parameter set  
   TComPPS* getPPS(Int ppsId)  { return m_ppsMap.getPS(ppsId); };
   TComPPS* getFirstPPS()      { return m_ppsMap.getFirstPS(); };
-#if Q0078_ADD_LAYER_SETS
-  Void     removePPS(Int ppsId) { m_ppsMap.removePS(ppsId); };
-#endif
 
   //! activate a SPS from a active parameter sets SEI message
   //! \returns true, if activation is successful
@@ -2607,11 +2583,13 @@ protected:
 
 #if SVC_EXTENSION
   static ParameterSetMap<TComVPS> m_vpsMap;
+  static ParameterSetMap<TComSPS> m_spsMap; 
+  static ParameterSetMap<TComPPS> m_ppsMap;
 #else
   ParameterSetMap<TComVPS> m_vpsMap;
-#endif
   ParameterSetMap<TComSPS> m_spsMap; 
   ParameterSetMap<TComPPS> m_ppsMap;
+#endif
 
 #if SVC_EXTENSION
   static Int m_activeVPSId;
