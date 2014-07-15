@@ -2021,10 +2021,10 @@ Void TDecTop::xDecodeVPS()
   m_parameterSetManagerDecoder.storePrefetchedVPS(vps);  
 }
 
+#if SVC_EXTENSION
 Void TDecTop::xDecodeSPS()
 {
   TComSPS* sps = new TComSPS();
-#if SVC_EXTENSION
   sps->setLayerId(m_layerId);
 #if SPS_DPB_PARAMS
   m_cEntropyDecoder.decodeSPS( sps ); // it should be removed after macro clean up
@@ -2048,10 +2048,6 @@ Void TDecTop::xDecodeSPS()
     xInitILRP(sps);
   }
 #endif
-#else //SVC_EXTENSION
-  m_cEntropyDecoder.decodeSPS( sps );
-  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
-#endif //SVC_EXTENSION
 }
 
 Void TDecTop::xDecodePPS(
@@ -2083,6 +2079,21 @@ Void TDecTop::xDecodePPS(
   }
 #endif
 }
+#else
+Void TDecTop::xDecodeSPS()
+{
+  TComSPS* sps = new TComSPS();
+  m_cEntropyDecoder.decodeSPS( sps );
+  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
+}
+
+Void TDecTop::xDecodePPS()
+{
+  TComPPS* pps = new TComPPS();
+  m_cEntropyDecoder.decodePPS( pps );
+  m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
+}
+#endif //SVC_EXTENSION
 
 Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType )
 {
