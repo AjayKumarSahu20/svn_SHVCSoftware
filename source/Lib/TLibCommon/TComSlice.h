@@ -459,6 +459,10 @@ class TComVPS
 {
 private:
   Int         m_VPSId;
+#if VPS_RESERVED_FLAGS
+  Bool        m_baseLayerInternalFlag;
+  Bool        m_baseLayerAvailableFlag;
+#endif
   UInt        m_uiMaxTLayers;
   UInt        m_uiMaxLayers;
   Bool        m_bTemporalIdNestingFlag;
@@ -747,6 +751,13 @@ private:
 public:
   TComVPS();
   virtual ~TComVPS();
+
+#if VPS_RESERVED_FLAGS
+  Void        setBaseLayerInternalFlag(Bool x) { m_baseLayerInternalFlag = x; }
+  Bool        getBaseLayerInternalFlag()         { return m_baseLayerInternalFlag; }
+  Void        setBaseLayerAvailableFlag(Bool x) { m_baseLayerAvailableFlag = x; }
+  Bool        getBaseLayerAvailableFlag()         { return m_baseLayerAvailableFlag; }
+#endif
 
   Void    createHrdParamBuffer()
   {

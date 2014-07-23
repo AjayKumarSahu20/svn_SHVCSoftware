@@ -2308,6 +2308,10 @@ Void RepFormat::init()
 #if SVC_EXTENSION
 TComVPS::TComVPS()
 : m_VPSId                     (  0)
+#if VPS_RESERVED_FLAGS
+, m_baseLayerInternalFlag     (true)
+, m_baseLayerAvailableFlag    (true)
+#endif
 , m_uiMaxTLayers              (  1)
 , m_uiMaxLayers               (  1)
 , m_bTemporalIdNestingFlag    (false)

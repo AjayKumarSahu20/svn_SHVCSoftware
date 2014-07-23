@@ -923,7 +923,12 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   UInt  uiCode;
 
   READ_CODE( 4,  uiCode,  "vps_video_parameter_set_id" );         pcVPS->setVPSId( uiCode );
+#if VPS_RESERVED_FLAGS
+  READ_FLAG( uiCode, "vps_base_layer_internal_flag");             pcVPS->setBaseLayerInternalFlag( uiCode ? true : false );
+  READ_FLAG( uiCode, "vps_base_layer_available_flag");            pcVPS->setBaseLayerAvailableFlag( uiCode ? true : false );
+#else
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
+#endif
 #if SVC_EXTENSION
 #if O0137_MAX_LAYERID
   READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( min( 62u, uiCode) + 1 );
