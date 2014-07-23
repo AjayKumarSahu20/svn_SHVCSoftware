@@ -705,7 +705,12 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #endif
 #endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
+#if VPS_RESERVED_FLAGS
+  WRITE_FLAG( pcVPS->getBaseLayerInternalFlag(),              "vps_base_layer_internal_flag");
+  WRITE_FLAG( pcVPS->getBaseLayerAvailableFlag(),             "vps_base_layer_available_flag");
+#else
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
+#endif
 #if SVC_EXTENSION
   WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );            
 #else

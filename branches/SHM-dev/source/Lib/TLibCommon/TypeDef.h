@@ -43,6 +43,7 @@
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
+#define VPS_RESERVED_FLAGS               1      ///< vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
