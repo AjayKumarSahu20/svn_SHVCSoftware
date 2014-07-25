@@ -1490,7 +1490,11 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
   {
 #if Q0078_ADD_LAYER_SETS
+#if R0227_BR_PR_ADD_LAYER_SET
+    for( i = 0; i < vps->getNumLayerSets(); i++ )
+#else
     for( i = 0; i <= vps->getVpsNumLayerSetsMinus1(); i++ )
+#endif
 #else
     for( i = 0; i < vps->getNumLayerSets(); i++ )
 #endif
