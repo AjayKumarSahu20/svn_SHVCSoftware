@@ -2396,6 +2396,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   READ_FLAG(uiCode, "vps_vui_bsp_hrd_present_flag" ); vps->setVpsVuiBspHrdPresentFlag(uiCode);
   if (vps->getVpsVuiBspHrdPresentFlag())
   {
+#if R0227_VUI_BSP_HRD_FLAG
+    assert (vps->getTimingInfo()->getTimingInfoPresentFlag() == 1);
+#endif
     READ_UVLC( uiCode, "vps_num_bsp_hrd_parameters_minus1" ); vps->setVpsNumBspHrdParametersMinus1(uiCode);
     vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
     for( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
