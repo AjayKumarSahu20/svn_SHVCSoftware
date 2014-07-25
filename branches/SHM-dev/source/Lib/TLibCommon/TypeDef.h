@@ -47,6 +47,8 @@
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define R0227_BR_PR_ADD_LAYER_SET        1      ///< JCTVC-R0227, Signalling of bit-rate and picture rate for additional layer set
+
 #define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
