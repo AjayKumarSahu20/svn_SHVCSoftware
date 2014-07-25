@@ -2113,6 +2113,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         m_pcSliceEncoder->estimateILWpParam( pcSlice );
       }
 #endif
+
+      if( pcSubstreamsOut )
+      {
+        delete[] pcSubstreamsOut;
+        pcSubstreamsOut = NULL;
+      }
+
+      if( pcBitstreamRedirect )
+      {
+        delete pcBitstreamRedirect;
+        pcBitstreamRedirect = NULL;
+      }
+
       return;
     }
 #endif

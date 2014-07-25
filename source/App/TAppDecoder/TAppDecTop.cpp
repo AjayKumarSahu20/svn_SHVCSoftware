@@ -1240,8 +1240,12 @@ Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
     {
       pcPic->destroy();
 
-      delete pcPic;
-      pcPic = NULL;
+      // pcPic is statically created for the external (AVC) base layer, no need to delete it
+      if( !m_acTDecTop[layerIdx].getParameterSetManager()->getActiveVPS()->getAvcBaseLayerFlag() || layerIdx )
+      {
+        delete pcPic;
+        pcPic = NULL;
+      }
     }
   }
 
