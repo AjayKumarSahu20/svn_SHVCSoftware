@@ -217,7 +217,12 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
 #if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
       {
-        printf( "%d(%d)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId() );
+        UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
+        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(refLayerId);
+        assert( g_posScalingFactor[refLayerIdc][0] );
+        assert( g_posScalingFactor[refLayerIdc][1] );
+
+        printf( "%d(%d, \{%1.2f, %1.2f\}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/g_posScalingFactor[refLayerIdc][0], 65536.0/g_posScalingFactor[refLayerIdc][1] );
       }
       else
       {
