@@ -2494,6 +2494,28 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
   assert(sps!=0);
   rpcSlice->setSPS(sps);
   rpcSlice->setPPS(pps);
+
+#if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
+  TComVPS* vps = NULL;
+  vps = parameterSetManager->getPrefetchedVPS(sps->getVPSId());
+  if ( rpcSlice->getLayerId() == 0 )
+  {
+    assert( sps->getPicWidthInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getPicWidthVpsInLumaSamples() );
+    assert( sps->getPicHeightInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getPicHeightVpsInLumaSamples() );
+    assert( sps->getChromaFormatIdc() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getChromaFormatVpsIdc() );
+    assert( sps->getBitDepthY() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getBitDepthVpsLuma() );
+    assert( sps->getBitDepthC() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getBitDepthVpsChroma() );
+  }
+  else 
+  {
+    assert(vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getLayerId()))->getPicWidthVpsInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()))->getPicWidthVpsInLumaSamples());
+    assert(vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getLayerId()))->getPicHeightVpsInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()))->getPicHeightVpsInLumaSamples());
+    assert(vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getLayerId()))->getChromaFormatVpsIdc() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()))->getChromaFormatVpsIdc());
+    assert(vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getLayerId()))->getBitDepthVpsLuma() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()))->getBitDepthVpsLuma());
+    assert(vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : rpcSlice->getLayerId()))->getBitDepthVpsChroma() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()))->getBitDepthVpsChroma());
+  }
+#endif
+
   if( pps->getDependentSliceSegmentsEnabledFlag() && ( !firstSliceSegmentInPic ))
   {
     READ_FLAG( uiCode, "dependent_slice_segment_flag" );       rpcSlice->setDependentSliceSegmentFlag(uiCode ? true : false);
