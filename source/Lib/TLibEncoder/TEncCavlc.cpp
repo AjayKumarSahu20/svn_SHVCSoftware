@@ -1544,8 +1544,15 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 
   if (vps->getVideoSigPresentVpsFlag() && vps->getNumVideoSignalInfo() > 1 )
   {
+#if VPS_VUI_VST_PARAMS
+    for(i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++)
+    {
+      WRITE_CODE( vps->getVideoSignalInfoIdx(i), 4, "vps_video_signal_info_idx" );
+    }
+#else
     for (i=1; i < vps->getMaxLayers(); i++)
       WRITE_CODE(vps->getVideoSignalInfoIdx(i), 4, "vps_video_signal_info_idx" );
+#endif
   }
 #endif 
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
