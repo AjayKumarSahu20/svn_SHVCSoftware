@@ -360,10 +360,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      sei = new SEIBspInitialArrivalTime;
      xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei);
      break;
+#if !REMOVE_BSP_HRD_SEI
    case SEI::BSP_HRD:
      sei = new SEIBspHrd;
      xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei);
      break;
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
    case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -1285,6 +1287,7 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
   }
 }
 
+#if !REMOVE_BSP_HRD_SEI
 Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei)
 {
   UInt uiCode;
@@ -1370,6 +1373,7 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
     }
   }
 }
+#endif
 
 Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
 {

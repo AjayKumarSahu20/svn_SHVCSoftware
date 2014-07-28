@@ -93,7 +93,9 @@ public:
 #if O0164_MULTI_LAYER_HRD
     BSP_NESTING                          = 140,
     BSP_INITIAL_ARRIVAL_TIME             = 141,
+#if !REMOVE_BSP_HRD_SEI
     BSP_HRD                              = 142,
+#endif
 #endif
 #if Q0074_SEI_COLOR_MAPPING
     COLOR_MAPPING_INFO                   = 143,
@@ -606,6 +608,7 @@ public:
   UInt m_vclInitialArrivalDelay[256];
 };
 
+#if !REMOVE_BSP_HRD_SEI
 class SEIBspHrd : public SEI
 {
 public:
@@ -626,6 +629,7 @@ public:
 
   TComHRD *hrd;
 };
+#endif
 
 #endif
 
