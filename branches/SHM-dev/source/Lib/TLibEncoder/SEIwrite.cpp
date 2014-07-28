@@ -902,7 +902,10 @@ Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TCo
   {
     WRITE_FLAG( 0, "bsp_nesting_zero_bit" );
   }
-
+#if NESTING_SEI_EXTENSIBILITY
+  assert( sei.m_nestedSEIs.size() <= MAX_SEIS_IN_BSP_NESTING );
+  WRITE_UVLC( sei.m_nestedSEIs.size(), "num_seis_in_bsp_minus1" );
+#endif
   // write nested SEI messages
   for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
   {
