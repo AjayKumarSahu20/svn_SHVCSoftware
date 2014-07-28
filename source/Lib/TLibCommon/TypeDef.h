@@ -47,6 +47,7 @@
 #define VPS_VUI_VST_PARAMS               1      ///< JCTVC-R0227: Related to signalling of VST parameters of the base layer.
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define REMOVE_BSP_HRD_SEI               1      ///< R0010: Remove bitstream partition HRD SEI message.
+#define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define R0227_VUI_BSP_HRD_FLAG           1      ///< JCTVC-R0227, Conformance checking such that VPS VUI HRD only present if VPS timing info is signalled
@@ -298,7 +299,9 @@ enum ScalabilityType
 
 #define MAX_NESTING_NUM_OPS         1024
 #define MAX_NESTING_NUM_LAYER       64
-
+#if NESTING_SEI_EXTENSIBILITY
+#define MAX_SEIS_IN_BSP_NESTING     64
+#endif
 #if SVC_EXTENSION
 #define MAX_VPS_OP_LAYER_SETS_PLUS1               (MAX_LAYERS+1)
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024

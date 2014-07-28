@@ -1233,6 +1233,15 @@ Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUni
   sei.m_callerOwnsSEIs = false;
 
   // read nested SEI messages
+#if NESTING_SEI_EXTENSIBILITY
+  Int numSeiMessages = 0;
+  READ_UVLC( uiCode, "num_seis_in_bsp_minus1" );  assert( uiCode <= MAX_SEIS_IN_BSP_NESTING );
+  numSeiMessages = uiCode;
+  for(Int i = 0; i < numSeiMessages; i++)
+  {
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &nestingSei, &sei);
+  }
+#else
   do {
 #if LAYERS_NOT_PRESENT_SEI
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &nestingSei, &sei);
@@ -1240,6 +1249,7 @@ Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUni
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, &nestingSei);
 #endif
   } while (m_pcBitstream->getNumBitsLeft() > 8);
+#endif
 }
 
 Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)
