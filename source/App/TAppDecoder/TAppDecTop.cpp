@@ -1159,7 +1159,10 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     // mark it should be extended later
     pic->getPicYuvRec()->setBorderExtension( false );
 
+#if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInLayer[layerIdx]--;
+#endif
+    dpbStatus.m_numPicsInSubDpb[layerIdx]--;
   }
 }
 
@@ -1392,7 +1395,9 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     {
       maxDpbLimit.m_maxLatencyPictures = sps->getMaxLatencyIncrease( highestTId ) + sps->getNumReorderPics( highestTId ) - 1;
     }
+#if RESOLUTION_BASED_DPB
     maxDpbLimit.m_numPicsInLayer[0] = sps->getMaxDecPicBuffering( highestTId );
+#endif
     maxDpbLimit.m_numPicsInSubDpb[0] = sps->getMaxDecPicBuffering( highestTId );
   }
   else
@@ -1540,7 +1545,11 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
           }
           if( pic->getSlice(0)->isReferenced() || pic->getOutputMark() )
           {
+#if RESOLUTION_BASED_DPB
             dpbStatus.m_numPicsInLayer[i]++;  // Count pictures that are "used for reference" or "needed for output"
+#else
+            dpbStatus.m_numPicsInSubDpb[i]++;  // Count pictures that are "used for reference" or "needed for output"
+#endif
           }
 #if POC_RESET_IDC_DECODER
         }
@@ -1565,7 +1574,6 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
     dpbStatus.m_numPicsNotDisplayedInLayer[i] = listOfPocsInEachLayer[i].size();
 #if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInSubDpb[vps->getSubDpbAssigned(targetLsIdx,i)] += dpbStatus.m_numPicsInLayer[i];
-#else
     dpbStatus.m_numPicsInSubDpb[i] += dpbStatus.m_numPicsInLayer[i];
 #endif
   }
