@@ -232,9 +232,11 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
    case SEI::BSP_INITIAL_ARRIVAL_TIME:
      xWriteSEIBspInitialArrivalTime(*static_cast<const SEIBspInitialArrivalTime*>(&sei), vps, sps, nestingSei, bspNestingSei);
      break;
+#if !REMOVE_BSP_HRD_SEI
    case SEI::BSP_HRD:
      xWriteSEIBspHrd(*static_cast<const SEIBspHrd*>(&sei), sps, nestingSei);
      break;
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
    case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -952,6 +954,7 @@ Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &s
   }
 }
 
+#if !REMOVE_BSP_HRD_SEI
 Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei)
 {
   WRITE_UVLC( sei.m_seiNumBspHrdParametersMinus1, "sei_num_bsp_hrd_parameters_minus1" );
@@ -1003,6 +1006,7 @@ Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEISca
     }
   }
 }
+#endif
 
 Void SEIWriter::xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 )
 {
