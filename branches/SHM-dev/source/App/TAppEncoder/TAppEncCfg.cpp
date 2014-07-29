@@ -383,8 +383,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
   Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  string    cfg_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
+  string    cfg_refRegionOffsetPresentFlag      [MAX_LAYERS];
+  string    cfg_refRegionLeftOffset   [MAX_LAYERS];
+  string    cfg_refRegionTopOffset    [MAX_LAYERS];
+  string    cfg_refRegionRightOffset  [MAX_LAYERS];
+  string    cfg_refRegionBottomOffset [MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  string    cfg_resamplePhaseSetPresentFlag [MAX_LAYERS];
+  string    cfg_phaseHorLuma   [MAX_LAYERS];
+  string    cfg_phaseVerLuma   [MAX_LAYERS];
+  string    cfg_phaseHorChroma [MAX_LAYERS];
+  string    cfg_phaseVerChroma [MAX_LAYERS];
+#else
 #if P0312_VERT_PHASE_ADJ
   string    cfg_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
 #endif
 
 #if O0098_SCALED_REF_LAYER_ID
@@ -394,6 +410,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
+#if REF_REGION_OFFSET
+  string*    cfg_scaledRefLayerOffsetPresentFlagPtr [MAX_LAYERS];
+  string*    cfg_refRegionOffsetPresentFlagPtr      [MAX_LAYERS];
+  string*    cfg_refRegionLeftOffsetPtr   [MAX_LAYERS];
+  string*    cfg_refRegionTopOffsetPtr    [MAX_LAYERS];
+  string*    cfg_refRegionRightOffsetPtr  [MAX_LAYERS];
+  string*    cfg_refRegionBottomOffsetPtr [MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  string*    cfg_resamplePhaseSetPresentFlagPtr [MAX_LAYERS];
+  string*    cfg_phaseHorLumaPtr   [MAX_LAYERS];
+  string*    cfg_phaseVerLumaPtr   [MAX_LAYERS];
+  string*    cfg_phaseHorChromaPtr [MAX_LAYERS];
+  string*    cfg_phaseVerChromaPtr [MAX_LAYERS];
+#endif
 #if P0312_VERT_PHASE_ADJ
   string*    cfg_vertPhasePositionEnableFlagPtr[MAX_LAYERS];
 #endif
@@ -465,6 +496,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
 #if P0312_VERT_PHASE_ADJ
       cfg_vertPhasePositionEnableFlagPtr[layer] = &cfg_vertPhasePositionEnableFlag[layer];
+#endif
+#if REF_REGION_OFFSET
+      cfg_scaledRefLayerOffsetPresentFlagPtr [layer] = &cfg_scaledRefLayerOffsetPresentFlag [layer];
+      cfg_refRegionOffsetPresentFlagPtr      [layer] = &cfg_refRegionOffsetPresentFlag      [layer];
+      cfg_refRegionLeftOffsetPtr  [layer] = &cfg_refRegionLeftOffset  [layer];
+      cfg_refRegionTopOffsetPtr   [layer] = &cfg_refRegionTopOffset   [layer];
+      cfg_refRegionRightOffsetPtr [layer] = &cfg_refRegionRightOffset [layer];
+      cfg_refRegionBottomOffsetPtr[layer] = &cfg_refRegionBottomOffset[layer];
+#endif
+#if R0209_GENERIC_PHASE
+      cfg_resamplePhaseSetPresentFlagPtr [layer] = &cfg_resamplePhaseSetPresentFlag [layer];
+      cfg_phaseHorLumaPtr   [layer] = &cfg_phaseHorLuma   [layer];
+      cfg_phaseVerLumaPtr   [layer] = &cfg_phaseVerLuma   [layer];
+      cfg_phaseHorChromaPtr [layer] = &cfg_phaseHorChroma [layer];
+      cfg_phaseVerChromaPtr [layer] = &cfg_phaseVerChroma [layer];
 #endif
     }
 #if RC_SHVC_HARMONIZATION
@@ -596,6 +642,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
   " bottom-right luma sample of the EL picture, in units of two luma samples")
+#if REF_REGION_OFFSET
+  ("ScaledRefLayerOffsetPresentFlag%d",      cfg_scaledRefLayerOffsetPresentFlagPtr,     string(""), MAX_LAYERS, "presense flag of scaled reference layer offsets")
+  ("RefRegionOffsetPresentFlag%d",           cfg_refRegionOffsetPresentFlagPtr,          string(""), MAX_LAYERS, "presense flag of reference region offsets")
+  ("RefRegionLeftOffset%d",   cfg_refRegionLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of ref region with respect to"
+                                                                 " top-left luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionTopOffset%d",    cfg_refRegionTopOffsetPtr,   string(""), MAX_LAYERS,   "Vertical offset of top-left luma sample of ref region with respect to"
+                                                                 " top-left luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionRightOffset%d",  cfg_refRegionRightOffsetPtr, string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of ref region with respect to"
+                                                                 " bottom-right luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionBottomOffset%d", cfg_refRegionBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of ref region with respect to"
+                                                                 " bottom-right luma sample of the BL picture, in units of two luma samples")
+#endif
+#if R0209_GENERIC_PHASE
+  ("ResamplePhaseSetPresentFlag%d",  cfg_resamplePhaseSetPresentFlagPtr, string(""), MAX_LAYERS, "presense flag of resample phase set")
+  ("PhaseHorLuma%d",   cfg_phaseHorLumaPtr,   string(""), MAX_LAYERS, "luma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerLuma%d",   cfg_phaseVerLumaPtr,   string(""), MAX_LAYERS, "luma shift in the vertical   direction used in resampling proces")
+  ("PhaseHorChroma%d", cfg_phaseHorChromaPtr, string(""), MAX_LAYERS, "chroma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerChroma%d", cfg_phaseVerChromaPtr, string(""), MAX_LAYERS, "chroma shift in the vertical   direction used in resampling proces")
+#endif
 #if P0312_VERT_PHASE_ADJ
   ("VertPhasePositionEnableFlag%d", cfg_vertPhasePositionEnableFlagPtr,string(""), MAX_LAYERS, "VertPhasePositionEnableFlag for layer %d")
 #endif
@@ -1186,6 +1251,28 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0098_SCALED_REF_LAYER_ID
       assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
 #endif
+#if REF_REGION_OFFSET
+      Bool srloFlag =
+        strcmp(cfg_scaledRefLayerLeftOffset   [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerRightOffset  [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerTopOffset    [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerBottomOffset [layer].c_str(), "");
+      Bool rroFlag =
+        strcmp(cfg_refRegionLeftOffset   [layer].c_str(), "") ||
+        strcmp(cfg_refRegionRightOffset  [layer].c_str(), "") ||
+        strcmp(cfg_refRegionTopOffset    [layer].c_str(), "") ||
+        strcmp(cfg_refRegionBottomOffset [layer].c_str(), "");
+#if R0209_GENERIC_PHASE
+      Bool phaseSetFlag =
+        strcmp(cfg_phaseHorLuma   [layer].c_str(), "") ||
+        strcmp(cfg_phaseVerLuma  [layer].c_str(), "") ||
+        strcmp(cfg_phaseHorChroma    [layer].c_str(), "") ||
+        strcmp(cfg_phaseVerChroma [layer].c_str(), "");
+      assert( srloFlag || rroFlag || phaseSetFlag);
+#else
+      assert( srloFlag || rroFlag );
+#endif
+#else
 #if P0312_VERT_PHASE_ADJ
       assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
@@ -1197,6 +1284,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
               strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
               strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"") ); 
+#endif
 #endif
     }
 
@@ -1212,6 +1300,22 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerId[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+
+#if REF_REGION_OFFSET
+    // Presense Flag //
+    if(strcmp(cfg_scaledRefLayerOffsetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerOffsetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -1288,7 +1392,152 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
 #endif
+#if REF_REGION_OFFSET
+    // Presense Flag //
+    if(strcmp(cfg_refRegionOffsetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionOffsetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Left offset //
+    if(strcmp(cfg_refRegionLeftOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionLeftOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionLeftOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Top offset //
+    if(strcmp(cfg_refRegionTopOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionTopOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionTopOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Right offset //
+    if(strcmp(cfg_refRegionRightOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionRightOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionRightOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Bottom offset //
+    if(strcmp(cfg_refRegionBottomOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionBottomOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionBottomOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+#if R0209_GENERIC_PHASE
+    Int numPhaseSet = m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+
+    // Presense Flag //
+    if(strcmp(cfg_resamplePhaseSetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_resamplePhaseSetPresentFlag[layer], numPhaseSet, "resamplePhaseSetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Luma horizontal phase //
+    if(strcmp(cfg_phaseHorLuma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseHorLuma[layer], numPhaseSet, "phaseHorLuma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseHorLuma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Luma vertical phase //
+    if(strcmp(cfg_phaseVerLuma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseVerLuma[layer], numPhaseSet, "phaseVerLuma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseVerLuma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Chroma horizontal phase //
+    if(strcmp(cfg_phaseHorChroma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseHorChroma[layer], numPhaseSet, "phaseHorChroma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseHorChroma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Chroma vertical phase //
+    if(strcmp(cfg_phaseVerChroma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseVerChroma[layer], numPhaseSet, "phaseVerChroma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseVerChroma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
   }
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {

@@ -61,11 +61,6 @@
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
 #define Q0146_SSH_EXT_DATA_BIT           1      ///< JCTVC-Q0146; Bug-fix -- the SSH_EXT_DATA_BIT can have any value -- not required to be 1
 
-#define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
-#define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
-#if P0312_VERT_PHASE_ADJ
-#define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
-#endif
 #define P0130_EOB                        1      ///< JCTVC-P0130, set layer Id of EOB NALU to be fixed to 0
 #define T_ID_EOB_BUG_FIX                 1      ///< Bug fix for the value of temporal id of EOB NALU. It must be set to 0
 #define P0307_REMOVE_VPS_VUI_OFFSET      1      ///< JCTVC-P0307, remove implementation related to VPS VUI offset signalling
@@ -234,6 +229,22 @@
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
+
+#define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
+#if R0340_RESAMPLING_MODIFICATION
+#define MOVE_SCALED_OFFSET_TO_PPS        1      ///< JCTVC-R0013: move scaled reference layer offset from SPS to PPS
+#if MOVE_SCALED_OFFSET_TO_PPS
+#define REF_REGION_OFFSET                1      ///< JCTVC-Q0159/R0220: reference region offset
+#define R0209_GENERIC_PHASE              1      ///< JCTVC-R0209: resampling with generic phase
+#define R0220_REMOVE_EL_CLIP             1      ///< JCTVC-R0220: remove clip to scaled ref window in resampling process
+#endif
+#else
+#define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
+#define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
+#if P0312_VERT_PHASE_ADJ
+#define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
+#endif
+#endif
 
 /// scalability types
 enum ScalabilityType

@@ -272,6 +272,56 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
     if( ppsExtensionTypeFlag[0] )
     {
       WRITE_FLAG( pcPPS->getPocResetInfoPresentFlag() ? 1 : 0, "poc_reset_info_present_flag" );
+#if REF_REGION_OFFSET
+      WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
+      for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+      {
+        WRITE_CODE( pcPPS->getScaledRefLayerId(i), 6, "scaled_ref_layer_id" );
+        WRITE_FLAG( pcPPS->getScaledRefLayerOffsetPresentFlag(i) ? 1 : 0, "scaled_ref_layer_offset_prsent_flag" );
+        if (pcPPS->getScaledRefLayerOffsetPresentFlag(i))
+        {
+          Window scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+          WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+          WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+          WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+          WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+        }
+        WRITE_FLAG( pcPPS->getRefRegionOffsetPresentFlag(i) ? 1 : 0, "ref_region_offset_prsent_flag" );
+        if (pcPPS->getRefRegionOffsetPresentFlag(i))
+        {
+          Window refWindow = pcPPS->getRefLayerWindow(i);
+          WRITE_SVLC( refWindow.getWindowLeftOffset()   >> 1, "ref_layer_left_offset" );
+          WRITE_SVLC( refWindow.getWindowTopOffset()    >> 1, "ref_layer_top_offset" );
+          WRITE_SVLC( refWindow.getWindowRightOffset()  >> 1, "ref_layer_right_offset" );
+          WRITE_SVLC( refWindow.getWindowBottomOffset() >> 1, "ref_layer_bottom_offset" );
+        }
+#if R0209_GENERIC_PHASE
+        WRITE_FLAG( pcPPS->getResamplePhaseSetPresentFlag(i) ? 1 : 0, "resample_phase_set_present_flag" );
+        if (pcPPS->getResamplePhaseSetPresentFlag(i))
+        {
+          WRITE_UVLC( pcPPS->getPhaseHorLuma(i), "phase_hor_luma" );
+          WRITE_UVLC( pcPPS->getPhaseVerLuma(i), "phase_ver_luma" );
+          WRITE_UVLC( pcPPS->getPhaseHorChroma(i) + 8, "phase_hor_chroma_plus8" );
+          WRITE_UVLC( pcPPS->getPhaseVerChroma(i) + 8, "phase_ver_chroma_plus8" );
+        }
+#endif
+      }
+#else
+#if MOVE_SCALED_OFFSET_TO_PPS
+      WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
+      for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+      {
+        Window scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+#if O0098_SCALED_REF_LAYER_ID
+        WRITE_CODE( pcPPS->getScaledRefLayerId(i), 6,          "scaled_ref_layer_id" );
+#endif
+        WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+        WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+        WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+        WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+      }
+#endif
+#endif
 #if Q0048_CGS_3D_ASYMLUT
       UInt uiPos = getNumberOfWrittenBits();
       WRITE_FLAG( pcPPS->getCGSFlag() , "colour_mapping_enabled_flag" );
@@ -671,6 +721,7 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
   // Vertical MV component restriction is not used in SHVC CTC
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
 
+#if !MOVE_SCALED_OFFSET_TO_PPS
   if( pcSPS->getLayerId() > 0 )
   {
     WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
@@ -689,6 +740,7 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 #endif
     }
   }
+#endif
 }
 #endif //SVC_EXTENSION
 

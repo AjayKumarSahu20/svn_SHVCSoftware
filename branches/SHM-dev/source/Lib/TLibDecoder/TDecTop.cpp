@@ -349,12 +349,26 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     {
       for(UInt i = 0; i < pcSlice->getVPS()->getNumDirectRefLayers( m_layerId ); i++ )
       {
+#if MOVE_SCALED_OFFSET_TO_PPS
+#if O0098_SCALED_REF_LAYER_ID
+        const Window scalEL = pcSlice->getPPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
+#else
+        const Window scalEL = pcSlice->getPPS()->getScaledRefLayerWindow(i);
+#endif
+#else
 #if O0098_SCALED_REF_LAYER_ID
         const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
 #else
         const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(i);
 #endif
+#endif
+#if REF_REGION_OFFSET
+        const Window refEL = pcSlice->getPPS()->getRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
+        Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
+                             && refEL.getWindowLeftOffset() == 0 && refEL.getWindowRightOffset() == 0 && refEL.getWindowTopOffset() == 0 && refEL.getWindowBottomOffset() == 0 );
+#else
         Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
+#endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
         TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( i );
@@ -762,6 +776,20 @@ Void TDecTop::xActivateParameterSets()
 #endif
 
 #if P0312_VERT_PHASE_ADJ
+#if MOVE_SCALED_OFFSET_TO_PPS
+  if( activeVPS->getVpsVuiVertPhaseInUseFlag() == 0 )
+  {    
+    for(Int i = 0; i < activePPS->getNumScaledRefLayerOffsets(); i++)
+    {
+      UInt scaledRefLayerId = activePPS->getScaledRefLayerId(i);
+      if( activePPS->getVertPhasePositionEnableFlag( scaledRefLayerId ) )
+      {
+        printf("\nWarning: LayerId = %d: vert_phase_position_enable_flag[%d] = 1, however indication vert_phase_position_in_use_flag = 0\n", m_layerId, scaledRefLayerId );
+        break;
+      }
+    }
+  }
+#else
   if( activeVPS->getVpsVuiVertPhaseInUseFlag() == 0 )
   {    
     for(Int i = 0; i < activeSPS->getNumScaledRefLayerOffsets(); i++)
@@ -774,6 +802,7 @@ Void TDecTop::xActivateParameterSets()
       }
     }
   }
+#endif
 #endif
 
 #if SPS_DPB_PARAMS
@@ -1725,12 +1754,25 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
 #endif
 
+#if MOVE_SCALED_OFFSET_TO_PPS
+#if O0098_SCALED_REF_LAYER_ID
+        const Window &scalEL = pcSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
+#else
+        const Window &scalEL = pcSlice->getPPS()->getScaledRefLayerWindow(refLayerIdc);
+#endif
+#else
 #if O0098_SCALED_REF_LAYER_ID
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc);
 #endif
+#endif
 
+#if REF_REGION_OFFSET
+        const Window &windowRL = pcSlice->getPPS()->getRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc));
+        Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth() - windowRL.getWindowLeftOffset() - windowRL.getWindowRightOffset();
+        Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight() - windowRL.getWindowTopOffset() - windowRL.getWindowBottomOffset();
+#else
         Int widthBL   = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getWidth();
         Int heightBL  = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec()->getHeight();
 #if Q0200_CONFORMANCE_BL_SIZE
@@ -1738,6 +1780,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         const Window &confBL = pcSlice->getBaseColPic(refLayerIdc)->getConformanceWindow(); 
         widthBL  -= ( confBL.getWindowLeftOffset() + confBL.getWindowRightOffset() ) * TComSPS::getWinUnitX( chromaFormatIdc );
         heightBL -= ( confBL.getWindowTopOffset() + confBL.getWindowBottomOffset() ) * TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
 #endif
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
@@ -1785,17 +1828,25 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT 
-            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#if MOVE_SCALED_OFFSET_TO_PPS
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getPPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
 #else
-            m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getSPS()->getScaledRefLayerWindow(refLayerIdc), pcSlice->getVPS()->getPhaseAlignFlag() );
+#endif
+#else
+          m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL, pcSlice->getVPS()->getPhaseAlignFlag() );
 #endif
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
-            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+#if REF_REGION_OFFSET
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL, altRL );
 #else
-            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
+#endif
+#else
+          m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
 #endif
 #else
 #if Q0048_CGS_3D_ASYMLUT 

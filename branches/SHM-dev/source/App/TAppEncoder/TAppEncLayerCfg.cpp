@@ -59,8 +59,24 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
   ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
+#if REF_REGION_OFFSET
+  ::memset(m_scaledRefLayerOffsetPresentFlag, 0, sizeof(m_scaledRefLayerOffsetPresentFlag));
+  ::memset(m_refRegionOffsetPresentFlag, 0, sizeof(m_refRegionOffsetPresentFlag));
+  ::memset(m_refRegionLeftOffset,   0, sizeof(m_refRegionLeftOffset));
+  ::memset(m_refRegionTopOffset,    0, sizeof(m_refRegionTopOffset));
+  ::memset(m_refRegionRightOffset,  0, sizeof(m_refRegionRightOffset));
+  ::memset(m_refRegionBottomOffset, 0, sizeof(m_refRegionBottomOffset));
+#endif
+#if R0209_GENERIC_PHASE
+  ::memset(m_resamplePhaseSetPresentFlag, 0, sizeof(m_resamplePhaseSetPresentFlag));
+  ::memset(m_phaseHorLuma,   0, sizeof(m_phaseHorLuma));
+  ::memset(m_phaseVerLuma,   0, sizeof(m_phaseVerLuma));
+  ::memset(m_phaseHorChroma, 0, sizeof(m_phaseHorChroma));
+  ::memset(m_phaseVerChroma, 0, sizeof(m_phaseVerChroma));
+#else
 #if P0312_VERT_PHASE_ADJ 
   ::memset(m_vertPhasePositionEnableFlag, 0, sizeof(m_vertPhasePositionEnableFlag));
+#endif
 #endif
 }
 

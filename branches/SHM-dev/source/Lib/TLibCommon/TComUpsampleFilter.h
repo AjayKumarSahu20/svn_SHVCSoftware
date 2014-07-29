@@ -50,7 +50,11 @@ public:
 #endif
 #else
 #if O0194_JOINT_US_BITSHIFT
+#if REF_REGION_OFFSET
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, const Window altRefWindow );
+#else
   Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
+#endif
 #else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
 #endif

@@ -778,12 +778,26 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
+#if MOVE_SCALED_OFFSET_TO_PPS
+#if O0098_SCALED_REF_LAYER_ID
+          const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+#else
+          const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
+#endif
+#else
 #if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
 #else
           const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
 #endif
+#endif
+#if REF_REGION_OFFSET
+          const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
+                               && altRL.getWindowLeftOffset() == 0 && altRL.getWindowRightOffset() == 0 && altRL.getWindowTopOffset() == 0 && altRL.getWindowBottomOffset() == 0);
+#else
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
+#endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
@@ -838,12 +852,26 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
+#if MOVE_SCALED_OFFSET_TO_PPS
+#if O0098_SCALED_REF_LAYER_ID
+          const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+#else
+          const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
+#endif
+#else
 #if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
 #else
           const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
 #endif
+#endif
+#if REF_REGION_OFFSET
+          const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
+                               && altRL.getWindowLeftOffset() == 0 && altRL.getWindowRightOffset() == 0 && altRL.getWindowTopOffset() == 0 && altRL.getWindowBottomOffset() == 0);
+#else
           Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
+#endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
@@ -917,6 +945,7 @@ Void TEncTop::xInitSPS()
 #else
   m_cSPS.setLayerId(m_layerId);
 #endif
+#if !MOVE_SCALED_OFFSET_TO_PPS
   m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
   for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
   {
@@ -928,6 +957,7 @@ Void TEncTop::xInitSPS()
     m_cSPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
 #endif
   }
+#endif
 #endif //SVC_EXTENSION
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
@@ -1202,6 +1232,31 @@ Void TEncTop::xInitPPS()
   if (m_crossLayerBLAFlag)
   {
     m_cPPS.setNumExtraSliceHeaderBits( 3 );
+  }
+#endif
+#if MOVE_SCALED_OFFSET_TO_PPS
+  m_cPPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
+  for(Int i = 0; i < m_cPPS.getNumScaledRefLayerOffsets(); i++)
+  {
+#if O0098_SCALED_REF_LAYER_ID
+    m_cPPS.setScaledRefLayerId(i, m_scaledRefLayerId[i]);
+#endif
+    m_cPPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
+#if REF_REGION_OFFSET
+    m_cPPS.getRefLayerWindow(i) = m_refLayerWindow[i];
+    m_cPPS.setScaledRefLayerOffsetPresentFlag( m_scaledRefLayerId[i], m_scaledRefLayerOffsetPresentFlag[i] );
+    m_cPPS.setRefRegionOffsetPresentFlag( m_scaledRefLayerId[i], m_refRegionOffsetPresentFlag[i] );
+#endif
+#if R0209_GENERIC_PHASE
+    m_cPPS.setResamplePhaseSetPresentFlag( m_scaledRefLayerId[i], m_resamplePhaseSetPresentFlag[i] );
+    m_cPPS.setPhaseHorLuma( m_scaledRefLayerId[i], m_phaseHorLuma[i] );
+    m_cPPS.setPhaseVerLuma( m_scaledRefLayerId[i], m_phaseVerLuma[i] );
+    m_cPPS.setPhaseHorChroma( m_scaledRefLayerId[i], m_phaseHorChroma[i] );
+    m_cPPS.setPhaseVerChroma( m_scaledRefLayerId[i], m_phaseVerChroma[i] );
+#endif
+#if P0312_VERT_PHASE_ADJ
+    m_cPPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
+#endif
   }
 #endif
 #if Q0048_CGS_3D_ASYMLUT
@@ -1681,6 +1736,23 @@ Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
   return win;
 }
+#if REF_REGION_OFFSET
+Window& TEncTop::getRefLayerWindowForLayer(Int layerId)
+{
+  static Window win;
+
+  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  {
+    if (layerId == m_refLayerId[i])
+    {
+      return m_refLayerWindow[i];
+    }
+  }
+
+  win.resetWindow();  // reference offsets are inferred to be zero when not present
+  return win;
+}
+#endif
 #endif
 
 #endif //SVC_EXTENSION
