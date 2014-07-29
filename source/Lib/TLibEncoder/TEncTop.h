@@ -135,6 +135,20 @@ private:
   UInt                    m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  UInt                    m_numRefLayerOffsets;
+  UInt                    m_refLayerId[MAX_LAYERS];
+  Window                  m_refLayerWindow[MAX_LAYERS];
+  Bool                    m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
+  Bool                    m_refRegionOffsetPresentFlag[MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  Int                     m_phaseHorLuma  [MAX_LAYERS];
+  Int                     m_phaseVerLuma  [MAX_LAYERS];
+  Int                     m_phaseHorChroma[MAX_LAYERS];
+  Int                     m_phaseVerChroma[MAX_LAYERS];
+  Int                     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
+#endif
 #if P0312_VERT_PHASE_ADJ
   Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
@@ -228,9 +242,33 @@ public:
   Window&   getScaledRefLayerWindowForLayer(Int layerId);
 #endif
   Window&   getScaledRefLayerWindow(Int x)                 { return m_scaledRefLayerWindow[x];        }
+#if REF_REGION_OFFSET
+  Void      setNumRefLayerOffsets(Int x) { m_numRefLayerOffsets = x; }
+  UInt      getNumRefLayerOffsets() { return m_numRefLayerOffsets; }
+  Void      setRefLayerId(Int x, UInt id) { m_refLayerId[x] = id;   }
+  UInt      getRefLayerId(Int x)          { return m_refLayerId[x]; }
+  Window&   getRefLayerWindowForLayer(Int layerId);
+  Window&   getRefLayerWindow(Int x)            { return m_refLayerWindow[x]; }
+  Bool      getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
+  Void      setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
+  Bool      getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
+  Void      setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
+#endif
 #if P0312_VERT_PHASE_ADJ
   Void      setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b;    }
   UInt      getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
+#endif
+#if R0209_GENERIC_PHASE
+  Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
+  Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
+  Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
+  Int getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
+  Void setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
+  Void setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
+  Void setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
+  Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
+  Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
+  Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
 #endif
 
   TComPic** getIlpList() { return m_cIlpPic; }

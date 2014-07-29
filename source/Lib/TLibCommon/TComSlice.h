@@ -1242,7 +1242,7 @@ public:
   { }
 
   Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
-#if P0312_VERT_PHASE_ADJ 
+#if P0312_VERT_PHASE_ADJ
   Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
 #else
   Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
@@ -1255,10 +1255,12 @@ public:
   Void          setWindowTopOffset(Int val)       { m_winTopOffset = val; m_enabledFlag = true; }
   Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
   Void          setWindowBottomOffset(Int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
-
 #if P0312_VERT_PHASE_ADJ
   Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
   Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
+#endif
+
+#if P0312_VERT_PHASE_ADJ
   Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
 #else
   Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
@@ -1531,12 +1533,14 @@ private:
 #if P0312_VERT_PHASE_ADJ
  Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
+#if !MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
   UInt        m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
+#endif
 #if REPN_FORMAT_IN_VPS
-  Bool        m_updateRepFormatFlag;
+  Bool m_updateRepFormatFlag;
 #if O0096_REP_FORMAT_INDEX
   UInt        m_updateRepFormatIndex;
 #endif
@@ -1546,6 +1550,7 @@ private:
   UInt        m_scalingListRefLayerId;
 #endif
 #endif //SVC_EXTENSION
+
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1692,6 +1697,7 @@ public:
   UInt     getLayerId()                        { return m_layerId;    }
   Int      getExtensionFlag()                  { return m_extensionFlag;  }
   Void     setExtensionFlag(Int n)             { m_extensionFlag = n;     }
+#if !MOVE_SCALED_OFFSET_TO_PPS
   UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
 #if P0312_VERT_PHASE_ADJ
@@ -1704,6 +1710,7 @@ public:
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
 #endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
+#endif
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
@@ -1815,6 +1822,25 @@ private:
 #endif
 #if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
+#endif
+#if MOVE_SCALED_OFFSET_TO_PPS
+  UInt     m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     m_scaledRefLayerId[MAX_LAYERS];
+#endif
+  Window   m_scaledRefLayerWindow[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  Window   m_refLayerWindow[MAX_LAYERS];
+  Bool     m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
+  Bool     m_refRegionOffsetPresentFlag[MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  Int      m_phaseHorLuma[MAX_LAYERS];
+  Int      m_phaseVerLuma[MAX_LAYERS];
+  Int      m_phaseHorChroma[MAX_LAYERS];
+  Int      m_phaseVerChroma[MAX_LAYERS];
+  Bool     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Int      m_nCGSFlag;
@@ -1943,6 +1969,36 @@ public:
 #if POC_RESET_IDC
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
+#endif
+#if MOVE_SCALED_OFFSET_TO_PPS
+  UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
+  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
+  Window&  getScaledRefLayerWindowForLayer( Int layerId );
+#endif
+  Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
+#if REF_REGION_OFFSET
+  Window&  getRefLayerWindowForLayer( Int layerId );
+  Window&  getRefLayerWindow( Int x )   { return m_refLayerWindow[x]; }
+  Bool getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
+  Void setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
+  Bool getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
+  Void setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
+#endif
+#if R0209_GENERIC_PHASE
+  Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
+  Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
+  Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
+  Int getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
+  Void setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
+  Void setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
+  Void setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
+  Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
+  Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
+  Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Int     getCGSFlag()                { return m_nCGSFlag;  }

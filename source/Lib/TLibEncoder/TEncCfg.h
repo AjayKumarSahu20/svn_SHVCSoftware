@@ -410,7 +410,7 @@ public:
   Void      setSourceHeight                 ( Int   i )      { m_iSourceHeight = i; }
 
   Window   &getConformanceWindow()                           { return m_conformanceWindow; }
-#if P0312_VERT_PHASE_ADJ 
+#if P0312_VERT_PHASE_ADJ && !R0209_GENERIC_PHASE
   Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom, false); }
 #else
   Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom); }
