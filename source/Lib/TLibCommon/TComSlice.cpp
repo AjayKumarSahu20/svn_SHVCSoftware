@@ -2114,9 +2114,15 @@ UInt TComSlice::getPicWidthInLumaSamples()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 #if O0096_REP_FORMAT_INDEX
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#else
   if ( layerId == 0 )
   {
     if( vps->getAvcBaseLayerFlag() )
+#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
     }
@@ -2147,9 +2153,15 @@ UInt TComSlice::getPicHeightInLumaSamples()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 #if O0096_REP_FORMAT_INDEX
-  if( layerId == 0 )
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#else
+  if ( layerId == 0 )
   {
     if( vps->getAvcBaseLayerFlag() )
+#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
     }
@@ -2189,9 +2201,15 @@ UInt TComSlice::getChromaFormatIdc()
   UInt retVal, layerId = getLayerId();
 #endif
 #if O0096_REP_FORMAT_INDEX
-  if( layerId == 0 )
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#else
+  if ( layerId == 0 )
   {
     if( vps->getAvcBaseLayerFlag() )
+#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
     }
@@ -2222,7 +2240,11 @@ UInt TComSlice::getBitDepthY()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 #if O0096_REP_FORMAT_INDEX
-  if( layerId == 0 )
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+#else
+  if ( layerId == 0 )
+#endif
   {
     retVal = sps->getBitDepthY();
   }
@@ -2248,7 +2270,11 @@ UInt TComSlice::getBitDepthC()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 #if O0096_REP_FORMAT_INDEX
-  if( layerId == 0 )
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+#else
+  if ( layerId == 0 )
+#endif
   {
     retVal = sps->getBitDepthC();
   }
@@ -2995,6 +3021,9 @@ TComSPS::TComSPS()
 , m_VPSId                     (  0)
 , m_chromaFormatIdc           (CHROMA_420)
 , m_uiMaxTLayers              (  1)
+#if R0279_REP_FORMAT_INBL
+, m_bV1CompatibleSPSFlag      (  0)
+#endif
 // Structure
 , m_picWidthInLumaSamples     (352)
 , m_picHeightInLumaSamples    (288)

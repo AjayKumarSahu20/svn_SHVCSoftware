@@ -50,6 +50,7 @@
 #define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define R0279_REP_FORMAT_INBL            1      ///< JCTVC-R0279, For any independent non-base layer the used representation format is the one that is signalled in the active SPS for the layer
 #define R0227_VUI_BSP_HRD_FLAG           1      ///< JCTVC-R0227, Conformance checking such that VPS VUI HRD only present if VPS timing info is signalled
 #define R0227_REP_FORMAT_CONSTRAINT      1      ///< JCTVC-R0227, Conformance checking such that representation format of a particular layer shall not be greater than the one defined in VPS for that layer
 #define R0227_BR_PR_ADD_LAYER_SET        1      ///< JCTVC-R0227, Signalling of bit-rate and picture rate for additional layer set
