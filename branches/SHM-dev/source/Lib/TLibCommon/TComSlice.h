@@ -1455,6 +1455,10 @@ private:
 
   UInt        m_uiMaxTLayers;           // maximum number of temporal layers
 
+#if R0279_REP_FORMAT_INBL
+  Bool        m_bV1CompatibleSPSFlag;
+#endif
+
   // Structure
   UInt        m_picWidthInLumaSamples;
   UInt        m_picHeightInLumaSamples;
@@ -1564,7 +1568,12 @@ public:
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
 #endif
-  
+
+#if R0279_REP_FORMAT_INBL //These two functions shall be used / called when the syntax element sps_ext_or_max_sub_layers_minus1 and V1CompatibleSPSFlag are implemented
+  Bool getV1CompatibleSPSFlag()        {return m_bV1CompatibleSPSFlag;}
+  Void setV1CompatibleSPSFlag(Bool x)       { m_bV1CompatibleSPSFlag = x;}
+#endif
+
   // structure
   Void setPicWidthInLumaSamples       ( UInt u ) { m_picWidthInLumaSamples = u;        }
   UInt getPicWidthInLumaSamples       ()         { return  m_picWidthInLumaSamples;    }

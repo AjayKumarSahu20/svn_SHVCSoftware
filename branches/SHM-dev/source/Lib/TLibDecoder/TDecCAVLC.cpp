@@ -2529,6 +2529,15 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
 #if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
   TComVPS* vps = NULL;
   vps = parameterSetManager->getPrefetchedVPS(sps->getVPSId());
+#if R0279_REP_FORMAT_INBL
+  if ( vps->getVpsExtensionFlag() == 1 && (rpcSlice->getLayerId() == 0 || sps->getV1CompatibleSPSFlag() == 1) )
+  {
+    assert( sps->getPicWidthInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()) )->getPicWidthVpsInLumaSamples() );
+    assert( sps->getPicHeightInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()) )->getPicHeightVpsInLumaSamples() );
+    assert( sps->getChromaFormatIdc() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()) )->getChromaFormatVpsIdc() );
+    assert( sps->getBitDepthY() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()) )->getBitDepthVpsLuma() );
+    assert( sps->getBitDepthC() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(rpcSlice->getLayerId()) )->getBitDepthVpsChroma() );
+#else
   if ( rpcSlice->getLayerId() == 0 && vps->getVpsExtensionFlag() == 1 )
   {
     assert( sps->getPicWidthInLumaSamples() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getPicWidthVpsInLumaSamples() );
@@ -2536,6 +2545,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     assert( sps->getChromaFormatIdc() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getChromaFormatVpsIdc() );
     assert( sps->getBitDepthY() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getBitDepthVpsLuma() );
     assert( sps->getBitDepthC() <= vps->getVpsRepFormat( vps->getVpsRepFormatIdx(0) )->getBitDepthVpsChroma() );
+#endif
   }
   else if ( vps->getVpsExtensionFlag() == 1 )
   {
