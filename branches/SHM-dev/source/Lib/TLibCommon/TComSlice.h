@@ -2498,6 +2498,22 @@ public:
   Bool     isRADL()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_R); }
   Bool     isRASL()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
 
+#if POC_RESET_RESTRICTIONS
+  Bool     isIDR()    { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP); }
+  Bool     isCRA()    { return m_eNalUnitType == NAL_UNIT_CODED_SLICE_CRA; }
+  Bool     isBLA()    { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP ); }
+  Bool     isSLNR()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N10
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N12
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N14 ); }
+#endif
 #if POC_RESET_FLAG
   Bool      getPocResetFlag  ()                              { return m_bPocResetFlag;       }
   Void      setPocResetFlag  (Bool b)                        { m_bPocResetFlag = b;          }
