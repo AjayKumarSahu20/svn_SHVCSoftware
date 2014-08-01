@@ -2049,7 +2049,6 @@ private:
 #if POC_RESET_IDC_ENCODER
   Int         m_associatedIrapPocBeforeReset;
 #endif
-
   NalUnitType m_iAssociatedIRAPType;
   static Int  m_prevTid0POC;
   TComReferencePictureSet *m_pcRPS;
@@ -2140,6 +2139,9 @@ private:
   Bool       m_LFCrossSliceBoundaryFlag;
 
   Bool       m_enableTMVPFlag;
+#if R0226_SLICE_TMVP
+  Bool       m_availableForTMVPRefFlag;
+#endif
 
 #if SVC_EXTENSION
   UInt        m_layerId;
@@ -2446,6 +2448,11 @@ public:
 
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
+
+#if R0226_SLICE_TMVP
+  Void      setAvailableForTMVPRefFlag     ( Bool   b )    { m_availableForTMVPRefFlag = b; }
+  Bool      getAvailableForTMVPRefFlag     ()              { return m_availableForTMVPRefFlag;}
+#endif
 
 #if SVC_EXTENSION
   Bool      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );

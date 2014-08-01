@@ -105,6 +105,9 @@ TComSlice::TComSlice()
 , m_numEntryPointOffsets          ( 0 )
 , m_temporalLayerNonReferenceFlag ( false )
 , m_enableTMVPFlag                ( true )
+#if R0226_SLICE_TMVP
+, m_availableForTMVPRefFlag       ( true )
+#endif
 #if SVC_EXTENSION
 , m_layerId                     ( 0 )
 #if REF_IDX_MFM

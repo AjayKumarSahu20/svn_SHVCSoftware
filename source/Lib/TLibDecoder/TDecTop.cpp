@@ -1312,6 +1312,29 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_parseIdc = -1;
 #endif
 
+#if R0226_SLICE_TMVP
+  if ( m_apcSlicePilot->getTLayer() == 0 && m_apcSlicePilot->getEnableTMVPFlag() == 0 )
+  {
+    //update all pics in the DPB such that they cannot be used for TMPV ref
+    TComList<TComPic*>::iterator  iterRefPic = m_cListPic.begin();  
+    while( iterRefPic != m_cListPic.end() )
+    {
+      TComPic *refPic = *iterRefPic;
+      if( ( refPic->getLayerId() == m_apcSlicePilot->getLayerId() ) && refPic->getReconMark() )
+      {
+        for(Int i = refPic->getNumAllocatedSlice()-1; i >= 0; i--)
+        {
+
+          TComSlice *refSlice = refPic->getSlice(i);
+          refSlice->setAvailableForTMVPRefFlag( false );
+        }
+      }
+      iterRefPic++;
+    }
+  }
+  m_apcSlicePilot->setAvailableForTMVPRefFlag( true );
+#endif
+
   // actual decoding starts here
     xActivateParameterSets();
 
@@ -1944,12 +1967,15 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
-
+    
     if( m_layerId > 0 && !pcSlice->isIntra() && pcSlice->getEnableTMVPFlag() )
     {
       TComPic* refPic = pcSlice->getRefPic(RefPicList(1 - pcSlice->getColFromL0Flag()), pcSlice->getColRefIdx());
 
       assert( refPic );
+#if R0226_SLICE_TMVP
+      assert ( refPic->getPicSym()->getSlice(0)->getAvailableForTMVPRefFlag() == true );
+#endif
 
       // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
       // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.

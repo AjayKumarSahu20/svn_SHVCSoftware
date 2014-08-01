@@ -2959,7 +2959,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     }
     if (rpcSlice->getSPS()->getTMVPFlagsPresent())
     {
+#if R0226_SLICE_TMVP
+      READ_FLAG( uiCode, "slice_temporal_mvp_enabled_flag" );
+#else
       READ_FLAG( uiCode, "slice_temporal_mvp_enable_flag" );
+#endif
       rpcSlice->setEnableTMVPFlag( uiCode == 1 ? true : false );
     }
     else
