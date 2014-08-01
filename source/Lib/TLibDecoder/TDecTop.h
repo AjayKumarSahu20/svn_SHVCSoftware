@@ -212,6 +212,18 @@ public:
   TDecColorMapping* m_ColorMapping;
 #endif
 
+#if POC_RESET_RESTRICTIONS
+  static Bool                    m_checkPocRestrictionsForCurrAu;
+  static Int                     m_pocResetIdcOrCurrAu;
+  static Bool                    m_baseLayerIdrFlag;
+  static Bool                    m_baseLayerPicPresentFlag;
+  static Bool                    m_baseLayerIrapFlag;
+  static Bool                    m_nonBaseIdrPresentFlag;
+  static Int                     m_nonBaseIdrType;
+  static Bool                    m_picNonIdrWithRadlPresentFlag;
+  static Bool                    m_picNonIdrNoLpPresentFlag;
+#endif
+
   TDecTop();
   virtual ~TDecTop();
   
@@ -356,7 +368,11 @@ protected:
 #if Q0048_CGS_3D_ASYMLUT
   Void initAsymLut(TComSlice *pcSlice);
 #endif
+#if POC_RESET_RESTRICTIONS
+  Void resetPocRestrictionCheckParameters();
+#endif
 };// END CLASS DEFINITION TDecTop
+
 
 
 //! \}

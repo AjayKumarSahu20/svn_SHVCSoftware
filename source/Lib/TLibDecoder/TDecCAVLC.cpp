@@ -3438,6 +3438,25 @@ if( sliceHeaderExtensionLength > 0 )
   if( rpcSlice->getPPS()->getPocResetInfoPresentFlag() )
   {
     READ_CODE( 2, uiCode,       "poc_reset_idc"); rpcSlice->setPocResetIdc(uiCode);
+#if POC_RESET_RESTRICTIONS
+    /* The value of poc_reset_idc shall not be equal to 1 or 2 for a RASL picture, a RADL picture, 
+       a sub-layer non-reference picture, or a picture that has TemporalId greater than 0, 
+       or a picture that has discardable_flag equal to 1. */
+    if( rpcSlice->getPocResetIdc() == 1 || rpcSlice->getPocResetIdc() == 2 )
+    {
+      assert( !rpcSlice->isRASL() );
+      assert( !rpcSlice->isRADL() );
+      assert( !rpcSlice->isSLNR() );
+      assert( rpcSlice->getTLayer() == 0 );
+      assert( rpcSlice->getDiscardableFlag() == 0 );
+    }
+
+    // The value of poc_reset_idc of a CRA or BLA picture shall be less than 3.
+    if( rpcSlice->getPocResetIdc() == 3)
+    {
+      assert( ! ( rpcSlice->isCRA() || rpcSlice->isBLA() ) );
+    }
+#endif
   }
   else
   {
