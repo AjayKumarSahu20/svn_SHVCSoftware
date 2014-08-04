@@ -4153,12 +4153,18 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
     );
   pc3DAsymLUT->setResQuantBit( uiResQaunBit );
 
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   pc3DAsymLUT->xInitCuboids();
 #endif
   xParse3DAsymLUTOctant( pc3DAsymLUT , 0 , 0 , 0 , 0 , 1 << pc3DAsymLUT->getCurOctantDepth() );
 #if R0164_CGS_LUT_BUGFIX
-  pc3DAsymLUT->xCuboidsExplicitCheck( true );
+#if R0164_CGS_LUT_BUGFIX_CHECK
+  printf("============= Before 'xCuboidsFilledCheck()': ================\n");
+  pc3DAsymLUT->display();
+  pc3DAsymLUT->xCuboidsFilledCheck( false );
+  printf("============= After 'xCuboidsFilledCheck()': =================\n");
+  pc3DAsymLUT->display();
+#endif
 #endif
 }
 
@@ -4218,14 +4224,37 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
         }
 #if R0164_CGS_LUT_BUGFIX
         pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) , uIdx , vIdx , nVertexIdx , deltaY , deltaU , deltaV );
+        for (Int m = 1; m < (1<<shift); m++) {
+          pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) + m , uIdx , vIdx , nVertexIdx , 0 , 0 , 0 );
+#if R0164_CGS_LUT_BUGFIX_CHECK
+          pc3DAsymLUT->xSetFilled( yIdx + (l<<shift) + m , uIdx , vIdx );
+#endif
+        }
 #else
         pc3DAsymLUT->setCuboidVertexResTree( yIdx + l , uIdx , vIdx , nVertexIdx , deltaY , deltaU , deltaV );
 #endif
       }
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
       pc3DAsymLUT->xSetExplicit( yIdx + (l<<shift) , uIdx , vIdx );
 #endif
     }
+#if R0164_CGS_LUT_BUGFIX
+    for ( Int u=0 ; u<nLength ; u++ ) {
+      for ( Int v=0 ; v<nLength ; v++ ) {
+        if ( u!=0 || v!=0 ) {
+          for ( Int y=0 ; y<nLength*nYPartNum ; y++ ) {
+            for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+            {
+              pc3DAsymLUT->setCuboidVertexResTree( yIdx + y , uIdx + u , vIdx + v , nVertexIdx , 0 , 0 , 0 );
+#if R0164_CGS_LUT_BUGFIX_CHECK
+              pc3DAsymLUT->xSetFilled( yIdx + y , uIdx + u , vIdx + v );
+#endif
+            }
+          }
+        }
+      }
+    }
+#endif
   }
 }
 

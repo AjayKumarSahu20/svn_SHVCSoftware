@@ -2873,12 +2873,13 @@ Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   }
 #endif
 
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   pc3DAsymLUT->xInitCuboids();
 #endif
   xCode3DAsymLUTOctant( pc3DAsymLUT , 0 , 0 , 0 , 0 , 1 << pc3DAsymLUT->getCurOctantDepth() );
-#if R0164_CGS_LUT_BUGFIX
-  pc3DAsymLUT->xCuboidsExplicitCheck( false );
+#if R0164_CGS_LUT_BUGFIX_CHECK
+  xCuboidsFilledCheck( false );
+  pc3DAsymLUT->display( false );
 #endif
 }
 
@@ -2941,7 +2942,7 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
 #endif
         }
       }
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
       pc3DAsymLUT->xSetExplicit( yIdx + (l<<shift) , uIdx , vIdx );
 #endif
     }
