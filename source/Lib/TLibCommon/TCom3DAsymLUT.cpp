@@ -16,8 +16,9 @@ TCom3DAsymLUT::TCom3DAsymLUT()
 {
   m_pCuboid = NULL;
   m_nResQuanBit = 0;
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   m_pCuboidExplicit = NULL;
+  m_pCuboidFilled = NULL;
 #endif
 }
 
@@ -59,16 +60,18 @@ Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
   }
   xAllocate3DArray( m_pCuboid , m_nYSize , m_nUSize , m_nVSize );
 
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   xAllocate3DArray( m_pCuboidExplicit , m_nYSize , m_nUSize , m_nVSize );
+  xAllocate3DArray( m_pCuboidFilled   , m_nYSize , m_nUSize , m_nVSize );
 #endif
 }
 
 Void TCom3DAsymLUT::destroy()
 {
   xFree3DArray( m_pCuboid );
-#if R0164_CGS_LUT_BUGFIX
-  xFree3DArray( m_pCuboidExplicit  );
+#if R0164_CGS_LUT_BUGFIX_CHECK
+  xFree3DArray( m_pCuboidExplicit );
+  xFree3DArray( m_pCuboidFilled   );
 #endif
 }
 
@@ -344,7 +347,7 @@ Void TCom3DAsymLUT::copy3DAsymLUT( TCom3DAsymLUT * pSrc )
   xSaveCuboids( pSrc->m_pCuboid );
 }
 
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
 Void TCom3DAsymLUT::xInitCuboids( )
 {
   // All vertices are initialized as non-exlicitly-encoded
@@ -355,27 +358,28 @@ Void TCom3DAsymLUT::xInitCuboids( )
       for( Int vIdx = 0 ; vIdx < m_nVSize ; vIdx++ )
       { 
         m_pCuboidExplicit[yIdx][uIdx][vIdx] = false;
+        m_pCuboidFilled[yIdx][uIdx][vIdx]   = false;
       }
     }
   }
 }
 
-Void TCom3DAsymLUT::xCuboidsExplicitCheck( Int yIdx , Int uIdx , Int vIdx )
+Void TCom3DAsymLUT::xCuboidsFilledCheck( Int yIdx , Int uIdx , Int vIdx )
 {
-  if ( m_pCuboidExplicit[yIdx][uIdx][vIdx] == false )
+  if ( m_pCuboidFilled[yIdx][uIdx][vIdx] == false )
   {
     if( yIdx > 0) 
-      assert ( m_pCuboidExplicit[yIdx-1][uIdx][vIdx] );
+      assert ( m_pCuboidFilled[yIdx-1][uIdx][vIdx] );
 
     for ( Int nVertexIdx=0 ; nVertexIdx<4 ; nVertexIdx++ )
       m_pCuboid[yIdx][uIdx][vIdx].P[nVertexIdx] = yIdx == 0 ? xGetCuboidVertexPredA( yIdx , uIdx , vIdx , nVertexIdx ): xGetCuboidVertexPredAll( yIdx , uIdx , vIdx , nVertexIdx );
 
-    m_pCuboidExplicit[yIdx][uIdx][vIdx] = true ;
+    m_pCuboidFilled[yIdx][uIdx][vIdx] = true ;
   }
 }
 
 
-Void TCom3DAsymLUT::xCuboidsExplicitCheck( Bool bDecode )
+Void TCom3DAsymLUT::xCuboidsFilledCheck( Bool bDecode )
 {
   Int ySize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
   Int uSize = 1 << getCurOctantDepth();
@@ -387,9 +391,9 @@ Void TCom3DAsymLUT::xCuboidsExplicitCheck( Bool bDecode )
       for( Int vIdx = 0 ; vIdx < vSize ; vIdx++ )
       { 
         if ( bDecode )
-          xCuboidsExplicitCheck( yIdx , uIdx , vIdx );
+          xCuboidsFilledCheck( yIdx , uIdx , vIdx );
 
-        assert( m_pCuboidExplicit[yIdx][uIdx][vIdx] );
+        assert( m_pCuboidFilled[yIdx][uIdx][vIdx] );
       }
     }
   }
@@ -411,6 +415,54 @@ Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
   }
 
   return( bIsRefLayer );
+}
+#endif
+
+#if R0164_CGS_LUT_BUGFIX_CHECK
+Void  TCom3DAsymLUT::display( Bool bFilled )
+{
+  Int ySize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
+  Int uSize = 1 << getCurOctantDepth();
+  Int vSize = 1 << getCurOctantDepth();
+  Int vIdx=0;
+
+  printf("\n");
+  printf("3DLut Explicit flag:\n");
+  for( Int uIdx = 0 ; uIdx < uSize ; uIdx++ )
+  {
+    for( Int yIdx = 0 ; yIdx < ySize ; yIdx++ )
+    {
+      printf("%d\t", m_pCuboidExplicit[yIdx][uIdx][vIdx] );
+    }
+    printf("\n");
+  }
+
+  printf("3DLut values (explicit):\n");
+  for( Int uIdx = 0 ; uIdx < uSize ; uIdx++ )
+  {
+    for( Int yIdx = 0 ; yIdx < ySize ; yIdx++ )
+    {
+      if ( m_pCuboidExplicit[yIdx][uIdx][vIdx] )  printf("%d\t", m_pCuboid[yIdx][uIdx][vIdx].P[0].Y );
+      else                                        printf("?\t", m_pCuboid[yIdx][uIdx][vIdx].P[0].Y );
+    }
+    printf("\n");
+  }
+
+  printf("3DLut values (all):\n");
+  for( Int uIdx = 0 ; uIdx < uSize ; uIdx++ )
+  {
+    for( Int yIdx = 0 ; yIdx < ySize ; yIdx++ )
+    {
+      if ( bFilled ) {
+        if ( m_pCuboidFilled[yIdx][uIdx][vIdx] )  printf("%d\t"  , m_pCuboid[yIdx][uIdx][vIdx].P[0].Y );
+        else                                      printf("unk\t" , m_pCuboid[yIdx][uIdx][vIdx].P[0].Y );
+      }
+      else
+        printf("%d\t"  , m_pCuboid[yIdx][uIdx][vIdx].P[0].Y );
+    }
+    printf("\n");
+  }
+
 }
 #endif
 

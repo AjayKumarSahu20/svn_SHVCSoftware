@@ -73,11 +73,13 @@ public:
   SYUVP xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx , SCuboid *** pCurCuboid=NULL );
   SYUVP getCuboidVertexResTree( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx );
   Void  setCuboidVertexResTree( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx , Int deltaY , Int deltaU , Int deltaV );
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   Void  xInitCuboids( );
-  Void  xCuboidsExplicitCheck( Int yIdx , Int uIdx , Int vIdx );
-  Void  xCuboidsExplicitCheck( Bool bDecode );
-  Void  xSetExplicit( Int yIdx , Int uIdx , Int vIdx )  { m_pCuboidExplicit[yIdx][uIdx][vIdx] = true ;}
+  Void  xCuboidsFilledCheck( Int yIdx , Int uIdx , Int vIdx );
+  Void  xCuboidsFilledCheck( Bool bDecode );
+  Void  display( Bool bFilled=true );
+  Void  xSetExplicit( Int yIdx , Int uIdx , Int vIdx )  { m_pCuboidExplicit[yIdx][uIdx][vIdx] = true ; xSetFilled(yIdx,uIdx,vIdx); }
+  Void  xSetFilled( Int yIdx , Int uIdx , Int vIdx )    { m_pCuboidFilled[yIdx][uIdx][vIdx] = true ; }
 #endif
 
 private:
@@ -113,8 +115,9 @@ private:
   Int   m_nAdaptCThresholdU;
   Int   m_nAdaptCThresholdV;
 #endif
-#if R0164_CGS_LUT_BUGFIX
+#if R0164_CGS_LUT_BUGFIX_CHECK
   Bool  *** m_pCuboidExplicit;
+  Bool  *** m_pCuboidFilled;
 #endif
 
 protected:
