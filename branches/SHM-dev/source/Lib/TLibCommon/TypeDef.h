@@ -51,6 +51,7 @@
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements.
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
 #define R0279_REP_FORMAT_INBL            1      ///< JCTVC-R0279, For any independent non-base layer the used representation format is the one that is signalled in the active SPS for the layer
 #define R0227_VUI_BSP_HRD_FLAG           1      ///< JCTVC-R0227, Conformance checking such that VPS VUI HRD only present if VPS timing info is signalled
