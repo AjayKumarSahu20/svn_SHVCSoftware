@@ -1334,6 +1334,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_parseIdc = -1;
 #endif
 
+
 #if R0226_SLICE_TMVP
   if ( m_apcSlicePilot->getTLayer() == 0 && m_apcSlicePilot->getEnableTMVPFlag() == 0 )
   {
@@ -1742,6 +1743,34 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         isField = (pictureTiming->m_picStruct == 1) || (pictureTiming->m_picStruct == 2);
         isTff =  (pictureTiming->m_picStruct == 1);
       }
+
+#if R0226_CONSTRAINT_TMVP_SEI
+      // Check if any new temporal motion vector prediction constraints SEI has arrived
+      SEIMessages seiTMVPConstrainsList = extractSeisByType (m_SEIs, SEI::TMVP_CONSTRAINTS);
+      if (seiTMVPConstrainsList.size() > 0)
+      {
+        assert ( pcPic->getTLayer() == 0 );  //this SEI can present only for AU with Tid equal to 0
+        SEITMVPConstrains* tmvpConstraintSEI = (SEITMVPConstrains*) *(seiTMVPConstrainsList.begin());
+        if ( tmvpConstraintSEI->prev_pics_not_used_flag == 1 )
+        {
+          //update all pics in the DPB such that they cannot be used for TMPV ref
+          TComList<TComPic*>::iterator  iterRefPic = m_cListPic.begin();  
+          while( iterRefPic != m_cListPic.end() )
+          {
+            TComPic *refPic = *iterRefPic;
+            if( ( refPic->getLayerId() == pcPic->getLayerId() ) && refPic->getReconMark() )
+            {
+              for(Int i = refPic->getNumAllocatedSlice()-1; i >= 0; i--)
+              {
+                TComSlice *refSlice = refPic->getSlice(i);
+                refSlice->setAvailableForTMVPRefFlag( false );
+              }
+            }
+            iterRefPic++;
+          }
+        }
+      }
+#endif
     }
     
     //Set Field/Frame coding mode
