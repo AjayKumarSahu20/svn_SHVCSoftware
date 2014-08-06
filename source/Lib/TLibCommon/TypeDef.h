@@ -48,7 +48,8 @@
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define REMOVE_BSP_HRD_SEI               1      ///< R0010: Remove bitstream partition HRD SEI message.
 #define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
-#define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements.
+#define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
+#define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message

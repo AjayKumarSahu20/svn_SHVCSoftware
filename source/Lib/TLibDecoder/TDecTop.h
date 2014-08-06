@@ -223,6 +223,10 @@ public:
   static Bool                    m_picNonIdrWithRadlPresentFlag;
   static Bool                    m_picNonIdrNoLpPresentFlag;
 #endif
+#if POC_RESET_VALUE_RESTRICTION
+  static Int                     m_crossLayerPocResetPeriodId;
+  static Int                     m_crossLayerPocResetIdc;
+#endif
 
   TDecTop();
   virtual ~TDecTop();

@@ -53,6 +53,10 @@ Int   TDecTop::m_nonBaseIdrType                      = -1;
 Bool  TDecTop::m_picNonIdrWithRadlPresentFlag        = false;
 Bool  TDecTop::m_picNonIdrNoLpPresentFlag            = false;
 #endif
+#if POC_RESET_VALUE_RESTRICTION
+Int   TDecTop::m_crossLayerPocResetPeriodId          = -1;
+Int   TDecTop::m_crossLayerPocResetIdc               = -1;
+#endif
 #endif
 
 //! \ingroup TLibDecoder
@@ -1149,6 +1153,33 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         setLastPocPeriodId(pocResetPeriodId);
         m_parseIdc = 0;
       }
+#if POC_RESET_VALUE_RESTRICTION
+      // Check if the POC Reset period ID matches with the Reset Period ID 
+      if( pocResetPeriodId == m_crossLayerPocResetPeriodId )
+      {
+        // If matching, and current poc_reset_idc = 3, then the values should match
+        if( m_apcSlicePilot->getPocResetIdc() == 3 )
+        {
+          assert( m_apcSlicePilot->getFullPocResetFlag() == false && m_crossLayerPocResetIdc == 1
+                  || m_apcSlicePilot->getFullPocResetFlag() == true && m_crossLayerPocResetIdc == 2 );
+        }
+      }
+      else
+      {
+        // This is the first picture of a POC resetting access unit
+        m_crossLayerPocResetPeriodId = pocResetPeriodId;
+        if( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 )
+        {
+          m_crossLayerPocResetIdc = m_apcSlicePilot->getPocResetIdc();
+        }
+        else
+        { // poc_reset_idc = 3
+          // In this case, the entire POC resetting access unit has been lost. 
+          // Need more checking to ensure poc_reset_idc = 3 works.
+          assert ( 0 );
+        }
+      }
+#endif
     }
     else
     {
