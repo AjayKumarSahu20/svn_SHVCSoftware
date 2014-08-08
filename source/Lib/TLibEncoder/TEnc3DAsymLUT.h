@@ -77,9 +77,16 @@ protected:
   TComPicYuv* m_pDsOrigPic;
   SCuboid *** m_pEncCuboid;
   SCuboid *** m_pBestEncCuboid;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int   m_nAccuFrameBit;                  // base + enhancement layer
   Int   m_nAccuFrameCGSBit;
   Int   m_nPrevFrameCGSPartNumLog2;
+#else
+  Int   m_nPrevFrameBit[3][MAX_TLAYER];                  // base + enhancement layer
+  Int   m_nPrevFrameCGSBit[3][MAX_TLAYER];
+  Int   m_nPrevFrameCGSPartNumLog2[3][MAX_TLAYER];
+  Int   m_nPrevFrameOverWritePPS[3][MAX_TLAYER];
+#endif
   Double m_dTotalFrameBit;
   Int   m_nTotalCGSBit;
   Int   m_nPPSBit;
