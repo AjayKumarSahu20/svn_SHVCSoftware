@@ -14,9 +14,16 @@ TEnc3DAsymLUT::TEnc3DAsymLUT()
   m_pColorInfoC = NULL;
   m_pEncCuboid = NULL;
   m_pBestEncCuboid = NULL;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
   m_nAccuFrameBit = 0;
   m_nAccuFrameCGSBit = 0;
   m_nPrevFrameCGSPartNumLog2 = 0;
+#else
+  memset( m_nPrevFrameBit , 0 , sizeof( m_nPrevFrameBit ) );
+  memset( m_nPrevFrameCGSBit , 0 , sizeof( m_nPrevFrameCGSBit ) );
+  memset( m_nPrevFrameCGSPartNumLog2 , 0 , sizeof( m_nPrevFrameCGSPartNumLog2 ) );
+  memset( m_nPrevFrameOverWritePPS , 0 , sizeof( m_nPrevFrameOverWritePPS ) );
+#endif
   m_dTotalFrameBit = 0;
   m_nTotalCGSBit = 0;
   m_nPPSBit = 0;
@@ -586,15 +593,41 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
 
 Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , Int & rOctantDepth , Int & rYPartNumLog2 , Bool bSignalPPS , Bool bElRapSliceTypeB )
 {
+#if !R0151_CGS_3D_ASYMLUT_IMPROVE
+  Int nSliceType = pSlice->getSliceType();
+  // update slice type as what will be done later
+  if( pSlice->getActiveNumILRRefIdx() == 0 && pSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
+  {
+    nSliceType = I_SLICE;
+  }
+  else if( !bElRapSliceTypeB )
+  {
+    if( (pSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
+      (pSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) &&
+      pSlice->getSliceType() == B_SLICE )
+    {
+      nSliceType = P_SLICE;
+    }
+  }
+
+  const Int nSliceTempLevel = pSlice->getDepth();
+#endif
   Int nPartNumLog2 = 4;
   if( pSlice->getBaseColPic( pSlice->getInterLayerPredLayerIdc( 0 ) )->getSlice( 0 )->isIntra() )
   {
     nPartNumLog2 = xGetMaxPartNumLog2();
   }
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
   if( m_nAccuFrameBit && pSlice->getPPS()->getCGSFlag() ) 
   {
     Double dBitCost = 1.0 * m_nAccuFrameCGSBit / m_nAccuFrameBit;
     nPartNumLog2 = m_nPrevFrameCGSPartNumLog2;
+#else
+  if( m_nPrevFrameBit[nSliceType][nSliceTempLevel] && pSlice->getPPS()->getCGSFlag() ) 
+  {
+    Double dBitCost = 1.0 * m_nPrevFrameCGSBit[nSliceType][nSliceTempLevel] / m_nPrevFrameBit[nSliceType][nSliceTempLevel];
+    nPartNumLog2 = m_nPrevFrameCGSPartNumLog2[nSliceType][nSliceTempLevel];
+#endif
     Double dBitCostT = 0.03;
     if( dBitCost < dBitCostT / 6.0 )
     {
@@ -605,6 +638,12 @@ Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , 
       nPartNumLog2--;
     }
   }
+#if !R0151_CGS_3D_ASYMLUT_IMPROVE
+  else
+  {
+    nPartNumLog2 -= nSliceTempLevel;
+  }
+#endif
   nPartNumLog2 = Clip3( 0 , xGetMaxPartNumLog2()  , nPartNumLog2 );
   xxMapPartNum2DepthYPart( nPartNumLog2 , rOctantDepth , rYPartNumLog2 );
 }
@@ -629,15 +668,30 @@ Void TEnc3DAsymLUT::xxMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDep
 
 Void TEnc3DAsymLUT::updatePicCGSBits( TComSlice * pcSlice , Int nPPSBit )
 {
+#if !R0151_CGS_3D_ASYMLUT_IMPROVE
+  const Int nSliceType = pcSlice->getSliceType();
+  const Int nSliceTempLevel = pcSlice->getDepth();
+#endif
   for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
   {
     UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
     m_nAccuFrameBit += pcSlice->getPic()->getFrameBit() + pcSlice->getBaseColPic(refLayerIdc)->getFrameBit();
+#else
+    m_nPrevFrameBit[nSliceType][nSliceTempLevel] = pcSlice->getPic()->getFrameBit() + pcSlice->getBaseColPic(refLayerIdc)->getFrameBit();
+#endif
     m_dTotalFrameBit += pcSlice->getPic()->getFrameBit() + pcSlice->getBaseColPic(refLayerIdc)->getFrameBit();
   }
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
   m_nAccuFrameCGSBit += nPPSBit;
   m_nTotalCGSBit += nPPSBit;
   m_nPrevFrameCGSPartNumLog2 = getCurOctantDepth() * 3 + getCurYPartNumLog2();
+#else
+  m_nPrevFrameOverWritePPS[nSliceType][nSliceTempLevel] = pcSlice->getCGSOverWritePPS();
+  m_nPrevFrameCGSBit[nSliceType][nSliceTempLevel] = nPPSBit;
+  m_nTotalCGSBit += nPPSBit;
+  m_nPrevFrameCGSPartNumLog2[nSliceType][nSliceTempLevel] = getCurOctantDepth() * 3 + getCurYPartNumLog2();
+#endif
 }
 
 #endif
