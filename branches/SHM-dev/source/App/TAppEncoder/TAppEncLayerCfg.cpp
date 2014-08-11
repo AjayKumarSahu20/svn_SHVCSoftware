@@ -227,15 +227,16 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
       exit(EXIT_FAILURE);
     }
 
+    Int tempCode;
     retval = fscanf( fic, "%d", &m_colourRemapSEIId );
-    retval = fscanf( fic, "%d", &m_colourRemapSEICancelFlag );
+    retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEICancelFlag = tempCode ? 1 : 0; 
     if( !m_colourRemapSEICancelFlag )
     {
-      retval = fscanf( fic, "%d", &m_colourRemapSEIPersistenceFlag );
-      retval = fscanf( fic, "%d", &m_colourRemapSEIVideoSignalTypePresentFlag);
+      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIPersistenceFlag = tempCode ? 1 : 0; 
+      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIVideoSignalTypePresentFlag = tempCode ? 1 : 0; 
       if( m_colourRemapSEIVideoSignalTypePresentFlag )
       {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIVideoFullRangeFlag  );
+        retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIVideoFullRangeFlag = tempCode ? 1 : 0; 
         retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
         retval = fscanf( fic, "%d", &m_colourRemapSEITransferCharacteristics );
         retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoeffs );
@@ -259,7 +260,7 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
         }
       }
 
-      retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixPresentFlag );
+      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0; 
       if( m_colourRemapSEIMatrixPresentFlag )
       {
         retval = fscanf( fic, "%d", &m_colourRemapSEILog2MatrixDenom );

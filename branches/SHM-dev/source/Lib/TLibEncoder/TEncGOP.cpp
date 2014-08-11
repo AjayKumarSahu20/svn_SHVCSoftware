@@ -508,7 +508,7 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  if(m_pcCfg->getCRISEIFile())
+  if(strlen(m_pcCfg->getCRISEIFile()))
   {
     SEIColourRemappingInfo *sei = xCreateSEIColourRemappingInfo ();
       
