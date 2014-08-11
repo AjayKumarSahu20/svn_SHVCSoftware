@@ -108,7 +108,7 @@
 #define R0179_CGS_SIZE_8x1x1             1      ///< JCTVC-R0179: allow CGS LUT size to be 8x1x1 as well 
 #define R0300_CGS_RES_COEFF_CODING       1      ///< JCTVC-R0300: improved residual coefficient coding for R0151
 #endif
-#define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediciton for color gamut scalability
+#define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediction for colour gamut scalability
 #define POC_RESET_FLAG                   0      ///< JCTVC-N0244: POC reset flag for  layer pictures.
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation - eventually will replace POC_RESET_FLAG
 #if POC_RESET_IDC
@@ -279,7 +279,6 @@ enum ScalabilityType
 #if SUB_BITSTREAM_PROPERTY_SEI
 #define MAX_SUB_STREAMS                  1024
 #endif
-#define Q0074_SEI_COLOR_MAPPING          1      ///< JCTVC-Q0074, SEI Color Mapping
 #define LAYERS_NOT_PRESENT_SEI           1      ///< JCTVC-M0043: add layers not present SEI.
 #define N0383_IL_CONSTRAINED_TILE_SETS_SEI  1
 #define Q0189_TMVP_CONSTRAINTS           1      ///< JCTVC-Q0189: indicate constraints on TMVP
@@ -287,6 +286,7 @@ enum ScalabilityType
 
 
 #endif // SVC_EXTENSION
+#define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
 
 
 //! \ingroup TLibCommon

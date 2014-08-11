@@ -91,9 +91,9 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
     break;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  case SEI::COLOR_MAPPING_INFO:
-    fprintf( g_hTrace, "=========== Color Mapping Info SEI message ===========\n");
+#if Q0074_COLOUR_REMAPPING_SEI
+  case SEI::COLOUR_REMAPPING_INFO:
+    fprintf( g_hTrace, "=========== Colour Remapping Information SEI message ===========\n");
     break;
 #endif
   case SEI::SOP_DESCRIPTION:
@@ -125,9 +125,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::BSP_INITIAL_ARRIVAL_TIME:
     fprintf( g_hTrace, "=========== Bitstream parition initial arrival time SEI message ===========\n");
     break;
+#if !REMOVE_BSP_HRD_SEI
   case SEI::BSP_HRD:
     fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
     break;
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
   case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -194,9 +196,9 @@ void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
     xWriteSEIKneeFunctionInfo(*static_cast<const SEIKneeFunctionInfo*>(&sei));
     break;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  case SEI::COLOR_MAPPING_INFO:
-    xWriteSEIColorMappingInfo(*static_cast<const SEIColorMappingInfo*>(&sei));
+#if Q0074_COLOUR_REMAPPING_SEI
+  case SEI::COLOUR_REMAPPING_INFO:
+    xWriteSEIColourRemappingInfo(*static_cast<const SEIColourRemappingInfo*>(&sei));
     break;
 #endif
   case SEI::SOP_DESCRIPTION:
@@ -635,60 +637,55 @@ Void SEIWriter::xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei)
   xWriteByteAlign();
 }
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-Void SEIWriter::xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei)
+#if Q0074_COLOUR_REMAPPING_SEI
+Void SEIWriter::xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei)
 {
-  WRITE_UVLC( sei.m_colorMapId,                    "colour_map_id" );
-  WRITE_FLAG( sei.m_colorMapCancelFlag,            "colour_map_cancel_flag" );
-  if( !sei.m_colorMapCancelFlag ) 
+  WRITE_UVLC( sei.m_colourRemapId,                             "colour_remap_id" );
+  WRITE_FLAG( sei.m_colourRemapCancelFlag,                     "colour_remap_cancel_flag" );
+  if( !sei.m_colourRemapCancelFlag ) 
   {
-    WRITE_FLAG( sei.m_colorMapPersistenceFlag,            "colour_map_persistence_flag" );
-    WRITE_FLAG( sei.m_colorMap_video_signal_type_present_flag,            "colour_map_video_signal_type_present_flag" );
-    if ( sei.m_colorMap_video_signal_type_present_flag )
+    WRITE_FLAG( sei.m_colourRemapPersistenceFlag,              "colour_remap_persistence_flag" );
+    WRITE_FLAG( sei.m_colourRemapVideoSignalTypePresentFlag,   "colour_remap_video_signal_type_present_flag" );
+    if ( sei.m_colourRemapVideoSignalTypePresentFlag )
     {
-      WRITE_FLAG( sei.m_colorMap_video_full_range_flag,       "colour_map_video_full_range_flag" );
-      WRITE_CODE( sei.m_colorMap_primaries,                 8,      "colour_map_primaries" );
-      WRITE_CODE( sei.m_colorMap_transfer_characteristics,  8,      "colour_map_transfer_characteristics" );
-      WRITE_CODE( sei.m_colorMap_matrix_coeffs,             8,      "colour_map_matrix_coeffs" );
+      WRITE_FLAG( sei.m_colourRemapVideoFullRangeFlag,         "colour_remap_video_full_range_flag" );
+      WRITE_CODE( sei.m_colourRemapPrimaries,               8, "colour_remap_primaries" );
+      WRITE_CODE( sei.m_colourRemapTransferCharacteristics, 8, "colour_remap_transfer_characteristics" );
+      WRITE_CODE( sei.m_colourRemapMatrixCoeffs,            8, "colour_remap_matrix_coeffs" );
     }
-  }
-
-  WRITE_CODE( sei.m_colour_map_coded_data_bit_depth,  5,  "colour_map_coded_data_bit_depth" );
-  WRITE_CODE( sei.m_colour_map_target_bit_depth,  5,      "colour_map_target_bit_depth" );
-  WRITE_UVLC( sei.m_colorMapModelId,                      "colour_map_model_id" );
-
-  assert( sei.m_colorMapModelId == 0 );
-  
-  for( Int i=0 ; i<3 ; i++ )
-  {
-    WRITE_CODE( sei.m_num_input_pivots[i] - 1,         8,      "num_input_pivots_minus1[i]" );
-    for( Int j=0 ; j<sei.m_num_input_pivots[i] ; j++ )
+    WRITE_CODE( sei.m_colourRemapCodedDataBitDepth,         8, "colour_remap_coded_data_bit_depth" );
+    WRITE_CODE( sei.m_colourRemapTargetBitDepth,            8, "colour_remap_target_bit_depth" );
+    for( Int c=0 ; c<3 ; c++ )
     {
-      WRITE_CODE( sei.m_coded_input_pivot_value[i][j],  (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, "coded_input_pivot_value[i][j]" );
-      WRITE_CODE( sei.m_target_input_pivot_value[i][j], (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, "target_input_pivot_value[i][j]" );
+      WRITE_CODE( sei.m_preLutNumValMinus1[c],              8, "pre_lut_num_val_minus1[c]" );
+      if( sei.m_preLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=sei.m_preLutNumValMinus1[c] ; i++ )
+        {
+          WRITE_CODE( sei.m_preLutCodedValue[c][i],  (( sei.m_colourRemapCodedDataBitDepth + 7 ) >> 3 ) << 3, "pre_lut_coded_value[c][i]" );
+          WRITE_CODE( sei.m_preLutTargetValue[c][i], (( sei.m_colourRemapTargetBitDepth    + 7 ) >> 3 ) << 3, "pre_lut_target_value[c][i]" );
+        }
     }
-  }
-
-  WRITE_FLAG( sei.m_matrix_flag,            "matrix_flag" );
-  if( sei.m_matrix_flag )
-  {
-    WRITE_CODE( sei.m_log2_matrix_denom, 4, "log2_matrix_denom" );
-    for( Int i=0 ; i<3 ; i++ )
+    WRITE_FLAG( sei.m_colourRemapMatrixPresentFlag,            "colour_remap_matrix_present_flag" );
+    if( sei.m_colourRemapMatrixPresentFlag )
     {
-      for( Int j=0 ; j<3 ; j++ )
-      {
-        WRITE_SVLC( sei.m_matrix_coef[i][j],  "matrix_coef[i][j]" );
-      }
+      WRITE_CODE( sei.m_log2MatrixDenom,                    4, "log2_matrix_denom" );
+      for( Int c=0 ; c<3 ; c++ )
+        for( Int i=0 ; i<3 ; i++ )
+          WRITE_SVLC( sei.m_colourRemapCoeffs[c][i],           "colour_remap_coeffs[c][i]" );
     }
-  }
 
-  for( Int i=0 ; i<3 ; i++ )
-  {
-    WRITE_CODE( sei.m_num_output_pivots[i] - 1,         8,      "num_output_pivots_minus1[i]" );
-    for( Int j=0 ; j<sei.m_num_output_pivots[i] ; j++ )
+    for( Int c=0 ; c<3 ; c++ )
     {
-      WRITE_CODE( sei.m_coded_output_pivot_value[i][j],  (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, "coded_output_pivot_value[i][j]" );
-      WRITE_CODE( sei.m_target_output_pivot_value[i][j], (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, "target_output_pivot_value[i][j]" );
+      WRITE_CODE( sei.m_postLutNumValMinus1[c],             8, "m_postLutNumValMinus1[c]" );
+      if( sei.m_postLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=sei.m_postLutNumValMinus1[c] ; i++ )
+        {
+          if( sei.m_preLutNumValMinus1[c]>0 || sei.m_colourRemapMatrixPresentFlag )
+            WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );
+          else 
+            WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapCodedDataBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );
+          WRITE_CODE( sei.m_postLutTargetValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_target_value[c][i]" );
+        }
     }
   }
 

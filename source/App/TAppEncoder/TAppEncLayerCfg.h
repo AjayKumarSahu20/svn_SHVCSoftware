@@ -54,9 +54,6 @@ protected:
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  string    m_cSeiColorMappingFile;
-#endif
 
 #if LAYER_CTB
   // coding unit (CU) definition
@@ -126,6 +123,28 @@ protected:
 #endif
 #if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
+#endif
+#if Q0074_COLOUR_REMAPPING_SEI
+  string    m_colourRemapSEIFile;                           ///< Colour Remapping Information SEI message parameters file
+  Int       m_colourRemapSEIId;
+  Bool      m_colourRemapSEICancelFlag;
+  Bool      m_colourRemapSEIPersistenceFlag;
+  Bool      m_colourRemapSEIVideoSignalTypePresentFlag;
+  Bool      m_colourRemapSEIVideoFullRangeFlag;
+  Int       m_colourRemapSEIPrimaries;
+  Int       m_colourRemapSEITransferCharacteristics;
+  Int       m_colourRemapSEIMatrixCoeffs;
+  Int       m_colourRemapSEICodedDataBitDepth;
+  Int       m_colourRemapSEITargetBitDepth;
+  Int       m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPreLutCodedValue[3];
+  Int*      m_colourRemapSEIPreLutTargetValue[3];
+  Bool      m_colourRemapSEIMatrixPresentFlag;
+  Int       m_colourRemapSEILog2MatrixDenom;
+  Int       m_colourRemapSEICoeffs[3][3];
+  Int       m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPostLutCodedValue[3];
+  Int*      m_colourRemapSEIPostLutTargetValue[3];
 #endif
 public:
   TAppEncLayerCfg();

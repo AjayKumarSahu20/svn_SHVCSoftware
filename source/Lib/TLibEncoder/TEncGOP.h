@@ -224,8 +224,8 @@ protected:
 #if P0050_KNEE_FUNCTION_SEI
   SEIKneeFunctionInfo*    xCreateSEIKneeFunctionInfo();
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  SEIColorMappingInfo*    xCreateSEIColorMappingInfo( Char* file );
+#if Q0074_COLOUR_REMAPPING_SEI
+  SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
 #endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);

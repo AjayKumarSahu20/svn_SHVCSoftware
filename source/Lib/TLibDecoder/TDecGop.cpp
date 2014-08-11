@@ -53,6 +53,10 @@ extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode
 //! \ingroup TLibDecoder
 //! \{
 static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
+#if Q0074_COLOUR_REMAPPING_SEI
+static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* colourRemappingInfoSEI, UInt layerId=0 );
+static std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Remapping Information SEI
+#endif
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
@@ -251,6 +255,22 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
     }
     calcAndPrintHashStatus(*rpcPic->getPicYuvRec(), hash);
   }
+#if Q0074_COLOUR_REMAPPING_SEI
+  if (m_colourRemapSEIEnabled)
+  {
+    SEIMessages colourRemappingInfo = getSeisByType(rpcPic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
+    const SEIColourRemappingInfo *seiColourRemappingInfo = ( colourRemappingInfo.size() > 0 ) ? (SEIColourRemappingInfo*) *(colourRemappingInfo.begin()) : NULL;
+    if (colourRemappingInfo.size() > 1)
+    {
+      printf ("Warning: Got multiple Colour Remapping Information SEI messages. Using first.");
+    }
+    applyColourRemapping(*rpcPic->getPicYuvRec(), seiColourRemappingInfo
+#if SVC_EXTENSION
+     , rpcPic->getLayerId()
+#endif
+     );
+  }
+#endif
 
 #if SETTING_PIC_OUTPUT_MARK
   rpcPic->setOutputMark(rpcPic->getSlice(0)->getPicOutputFlag() ? true : false);
@@ -338,4 +358,169 @@ static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
     printf("[rx%s:%s] ", hashType, digestToString(pictureHashSEI->digest, numChar));
   }
 }
+
+#if Q0074_COLOUR_REMAPPING_SEI
+Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI )
+{
+  for ( Int c=0 ; c<3 ; c++ )
+  {  
+    Int bitDepth = c ? bitDepthC : bitDepthY ;
+    preLut[c].resize(1 << bitDepth);
+    postLut[c].resize(1 << pCriSEI->m_colourRemapTargetBitDepth);
+    
+    Int bitDepthDiff = pCriSEI->m_colourRemapTargetBitDepth - bitDepth;
+    Int iShift1 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from bitdepth to TargetBitdepth (manage only case colourRemapTargetBitDepth>= bitdepth)
+    if( bitDepthDiff<0 )
+      printf ("Warning: CRI SEI - colourRemapTargetBitDepth (%d) <bitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapTargetBitDepth, bitDepth);
+    bitDepthDiff = pCriSEI->m_colourRemapTargetBitDepth - pCriSEI->m_colourRemapCodedDataBitDepth;
+    Int iShift2 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from codedDataBitdepth to TargetBitdepth (manage only case colourRemapTargetBitDepth>= colourRemapCodedDataBitDepth)
+    if( bitDepthDiff<0 )
+      printf ("Warning: CRI SEI - colourRemapTargetBitDepth (%d) <colourRemapCodedDataBitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapTargetBitDepth, pCriSEI->m_colourRemapCodedDataBitDepth);
+
+    //Fill preLut
+    for ( Int k=0 ; k<(1<<bitDepth) ; k++ )
+    {
+      Int iSample = k << iShift1 ;
+      for ( Int iPivot=0 ; iPivot<=pCriSEI->m_preLutNumValMinus1[c] ; iPivot++ )
+      {
+        Int iCodedPrev  = pCriSEI->m_preLutCodedValue[c][iPivot]    << iShift2; //Coded in CodedDataBitdepth
+        Int iCodedNext  = pCriSEI->m_preLutCodedValue[c][iPivot+1]  << iShift2; //Coded in CodedDataBitdepth
+        Int iTargetPrev = pCriSEI->m_preLutTargetValue[c][iPivot];              //Coded in TargetBitdepth
+        Int iTargetNext = pCriSEI->m_preLutTargetValue[c][iPivot+1];            //Coded in TargetBitdepth
+        if ( iCodedPrev <= iSample && iSample <= iCodedNext )
+        {
+          Float fInterpol = (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) * 1.f / (Float)(iCodedNext - iCodedPrev);
+          preLut[c][k]  = (Int)( 0.5f + fInterpol );
+          iPivot = pCriSEI->m_preLutNumValMinus1[c] + 1;
+        }
+      }
+    }
+    
+    //Fill postLut
+    for ( Int k=0 ; k<(1<<pCriSEI->m_colourRemapTargetBitDepth) ; k++ )
+    {
+      Int iSample = k;
+      for ( Int iPivot=0 ; iPivot<=pCriSEI->m_postLutNumValMinus1[c] ; iPivot++ )
+      {
+        Int iCodedPrev  = pCriSEI->m_postLutCodedValue[c][iPivot];    //Coded in TargetBitdepth
+        Int iCodedNext  = pCriSEI->m_postLutCodedValue[c][iPivot+1];  //Coded in TargetBitdepth
+        Int iTargetPrev = pCriSEI->m_postLutTargetValue[c][iPivot];   //Coded in TargetBitdepth
+        Int iTargetNext = pCriSEI->m_postLutTargetValue[c][iPivot+1]; //Coded in TargetBitdepth
+        if ( iCodedPrev <= iSample && iSample <= iCodedNext )
+        {
+          Float fInterpol =  (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) * 1.f / (Float)(iCodedNext - iCodedPrev) ;
+          postLut[c][k]  = (Int)( 0.5f + fInterpol );
+          iPivot = pCriSEI->m_postLutNumValMinus1[c] + 1;
+        }
+      }
+    }
+  }
+}
+
+static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId )
+{  
+  if( !storeCriSEI.size() )
+#if SVC_EXTENSION
+    storeCriSEI.resize(MAX_LAYERS);
+#else
+    storeCriSEI.resize(1);
+#endif
+
+  if ( pCriSEI ) //if a CRI SEI has just been retrieved, keep it in memory (persistence management)
+    storeCriSEI[layerId] = *pCriSEI;
+
+  if( !storeCriSEI[layerId].m_colourRemapCancelFlag )
+  {
+    Int iHeight  = pic.getHeight();
+    Int iWidth   = pic.getWidth();
+    Int iStride  = pic.getStride();
+    Int iCStride = pic.getCStride();
+
+    Pel *YUVIn[3], *YUVOut[3];
+    YUVIn[0] = pic.getLumaAddr();
+    YUVIn[1] = pic.getCbAddr();
+    YUVIn[2] = pic.getCrAddr();
+    
+    TComPicYuv picColourRemapped;
+#if SVC_EXTENSION
+#if AUXILIARY_PICTURES
+    picColourRemapped.create( pic.getWidth(), pic.getHeight(), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+#else
+    picColourRemapped.create( pic.getWidth(), pic.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+#endif
+#else
+    picColourRemapped.create( pic.getWidth(), pic.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+#endif 
+    YUVOut[0] = picColourRemapped.getLumaAddr();
+    YUVOut[1] = picColourRemapped.getCbAddr();
+    YUVOut[2] = picColourRemapped.getCrAddr();
+
+#if SVC_EXTENSION
+    Int bitDepthY = g_bitDepthYLayer[layerId];
+    Int bitDepthC = g_bitDepthCLayer[layerId];
+
+    assert( g_bitDepthY == bitDepthY );
+    assert( g_bitDepthC == bitDepthC );
+#else
+    Int bitDepthY = g_bitDepthY;
+    Int bitDepthC = g_bitDepthC;
+#endif
+
+    std::vector<Int> preLut[3];
+    std::vector<Int> postLut[3];
+    xInitColourRemappingLut( bitDepthY, bitDepthC, preLut, postLut, &storeCriSEI[layerId] );
+    
+    Int roundingOffset = (storeCriSEI[layerId].m_log2MatrixDenom==0) ? 0 : (1 << (storeCriSEI[layerId].m_log2MatrixDenom - 1));
+
+    for( Int y = 0; y < iHeight ; y++ )
+    {
+      for( Int x = 0; x < iWidth ; x++ )
+      {
+        Int YUVPre[3], YUVMat[3];
+        YUVPre[0] = preLut[0][ YUVIn[0][x]   ];
+        YUVPre[1] = preLut[1][ YUVIn[1][x>>1] ];
+        YUVPre[2] = preLut[2][ YUVIn[2][x>>1] ];
+
+        YUVMat[0] = ( storeCriSEI[layerId].m_colourRemapCoeffs[0][0]*YUVPre[0]
+                    + storeCriSEI[layerId].m_colourRemapCoeffs[0][1]*YUVPre[1] 
+                    + storeCriSEI[layerId].m_colourRemapCoeffs[0][2]*YUVPre[2] 
+                    + roundingOffset ) >> ( storeCriSEI[layerId].m_log2MatrixDenom );
+        YUVMat[0] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapTargetBitDepth)-1, YUVMat[0] );
+        YUVOut[0][x] = postLut[0][ YUVMat[0] ];
+
+        if( (y&1) && (x&1) )
+        {
+          for(Int c=1 ; c<3 ; c++)
+          {
+            YUVMat[c] = ( storeCriSEI[layerId].m_colourRemapCoeffs[c][0]*YUVPre[0] 
+                        + storeCriSEI[layerId].m_colourRemapCoeffs[c][1]*YUVPre[1] 
+                        + storeCriSEI[layerId].m_colourRemapCoeffs[c][2]*YUVPre[2] 
+                        + roundingOffset ) >> ( storeCriSEI[layerId].m_log2MatrixDenom );
+            YUVMat[c] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapTargetBitDepth)-1, YUVMat[c] );
+            YUVOut[c][x>>1] = postLut[c][ YUVMat[c] ];   
+          }
+        }
+      }
+      YUVIn[0]  += iStride;
+      YUVOut[0] += iStride;
+      if( y&1 )
+      {
+        YUVIn[1]  += iCStride;
+        YUVIn[2]  += iCStride;
+        YUVOut[1] += iCStride;
+        YUVOut[2] += iCStride;
+      }
+    }
+
+    //Write remapped picture in decoding order
+    Char  cTemp[255];
+    sprintf(cTemp, "seiColourRemappedPic_L%d_%dx%d_%dbits.yuv", layerId, iWidth, iHeight, storeCriSEI[layerId].m_colourRemapTargetBitDepth );
+    picColourRemapped.dump( cTemp, true, storeCriSEI[layerId].m_colourRemapTargetBitDepth );
+
+    picColourRemapped.destroy();
+
+    storeCriSEI[layerId].m_colourRemapCancelFlag = !storeCriSEI[layerId].m_colourRemapPersistenceFlag; //Handling persistence
+  }
+}
+#endif
 //! \}

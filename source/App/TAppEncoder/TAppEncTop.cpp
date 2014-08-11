@@ -533,8 +533,27 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setKneeSEIInputKneePoint                     ( m_kneeSEIInputKneePoint );
     m_acTEncTop[layer].setKneeSEIOutputKneePoint                    ( m_kneeSEIOutputKneePoint );
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-    m_acTEncTop[layer].setColorMappingInfoSEIFile                   ( m_acLayerCfg[layer].m_cSeiColorMappingFile.empty() ? NULL : const_cast<Char *>(m_acLayerCfg[layer].m_cSeiColorMappingFile.c_str()) );
+#if Q0074_COLOUR_REMAPPING_SEI
+    m_acTEncTop[layer].setCRISEIFile                                ( const_cast<Char*>(m_acLayerCfg[layer].m_colourRemapSEIFile.c_str()) );
+    m_acTEncTop[layer].setCRISEIId                                  ( m_acLayerCfg[layer].m_colourRemapSEIId );
+    m_acTEncTop[layer].setCRISEICancelFlag                          ( m_acLayerCfg[layer].m_colourRemapSEICancelFlag );
+    m_acTEncTop[layer].setCRISEIPersistenceFlag                     ( m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag );
+    m_acTEncTop[layer].setCRISEIVideoSignalTypePresentFlag          ( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag );
+    m_acTEncTop[layer].setCRISEIVideoFullRangeFlag                  ( m_acLayerCfg[layer].m_colourRemapSEIVideoFullRangeFlag );
+    m_acTEncTop[layer].setCRISEIPrimaries                           ( m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
+    m_acTEncTop[layer].setCRISEITransferCharacteristics             ( m_acLayerCfg[layer].m_colourRemapSEITransferCharacteristics );
+    m_acTEncTop[layer].setCRISEIMatrixCoeffs                        ( m_acLayerCfg[layer].m_colourRemapSEIMatrixCoeffs );
+    m_acTEncTop[layer].setCRISEICodedDataBitDepth                   ( m_acLayerCfg[layer].m_colourRemapSEICodedDataBitDepth );
+    m_acTEncTop[layer].setCRISEITargetBitDepth                      ( m_acLayerCfg[layer].m_colourRemapSEITargetBitDepth );
+    m_acTEncTop[layer].setCRISEIPreLutNumValMinus1                  ( m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1 );
+    m_acTEncTop[layer].setCRISEIPreLutCodedValue                    ( m_acLayerCfg[layer].m_colourRemapSEIPreLutCodedValue );
+    m_acTEncTop[layer].setCRISEIPreLutTargetValue                   ( m_acLayerCfg[layer].m_colourRemapSEIPreLutTargetValue );
+    m_acTEncTop[layer].setCRISEIMatrixPresentFlag                   ( m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag );
+    m_acTEncTop[layer].setCRISEILog2MatrixDenom                     ( m_acLayerCfg[layer].m_colourRemapSEILog2MatrixDenom );
+    m_acTEncTop[layer].setCRISEICoeffs                              ( m_acLayerCfg[layer].m_colourRemapSEICoeffs );
+    m_acTEncTop[layer].setCRISEIPostLutNumValMinus1                 ( m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1 );
+    m_acTEncTop[layer].setCRISEIPostLutCodedValue                   ( m_acLayerCfg[layer]. m_colourRemapSEIPostLutCodedValue );
+    m_acTEncTop[layer].setCRISEIPostLutTargetValue                  ( m_acLayerCfg[layer].m_colourRemapSEIPostLutTargetValue );
 #endif
     m_acTEncTop[layer].setFramePackingArrangementSEIEnabled( m_framePackingSEIEnabled );
     m_acTEncTop[layer].setFramePackingArrangementSEIType( m_framePackingSEIType );
@@ -899,8 +918,27 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setKneeSEIInputKneePoint       ( m_kneeSEIInputKneePoint );
   m_cTEncTop.setKneeSEIOutputKneePoint      ( m_kneeSEIOutputKneePoint );
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  m_cTEncTop.setColorMappingInfoSEIFile                   ( m_pchSEIColorMappingFile );
+#if Q0074_COLOUR_REMAPPING_SEI
+  m_cTEncTop.setCRISEIFile                       ( const_cast<Char*>(m_colourRemapSEIFile.c_str()) );
+  m_cTEncTop.setCRISEIId                         ( m_colourRemapSEIId );
+  m_cTEncTop.setCRISEICancelFlag                 ( m_colourRemapSEICancelFlag );
+  m_cTEncTop.setCRISEIPersistenceFlag            ( m_colourRemapSEIPersistenceFlag );
+  m_cTEncTop.setCRISEIVideoSignalTypePresentFlag ( m_colourRemapSEIVideoSignalTypePresentFlag );
+  m_cTEncTop.setCRISEIVideoFullRangeFlag         ( m_colourRemapSEIVideoFullRangeFlag );
+  m_cTEncTop.setCRISEIPrimaries                  ( m_colourRemapSEIPrimaries );
+  m_cTEncTop.setCRISEITransferCharacteristics    ( m_colourRemapSEITransferCharacteristics );
+  m_cTEncTop.setCRISEIMatrixCoeffs               ( m_colourRemapSEIMatrixCoeffs );
+  m_cTEncTop.setCRISEICodedDataBitDepth          ( m_colourRemapSEICodedDataBitDepth );
+  m_cTEncTop.setCRISEITargetBitDepth             ( m_colourRemapSEITargetBitDepth );
+  m_cTEncTop.setCRISEIPreLutNumValMinus1         ( m_colourRemapSEIPreLutNumValMinus1 );
+  m_cTEncTop.setCRISEIPreLutCodedValue           ( m_colourRemapSEIPreLutCodedValue );
+  m_cTEncTop.setCRISEIPreLutTargetValue          ( m_colourRemapSEIPreLutTargetValue );
+  m_cTEncTop.setCRISEIMatrixPresentFlag          ( m_colourRemapSEIMatrixPresentFlag );
+  m_cTEncTop.setCRISEILog2MatrixDenom            ( m_colourRemapSEILog2MatrixDenom );
+  m_cTEncTop.setCRISEICoeffs                     ( m_colourRemapSEICoeffs );
+  m_cTEncTop.setCRISEIPostLutNumValMinus1        ( m_colourRemapSEIPostLutNumValMinus1 );
+  m_cTEncTop.setCRISEIPostLutCodedValue          ( m_colourRemapSEIPostLutCodedValue );
+  m_cTEncTop.setCRISEIPostLutTargetValue         ( m_colourRemapSEIPostLutTargetValue );
 #endif
   m_cTEncTop.setFramePackingArrangementSEIEnabled( m_framePackingSEIEnabled );
   m_cTEncTop.setFramePackingArrangementSEIType( m_framePackingSEIType );
