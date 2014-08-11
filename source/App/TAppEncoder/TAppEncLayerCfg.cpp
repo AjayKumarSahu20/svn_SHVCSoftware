@@ -516,7 +516,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  if ( m_colourRemapSEIFile.c_str() && !m_colourRemapSEICancelFlag )
+  if ( m_colourRemapSEIFile.length() && !m_colourRemapSEICancelFlag )
   {
     xConfirmPara( m_colourRemapSEICodedDataBitDepth < 8 || m_colourRemapSEICodedDataBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
     xConfirmPara( m_colourRemapSEITargetBitDepth < 8 || (m_colourRemapSEITargetBitDepth > 16 && m_colourRemapSEITargetBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
