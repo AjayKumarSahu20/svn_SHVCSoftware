@@ -1005,6 +1005,26 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
+#if MOVE_ADDN_LS_SIGNALLING
+#if Q0078_ADD_LAYER_SETS
+  if (vps->getNumIndependentLayers() > 1)
+  {
+    WRITE_UVLC( vps->getNumAddLayerSets(), "num_add_layer_sets" );
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        int len = 1;
+        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        {
+          len++;
+        }
+        WRITE_CODE(vps->getHighestLayerIdxPlus1(i, j), len, "highest_layer_idx_plus1[i][j]");
+      }
+    }
+  }
+#endif
+#endif
 #if VPS_TSLAYERS
     WRITE_FLAG( vps->getMaxTSLayersPresentFlag(), "vps_sub_layers_max_minus1_present_flag");
     if (vps->getMaxTSLayersPresentFlag())
@@ -1055,6 +1075,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
+
+#if !MOVE_ADDN_LS_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
   if (vps->getNumIndependentLayers() > 1)
   {
@@ -1072,6 +1094,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
+#endif
 #endif
 
 #if !VPS_EXTN_UEV_CODING
