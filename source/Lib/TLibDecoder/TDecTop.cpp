@@ -1142,8 +1142,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         // If matching, and current poc_reset_idc = 3, then the values should match
         if( m_apcSlicePilot->getPocResetIdc() == 3 )
         {
-          assert( m_apcSlicePilot->getFullPocResetFlag() == false && m_crossLayerPocResetIdc == 1
-                  || m_apcSlicePilot->getFullPocResetFlag() == true && m_crossLayerPocResetIdc == 2 );
+          assert( ( m_apcSlicePilot->getFullPocResetFlag() == false && m_crossLayerPocResetIdc == 1 ) ||
+                  ( m_apcSlicePilot->getFullPocResetFlag() == true  && m_crossLayerPocResetIdc == 2 ) );
         }
       }
       else
@@ -1732,10 +1732,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       with a particular value of nal_unit_type in an access unit and there is at least one other coded picture 
       that is present in the bitstream in the same access unit with a different value of nal_unit_type, 
       the value of poc_reset_idc shall be equal to 1 or 2 for all pictures in the access unit. */
-      if( m_nonBaseIdrPresentFlag && 
-            ( m_nonBaseIdrType == 1 && m_picNonIdrWithRadlPresentFlag  
-             || m_nonBaseIdrType == 0 && m_picNonIdrNoLpPresentFlag )
-        )
+      if( m_nonBaseIdrPresentFlag && (
+            ( m_nonBaseIdrType == 1 && m_picNonIdrWithRadlPresentFlag ) ||
+            ( m_nonBaseIdrType == 0 && m_picNonIdrNoLpPresentFlag )
+        ))
       {
         assert( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 );
       }
