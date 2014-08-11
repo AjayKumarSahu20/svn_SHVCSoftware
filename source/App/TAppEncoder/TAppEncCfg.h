@@ -79,6 +79,13 @@ protected:
   Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
 #endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  std::vector<Int>                m_outputLayerSetIdx;
+  Int       m_defaultTargetOutputLayerIdc;
+  Int       m_numOutputLayerSets;
+  std::vector<Int>                m_numLayersInOutputLayerSet;
+  std::vector< std::vector<Int> > m_listOfOutputLayers;
+#endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -487,7 +494,13 @@ public:
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
   Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
+#if OUTPUT_LAYER_SETS_CONFIG
+  Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
+  Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> &  returnVector);
+  Void cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString);
+#else
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
+#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
 #endif

@@ -50,6 +50,7 @@
 #define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
+#define OUTPUT_LAYER_SETS_CONFIG         1
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
@@ -322,6 +323,7 @@ enum ScalabilityType
 #if SVC_EXTENSION
 #define MAX_VPS_OP_LAYER_SETS_PLUS1               (MAX_LAYERS+1)
 #define MAX_VPS_LAYER_SETS_PLUS1                  1024
+#define MAX_VPS_OUTPUT_LAYER_SETS_PLUS1           1024
 #define MAX_VPS_LAYER_ID_PLUS1                    MAX_LAYERS
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                1

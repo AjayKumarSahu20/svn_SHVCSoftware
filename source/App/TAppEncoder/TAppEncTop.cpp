@@ -1141,9 +1141,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
 #if Q0078_ADD_LAYER_SETS
+#if OUTPUT_LAYER_SETS_CONFIG
+  if (m_numLayerSets > 1)
+  {
+    vps->setNumLayerSets(m_numLayerSets);
+#else
   if (m_numLayerSets > 0)
   {
     vps->setNumLayerSets(m_numLayerSets+1);
+#endif
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
       for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
@@ -1153,10 +1159,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
+#if OUTPUT_LAYER_SETS_CONFIG
+      for (Int i = 0; i < m_numLayerInIdList[setId]; i++)
+      {
+        Int layerId = m_layerSetLayerIdList[setId][i];
+#else
       for (Int i = 0; i < m_numLayerInIdList[setId-1]; i++)
       {
         Int layerId = m_layerSetLayerIdList[setId-1][i];
-
+#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
         g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
@@ -1402,9 +1413,36 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setLayerIdIncludedFlagsForAddLayerSets();
 #endif
 #endif
+#if OUTPUT_LAYER_SETS_CONFIG
+
+  vps->setDefaultTargetOutputLayerIdc( m_defaultTargetOutputLayerIdc ); // As per configuration file
+
+  if( m_numOutputLayerSets == -1 )  // # of output layer sets not specified in the configuration file
+  {
+    vps->setNumOutputLayerSets(vps->getNumLayerSets());
+
+    for(i = 1; i < vps->getNumLayerSets(); i++)
+    {
+        vps->setOutputLayerSetIdx(i, i);
+    }
+  }
+  else
+  {
+    vps->setNumOutputLayerSets( m_numOutputLayerSets );
+    for( Int olsCtr = 0; olsCtr < vps->getNumLayerSets(); olsCtr ++ ) // Default output layer sets
+    {
+      vps->setOutputLayerSetIdx(i, i);
+    }
+    for( Int olsCtr = vps->getNumLayerSets(); olsCtr < vps->getNumOutputLayerSets(); olsCtr ++ )  // Non-default output layer sets
+    {
+      vps->setOutputLayerSetIdx(i, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
+    }
+  }
+#endif
   // Target output layer
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
+#if !OUTPUT_LAYER_SETS_CONFIG // Taken care by configuration file parameter
 #if P0295_DEFAULT_OUT_LAYER_IDC
   vps->setDefaultTargetOutputLayerIdc(1);
 #else
@@ -1414,10 +1452,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setDefaultOneTargetOutputLayerFlag(true);
 #endif
 #endif
+#endif
   for(i = 1; i < vps->getNumLayerSets(); i++)
   {
     vps->setProfileLevelTierIdx(i, i);
+#if !OUTPUT_LAYER_SETS_CONFIG
     vps->setOutputLayerSetIdx(i, i);
+#endif
   }  
 #endif
  #if VPS_DPB_SIZE_TABLE
@@ -1432,7 +1473,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 
   // derive OutputLayerFlag[i][j] 
+#if !OUTPUT_LAYER_SETS_CONFIG
   if( vps->getDefaultTargetOutputLayerIdc() == 1 )
+#endif
   {
     // default_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
     // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
@@ -1445,17 +1488,41 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if !Q0078_ADD_LAYER_SETS  // the following condition is incorrect and is not needed anyway
         if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
 #endif
-        {        
+        {
+#if OUTPUT_LAYER_SETS_CONFIG
+          switch(vps->getDefaultTargetOutputLayerIdc())
+          {
+            case 0: vps->setOutputLayerFlag( lsIdx, layer, 1 );
+              break;
+            case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
+              break;
+            case 2:
+            case 3: vps->setOutputLayerFlag( lsIdx, layer, std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), layer) != m_listOfOutputLayers[lsIdx].end() );
+              break;
+          }
+#else
           vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
+#endif
         }
       }
     }
+#if OUTPUT_LAYER_SETS_CONFIG
+    for( Int olsIdx = vps->getNumLayerSets(); olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
+    {
+      for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
+      {
+        vps->setOutputLayerFlag( olsIdx, layer, std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), layer) != m_listOfOutputLayers[olsIdx].end());
+      }
+    }
+#endif
   }
+#if !OUTPUT_LAYER_SETS_CONFIG
   else
   {
     // cases when default_output_layer_idc is not equal to 1
     assert(!"default_output_layer_idc not equal to 1 is not yet supported");
   }
+#endif
 
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)

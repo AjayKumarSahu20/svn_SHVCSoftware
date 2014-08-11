@@ -71,6 +71,10 @@ TAppEncCfg::TAppEncCfg()
 , m_maxTidRefPresentFlag(1)
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
+#if OUTPUT_LAYER_SETS_CONFIG
+, m_defaultTargetOutputLayerIdc (-1)
+, m_numOutputLayerSets          (-1)
+#endif
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
@@ -579,6 +583,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
   }
 #endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  string* cfg_numLayersInOutputLayerSet = new string;
+  string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+  string* cfg_outputLayerSetIdx      = new string;
+#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
@@ -635,12 +644,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
 #if Q0078_ADD_LAYER_SETS
+#if OUTPUT_LAYER_SETS_CONFIG
+  ("NumLayerSets",            m_numLayerSets, 1, "Number of layer sets")
+#else
   ("NumLayerSets",            m_numLayerSets, 0, "Number of layer sets")
+#endif
   ("NumLayerInIdList%d",      cfg_numLayerInIdList, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of layers in the set")
   ("LayerSetLayerIdList%d",   cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set")
   ("NumAddLayerSets",         m_numAddLayerSets, 0, "Number of additional layer sets")
   ("NumHighestLayerIdx%d",    cfg_numHighestLayerIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of highest layer idx")
   ("HighestLayerIdx%d",       cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Highest layer idx for an additional layer set")
+#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  ("DefaultTargetOutputLayerIdc",    m_defaultTargetOutputLayerIdc, 1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
+  ("NumOutputLayerSets",            m_numOutputLayerSets, 1, "Number of output layer sets excluding the 0-th output layer set")
+  ("NumLayersInOutputLayerSet",   cfg_numLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
+  ("ListOfOutputLayers%d",          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
+  ("OutputLayerSetIdx",            cfg_outputLayerSetIdx, string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
 #if AUXILIARY_PICTURES
   ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
@@ -1700,6 +1720,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
 #if Q0078_ADD_LAYER_SETS
+#if OUTPUT_LAYER_SETS_CONFIG
+  for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
+  {
+    // Simplifying the code in the #else section, and allowing 0-th layer set t
+    assert( scanStringToArray( cfg_layerSetLayerIdList[layerSet], m_numLayerInIdList[layerSet], "NumLayerInIdList", m_layerSetLayerIdList[layerSet] ) );
+#else
   for (Int layerSet = 0; layerSet < m_numLayerSets; layerSet++)
   {
     if (m_numLayerInIdList[layerSet] > 0)
@@ -1725,9 +1751,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         layerSetLayerIdListDup = NULL;
       }
     }
+#endif
   }
   for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
   {
+#if OUTPUT_LAYER_SETS_CONFIG
+    // Simplifying the code in the #else section
+    assert( scanStringToArray( cfg_layerSetLayerIdList[addLayerSet], m_numLayerInIdList[addLayerSet], "NumLayerInIdList",  m_highestLayerIdx[addLayerSet] ) );
+#else
     if (m_numHighestLayerIdx[addLayerSet] > 0)
     {
       Char* highestLayrIdxListDup = cfg_highestLayerIdx[addLayerSet].empty() ? NULL : strdup(cfg_highestLayerIdx[addLayerSet].c_str());
@@ -1751,7 +1782,58 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         highestLayrIdxListDup = NULL;
       }
     }
+#endif
   }
+#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  if( m_defaultTargetOutputLayerIdc != -1 )
+  {
+    assert( m_defaultTargetOutputLayerIdc >= 0 && m_defaultTargetOutputLayerIdc <= 3 );
+  }
+  assert( m_numOutputLayerSets != 0 );
+  assert( m_numOutputLayerSets >= m_numLayerSets + m_numAddLayerSets ); // Number of output layer sets must be at least as many as layer sets.
+
+  Int *tempArray = NULL;
+  
+  // If output layer Set Idx is specified, only specify it for the non-default output layer sets
+  Int numNonDefaultOls = m_numOutputLayerSets - (m_numLayerSets + m_numAddLayerSets);
+  if( numNonDefaultOls )
+  {
+    assert( scanStringToArray( *cfg_outputLayerSetIdx, numNonDefaultOls, "OutputLayerSetIdx", m_outputLayerSetIdx ) ); 
+    for(Int i = 0; i < numNonDefaultOls; i++)
+    {
+      assert( m_outputLayerSetIdx[i] >= 0 && m_outputLayerSetIdx[i] < (m_numLayerSets + m_numAddLayerSets) );
+    }
+  }
+
+  // Number of output layers in output layer sets
+  Bool readStringFlag = scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
+  m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
+  // Layers in the output layer set
+  m_listOfOutputLayers.resize(m_numOutputLayerSets);
+  Int startOlsCtr = 1;
+  if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
+  {
+    // Default output layer sets defined
+    startOlsCtr = m_numLayerSets + m_numAddLayerSets;
+  }
+  for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
+  {
+    if( olsCtr < startOlsCtr )
+    {
+      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
+      {
+        std::cout << "Default OLS defined. Ignoring ListOfOutputLayers" << olsCtr << endl;
+      }
+    }
+    else
+    {
+      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
+    }
+  }
+  delete cfg_numLayersInOutputLayerSet;
+  delete [] cfg_listOfOutputLayers;
+  delete cfg_outputLayerSetIdx;
 #endif
 #endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
@@ -3669,7 +3751,11 @@ Bool confirmPara(Bool bflag, const Char* message)
 }
 
 #if SVC_EXTENSION
+#if OUTPUT_LAYER_SETS_CONFIG
+Void TAppEncCfg::cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString)
+#else
 Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
+#endif
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
   if( numEntries > 0 )
@@ -3678,7 +3764,18 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     Int i = 0;
     *arr = new Int[numEntries];
 
+#if OUTPUT_LAYER_SETS_CONFIG
+    if( tempChar == NULL )
+    {
+      arrayEntry = NULL;
+    }
+    else
+    {
+      arrayEntry = strtok( tempChar, " ,");
+    }
+#else
     arrayEntry = strtok( tempChar, " ,");
+#endif
     while(arrayEntry != NULL)
     {
       if( i >= numEntries )
@@ -3708,5 +3805,40 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
   }
 }
 
+#if OUTPUT_LAYER_SETS_CONFIG
+Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray)
+{
+  Int *tempArray = NULL;
+  // For all layer sets
+  cfgStringToArray( &tempArray, cfgString, numEntries, logString );
+  if(tempArray)
+  {
+    for(Int i = 0; i < numEntries; i++)
+    {
+      returnArray[i] = tempArray[i];
+    }
+    delete [] tempArray; tempArray = NULL;
+    return true;
+  }
+  return false;
+}
+Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> & returnVector)
+{
+  Int *tempArray = NULL;
+  // For all layer sets
+  cfgStringToArray( &tempArray, cfgString, numEntries, logString );
+  if(tempArray)
+  {
+    returnVector.empty();
+    for(Int i = 0; i < numEntries; i++)
+    {
+      returnVector.push_back(tempArray[i]);
+    }
+    delete [] tempArray; tempArray = NULL;
+    return true;
+  }
+  return false;
+}
+#endif
 #endif //SVC_EXTENSION
 //! \}
