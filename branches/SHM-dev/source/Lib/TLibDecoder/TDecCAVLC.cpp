@@ -1280,6 +1280,28 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
 #endif
+#if MOVE_ADDN_LS_SIGNALLING
+#if Q0078_ADD_LAYER_SETS
+  if (vps->getNumIndependentLayers() > 1)
+  {
+    READ_UVLC(uiCode, "num_add_layer_sets"); vps->setNumAddLayerSets(uiCode);
+    for (i = 0; i < vps->getNumAddLayerSets(); i++)
+    {
+      for (j = 1; j < vps->getNumIndependentLayers(); j++)
+      {
+        int len = 1;
+        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        {
+          len++;
+        }
+        READ_CODE(len, uiCode, "highest_layer_idx_plus1[i][j]"); vps->setHighestLayerIdxPlus1(i, j, uiCode);
+      }
+    }
+    vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
+    vps->setLayerIdIncludedFlagsForAddLayerSets();
+  }
+#endif
+#endif
 #if VPS_TSLAYERS
   READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
 
@@ -1365,6 +1387,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
+#if !MOVE_ADDN_LS_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
   if (vps->getNumIndependentLayers() > 1)
   {
@@ -1384,6 +1407,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
     vps->setLayerIdIncludedFlagsForAddLayerSets();
   }
+#endif
 #endif
 
 #if !VPS_EXTN_UEV_CODING
