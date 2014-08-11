@@ -74,8 +74,8 @@ protected:
 #if P0050_KNEE_FUNCTION_SEI
   Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Void xWriteSEIColorMappingInfo(const SEIColorMappingInfo& sei);
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
 #endif
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #if O0164_MULTI_LAYER_HRD

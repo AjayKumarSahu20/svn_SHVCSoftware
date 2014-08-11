@@ -364,87 +364,63 @@ SEIKneeFunctionInfo* TEncGOP::xCreateSEIKneeFunctionInfo()
 }
 #endif
 
-#if Q0074_SEI_COLOR_MAPPING
-SEIColorMappingInfo*  TEncGOP::xCreateSEIColorMappingInfo( Char* file )
+#if Q0074_COLOUR_REMAPPING_SEI
+SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
 {
-  SEIColorMappingInfo *seiColorMappingInfo = new SEIColorMappingInfo();
-
-  FILE* fic = fopen( file, "r" );
-
-  Int iVal, retval;
-
-  retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colorMapId );
-  retval = fscanf( fic, "%d", &iVal );
-  seiColorMappingInfo->m_colorMapCancelFlag = iVal;
-  if( !seiColorMappingInfo->m_colorMapCancelFlag )
+  SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo();
+  seiColourRemappingInfo->m_colourRemapId         = m_pcCfg->getCRISEIId();
+  seiColourRemappingInfo->m_colourRemapCancelFlag = m_pcCfg->getCRISEICancelFlag();
+  if( !seiColourRemappingInfo->m_colourRemapCancelFlag )
   {
-    retval = fscanf( fic, "%d", &iVal );
-    seiColorMappingInfo->m_colorMapPersistenceFlag = iVal;
-    retval = fscanf( fic, "%d", &iVal );
-    seiColorMappingInfo->m_colorMap_video_signal_type_present_flag = iVal;
-    if( seiColorMappingInfo->m_colorMap_video_signal_type_present_flag )
+    seiColourRemappingInfo->m_colourRemapPersistenceFlag            = m_pcCfg->getCRISEIPersistenceFlag();
+    seiColourRemappingInfo->m_colourRemapVideoSignalTypePresentFlag = m_pcCfg->getCRISEIVideoSignalTypePresentFlag();
+    if( seiColourRemappingInfo->m_colourRemapVideoSignalTypePresentFlag )
     {
-      retval = fscanf( fic, "%d", &iVal );
-      seiColorMappingInfo->m_colorMap_video_full_range_flag = iVal;
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_primaries );
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_transfer_characteristics );
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colorMap_matrix_coeffs );
+      seiColourRemappingInfo->m_colourRemapVideoFullRangeFlag      = m_pcCfg->getCRISEIVideoFullRangeFlag();
+      seiColourRemappingInfo->m_colourRemapPrimaries               = m_pcCfg->getCRISEIPrimaries();
+      seiColourRemappingInfo->m_colourRemapTransferCharacteristics = m_pcCfg->getCRISEITransferCharacteristics();
+      seiColourRemappingInfo->m_colourRemapMatrixCoeffs            = m_pcCfg->getCRISEIMatrixCoeffs();
     }
-  }
-
-  retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colour_map_coded_data_bit_depth );
-  retval = fscanf( fic, "%d", &seiColorMappingInfo->m_colour_map_target_bit_depth );
-  retval = fscanf( fic, "%d", &iVal );
-  seiColorMappingInfo->m_colorMapModelId = iVal;
-
-  assert( seiColorMappingInfo->m_colorMapModelId == 0 );
-  
-  for( Int i=0 ; i<3 ; i++ )
-  {
-    retval = fscanf( fic, "%d", &seiColorMappingInfo->m_num_input_pivots[i] );
-    seiColorMappingInfo->m_coded_input_pivot_value[i]   = new Int[ seiColorMappingInfo->m_num_input_pivots[i] ];
-    seiColorMappingInfo->m_target_input_pivot_value[i]  = new Int[ seiColorMappingInfo->m_num_input_pivots[i] ];
-    for( Int j=0 ; j<seiColorMappingInfo->m_num_input_pivots[i] ; j++ )
+    seiColourRemappingInfo->m_colourRemapCodedDataBitDepth = m_pcCfg->getCRISEICodedDataBitDepth();
+    seiColourRemappingInfo->m_colourRemapTargetBitDepth    = m_pcCfg->getCRISEITargetBitDepth();
+    for( Int c=0 ; c<3 ; c++ )
     {
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_coded_input_pivot_value[i][j] );
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_target_input_pivot_value[i][j] );
-    }
-  }
-
-  retval = fscanf( fic, "%d", &iVal );
-  seiColorMappingInfo->m_matrix_flag = iVal;
-  if( seiColorMappingInfo->m_matrix_flag )
-  {
-    retval = fscanf( fic, "%d", &seiColorMappingInfo->m_log2_matrix_denom );
-    for( Int i=0 ; i<3 ; i++ )
-    {
-      for( Int j=0 ; j<3 ; j++ )
+      seiColourRemappingInfo->m_preLutNumValMinus1[c] = m_pcCfg->getCRISEIPreLutNumValMinus1(c);
+      if( seiColourRemappingInfo->m_preLutNumValMinus1[c]>0 )
       {
-        retval = fscanf( fic, "%d", &seiColorMappingInfo->m_matrix_coef[i][j] );
+        seiColourRemappingInfo->m_preLutCodedValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
+        seiColourRemappingInfo->m_preLutTargetValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
+        for( Int i=0 ; i<=seiColourRemappingInfo->m_preLutNumValMinus1[c] ; i++)
+        {
+          seiColourRemappingInfo->m_preLutCodedValue[c][i]  = (m_pcCfg->getCRISEIPreLutCodedValue(c))[i];
+          seiColourRemappingInfo->m_preLutTargetValue[c][i] = (m_pcCfg->getCRISEIPreLutTargetValue(c))[i];
+        }
+      }
+    }
+    seiColourRemappingInfo->m_colourRemapMatrixPresentFlag = m_pcCfg->getCRISEIMatrixPresentFlag();
+    if( seiColourRemappingInfo->m_colourRemapMatrixPresentFlag )
+    {
+      seiColourRemappingInfo->m_log2MatrixDenom = m_pcCfg->getCRISEILog2MatrixDenom();
+      for( Int c=0 ; c<3 ; c++ )
+        for( Int i=0 ; i<3 ; i++ )
+          seiColourRemappingInfo->m_colourRemapCoeffs[c][i] = (m_pcCfg->getCRISEICoeffs(c))[i];
+    }
+    for( Int c=0 ; c<3 ; c++ )
+    {
+      seiColourRemappingInfo->m_postLutNumValMinus1[c] = m_pcCfg->getCRISEIPostLutNumValMinus1(c);
+      if( seiColourRemappingInfo->m_postLutNumValMinus1[c]>0 )
+      {
+        seiColourRemappingInfo->m_postLutCodedValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
+        seiColourRemappingInfo->m_postLutTargetValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
+        for( Int i=0 ; i<=seiColourRemappingInfo->m_postLutNumValMinus1[c] ; i++)
+        {
+          seiColourRemappingInfo->m_postLutCodedValue[c][i]  = (m_pcCfg->getCRISEIPostLutCodedValue(c))[i];
+          seiColourRemappingInfo->m_postLutTargetValue[c][i] = (m_pcCfg->getCRISEIPostLutTargetValue(c))[i];
+        }
       }
     }
   }
-
-  for( Int i=0 ; i<3 ; i++ )
-  {
-    retval = fscanf( fic, "%d", &seiColorMappingInfo->m_num_output_pivots[i] );
-    seiColorMappingInfo->m_coded_output_pivot_value[i]   = new Int[ seiColorMappingInfo->m_num_output_pivots[i] ];
-    seiColorMappingInfo->m_target_output_pivot_value[i]  = new Int[ seiColorMappingInfo->m_num_output_pivots[i] ];
-    for( Int j=0 ; j<seiColorMappingInfo->m_num_output_pivots[i] ; j++ )
-    {
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_coded_output_pivot_value[i][j] );
-      retval = fscanf( fic, "%d", &seiColorMappingInfo->m_target_output_pivot_value[i][j] );
-    }
-  }
-
-  fclose( fic );
-
-  if( retval != 1 )
-  {
-    printf("Error: can't read color mapping information\n");
-  }
-
-  return seiColorMappingInfo;
+  return seiColourRemappingInfo;
 }
 #endif
 
@@ -531,13 +507,13 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     delete sei;
   }
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  if(m_pcCfg->getColorMappingInfoSEIFile())
+#if Q0074_COLOUR_REMAPPING_SEI
+  if(m_pcCfg->getCRISEIFile())
   {
-    SEIColorMappingInfo *sei = xCreateSEIColorMappingInfo( m_pcCfg->getColorMappingInfoSEIFile() );
+    SEIColourRemappingInfo *sei = xCreateSEIColourRemappingInfo ();
       
 #if SVC_EXTENSION
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_layerId);  // temporalId = 0 ?
+    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, sps->getLayerId());  // SEI-CRI is applied per layer
 #else
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
 #endif

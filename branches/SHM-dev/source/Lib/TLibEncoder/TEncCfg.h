@@ -384,13 +384,32 @@ protected:
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Char*     m_seiColorMappingFile;
-#endif
 #if Q0189_TMVP_CONSTRAINTS
   Int       m_TMVPConstraintsSEIEnabled;
 #endif
 #endif //SVC_EXTENSION
+#if Q0074_COLOUR_REMAPPING_SEI
+  Char*     m_colourRemapSEIFile;          ///< SEI Colour Remapping File (initialized from external file)
+  Int       m_colourRemapSEIId;
+  Bool      m_colourRemapSEICancelFlag;
+  Bool      m_colourRemapSEIPersistenceFlag;
+  Bool      m_colourRemapSEIVideoSignalTypePresentFlag;
+  Bool      m_colourRemapSEIVideoFullRangeFlag;
+  Int       m_colourRemapSEIPrimaries;
+  Int       m_colourRemapSEITransferCharacteristics;
+  Int       m_colourRemapSEIMatrixCoeffs;
+  Int       m_colourRemapSEICodedDataBitDepth;
+  Int       m_colourRemapSEITargetBitDepth;
+  Int       m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPreLutCodedValue[3];
+  Int*      m_colourRemapSEIPreLutTargetValue[3];
+  Bool      m_colourRemapSEIMatrixPresentFlag;
+  Int       m_colourRemapSEILog2MatrixDenom;
+  Int       m_colourRemapSEICoeffs[3][3];
+  Int       m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPostLutCodedValue[3];
+  Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
 
 public:
   TEncCfg()
@@ -683,9 +702,47 @@ public:
   Void  setKneeSEIOutputKneePoint(Int *p)                    { m_kneeSEIOutputKneePoint = p; }
   Int*  getKneeSEIOutputKneePoint()                          { return m_kneeSEIOutputKneePoint; }
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
-  Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void  setCRISEIFile( Char* pch )                           { m_colourRemapSEIFile = pch; }
+  Char* getCRISEIFile()                                      { return m_colourRemapSEIFile; }
+  Void  setCRISEIId(Int i)                                   { m_colourRemapSEIId = i; }
+  Int   getCRISEIId()                                        { return m_colourRemapSEIId; }
+  Void  setCRISEICancelFlag(Bool b)                          { m_colourRemapSEICancelFlag = b; }
+  Bool  getCRISEICancelFlag()                                { return m_colourRemapSEICancelFlag; }
+  Void  setCRISEIPersistenceFlag(Bool b)                     { m_colourRemapSEIPersistenceFlag = b; }
+  Bool  getCRISEIPersistenceFlag()                           { return m_colourRemapSEIPersistenceFlag; }
+  Void  setCRISEIVideoSignalTypePresentFlag(Bool b)          { m_colourRemapSEIVideoSignalTypePresentFlag = b; }
+  Bool  getCRISEIVideoSignalTypePresentFlag()                { return m_colourRemapSEIVideoSignalTypePresentFlag; }
+  Void  setCRISEIVideoFullRangeFlag(Bool b)                  { m_colourRemapSEIVideoFullRangeFlag = b; }
+  Bool  getCRISEIVideoFullRangeFlag()                        { return m_colourRemapSEIVideoFullRangeFlag; }
+  Void  setCRISEIPrimaries(Int i)                            { m_colourRemapSEIPrimaries = i; }
+  Int   getCRISEIPrimaries()                                 { return m_colourRemapSEIPrimaries; }  
+  Void  setCRISEITransferCharacteristics(Int i)              { m_colourRemapSEITransferCharacteristics = i; }
+  Int   getCRISEITransferCharacteristics()                   { return m_colourRemapSEITransferCharacteristics; }  
+  Void  setCRISEIMatrixCoeffs(Int i)                         { m_colourRemapSEIMatrixCoeffs = i; }
+  Int   getCRISEIMatrixCoeffs()                              { return m_colourRemapSEIMatrixCoeffs; }
+  Void  setCRISEICodedDataBitDepth(Int i)                    { m_colourRemapSEICodedDataBitDepth = i; }
+  Int   getCRISEICodedDataBitDepth()                         { return m_colourRemapSEICodedDataBitDepth; } 
+  Void  setCRISEITargetBitDepth(Int i)                       { m_colourRemapSEITargetBitDepth = i; }
+  Int   getCRISEITargetBitDepth()                            { return m_colourRemapSEITargetBitDepth; } 
+  Void  setCRISEIPreLutNumValMinus1(Int *i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutNumValMinus1[c] = i[c]; }
+  Int   getCRISEIPreLutNumValMinus1(Int i)                   { return m_colourRemapSEIPreLutNumValMinus1[i]; }
+  Void  setCRISEIPreLutCodedValue(Int **i)                   { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutCodedValue[c] = i[c]; }
+  Int*  getCRISEIPreLutCodedValue(Int i)                     { return m_colourRemapSEIPreLutCodedValue[i]; }
+  Void  setCRISEIPreLutTargetValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutTargetValue[c] = i[c]; }
+  Int*  getCRISEIPreLutTargetValue(Int i)                    { return m_colourRemapSEIPreLutTargetValue[i]; }
+  Void  setCRISEIMatrixPresentFlag(Bool b)                   { m_colourRemapSEIMatrixPresentFlag = b; }
+  Bool  getCRISEIMatrixPresentFlag()                         { return m_colourRemapSEIMatrixPresentFlag; }
+  Void  setCRISEILog2MatrixDenom(Int i)                      { m_colourRemapSEILog2MatrixDenom = i; }
+  Int   getCRISEILog2MatrixDenom()                           { return m_colourRemapSEILog2MatrixDenom; } 
+  Void  setCRISEICoeffs(Int i[3][3])                         { for(Int c=0 ; c<3 ; c++) for(Int j=0 ; j<3 ; j++) m_colourRemapSEICoeffs[c][j] = i[c][j]; }
+  Int*  getCRISEICoeffs(Int i)                               { return m_colourRemapSEICoeffs[i]; }
+  Void  setCRISEIPostLutNumValMinus1(Int *i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutNumValMinus1[c] = i[c]; }
+  Int   getCRISEIPostLutNumValMinus1(Int i)                  { return m_colourRemapSEIPostLutNumValMinus1[i]; }
+  Void  setCRISEIPostLutCodedValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutCodedValue[c] = i[c]; }
+  Int*  getCRISEIPostLutCodedValue(Int i)                    { return m_colourRemapSEIPostLutCodedValue[i]; }
+  Void  setCRISEIPostLutTargetValue(Int **i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutTargetValue[c] = i[c]; }
+  Int*  getCRISEIPostLutTargetValue(Int i)                   { return m_colourRemapSEIPostLutTargetValue[i]; }
 #endif
   Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
   Int   getFramePackingArrangementSEIEnabled()           { return m_framePackingSEIEnabled; }

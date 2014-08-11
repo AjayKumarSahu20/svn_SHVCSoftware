@@ -92,8 +92,8 @@ protected:
 #if P0050_KNEE_FUNCTION_SEI
   Void xParseSEIKneeFunctionInfo      (SEIKneeFunctionInfo& sei, UInt payloadSize);
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Void xParseSEIColorMappingInfo      (SEIColorMappingInfo& sei, UInt payloadSize);
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void xParseSEIColourRemappingInfo   (SEIColourRemappingInfo& sei, UInt payloadSize);
 #endif
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI

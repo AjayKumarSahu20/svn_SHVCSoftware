@@ -365,7 +365,6 @@ Void TComPicYuv::dump (Char* pFileName, Bool bAdd)
   fclose(pFile);
 }
 
-#if SVC_EXTENSION
 Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
 {
   FILE* pFile;
@@ -429,7 +428,5 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
   
   fclose(pFile);
 }
-
-#endif
 
 //! \}

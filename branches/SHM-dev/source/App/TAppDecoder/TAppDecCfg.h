@@ -68,6 +68,9 @@ protected:
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+#if Q0074_COLOUR_REMAPPING_SEI
+  Bool          m_colourRemapSEIEnabled;              ///< Enable the Colour Remapping Information SEI message if available (remapping decoded pictures)
+#endif
 
 #if SVC_EXTENSION
   Int           m_tgtLayerId;                        ///< target layer ID
@@ -97,6 +100,9 @@ public:
   , m_outputBitDepthC(0)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
+#if Q0074_COLOUR_REMAPPING_SEI
+  , m_colourRemapSEIEnabled(0)
+#endif
 #if SVC_EXTENSION
   , m_tgtLayerId(0)
 #if AVC_BASE && !REPN_FORMAT_IN_VPS
