@@ -1995,7 +1995,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION
   // reading external Colour Remapping Information SEI message parameters from file
-  if( m_colourRemapSEIFile.c_str() )
+  if( m_colourRemapSEIFile.length() )
   {
     FILE* fic;
     Int retval;
@@ -2074,7 +2074,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   // It seems that TAppEncLayerCfg::parseCfg is not used
   for(UInt layer = 0; layer < m_numLayers; layer++)
   {
-    if( cfg_colourRemapSEIFile[layer]->c_str() )
+    if( cfg_colourRemapSEIFile[layer]->length() )
     {
       FILE* fic;
       Int retval;
