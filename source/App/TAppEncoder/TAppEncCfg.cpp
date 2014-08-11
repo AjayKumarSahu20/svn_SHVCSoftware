@@ -2083,16 +2083,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", cfg_colourRemapSEIFile[layer]->c_str());
         exit(EXIT_FAILURE);
       }
-
+      Int tempCode;
       retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIId );
-      retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEICancelFlag );
+      retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
       if( !m_acLayerCfg[layer].m_colourRemapSEICancelFlag )
       {
-        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag );
-        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag);
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag = tempCode ? 1 : 0;
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag = tempCode ? 1 : 0;
         if( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag )
         {
-          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIVideoFullRangeFlag  );
+          retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoFullRangeFlag = tempCode ? 1 : 0;
           retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
           retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEITransferCharacteristics );
           retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIMatrixCoeffs );
@@ -2116,7 +2116,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
           }
         }
 
-        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag );
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
         if( m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag )
         {
           retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEILog2MatrixDenom );
