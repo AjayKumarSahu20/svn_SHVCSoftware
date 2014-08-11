@@ -680,15 +680,11 @@ Void SEIWriter::xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei)
       if( sei.m_postLutNumValMinus1[c]>0 )
         for( Int i=0 ; i<=sei.m_postLutNumValMinus1[c] ; i++ )
         {
-          if( sei.m_preLutNumValMinus1[c]>0 || sei.m_colourRemapMatrixPresentFlag )
-            WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );
-          else 
-            WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapCodedDataBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );
+          WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );       
           WRITE_CODE( sei.m_postLutTargetValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_target_value[c][i]" );
         }
     }
   }
-
   xWriteByteAlign();
 }
 #endif
