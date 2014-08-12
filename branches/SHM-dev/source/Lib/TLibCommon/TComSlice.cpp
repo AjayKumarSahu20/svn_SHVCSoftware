@@ -35,6 +35,7 @@
     \brief    slice header and SPS class
 */
 
+#include <numeric>
 #include "CommonDef.h"
 #include "TComSlice.h"
 #include "TComPic.h"
@@ -2438,9 +2439,11 @@ TComVPS::TComVPS()
   m_directDepTypeLen = 2;
   ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
 #endif
+#if !NECESSARY_LAYER_FLAG
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
   ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
+#endif
 #endif
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
   m_maxOneActiveRefLayerFlag = true;
@@ -2561,8 +2564,14 @@ TComVPS::~TComVPS()
 Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
+#if NECESSARY_LAYER_FLAG
+  m_numLayerInIdList.push_back(1);
+  m_layerSetLayerIdList.resize(m_numLayerSets);
+  m_layerSetLayerIdList[0].push_back(0);
+#else
   m_numLayerInIdList[0] = 1;
   m_layerSetLayerIdList[0][0] = 0;
+#endif
   
   // For other layers
   Int i, m, n;
@@ -2573,10 +2582,18 @@ Void TComVPS::deriveLayerIdListVariables()
     {
       if( m_layerIdIncludedFlag[i][m] )
       {
+#if NECESSARY_LAYER_FLAG
+        m_layerSetLayerIdList[i].push_back(m);
+#else
         m_layerSetLayerIdList[i][n++] = m;
+#endif
       }
     }
+#if NECESSARY_LAYER_FLAG
+    m_numLayerInIdList.push_back(m_layerSetLayerIdList[i].size());
+#else
     m_numLayerInIdList[i] = n;
+#endif
   }
 }
 #endif
@@ -2992,6 +3009,69 @@ Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt
       hrd->setDuBitRateValueMinus1( i, j, 1, ( duBitRateValue - 1 ) );
       hrd->setCbrFlag( i, j, 1, ( j == 0 ) );
     }
+  }
+}
+#endif
+#if NECESSARY_LAYER_FLAG
+Void TComVPS::deriveNecessaryLayerFlag()
+{
+  m_necessaryLayerFlag.empty();
+  m_numNecessaryLayers.empty();
+  // Assumed that output layer sets and variables RecursiveRefLayer are already derived
+  for( Int olsIdx = 0; olsIdx < getNumOutputLayerSets(); olsIdx++)
+  {
+    deriveNecessaryLayerFlag(olsIdx);
+  }
+}
+Void TComVPS::deriveNecessaryLayerFlag(Int const olsIdx)
+{
+  Int lsIdx = this->getOutputLayerSetIdx( olsIdx );
+  Int numLayersInLs = this->getNumLayersInIdList( lsIdx );
+  assert( m_necessaryLayerFlag.size() == olsIdx );   // Function should be called in the correct order.
+  m_necessaryLayerFlag.push_back( std::vector<Bool>( numLayersInLs, false ) ); // Initialize to false
+  for( Int lsLayerIdx = 0; lsLayerIdx < numLayersInLs; lsLayerIdx++ )
+  {
+    if( this->m_outputLayerFlag[olsIdx][lsLayerIdx] )
+    {
+      m_necessaryLayerFlag[olsIdx][lsLayerIdx] = true;
+      Int currNuhLayerId = this->m_layerSetLayerIdList[lsIdx][lsLayerIdx];
+      for( Int rLsLayerIdx = 0; rLsLayerIdx < lsLayerIdx; rLsLayerIdx++ )
+      {
+        Int refNuhLayerId = this->m_layerSetLayerIdList[lsIdx][rLsLayerIdx];
+        if( this->m_recursiveRefLayerFlag[currNuhLayerId][refNuhLayerId] )
+        {
+          m_necessaryLayerFlag[olsIdx][rLsLayerIdx] = true;
+        }
+      }
+    }
+  }
+  m_numNecessaryLayers.push_back(std::accumulate(m_necessaryLayerFlag[olsIdx].begin(), m_necessaryLayerFlag[olsIdx].end(), 0));
+}
+Void TComVPS::checkNecessaryLayerFlagCondition()
+{
+  /* It is a requirement of bitstream conformance that for each layer index layerIdx in the range of 
+  ( vps_base_layer_internal_flag ? 0 : 1 ) to MaxLayersMinus1, inclusive, there shall be at least one OLS with index olsIdx such that 
+  NecessaryLayerFlag[ olsIdx ][ lsLayerIdx ] is equal to 1 for the value of lsLayerIdx 
+  for which LayerSetLayerIdList[ OlsIdxToLsIdx[ olsIdx ] ][ lsLayerIdx ] is equal to layer_id_in_nuh[ layerIdx ]. */
+  for(Int layerIdx = this->getBaseLayerInternalFlag() ? 0 : 1; layerIdx < this->getMaxLayers(); layerIdx++)
+  {
+    Bool layerFoundNecessaryLayerFlag = false;
+    for(Int olsIdx = 0; olsIdx < this->getNumOutputLayerSets(); olsIdx++)
+    {
+      Int lsIdx = this->getOutputLayerSetIdx( olsIdx );
+      Int currNuhLayerId = this->getLayerIdInNuh( layerIdx );
+      std::vector<Int>::iterator iter = std::find( m_layerSetLayerIdList[lsIdx].begin(), m_layerSetLayerIdList[lsIdx].end(), currNuhLayerId );
+      if( iter != m_layerSetLayerIdList[lsIdx].end() ) // Layer present in layer set
+      {
+        size_t positionLayer = iter - m_layerSetLayerIdList[lsIdx].begin();
+        if( *(m_necessaryLayerFlag[olsIdx].begin() + positionLayer) == true )
+        {
+          layerFoundNecessaryLayerFlag = true;
+          break;
+        }
+      }
+    }
+    assert( layerFoundNecessaryLayerFlag );
   }
 }
 #endif

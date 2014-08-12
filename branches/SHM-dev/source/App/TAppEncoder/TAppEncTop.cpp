@@ -1454,11 +1454,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setNumOutputLayerSets( m_numOutputLayerSets );
     for( Int olsCtr = 0; olsCtr < vps->getNumLayerSets(); olsCtr ++ ) // Default output layer sets
     {
-      vps->setOutputLayerSetIdx(i, i);
+      vps->setOutputLayerSetIdx(olsCtr, olsCtr);
     }
     for( Int olsCtr = vps->getNumLayerSets(); olsCtr < vps->getNumOutputLayerSets(); olsCtr ++ )  // Non-default output layer sets
     {
-      vps->setOutputLayerSetIdx(i, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
+      vps->setOutputLayerSetIdx(olsCtr, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
     }
   }
 #endif
@@ -1550,7 +1550,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     assert(!"default_output_layer_idc not equal to 1 is not yet supported");
   }
 #endif
-
+#if NECESSARY_LAYER_FLAG
+  vps->deriveNecessaryLayerFlag();
+  vps->checkNecessaryLayerFlagCondition();
+#endif
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {

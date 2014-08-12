@@ -488,8 +488,13 @@ private:
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
+#if NECESSARY_LAYER_FLAG
+  std::vector< std::vector<Int> >     m_layerSetLayerIdList;
+  std::vector<Int>                      m_numLayerInIdList;;
+#else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
+#endif
 #else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -746,6 +751,10 @@ private:
 #endif
 #if RESOLUTION_BASED_DPB
   Int        m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
+#endif
+#if NECESSARY_LAYER_FLAG
+  std::vector< std::vector<Bool> > m_necessaryLayerFlag;
+  std::vector<Int>               m_numNecessaryLayers;
 #endif
 #endif //SVC_EXTENSION
 public:
@@ -1214,6 +1223,11 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #if O0164_MULTI_LAYER_HRD
   Void setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
+#endif
+#if NECESSARY_LAYER_FLAG
+  Void  deriveNecessaryLayerFlag();
+  Void  deriveNecessaryLayerFlag(Int const olsIdx);
+  Void  checkNecessaryLayerFlagCondition();
 #endif
 #endif //SVC_EXTENSION
 };
