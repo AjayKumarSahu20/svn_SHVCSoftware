@@ -1334,6 +1334,28 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
     vps->setIlpSshSignalingEnabledFlag(false);
 #if VPS_EXTN_PROFILE_INFO
+
+#if LIST_OF_PTL
+  vps->getPTLForExtnPtr()->resize(1);   // Dummy object - unused.
+  for(i = 0; i < vps->getMaxLayers(); i++)
+  {
+    // TODO: The profile tier level have to be given support to be included in the configuration files
+    if(i == 0)
+    {
+      if( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 )
+      {
+        vps->setProfilePresentFlag(1, false);
+        vps->getPTLForExtnPtr()->push_back( *(m_acTEncTop[0].getSPS()->getPTL()) );
+      }
+    }
+    else  // i > 0
+    {
+      vps->setProfilePresentFlag(i, true);
+      // Note - may need to be changed for other layer structures.
+      vps->getPTLForExtnPtr()->push_back( *(m_acTEncTop[0].getSPS()->getPTL()) );
+    }
+  }
+#else
   vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
   for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
   {
@@ -1341,6 +1363,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // Note - may need to be changed for other layer structures.
     *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
   }
+#endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
@@ -1440,8 +1463,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
   // Target output layer
+#if LIST_OF_PTL
+  vps->setNumProfileTierLevel( vps->getPTLForExtnPtr()->size() ); // +1 for the base VPS PTL()
+#else
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
+#endif
 #if !OUTPUT_LAYER_SETS_CONFIG // Taken care by configuration file parameter
 #if P0295_DEFAULT_OUT_LAYER_IDC
   vps->setDefaultTargetOutputLayerIdc(1);
