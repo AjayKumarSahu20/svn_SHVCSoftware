@@ -830,8 +830,10 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       WRITE_FLAG( pcVPS->getLayerIdIncludedFlag( opsIdx, i ) ? 1 : 0, "layer_id_included_flag[opsIdx][i]" );
     }
   }
+#if !NECESSARY_FLAG   // Already called once in TAppEncTop.cpp
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   pcVPS->deriveLayerIdListVariables();
+#endif
 #endif
   TimingInfo *timingInfo = pcVPS->getTimingInfo();
   WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),          "vps_timing_info_present_flag");

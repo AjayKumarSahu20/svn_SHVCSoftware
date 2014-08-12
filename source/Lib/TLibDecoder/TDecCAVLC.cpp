@@ -1466,7 +1466,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
   vps->setNumOutputLayerSets( numOutputLayerSets );
-
+#if NECESSARY_LAYER_FLAG
+  // Default output layer set
+  vps->setOutputLayerSetIdx(0, 0);
+  vps->setOutputLayerFlag(0, 0, true);
+  vps->deriveNecessaryLayerFlag(0);
+#endif
   for(i = 1; i < numOutputLayerSets; i++)
   {
     if( i > (vps->getNumLayerSets() - 1) )
@@ -1518,6 +1523,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         }
       }
     }
+#if NECESSARY_LAYER_FLAG
+    vps->deriveNecessaryLayerFlag(i);  
+#endif
     Int numBits = 1;
     while ((1 << numBits) < (vps->getNumProfileTierLevel()))
     {
@@ -1546,6 +1554,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
 #endif
   }
+#if NECESSARY_LAYER_FLAG
+  vps->checkNecessaryLayerFlagCondition();  
+#endif
 #else
   if( numOutputLayerSets > 1 )
   {
