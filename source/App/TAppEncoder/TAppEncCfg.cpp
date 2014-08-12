@@ -69,12 +69,12 @@ TAppEncCfg::TAppEncCfg()
 , m_avcBaseLayerFlag(0)
 #endif
 , m_maxTidRefPresentFlag(1)
-, m_scalingListFile()
-, m_elRapSliceBEnabled(0)
 #if OUTPUT_LAYER_SETS_CONFIG
 , m_defaultTargetOutputLayerIdc (-1)
 , m_numOutputLayerSets          (-1)
 #endif
+, m_scalingListFile()
+, m_elRapSliceBEnabled(0)
 {
   for(UInt layer=0; layer<MAX_LAYERS; layer++)
   {
@@ -1793,8 +1793,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   assert( m_numOutputLayerSets != 0 );
   assert( m_numOutputLayerSets >= m_numLayerSets + m_numAddLayerSets ); // Number of output layer sets must be at least as many as layer sets.
 
-  Int *tempArray = NULL;
-  
   // If output layer Set Idx is specified, only specify it for the non-default output layer sets
   Int numNonDefaultOls = m_numOutputLayerSets - (m_numLayerSets + m_numAddLayerSets);
   if( numNonDefaultOls )
@@ -1807,7 +1805,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   // Number of output layers in output layer sets
-  Bool readStringFlag = scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
+  scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
   m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
