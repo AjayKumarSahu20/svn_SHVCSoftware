@@ -1147,6 +1147,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
   Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
+#if LIST_OF_PTL
+  if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
+  {
+    vps->setProfilePresentFlag(1, false);
+    vps->getPTLForExtnPtr()->empty();
+    vps->getPTLForExtnPtr()->resize(2);
+    vps->getPTLForExtn(1)->copyProfileInfo( vps->getPTL() );
+    parsePTL( vps->getPTLForExtn(1), vps->getProfilePresentFlag(1), vps->getMaxTLayers() - 1 );
+  }
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt numScalabilityTypes = 0, i = 0, j = 0;
 
@@ -1364,7 +1374,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
 #endif
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
+#if LIST_OF_PTL
+  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#else
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#endif
   {
     READ_FLAG( uiCode, "vps_profile_present_flag[i]" ); vps->setProfilePresentFlag(idx, uiCode ? true : false);
     if( !vps->getProfilePresentFlag(idx) )

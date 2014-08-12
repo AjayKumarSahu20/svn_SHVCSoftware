@@ -904,6 +904,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
   Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
+#if LIST_OF_PTL
+  if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
+  {
+    codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
+  }
+#endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, j = 0;
 
@@ -1062,7 +1068,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #else
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
 #endif
+#if LIST_OF_PTL
+  assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
+  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#else
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+#endif
   {
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
 #if !P0048_REMOVE_PROFILE_REF

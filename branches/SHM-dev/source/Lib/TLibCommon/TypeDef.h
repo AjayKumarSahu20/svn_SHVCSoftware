@@ -52,6 +52,10 @@
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
 #define OUTPUT_LAYER_SETS_CONFIG         1
 #define MOVE_ADDN_LS_SIGNALLING          1      ///< JCTVC-R0238: (Ed.) Move additional layer set signalling in VPS extn.
+#define PTL_SIGNALLING                   1      ///< Overall macro for all PTL-related signalling
+#if PTL_SIGNALLING
+#define LIST_OF_PTL                      1      ///< JCTVC-R0272: Signalling the PTL for the 0-th OLS
+#endif
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
