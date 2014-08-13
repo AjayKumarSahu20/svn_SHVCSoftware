@@ -2607,17 +2607,33 @@ TComVPS::~TComVPS()
   if( m_cprmsPresentFlag != NULL )     delete[] m_cprmsPresentFlag;
 }
 #if DERIVE_LAYER_ID_LIST_VARIABLES
+#if NECESSARY_LAYER_FLAG
 Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
-#if NECESSARY_LAYER_FLAG
   m_numLayerInIdList.push_back(1);
   m_layerSetLayerIdList.resize(m_numLayerSets);
   m_layerSetLayerIdList[0].push_back(0);
+  
+  // For other layers
+  for( Int i = 1; i < m_numLayerSets; i++ )
+  {
+    for( Int m = 0; m <= m_maxLayerId; m++)
+    {
+      if( m_layerIdIncludedFlag[i][m] )
+      {
+        m_layerSetLayerIdList[i].push_back(m);
+      }
+    }
+    m_numLayerInIdList.push_back(m_layerSetLayerIdList[i].size());
+  }
+}
 #else
+Void TComVPS::deriveLayerIdListVariables()
+{
+  // For layer 0
   m_numLayerInIdList[0] = 1;
   m_layerSetLayerIdList[0][0] = 0;
-#endif
   
   // For other layers
   Int i, m, n;
@@ -2628,20 +2644,13 @@ Void TComVPS::deriveLayerIdListVariables()
     {
       if( m_layerIdIncludedFlag[i][m] )
       {
-#if NECESSARY_LAYER_FLAG
-        m_layerSetLayerIdList[i].push_back(m);
-#else
         m_layerSetLayerIdList[i][n++] = m;
-#endif
       }
     }
-#if NECESSARY_LAYER_FLAG
-    m_numLayerInIdList.push_back(m_layerSetLayerIdList[i].size());
-#else
     m_numLayerInIdList[i] = n;
-#endif
   }
 }
+#endif
 #endif
 #if !RESOLUTION_BASED_DPB
 #if VPS_DPB_SIZE_TABLE

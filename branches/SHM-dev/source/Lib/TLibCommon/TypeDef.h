@@ -55,7 +55,7 @@
 #define PTL_SIGNALLING                   1      ///< Overall macro for all PTL-related signalling
 #if PTL_SIGNALLING
 #define LIST_OF_PTL                      1      ///< JCTVC-R0272: Signalling the PTL for the 0-th OLS
-#define NECESSARY_LAYER_FLAG                   1      ////< Derivation of NecessaryLayerFlag
+#define NECESSARY_LAYER_FLAG             1      ////< Derivation of NecessaryLayerFlag
 #define PER_LAYER_PTL                    1      ///< Signal profile-tier-level information for each layer.
 #endif
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
