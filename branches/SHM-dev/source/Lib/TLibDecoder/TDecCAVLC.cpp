@@ -1373,6 +1373,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #else
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
 #endif
+#if PER_LAYER_PTL
+  Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
+#endif
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
 #if LIST_OF_PTL
   for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
@@ -1471,6 +1474,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setOutputLayerSetIdx(0, 0);
   vps->setOutputLayerFlag(0, 0, true);
   vps->deriveNecessaryLayerFlag(0);
+#if PER_LAYER_PTL
+  vps->getProfileLevelTierIdx()->resize(numOutputLayerSets);
+  vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0);
+#endif
 #endif
   for(i = 1; i < numOutputLayerSets; i++)
   {
@@ -1487,15 +1494,15 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       vps->setOutputLayerSetIdx( i, i );
     }
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
 #if Q0078_ADD_LAYER_SETS
     if ( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 )
 #else
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 )
 #endif
     {
-      Int lsIdx = vps->getOutputLayerSetIdx(i);
 #if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
+      for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
 #else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
 #endif
@@ -1507,17 +1514,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       // i <= (vps->getNumLayerSets() - 1)
       // Assign OutputLayerFlag depending on default_one_target_output_layer_flag
-      Int lsIdx = i;
       if( vps->getDefaultTargetOutputLayerIdc() == 1 )
       {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
+        for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
         {
-          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) && (vps->getDimensionId(j,1) == 0) );
+          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet)-1)) && (vps->getDimensionId(j,1) == 0) );
         }
       }
       else if ( vps->getDefaultTargetOutputLayerIdc() == 0 )
       {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
+        for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
         {
           vps->setOutputLayerFlag(i, j, 1);
         }
@@ -1526,15 +1532,26 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if NECESSARY_LAYER_FLAG
     vps->deriveNecessaryLayerFlag(i);  
 #endif
+#if PER_LAYER_PTL
+    vps->getProfileLevelTierIdx(i)->assign(vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet), -1);
+    for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
+    {
+      if( vps->getNecessaryLayerFlag(i, j) )
+      {
+        READ_CODE( numBitsForPtlIdx, uiCode, "profile_level_tier_idx[i]" ); 
+        vps->setProfileLevelTierIdx(i, j, uiCode );
+      }
+    }
+#else
     Int numBits = 1;
     while ((1 << numBits) < (vps->getNumProfileTierLevel()))
     {
       numBits++;
     }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
+#endif
 #if P0300_ALT_OUTPUT_LAYER_FLAG
     NumOutputLayersInOutputLayerSet[i] = 0;
-    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
     for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
     {
       NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);

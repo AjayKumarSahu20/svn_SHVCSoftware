@@ -584,7 +584,11 @@ private:
   Bool       m_defaultOneTargetOutputLayerFlag;
 #endif
 #endif
+#if PER_LAYER_PTL
+  std::vector< std::vector<Int> >  m_profileLevelTierIdx;
+#else
   Int        m_profileLevelTierIdx[64];     
+#endif
   Bool       m_maxOneActiveRefLayerFlag;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
@@ -983,8 +987,17 @@ Void      deriveNumberOfSubDpbs();
   Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
 #endif
 #endif
+#if PER_LAYER_PTL
+  Bool const getNecessaryLayerFlag(Int const i, Int const j) { return m_necessaryLayerFlag[i][j]; }
+  std::vector< std::vector<Int> >* const getProfileLevelTierIdx() { return &m_profileLevelTierIdx; }
+  std::vector<Int>* const getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
+  Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
+  Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
+  Int const calculateLenOfSyntaxElement( Int const numVal );
+#else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
+#endif
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
