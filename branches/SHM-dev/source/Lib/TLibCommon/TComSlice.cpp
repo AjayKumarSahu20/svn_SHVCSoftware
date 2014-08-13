@@ -3078,7 +3078,7 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
 }
 #endif
 #if PER_LAYER_PTL
-Int const TComVPS::calculateLenOfSyntaxElement( Int const numVal )
+Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
 {
   Int numBits = 1;
   while((1 << numBits) < numVal)
