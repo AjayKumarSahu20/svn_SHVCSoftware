@@ -402,6 +402,68 @@ public:
   Void setNumTicksPocDiffOneMinus1          (Int x       ) { m_numTicksPocDiffOneMinus1 = x;               }
 };
 
+class Window
+{
+private:
+  Bool          m_enabledFlag;
+  Int           m_winLeftOffset;
+  Int           m_winRightOffset;
+  Int           m_winTopOffset;
+  Int           m_winBottomOffset;
+#if P0312_VERT_PHASE_ADJ
+  Bool          m_vertPhasePositionEnableFlag;
+#endif
+public:
+  Window()
+  : m_enabledFlag (false)
+  , m_winLeftOffset     (0)
+  , m_winRightOffset    (0)
+  , m_winTopOffset      (0)
+  , m_winBottomOffset   (0)
+#if P0312_VERT_PHASE_ADJ
+  , m_vertPhasePositionEnableFlag(false)  
+#endif
+  { }
+
+  Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
+#if P0312_VERT_PHASE_ADJ
+  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
+#else
+  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
+#endif
+  Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
+  Void          setWindowLeftOffset(Int val)      { if(val) {m_winLeftOffset = val; m_enabledFlag = true;} }
+  Int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
+  Void          setWindowRightOffset(Int val)     { if(val) {m_winRightOffset = val; m_enabledFlag = true;} }
+  Int           getWindowTopOffset() const        { return m_enabledFlag ? m_winTopOffset : 0; }
+  Void          setWindowTopOffset(Int val)       { if(val) {m_winTopOffset = val; m_enabledFlag = true;} }
+  Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
+  Void          setWindowBottomOffset(Int val)    { if(val) {m_winBottomOffset = val; m_enabledFlag = true;} }
+#if P0312_VERT_PHASE_ADJ
+  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
+  Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
+#endif
+
+#if P0312_VERT_PHASE_ADJ
+  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
+#else
+  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
+#endif
+  {
+    if(offsetLeft || offsetLRight || offsetLTop || offsetLBottom) 
+    {
+      m_enabledFlag       = true;
+      m_winLeftOffset     = offsetLeft;
+      m_winRightOffset    = offsetLRight;
+      m_winTopOffset      = offsetLTop;
+      m_winBottomOffset   = offsetLBottom;
+    }
+#if P0312_VERT_PHASE_ADJ
+    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
+#endif
+  }
+};
+
 #if REPN_FORMAT_IN_VPS
 class RepFormat
 {
@@ -418,6 +480,10 @@ class RepFormat
   Int  m_picHeightVpsInLumaSamples;
   Int  m_bitDepthVpsLuma;               // coded as minus8
   Int  m_bitDepthVpsChroma;             // coded as minus8
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window m_conformanceWindowVps;
+#endif
 
 public:
   RepFormat();
@@ -453,6 +519,11 @@ public:
 
   Int  getBitDepthVpsChroma()           { return m_bitDepthVpsChroma;   }
   Void setBitDepthVpsChroma(Int x)      { m_bitDepthVpsChroma = x;      }
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window& getConformanceWindowVps()                           { return  m_conformanceWindowVps;             }
+  Void    setConformanceWindowVps(Window& conformanceWindow ) { m_conformanceWindowVps = conformanceWindow; }
+#endif
 };
 #endif
 class TComVPS
@@ -1244,66 +1315,6 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #endif //SVC_EXTENSION
 };
-
-class Window
-{
-private:
-  Bool          m_enabledFlag;
-  Int           m_winLeftOffset;
-  Int           m_winRightOffset;
-  Int           m_winTopOffset;
-  Int           m_winBottomOffset;
-#if P0312_VERT_PHASE_ADJ
-  Bool          m_vertPhasePositionEnableFlag;
-#endif
-public:
-  Window()
-  : m_enabledFlag (false)
-  , m_winLeftOffset     (0)
-  , m_winRightOffset    (0)
-  , m_winTopOffset      (0)
-  , m_winBottomOffset   (0)
-#if P0312_VERT_PHASE_ADJ
-  , m_vertPhasePositionEnableFlag(false)  
-#endif
-  { }
-
-  Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
-#if P0312_VERT_PHASE_ADJ
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
-#else
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
-#endif
-  Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
-  Void          setWindowLeftOffset(Int val)      { m_winLeftOffset = val; m_enabledFlag = true; }
-  Int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
-  Void          setWindowRightOffset(Int val)     { m_winRightOffset = val; m_enabledFlag = true; }
-  Int           getWindowTopOffset() const        { return m_enabledFlag ? m_winTopOffset : 0; }
-  Void          setWindowTopOffset(Int val)       { m_winTopOffset = val; m_enabledFlag = true; }
-  Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
-  Void          setWindowBottomOffset(Int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
-#if P0312_VERT_PHASE_ADJ
-  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
-  Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
-#endif
-
-#if P0312_VERT_PHASE_ADJ
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
-#else
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
-#endif
-  {
-    m_enabledFlag       = true;
-    m_winLeftOffset     = offsetLeft;
-    m_winRightOffset    = offsetLRight;
-    m_winTopOffset      = offsetLTop;
-    m_winBottomOffset   = offsetLBottom;
-#if P0312_VERT_PHASE_ADJ
-    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
-#endif
-  }
-};
-
 
 class TComVUI
 {
@@ -2570,6 +2581,10 @@ public:
   UInt getBitDepthC();
   Int  getQpBDOffsetY();
   Int  getQpBDOffsetC();
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window& getConformanceWindow();
+#endif
 #endif
 
   Void setILRPic(TComPic **pcIlpPic);

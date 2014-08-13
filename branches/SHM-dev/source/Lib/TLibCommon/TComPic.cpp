@@ -83,26 +83,50 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
   m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#else
+    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#endif
+#else
 #if AUXILIARY_PICTURES
     m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #else
     m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #endif
+#endif
   }
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#else
+  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#endif
+#else
 #if AUXILIARY_PICTURES
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #else
   m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
 #endif
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
     if( m_bSpatialEnhLayer[i] )
     {
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#else
+      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+#endif
+#else
 #if AUXILIARY_PICTURES
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #else
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
+#endif
 #endif
     }
   }

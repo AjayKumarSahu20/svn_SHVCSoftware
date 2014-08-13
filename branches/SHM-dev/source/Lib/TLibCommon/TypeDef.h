@@ -209,6 +209,8 @@
 #define Q0195_REP_FORMAT_CLEANUP         1      ///< JCTVC-Q0195: restructureing of rep_format() signaling
 #define REP_FORMAT_FIX                   1      ///< update_rep_format_flag should be inferred to be equal to 0
 
+#define R0156_CONF_WINDOW_IN_REP_FORMAT  O0096_REP_FORMAT_INDEX ///< JCTVC-R0156: add conformance window cropping offsets to rep_format()
+
 #define RESAMPLING_CONSTRAINT_BUG_FIX    1
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 
