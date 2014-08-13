@@ -988,12 +988,12 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #endif
 #if PER_LAYER_PTL
-  Bool const getNecessaryLayerFlag(Int const i, Int const j) { return m_necessaryLayerFlag[i][j]; }
-  std::vector< std::vector<Int> >* const getProfileLevelTierIdx() { return &m_profileLevelTierIdx; }
-  std::vector<Int>* const getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
+  Bool getNecessaryLayerFlag(Int const i, Int const j) { return m_necessaryLayerFlag[i][j]; }
+  std::vector< std::vector<Int> >* getProfileLevelTierIdx() { return &m_profileLevelTierIdx; }
+  std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
   Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
   Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
-  Int const calculateLenOfSyntaxElement( Int const numVal );
+  Int calculateLenOfSyntaxElement( Int const numVal );
 #else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
