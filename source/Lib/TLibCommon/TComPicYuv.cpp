@@ -68,10 +68,18 @@ TComPicYuv::~TComPicYuv()
 }
 
 #if SVC_EXTENSION
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow )
+#else
+Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow )
+#endif
+#else // R0156_CONF_WINDOW_IN_REP_FORMAT
 #if AUXILIARY_PICTURES
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
 #else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps )
+#endif
 #endif
 #else
 Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )
@@ -81,10 +89,17 @@ Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt 
   m_iPicHeight      = iPicHeight;
   
 #if SVC_EXTENSION
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  if(conformanceWindow != NULL)
+  {
+    m_conformanceWindow = *conformanceWindow;
+  }
+#else
   if(pcSps != NULL)
   {
     m_conformanceWindow = pcSps->getConformanceWindow();
   }
+#endif
 #endif
 
   // --> After config finished!

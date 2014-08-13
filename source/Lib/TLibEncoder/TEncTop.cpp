@@ -1697,7 +1697,11 @@ Void TEncTop::xInitILRP()
     g_uiAddCUDepth  = max (0, m_cSPS.getLog2MinCodingBlockSize() - (Int)m_cSPS.getQuadtreeTULog2MinSize() );
 
     Int  numReorderPics[MAX_TLAYER];
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+    Window &conformanceWindow = repFormat->getConformanceWindowVps();
+#else
     Window &conformanceWindow = m_cSPS.getConformanceWindow();
+#endif
     Window defaultDisplayWindow = m_cSPS.getVuiParametersPresentFlag() ? m_cSPS.getVuiParameters()->getDefaultDisplayWindow() : Window();
 
     if (m_cIlpPic[0] == NULL)

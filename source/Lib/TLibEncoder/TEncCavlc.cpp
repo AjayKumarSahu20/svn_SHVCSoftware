@@ -554,23 +554,39 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 #endif
 #endif
-  Window conf = pcSPS->getConformanceWindow();
 
-  WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
-  if (conf.getWindowEnabledFlag())
-  {
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
 #if REPN_FORMAT_IN_VPS
-    WRITE_UVLC( conf.getWindowLeftOffset(),   "conf_win_left_offset"   );
-    WRITE_UVLC( conf.getWindowRightOffset(),  "conf_win_right_offset"  );
-    WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_top_offset"    );
-    WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_bottom_offset" );
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 ) 
 #else
-    WRITE_UVLC( conf.getWindowLeftOffset()   / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_left_offset" );
-    WRITE_UVLC( conf.getWindowRightOffset()  / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_right_offset" );
-    WRITE_UVLC( conf.getWindowTopOffset()    / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_top_offset" );
-    WRITE_UVLC( conf.getWindowBottomOffset() / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_bottom_offset" );
+  if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+#endif  
+  {
 #endif
+#endif
+    Window conf = pcSPS->getConformanceWindow();
+
+    WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
+    if (conf.getWindowEnabledFlag())
+    {
+#if REPN_FORMAT_IN_VPS
+      WRITE_UVLC( conf.getWindowLeftOffset(),   "conf_win_left_offset"   );
+      WRITE_UVLC( conf.getWindowRightOffset(),  "conf_win_right_offset"  );
+      WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_top_offset"    );
+      WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_bottom_offset" );
+#else
+      WRITE_UVLC( conf.getWindowLeftOffset()   / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_left_offset" );
+      WRITE_UVLC( conf.getWindowRightOffset()  / TComSPS::getWinUnitX(pcSPS->getChromaFormatIdc() ), "conf_win_right_offset" );
+      WRITE_UVLC( conf.getWindowTopOffset()    / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_top_offset" );
+      WRITE_UVLC( conf.getWindowBottomOffset() / TComSPS::getWinUnitY(pcSPS->getChromaFormatIdc() ), "conf_win_bottom_offset" );
+#endif
+    }
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if REPN_FORMAT_IN_VPS
   }
+#endif
+#endif
 
 #if REPN_FORMAT_IN_VPS
 #if O0096_REP_FORMAT_INDEX
@@ -1470,6 +1486,19 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
   assert( repFormat->getBitDepthVpsChroma() >= 8 );
   WRITE_CODE( repFormat->getBitDepthVpsLuma() - 8,   4, "bit_depth_luma_minus8" );           
   WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );
+#endif
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window conf = repFormat->getConformanceWindowVps();
+
+  WRITE_FLAG( conf.getWindowEnabledFlag(),    "conformance_window_vps_flag" );
+  if (conf.getWindowEnabledFlag())
+  {
+    WRITE_UVLC( conf.getWindowLeftOffset(),   "conf_win_vps_left_offset"   );
+    WRITE_UVLC( conf.getWindowRightOffset(),  "conf_win_vps_right_offset"  );
+    WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_vps_top_offset"    );
+    WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_vps_bottom_offset" );
+  }
 #endif
 }
 #endif

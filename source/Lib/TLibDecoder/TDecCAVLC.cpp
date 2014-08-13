@@ -728,22 +728,39 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   }
 #endif
 #endif
-  READ_FLAG(     uiCode, "conformance_window_flag");
-  if (uiCode != 0)
-  {
-    Window &conf = pcSPS->getConformanceWindow();
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
 #if REPN_FORMAT_IN_VPS
-    READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode );
-    READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode );
-    READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode );
-    READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode );
+#if O0096_REP_FORMAT_INDEX
+  if( pcSPS->getLayerId() == 0 )
 #else
-    READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
-    READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
-    READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
-    READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
+  if(  pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() )
 #endif
+  {
+#endif
+#endif
+    READ_FLAG(     uiCode, "conformance_window_flag");
+    if (uiCode != 0)
+    {
+      Window &conf = pcSPS->getConformanceWindow();
+#if REPN_FORMAT_IN_VPS
+      READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode );
+      READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode );
+      READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode );
+      READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode );
+#else
+      READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
+      READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode * TComSPS::getWinUnitX( pcSPS->getChromaFormatIdc() ) );
+      READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
+      READ_UVLC(   uiCode, "conf_win_bottom_offset" );             conf.setWindowBottomOffset( uiCode * TComSPS::getWinUnitY( pcSPS->getChromaFormatIdc() ) );
+#endif
+    }
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if REPN_FORMAT_IN_VPS
   }
+#endif
+#endif
+
 #if REPN_FORMAT_IN_VPS
 #if O0096_REP_FORMAT_INDEX
   if( pcSPS->getLayerId() == 0 )
@@ -2068,6 +2085,7 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
     repFormat->setBitDepthVpsLuma           ( repFormatPrev->getBitDepthVpsLuma() );
     repFormat->setBitDepthVpsChroma         ( repFormatPrev->getBitDepthVpsChroma() );
   }
+
 #else 
 #if AUXILIARY_PICTURES
   READ_CODE( 2, uiCode, "chroma_format_idc" );               repFormat->setChromaFormatVpsIdc( ChromaFormat(uiCode) );
@@ -2086,6 +2104,18 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
   READ_CODE( 4, uiCode, "bit_depth_luma_minus8" );           repFormat->setBitDepthVpsLuma  ( uiCode + 8 );
   READ_CODE( 4, uiCode, "bit_depth_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
 #endif 
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  READ_FLAG( uiCode, "conformance_window_vps_flag" );
+  if( uiCode != 0) 
+  {
+    Window &conf = repFormat->getConformanceWindowVps();
+    READ_UVLC( uiCode, "conf_win_vps_left_offset" );         conf.setWindowLeftOffset  ( uiCode );
+    READ_UVLC( uiCode, "conf_win_vps_right_offset" );        conf.setWindowRightOffset ( uiCode );
+    READ_UVLC( uiCode, "conf_win_vps_top_offset" );          conf.setWindowTopOffset   ( uiCode );
+    READ_UVLC( uiCode, "conf_win_vps_bottom_offset" );       conf.setWindowBottomOffset( uiCode );
+  }
+#endif
 }
 #endif
 #if VPS_DPB_SIZE_TABLE

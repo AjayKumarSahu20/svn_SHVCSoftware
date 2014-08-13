@@ -2315,6 +2315,47 @@ Int TComSlice::getQpBDOffsetC()
   return (getBitDepthC() - 8) * 6;
 }
 
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+Window& TComSlice::getConformanceWindow()
+{
+  TComSPS *sps = getSPS();
+  TComVPS *vps = getVPS();
+  UInt layerId = getLayerId();
+#if O0096_REP_FORMAT_INDEX
+#if R0279_REP_FORMAT_INBL
+  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#else
+  if ( layerId == 0 )
+  {
+    if( vps->getAvcBaseLayerFlag() )
+#endif
+    {
+      return vps->getVpsRepFormat(layerId)->getConformanceWindowVps();
+    }
+    else
+    {
+      return sps->getConformanceWindow();
+    }
+  }
+  else
+  {
+    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getConformanceWindowVps();
+  }
+#else
+  if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
+  {
+    return sps->getConformanceWindow();
+  }
+  else
+  {
+    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getConformanceWindowVps();
+  }
+#endif
+}
+#endif
+
 RepFormat::RepFormat()
 #if AUXILIARY_PICTURES
 : m_chromaFormatVpsIdc          (CHROMA_420)
@@ -2336,6 +2377,9 @@ Void RepFormat::init()
   m_picHeightVpsInLumaSamples   = 0;
   m_bitDepthVpsLuma             = 0;
   m_bitDepthVpsChroma           = 0;
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  m_conformanceWindowVps.resetWindow();
+#endif
 }
 #endif
 #endif
@@ -3101,6 +3145,9 @@ RepFormat& RepFormat::operator= (const RepFormat &other)
     m_picHeightVpsInLumaSamples       = other.m_picHeightVpsInLumaSamples;
     m_bitDepthVpsLuma                 = other.m_bitDepthVpsLuma;
     m_bitDepthVpsChroma               = other.m_bitDepthVpsChroma;
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+    m_conformanceWindowVps            = other.m_conformanceWindowVps;
+#endif
   }
   return *this;
 }
@@ -4076,7 +4123,7 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
     {
       TComPic* pcRefPicBL = m_pcBaseColPic[refLayerIdc];
 
-      // copy scalability ratio, it is needed to get the corect location for the motion field of the corresponding reference layer block
+      // copy scalability ratio, it is needed to get the correct location for the motion field of the corresponding reference layer block
       pcIlpPic[refLayerIdc]->setSpatialEnhLayerFlag( refLayerIdc, m_pcPic->isSpatialEnhLayer(refLayerIdc) );
 
       pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );      

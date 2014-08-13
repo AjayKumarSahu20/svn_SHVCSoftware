@@ -180,6 +180,15 @@ Void TAppEncTop::xInitLibCfg()
     repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
     repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
 #endif
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+    repFormat->getConformanceWindowVps().setWindow(
+      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinLeft, 
+      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinRight, 
+      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinTop,
+      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinBottom );
+#endif
+
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
     m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch( m_skipPictureAtArcSwitch );
 #endif

@@ -213,7 +213,11 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     g_uiAddCUDepth  = max (0, pcSPS->getLog2MinCodingBlockSize() - (Int)pcSPS->getQuadtreeTULog2MinSize() );
 
     Int  numReorderPics[MAX_TLAYER];
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+    Window &conformanceWindow = slice->getConformanceWindow();
+#else
     Window &conformanceWindow = pcSPS->getConformanceWindow();
+#endif
     Window defaultDisplayWindow = pcSPS->getVuiParametersPresentFlag() ? pcSPS->getVuiParameters()->getDefaultDisplayWindow() : Window();
 
     for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
@@ -302,7 +306,11 @@ Void TDecTop::deletePicBuffer ( )
 Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 {
   Int  numReorderPics[MAX_TLAYER];
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window &conformanceWindow = pcSlice->getConformanceWindow();
+#else
   Window &conformanceWindow = pcSlice->getSPS()->getConformanceWindow();
+#endif
   Window defaultDisplayWindow = pcSlice->getSPS()->getVuiParametersPresentFlag() ? pcSlice->getSPS()->getVuiParameters()->getDefaultDisplayWindow() : Window();
 
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
@@ -764,13 +772,23 @@ Void TDecTop::xActivateParameterSets()
       RepFormat* repFormat = activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(refLayerId) );
 
       Int  numReorderPics[MAX_TLAYER];
+#if !R0156_CONF_WINDOW_IN_REP_FORMAT
       Window conformanceWindow;
+#endif
       Window defaultDisplayWindow;
 
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), repFormat->getConformanceWindowVps(), defaultDisplayWindow, numReorderPics, NULL, true);
+#else
+      pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), repFormat->getConformanceWindowVps(), defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
+#else
 #if AUXILIARY_PICTURES
       pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), repFormat->getChromaFormatVpsIdc(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
 #else
       pBLPic->create( repFormat->getPicWidthVpsInLumaSamples(), repFormat->getPicHeightVpsInLumaSamples(), activeSPS->getMaxCUWidth(), activeSPS->getMaxCUHeight(), activeSPS->getMaxCUDepth(), conformanceWindow, defaultDisplayWindow, numReorderPics, NULL, true);
+#endif
 #endif
       // it is needed where the VPS is accessed through the slice
       pBLPic->getSlice(0)->setVPS( activeVPS );
