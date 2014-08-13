@@ -373,16 +373,16 @@ SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
   if( !seiColourRemappingInfo->m_colourRemapCancelFlag )
   {
     seiColourRemappingInfo->m_colourRemapPersistenceFlag            = m_pcCfg->getCRISEIPersistenceFlag();
-    seiColourRemappingInfo->m_colourRemapVideoSignalTypePresentFlag = m_pcCfg->getCRISEIVideoSignalTypePresentFlag();
-    if( seiColourRemappingInfo->m_colourRemapVideoSignalTypePresentFlag )
+    seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag = m_pcCfg->getCRISEIVideoSignalInfoPresentFlag();
+    if( seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag )
     {
-      seiColourRemappingInfo->m_colourRemapVideoFullRangeFlag      = m_pcCfg->getCRISEIVideoFullRangeFlag();
+      seiColourRemappingInfo->m_colourRemapFullRangeFlag           = m_pcCfg->getCRISEIFullRangeFlag();
       seiColourRemappingInfo->m_colourRemapPrimaries               = m_pcCfg->getCRISEIPrimaries();
-      seiColourRemappingInfo->m_colourRemapTransferCharacteristics = m_pcCfg->getCRISEITransferCharacteristics();
-      seiColourRemappingInfo->m_colourRemapMatrixCoeffs            = m_pcCfg->getCRISEIMatrixCoeffs();
+      seiColourRemappingInfo->m_colourRemapTransferFunction        = m_pcCfg->getCRISEITransferFunction();
+      seiColourRemappingInfo->m_colourRemapMatrixCoefficients      = m_pcCfg->getCRISEIMatrixCoefficients();
     }
-    seiColourRemappingInfo->m_colourRemapCodedDataBitDepth = m_pcCfg->getCRISEICodedDataBitDepth();
-    seiColourRemappingInfo->m_colourRemapTargetBitDepth    = m_pcCfg->getCRISEITargetBitDepth();
+    seiColourRemappingInfo->m_colourRemapInputBitDepth             = m_pcCfg->getCRISEIInputBitDepth();
+    seiColourRemappingInfo->m_colourRemapBitDepth                  = m_pcCfg->getCRISEIBitDepth();
     for( Int c=0 ; c<3 ; c++ )
     {
       seiColourRemappingInfo->m_preLutNumValMinus1[c] = m_pcCfg->getCRISEIPreLutNumValMinus1(c);

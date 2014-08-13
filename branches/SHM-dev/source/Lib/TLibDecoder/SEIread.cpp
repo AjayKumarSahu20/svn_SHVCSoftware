@@ -935,16 +935,16 @@ Void SEIReader::xParseSEIColourRemappingInfo(SEIColourRemappingInfo& sei, UInt /
   if( !sei.m_colourRemapCancelFlag ) 
   {
     READ_FLAG( uiVal, "colour_remap_persistence_flag" );                sei.m_colourRemapPersistenceFlag = uiVal;
-    READ_FLAG( uiVal, "colour_remap_video_signal_type_present_flag" );  sei.m_colourRemapVideoSignalTypePresentFlag = uiVal;
-    if ( sei.m_colourRemapVideoSignalTypePresentFlag )
+    READ_FLAG( uiVal, "colour_remap_video_signal_info_present_flag" );  sei.m_colourRemapVideoSignalInfoPresentFlag = uiVal;
+    if ( sei.m_colourRemapVideoSignalInfoPresentFlag )
     {
-      READ_FLAG( uiVal,    "colour_remap_video_full_range_flag" );     sei.m_colourRemapVideoFullRangeFlag = uiVal;
+      READ_FLAG( uiVal,    "colour_remap_full_range_flag" );           sei.m_colourRemapFullRangeFlag = uiVal;
       READ_CODE( 8, uiVal, "colour_remap_primaries" );                 sei.m_colourRemapPrimaries = uiVal;
-      READ_CODE( 8, uiVal, "colour_remap_transfer_characteristics" );  sei.m_colourRemapTransferCharacteristics = uiVal;
-      READ_CODE( 8, uiVal, "colour_remap_matrix_coeffs" );             sei.m_colourRemapMatrixCoeffs = uiVal;
+      READ_CODE( 8, uiVal, "colour_remap_transfer_function" );         sei.m_colourRemapTransferFunction = uiVal;
+      READ_CODE( 8, uiVal, "colour_remap_matrix_coefficients" );       sei.m_colourRemapMatrixCoefficients = uiVal;
     }
-    READ_CODE( 8, uiVal, "colour_remap_coded_data_bit_depth" );  sei.m_colourRemapCodedDataBitDepth = uiVal;
-    READ_CODE( 8, uiVal, "colour_remap_target_bit_depth" );      sei.m_colourRemapTargetBitDepth = uiVal;
+    READ_CODE( 8, uiVal, "colour_remap_input_bit_depth" ); sei.m_colourRemapInputBitDepth = uiVal;
+    READ_CODE( 8, uiVal, "colour_remap_bit_depth" ); sei.m_colourRemapBitDepth = uiVal;
   
     for( Int c=0 ; c<3 ; c++ )
     {
@@ -954,15 +954,15 @@ Void SEIReader::xParseSEIColourRemappingInfo(SEIColourRemappingInfo& sei, UInt /
       if( uiVal> 0 )
         for ( Int i=0 ; i<=sei.m_preLutNumValMinus1[c] ; i++ )
         {
-          READ_CODE( (( sei.m_colourRemapCodedDataBitDepth   + 7 ) >> 3 ) << 3, uiVal, "pre_lut_coded_value[c][i]" );  sei.m_preLutCodedValue[c][i]  = uiVal;
-          READ_CODE( (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, uiVal, "pre_lut_target_value[c][i]" ); sei.m_preLutTargetValue[c][i] = uiVal;
+          READ_CODE( (( sei.m_colourRemapInputBitDepth   + 7 ) >> 3 ) << 3, uiVal, "pre_lut_coded_value[c][i]" );  sei.m_preLutCodedValue[c][i]  = uiVal;
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "pre_lut_target_value[c][i]" ); sei.m_preLutTargetValue[c][i] = uiVal;
         }
       else // pre_lut_num_val_minus1[c] == 0
       {
         sei.m_preLutCodedValue[c][0]  = 0;
         sei.m_preLutTargetValue[c][0] = 0;
-        sei.m_preLutCodedValue[c][1]  = (1 << sei.m_colourRemapCodedDataBitDepth) - 1 ;
-        sei.m_preLutTargetValue[c][1] = (1 << sei.m_colourRemapTargetBitDepth) - 1 ;
+        sei.m_preLutCodedValue[c][1]  = (1 << sei.m_colourRemapInputBitDepth) - 1 ;
+        sei.m_preLutTargetValue[c][1] = (1 << sei.m_colourRemapBitDepth) - 1 ;
       }
     }
 
@@ -991,15 +991,15 @@ Void SEIReader::xParseSEIColourRemappingInfo(SEIColourRemappingInfo& sei, UInt /
       if( uiVal > 0 )
         for ( Int i=0 ; i<=sei.m_postLutNumValMinus1[c] ; i++ )
         {
-          READ_CODE( (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_coded_value[c][i]" );  sei.m_postLutCodedValue[c][i] = uiVal;
-          READ_CODE( (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_target_value[c][i]" ); sei.m_postLutTargetValue[c][i] = uiVal;
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_coded_value[c][i]" );  sei.m_postLutCodedValue[c][i] = uiVal;
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_target_value[c][i]" ); sei.m_postLutTargetValue[c][i] = uiVal;
         }
       else
       {
         sei.m_postLutCodedValue[c][0]  = 0;
         sei.m_postLutTargetValue[c][0] = 0;
-        sei.m_postLutTargetValue[c][1] = (1 << sei.m_colourRemapTargetBitDepth) - 1;
-        sei.m_postLutCodedValue[c][1]  = (1 << sei.m_colourRemapTargetBitDepth) - 1;
+        sei.m_postLutTargetValue[c][1] = (1 << sei.m_colourRemapBitDepth) - 1;
+        sei.m_postLutCodedValue[c][1]  = (1 << sei.m_colourRemapBitDepth) - 1;
       }
     }
   }

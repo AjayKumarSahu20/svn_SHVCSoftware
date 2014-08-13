@@ -2075,7 +2075,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION
   // reading external Colour Remapping Information SEI message parameters from file
-  if( m_colourRemapSEIFile.length() )
+  if( m_colourRemapSEIFile.size() > 0 )
   {
     FILE* fic;
     Int retval;
@@ -2090,17 +2090,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     if( !m_colourRemapSEICancelFlag )
     {
       retval = fscanf( fic, "%d", &m_colourRemapSEIPersistenceFlag );
-      retval = fscanf( fic, "%d", &m_colourRemapSEIVideoSignalTypePresentFlag);
-      if( m_colourRemapSEIVideoSignalTypePresentFlag )
+      retval = fscanf( fic, "%d", &m_colourRemapSEIVideoSignalInfoPresentFlag);
+      if( m_colourRemapSEIVideoSignalInfoPresentFlag )
       {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIVideoFullRangeFlag  );
+        retval = fscanf( fic, "%d", &m_colourRemapSEIFullRangeFlag  );
         retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
-        retval = fscanf( fic, "%d", &m_colourRemapSEITransferCharacteristics );
-        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoeffs );
+        retval = fscanf( fic, "%d", &m_colourRemapSEITransferFunction );
+        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoefficients );
       }
 
-      retval = fscanf( fic, "%d", &m_colourRemapSEICodedDataBitDepth );
-      retval = fscanf( fic, "%d", &m_colourRemapSEITargetBitDepth );
+      retval = fscanf( fic, "%d", &m_colourRemapSEIInputBitDepth );
+      retval = fscanf( fic, "%d", &m_colourRemapSEIBitDepth );
   
       for( Int c=0 ; c<3 ; c++ )
       {
@@ -2169,17 +2169,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       if( !m_acLayerCfg[layer].m_colourRemapSEICancelFlag )
       {
         retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag = tempCode ? 1 : 0;
-        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag = tempCode ? 1 : 0;
-        if( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalTypePresentFlag )
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
+        if( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag )
         {
-          retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoFullRangeFlag = tempCode ? 1 : 0;
+          retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
           retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
-          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEITransferCharacteristics );
-          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIMatrixCoeffs );
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEITransferFunction );
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIMatrixCoefficients );
         }
 
-        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEICodedDataBitDepth );
-        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEITargetBitDepth );
+        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIInputBitDepth );
+        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIBitDepth );
   
         for( Int c=0 ; c<3 ; c++ )
         {
@@ -3323,25 +3323,25 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION
-  if ( m_colourRemapSEIFile.c_str() && !m_colourRemapSEICancelFlag )
+  if ( ( m_colourRemapSEIFile.size() > 0 ) && !m_colourRemapSEICancelFlag )
   {
-    xConfirmPara( m_colourRemapSEICodedDataBitDepth < 8 || m_colourRemapSEICodedDataBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
-    xConfirmPara( m_colourRemapSEITargetBitDepth < 8 || (m_colourRemapSEITargetBitDepth > 16 && m_colourRemapSEITargetBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmPara( m_colourRemapSEIInputBitDepth < 8 || m_colourRemapSEIInputBitDepth > 16 , "colour_remap_input_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmPara( m_colourRemapSEIBitDepth < 8 || m_colourRemapSEIBitDepth > 16, "colour_remap_bit_depth shall be in the range of 8 to 16, inclusive");
     for( Int c=0 ; c<3 ; c++)
     {
       xConfirmPara( m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
       if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
         for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
         {
-          xConfirmPara( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEICodedDataBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_coded_data_bit_depth)-1, inclusive");
-          xConfirmPara( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEITargetBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_input_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
         }
       xConfirmPara( m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
       if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
         for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
         {
-          xConfirmPara( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEITargetBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
-          xConfirmPara( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEITargetBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
         }
     }
     if ( m_colourRemapSEIMatrixPresentFlag )

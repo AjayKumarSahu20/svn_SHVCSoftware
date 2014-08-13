@@ -366,16 +366,16 @@ Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vec
   {  
     Int bitDepth = c ? bitDepthC : bitDepthY ;
     preLut[c].resize(1 << bitDepth);
-    postLut[c].resize(1 << pCriSEI->m_colourRemapTargetBitDepth);
+    postLut[c].resize(1 << pCriSEI->m_colourRemapBitDepth);
     
-    Int bitDepthDiff = pCriSEI->m_colourRemapTargetBitDepth - bitDepth;
-    Int iShift1 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from bitdepth to TargetBitdepth (manage only case colourRemapTargetBitDepth>= bitdepth)
+    Int bitDepthDiff = pCriSEI->m_colourRemapBitDepth - bitDepth;
+    Int iShift1 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from bitdepth to ColourRemapBitdepth (manage only case colourRemapBitDepth>= bitdepth)
     if( bitDepthDiff<0 )
-      printf ("Warning: CRI SEI - colourRemapTargetBitDepth (%d) <bitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapTargetBitDepth, bitDepth);
-    bitDepthDiff = pCriSEI->m_colourRemapTargetBitDepth - pCriSEI->m_colourRemapCodedDataBitDepth;
-    Int iShift2 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from codedDataBitdepth to TargetBitdepth (manage only case colourRemapTargetBitDepth>= colourRemapCodedDataBitDepth)
+      printf ("Warning: CRI SEI - colourRemapBitDepth (%d) <bitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapBitDepth, bitDepth);
+    bitDepthDiff = pCriSEI->m_colourRemapBitDepth - pCriSEI->m_colourRemapInputBitDepth;
+    Int iShift2 = (bitDepthDiff>0) ? bitDepthDiff : 0; //bit scale from ColourRemapInputBitdepth to ColourRemapBitdepth (manage only case colourRemapBitDepth>= colourRemapInputBitDepth)
     if( bitDepthDiff<0 )
-      printf ("Warning: CRI SEI - colourRemapTargetBitDepth (%d) <colourRemapCodedDataBitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapTargetBitDepth, pCriSEI->m_colourRemapCodedDataBitDepth);
+      printf ("Warning: CRI SEI - colourRemapBitDepth (%d) <colourRemapInputBitDepth (%d) - case not handled\n", pCriSEI->m_colourRemapBitDepth, pCriSEI->m_colourRemapInputBitDepth);
 
     //Fill preLut
     for ( Int k=0 ; k<(1<<bitDepth) ; k++ )
@@ -383,10 +383,10 @@ Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vec
       Int iSample = k << iShift1 ;
       for ( Int iPivot=0 ; iPivot<=pCriSEI->m_preLutNumValMinus1[c] ; iPivot++ )
       {
-        Int iCodedPrev  = pCriSEI->m_preLutCodedValue[c][iPivot]    << iShift2; //Coded in CodedDataBitdepth
-        Int iCodedNext  = pCriSEI->m_preLutCodedValue[c][iPivot+1]  << iShift2; //Coded in CodedDataBitdepth
-        Int iTargetPrev = pCriSEI->m_preLutTargetValue[c][iPivot];              //Coded in TargetBitdepth
-        Int iTargetNext = pCriSEI->m_preLutTargetValue[c][iPivot+1];            //Coded in TargetBitdepth
+        Int iCodedPrev  = pCriSEI->m_preLutCodedValue[c][iPivot]    << iShift2; //Coded in CRInputBitdepth
+        Int iCodedNext  = pCriSEI->m_preLutCodedValue[c][iPivot+1]  << iShift2; //Coded in CRInputBitdepth
+        Int iTargetPrev = pCriSEI->m_preLutTargetValue[c][iPivot];              //Coded in CRBitdepth
+        Int iTargetNext = pCriSEI->m_preLutTargetValue[c][iPivot+1];            //Coded in CRBitdepth
         if ( iCodedPrev <= iSample && iSample <= iCodedNext )
         {
           Float fInterpol = (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) * 1.f / (Float)(iCodedNext - iCodedPrev);
@@ -397,15 +397,15 @@ Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vec
     }
     
     //Fill postLut
-    for ( Int k=0 ; k<(1<<pCriSEI->m_colourRemapTargetBitDepth) ; k++ )
+    for ( Int k=0 ; k<(1<<pCriSEI->m_colourRemapBitDepth) ; k++ )
     {
       Int iSample = k;
       for ( Int iPivot=0 ; iPivot<=pCriSEI->m_postLutNumValMinus1[c] ; iPivot++ )
       {
-        Int iCodedPrev  = pCriSEI->m_postLutCodedValue[c][iPivot];    //Coded in TargetBitdepth
-        Int iCodedNext  = pCriSEI->m_postLutCodedValue[c][iPivot+1];  //Coded in TargetBitdepth
-        Int iTargetPrev = pCriSEI->m_postLutTargetValue[c][iPivot];   //Coded in TargetBitdepth
-        Int iTargetNext = pCriSEI->m_postLutTargetValue[c][iPivot+1]; //Coded in TargetBitdepth
+        Int iCodedPrev  = pCriSEI->m_postLutCodedValue[c][iPivot];    //Coded in CRBitdepth
+        Int iCodedNext  = pCriSEI->m_postLutCodedValue[c][iPivot+1];  //Coded in CRBitdepth
+        Int iTargetPrev = pCriSEI->m_postLutTargetValue[c][iPivot];   //Coded in CRBitdepth
+        Int iTargetNext = pCriSEI->m_postLutTargetValue[c][iPivot+1]; //Coded in CRBitdepth
         if ( iCodedPrev <= iSample && iSample <= iCodedNext )
         {
           Float fInterpol =  (Float)( (iCodedNext - iSample)*iTargetPrev + (iSample - iCodedPrev)*iTargetNext ) * 1.f / (Float)(iCodedNext - iCodedPrev) ;
@@ -485,7 +485,7 @@ static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
                     + storeCriSEI[layerId].m_colourRemapCoeffs[0][1]*YUVPre[1] 
                     + storeCriSEI[layerId].m_colourRemapCoeffs[0][2]*YUVPre[2] 
                     + roundingOffset ) >> ( storeCriSEI[layerId].m_log2MatrixDenom );
-        YUVMat[0] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapTargetBitDepth)-1, YUVMat[0] );
+        YUVMat[0] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapBitDepth)-1, YUVMat[0] );
         YUVOut[0][x] = postLut[0][ YUVMat[0] ];
 
         if( (y&1) && (x&1) )
@@ -496,7 +496,7 @@ static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
                         + storeCriSEI[layerId].m_colourRemapCoeffs[c][1]*YUVPre[1] 
                         + storeCriSEI[layerId].m_colourRemapCoeffs[c][2]*YUVPre[2] 
                         + roundingOffset ) >> ( storeCriSEI[layerId].m_log2MatrixDenom );
-            YUVMat[c] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapTargetBitDepth)-1, YUVMat[c] );
+            YUVMat[c] = Clip3( 0, (1<<storeCriSEI[layerId].m_colourRemapBitDepth)-1, YUVMat[c] );
             YUVOut[c][x>>1] = postLut[c][ YUVMat[c] ];   
           }
         }
@@ -514,8 +514,8 @@ static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
 
     //Write remapped picture in decoding order
     Char  cTemp[255];
-    sprintf(cTemp, "seiColourRemappedPic_L%d_%dx%d_%dbits.yuv", layerId, iWidth, iHeight, storeCriSEI[layerId].m_colourRemapTargetBitDepth );
-    picColourRemapped.dump( cTemp, true, storeCriSEI[layerId].m_colourRemapTargetBitDepth );
+    sprintf(cTemp, "seiColourRemappedPic_L%d_%dx%d_%dbits.yuv", layerId, iWidth, iHeight, storeCriSEI[layerId].m_colourRemapBitDepth );
+    picColourRemapped.dump( cTemp, true, storeCriSEI[layerId].m_colourRemapBitDepth );
 
     picColourRemapped.destroy();
 
