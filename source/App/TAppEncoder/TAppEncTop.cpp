@@ -1480,6 +1480,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 #endif
+#if !PER_LAYER_PTL
   for(i = 1; i < vps->getNumLayerSets(); i++)
   {
     vps->setProfileLevelTierIdx(i, i);
@@ -1487,6 +1488,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setOutputLayerSetIdx(i, i);
 #endif
   }  
+#endif
 #endif
  #if VPS_DPB_SIZE_TABLE
   // The Layer ID List variables can be derived here.  
@@ -1553,6 +1555,27 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if NECESSARY_LAYER_FLAG
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
+#endif
+#if PER_LAYER_PTL
+  vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
+  vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0 ); // Default 0-th output layer set
+  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
+  {
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
+    Int numLayerInLayerSet = vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet );
+    for(Int j = 0; j < numLayerInLayerSet; j++)
+    {
+      Int layerIdxInVps = vps->getLayerIdInVps( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) );
+      if( vps->getNecessaryLayerFlag(i, j) )
+      {
+        vps->getProfileLevelTierIdx(i)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? layerIdxInVps + 1 : layerIdxInVps);
+      }
+      else
+      {
+        vps->getProfileLevelTierIdx(i)->push_back( -1 );
+      }
+    }
+  }
 #endif
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)

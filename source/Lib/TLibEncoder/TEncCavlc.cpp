@@ -1069,6 +1069,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
 #else
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
+#if PER_LAYER_PTL
+  Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
+#endif
 #endif
 #if LIST_OF_PTL
   assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
@@ -1152,6 +1155,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   for(i = 1; i < numOutputLayerSets; i++)
   {
+    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
     if( i > (vps->getNumLayerSets() - 1) )
     {
       Int numBits = 1;
@@ -1169,9 +1173,8 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
     {
 #endif
-      Int lsIdx = vps->getOutputLayerSetIdx(i);
 #if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
+      for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
 #else
       for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
 #endif
@@ -1179,15 +1182,24 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
     }
+#if PER_LAYER_PTL
+    for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
+    {
+      if( vps->getNecessaryLayerFlag(i, j) )
+      {
+        WRITE_CODE( vps->getProfileLevelTierIdx(i, j), numBitsForPtlIdx, "profile_level_tier_idx[i]" );
+      }
+    }
+#else
     Int numBits = 1;
     while ((1 << numBits) < (vps->getNumProfileTierLevel()))
     {
       numBits++;
     }
     WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
+#endif
 #if P0300_ALT_OUTPUT_LAYER_FLAG
     NumOutputLayersInOutputLayerSet[i] = 0;
-    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
     for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
     {
       NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);

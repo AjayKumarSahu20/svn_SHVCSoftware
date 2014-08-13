@@ -2445,7 +2445,9 @@ TComVPS::TComVPS()
   ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
 #endif
 #endif
+#if !PER_LAYER_PTL
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
+#endif
   m_maxOneActiveRefLayerFlag = true;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
@@ -3073,6 +3075,17 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
     }
     assert( layerFoundNecessaryLayerFlag );
   }
+}
+#endif
+#if PER_LAYER_PTL
+Int const TComVPS::calculateLenOfSyntaxElement( Int const numVal )
+{
+  Int numBits = 1;
+  while((1 << numBits) < numVal)
+  {
+    numBits++;
+  }
+  return numBits;
 }
 #endif
 #if RESOLUTION_BASED_DPB
