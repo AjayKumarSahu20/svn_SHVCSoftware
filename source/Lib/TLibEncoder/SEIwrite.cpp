@@ -645,24 +645,24 @@ Void SEIWriter::xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei)
   if( !sei.m_colourRemapCancelFlag ) 
   {
     WRITE_FLAG( sei.m_colourRemapPersistenceFlag,              "colour_remap_persistence_flag" );
-    WRITE_FLAG( sei.m_colourRemapVideoSignalTypePresentFlag,   "colour_remap_video_signal_type_present_flag" );
-    if ( sei.m_colourRemapVideoSignalTypePresentFlag )
+    WRITE_FLAG( sei.m_colourRemapVideoSignalInfoPresentFlag,   "colour_remap_video_signal_info_present_flag" );
+    if ( sei.m_colourRemapVideoSignalInfoPresentFlag )
     {
-      WRITE_FLAG( sei.m_colourRemapVideoFullRangeFlag,         "colour_remap_video_full_range_flag" );
+      WRITE_FLAG( sei.m_colourRemapFullRangeFlag,              "colour_remap_full_range_flag" );
       WRITE_CODE( sei.m_colourRemapPrimaries,               8, "colour_remap_primaries" );
-      WRITE_CODE( sei.m_colourRemapTransferCharacteristics, 8, "colour_remap_transfer_characteristics" );
-      WRITE_CODE( sei.m_colourRemapMatrixCoeffs,            8, "colour_remap_matrix_coeffs" );
+      WRITE_CODE( sei.m_colourRemapTransferFunction,        8, "colour_remap_transfer_function" );
+      WRITE_CODE( sei.m_colourRemapMatrixCoefficients,      8, "colour_remap_matrix_coefficients" );
     }
-    WRITE_CODE( sei.m_colourRemapCodedDataBitDepth,         8, "colour_remap_coded_data_bit_depth" );
-    WRITE_CODE( sei.m_colourRemapTargetBitDepth,            8, "colour_remap_target_bit_depth" );
+    WRITE_CODE( sei.m_colourRemapInputBitDepth,             8, "colour_remap_input_bit_depth" );
+    WRITE_CODE( sei.m_colourRemapBitDepth,                  8, "colour_remap_bit_depth" );
     for( Int c=0 ; c<3 ; c++ )
     {
       WRITE_CODE( sei.m_preLutNumValMinus1[c],              8, "pre_lut_num_val_minus1[c]" );
       if( sei.m_preLutNumValMinus1[c]>0 )
         for( Int i=0 ; i<=sei.m_preLutNumValMinus1[c] ; i++ )
         {
-          WRITE_CODE( sei.m_preLutCodedValue[c][i],  (( sei.m_colourRemapCodedDataBitDepth + 7 ) >> 3 ) << 3, "pre_lut_coded_value[c][i]" );
-          WRITE_CODE( sei.m_preLutTargetValue[c][i], (( sei.m_colourRemapTargetBitDepth    + 7 ) >> 3 ) << 3, "pre_lut_target_value[c][i]" );
+          WRITE_CODE( sei.m_preLutCodedValue[c][i], (( sei.m_colourRemapInputBitDepth + 7 ) >> 3 ) << 3, "pre_lut_coded_value[c][i]" );
+          WRITE_CODE( sei.m_preLutTargetValue[c][i], (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, "pre_lut_target_value[c][i]" );
         }
     }
     WRITE_FLAG( sei.m_colourRemapMatrixPresentFlag,            "colour_remap_matrix_present_flag" );
@@ -680,8 +680,8 @@ Void SEIWriter::xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei)
       if( sei.m_postLutNumValMinus1[c]>0 )
         for( Int i=0 ; i<=sei.m_postLutNumValMinus1[c] ; i++ )
         {
-          WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );       
-          WRITE_CODE( sei.m_postLutTargetValue[c][i], (( sei.m_colourRemapTargetBitDepth + 7 ) >> 3 ) << 3, "post_lut_target_value[c][i]" );
+          WRITE_CODE( sei.m_postLutCodedValue[c][i], (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, "post_lut_coded_value[c][i]" );       
+          WRITE_CODE( sei.m_postLutTargetValue[c][i], (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, "post_lut_target_value[c][i]" );
         }
     }
   }

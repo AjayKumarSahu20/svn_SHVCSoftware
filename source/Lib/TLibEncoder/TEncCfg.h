@@ -393,13 +393,13 @@ protected:
   Int       m_colourRemapSEIId;
   Bool      m_colourRemapSEICancelFlag;
   Bool      m_colourRemapSEIPersistenceFlag;
-  Bool      m_colourRemapSEIVideoSignalTypePresentFlag;
-  Bool      m_colourRemapSEIVideoFullRangeFlag;
+  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool      m_colourRemapSEIFullRangeFlag;
   Int       m_colourRemapSEIPrimaries;
-  Int       m_colourRemapSEITransferCharacteristics;
-  Int       m_colourRemapSEIMatrixCoeffs;
-  Int       m_colourRemapSEICodedDataBitDepth;
-  Int       m_colourRemapSEITargetBitDepth;
+  Int       m_colourRemapSEITransferFunction;
+  Int       m_colourRemapSEIMatrixCoefficients;
+  Int       m_colourRemapSEIInputBitDepth;
+  Int       m_colourRemapSEIBitDepth;
   Int       m_colourRemapSEIPreLutNumValMinus1[3];
   Int*      m_colourRemapSEIPreLutCodedValue[3];
   Int*      m_colourRemapSEIPreLutTargetValue[3];
@@ -711,20 +711,20 @@ public:
   Bool  getCRISEICancelFlag()                                { return m_colourRemapSEICancelFlag; }
   Void  setCRISEIPersistenceFlag(Bool b)                     { m_colourRemapSEIPersistenceFlag = b; }
   Bool  getCRISEIPersistenceFlag()                           { return m_colourRemapSEIPersistenceFlag; }
-  Void  setCRISEIVideoSignalTypePresentFlag(Bool b)          { m_colourRemapSEIVideoSignalTypePresentFlag = b; }
-  Bool  getCRISEIVideoSignalTypePresentFlag()                { return m_colourRemapSEIVideoSignalTypePresentFlag; }
-  Void  setCRISEIVideoFullRangeFlag(Bool b)                  { m_colourRemapSEIVideoFullRangeFlag = b; }
-  Bool  getCRISEIVideoFullRangeFlag()                        { return m_colourRemapSEIVideoFullRangeFlag; }
+  Void  setCRISEIVideoSignalInfoPresentFlag(Bool b)          { m_colourRemapSEIVideoSignalInfoPresentFlag = b; }
+  Bool  getCRISEIVideoSignalInfoPresentFlag()                { return m_colourRemapSEIVideoSignalInfoPresentFlag; }
+  Void  setCRISEIFullRangeFlag(Bool b)                       { m_colourRemapSEIFullRangeFlag = b; }
+  Bool  getCRISEIFullRangeFlag()                             { return m_colourRemapSEIFullRangeFlag; }
   Void  setCRISEIPrimaries(Int i)                            { m_colourRemapSEIPrimaries = i; }
   Int   getCRISEIPrimaries()                                 { return m_colourRemapSEIPrimaries; }  
-  Void  setCRISEITransferCharacteristics(Int i)              { m_colourRemapSEITransferCharacteristics = i; }
-  Int   getCRISEITransferCharacteristics()                   { return m_colourRemapSEITransferCharacteristics; }  
-  Void  setCRISEIMatrixCoeffs(Int i)                         { m_colourRemapSEIMatrixCoeffs = i; }
-  Int   getCRISEIMatrixCoeffs()                              { return m_colourRemapSEIMatrixCoeffs; }
-  Void  setCRISEICodedDataBitDepth(Int i)                    { m_colourRemapSEICodedDataBitDepth = i; }
-  Int   getCRISEICodedDataBitDepth()                         { return m_colourRemapSEICodedDataBitDepth; } 
-  Void  setCRISEITargetBitDepth(Int i)                       { m_colourRemapSEITargetBitDepth = i; }
-  Int   getCRISEITargetBitDepth()                            { return m_colourRemapSEITargetBitDepth; } 
+  Void  setCRISEITransferFunction(Int i)                     { m_colourRemapSEITransferFunction = i; }
+  Int   getCRISEITransferFunction()                          { return m_colourRemapSEITransferFunction; }  
+  Void  setCRISEIMatrixCoefficients(Int i)                   { m_colourRemapSEIMatrixCoefficients = i; }
+  Int   getCRISEIMatrixCoefficients()                        { return m_colourRemapSEIMatrixCoefficients; }
+  Void  setCRISEIInputBitDepth(Int i)                        { m_colourRemapSEIInputBitDepth = i; }
+  Int   getCRISEIInputBitDepth()                             { return m_colourRemapSEIInputBitDepth; } 
+  Void  setCRISEIBitDepth(Int i)                             { m_colourRemapSEIBitDepth = i; }
+  Int   getCRISEIBitDepth()                                  { return m_colourRemapSEIBitDepth; } 
   Void  setCRISEIPreLutNumValMinus1(Int *i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutNumValMinus1[c] = i[c]; }
   Int   getCRISEIPreLutNumValMinus1(Int i)                   { return m_colourRemapSEIPreLutNumValMinus1[i]; }
   Void  setCRISEIPreLutCodedValue(Int **i)                   { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutCodedValue[c] = i[c]; }
