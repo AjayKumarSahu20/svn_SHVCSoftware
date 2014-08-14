@@ -941,7 +941,11 @@ Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &s
       WRITE_CODE( sei.m_nalInitialArrivalDelay[i], len, "nal_initial_arrival_delay" );
     }
   }
+#if BSP_INIT_ARRIVAL_SEI
+  if( hrd->getVclHrdParametersPresentFlag() )
+#else
   else
+#endif
   {
     for(UInt i = 0; i < schedCombCnt; i++)
     {

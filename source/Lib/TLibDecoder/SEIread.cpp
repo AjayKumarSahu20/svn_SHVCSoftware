@@ -1287,7 +1287,11 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
       READ_CODE( len, uiCode, "nal_initial_arrival_delay" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
     }
   }
+#if BSP_INIT_ARRIVAL_SEI
+  if( hrd->getVclHrdParametersPresentFlag() )
+#else
   else
+#endif
   {
     for(UInt i = 0; i < schedCombCnt; i++)
     {
