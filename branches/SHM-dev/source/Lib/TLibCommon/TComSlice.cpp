@@ -3141,6 +3141,20 @@ Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
   return numBits;
 }
 #endif
+#if SUB_LAYERS_IN_LAYER_SET
+Void TComVPS::calculateMaxSLInLayerSets()
+{
+  for(Int lsIdx = 0; lsIdx < getNumLayerSets(); lsIdx++)
+  {
+    UInt maxSLMinus1 = 0;
+    for(Int k = 0; k < getNumLayersInIdList(lsIdx); k++ ) {
+      Int  lId = getLayerSetLayerIdList(lsIdx, k);
+      maxSLMinus1 = std::max(maxSLMinus1, getMaxTSLayersMinus1(getLayerIdInVps(lId)));
+    }
+    setMaxSLayersInLayerSetMinus1(lsIdx,maxSLMinus1);
+  }
+}
+#endif
 #if RESOLUTION_BASED_DPB
 // RepFormat Assignment operator
 RepFormat& RepFormat::operator= (const RepFormat &other)

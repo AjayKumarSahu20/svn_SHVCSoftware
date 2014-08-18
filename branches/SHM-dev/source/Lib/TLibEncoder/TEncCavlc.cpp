@@ -1505,6 +1505,7 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 #if VPS_DPB_SIZE_TABLE
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
+#if !SUB_LAYERS_IN_LAYER_SET  // MaxSLInLayerSets calculated earlier in the encoder
 #if DPB_PARAMS_MAXTLAYERS
 #if BITRATE_PICRATE_SIGNALLING
     Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumLayerSets()];
@@ -1533,6 +1534,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
     }
 #endif
+#endif
     
     
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
@@ -1541,6 +1543,9 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
 #endif
     WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");
+#if SUB_LAYERS_IN_LAYER_SET
+    for(Int j = 0; j <= vps->getMaxSLayersInLayerSetMinus1( layerSetIdxForOutputLayerSet ); j++)
+#else
 #if DPB_PARAMS_MAXTLAYERS
 #if BITRATE_PICRATE_SIGNALLING
     for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ vps->getOutputLayerSetIdx( i ) ]; j++)
@@ -1549,6 +1554,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
 #else
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
+#endif
 #endif
     {
       if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
@@ -1584,11 +1590,13 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
     }
   }
 
+#if !SUB_LAYERS_IN_LAYER_SET
 #if BITRATE_PICRATE_SIGNALLING
   if( MaxSubLayersInLayerSetMinus1 )
   {
     delete [] MaxSubLayersInLayerSetMinus1;
   }
+#endif
 #endif
 }
 #endif

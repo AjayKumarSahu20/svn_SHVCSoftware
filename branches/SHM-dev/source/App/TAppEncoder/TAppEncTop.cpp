@@ -1305,12 +1305,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 #if VPS_TSLAYERS
-    vps->setMaxTSLayersPresentFlag(true);
+  vps->setMaxTSLayersPresentFlag(true);
 
-    for( i = 0; i < vps->getMaxLayers(); i++ )
-    {
-      vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
-    }
+  for( i = 0; i < vps->getMaxLayers(); i++ )
+  {
+    vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
+  }
 #endif
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
   if (vps->getMaxTidRefPresentFlag())
@@ -1585,6 +1585,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
+#endif
+#if SUB_LAYERS_IN_LAYER_SET
+  vps->calculateMaxSLInLayerSets();
 #endif
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
