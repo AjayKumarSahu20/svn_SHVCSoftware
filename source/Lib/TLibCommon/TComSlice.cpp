@@ -286,6 +286,7 @@ Int TComSlice::getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal 
   }
 }
 #endif
+
 /**
  - allocate table to contain substream sizes to be written to the slice header.
  .
@@ -3539,6 +3540,20 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
   return win;
 }
 #endif
+
+#if RESAMPLING_FIX
+#if R0209_GENERIC_PHASE
+Bool TComPPS::hasZeroResamplingPhase(Int refLayerIdc)
+{
+  Int phaseHorLuma   = this->getPhaseHorLuma(refLayerIdc);
+  Int phaseVerLuma   = this->getPhaseVerLuma(refLayerIdc);
+  Int phaseHorChroma = this->getPhaseHorChroma(refLayerIdc);
+  Int phaseVerChroma = this->getPhaseVerChroma(refLayerIdc);
+  return ( phaseHorLuma == 0 && phaseHorChroma == 0 && phaseVerLuma == 0 && phaseVerChroma == 0);
+}
+#endif
+#endif
+
 #endif
 
 TComReferencePictureSet::TComReferencePictureSet()

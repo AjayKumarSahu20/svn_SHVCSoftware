@@ -254,6 +254,7 @@
 #define REF_REGION_OFFSET                1      ///< JCTVC-Q0159/R0220: reference region offset
 #define R0209_GENERIC_PHASE              1      ///< JCTVC-R0209: resampling with generic phase
 #define R0220_REMOVE_EL_CLIP             1      ///< JCTVC-R0220: remove clip to scaled ref window in resampling process
+#define RESAMPLING_FIX                   1      ///< Resampling fix -- equal offset check and conformance check
 #endif
 #else
 #define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
