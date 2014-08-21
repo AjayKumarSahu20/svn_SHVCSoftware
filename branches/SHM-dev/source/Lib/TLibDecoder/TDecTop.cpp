@@ -380,8 +380,15 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
 #if REF_REGION_OFFSET
         const Window refEL = pcSlice->getPPS()->getRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
+#if RESAMPLING_FIX
+        Bool equalOffsets = scalEL.hasEqualOffset(refEL);
+#if R0209_GENERIC_PHASE
+        Bool zeroPhase = pcSlice->getPPS()->hasZeroResamplingPhase(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
+#endif
+#else
         Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
                              && refEL.getWindowLeftOffset() == 0 && refEL.getWindowRightOffset() == 0 && refEL.getWindowTopOffset() == 0 && refEL.getWindowBottomOffset() == 0 );
+#endif
 #else
         Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
 #endif
@@ -398,7 +405,15 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, i);
         Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
-        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets || !sameBitDepths
+        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !sameBitDepths
+#if REF_REGION_OFFSET && RESAMPLING_FIX
+          || !equalOffsets
+#if R0209_GENERIC_PHASE
+          || !zeroPhase
+#endif
+#else
+          || !zeroOffsets
+#endif
 #if Q0048_CGS_3D_ASYMLUT
           || pcSlice->getPPS()->getCGSFlag() > 0
 #endif
@@ -407,10 +422,28 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
           )
 #else
-        if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !zeroOffsets )
+        if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples()
+#if REF_REGION_OFFSET && RESAMPLING_FIX
+          || !equalOffsets
+#if R0209_GENERIC_PHASE
+          || !zeroPhase
 #endif
 #else
-        if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples() || !zeroOffsets )
+          || !zeroOffsets
+#endif
+        )
+#endif
+#else
+        if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples()
+#if REF_REGION_OFFSET && RESAMPLING_FIX
+          || !equalOffsets
+#if R0209_GENERIC_PHASE
+          || !zeroPhase
+#endif
+#else
+          || !zeroOffsets
+#endif
+        )
 #endif
         {
           rpcPic->setSpatialEnhLayerFlag( i, true );
@@ -1973,6 +2006,26 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
         Int widthEL   = pcPic->getPicYuvRec()->getWidth()  - scalEL.getWindowLeftOffset() - scalEL.getWindowRightOffset();
         Int heightEL  = pcPic->getPicYuvRec()->getHeight() - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
+
+#if RESAMPLING_FIX
+#if REF_REGION_OFFSET
+        // conformance check: the values of RefLayerRegionWidthInSamplesY, RefLayerRegionHeightInSamplesY, ScaledRefRegionWidthInSamplesY and ScaledRefRegionHeightInSamplesY shall be greater than 0
+        assert(widthEL > 0 && heightEL > 0 && widthBL > 0 && widthEL > 0);
+
+        // conformance check: ScaledRefRegionWidthInSamplesY shall be greater or equal to RefLayerRegionWidthInSamplesY and ScaledRefRegionHeightInSamplesY shall be greater or equal to RefLayerRegionHeightInSamplesY
+        assert(widthEL >= widthBL && heightEL >= heightBL);
+
+#if R0209_GENERIC_PHASE
+        // conformance check: when ScaledRefRegionWidthInSamplesY is equal to RefLayerRegionWidthInSamplesY, PhaseHorY shall be equal to 0, when ScaledRefRegionWidthInSamplesC is equal to RefLayerRegionWidthInSamplesC, PhaseHorC shall be equal to 0, when ScaledRefRegionHeightInSamplesY is equal to RefLayerRegionHeightInSamplesY, PhaseVerY shall be equal to 0, and when ScaledRefRegionHeightInSamplesC is equal to RefLayerRegionHeightInSamplesC, PhaseVerC shall be equal to 0.
+        Int phaseHorLuma   = pcSlice->getPPS()->getPhaseHorLuma(refLayerIdc);
+        Int phaseVerLuma   = pcSlice->getPPS()->getPhaseVerLuma(refLayerIdc);
+        Int phaseHorChroma = pcSlice->getPPS()->getPhaseHorChroma(refLayerIdc);
+        Int phaseVerChroma = pcSlice->getPPS()->getPhaseVerChroma(refLayerIdc);
+        assert( ( (widthEL  != widthBL)  || (phaseHorLuma == 0 && phaseHorChroma == 0) )
+             && ( (heightEL != heightBL) || (phaseVerLuma == 0 && phaseVerChroma == 0) ) );
+#endif
+#endif
+#endif
 
         g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
         g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);

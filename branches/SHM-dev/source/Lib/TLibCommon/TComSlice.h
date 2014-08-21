@@ -443,6 +443,15 @@ public:
   Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
   Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
 #endif
+#if REF_REGION_OFFSET && RESAMPLING_FIX
+  Bool          hasEqualOffset(const Window& ref) const
+  {
+    return (    this->getWindowLeftOffset()   == ref.getWindowLeftOffset()
+             && this->getWindowTopOffset()    == ref.getWindowTopOffset()
+             && this->getWindowRightOffset()  == ref.getWindowRightOffset()
+             && this->getWindowBottomOffset() == ref.getWindowBottomOffset() );
+  }
+#endif
 
 #if P0312_VERT_PHASE_ADJ
   Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
@@ -2039,6 +2048,9 @@ public:
   Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
   Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
   Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
+#if RESAMPLING_FIX
+  Bool hasZeroResamplingPhase(Int layerId);
+#endif
 #endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
@@ -2627,7 +2639,6 @@ public:
   Void      decrementRefPocValues(Int const decrementValue);
   Int       getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal );
 #endif
-
 
 #endif //SVC_EXTENSION
 protected:
