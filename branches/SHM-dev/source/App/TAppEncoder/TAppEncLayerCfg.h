@@ -80,7 +80,8 @@ protected:
 #endif
 
   Int       m_maxTidIlRefPicsPlus1;
-  Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
+  Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+  Int       m_iWaveFrontSubstreams;               ///< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
@@ -146,6 +147,7 @@ protected:
   Int*      m_colourRemapSEIPostLutCodedValue[3];
   Int*      m_colourRemapSEIPostLutTargetValue[3];
 #endif
+
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();

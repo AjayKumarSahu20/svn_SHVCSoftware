@@ -608,7 +608,7 @@ Void TAppEncTop::xInitLibCfg()
       m_bLFCrossTileBoundaryFlag = true;
     }
     m_acTEncTop[layer].setLFCrossTileBoundaryFlag( m_bLFCrossTileBoundaryFlag );
-    m_acTEncTop[layer].setWaveFrontSynchro           ( m_iWaveFrontSynchro );
+    m_acTEncTop[layer].setWaveFrontSynchro           ( m_acLayerCfg[layer].m_waveFrontSynchro );
     m_acTEncTop[layer].setWaveFrontSubstreams        ( m_acLayerCfg[layer].m_iWaveFrontSubstreams );
     m_acTEncTop[layer].setTMVPModeId ( m_TMVPModeId );
     m_acTEncTop[layer].setUseScalingListId           ( m_useScalingListId  );
