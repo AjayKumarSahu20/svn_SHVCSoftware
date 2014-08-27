@@ -233,7 +233,11 @@ Void TAppEncTop::xInitLibCfg()
 
 #if REF_IDX_MFM
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_nonHEVCBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+#else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+#endif
 #else
     m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
 #endif
@@ -1238,7 +1242,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, dimIdLen = 0;
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
+  if ( m_nonHEVCBaseLayerFlag )
+  {
+    vps->setBaseLayerInternalFlag (false);
+  }
+#else
   vps->setAvcBaseLayerFlag(m_avcBaseLayerFlag);
+#endif
 #else
   vps->setAvcBaseLayerFlag(false);
 #endif

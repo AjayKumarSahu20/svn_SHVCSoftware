@@ -68,7 +68,11 @@ protected:
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  Int       m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
+#else
   Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
+#endif
 #endif
   Bool      m_maxTidRefPresentFlag; 
 #if Q0078_ADD_LAYER_SETS

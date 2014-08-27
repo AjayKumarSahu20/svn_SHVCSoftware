@@ -346,6 +346,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #else
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+    //TODO: HENDRY -- Do the checking here.
 #endif
   }
 #else
@@ -741,7 +742,11 @@ Void TDecTop::xActivateParameterSets()
     TComSPS *refSps = m_ppcTDecTop[refLayerId]->getParameterSetManager()->getActiveSPS(); assert( refSps != NULL );
 
     // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( activeVPS->getNonHEVCBaseLayerFlag() )
+#else
     if( activeVPS->getAvcBaseLayerFlag() )
+#endif
     {
       assert( refLayerId > 0 );
     }
@@ -770,7 +775,11 @@ Void TDecTop::xActivateParameterSets()
     TComPPS *refPps = m_ppcTDecTop[refLayerId]->getParameterSetManager()->getActivePPS(); assert( refPps != NULL );
 
     // When avc_base_layer_flag is equal to 1, it is a requirement of bitstream conformance that the value of sps_scaling_list_ref_layer_id shall be greater than 0
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( activeVPS->getNonHEVCBaseLayerFlag() )
+#else
     if( activeVPS->getAvcBaseLayerFlag() )
+#endif
     {
       assert( refLayerId > 0 );
     }
@@ -796,7 +805,11 @@ Void TDecTop::xActivateParameterSets()
 #endif
 
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  if( activeVPS->getNonHEVCBaseLayerFlag() )
+#else
   if( activeVPS->getAvcBaseLayerFlag() )
+#endif
   {
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
     if( m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
@@ -1058,6 +1071,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     m_isNoOutputPriorPics = false;
   }
+
+  //TODO: HENDRY -- Probably do the checking for max number of positive and negative pics here
+
 
   //For inference of PicOutputFlag
   if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)
@@ -1579,7 +1595,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if (m_bFirstSliceInPicture)
   {
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
+#else
     if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+#endif
     {
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
       pBLPic->getSlice(0)->setReferenced(true);
@@ -1940,7 +1960,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         UInt refLayerIdc = i;
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+        if( refLayerId == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getNonHEVCBaseLayerFlag() )
+#else
         if( refLayerId == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
+#endif
         {          
           TComPic* pic = *m_ppcTDecTop[0]->getListPic()->begin();
 
@@ -2115,7 +2139,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+        if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getNonHEVCBaseLayerFlag() )
+#else
         if( pcSlice->getVPS()->getRefLayerId( m_layerId, refLayerIdc ) == 0 && m_parameterSetManagerDecoder.getActiveVPS()->getAvcBaseLayerFlag() )
+#endif
         {
           pcSlice->setBaseColPic ( refLayerIdc, *m_ppcTDecTop[0]->getListPic()->begin() );
         }
@@ -2436,7 +2464,11 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       m_isLastNALWasEos = false;
 #endif
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+      if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
+#else
       if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+#endif
       {
         if( !m_ppcTDecTop[0]->getBLReconFile()->good() )
         {

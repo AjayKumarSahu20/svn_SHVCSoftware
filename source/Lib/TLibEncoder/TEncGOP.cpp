@@ -992,7 +992,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SCALINGLIST_INFERRING
       // inferring of the scaling list can be moved to the config file
       UInt refLayerId = 0;
+#if VPS_AVC_BL_FLAG_REMOVAL
+      if( m_layerId > 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+#else
       if( m_layerId > 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+#endif
       {
         m_pcEncTop->getSPS()->setInferScalingListFlag( true );
         m_pcEncTop->getSPS()->setScalingListRefLayerId( refLayerId );
@@ -1022,7 +1026,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SCALINGLIST_INFERRING
       // inferring of the scaling list can be moved to the config file
       UInt refLayerId = 0;
+#if VPS_AVC_BL_FLAG_REMOVAL
+      if( m_layerId > 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+#else
       if( m_layerId > 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
+#endif
       {
         m_pcEncTop->getSPS()->setInferScalingListFlag( true );
         m_pcEncTop->getSPS()->setScalingListRefLayerId( refLayerId );
@@ -2109,7 +2117,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_storedStartCUAddrForEncodingSliceSegment.push_back(nextCUAddr);
     startCUAddrSliceSegmentIdx++;
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( m_layerId == 0 && m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() )
+#else
     if( m_layerId == 0 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() )
+#endif
     {
       pcPic->getPicYuvOrg()->copyToPic( pcPic->getPicYuvRec() );
 #if O0194_WEIGHTED_PREDICTION_CGS
@@ -2222,7 +2234,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
       OutputNALUnit nalu( NAL_UNIT_VPS, 0, 0 ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+      if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) )
+#else
       if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) )
+#endif
 #else
       if( m_layerId == 0 )
 #endif
