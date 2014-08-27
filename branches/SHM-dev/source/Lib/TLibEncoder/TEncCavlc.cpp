@@ -930,8 +930,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, j = 0;
-
+#if !VPS_AVC_BL_FLAG_REMOVAL
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
+#endif
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if O0109_MOVE_VPS_VUI_FLAG
   WRITE_FLAG( 1,                     "vps_vui_present_flag" );

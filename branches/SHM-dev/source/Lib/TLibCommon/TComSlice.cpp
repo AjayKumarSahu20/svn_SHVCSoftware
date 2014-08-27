@@ -2130,7 +2130,11 @@ UInt TComSlice::getPicWidthInLumaSamples()
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
     if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
 #else
   if ( layerId == 0 )
   {
@@ -2169,7 +2173,11 @@ UInt TComSlice::getPicHeightInLumaSamples()
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
     if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
 #else
   if ( layerId == 0 )
   {
@@ -2217,7 +2225,11 @@ UInt TComSlice::getChromaFormatIdc()
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
     if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
 #else
   if ( layerId == 0 )
   {
@@ -2326,7 +2338,11 @@ Window& TComSlice::getConformanceWindow()
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
     if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
 #else
   if ( layerId == 0 )
   {
@@ -2454,7 +2470,11 @@ TComVPS::TComVPS()
     m_uiMaxLatencyIncrease[i] = 0;
   }
 #if VPS_EXTN_MASK_AND_DIM_INFO
+#if VPS_AVC_BL_FLAG_REMOVAL
+  m_nonHEVCBaseLayerFlag = false;
+#else
   m_avcBaseLayerFlag = false;
+#endif
   m_splittingFlag = false;
   ::memset(m_scalabilityMask, 0, sizeof(m_scalabilityMask));
   ::memset(m_dimensionIdLen, 0, sizeof(m_dimensionIdLen));

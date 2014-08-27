@@ -66,7 +66,11 @@ namespace po = df::program_options_lite;
 TAppEncCfg::TAppEncCfg()
 : m_pBitstreamFile()
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+, m_nonHEVCBaseLayerFlag(0)
+#else
 , m_avcBaseLayerFlag(0)
+#endif
 #endif
 , m_maxTidRefPresentFlag(1)
 #if OUTPUT_LAYER_SETS_CONFIG
@@ -742,7 +746,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterLayerWeightedPred", m_useInterLayerWeightedPred, false, "enable IL WP parameters estimation at encoder" )  
 #endif
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  ("NonHEVCBase,-nonhevc",            m_nonHEVCBaseLayerFlag,     0, "BL is available but not internal")
+#else
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
+#endif
   ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
@@ -1215,7 +1223,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /* convert std::string to c string for compatability */
 #if SVC_EXTENSION
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  if( m_nonHEVCBaseLayerFlag )
+#else
   if( m_avcBaseLayerFlag )
+#endif
   {
     *cfg_InputFile[0] = cfg_BLInputFile;
   }
@@ -2573,7 +2585,11 @@ Void TAppEncCfg::xCheckParameter()
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
   
   // it can be updated after AVC BL support will be added to the WD
+#if VPS_AVC_BL_FLAG_REMOVAL
+  if( m_nonHEVCBaseLayerFlag )
+#else
   if( m_avcBaseLayerFlag )
+#endif
   {
     m_crossLayerIrapAlignFlag = false;
     m_crossLayerPictureTypeAlignFlag = false;
@@ -3560,7 +3576,11 @@ Void TAppEncCfg::xPrintParameter()
   printf("Multiview                     : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
   printf("Scalable                      : %d\n", m_scalabilityMask[SCALABILITY_ID] );
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  printf("Base layer                    : %s\n", m_nonHEVCBaseLayerFlag ? "Non-HEVC" : "HEVC");
+#else
   printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
+#endif
 #endif
 #if AUXILIARY_PICTURES
   printf("Auxiliary pictures            : %d\n", m_scalabilityMask[AUX_ID] );
