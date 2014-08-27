@@ -256,8 +256,8 @@ protected:
   Int       m_numTileRowsMinus1;
   std::vector<Int> m_tileColumnWidth;
   std::vector<Int> m_tileRowHeight;
-  Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
 #if !SVC_EXTENSION
+  Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
   Bool      m_bUseConstrainedIntraPred;                       ///< flag for using constrained intra prediction
@@ -496,7 +496,7 @@ public:
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
 #endif
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
-  Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
+  Int  getWaveFrontSynchro(Int layerId)        { return m_acLayerCfg[layerId].m_waveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
 #if OUTPUT_LAYER_SETS_CONFIG
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);

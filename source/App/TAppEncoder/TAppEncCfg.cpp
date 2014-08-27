@@ -484,6 +484,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
   string* cfg_colourRemapSEIFile[MAX_LAYERS];
 #endif
+  Int*    cfg_waveFrontSynchro[MAX_LAYERS];
+
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
@@ -522,6 +524,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+    cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
 #if O0098_SCALED_REF_LAYER_ID
@@ -958,7 +961,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TileColumnWidthArray",        cfgColumnWidth,                  string(""), "Array containing tile column width values in units of LCU")
   ("TileRowHeightArray",          cfgRowHeight,                    string(""), "Array containing tile row height values in units of LCU")
   ("LFCrossTileBoundaryFlag",      m_bLFCrossTileBoundaryFlag,             true,          "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
+#if SVC_EXTENSION
+  ("WaveFrontSynchro%d",          cfg_waveFrontSynchro,             0,  MAX_LAYERS,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+#else
   ("WaveFrontSynchro",            m_iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+#endif
   ("ScalingList",                 m_useScalingListId,              0,          "0: no scaling list, 1: default scaling lists, 2: scaling lists specified in ScalingListFile")
   ("ScalingListFile",             cfg_ScalingListFile,             string(""), "Scaling list file name")
   ("SignHideFlag,-SBH",                m_signHideFlag, 1)
@@ -2457,11 +2464,11 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_sliceSegmentArgument < 1 ,         "SliceSegmentArgument should be larger than or equal to 1" );
   }
   
+#if !SVC_EXTENSION
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
   xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 
   //TODO:ChromaFmt assumes 4:2:0 below
-#if !SVC_EXTENSION
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
 
@@ -3227,7 +3234,12 @@ Void TAppEncCfg::xCheckParameter()
     Int m_uiMaxCUWidth = m_acLayerCfg[layer].m_uiMaxCUWidth;
     Int m_uiMaxCUHeight = m_acLayerCfg[layer].m_uiMaxCUHeight;
 #endif
+
+    Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
+    Int m_iWaveFrontSynchro = m_acLayerCfg[layer].m_waveFrontSynchro;
+    xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 #endif
+
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   { 
     Int PicSizeInSamplesY =  m_iSourceWidth * m_iSourceHeight;
@@ -3304,8 +3316,8 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-  xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
 #if !SVC_EXTENSION
+  xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
   xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 #endif

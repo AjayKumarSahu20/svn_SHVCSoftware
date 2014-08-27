@@ -332,7 +332,7 @@ Void TAppEncLayerCfg::xPrintParameter()
     printf("ForceIntraQP                  : %d\n", m_RCForceIntraQP );
   }
 #endif
-  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_cAppEncCfg->getWaveFrontSynchro(), m_iWaveFrontSubstreams);
+  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_waveFrontSynchro, m_iWaveFrontSubstreams);
 #if LAYER_CTB
   printf("PCM:%d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
@@ -463,10 +463,10 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 #endif
 
-
-  m_iWaveFrontSubstreams = m_cAppEncCfg->getWaveFrontSynchro() ? (m_iSourceHeight + maxCUHeight - 1) / maxCUHeight : 1;
+  m_iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + maxCUHeight - 1) / maxCUHeight : 1;
+  xConfirmPara( m_waveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
-  xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_cAppEncCfg->getWaveFrontSynchro(), "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
+  xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_waveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 
   //chekc parameters
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
