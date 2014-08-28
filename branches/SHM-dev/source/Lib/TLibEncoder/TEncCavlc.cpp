@@ -2998,7 +2998,7 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
 #if R0164_CGS_LUT_BUGFIX      
-      Int shift = pc3DAsymLUT->getMaxOctantDepth() - nDepth ;
+      Int shift = pc3DAsymLUT->getCurOctantDepth() - nDepth ;
 #endif
       for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
       {
