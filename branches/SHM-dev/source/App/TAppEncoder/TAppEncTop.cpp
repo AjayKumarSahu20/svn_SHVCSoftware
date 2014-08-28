@@ -728,6 +728,9 @@ Void TAppEncTop::xInitLibCfg()
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
     m_acTEncTop[layer].setCGSAdaptChroma( m_nCGSAdaptiveChroma );
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+    m_acTEncTop[layer].setCGSLutSizeRDO( m_nCGSLutSizeRDO );
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
     m_acTEncTop[layer].setNumAddLayerSets( m_numAddLayerSets );

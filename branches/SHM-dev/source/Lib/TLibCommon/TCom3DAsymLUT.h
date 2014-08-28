@@ -66,6 +66,10 @@ public:
   Void  setAdaptChromaThresholdV( Int n ) { m_nAdaptCThresholdV = n;  }
   Int   getAdaptChromaThresholdV()        { return m_nAdaptCThresholdV; }
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int   getMaxYSize() { return 1<<(m_nMaxOctantDepth+m_nMaxYPartNumLog2); }
+  Int   getMaxCSize() { return 1<<m_nMaxOctantDepth; }
+#endif 
 
   Void  colorMapping( TComPicYuv * pcPicSrc,  TComPicYuv * pcPicDst );
   Void  copy3DAsymLUT( TCom3DAsymLUT * pSrc );
