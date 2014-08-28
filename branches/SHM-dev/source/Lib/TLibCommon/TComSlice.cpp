@@ -2769,78 +2769,74 @@ Void TComVPS::setNumRefLayers()
 #if Q0078_ADD_LAYER_SETS
 Void TComVPS::setPredictedLayerIds()
 {
-  for (UInt i = 0; i < getMaxLayers() - 1; i++)
+  for (UInt i = 0; i < m_uiMaxLayers - 1; i++)
   {
-    UInt iNuhLId = getLayerIdInNuh(i);
+    UInt iNuhLId = m_layerIdInNuh[i];
     UInt predIdx = 0;
     for (UInt j = iNuhLId + 1; j < MAX_NUM_LAYER_IDS; j++)
     {
-      if (getRecursiveRefLayerFlag(j, iNuhLId))
+      if( m_recursiveRefLayerFlag[j][iNuhLId] )
       {
-        setPredictedLayerId(i, predIdx, j);
+        m_predictedLayerId[i][predIdx] = j;
         predIdx++;
       }
     }
-    setNumPredictedLayers(iNuhLId, predIdx);
+    m_numPredictedLayers[iNuhLId] = predIdx;
   }
 }
 
 Void TComVPS::setTreePartitionLayerIdList()
 {
   Bool countedLayerIdxFlag[MAX_NUM_LAYER_IDS];
-
-  for (UInt i = 0; i <= getMaxLayers() - 1; i++)
-  {
-    countedLayerIdxFlag[i] = false;
-  }
+  memset( countedLayerIdxFlag, 0, sizeof(countedLayerIdxFlag) );
 
   Int numIndependentLayers = 0;
 
-  for (UInt i = 0; i <= getMaxLayers() - 1; i++)
+  for (UInt i = 0; i < m_uiMaxLayers; i++)
   {
-    UInt iNuhLId = getLayerIdInNuh(i);
-    if (getNumDirectRefLayers(iNuhLId) == 0)
+    UInt iNuhLId = m_layerIdInNuh[i];
+    if( m_numDirectRefLayers[iNuhLId] == 0 )
     {
-      setTreePartitionLayerId(numIndependentLayers, 0, iNuhLId);
-      setNumLayersInTreePartition(numIndependentLayers, 1);
-      for (UInt j = 0; j < getNumPredictedLayers(iNuhLId); j++)
+      m_treePartitionLayerIdList[numIndependentLayers][0] = iNuhLId;
+      m_numLayersInTreePartition[numIndependentLayers] = 1;
+      for( UInt j = 0; j < m_numPredictedLayers[iNuhLId]; j++ )
       {
-        if (!countedLayerIdxFlag[getLayerIdInVps(iNuhLId)])
+        if( !countedLayerIdxFlag[m_layerIdInVps[iNuhLId]] )
         {
-          setTreePartitionLayerId(numIndependentLayers, getNumLayersInTreePartition(numIndependentLayers), getPredictedLayerId(iNuhLId, j));
-          setNumLayersInTreePartition(numIndependentLayers, getNumLayersInTreePartition(numIndependentLayers) + 1);
-          countedLayerIdxFlag[getLayerIdInVps(getPredictedLayerId(iNuhLId, j))] = true;
+          m_treePartitionLayerIdList[numIndependentLayers][m_numLayersInTreePartition[numIndependentLayers]] = m_predictedLayerId[iNuhLId][j];
+          m_numLayersInTreePartition[numIndependentLayers] = m_numLayersInTreePartition[numIndependentLayers] + 1;
+          countedLayerIdxFlag[m_layerIdInVps[m_predictedLayerId[iNuhLId][j]]] = true;
         }
       }
       numIndependentLayers++;
     }
   }
 
-  setNumIndependentLayers(numIndependentLayers);
+  m_numIndependentLayers = numIndependentLayers;
 }
 
 void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
 {
-  for (UInt i = 0; i < getNumAddLayerSets(); i++)
+  for (UInt i = 0; i < m_numAddLayerSets; i++)
   {
-    for (UInt j = 1; j < getNumIndependentLayers(); j++)
+    for (UInt j = 1; j < m_numIndependentLayers; j++)
     {
       Int layerNum = 0;
-      Int lsIdx = getVpsNumLayerSetsMinus1() + 1 + i;
+      Int lsIdx = m_vpsNumLayerSetsMinus1 + 1 + i;
       for (Int layerId = 0; layerId < MAX_VPS_LAYER_ID_PLUS1; layerId++)
       {
-        setLayerIdIncludedFlag(false, lsIdx, layerId);
+        m_layerIdIncludedFlag[lsIdx][layerId] = false;
       }
-      for (Int treeIdx = 1; treeIdx < getNumIndependentLayers(); treeIdx++)
+      for (Int treeIdx = 1; treeIdx < m_numIndependentLayers; treeIdx++)
       {
-        for (Int layerCnt = 0; layerCnt < getHighestLayerIdxPlus1(i, j); layerCnt++)
+        for (Int layerCnt = 0; layerCnt < m_highestLayerIdxPlus1[i][j]; layerCnt++)
         {
-          setLayerSetLayerIdList(lsIdx, layerNum, getTreePartitionLayerId(treeIdx, layerCnt));
-          setLayerIdIncludedFlag(true, lsIdx, getTreePartitionLayerId(treeIdx, layerCnt));
+          m_layerSetLayerIdList[lsIdx][layerNum] = m_treePartitionLayerIdList[treeIdx][layerCnt];
+          m_layerIdIncludedFlag[lsIdx][m_treePartitionLayerIdList[treeIdx][layerCnt]] = true;
           layerNum++;
         }
       }
-      setNumLayersInIdList(lsIdx, layerNum);
+      m_numLayerInIdList[lsIdx] = layerNum;
     }
   }
 }
