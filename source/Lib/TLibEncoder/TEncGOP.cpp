@@ -4031,8 +4031,12 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   pcPic->setFrameBit( (Int)uibits );
   if( m_layerId && pcSlice->getPPS()->getCGSFlag() )
   {
+#if R0179_ENC_OPT_3DLUT_SIZE
+      m_Enc3DAsymLUTPicUpdate.update3DAsymLUTParam( &m_Enc3DAsymLUTPPS );
+#else
     if( m_Enc3DAsymLUTPPS.getPPSBit() > 0 )
       m_Enc3DAsymLUTPicUpdate.copy3DAsymLUT( &m_Enc3DAsymLUTPPS );
+#endif
     m_Enc3DAsymLUTPicUpdate.updatePicCGSBits( pcSlice , m_Enc3DAsymLUTPPS.getPPSBit() );
   }
 #endif
@@ -4755,7 +4759,29 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt 
   Int nCGSFlag = pSlice->getPPS()->getCGSFlag();
   m_Enc3DAsymLUTPPS.setPPSBit( 0 );
   Double dErrorUpdatedPPS = 0 , dErrorPPS = 0;
-  dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB() );
+
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int nTLthres = m_pcCfg->getCGSLutSizeRDO() ? 2:7;
+  Double dFrameLambda; 
+#if FULL_NBIT
+  Int    SHIFT_QP = 12 + 6 * (pSlice->getBitDepthY() - 8);
+#else
+  Int    SHIFT_QP = 12; 
+#endif 
+  Int QP = pSlice->getSliceQp();
+
+  // set frame lambda
+  dFrameLambda = 0.68 * pow (2, (QP  - SHIFT_QP) / 3.0) * (m_pcCfg->getGOPSize() > 1 && pSlice->isInterB()? 2 : 1);
+
+  if(m_pcCfg->getCGSLutSizeRDO() == 1 && (!bSignalPPS && (pSlice->getDepth() < nTLthres))) 
+    dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB(), dFrameLambda );
+  else if (pSlice->getDepth() >= nTLthres)
+    dErrorUpdatedPPS = MAX_DOUBLE;
+  else // if (m_pcCfg->getCGSLutSizeRDO() = 0 || bSignalPPS)
+#endif   
+    dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB() );
+
+
   if( bSignalPPS )
   {
     m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );
@@ -4763,9 +4789,31 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt 
   }
   else if( nCGSFlag )
   {
-    dErrorPPS = m_Enc3DAsymLUTPPS.estimateDistWithCur3DAsymLUT( pCurPic , refLayerIdc );
-    Double dFactor = pCfg->getIntraPeriod() == 1 ? 0.99 : 0.9;
-    pSlice->setCGSOverWritePPS( dErrorUpdatedPPS < dFactor * dErrorPPS );
+#if R0179_ENC_OPT_3DLUT_SIZE
+    if(pSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R || pSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N) 
+    {
+      pSlice->setCGSOverWritePPS( 0 ); 
+    }
+    else if (pSlice->getDepth() >= nTLthres) 
+    {
+      pSlice->setCGSOverWritePPS( 0 ); 
+    }
+    else
+    {
+#endif    
+      dErrorPPS = m_Enc3DAsymLUTPPS.estimateDistWithCur3DAsymLUT( pCurPic , refLayerIdc );
+      Double dFactor = pCfg->getIntraPeriod() == 1 ? 0.99 : 0.9;
+
+#if R0179_ENC_OPT_3DLUT_SIZE 
+      if( m_pcCfg->getCGSLutSizeRDO() )
+      {
+        dErrorPPS = dErrorPPS/m_Enc3DAsymLUTPicUpdate.getDistFactor(pSlice->getSliceType(), pSlice->getDepth()); 
+      }
+#endif
+      pSlice->setCGSOverWritePPS( dErrorUpdatedPPS < dFactor * dErrorPPS );
+#if R0179_ENC_OPT_3DLUT_SIZE
+    }
+#endif
     if( pSlice->getCGSOverWritePPS() )
     {
       m_Enc3DAsymLUTPPS.copy3DAsymLUT( &m_Enc3DAsymLUTPicUpdate );

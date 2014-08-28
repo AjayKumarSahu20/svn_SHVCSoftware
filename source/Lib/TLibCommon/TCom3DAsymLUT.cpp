@@ -75,6 +75,7 @@ Void TCom3DAsymLUT::destroy()
 #endif
 }
 
+
 Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   , Int nAdaptCThresholdU , Int nAdaptCThresholdV
@@ -100,6 +101,12 @@ Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumL
   m_nMappingShift = m_nYShift2Idx + m_nUShift2Idx;
 #endif
   m_nMappingOffset = 1 << ( m_nMappingShift - 1 );
+
+#if R0179_ENC_OPT_3DLUT_SIZE
+  m_nYSize = 1 << ( m_nCurOctantDepth + m_nCurYPartNumLog2 );
+  m_nUSize = 1 << m_nCurOctantDepth;
+  m_nVSize = 1 << m_nCurOctantDepth;
+#endif
 }
 
 Void TCom3DAsymLUT::colorMapping( TComPicYuv * pcPic, TComPicYuv * pcPicDst )
@@ -332,7 +339,11 @@ SYUVP TCom3DAsymLUT::xMapUV( Pel y , Pel u , Pel v )
 
 Void TCom3DAsymLUT::xSaveCuboids( SCuboid *** pSrcCuboid )
 {
+#if R0179_ENC_OPT_3DLUT_SIZE
+  memcpy( m_pCuboid[0][0] , pSrcCuboid[0][0] , sizeof( SCuboid ) * getMaxYSize() * getMaxCSize() * getMaxCSize() );
+#else
   memcpy( m_pCuboid[0][0] , pSrcCuboid[0][0] , sizeof( SCuboid ) * m_nYSize * m_nUSize * m_nVSize );
+#endif 
 }
 
 Void TCom3DAsymLUT::copy3DAsymLUT( TCom3DAsymLUT * pSrc )

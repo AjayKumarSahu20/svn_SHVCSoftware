@@ -467,6 +467,9 @@ protected:
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int  m_nCGSAdaptiveChroma;
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int  m_nCGSLutSizeRDO;
+#endif
 #endif 
 #endif //SVC_EXTENSION
 public:

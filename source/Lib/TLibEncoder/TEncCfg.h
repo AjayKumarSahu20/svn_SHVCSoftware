@@ -369,6 +369,9 @@ protected:
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int  m_nCGSAdaptiveChroma;
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int  m_nCGSLutSizeRDO;
+#endif
 #endif
 #if P0050_KNEE_FUNCTION_SEI
   Bool      m_kneeSEIEnabled;
@@ -1002,6 +1005,10 @@ public:
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Void      setCGSAdaptChroma(Int n)      { m_nCGSAdaptiveChroma = n;  }
   Int       getCGSAdaptChroma()           { return m_nCGSAdaptiveChroma; }
+#endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Void      setCGSLutSizeRDO(Int n)      { m_nCGSLutSizeRDO = n;  }
+  Int       getCGSLutSizeRDO()           { return m_nCGSLutSizeRDO; }
 #endif
 #endif
 #endif

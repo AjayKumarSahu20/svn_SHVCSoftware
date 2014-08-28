@@ -1145,6 +1145,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   ("CGSAdaptC",     m_nCGSAdaptiveChroma , 1, "adaptive chroma partition (only for the case of two chroma partitions)")
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  ("CGSSizeRDO",     m_nCGSLutSizeRDO , 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
+#endif
 #endif
 #if Q0108_TSA_STSA
   ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
@@ -3766,6 +3769,10 @@ Void TAppEncCfg::xPrintParameter()
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   printf("CGSAdaptC:%d " , m_nCGSAdaptiveChroma );
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  printf("CGSSizeRDO:%d " , m_nCGSLutSizeRDO );
+#endif
+
   printf("\n\n");
   
   fflush(stdout);

@@ -7,6 +7,12 @@
 #include "../TLibCommon/CommonDef.h"
 #include "../TLibCommon/TComPic.h"
 #include "TEncCfg.h"
+#if R0179_ENC_OPT_3DLUT_SIZE
+#include "TEncCavlc.h"
+#define MAX_NUM_LUT_SIZES               10   // 4+3+2+1
+#define MAX_Y_SIZE                       4
+#define MAX_C_SIZE                       4
+#endif
 
 #if Q0048_CGS_3D_ASYMLUT
 
@@ -54,6 +60,13 @@ public:
 
 }SColorInfo;
 
+#if R0179_ENC_OPT_3DLUT_SIZE
+typedef struct _LUTSize 
+{
+  Int iYPartNumLog2; 
+  Int iCPartNumLog2; 
+} SLUTSize; 
+#endif 
 
 class TEnc3DAsymLUT : public TCom3DAsymLUT
 {
@@ -65,6 +78,11 @@ public:
   virtual Void  destroy();
   Double derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB );
   Double estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt refLayerIdc );
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Double getDistFactor( Int iSliceType, Int iLayer) { return m_dDistFactor[iSliceType][iLayer];}
+  Double derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB, Double dFrameLambda );
+  Void   update3DAsymLUTParam( TEnc3DAsymLUT * pSrc );
+#endif
 
   Void  updatePicCGSBits( TComSlice * pcSlice , Int nPPSBit );
   Void  setPPSBit(Int n)  { m_nPPSBit = n;  }
@@ -74,6 +92,10 @@ public:
 protected:
   SColorInfo *** m_pColorInfo;
   SColorInfo *** m_pColorInfoC;
+#if R0179_ENC_OPT_3DLUT_SIZE
+  SColorInfo *** m_pMaxColorInfo;
+  SColorInfo *** m_pMaxColorInfoC;
+#endif 
   TComPicYuv* m_pDsOrigPic;
   SCuboid *** m_pEncCuboid;
   SCuboid *** m_pBestEncCuboid;
@@ -91,11 +113,25 @@ protected:
   Int   m_nTotalCGSBit;
   Int   m_nPPSBit;
   Int   m_nLUTBitDepth;
+#if R0179_ENC_OPT_3DLUT_SIZE
+
+  Double m_dDistFactor[3][MAX_TLAYER];         
+  Int    m_nNumLUTBits[MAX_Y_SIZE][MAX_C_SIZE]; 
+  Int    m_nPrevELFrameBit[3][MAX_TLAYER];   
+
+
+  Int   m_nTotalLutSizes;
+  SLUTSize m_sLutSizes[MAX_NUM_LUT_SIZES];
+#endif 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Double m_dSumU;
   Double m_dSumV;
   Int    m_nNChroma;
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  TComOutputBitstream  *m_pBitstreamRedirect;
+  TEncCavlc *m_pEncCavlc;
+#endif 
 
 private:
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
@@ -110,6 +146,7 @@ private:
   Void    xxMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDepth , Int & rYPartNumLog2 );
   Int     xxCoeff2Vertex( Double a , Double b , Double c , Double d , Int y , Int u , Int v ) { return ( ( Int )( a * y + b * u + c * v + d + 0.5 ) ); }
   Void    xxCollectData( TComPic * pCurPic , UInt refLayerIdc );
+
   Double  xxDeriveVertexes( Int nResQuantBit , SCuboid *** pCurCuboid );
   inline Double  xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
     Int y0 , Int u0 , Int v0 , Int nLengthY , Int nLengthUV , Pel nP0 , Pel nP1 , Pel nP3 , Pel nP7 );
@@ -119,6 +156,12 @@ private:
   inline Double  xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
     Pel nP0 , Pel nP1 , Pel nP3 , Pel nP7 );
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Void    xxConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSize );
+  Void    xxGetAllLutSizes(TComSlice *pSlice);
+  Void    xxCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  SColorInfo *** dstC, SColorInfo *** srcC ); 
+  Void    xxAddColorInfo( Int yIdx, Int uIdx, Int vIdx, Int iYDiffLog2, Int iCDiffLog2 );
+#endif 
 };
 
 Double TEnc3DAsymLUT::xxCalEstDist( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,

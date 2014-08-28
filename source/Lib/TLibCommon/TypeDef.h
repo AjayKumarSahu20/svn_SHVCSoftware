@@ -118,6 +118,7 @@
 #define R0164_CGS_LUT_BUGFIX_CHECK       0      ///< JCTVC-R0164: Add traces explicitly/non-explicitly encoded vertices and check if 3DLUT is correctly filled
 #define R0179_CGS_SIZE_8x1x1             1      ///< JCTVC-R0179: allow CGS LUT size to be 8x1x1 as well 
 #define R0300_CGS_RES_COEFF_CODING       1      ///< JCTVC-R0300: improved residual coefficient coding for R0151
+#define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
 #define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediction for colour gamut scalability
 #define POC_RESET_FLAG                   0      ///< JCTVC-N0244: POC reset flag for  layer pictures.

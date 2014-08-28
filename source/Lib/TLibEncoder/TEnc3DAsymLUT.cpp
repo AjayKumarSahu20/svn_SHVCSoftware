@@ -13,6 +13,7 @@ TEnc3DAsymLUT::TEnc3DAsymLUT()
   m_pColorInfo = NULL;
   m_pColorInfoC = NULL;
   m_pEncCuboid = NULL;
+
   m_pBestEncCuboid = NULL;
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   m_nAccuFrameBit = 0;
@@ -28,6 +29,35 @@ TEnc3DAsymLUT::TEnc3DAsymLUT()
   m_nTotalCGSBit = 0;
   m_nPPSBit = 0;
   m_pDsOrigPic = NULL;
+#if R0179_ENC_OPT_3DLUT_SIZE
+  m_pMaxColorInfo = NULL;
+  m_pMaxColorInfoC = NULL;
+
+  
+  // fixed m_dDistFactor
+  Double dTmpFactor[3];   
+  dTmpFactor[I_SLICE] = 1.0;
+  dTmpFactor[P_SLICE] = 4./3.;
+  dTmpFactor[B_SLICE] = 1.5; 
+  for( Int iSliceType = 0; iSliceType < 3; iSliceType++) 
+  {
+    for(Int iLayer = 0; iLayer < MAX_TLAYER; iLayer++)
+    {
+      m_dDistFactor[iSliceType][iLayer] = dTmpFactor[iSliceType]*(Double)(1<<iLayer);      
+    }
+  }
+  // initialization with approximate number of bits to code the LUT
+  m_nNumLUTBits[0][0] = 200; // 1x1x1
+  m_nNumLUTBits[1][0] = 400; // 2x1x1  
+  m_nNumLUTBits[1][1] = 1500; // 2x2x2  
+  m_nNumLUTBits[2][0] = 800; // 4x1x1
+  m_nNumLUTBits[2][1] = 3200; // 4x2x2  
+  m_nNumLUTBits[2][2] = 8500; // 4x4x4  
+  m_nNumLUTBits[3][0] = 1200; // 8x1x1
+  m_nNumLUTBits[3][1] = 4500; // 8x2x2  
+  m_nNumLUTBits[3][2] = 10000; // 8x4x4  
+  m_nNumLUTBits[3][3] = 12000; // 8x8x8
+#endif
 }
 
 Void TEnc3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 )
@@ -46,6 +76,14 @@ Void TEnc3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
   xAllocate3DArray( m_pColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
   xAllocate3DArray( m_pEncCuboid , xGetYSize() , xGetUSize() , xGetVSize() );
   xAllocate3DArray( m_pBestEncCuboid , xGetYSize() , xGetUSize() , xGetVSize() );
+#if R0179_ENC_OPT_3DLUT_SIZE
+  xAllocate3DArray( m_pMaxColorInfo , xGetYSize() , xGetUSize() , xGetVSize() );
+  xAllocate3DArray( m_pMaxColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
+
+  m_pEncCavlc = new TEncCavlc;
+  m_pBitstreamRedirect = new TComOutputBitstream;
+  m_pEncCavlc->setBitstream(m_pBitstreamRedirect);
+#endif
 }
 
 Void TEnc3DAsymLUT::destroy()
@@ -54,6 +92,12 @@ Void TEnc3DAsymLUT::destroy()
   xFree3DArray( m_pColorInfoC );
   xFree3DArray( m_pEncCuboid );
   xFree3DArray( m_pBestEncCuboid );
+#if R0179_ENC_OPT_3DLUT_SIZE
+  xFree3DArray( m_pMaxColorInfo );
+  xFree3DArray( m_pMaxColorInfoC );
+  delete m_pBitstreamRedirect;
+  delete m_pEncCavlc;
+#endif 
   TCom3DAsymLUT::destroy();
 }
 
@@ -286,6 +330,175 @@ Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt ref
 #endif
 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0179_ENC_OPT_3DLUT_SIZE
+Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB, Double dFrameLambda )
+{
+  m_nLUTBitDepth = pCfg->getCGSLUTBit();
+
+  Int nBestAdaptCThresholdU = 1 << ( getInputBitDepthC() - 1 );
+  Int nBestAdaptCThresholdV = 1 << ( getInputBitDepthC() - 1 );
+  Int nAdaptCThresholdU, nAdaptCThresholdV;
+
+  Int nTmpLutBits[MAX_Y_SIZE][MAX_C_SIZE] ;
+  memset(nTmpLutBits, 0, sizeof(nTmpLutBits)); 
+
+  SLUTSize sMaxLutSize;  
+
+  // collect stats for the most partitions 
+  Int nCurYPartNumLog2 = 0 , nCurOctantDepth = 0; 
+  Int nMaxPartNumLog2 = xGetMaxPartNumLog2();
+
+  xxMapPartNum2DepthYPart( nMaxPartNumLog2 , nCurOctantDepth , nCurYPartNumLog2 ); 
+  xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
+  xxCollectData( pCurPic , refLayerIdc );
+  xxCopyColorInfo(m_pMaxColorInfo, m_pColorInfo, m_pMaxColorInfoC, m_pColorInfoC); 
+ 
+  sMaxLutSize.iCPartNumLog2 = nCurOctantDepth; 
+  sMaxLutSize.iYPartNumLog2 = nCurOctantDepth + nCurYPartNumLog2; 
+
+  m_pBitstreamRedirect->clear();
+
+  // find the best partition based on RD cost 
+  Int i; 
+  Double dMinCost, dCurCost;
+
+  Int iBestLUTSizeIdx = 0;   
+  Int nBestResQuanBit = 0;
+  Double dCurError, dMinError; 
+  Int iNumBitsCurSize; 
+  Int iNumBitsCurSizeSave = m_pEncCavlc->getNumberOfWrittenBits(); 
+  Double dDistFactor = getDistFactor(pSlice->getSliceType(), pSlice->getDepth());
+
+  // check all LUT sizes 
+  xxGetAllLutSizes(pSlice);  
+  if (m_nTotalLutSizes == 0) // return if no valid size is found, LUT will not be updated
+  {
+    nCurOctantDepth = sMaxLutSize.iCPartNumLog2;
+    nCurYPartNumLog2 = sMaxLutSize.iYPartNumLog2-nCurOctantDepth; 
+    xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
+    return MAX_DOUBLE; 
+  }
+
+  dMinCost = MAX_DOUBLE; dMinError = MAX_DOUBLE;
+  for (i = 0; i < m_nTotalLutSizes; i++)
+  {
+    // add up the stats
+    nCurOctantDepth = m_sLutSizes[i].iCPartNumLog2;
+    nCurYPartNumLog2 = m_sLutSizes[i].iYPartNumLog2-nCurOctantDepth; 
+    xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
+    xxConsolidateData( &m_sLutSizes[i], &sMaxLutSize );
+  
+    dCurError = xxDeriveVertexes(nBestResQuanBit, m_pEncCuboid);
+
+    setResQuantBit( nBestResQuanBit );
+    xSaveCuboids( m_pEncCuboid ); 
+    m_pEncCavlc->xCode3DAsymLUT( this ); 
+    iNumBitsCurSize = m_pEncCavlc->getNumberOfWrittenBits();
+    dCurCost = dCurError/dDistFactor + dFrameLambda*(Double)(iNumBitsCurSize-iNumBitsCurSizeSave);  
+    nTmpLutBits[m_sLutSizes[i].iYPartNumLog2][m_sLutSizes[i].iCPartNumLog2] = iNumBitsCurSize-iNumBitsCurSizeSave; // store LUT size 
+    iNumBitsCurSizeSave = iNumBitsCurSize;
+    if(dCurCost < dMinCost )
+    {
+      SCuboid *** tmp = m_pBestEncCuboid;
+      m_pBestEncCuboid = m_pEncCuboid;
+      m_pEncCuboid = tmp;
+      dMinCost = dCurCost; 
+      dMinError = dCurError;
+      iBestLUTSizeIdx = i; 
+    }
+  }
+
+  nCurOctantDepth = m_sLutSizes[iBestLUTSizeIdx].iCPartNumLog2;
+  nCurYPartNumLog2 = m_sLutSizes[iBestLUTSizeIdx].iYPartNumLog2-nCurOctantDepth; 
+
+  xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
+
+  Bool bUseNewColorInfo = false; 
+  if( pCfg->getCGSAdaptChroma() && nCurOctantDepth <= 1 ) // if the best size found so far has depth = 0 or 1, then check AdaptC U/V thresholds
+  {
+    nAdaptCThresholdU = ( Int )( m_dSumU / m_nNChroma + 0.5 );
+    nAdaptCThresholdV = ( Int )( m_dSumV / m_nNChroma + 0.5 );
+    if( !(nAdaptCThresholdU == nBestAdaptCThresholdU && nAdaptCThresholdV == nBestAdaptCThresholdV ) ) 
+    {
+      nCurOctantDepth = 1;
+      if( nCurOctantDepth + nCurYPartNumLog2 > getMaxYPartNumLog2()+getMaxOctantDepth() )
+        nCurYPartNumLog2 = getMaxYPartNumLog2()+getMaxOctantDepth()-nCurOctantDepth; 
+      xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2 , nAdaptCThresholdU , nAdaptCThresholdV );
+      xxCollectData( pCurPic , refLayerIdc );
+
+      dCurError = xxDeriveVertexes( nBestResQuanBit , m_pEncCuboid ) ;
+      setResQuantBit( nBestResQuanBit );
+      xSaveCuboids( m_pEncCuboid ); 
+      m_pEncCavlc->xCode3DAsymLUT( this ); 
+      iNumBitsCurSize = m_pEncCavlc->getNumberOfWrittenBits();
+      dCurCost = dCurError/dDistFactor + dFrameLambda*(Double)(iNumBitsCurSize-iNumBitsCurSizeSave);  
+      iNumBitsCurSizeSave = iNumBitsCurSize;
+      if(dCurCost < dMinCost )
+      {
+        SCuboid *** tmp = m_pBestEncCuboid;
+        m_pBestEncCuboid = m_pEncCuboid;
+        m_pEncCuboid = tmp;
+        dMinCost = dCurCost; 
+        dMinError = dCurError;
+        nBestAdaptCThresholdU = nAdaptCThresholdU;
+        nBestAdaptCThresholdV = nAdaptCThresholdV;
+        bUseNewColorInfo = true; 
+      }
+    }
+  }
+
+  xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
+
+  // check res_quant_bits only for the best table size and best U/V threshold
+  if( !bUseNewColorInfo ) 
+    xxConsolidateData( &m_sLutSizes[iBestLUTSizeIdx], &sMaxLutSize );
+
+  //    xxCollectData( pCurPic , refLayerIdc );
+  for( Int nResQuanBit = 1 ; nResQuanBit < 4 ; nResQuanBit++ )
+  {
+    dCurError = xxDeriveVertexes( nResQuanBit , m_pEncCuboid );
+
+    setResQuantBit( nResQuanBit );
+    xSaveCuboids( m_pEncCuboid ); 
+    m_pEncCavlc->xCode3DAsymLUT( this ); 
+    iNumBitsCurSize = m_pEncCavlc->getNumberOfWrittenBits();
+    dCurCost = dCurError/dDistFactor + dFrameLambda*(Double)(iNumBitsCurSize-iNumBitsCurSizeSave);   
+
+    iNumBitsCurSizeSave = iNumBitsCurSize;
+    if(dCurCost < dMinCost)
+    {
+      nBestResQuanBit = nResQuanBit;
+      SCuboid *** tmp = m_pBestEncCuboid;
+      m_pBestEncCuboid = m_pEncCuboid;
+      m_pEncCuboid = tmp;
+      dMinCost = dCurCost; 
+      dMinError = dCurError;
+    }
+    else
+    {
+      break;
+    }
+  }
+    
+  setResQuantBit( nBestResQuanBit );
+  xSaveCuboids( m_pBestEncCuboid );
+
+  // update LUT size stats 
+  for(Int iLutSizeY = 0; iLutSizeY < MAX_Y_SIZE; iLutSizeY++)
+  {
+    for(Int iLutSizeC = 0; iLutSizeC < MAX_C_SIZE; iLutSizeC++) 
+    {
+      if(nTmpLutBits[iLutSizeY][iLutSizeC] != 0) 
+        m_nNumLUTBits[iLutSizeY][iLutSizeC] =  (m_nNumLUTBits[iLutSizeY][iLutSizeC] + nTmpLutBits[iLutSizeY][iLutSizeC]*3+2)>>2; // update with new stats
+    }
+  }
+
+  // return cost rather than error
+  return( dMinCost );
+}
+#endif 
+
+
 Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB )
 {
   m_nLUTBitDepth = pCfg->getCGSLUTBit();
@@ -316,6 +529,7 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
         && nCurOctantDepth == nBestOctantDepth && nCurYPartNumLog2 == nBestYPartNumLog2 )
         break;
     }
+
     xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2 , nAdaptCThresholdU , nAdaptCThresholdV );
     xxCollectData( pCurPic , refLayerIdc );
     for( Int nResQuanBit = 0 ; nResQuanBit < 4 ; nResQuanBit++ )
@@ -339,8 +553,10 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
       }
     }
   }
+
   setResQuantBit( nBestResQuanBit );
   xUpdatePartitioning( nBestOctantDepth , nBestYPartNumLog2 , nBestAdaptCThresholdU , nBestAdaptCThresholdV );
+
   xSaveCuboids( m_pBestEncCuboid );
   return( dMinError );
 }
@@ -459,8 +675,13 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
   Pel * pIRLV = pRecPic->getCrAddr();
   Int nStrideILRY = pRecPic->getStride();
   Int nStrideILRC = pRecPic->getCStride();
+#if R0179_ENC_OPT_3DLUT_SIZE
+  xReset3DArray( m_pColorInfo  , getMaxYSize() , getMaxCSize() , getMaxCSize() );
+  xReset3DArray( m_pColorInfoC , getMaxYSize() , getMaxCSize() , getMaxCSize() );
+#else
   xReset3DArray( m_pColorInfo , xGetYSize() , xGetUSize() , xGetVSize() );
   xReset3DArray( m_pColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
+#endif
 
   //alignment padding
   pRecPic->setBorderExtension( false );
@@ -692,6 +913,137 @@ Void TEnc3DAsymLUT::updatePicCGSBits( TComSlice * pcSlice , Int nPPSBit )
   m_nTotalCGSBit += nPPSBit;
   m_nPrevFrameCGSPartNumLog2[nSliceType][nSliceTempLevel] = getCurOctantDepth() * 3 + getCurYPartNumLog2();
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int nCurELFrameBit = pcSlice->getPic()->getFrameBit();
+  const Int nSliceType = pcSlice->getSliceType();
+  const Int nSliceTempLevel = pcSlice->getDepth();
+  m_nPrevELFrameBit[nSliceType][nSliceTempLevel] = m_nPrevELFrameBit[nSliceType][nSliceTempLevel] == 0 ? nCurELFrameBit:((m_nPrevELFrameBit[nSliceType][nSliceTempLevel]+nCurELFrameBit)>>1);
+#endif 
 }
 
+#if R0179_ENC_OPT_3DLUT_SIZE
+
+Void TEnc3DAsymLUT::xxGetAllLutSizes(TComSlice *pSlice)
+{
+  Int iMaxYPartNumLog2, iMaxCPartNumLog2; 
+  Int iCurYPartNumLog2, iCurCPartNumLog2; 
+  Int iMaxAddYPartNumLog2; 
+  Int iNumELFrameBits = m_nPrevELFrameBit[pSlice->getSliceType()][pSlice->getDepth()];
+
+  xxMapPartNum2DepthYPart( xGetMaxPartNumLog2() , iMaxCPartNumLog2 , iMaxYPartNumLog2 );
+  iMaxAddYPartNumLog2 = iMaxYPartNumLog2; 
+  iMaxYPartNumLog2 += iMaxCPartNumLog2; 
+
+  //m_sLutSizes[0].iYPartNumLog2 = iMaxYPartNumLog2; 
+  //m_sLutSizes[0].iCPartNumLog2 = iMaxCPartNumLog2; 
+  m_nTotalLutSizes = 0; 
+
+
+  for(iCurYPartNumLog2 = iMaxYPartNumLog2; iCurYPartNumLog2 >= 0; iCurYPartNumLog2--) 
+  {
+    for(iCurCPartNumLog2 = iMaxCPartNumLog2; iCurCPartNumLog2 >= 0; iCurCPartNumLog2--) 
+    {
+       // try more sizes
+      if(iCurCPartNumLog2 <= iCurYPartNumLog2  && 
+         (m_nNumLUTBits[iCurYPartNumLog2][iCurCPartNumLog2] < (iNumELFrameBits>>1)) && 
+         m_nTotalLutSizes < MAX_NUM_LUT_SIZES)
+      {
+        m_sLutSizes[m_nTotalLutSizes].iYPartNumLog2 = iCurYPartNumLog2; 
+        m_sLutSizes[m_nTotalLutSizes].iCPartNumLog2 = iCurCPartNumLog2; 
+        m_nTotalLutSizes ++; 
+      }
+    }
+  }
+
+}
+
+Void TEnc3DAsymLUT::xxCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  SColorInfo *** dstC, SColorInfo *** srcC )
+{
+  Int yIdx, uIdx, vIdx; 
+
+  // copy from pColorInfo to pMaxColorInfo
+  for(yIdx = 0; yIdx < xGetYSize(); yIdx++)
+  {
+    for(uIdx = 0; uIdx < xGetUSize(); uIdx++)
+    {
+      for(vIdx = 0; vIdx < xGetVSize(); vIdx++)
+      {
+        dst [yIdx][uIdx][vIdx] = src [yIdx][uIdx][vIdx];
+        dstC[yIdx][uIdx][vIdx] = srcC[yIdx][uIdx][vIdx];
+      }
+    }
+  }
+}
+
+Void TEnc3DAsymLUT::xxAddColorInfo( Int yIdx, Int uIdx, Int vIdx, Int iYDiffLog2, Int iCDiffLog2 )
+{
+  SColorInfo & rCuboidColorInfo  = m_pColorInfo [yIdx][uIdx][vIdx];
+  SColorInfo & rCuboidColorInfoC = m_pColorInfoC[yIdx][uIdx][vIdx];
+  
+  for( Int i = 0; i < (1<<iYDiffLog2); i++)
+  {
+    for (Int j = 0; j < (1<<iCDiffLog2); j++)
+    {
+      for(Int k = 0; k < (1<<iCDiffLog2); k++)
+      {
+        rCuboidColorInfo  += m_pMaxColorInfo [(yIdx<<iYDiffLog2)+i][(uIdx<<iCDiffLog2)+j][(vIdx<<iCDiffLog2)+k];
+        rCuboidColorInfoC += m_pMaxColorInfoC[(yIdx<<iYDiffLog2)+i][(uIdx<<iCDiffLog2)+j][(vIdx<<iCDiffLog2)+k];
+      }
+    }
+  }
+}
+
+Void TEnc3DAsymLUT::xxConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSize )
+{
+  Int yIdx, uIdx, vIdx; 
+  Int iYDiffLog2, iCDiffLog2;
+  Int nYSize = 1<< pMaxLUTSize->iYPartNumLog2;
+  Int nCSize = 1<< pMaxLUTSize->iCPartNumLog2;
+
+  iYDiffLog2 = pMaxLUTSize->iYPartNumLog2-pCurLUTSize->iYPartNumLog2;
+  iCDiffLog2 = pMaxLUTSize->iCPartNumLog2-pCurLUTSize->iCPartNumLog2;
+
+  //assert(pMaxLUTSize->iCPartNumLog2 >= pCurLUTSize->iCPartNumLog2 && pMaxLUTSize->iYPartNumLog2 >= pCurLUTSize->iYPartNumLog2); 
+  if (iYDiffLog2 == 0 && iCDiffLog2 == 0) // shouldn't have to do anything 
+  {
+    xxCopyColorInfo(m_pColorInfo, m_pMaxColorInfo, m_pColorInfoC, m_pMaxColorInfoC);
+    return; 
+  }
+
+  xReset3DArray( m_pColorInfo  ,  1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
+  xReset3DArray( m_pColorInfoC ,  1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
+
+  for(yIdx = 0; yIdx < nYSize; yIdx++)
+  {
+    for(uIdx = 0; uIdx < nCSize; uIdx++)
+    {
+      for(vIdx = 0; vIdx < nCSize; vIdx++)
+      {
+        const SColorInfo & rCuboidSrc   = m_pMaxColorInfo [yIdx][uIdx][vIdx];
+        const SColorInfo & rCuboidSrcC  = m_pMaxColorInfoC[yIdx][uIdx][vIdx];
+        
+        Int yIdx2, uIdx2, vIdx2; 
+        yIdx2 = yIdx>>iYDiffLog2; 
+        uIdx2 = uIdx>>iCDiffLog2;
+        vIdx2 = vIdx>>iCDiffLog2; 
+
+        m_pColorInfo [yIdx2][uIdx2][vIdx2] += rCuboidSrc;
+        m_pColorInfoC[yIdx2][uIdx2][vIdx2] += rCuboidSrcC;
+      }
+    }
+  }
+}
+
+Void TEnc3DAsymLUT::update3DAsymLUTParam( TEnc3DAsymLUT * pSrc )
+{
+  assert( pSrc->getMaxOctantDepth() == getMaxOctantDepth() && pSrc->getMaxYPartNumLog2() == getMaxYPartNumLog2() );
+  xUpdatePartitioning( pSrc->getCurOctantDepth() , pSrc->getCurYPartNumLog2() 
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+    , pSrc->getAdaptChromaThresholdU() , pSrc->getAdaptChromaThresholdV()
+#endif
+    );
+  setResQuantBit( pSrc->getResQuantBit() );
+}
+
+#endif 
 #endif
