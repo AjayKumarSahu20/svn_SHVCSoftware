@@ -924,10 +924,10 @@ public:
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
-  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x   ; }
+  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
 
   Int     getNumLayersInIdList(Int set)                          { return m_numLayerInIdList[set]; }
-  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x   ; }
+  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x;    }
 
   Void    deriveLayerIdListVariables();
 #endif
