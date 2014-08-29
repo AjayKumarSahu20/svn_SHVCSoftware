@@ -222,6 +222,9 @@ public:
   Bool isCurrAu() { return m_currAuFlag; }
   Void setCurrAuFlag(Bool x) {m_currAuFlag = x; }
 #endif
+#if WPP_FIX
+  UInt          getSubstreamForLCUAddr(const UInt uiLCUAddr, const Bool bAddressInRaster, TComSlice *pcSlice);
+#endif
 };// END CLASS DEFINITION TComPic
 
 //! \}

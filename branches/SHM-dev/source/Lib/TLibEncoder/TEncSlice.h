@@ -149,6 +149,10 @@ public:
   Void      initCtxMem( UInt i );
   Void      setCtxMem( TEncSbac* sb, Int b )   { CTXMem[b] = sb; }
 
+#if WPP_FIX 
+  Void     calculateBoundingCUAddrForSlice(UInt &uiStartCUAddrSlice, UInt &uiBoundingCUAddrSlice, Bool &bReachedTileBoundary, TComPic*& rpcPic, Bool bEncodeSlice, Int sliceMode, Int sliceArgument, UInt uiSliceCurEndCUAddr); 
+#endif
+
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
 
