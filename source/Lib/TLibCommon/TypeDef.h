@@ -274,6 +274,8 @@ enum ScalabilityType
   AUX_ID            = 3,
 };
 
+#define WPP_FIX                          1
+
 /// normative encoder constraints --------
 #define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
 #define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
