@@ -2777,12 +2777,13 @@ Void TComVPS::setPredictedLayerIds()
     {
       if( m_recursiveRefLayerFlag[j][iNuhLId] )
       {
-        m_predictedLayerId[i][predIdx] = j;
+        m_predictedLayerId[iNuhLId][predIdx] = j;
         predIdx++;
       }
     }
     m_numPredictedLayers[iNuhLId] = predIdx;
   }
+  m_numPredictedLayers[m_layerIdInNuh[m_uiMaxLayers-1]] = 0;
 }
 
 Void TComVPS::setTreePartitionLayerIdList()
