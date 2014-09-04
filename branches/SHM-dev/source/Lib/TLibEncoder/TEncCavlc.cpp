@@ -2941,10 +2941,10 @@ Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   WRITE_CODE( pc3DAsymLUT->getCurYPartNumLog2() , 2 , "cm_y_part_num_log2" );
   assert( pc3DAsymLUT->getInputBitDepthY() < 16 );
 #if R0150_CGS_SIGNAL_CONSTRAINTS
-  WRITE_CODE( pc3DAsymLUT->getInputBitDepthY() - 8 , 3 , "cm_input_luma_bit_depth_minus8" );
-  WRITE_CODE( pc3DAsymLUT->getInputBitDepthC() - 8 , 3 , "cm_input_chroma_bit_depth_minus8" );
-  WRITE_CODE( pc3DAsymLUT->getOutputBitDepthY() - 8 , 3 , "cm_output_luma_bit_depth_minus8" );
-  WRITE_CODE( pc3DAsymLUT->getOutputBitDepthC() - 8 , 3 , "cm_output_chroma_bit_depth_minus8" );
+  WRITE_UVLC( pc3DAsymLUT->getInputBitDepthY() - 8 , "cm_input_luma_bit_depth_minus8" );
+  WRITE_UVLC( pc3DAsymLUT->getInputBitDepthC() - 8 , "cm_input_chroma_bit_depth_minus8" );
+  WRITE_UVLC( pc3DAsymLUT->getOutputBitDepthY() - 8 , "cm_output_luma_bit_depth_minus8" );
+  WRITE_UVLC( pc3DAsymLUT->getOutputBitDepthC() - 8 , "cm_output_chroma_bit_depth_minus8" );
 #else
   WRITE_CODE( pc3DAsymLUT->getInputBitDepthY() - 8 , 3 , "cm_input_bit_depth_minus8" );
   WRITE_SVLC(pc3DAsymLUT->getInputBitDepthC()-pc3DAsymLUT->getInputBitDepthY(), "cm_input_bit_depth_chroma delta");
