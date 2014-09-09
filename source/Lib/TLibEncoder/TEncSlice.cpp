@@ -1310,7 +1310,11 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstre
   }
 
   UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
+#if WPP_FIX
+  UInt uiCol=0, uiSubStrm=0;
+#else
   UInt uiCol=0, uiLin=0, uiSubStrm=0;
+#endif
   UInt uiTileCol      = 0;
   UInt uiTileStartLCU = 0;
   UInt uiTileLCUX     = 0;
@@ -1387,10 +1391,10 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstre
     uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
     //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
     uiCol     = uiCUAddr % uiWidthInLCUs;
-    uiLin     = uiCUAddr / uiWidthInLCUs;
 #if WPP_FIX
     uiSubStrm=rpcPic->getSubstreamForLCUAddr(uiCUAddr, true, pcSlice);
 #else
+    uiLin     = uiCUAddr / uiWidthInLCUs;
     if (pcSlice->getPPS()->getNumSubstreams() > 1)
     {
       // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
