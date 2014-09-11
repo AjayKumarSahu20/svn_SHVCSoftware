@@ -2029,6 +2029,33 @@ Void TAppEncTop::encode()
         }
       }
     }
+#if R0247_SEI_ACTIVE
+    if(bFirstFrame)
+    {
+      list<AccessUnit>::iterator first_au = outputAccessUnits.begin();
+      AccessUnit::iterator it_sps;
+      for (it_sps = first_au->begin(); it_sps != first_au->end(); it_sps++)
+      {
+        if( (*it_sps)->m_nalUnitType == NAL_UNIT_SPS )
+        {
+          break;
+        }
+      }
+
+      for (list<AccessUnit>::iterator it_au = ++outputAccessUnits.begin(); it_au != outputAccessUnits.end(); it_au++)
+      {
+        for (AccessUnit::iterator it_nalu = it_au->begin(); it_nalu != it_au->end(); it_nalu++)
+        {
+          if( (*it_nalu)->m_nalUnitType == NAL_UNIT_SPS )
+          {
+            first_au->insert(++it_sps, *it_nalu);
+            it_nalu = it_au->erase(it_nalu);
+          }
+        }
+      }
+    }
+
+#endif
 
 #if RC_SHVC_HARMONIZATION
     for(UInt layer=0; layer<m_numLayers; layer++)

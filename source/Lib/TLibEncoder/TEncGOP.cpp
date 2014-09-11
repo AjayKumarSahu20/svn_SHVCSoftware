@@ -201,9 +201,23 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (TComSPS *sps)
   seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId(); 
   seiActiveParameterSets->m_selfContainedCvsFlag = false;
   seiActiveParameterSets->m_noParameterSetUpdateFlag = false;
+#if !R0247_SEI_ACTIVE
   seiActiveParameterSets->numSpsIdsMinus1 = 0;
   seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1); 
   seiActiveParameterSets->activeSeqParameterSetId[0] = sps->getSPSId();
+#else
+  seiActiveParameterSets->numSpsIdsMinus1 = m_pcCfg->getNumLayer()-1;
+  seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1); 
+  seiActiveParameterSets->layerSpsIdx.resize(seiActiveParameterSets->numSpsIdsMinus1+ 1);  
+  for (Int c=0; c <= seiActiveParameterSets->numSpsIdsMinus1; c++)
+  {
+     seiActiveParameterSets->activeSeqParameterSetId[c] = c;
+  }
+  for (Int c=1; c <= seiActiveParameterSets->numSpsIdsMinus1; c++)
+  {
+     seiActiveParameterSets->layerSpsIdx[c] = c;
+  }
+#endif
   return seiActiveParameterSets;
 }
 
@@ -428,7 +442,11 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 {
   OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
-  if(m_pcCfg->getActiveParameterSetsSEIEnabled())
+  if(m_pcCfg->getActiveParameterSetsSEIEnabled()
+#if R0247_SEI_ACTIVE
+    && m_layerId == 0
+#endif
+    )
   {
     SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets (sps);
 
