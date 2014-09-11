@@ -2397,12 +2397,30 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
     if (activeParamSets.size()>0)
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
+#if !R0247_SEI_ACTIVE
       m_parameterSetManagerDecoder.applyPrefetchedPS();
       assert(seiAps->activeSeqParameterSetId.size()>0);
       if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
+#else
+      getLayerDec(0)->m_parameterSetManagerDecoder.applyPrefetchedPS();
+      assert(seiAps->activeSeqParameterSetId.size()>0);
+      if( !getLayerDec(0)->m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
+      {
+        printf ("Warning SPS activation with Active parameter set SEI failed");
+      }
+      for (Int c=1 ; c <= seiAps->numSpsIdsMinus1; c++)
+      {
+        Int layerIdx = seiAps->layerSpsIdx[c];
+        getLayerDec(layerIdx)->m_parameterSetManagerDecoder.applyPrefetchedPS();
+        if( !getLayerDec(layerIdx)->m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[layerIdx] ) )
+        {
+          printf ("Warning SPS activation with Active parameter set SEI failed");
+        }
+      }
+#endif
     }
   }
 #else

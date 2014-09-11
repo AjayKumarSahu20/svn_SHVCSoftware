@@ -583,11 +583,19 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt /
   READ_UVLC(   val, "num_sps_ids_minus1"); sei.numSpsIdsMinus1 = val;
 
   sei.activeSeqParameterSetId.resize(sei.numSpsIdsMinus1 + 1);
+#if R0247_SEI_ACTIVE
+  sei.layerSpsIdx.resize(sei.numSpsIdsMinus1 + 1);
+#endif
   for (Int i=0; i < (sei.numSpsIdsMinus1 + 1); i++)
   {
     READ_UVLC(val, "active_seq_parameter_set_id");      sei.activeSeqParameterSetId[i] = val; 
   }
-
+#if R0247_SEI_ACTIVE
+  for (Int i=1; i < (sei.numSpsIdsMinus1 + 1); i++)
+  {
+    READ_UVLC(val, "layer_sps_idx"); sei.layerSpsIdx[i] = val; 
+  }
+#endif
   xParseByteAlign();
 }
 

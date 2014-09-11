@@ -393,6 +393,12 @@ Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
   {
     WRITE_UVLC(sei.activeSeqParameterSetId[i], "active_seq_parameter_set_id"); 
   }
+#if R0247_SEI_ACTIVE
+  for (Int i = 1; i < sei.activeSeqParameterSetId.size(); i++)
+  {
+    WRITE_UVLC(sei.layerSpsIdx[i], "layer_sps_idx"); 
+  }
+#endif
   xWriteByteAlign();
 }
 

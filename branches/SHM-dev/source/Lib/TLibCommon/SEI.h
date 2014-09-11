@@ -174,6 +174,9 @@ public:
   Bool m_noParameterSetUpdateFlag;
   Int numSpsIdsMinus1;
   std::vector<Int> activeSeqParameterSetId; 
+#if R0247_SEI_ACTIVE
+  std::vector<Int> layerSpsIdx; 
+#endif
 };
 
 class SEIBufferingPeriod : public SEI
