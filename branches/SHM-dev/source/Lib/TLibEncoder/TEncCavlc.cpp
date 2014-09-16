@@ -1949,6 +1949,16 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if (pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
       assert(!!"discardable_flag");
+#if NON_REF_NAL_TYPE_DISCARDABLE
+      if (pcSlice->getDiscardableFlag())
+      {
+        assert(pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TRAIL_R &&
+          pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TSA_R &&
+          pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_STSA_R &&
+          pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RADL_R &&
+          pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RASL_R);
+      }
+#endif
       WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
     }
     for (Int i = 1; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
