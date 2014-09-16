@@ -1362,8 +1362,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         if(vps->getDirectDependencyFlag(j, i))
         {
-          READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i][j]" ); vps->setMaxTidIlRefPicsPlus1(i, j, uiCode);
-          assert( uiCode <= vps->getMaxTLayers());
+          READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i][j]" ); vps->setMaxTidIlRefPicsPlus1(i, j, uiCode);          
         }
       }
 #else
