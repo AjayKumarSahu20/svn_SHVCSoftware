@@ -43,6 +43,7 @@
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
+#define CROSS_LAYER_BLA_FLAG_FIX         1      ///< Fix for earlier implementation mistake that omit the signalling of cross_layer_bla_flag
 #define NON_REF_NAL_TYPE_DISCARDABLE     1      ///< JCTVC-P0041 -- If discardable picture is a non-IRAP, it must be a non-referenced sub-layer picture
 #define VPS_AVC_BL_FLAG_REMOVAL          1      ///< remove avc_base_layer_flag and direct the function its offer to vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_RESERVED_FLAGS               1      ///< vps_base_layer_internal_flag and vps_base_layer_available_flag
