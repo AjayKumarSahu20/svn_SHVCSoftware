@@ -2809,6 +2809,18 @@ Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecod
     if(rpcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
     {
       READ_FLAG(uiCode, "discardable_flag"); // ignored
+#if NON_REF_NAL_TYPE_DISCARDABLE
+      rpcSlice->setDiscardableFlag( uiCode ? true : false );
+      if (uiCode)
+      {
+        assert(rpcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TRAIL_R &&
+          rpcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TSA_R &&
+          rpcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_STSA_R &&
+          rpcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RADL_R &&
+          rpcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RASL_R);
+      }
+#endif
+
     }
     for (Int i = 1; i < rpcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
