@@ -1946,7 +1946,12 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
 #else
+#if CROSS_LAYER_BLA_FLAG_FIX
+    Int iBits = 0;
+    if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
+#else
     if (pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
+#endif
     {
       assert(!!"discardable_flag");
 #if NON_REF_NAL_TYPE_DISCARDABLE
@@ -1960,8 +1965,21 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       }
 #endif
       WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
+#if CROSS_LAYER_BLA_FLAG_FIX
+      iBits++;
+#endif
     }
+#if CROSS_LAYER_BLA_FLAG_FIX
+    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
+    {
+      assert(!!"cross_layer_bla_flag");
+      WRITE_FLAG(pcSlice->getCrossLayerBLAFlag(), "cross_layer_bla_flag");
+      iBits++;
+    }
+    for (; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
+#else
     for (Int i = 1; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
+#endif
     {
       assert(!!"slice_reserved_undetermined_flag[]");
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
