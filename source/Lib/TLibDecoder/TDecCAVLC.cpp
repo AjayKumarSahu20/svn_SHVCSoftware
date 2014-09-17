@@ -2304,6 +2304,45 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   READ_FLAG( uiCode,        "bit_rate_present_vps_flag" );  vps->setBitRatePresentVpsFlag( uiCode ? true : false );
   READ_FLAG( uiCode,        "pic_rate_present_vps_flag" );  vps->setPicRatePresentVpsFlag( uiCode ? true : false );
 
+#if SIGNALLING_BITRATE_PICRATE_FIX
+  if ( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
+  {
+    for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getNumLayerSets(); i++ )
+    {
+      for( Int j = 0; j  <=  vps->getMaxSLayersInLayerSetMinus1( i ); j++ ) 
+      {
+        if( vps->getBitRatePresentVpsFlag() )
+        {
+          READ_FLAG( uiCode, "bit_rate_present_flag[i][j]" ); vps->setBitRatePresentFlag( i, j, uiCode ? true : false );            
+        }
+        if( vps->getPicRatePresentVpsFlag( )  )
+        {
+          READ_FLAG( uiCode, "pic_rate_present_flag[i][j]" ); vps->setPicRatePresentFlag( i, j, uiCode ? true : false );
+        }
+        if( vps->getBitRatePresentFlag( i, j ) )
+        {
+          READ_CODE( 16, uiCode, "avg_bit_rate" ); vps->setAvgBitRate( i, j, uiCode );
+          READ_CODE( 16, uiCode, "max_bit_rate" ); vps->setMaxBitRate( i, j, uiCode );
+        }
+        else
+        {
+          vps->setAvgBitRate( i, j, 0 );
+          vps->setMaxBitRate( i, j, 0 );
+        }
+        if( vps->getPicRatePresentFlag( i, j ) )
+        {
+          READ_CODE( 2,  uiCode, "constant_pic_rate_idc" ); vps->setConstPicRateIdc( i, j, uiCode );
+          READ_CODE( 16, uiCode, "avg_pic_rate" );          vps->setAvgPicRate( i, j, uiCode );
+        }
+        else
+        {
+          vps->setConstPicRateIdc( i, j, 0 );
+          vps->setAvgPicRate( i, j, 0 );
+        }
+      }
+    }
+  }
+#else
   Bool parseFlag = vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag();
 
 #if Q0078_ADD_LAYER_SETS
@@ -2360,6 +2399,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       }
     }
   }
+#endif
 #if VPS_VUI_VIDEO_SIGNAL_MOVE
   READ_FLAG( uiCode, "video_signal_info_idx_present_flag" ); vps->setVideoSigPresentVpsFlag( uiCode == 1 );
   if (vps->getVideoSigPresentVpsFlag())
