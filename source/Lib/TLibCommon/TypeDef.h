@@ -43,6 +43,7 @@
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
+#define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
 #define CROSS_LAYER_BLA_FLAG_FIX         1      ///< Fix for earlier implementation mistake that omit the signalling of cross_layer_bla_flag
 #define NON_REF_NAL_TYPE_DISCARDABLE     1      ///< JCTVC-P0041 -- If discardable picture is a non-IRAP, it must be a non-referenced sub-layer picture
 #define VPS_AVC_BL_FLAG_REMOVAL          1      ///< remove avc_base_layer_flag and direct the function its offer to vps_base_layer_internal_flag and vps_base_layer_available_flag
@@ -132,7 +133,11 @@
 #define ALIGN_IRAP_BUGFIX                1
 #define UNAVAILABLE_PIC_BUGFIX           1
 #endif
+#if INFERENCE_POC_MSB_VAL_PRESENT
+#define POC_MSB_VAL_PRESENT_FLAG_SEM     0      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
+#else
 #define POC_MSB_VAL_PRESENT_FLAG_SEM     1      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
+#endif
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
 #define NO_OUTPUT_OF_PRIOR_PICS          1      ///< Use no_output_of_prior_pics_flag
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
