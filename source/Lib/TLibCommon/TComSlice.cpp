@@ -270,6 +270,7 @@ Void TComSlice::decrementRefPocValues(Int const decrementValue)
     }
   }
 }
+
 Int TComSlice::getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal )
 {
   if( prevLsb - currLsb >= (maxLsbVal >> 1) )
@@ -4259,6 +4260,19 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
 
     }
   }
+}
+
+Int TComSlice::getReferenceLayerIdc( UInt refLayerId )
+{ 
+  for( Int i = 0; i < m_activeNumILRRefIdx; i++ )
+  {
+    if( m_pcVPS->getRefLayerId(m_layerId, m_interLayerPredLayerIdc[i]) == refLayerId )
+    {
+      return m_interLayerPredLayerIdc[i];
+    }
+  }
+
+  return -1;
 }
 #endif //SVC_EXTENSION
 

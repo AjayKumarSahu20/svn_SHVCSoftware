@@ -4054,7 +4054,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       {
 #if POC_RESET_IDC_ENCODER
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
-        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(refLayerId);
+        UInt refLayerIdc = pcSlice->getReferenceLayerIdc(refLayerId);
         assert( g_posScalingFactor[refLayerIdc][0] );
         assert( g_posScalingFactor[refLayerIdc][1] );
 

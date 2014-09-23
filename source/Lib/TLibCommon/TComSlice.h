@@ -2648,6 +2648,7 @@ public:
   Void      decrementRefPocValues(Int const decrementValue);
   Int       getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal );
 #endif
+  Int       getReferenceLayerIdc( UInt refLayerId );
 
 #endif //SVC_EXTENSION
 protected:
