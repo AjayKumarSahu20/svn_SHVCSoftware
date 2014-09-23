@@ -222,7 +222,7 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
       {
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
-        UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(refLayerId);
+        UInt refLayerIdc = pcSlice->getReferenceLayerIdc(refLayerId);
         assert( g_posScalingFactor[refLayerIdc][0] );
         assert( g_posScalingFactor[refLayerIdc][1] );
 
