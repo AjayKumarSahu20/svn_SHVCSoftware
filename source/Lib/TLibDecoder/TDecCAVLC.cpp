@@ -1586,6 +1586,13 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       READ_FLAG(uiCode, "alt_output_layer_flag[i]");
       vps->setAltOuputLayerFlag(i, uiCode ? true : false);
     }
+#if ALT_OPT_LAYER_FLAG
+    else
+    {
+          uiCode=0;
+          vps->setAltOuputLayerFlag(i, uiCode ? true : false);
+    }
+#endif
 #if Q0165_OUTPUT_LAYER_SET
     assert( NumOutputLayersInOutputLayerSet[i]>0 );
 #endif
