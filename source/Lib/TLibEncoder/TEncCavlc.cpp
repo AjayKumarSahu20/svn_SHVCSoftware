@@ -1574,7 +1574,10 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
 #endif
         {
-          WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j), "max_vps_dec_pic_buffering_minus1[i][k][j]" ); 
+#if DPB_INTERNAL_BL_SIG
+        if(vps->getBaseLayerInternalFlag()  || ( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k)   !=  0 ) )
+#endif
+          WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j), "max_vps_dec_pic_buffering_minus1[i][k][j]" );
         }
         WRITE_UVLC( vps->getMaxVpsNumReorderPics( i, j), "max_vps_num_reorder_pics[i][j]" );              
 #if RESOLUTION_BASED_DPB

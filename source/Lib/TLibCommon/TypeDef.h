@@ -256,7 +256,7 @@
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
-
+#define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
 #if R0340_RESAMPLING_MODIFICATION
 #define MOVE_SCALED_OFFSET_TO_PPS        1      ///< JCTVC-R0013: move scaled reference layer offset from SPS to PPS
