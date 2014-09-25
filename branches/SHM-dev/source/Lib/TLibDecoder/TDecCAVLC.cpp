@@ -2205,6 +2205,10 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
 #endif
         {
+#if DPB_INTERNAL_BL_SIG
+            uiCode=0;
+        if(vps->getBaseLayerInternalFlag()  || ( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k)   !=  0 ) )
+#endif
           READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
         }
         READ_UVLC( uiCode, "max_vps_num_reorder_pics[i][j]" );              vps->setMaxVpsNumReorderPics( i, j, uiCode);
