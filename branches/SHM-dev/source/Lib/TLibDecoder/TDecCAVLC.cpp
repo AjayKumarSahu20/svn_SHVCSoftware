@@ -1539,7 +1539,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
         {
+#if DEF_OPT_LAYER_IDC
+          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet)-1))  );
+
+#else
           vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet)-1)) && (vps->getDimensionId(j,1) == 0) );
+#endif
         }
       }
       else if ( vps->getDefaultTargetOutputLayerIdc() == 0 )
@@ -1647,7 +1652,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
         {
 #if O0135_DEFAULT_ONE_OUT_SEMANTIC
+#if DEF_OPT_LAYER_IDC
+        vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) );
+#else
           vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) && (vps->getDimensionId(j,1)==0) );
+#endif
 #else
           vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)));
 #endif
