@@ -250,7 +250,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIDecodingUnitInfo; 
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps);
+#endif
       }
       break; 
     case SEI::BUFFERING_PERIOD:
@@ -261,7 +265,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIBufferingPeriod;
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps);
+#endif
       }
       break;
     case SEI::PICTURE_TIMING:
@@ -272,7 +280,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIPictureTiming;
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps);
+#endif
       }
       break;
     case SEI::RECOVERY_POINT:
@@ -599,16 +611,60 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt /
   xParseByteAlign();
 }
 
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   UInt val;
   READ_UVLC(val, "decoding_unit_idx");
   sei.m_decodingUnitIdx = val;
 
-  TComVUI *vui = sps->getVuiParameters();
-  if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *hrd;
+  if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
-    READ_CODE( ( vui->getHrdParameters()->getDuCpbRemovalDelayLengthMinus1() + 1 ), val, "du_spt_cpb_removal_delay");
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(Int i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+        assert( hrdVec[i]->getSubPicCpbParamsInPicTimingSEIFlag()   == hrdVec[i-1]->getSubPicCpbParamsInPicTimingSEIFlag() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        // To be done: Check CpbDpbDelaysPresentFlag
+      }
+    }
+    hrd = hrdVec[0];
+  }
+  else
+  {
+    TComVUI *vui = sps->getVuiParameters();
+    hrd = vui->getHrdParameters();
+  }
+#else
+  TComVUI *vui = sps->getVuiParameters();
+  TComHrd *hrd = vui->getHrdParameters();
+#endif
+  if(hrd->getSubPicCpbParamsInPicTimingSEIFlag())
+  {
+    READ_CODE( ( hrd->getDuCpbRemovalDelayLengthMinus1() + 1 ), val, "du_spt_cpb_removal_delay");
     sei.m_duSptCpbRemovalDelay = val;
   }
   else
@@ -618,19 +674,62 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*paylo
   READ_FLAG( val, "dpb_output_du_delay_present_flag"); sei.m_dpbOutputDuDelayPresentFlag = val ? true : false;
   if(sei.m_dpbOutputDuDelayPresentFlag)
   {
-    READ_CODE(vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, val, "pic_spt_dpb_output_du_delay"); 
+    READ_CODE(hrd->getDpbOutputDelayDuLengthMinus1() + 1, val, "pic_spt_dpb_output_du_delay"); 
     sei.m_picSptDpbOutputDuDelay = val;
   }
   xParseByteAlign();
 }
 
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   Int i, nalOrVcl;
   UInt code;
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *pHRD;
+  if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
+  {
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getCpbRemovalDelayLengthMinus1()   == hrdVec[i-1]->getCpbRemovalDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+      }
+    }
+    pHRD = hrdVec[i];
+  }
+  else
+  {
+    TComVUI *vui = sps->getVuiParameters();
+    pHRD = vui->getHrdParameters();
+  }
+  // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
+#else
   TComVUI *pVUI = sps->getVuiParameters();
   TComHRD *pHRD = pVUI->getHrdParameters();
+#endif
 
   READ_UVLC( code, "bp_seq_parameter_set_id" );                         sei.m_bpSeqParameterSetId     = code;
   if( !pHRD->getSubPicCpbParamsPresentFlag() )
@@ -682,13 +781,60 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payload
 
   xParseByteAlign();
 }
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   Int i;
   UInt code;
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *hrd;    
+  TComVUI *vui = sps->getVuiParameters(); 
+  if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
+  {
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+        assert( hrdVec[i]->getSubPicCpbParamsInPicTimingSEIFlag()   == hrdVec[i-1]->getSubPicCpbParamsInPicTimingSEIFlag() );
+        assert( hrdVec[i]->getCpbRemovalDelayLengthMinus1()  == hrdVec[i-1]->getCpbRemovalDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        assert( hrdVec[i]->getDuCpbRemovalDelayLengthMinus1()  == hrdVec[i-1]->getDuCpbRemovalDelayLengthMinus1() );
+        // To be done: Check CpbDpbDelaysPresentFlag
+      }
+    }
+    hrd = hrdVec[0];
+  }
+  else
+  {
+    hrd = vui->getHrdParameters();
+  }
+  // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
+#else
   TComVUI *vui = sps->getVuiParameters();
   TComHRD *hrd = vui->getHrdParameters();
+#endif
 
   if( vui->getFrameFieldInfoPresentFlag() )
   {
@@ -1263,6 +1409,46 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
 {
   assert(vps->getVpsVuiPresentFlag());
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  UInt uiCode;
+  Int psIdx         = bspNestingSei.m_seiPartitioningSchemeIdx;
+  Int seiOlsIdx     = bspNestingSei.m_seiOlsIdx;
+  Int maxTemporalId = nestingSei.m_nestingMaxTemporalIdPlus1[0];
+  Int maxValues     = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+  std::vector<Int> hrdIdx(0, maxValues);
+  std::vector<TComHRD *> hrdVec;
+  std::vector<Int> syntaxElemLen;
+  for(Int i = 0; i < maxValues; i++)
+  {
+    hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei.m_bspIdx);
+    hrdVec[i] = vps->getBspHrd(hrdIdx[i]);
+    
+    syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+    if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+    {
+      assert( syntaxElemLen[i] == 24 ); // Default value of init_cpb_removal_delay_length_minus1 is 23
+    }
+    if( i > 0 )
+    {
+      assert( hrdVec[i]->getNalHrdParametersPresentFlag() == hrdVec[i-1]->getNalHrdParametersPresentFlag() );
+      assert( hrdVec[i]->getVclHrdParametersPresentFlag() == hrdVec[i-1]->getVclHrdParametersPresentFlag() );
+    }
+  }
+  if (hrdVec[0]->getNalHrdParametersPresentFlag())
+  {
+    for(UInt i = 0; i < maxValues; i++)
+    {
+      READ_CODE( syntaxElemLen[i], uiCode, "nal_initial_arrival_delay[i]" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
+    }
+  }
+  if( hrdVec[0]->getVclHrdParametersPresentFlag() )
+  {
+    for(UInt i = 0; i < maxValues; i++)
+    {
+      READ_CODE( syntaxElemLen[i], uiCode, "vcl_initial_arrival_delay[i]" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
+    }
+  }
+#else
   UInt schedCombCnt = vps->getNumBspSchedCombinations(nestingSei.m_nestingOpIdx[0]);
   UInt len;
   UInt hrdIdx;
@@ -1306,6 +1492,7 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
       READ_CODE( len, uiCode, "vcl_initial_arrival_delay" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
     }
   }
+#endif
 }
 
 #if !REMOVE_BSP_HRD_SEI

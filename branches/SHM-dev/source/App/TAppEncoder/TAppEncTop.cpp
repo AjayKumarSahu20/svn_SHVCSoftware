@@ -1733,6 +1733,85 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setVpsVuiVertPhaseInUseFlag( vpsVuiVertPhaseInUseFlag );
 #endif
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  vps->setVpsVuiBspHrdPresentFlag(false);
+  TEncTop *pcCfg = &m_acTEncTop[0];
+  if( pcCfg->getBufferingPeriodSEIEnabled() )
+  {
+    vps->setVpsVuiBspHrdPresentFlag(true);
+    vps->setVpsNumAddHrdParams( vps->getMaxLayers() );
+    vps->createBspHrdParamBuffer(vps->getVpsNumAddHrdParams() + 1);
+    for(Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++)
+    {
+      vps->setCprmsAddPresentFlag( j, true );
+      vps->setNumSubLayerHrdMinus1( j, vps->getMaxTLayers() - 1 );
+
+      UInt layerId = j;
+      TEncTop *pcCfgLayer = &m_acTEncTop[layerId];
+
+      Int iPicWidth         = pcCfgLayer->getSourceWidth();
+      Int iPicHeight        = pcCfgLayer->getSourceHeight();
+#if LAYER_CTB
+      UInt uiWidthInCU       = ( iPicWidth  % m_acLayerCfg[layerId].m_uiMaxCUWidth  ) ? iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth  + 1 : iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth;
+      UInt uiHeightInCU      = ( iPicHeight % m_acLayerCfg[layerId].m_uiMaxCUHeight ) ? iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight + 1 : iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight;
+      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_acLayerCfg[layerId].m_uiMaxCUDepth << 1);
+#else
+      UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
+      UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;
+      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_uiMaxCUDepth << 1);
+#endif
+      UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
+
+      UInt numDU = ( pcCfgLayer->getSliceMode() == 1 ) ? ( uiNumCUsInFrame / maxCU ) : ( 0 );
+      if( uiNumCUsInFrame % maxCU != 0 || numDU == 0 )
+      {
+        numDU ++;
+      }
+      vps->getBspHrd(i)->setNumDU( numDU );
+      vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
+    }
+
+    // Signalling of additional partitioning schemes
+    for(Int h = 1; h < vps->getNumOutputLayerSets(); h++)
+    {
+      Int lsIdx = vps->getOutputLayerSetIdx( h );
+      vps->setNumSignalledPartitioningSchemes(h, 1);  // Only the default per-layer partitioning scheme
+      for(Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h); j++)
+      {
+        // ToDo: Add code for additional partitioning schemes here
+        // ToDo: Initialize num_partitions_in_scheme_minus1 and layer_included_in_partition_flag
+      }
+
+      for(Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h); i++)
+      {
+        if( i == 0 )
+        {
+          for(Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1( lsIdx ); t++)
+          {
+            vps->setNumBspSchedulesMinus1( h, i, t, 0 );
+            for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
+            {
+              for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
+              {
+                // Only for the default partition
+                Int nuhlayerId = vps->getLayerSetLayerIdList( lsIdx, k);
+                Int layerIdxInVps = vps->getLayerIdInVps( nuhlayerId );
+                vps->setBspHrdIdx(h, i, t, j, k, layerIdxInVps + vps->getNumHrdParameters());
+
+                vps->setBspSchedIdx(h, i, t, j, k, 0);
+              }
+            }
+          }
+        }
+        else
+        {
+          assert(0);    // Need to add support for additional partitioning schemes.
+        }
+      }
+    }
+  }
+#else
+
 #if O0164_MULTI_LAYER_HRD
   vps->setVpsVuiBspHrdPresentFlag(false);
   TEncTop *pcCfg = &m_acTEncTop[0];
@@ -1804,6 +1883,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
+#endif
 #endif
 
 #else //SVC_EXTENSION

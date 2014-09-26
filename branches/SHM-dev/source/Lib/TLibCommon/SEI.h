@@ -591,6 +591,10 @@ public:
   Int  m_bspIdx;
   Bool  m_callerOwnsSEIs;
   SEIMessages m_nestedSEIs;
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int  m_seiPartitioningSchemeIdx;
+  Int  m_seiOlsIdx;
+#endif
 };
 
 class SEIBspInitialArrivalTime : public SEI

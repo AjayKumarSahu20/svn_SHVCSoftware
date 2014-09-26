@@ -369,6 +369,25 @@ public:
   Void setNumDU                              ( UInt value ) { m_numDU = value;                            }
   UInt getNumDU                              ( )            { return m_numDU;          }
   Bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
+
+#if VPS_VUI_BSP_HRD_PARAMS
+Void copyCommonInformation( TComHRD *refHrd )
+{
+  m_nalHrdParametersPresentFlag         = refHrd->getNalHrdParametersPresentFlag();
+  m_vclHrdParametersPresentFlag         = refHrd->getVclHrdParametersPresentFlag();
+  m_subPicCpbParamsPresentFlag          = refHrd->getSubPicCpbParamsPresentFlag();
+  m_tickDivisorMinus2                   = refHrd->getTickDivisorMinus2();
+  m_duCpbRemovalDelayLengthMinus1       = refHrd->getDuCpbRemovalDelayLengthMinus1();
+  m_subPicCpbParamsInPicTimingSEIFlag   = refHrd->getSubPicCpbParamsInPicTimingSEIFlag();
+  m_dpbOutputDelayDuLengthMinus1        = refHrd->getDpbOutputDelayDuLengthMinus1();
+  m_bitRateScale                        = refHrd->getBitRateScale();
+  m_cpbSizeScale                        = refHrd->getCpbSizeScale();
+  m_ducpbSizeScale                      = refHrd->getDuCpbSizeScale();
+  m_initialCpbRemovalDelayLengthMinus1  = refHrd->getInitialCpbRemovalDelayLengthMinus1();
+  m_cpbRemovalDelayLengthMinus1         = refHrd->getCpbRemovalDelayLengthMinus1();
+  m_dpbOutputDelayLengthMinus1          = refHrd->getDpbOutputDelayLengthMinus1();
+}
+#endif
 };
 
 class TimingInfo
@@ -813,6 +832,18 @@ private:
 
 #if O0164_MULTI_LAYER_HRD
   Bool       m_vpsVuiBspHrdPresentFlag;
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int                 m_vpsNumAddHrdParams;
+  std::vector<Bool>   m_cprmsAddPresentFlag;
+  std::vector<Int>    m_numSubLayerHrdMinus1;
+  std::vector<TComHRD> m_bspHrd;
+  Int    m_numSignalledPartitioningSchemes[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+  Int    m_numPartitionsInSchemeMinus1    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16];
+  Int    m_layerIncludedInPartitionFlag   [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_LAYERS][MAX_LAYERS];
+  Int    m_numBspSchedulesMinus1          [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER];
+  Int    m_bspHrdIdx                      [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+  Int    m_bspSchedIdx                    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+#else
   UInt       m_vpsNumBspHrdParametersMinus1;
   Bool       m_bspCprmsPresentFlag[MAX_VPS_LAYER_SETS_PLUS1];
   TComHRD    *m_bspHrd;
@@ -821,6 +852,7 @@ private:
   UInt       m_numBspSchedCombinations[MAX_VPS_LAYER_SETS_PLUS1];
   UInt       m_bspCombHrdIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
   UInt       m_bspCombSchedIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
+#endif
 #endif
 
 #if P0182_VPS_VUI_PS_FLAG
@@ -866,7 +898,13 @@ public:
 #if O0164_MULTI_LAYER_HRD
   Void    createBspHrdParamBuffer(UInt numHrds)
   {
+#if VPS_VUI_BSP_HRD_PARAMS
+    m_bspHrd.resize( numHrds );
+    m_cprmsAddPresentFlag.resize( numHrds );
+    m_numSubLayerHrdMinus1.resize( numHrds );
+#else
     m_bspHrd    = new TComHRD[ numHrds ];
+#endif
 //    m_hrdOpSetIdx      = new UInt   [ getNumHrdParameters() ];
 //    m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
   }
@@ -874,7 +912,11 @@ public:
 #if HRD_BPB
   Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
   {
+#if VPS_VUI_BSP_HRD_PARAMS
+    return m_bspHrd[i].getCpbCntMinus1(sl);
+#else
     return m_bspHrd->getCpbCntMinus1(sl);
+#endif
   }
 #endif
 
@@ -1195,6 +1237,36 @@ Void      deriveNumberOfSubDpbs();
 #if O0164_MULTI_LAYER_HRD
   Bool     getVpsVuiBspHrdPresentFlag()                         { return m_vpsVuiBspHrdPresentFlag;      }
   Void     setVpsVuiBspHrdPresentFlag(Bool x)                   { m_vpsVuiBspHrdPresentFlag = x;         }
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int      getVpsNumAddHrdParams()                              { return m_vpsNumAddHrdParams; }
+  Void     setVpsNumAddHrdParams(Int  i)                   { m_vpsNumAddHrdParams = i;    }
+
+  Bool     getCprmsAddPresentFlag(Int i)                        { return m_cprmsAddPresentFlag[i];       }
+  Void     setCprmsAddPresentFlag(Int  i, Bool  val)  { m_cprmsAddPresentFlag[i] = val;        }
+
+  Int      getNumSubLayerHrdMinus1(Int i)           { return m_numSubLayerHrdMinus1[i]; }
+  Void     setNumSubLayerHrdMinus1(Int i, Int val)  { m_numSubLayerHrdMinus1[i] = val; }
+
+  TComHRD*  getBspHrd(Int i)           {return &m_bspHrd[i];}
+
+  Int      getNumSignalledPartitioningSchemes(Int  i)                    { return m_numSignalledPartitioningSchemes[i];    }
+  Void     setNumSignalledPartitioningSchemes(Int  i, Int  val)          { m_numSignalledPartitioningSchemes[i] = val;     }
+
+  Int      getNumPartitionsInSchemeMinus1(Int  i, Int j)  { return m_numPartitionsInSchemeMinus1[i][j];}
+  Void     setNumPartitionsInSchemeMinus1(Int i, Int j, Int val) { m_numPartitionsInSchemeMinus1[i][j] = val; }
+
+  Int      getLayerIncludedInPartitionFlag(Int  i, Int j, Int k, Int l)  { return m_layerIncludedInPartitionFlag[i][j][k][l];}
+  Void     setLayerIncludedInPartitionFlag(Int i, Int j, Int k, Int l, Int val) { m_layerIncludedInPartitionFlag[i][j][k][l] = val; }
+
+  Int      getNumBspSchedulesMinus1(Int  i, Int j, Int k)         { return m_numBspSchedulesMinus1[i][j][k];}
+  Void     setNumBspSchedulesMinus1(Int i, Int j, Int k, Int val) { m_numBspSchedulesMinus1[i][j][k] = val; }
+
+  Int      getBspSchedIdx(Int  i, Int j, Int k, Int l, Int m)  { return m_bspSchedIdx[i][j][k][l][m];}
+  Void     setBspSchedIdx(Int  i, Int j, Int k, Int l, Int m, Int val) { m_bspSchedIdx[i][j][k][l][m] = val; }
+
+  Int      getBspHrdIdx(Int  i, Int j, Int k, Int l, Int m)  { return m_bspHrdIdx[i][j][k][l][m];}
+  Void     setBspHrdIdx(Int  i, Int j, Int k, Int l, Int m, Int val) { m_bspHrdIdx[i][j][k][l][m] = val; }
+#else
   UInt     getVpsNumBspHrdParametersMinus1()                    { return m_vpsNumBspHrdParametersMinus1; }
   Void     setVpsNumBspHrdParametersMinus1(UInt i)              { m_vpsNumBspHrdParametersMinus1 = i;    }
   Bool     getBspCprmsPresentFlag(UInt i)                       { return m_bspCprmsPresentFlag[i];       }
@@ -1210,6 +1282,7 @@ Void      deriveNumberOfSubDpbs();
   Void     setBspCombHrdIdx(UInt h, UInt i, UInt j, UInt val)   { m_bspCombHrdIdx[h][i][j] = val;        }
   UInt     getBspCombSchedIdx(UInt h, UInt i, UInt j)           { return m_bspCombSchedIdx[h][i][j];     }
   Void     setBspCombSchedIdx(UInt h, UInt i, UInt j, UInt val) { m_bspCombSchedIdx[h][i][j] = val;      }
+#endif
 #endif
 #if P0182_VPS_VUI_PS_FLAG
   Int    getSPSId       (Int layer)                   { return m_SPSId[layer];       }

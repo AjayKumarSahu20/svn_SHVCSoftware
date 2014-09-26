@@ -2360,24 +2360,42 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if O0164_MULTI_LAYER_HRD
       if (pcSlice->getLayerId() == 0 && m_pcEncTop->getVPS()->getVpsVuiBspHrdPresentFlag())
       {
-        nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, 1);
-        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-        SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice);
-        m_seiWriter.writeSEImessage(nalu.m_Bitstream, *scalableBspNestingSei, m_pcEncTop->getVPS(), pcSlice->getSPS());
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-
-        UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-        UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
-          + m_bufferingPeriodSEIPresentInAU 
-          + m_pictureTimingSEIPresentInAU
-          + m_nestedPictureTimingSEIPresentInAU;  // Insert SEI after APS, BP and PT SEI
-        AccessUnit::iterator it;
-        for(j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
+#if VPS_VUI_BSP_HRD_PARAMS
+        TComVPS *vps = m_pcEncTop->getVPS();
+        for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
         {
-          it++;
+          for(Int k = 0; k < vps->getNumSignalledPartitioningSchemes(i); k++)
+          {
+            for(Int l = 0; l < vps->getNumPartitionsInSchemeMinus1(i, k)+1; l++)
+            {
+#endif
+              nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, 1);
+              m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+              m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if VPS_VUI_BSP_HRD_PARAMS
+              SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice, i, k, l);
+#else
+              SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice);
+#endif
+              m_seiWriter.writeSEImessage(nalu.m_Bitstream, *scalableBspNestingSei, m_pcEncTop->getVPS(), pcSlice->getSPS());
+              writeRBSPTrailingBits(nalu.m_Bitstream);
+
+              UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
+              UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
+                + m_bufferingPeriodSEIPresentInAU 
+                + m_pictureTimingSEIPresentInAU
+                + m_nestedPictureTimingSEIPresentInAU;  // Insert SEI after APS, BP and PT SEI
+              AccessUnit::iterator it;
+              for(j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++)
+              {
+                it++;
+              }
+              accessUnit.insert(it, new NALUnitEBSP(nalu));
+#if VPS_VUI_BSP_HRD_PARAMS
+            }
+          }
         }
-        accessUnit.insert(it, new NALUnitEBSP(nalu));
+#endif
       }
 #endif
 
@@ -4745,7 +4763,11 @@ Void TEncGOP::xBuildTileSetsMap(TComPicSym* picSym)
 #endif
 
 #if O0164_MULTI_LAYER_HRD
+#if VPS_VUI_BSP_HRD_PARAMS
+SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx)
+#else
 SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice)
+#endif
 {
   SEIScalableNesting *seiScalableNesting = new SEIScalableNesting();
   SEIBspInitialArrivalTime *seiBspInitialArrivalTime = new SEIBspInitialArrivalTime();
@@ -4758,7 +4780,12 @@ SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice)
   seiScalableNesting->m_nestingOpFlag                 = 1;
   seiScalableNesting->m_defaultOpFlag                 = 0;
   seiScalableNesting->m_nestingNumOpsMinus1           = 0;      //nesting_num_ops_minus1
+#if VPS_VUI_BSP_HRD_PARAMS
+  seiScalableNesting->m_nestingOpIdx[0]               = pcSlice->getVPS()->getOutputLayerSetIdx(olsIdx);
+  seiScalableNesting->m_nestingMaxTemporalIdPlus1[0]  = 6 + 1;
+#else
   seiScalableNesting->m_nestingOpIdx[0]               = 1;
+#endif
   seiScalableNesting->m_allLayersFlag                 = 0;
   seiScalableNesting->m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1;  //nesting_no_op_max_temporal_id_plus1
   seiScalableNesting->m_nestingNumLayersMinus1        = 1 - 1;  //nesting_num_layers_minus1
@@ -4804,6 +4831,11 @@ SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice)
 
   seiBspNesting->m_nestedSEIs.push_back(seiBufferingPeriod);
   seiBspNesting->m_nestedSEIs.push_back(seiBspInitialArrivalTime);
+#if VPS_VUI_BSP_HRD_PARAMS
+  seiBspNesting->m_bspIdx = bspIdx;
+  seiBspNesting->m_seiOlsIdx = olsIdx;
+  seiBspNesting->m_seiPartitioningSchemeIdx = partitioningSchemeIdx;
+#endif
   seiScalableNesting->m_nestedSEIs.push_back(seiBspNesting); // BSP nesting SEI is contained in scalable nesting SEI
 
   return seiScalableNesting;

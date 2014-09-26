@@ -252,7 +252,11 @@ protected:
   SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
 #endif
 #if O0164_MULTI_LAYER_HRD
+#if VPS_VUI_BSP_HRD_PARAMS
+  SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
+#else
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );

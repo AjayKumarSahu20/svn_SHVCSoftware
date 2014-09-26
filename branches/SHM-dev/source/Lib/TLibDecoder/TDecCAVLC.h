@@ -85,6 +85,9 @@ public:
 #if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
 #endif
+#if VPS_VUI_BSP_HRD_PARAMS
+  Void  parseVpsVuiBspHrdParams( TComVPS *vps );
+#endif
 #if SPS_DPB_PARAMS
   Void  parseSPS            ( TComSPS* pcSPS ); // it should be removed after macro clean up
 #else
