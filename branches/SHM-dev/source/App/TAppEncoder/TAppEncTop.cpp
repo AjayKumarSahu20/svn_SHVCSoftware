@@ -1738,10 +1738,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   TEncTop *pcCfg = &m_acTEncTop[0];
   if( pcCfg->getBufferingPeriodSEIEnabled() )
   {
+    Int j;
     vps->setVpsVuiBspHrdPresentFlag(true);
     vps->setVpsNumAddHrdParams( vps->getMaxLayers() );
     vps->createBspHrdParamBuffer(vps->getVpsNumAddHrdParams() + 1);
-    for(Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++)
+    for( i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++ )
     {
       vps->setCprmsAddPresentFlag( j, true );
       vps->setNumSubLayerHrdMinus1( j, vps->getMaxTLayers() - 1 );
@@ -1776,20 +1777,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       Int lsIdx = vps->getOutputLayerSetIdx( h );
       vps->setNumSignalledPartitioningSchemes(h, 1);  // Only the default per-layer partitioning scheme
-      for(Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h); j++)
+      for( j = 1; j < vps->getNumSignalledPartitioningSchemes(h); j++ )
       {
         // ToDo: Add code for additional partitioning schemes here
         // ToDo: Initialize num_partitions_in_scheme_minus1 and layer_included_in_partition_flag
       }
 
-      for(Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h); i++)
+      for( i = 0; i < vps->getNumSignalledPartitioningSchemes(h); i++ )
       {
         if( i == 0 )
         {
           for(Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1( lsIdx ); t++)
           {
             vps->setNumBspSchedulesMinus1( h, i, t, 0 );
-            for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
+            for( j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
             {
               for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
               {
