@@ -253,7 +253,7 @@ protected:
 #endif
 #if O0164_MULTI_LAYER_HRD
 #if VPS_VUI_BSP_HRD_PARAMS
-  SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
+  SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
 #else
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
 #endif
