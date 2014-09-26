@@ -3174,6 +3174,7 @@ Void TComVPS::calculateMaxSLInLayerSets()
   }
 }
 #endif
+
 #if RESOLUTION_BASED_DPB
 // RepFormat Assignment operator
 RepFormat& RepFormat::operator= (const RepFormat &other)

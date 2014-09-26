@@ -1812,6 +1812,9 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     WRITE_FLAG(vps->getVpsVuiBspHrdPresentFlag(), "vps_vui_bsp_hrd_present_flag" );
     if (vps->getVpsVuiBspHrdPresentFlag())
     {
+#if VPS_VUI_BSP_HRD_PARAMS
+      codeVpsVuiBspHrdParams(vps);
+#else
       WRITE_UVLC( vps->getVpsNumBspHrdParametersMinus1(), "vps_num_bsp_hrd_parameters_minus1" );
       for( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
       {
@@ -1855,6 +1858,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
           }
         }
       }
+#endif
     }
 #endif
 #if P0182_VPS_VUI_PS_FLAG
@@ -3187,6 +3191,51 @@ Void TEncCavlc::xCheckParamBits( Int param, Int rParam, Int &nBits)
     nBits++; 
 }
 #endif
-
+#if VPS_VUI_BSP_HRD_PARAMS
+Void TEncCavlc::codeVpsVuiBspHrdParams(TComVPS * const vps)
+{
+  WRITE_UVLC( vps->getVpsNumAddHrdParams(), "vps_num_add_hrd_params" );
+  for( Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++ ) // j = i - vps->getNumHrdParameters()
+  {
+    if( i > 0 )
+    {
+      WRITE_FLAG( vps->getCprmsAddPresentFlag(j), "cprms_add_present_flag[i]" );
+    }
+    WRITE_UVLC( vps->getNumSubLayerHrdMinus1(j), "num_sub_layer_hrd_minus1[i]" );
+    codeHrdParameters(vps->getBspHrd(j), i == 0 ? true : vps->getCprmsAddPresentFlag(j), vps->getNumSubLayerHrdMinus1(j));
+  }
+  for( Int h = 1; h < vps->getNumOutputLayerSets(); h++ )
+  {
+    Int lsIdx = vps->getOutputLayerSetIdx( h );
+    WRITE_UVLC( vps->getNumSignalledPartitioningSchemes(h), "num_signalled_partitioning_schemes[h]");
+    for( Int j = 0; j < vps->getNumSignalledPartitioningSchemes(h); j++ )
+    {
+      WRITE_UVLC( vps->getNumPartitionsInSchemeMinus1(h, j), "num_partitions_in_scheme_minus1[h][j]" );
+      for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++ )
+      {
+        for( Int r = 0; r < vps->getNumLayersInIdList( lsIdx ); r++ )
+        {
+          WRITE_FLAG( vps->getLayerIncludedInPartitionFlag(h, j, k, r), "layer_included_in_partition_flag[h][j][k][r]" );
+        }
+      }
+    }
+    for( Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++ )
+    {
+      for( Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++ )
+      {
+        WRITE_UVLC(vps->getNumBspSchedulesMinus1(h, i, t), "num_bsp_schedules_minus1[h][i][t]");
+        for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
+        {
+          for( Int k = 0; k < vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
+          {
+            WRITE_UVLC( vps->getBspHrdIdx(h, i, t, j, k),   "bsp_comb_hrd_idx[h][i][t][j][k]");
+            WRITE_UVLC( vps->getBspSchedIdx(h, i, t, j, k), "bsp_comb_sched_idx[h][i][t][j][k]");
+          }
+        }
+      }
+    }
+  }
+}
+#endif
 #endif
 //! \}

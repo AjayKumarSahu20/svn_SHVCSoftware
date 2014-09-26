@@ -577,6 +577,13 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
       READ_CODE( 5, uiCode, "au_cpb_removal_delay_length_minus1" );      hrd->setCpbRemovalDelayLengthMinus1( uiCode );
       READ_CODE( 5, uiCode, "dpb_output_delay_length_minus1" );       hrd->setDpbOutputDelayLengthMinus1( uiCode );
     }
+#if VPS_VUI_BSP_HRD_PARAMS
+    else
+    {
+      hrd->setInitialCpbRemovalDelayLengthMinus1( 23 );
+      // Add inferred values for other syntax elements here.
+    }
+#endif
   }
   Int i, j, nalOrVcl;
   for( i = 0; i <= maxNumSubLayersMinus1; i ++ )
@@ -2624,6 +2631,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   READ_FLAG(uiCode, "vps_vui_bsp_hrd_present_flag" ); vps->setVpsVuiBspHrdPresentFlag(uiCode);
   if (vps->getVpsVuiBspHrdPresentFlag())
   {
+#if VPS_VUI_BSP_HRD_PARAMS
+    parseVpsVuiBspHrdParams(vps);
+#else
 #if R0227_VUI_BSP_HRD_FLAG
     assert (vps->getTimingInfo()->getTimingInfoPresentFlag() == 1);
 #endif
@@ -2702,9 +2712,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
         }
       }
     }
+#endif
   }
 #endif
-
 #if P0182_VPS_VUI_PS_FLAG
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
@@ -2720,6 +2730,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif
 }
+
 #endif //SVC_EXTENSION
 
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice, ParameterSetManagerDecoder *parameterSetManager)
@@ -4484,6 +4495,82 @@ Void TDecCavlc::xReadParam( Int& param )
     param = sign ? -(Int)(rSymbol) : (Int)(rSymbol);
   }
   else param = 0;
+}
+#endif
+#if VPS_VUI_BSP_HRD_PARAMS
+Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
+{
+  UInt uiCode;
+  assert (vps->getTimingInfo()->getTimingInfoPresentFlag() == 1);
+  READ_UVLC( uiCode, "vps_num_add_hrd_params" ); vps->setVpsNumAddHrdParams(uiCode);
+  vps->createBspHrdParamBuffer(vps->getVpsNumAddHrdParams()); // Also allocates m_cprmsAddPresentFlag and m_numSubLayerHrdMinus
+
+  for( Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++ ) // j = i - vps->getNumHrdParameters()
+  {
+    if( i > 0 )
+    {
+      READ_FLAG( uiCode, "cprms_add_present_flag[i]" );   vps->setCprmsAddPresentFlag(j, uiCode ? true : false);
+    }
+    else
+    {
+      // i == 0
+      if( vps->getNumHrdParameters() == 0 )
+      {
+        vps->setCprmsAddPresentFlag(0, true);
+      }
+    }
+    READ_UVLC( uiCode, "num_sub_layer_hrd_minus1[i]" ); vps->setNumSubLayerHrdMinus1(j, uiCode );
+    assert( uiCode <= vps->getMaxTLayers() - 1 );
+    
+    parseHrdParameters( vps->getBspHrd(j), vps->getCprmsAddPresentFlag(j), vps->getNumSubLayerHrdMinus1(j) );
+    if( i > 0 && !vps->getCprmsAddPresentFlag(i) )
+    {
+      // Copy common information parameters
+      if( i == vps->getNumHrdParameters() )
+      {
+        vps->getBspHrd(j)->copyCommonInformation( vps->getHrdParameters( vps->getNumHrdParameters() - 1 ) );
+      }
+      else
+      {
+        vps->getBspHrd(j)->copyCommonInformation( vps->getBspHrd( j - 1 ) );
+      }
+    }
+  }
+  for (Int h = 1; h < vps->getNumOutputLayerSets(); h++)
+  {
+    Int lsIdx = vps->getOutputLayerSetIdx( h );
+    READ_UVLC( uiCode, "num_signalled_partitioning_schemes[h]"); vps->setNumSignalledPartitioningSchemes(h, uiCode);
+    for( Int j = 0; j < vps->getNumSignalledPartitioningSchemes(h); j++ )
+    {
+      READ_UVLC( uiCode, "num_partitions_in_scheme_minus1[h][j]" ); vps->setNumPartitionsInSchemeMinus1(h, j, uiCode);
+      for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++ )
+      {
+        for( Int r = 0; r < vps->getNumLayersInIdList( lsIdx ); r++ )
+        {
+          READ_FLAG( uiCode, "layer_included_in_partition_flag[h][j][k][r]" ); vps->setLayerIncludedInPartitionFlag(h, j, k, r, uiCode ? true : false);
+        }
+      }
+    }
+    for( Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++ )
+    {
+      for( Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++ )
+      {
+        READ_UVLC( uiCode, "num_bsp_schedules_minus1[h][i][t]");              vps->setNumBspSchedulesMinus1(h, i, t, uiCode);
+        for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
+        {
+          for( Int k = 0; k < vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
+          {
+            READ_UVLC( uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
+            READ_UVLC( uiCode, "bsp_comb_sched_idx[h][i][t][j][k]");    vps->setBspSchedIdx(h, i, t, j, k, uiCode);
+          }
+        }
+      }
+    }
+
+    // To be done: Check each layer included in not more than one BSP in every partitioning scheme,
+    // and other related checks associated with layers in bitstream partitions.
+
+  }
 }
 #endif
 #endif
