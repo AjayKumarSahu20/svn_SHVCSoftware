@@ -2336,7 +2336,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getNumLayerSets(); i++ )
     {
-      for( Int j = 0; j  <=  vps->getMaxSLayersInLayerSetMinus1( i ); j++ ) 
+      for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1( i ); j++ ) 
       {
         if( vps->getBitRatePresentVpsFlag() )
         {
