@@ -258,6 +258,7 @@
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
 #define ALT_OPT_LAYER_FLAG               1      ///< JCTVC-R0154: proposal1 - alt_output_layer_flag[i] inference
+#define DEF_OPT_LAYER_IDC                1      ///< JCTVC-R0154: proposal2 - default_output_layer_idc and output_layer_flag[i][j]
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
 #if R0340_RESAMPLING_MODIFICATION
 #define MOVE_SCALED_OFFSET_TO_PPS        1      ///< JCTVC-R0013: move scaled reference layer offset from SPS to PPS
