@@ -106,7 +106,11 @@ protected:
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
+#if OLS_IDX_CHK
+Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei, TComVPS *vps);
+#else
 Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
+#endif
 #endif
 #if LAYERS_NOT_PRESENT_SEI
   Void xParseSEILayersNotPresent      (SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps);
