@@ -1662,6 +1662,9 @@ private:
   UInt        m_layerId;
   Bool        m_extensionFlag;
   UInt        m_numScaledRefLayerOffsets;
+#if R0042_PROFILE_INDICATION  
+  Int         m_NumDirectRefLayers;
+#endif
 #if P0312_VERT_PHASE_ADJ
  Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
@@ -1829,6 +1832,10 @@ public:
   UInt     getLayerId()                        { return m_layerId;    }
   Int      getExtensionFlag()                  { return m_extensionFlag;  }
   Void     setExtensionFlag(Int n)             { m_extensionFlag = n;     }
+#if R0042_PROFILE_INDICATION
+  Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
+  Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
+#endif
 #if !MOVE_SCALED_OFFSET_TO_PPS
   UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }

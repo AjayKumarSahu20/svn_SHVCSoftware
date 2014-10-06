@@ -224,6 +224,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
     }
   }
 
+#if !R0042_PROFILE_INDICATION
 #if SCALINGLIST_INFERRING
   if( pcPPS->getLayerId() > 0 )
   {
@@ -240,25 +241,32 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
   else
   {
 #endif
+#endif
 
   WRITE_FLAG( pcPPS->getScalingListPresentFlag() ? 1 : 0,                          "pps_scaling_list_data_present_flag" ); 
   if( pcPPS->getScalingListPresentFlag() )
   {
     codeScalingList( m_pcSlice->getScalingList() );
   }
-
+#if !R0042_PROFILE_INDICATION
 #if SCALINGLIST_INFERRING
   }
+#endif
 #endif
 
   WRITE_FLAG( pcPPS->getListsModificationPresentFlag(), "lists_modification_present_flag");
   WRITE_UVLC( pcPPS->getLog2ParallelMergeLevelMinus2(), "log2_parallel_merge_level_minus2");
   WRITE_FLAG( pcPPS->getSliceHeaderExtensionPresentFlag() ? 1 : 0, "slice_segment_header_extension_present_flag");
 #if P0166_MODIFIED_PPS_EXTENSION
+#if !R0042_PROFILE_INDICATION
   WRITE_FLAG( pcPPS->getExtensionFlag() ? 1 : 0, "pps_extension_flag" );
+#else
+  WRITE_FLAG( pcPPS->getExtensionFlag() ? 1 : 0, "pps_extension_present_flag" );
+#endif
 
   if( pcPPS->getExtensionFlag() )
   {
+#if !R0042_PROFILE_INDICATION
 #if !POC_RESET_IDC
     UInt ppsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
 #else
@@ -334,6 +342,83 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 #endif
 #endif
     }
+#else
+  WRITE_FLAG( 0, "pps_range_extension_flag" );
+  WRITE_FLAG( 1, "pps_multilayer_extension_flag" );
+  WRITE_CODE( 0, 6,  "pps_extension_6bits" );     
+
+  WRITE_FLAG( pcPPS->getPocResetInfoPresentFlag() ? 1 : 0, "poc_reset_info_present_flag" );
+#if SCALINGLIST_INFERRING
+  WRITE_FLAG( pcPPS->getInferScalingListFlag() ? 1 : 0, "pps_infer_scaling_list_flag" );
+  if( pcPPS->getInferScalingListFlag() )
+  {
+    // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+    assert( pcPPS->getScalingListRefLayerId() <= 62 );
+    WRITE_UVLC( pcPPS->getScalingListRefLayerId(), "pps_scaling_list_ref_layer_id" );
+  }
+#endif
+
+#if REF_REGION_OFFSET
+  WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_ref_loc_offsets" );
+  for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+  {
+    WRITE_CODE( pcPPS->getScaledRefLayerId(i), 6, "ref_loc_offset_layer_id" );
+    WRITE_FLAG( pcPPS->getScaledRefLayerOffsetPresentFlag(i) ? 1 : 0, "scaled_ref_layer_offset_prsent_flag" );
+    if (pcPPS->getScaledRefLayerOffsetPresentFlag(i))
+    {
+      Window scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+      WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+      WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+      WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+      WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+    }
+    WRITE_FLAG( pcPPS->getRefRegionOffsetPresentFlag(i) ? 1 : 0, "ref_region_offset_prsent_flag" );
+    if (pcPPS->getRefRegionOffsetPresentFlag(i))
+    {
+      Window refWindow = pcPPS->getRefLayerWindow(i);
+      WRITE_SVLC( refWindow.getWindowLeftOffset()   >> 1, "ref_region_left_offset" );
+      WRITE_SVLC( refWindow.getWindowTopOffset()    >> 1, "ref_region_top_offset" );
+      WRITE_SVLC( refWindow.getWindowRightOffset()  >> 1, "ref_region_right_offset" );
+      WRITE_SVLC( refWindow.getWindowBottomOffset() >> 1, "ref_region_bottom_offset" );
+    }
+#if R0209_GENERIC_PHASE
+    WRITE_FLAG( pcPPS->getResamplePhaseSetPresentFlag(i) ? 1 : 0, "resample_phase_set_present_flag" );
+    if (pcPPS->getResamplePhaseSetPresentFlag(i))
+    {
+      WRITE_UVLC( pcPPS->getPhaseHorLuma(i), "phase_hor_luma" );
+      WRITE_UVLC( pcPPS->getPhaseVerLuma(i), "phase_ver_luma" );
+      WRITE_UVLC( pcPPS->getPhaseHorChroma(i) + 8, "phase_hor_chroma_plus8" );
+      WRITE_UVLC( pcPPS->getPhaseVerChroma(i) + 8, "phase_ver_chroma_plus8" );
+    }
+#endif
+  }
+#else
+#if MOVE_SCALED_OFFSET_TO_PPS
+  WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
+  for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+  {
+    Window scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+#if O0098_SCALED_REF_LAYER_ID
+    WRITE_CODE( pcPPS->getScaledRefLayerId(i), 6,          "scaled_ref_layer_id" );
+#endif
+    WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
+    WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
+    WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
+    WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
+  }
+#endif
+#endif
+#if Q0048_CGS_3D_ASYMLUT
+  UInt uiPos = getNumberOfWrittenBits();
+  WRITE_FLAG( pcPPS->getCGSFlag() , "colour_mapping_enabled_flag" );
+  if( pcPPS->getCGSFlag() )
+  {
+    assert( pc3DAsymLUT != NULL );
+    xCode3DAsymLUT( pc3DAsymLUT );
+  }
+  pc3DAsymLUT->setPPSBit( getNumberOfWrittenBits() - uiPos );
+#endif
+#endif
   }
 #else
   WRITE_FLAG( 0, "pps_extension_flag" );
@@ -501,6 +586,9 @@ Void TEncCavlc::codeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt
 
 Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 {
+#if R0042_PROFILE_INDICATION
+  bool bMultiLayerExtSpsFlag = (pcSPS->getNumDirectRefLayers() != 0 ) ; 
+#endif
 #if ENC_DEC_TRACE  
   xTraceSPSHeader (pcSPS);
 #endif
@@ -510,12 +598,34 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   {
 #endif
     WRITE_CODE( pcSPS->getMaxTLayers() - 1,  3,       "sps_max_sub_layers_minus1" );
+#if SVC_EXTENSION
+  }
+#if R0042_PROFILE_INDICATION
+  else
+  {
+    WRITE_CODE(bMultiLayerExtSpsFlag? 7:(pcSPS->getMaxTLayers() - 1) ,  3,       "sps_ext_or_max_sub_layers_minus1" );
+  }
+#endif
+#endif
+
+#if SVC_EXTENSION
+#if !R0042_PROFILE_INDICATION
+  if(pcSPS->getLayerId() == 0)
+#else
+  if(!bMultiLayerExtSpsFlag)
+#endif
+  {
+#endif
     WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0,                             "sps_temporal_id_nesting_flag" );
 #if SVC_EXTENSION
   }
 #endif
 #ifdef SPS_PTL_FIX
+#if !R0042_PROFILE_INDICATION
   if (pcSPS->getLayerId() == 0)
+#else
+  if(!bMultiLayerExtSpsFlag)
+#endif
   {
     codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
   }
@@ -524,14 +634,31 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #endif
   WRITE_UVLC( pcSPS->getSPSId (),                   "sps_seq_parameter_set_id" );
 #if REPN_FORMAT_IN_VPS
+#if !R0042_PROFILE_INDICATION
   if( pcSPS->getLayerId() > 0 )
+#else
+  if(bMultiLayerExtSpsFlag)
+#endif
   {
     WRITE_FLAG( pcSPS->getUpdateRepFormatFlag(), "update_rep_format_flag" );
   }
+#if R0042_PROFILE_INDICATION
+  if( bMultiLayerExtSpsFlag && pcSPS->getUpdateRepFormatFlag())
+  {
+    WRITE_CODE( pcSPS->getUpdateRepFormatIndex(), 8,   "sps_rep_format_idx");
+  }
+#endif
+
+#if R0042_PROFILE_INDICATION
+  if(!bMultiLayerExtSpsFlag)
+  {
+#endif
+#if !R0042_PROFILE_INDICATION
 #if O0096_REP_FORMAT_INDEX
   if( pcSPS->getLayerId() == 0 ) 
 #else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
+#endif
 #endif
   {
 #endif
@@ -547,6 +674,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     WRITE_UVLC( pcSPS->getPicHeightInLumaSamples(),   "pic_height_in_luma_samples" );
 #if REPN_FORMAT_IN_VPS
   }
+#if !R0042_PROFILE_INDICATION
 #if O0096_REP_FORMAT_INDEX
   else if (pcSPS->getUpdateRepFormatFlag())
   {
@@ -554,14 +682,17 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 #endif
 #endif
+#endif
 
 #if R0156_CONF_WINDOW_IN_REP_FORMAT
 #if REPN_FORMAT_IN_VPS
+#if !R0042_PROFILE_INDICATION
 #if O0096_REP_FORMAT_INDEX
   if( pcSPS->getLayerId() == 0 ) 
 #else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
 #endif  
+#endif
   {
 #endif
 #endif
@@ -589,11 +720,13 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #endif
 
 #if REPN_FORMAT_IN_VPS
+#if !R0042_PROFILE_INDICATION
 #if O0096_REP_FORMAT_INDEX
   if( pcSPS->getLayerId() == 0 ) 
 #else
   if( pcSPS->getLayerId() == 0 || pcSPS->getUpdateRepFormatFlag() ) 
-#endif  
+#endif
+#endif
   {
     assert( pcSPS->getBitDepthY() >= 8 );
     assert( pcSPS->getBitDepthC() >= 8 );
@@ -603,10 +736,18 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #if REPN_FORMAT_IN_VPS
   }
 #endif
+#if R0042_PROFILE_INDICATION
+  }
+#endif
+
   WRITE_UVLC( pcSPS->getBitsForPOC()-4,                 "log2_max_pic_order_cnt_lsb_minus4" );
 
 #if SPS_DPB_PARAMS
+#if !R0042_PROFILE_INDICATION
   if( pcSPS->getLayerId() == 0 )
+#else
+  if(!bMultiLayerExtSpsFlag)
+#endif
   {
 #endif
   const Bool subLayerOrderingInfoPresentFlag = 1;
@@ -636,7 +777,11 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   if(pcSPS->getScalingListFlag())
   {
 #if SCALINGLIST_INFERRING
+#if !R0042_PROFILE_INDICATION
     if( pcSPS->getLayerId() > 0 )
+#else
+    if( bMultiLayerExtSpsFlag)
+#endif
     {
       WRITE_FLAG( pcSPS->getInferScalingListFlag() ? 1 : 0, "sps_infer_scaling_list_flag" );
     }
@@ -705,10 +850,15 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   }
 
 #if SVC_EXTENSION
+#if !R0042_PROFILE_INDICATION
   WRITE_FLAG( pcSPS->getExtensionFlag() ? 1 : 0, "sps_extension_flag" );
+#else
+  WRITE_FLAG( pcSPS->getExtensionFlag() ? 1 : 0, "sps_extension_present_flag" );
+#endif
 
   if( pcSPS->getExtensionFlag() )
   {
+#if !R0042_PROFILE_INDICATION
 #if O0142_CONDITIONAL_SPS_EXTENSION
     UInt spsExtensionTypeFlag[8] = { 0, 1, 0, 0, 0, 0, 0, 0 };
     for (UInt i = 0; i < 8; i++)
@@ -722,6 +872,12 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 #else
     codeSPSExtension( pcSPS );
     WRITE_FLAG( 0, "sps_extension2_flag" );
+#endif
+#else
+    WRITE_FLAG( 0, "sps_range_extension_flag" );
+    WRITE_FLAG( 1, "sps_multilayer_extension_flag" );
+    WRITE_CODE( 0, 6,  "sps_extension_6bits" );   
+    codeSPSExtension( pcSPS ); //it is sps_multilayer_extension
 #endif
   }
 #else

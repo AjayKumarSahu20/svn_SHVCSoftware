@@ -984,7 +984,9 @@ Void TEncTop::xInitSPS()
 {
 #if SVC_EXTENSION
   m_cSPS.setExtensionFlag( m_layerId > 0 ? true : false );
-
+#if R0042_PROFILE_INDICATION
+  m_cSPS.setNumDirectRefLayers(m_numAddLayerSets);
+#endif
 #if Q0078_ADD_LAYER_SETS
   if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
