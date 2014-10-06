@@ -63,6 +63,7 @@ TComPic::TComPic()
 #if SVC_EXTENSION
   memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
   memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
+  memset( m_equalPictureSizeAndOffsetFlag, false, sizeof( m_equalPictureSizeAndOffsetFlag ) );
 #endif
   m_apcPicYuv[0]      = NULL;
   m_apcPicYuv[1]      = NULL;

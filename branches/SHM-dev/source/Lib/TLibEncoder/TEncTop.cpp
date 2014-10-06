@@ -819,6 +819,14 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
+#if REF_IDX_MFM
+          if( m_iSourceWidth == pcEncTopBase->getSourceWidth() && m_iSourceHeight == pcEncTopBase->getSourceHeight() && equalOffsets && zeroPhase )
+          {
+            pcEPic->setEqualPictureSizeAndOffsetFlag( i, true );
+          }
+
+          if( !pcEPic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
+#else
           if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !sameBitDepths 
 #if REF_REGION_OFFSET && RESAMPLING_FIX
             || !equalOffsets
@@ -827,6 +835,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #endif
 #else
             || !zeroOffsets
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0

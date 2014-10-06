@@ -406,6 +406,14 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, i);
         Bool sameBitDepths = ( g_bitDepthYLayer[m_layerId] == g_bitDepthYLayer[refLayerId] ) && ( g_bitDepthCLayer[m_layerId] == g_bitDepthCLayer[refLayerId] );
 
+#if REF_IDX_MFM
+        if( pcPicYuvRecBase->getWidth() == pcSlice->getPicWidthInLumaSamples() && pcPicYuvRecBase->getHeight() == pcSlice->getPicHeightInLumaSamples() && equalOffsets && zeroPhase )
+        {
+          rpcPic->setEqualPictureSizeAndOffsetFlag( i, true );
+        }
+
+        if( !rpcPic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
+#else
         if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !sameBitDepths
 #if REF_REGION_OFFSET && RESAMPLING_FIX
           || !equalOffsets
@@ -414,6 +422,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
 #else
           || !zeroOffsets
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
           || pcSlice->getPPS()->getCGSFlag() > 0

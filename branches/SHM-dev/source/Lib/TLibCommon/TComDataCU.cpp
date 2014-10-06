@@ -3545,17 +3545,17 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   // offset for collocated block in the motion mapping
   if( motionMapping )
   {
-    // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
-    if( m_pcPic->isSpatialEnhLayer(refLayerIdc) )
+    if( m_pcPic->equalPictureSizeAndOffsetFlag(refLayerIdc) )
     {
-      iBX = ( ( iBX + 4 ) >> 4 ) << 4;
-      iBY = ( ( iBY + 4 ) >> 4 ) << 4;
+      // copy motion field from the same sample position for the case of 1x scaling ratio and same offset value between the current and reference layers
+      iBX = pelX;
+      iBY = pelY;
     }
     else
     {
-      // copy motion field from the top left sample for 1x scaling ratio
-      iBX = pelX;
-      iBY = pelY;
+      // actually, motion field compression is performed in the Void TComPic::compressMotion() function, but with (+4) the rounding may have effect on the picture boundary check.
+      iBX = ( ( iBX + 4 ) >> 4 ) << 4;
+      iBY = ( ( iBY + 4 ) >> 4 ) << 4;
     }
   }
 #endif
