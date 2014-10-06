@@ -87,6 +87,9 @@ private:
   UInt                  m_layerId;              //  Layer ID
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
+#if REF_IDX_MFM
+  Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS]; 
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
@@ -202,6 +205,8 @@ public:
   Bool          isILR( UInt currLayerId )   { return ( m_bIsLongTerm && m_layerId < currLayerId ); }
 #endif
 #if REF_IDX_MFM
+  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc]; }
+  Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;    }
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
 #endif
