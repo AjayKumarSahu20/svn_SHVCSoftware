@@ -358,7 +358,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
 #if SUB_BITSTREAM_PROPERTY_SEI
    case SEI::SUB_BITSTREAM_PROPERTY:
      sei = new SEISubBitstreamProperty;
+#if OLS_IDX_CHK
+     xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei, vps);
+#else
      xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei);
+#endif
      break;
 #endif
 #if O0164_MULTI_LAYER_HRD
@@ -1348,7 +1352,11 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
 }
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
+#if OLS_IDX_CHK
+Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
+#endif
 {
   UInt uiCode;
   READ_CODE( 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
@@ -1357,7 +1365,12 @@ Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
   for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
   {
     READ_CODE(  2, uiCode, "sub_bitstream_mode[i]"           ); sei.m_subBitstreamMode[i] = uiCode;
-    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  ); sei.m_outputLayerSetIdxToVps[i] = uiCode;
+    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  );
+#if OLS_IDX_CHK
+      // The value of output_layer_set_idx_to_vps[ i ]  shall be in the range of 0 to NumOutputLayerSets − 1, inclusive.
+      assert(uiCode > 0 && uiCode <= vps->getNumOutputLayerSets()-1);
+#endif
+      sei.m_outputLayerSetIdxToVps[i] = uiCode;
     READ_CODE(  3, uiCode, "highest_sub_layer_id[i]"         ); sei.m_highestSublayerId[i] = uiCode;
     READ_CODE( 16, uiCode, "avg_bit_rate[i]"                 ); sei.m_avgBitRate[i] = uiCode;
     READ_CODE( 16, uiCode, "max_bit_rate[i]"                 ); sei.m_maxBitRate[i] = uiCode;
