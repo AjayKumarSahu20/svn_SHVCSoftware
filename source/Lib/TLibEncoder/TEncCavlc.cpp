@@ -587,7 +587,7 @@ Void TEncCavlc::codeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt
 Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 {
 #if R0042_PROFILE_INDICATION
-  bool bMultiLayerExtSpsFlag = (pcSPS->getNumDirectRefLayers() != 0 ) ; 
+  Bool bMultiLayerExtSpsFlag = (pcSPS->getNumDirectRefLayers() != 0 ) ; 
 #endif
 #if ENC_DEC_TRACE  
   xTraceSPSHeader (pcSPS);
