@@ -748,8 +748,8 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #endif
 
 #if R0042_PROFILE_INDICATION
-  UInt uiTmp;
-  bool bMultiLayerExtSpsFlag;
+  UInt uiTmp = 0;
+  Bool bMultiLayerExtSpsFlag;
 #endif
   UInt  uiCode;
   READ_CODE( 4,  uiCode, "sps_video_parameter_set_id");          pcSPS->setVPSId        ( uiCode );
