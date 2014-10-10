@@ -156,6 +156,8 @@
 #define POC_RESET_RPS                    1      ///< JCTVC-O0117 Modification to the decoding process for rps
 #endif
 
+#define P0297_VPS_POC_LSB_ALIGNED_FLAG   1      ///< JCTVC-P0297: vps_poc_lsb_aligned_flag for cross-layer POC anchor picture derivation
+
 #define VPS_EXTN_MASK_AND_DIM_INFO       1      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #define MAX_VPS_NUM_SCALABILITY_TYPES    16

@@ -167,6 +167,10 @@ private:
 #if Q0078_ADD_LAYER_SETS
   int                     m_numAddLayerSets;
 #endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool                    m_pocDecrementedInDPBFlag;
+  Int                     m_currPocMsb;
+#endif
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
@@ -304,6 +308,12 @@ public:
 #if Q0078_ADD_LAYER_SETS
   Void setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
   Int  getNumAddLayerSets()                  { return m_numAddLayerSets; }
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Void setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
+  Bool getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
+  Void setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
+  Int  getCurrPocMsb()                       { return m_currPocMsb; }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,

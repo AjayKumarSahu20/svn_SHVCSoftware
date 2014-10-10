@@ -696,6 +696,9 @@ private:
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool       m_vpsPocLsbAlignedFlag;
+#endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool       m_crossLayerPictureTypeAlignFlag;
 #endif
@@ -1134,6 +1137,10 @@ Void      deriveNumberOfSubDpbs();
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag; }
+  Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x; }
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
@@ -2316,6 +2323,10 @@ private:
   Int         m_pocResetPeriodId;
   Bool        m_fullPocResetFlag;
   Int         m_pocLsbVal;
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool        m_pocMsbValNeeded;
+  Int         m_pocResetDeltaPoc;
+#endif
   Int         m_pocMsbVal;
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
@@ -2701,6 +2712,12 @@ public:
   Void      setFullPocResetFlag  (Bool b)                        { m_fullPocResetFlag = b;          }
   Int       getPocLsbVal         ()                              { return m_pocLsbVal;       }
   Void      setPocLsbVal       (Int b)                           { m_pocLsbVal = b;          }
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Void      setPocMsbNeeded      (Bool x)                        { m_pocMsbValNeeded = x; }
+  Bool      getPocMsbNeeded      ()                              { return m_pocMsbValNeeded; }
+  Int       getPocResetDeltaPoc  ()                              { return m_pocResetDeltaPoc; }
+  Void      setPocResetDeltaPoc  (Int x)                         { m_pocResetDeltaPoc = x; }
+#endif
   Int       getPocMsbVal         ()                              { return m_pocMsbVal;       }
   Void      setPocMsbVal       (Int b)                           { m_pocMsbVal = b;          }
   Bool      getPocMsbValPresentFlag ()                           { return m_pocMsbValPresentFlag; }
