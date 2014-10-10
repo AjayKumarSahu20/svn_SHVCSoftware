@@ -2032,6 +2032,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  READ_FLAG(uiCode, "vps_poc_lsb_aligned_flag");
+  vps->setVpsPocLsbAlignedFlag(uiCode);
+#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   for(i = 1; i< vps->getMaxLayers(); i++)
   {
@@ -2227,8 +2231,9 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
     }
   }
 
-  // vps_poc_lsb_aligned_flag
-  // When not present, vps_poc_lsb_aligned_flag is inferred to be equal to 0.
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  vps->setVpsPocLsbAlignedFlag(false);
+#endif
 
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   // When not present, poc_lsb_not_present_flag[ i ] is inferred to be equal to 0.
@@ -3891,13 +3896,26 @@ if( sliceHeaderExtensionLength > 0 )
   }
 
   // Derive the value of PocMsbValRequiredFlag
-  rpcSlice->setPocMsbValRequiredFlag( rpcSlice->getCraPicFlag() || rpcSlice->getBlaPicFlag()
-    /* || related to vps_poc_lsb_aligned_flag */
-    );
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  rpcSlice->setPocMsbValRequiredFlag( (rpcSlice->getCraPicFlag() || rpcSlice->getBlaPicFlag())
+                                      && (!rpcSlice->getVPS()->getVpsPocLsbAlignedFlag() ||
+                                         (rpcSlice->getVPS()->getVpsPocLsbAlignedFlag() && rpcSlice->getVPS()->getNumDirectRefLayers(rpcSlice->getLayerId()) == 0))
+                                    );
+#else
+  rpcSlice->setPocMsbValRequiredFlag( rpcSlice->getCraPicFlag() || rpcSlice->getBlaPicFlag() );
+#endif
 
-  if( !rpcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */ )
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  if (!rpcSlice->getPocMsbValRequiredFlag() && rpcSlice->getVPS()->getVpsPocLsbAlignedFlag())
+#else
+  if (!rpcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */)
+#endif
   {
-    READ_FLAG( uiCode,    "poc_msb_val_present_flag"); rpcSlice->setPocMsbValPresentFlag( uiCode ? true : false );
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    READ_FLAG(uiCode, "poc_msb_cycle_val_present_flag"); rpcSlice->setPocMsbValPresentFlag(uiCode ? true : false);
+#else
+    READ_FLAG(uiCode, "poc_msb_val_present_flag"); rpcSlice->setPocMsbValPresentFlag(uiCode ? true : false);
+#endif
   }
   else
   {
@@ -3924,7 +3942,11 @@ if( sliceHeaderExtensionLength > 0 )
 #endif
   if( rpcSlice->getPocMsbValPresentFlag() )
   {
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    READ_UVLC( uiCode,    "poc_msb_cycle_val");             rpcSlice->setPocMsbVal( uiCode );
+#else
     READ_UVLC( uiCode,    "poc_msb_val");             rpcSlice->setPocMsbVal( uiCode );
+#endif
 
 #if !POC_RESET_IDC_DECODER
     // Update POC of the slice based on this MSB val

@@ -1488,6 +1488,9 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 
   WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  WRITE_FLAG(vps->getVpsPocLsbAlignedFlag(), "vps_poc_lsb_aligned_flag");
+#endif
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   for(i = 1; i< vps->getMaxLayers(); i++)
   {
@@ -2700,9 +2703,14 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
   if(slice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
     // Derive the value of PocMsbValRequiredFlag
-    slice->setPocMsbValRequiredFlag( slice->getCraPicFlag() || slice->getBlaPicFlag()
-                                          /* || related to vps_poc_lsb_aligned_flag */
-                                          );
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    slice->setPocMsbValRequiredFlag( (slice->getCraPicFlag() || slice->getBlaPicFlag())
+                                  && (!slice->getVPS()->getVpsPocLsbAlignedFlag() ||
+                                      (slice->getVPS()->getVpsPocLsbAlignedFlag() && slice->getVPS()->getNumDirectRefLayers(slice->getLayerId()) == 0))
+                                   );
+#else
+    slice->setPocMsbValRequiredFlag( slice->getCraPicFlag() || slice->getBlaPicFlag() );
+#endif
 
     // Determine value of SH extension length.
     Int shExtnLengthInBit = 0;
@@ -2720,7 +2728,11 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     }
 
 
-    if( !slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */ )
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    if (!slice->getPocMsbValRequiredFlag() && slice->getVPS()->getVpsPocLsbAlignedFlag())
+#else
+    if (!slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */)
+#endif
     {
       shExtnLengthInBit++;
     }
@@ -2736,7 +2748,14 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       }
     }
 
-    if( slice->getPocMsbValPresentFlag() )
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    if (slice->getPocMsbNeeded())
+    {
+      slice->setPocMsbValPresentFlag(true);
+    }
+#endif
+
+    if (slice->getPocMsbValPresentFlag())
     {
       UInt lengthVal = 1;
       UInt tempVal = (slice->getPocMsbVal() / maxPocLsb) + 1;
@@ -2770,14 +2789,26 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       WRITE_CODE( slice->getPocLsbVal(), slice->getSPS()->getBitsForPOC(),  "poc_lsb_val");
     }
 
-    if( !slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */ )
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+    if (!slice->getPocMsbValRequiredFlag() && slice->getVPS()->getVpsPocLsbAlignedFlag())
+#else
+    if (!slice->getPocMsbValRequiredFlag() /* &&  vps_poc_lsb_aligned_flag */)
+#endif
     {
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+      WRITE_FLAG( slice->getPocMsbValPresentFlag(),                           "poc_msb_cycle_val_present_flag" );
+#else
       WRITE_FLAG( slice->getPocMsbValPresentFlag(),                           "poc_msb_val_present_flag" );
+#endif
     }
-    if( slice->getPocMsbValPresentFlag() )
+    if (slice->getPocMsbValPresentFlag())
     {
-      assert( slice->getPocMsbVal() % maxPocLsb == 0 );
-      WRITE_UVLC( slice->getPocMsbVal() / maxPocLsb,                                      "poc_msb_val" );
+      assert(slice->getPocMsbVal() % maxPocLsb == 0);
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+      WRITE_UVLC(slice->getPocMsbVal() / maxPocLsb, "poc_msb_cycle_val");
+#else
+      WRITE_UVLC(slice->getPocMsbVal() / maxPocLsb, "poc_msb_val");
+#endif
     }
     for (Int i = 0; i < shExtnAdditionalBits; i++)
     {
