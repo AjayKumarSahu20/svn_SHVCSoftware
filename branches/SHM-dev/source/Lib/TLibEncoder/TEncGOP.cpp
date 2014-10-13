@@ -48,6 +48,9 @@
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#include <limits.h>
+#endif
 
 using namespace std;
 //! \ingroup TLibEncoder
@@ -3635,7 +3638,7 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
   {
     if (slice->getLayerId() == 0)
     {
-      int highestPoc = INT_MIN;
+      Int highestPoc = INT_MIN;
       // Find greatest POC in DPB for layer 0
       for (TComList<TComPic*>::iterator iterPic = m_pcEncTop->getListPic()->begin(); iterPic != m_pcEncTop->getListPic()->end(); ++iterPic)
       {

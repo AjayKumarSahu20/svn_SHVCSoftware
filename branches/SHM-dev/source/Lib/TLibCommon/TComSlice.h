@@ -696,9 +696,6 @@ private:
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  Bool       m_vpsPocLsbAlignedFlag;
-#endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool       m_crossLayerPictureTypeAlignFlag;
 #endif
@@ -871,6 +868,9 @@ private:
 #endif
 #if P0307_VPS_NON_VUI_EXTENSION
   Int        m_vpsNonVuiExtLength;
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool       m_vpsPocLsbAlignedFlag;
 #endif
 #if RESOLUTION_BASED_DPB
   Int        m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
@@ -2323,13 +2323,13 @@ private:
   Int         m_pocResetPeriodId;
   Bool        m_fullPocResetFlag;
   Int         m_pocLsbVal;
+  Int         m_pocMsbVal;
+  Bool        m_pocMsbValRequiredFlag;
+  Bool        m_pocMsbValPresentFlag;
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool        m_pocMsbValNeeded;
   Int         m_pocResetDeltaPoc;
 #endif
-  Int         m_pocMsbVal;
-  Bool        m_pocMsbValRequiredFlag;
-  Bool        m_pocMsbValPresentFlag;
 #endif
 #if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
