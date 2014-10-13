@@ -128,10 +128,10 @@ TComSlice::TComSlice()
 , m_pocLsbVal                     ( 0 )
 , m_pocMsbVal                     ( 0 )
 , m_pocMsbValRequiredFlag         ( false )
+, m_pocMsbValPresentFlag          ( false )
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
 , m_pocMsbValNeeded               ( false )
 #endif
-, m_pocMsbValPresentFlag          ( false )
 #endif
 #if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
 , m_picOrderCntLsb (0)
