@@ -63,51 +63,6 @@ struct InputNALUnit;
 // Class definition
 // ====================================================================================================================
 
-#if Q0074_SEI_COLOR_MAPPING
-class TDecColorMapping
-{
-  Int   m_colorMapId;
-  Bool  m_colorMapCancelFlag;
-  Bool  m_colorMapPersistenceFlag;
-  Bool  m_colorMap_video_signal_type_present_flag;
-  Bool  m_colorMap_video_full_range_flag;
-  Int   m_colorMap_primaries;
-  Int   m_colorMap_transfer_characteristics;
-  Int   m_colorMap_matrix_coeffs;
-  Int   m_colorMapModelId;
-
-  Int   m_colour_map_coded_data_bit_depth;
-  Int   m_colour_map_target_bit_depth;
-
-  Int   m_num_input_pivots[3];
-  Int*  m_coded_input_pivot_value[3];
-  Int*  m_target_input_pivot_value[3];
-  
-  Bool  m_matrix_flag;
-  Int   m_log2_matrix_denom;
-  Int   m_matrix_coef[3][3];
-
-  Int   m_num_output_pivots[3];
-  Int*  m_coded_output_pivot_value[3];
-  Int*  m_target_output_pivot_value[3];
-
-  Bool  m_lut1d_computed[3];
-  Int*  m_lut1d_input[3];
-  Int*  m_lut1d_output[3];
-  TComPicYuv* m_pcColorMappingPic[2];
-
-public:
-  TDecColorMapping();
-  ~TDecColorMapping();
-
-  Bool        getColorMappingFlag()                     { return(!m_colorMapCancelFlag);};
-
-  Void        setColorMapping( SEIMessages m_SEIs );
-  Void        setColorMapping( Int bitDepthY, Int bitDepthC );
-  TComPicYuv* getColorMapping( TComPicYuv* pPicYuvRec, Int iTop=0, Int curlayerId=0 );
-};// END CLASS DEFINITION TDecColorMapping
-#endif
-
 /// decoder class
 class TDecTop
 {
@@ -164,7 +119,6 @@ private:
 #if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
 #endif
-
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
@@ -172,6 +126,10 @@ private:
   UInt                    m_layerId;      
   UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool                    m_pocResettingFlag;
+  Bool                    m_pocDecrementedInDPBFlag;
+#endif
 #if AVC_BASE
   fstream*                m_pBLReconFile;
 #if !REPN_FORMAT_IN_VPS
@@ -194,10 +152,6 @@ private:
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    m_commonDecoderParams;
 #endif
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  fstream*               m_pBLSyntaxFile;
-#endif
-
 #if NO_CLRAS_OUTPUT_FLAG  
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
@@ -213,8 +167,20 @@ private:
                                            // When new VPS is activated, this should be re-initialized to -1
 #endif
 public:
-#if Q0074_SEI_COLOR_MAPPING
-  TDecColorMapping* m_ColorMapping;
+#if POC_RESET_RESTRICTIONS
+  static Bool                    m_checkPocRestrictionsForCurrAu;
+  static Int                     m_pocResetIdcOrCurrAu;
+  static Bool                    m_baseLayerIdrFlag;
+  static Bool                    m_baseLayerPicPresentFlag;
+  static Bool                    m_baseLayerIrapFlag;
+  static Bool                    m_nonBaseIdrPresentFlag;
+  static Int                     m_nonBaseIdrType;
+  static Bool                    m_picNonIdrWithRadlPresentFlag;
+  static Bool                    m_picNonIdrNoLpPresentFlag;
+#endif
+#if POC_RESET_VALUE_RESTRICTION
+  static Int                     m_crossLayerPocResetPeriodId;
+  static Int                     m_crossLayerPocResetIdc;
 #endif
 
   TDecTop();
@@ -224,6 +190,9 @@ public:
   Void  destroy ();
 
   void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
+#if Q0074_COLOUR_REMAPPING_SEI
+  void setColourRemappingInfoSEIEnabled(Bool enabled)  { m_cGopDecoder.setColourRemappingInfoSEIEnabled(enabled); }
+#endif
 
   Void  init();
 #if SVC_EXTENSION
@@ -326,10 +295,7 @@ public:
   Void assignSubDpbs(TComVPS *vps);
 #endif
 #endif //SVC_EXTENSION
-#if AVC_SYNTAX || SYNTAX_OUTPUT
-  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
-  fstream* getBLSyntaxFile() { return m_pBLSyntaxFile; }
-#endif
+
 protected:
   Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xCreateLostPicture (Int iLostPOC);
@@ -364,7 +330,11 @@ protected:
 #if Q0048_CGS_3D_ASYMLUT
   Void initAsymLut(TComSlice *pcSlice);
 #endif
+#if POC_RESET_RESTRICTIONS
+  Void resetPocRestrictionCheckParameters();
+#endif
 };// END CLASS DEFINITION TDecTop
+
 
 
 //! \}

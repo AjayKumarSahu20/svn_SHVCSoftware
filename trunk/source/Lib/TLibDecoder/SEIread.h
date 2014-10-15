@@ -79,10 +79,16 @@ protected:
 #endif
   Void xParseSEIuserDataUnregistered  (SEIuserDataUnregistered &sei, UInt payloadSize);
   Void xParseSEIActiveParameterSets   (SEIActiveParameterSets  &sei, UInt payloadSize);
-  Void xParseSEIDecodingUnitInfo      (SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps);
   Void xParseSEIDecodedPictureHash    (SEIDecodedPictureHash& sei, UInt payloadSize);
+#if VPS_VUI_BSP_HRD_PARAMS
+  Void xParseSEIDecodingUnitInfo      (SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);
+  Void xParseSEIBufferingPeriod       (SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);
+  Void xParseSEIPictureTiming         (SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);
+#else
+  Void xParseSEIDecodingUnitInfo      (SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps);
   Void xParseSEIBufferingPeriod       (SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps);
   Void xParseSEIPictureTiming         (SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps);
+#endif
   Void xParseSEIRecoveryPoint         (SEIRecoveryPoint& sei, UInt payloadSize);
   Void xParseSEIFramePacking          (SEIFramePacking& sei, UInt payloadSize);
   Void xParseSEIDisplayOrientation    (SEIDisplayOrientation &sei, UInt payloadSize);
@@ -92,15 +98,19 @@ protected:
 #if P0050_KNEE_FUNCTION_SEI
   Void xParseSEIKneeFunctionInfo      (SEIKneeFunctionInfo& sei, UInt payloadSize);
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Void xParseSEIColorMappingInfo      (SEIColorMappingInfo& sei, UInt payloadSize);
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void xParseSEIColourRemappingInfo   (SEIColourRemappingInfo& sei, UInt payloadSize);
 #endif
   Void xParseSEISOPDescription        (SEISOPDescription &sei, UInt payloadSize);
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize);
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
+#if OLS_IDX_CHK
+Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei, TComVPS *vps);
+#else
 Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
+#endif
 #endif
 #if LAYERS_NOT_PRESENT_SEI
   Void xParseSEILayersNotPresent      (SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps);
@@ -115,7 +125,9 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
   Void xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting &nestingSei);
 #endif
   Void xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
+#if !REMOVE_BSP_HRD_SEI
   Void xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
+#endif
   Void xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1);
 #endif
 #if Q0078_ADD_LAYER_SETS

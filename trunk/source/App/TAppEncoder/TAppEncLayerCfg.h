@@ -34,10 +34,10 @@ protected:
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
   Int       m_conformanceMode;
-  Int       m_confLeft;
-  Int       m_confRight;
-  Int       m_confTop;
-  Int       m_confBottom;
+  Int       m_confWinLeft;
+  Int       m_confWinRight;
+  Int       m_confWinTop;
+  Int       m_confWinBottom;
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
@@ -53,9 +53,6 @@ protected:
   Int       m_numMotionPredRefLayers;
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
-#endif
-#if Q0074_SEI_COLOR_MAPPING
-  string    m_cSeiColorMappingFile;
 #endif
 
 #if LAYER_CTB
@@ -83,7 +80,8 @@ protected:
 #endif
 
   Int       m_maxTidIlRefPicsPlus1;
-  Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
+  Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+  Int       m_iWaveFrontSubstreams;               ///< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
@@ -97,8 +95,23 @@ protected:
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#if P0312_VERT_PHASE_ADJ 
+#if REF_REGION_OFFSET
+  Bool      m_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
+  Bool      m_refRegionOffsetPresentFlag      [MAX_LAYERS];
+  Int       m_refRegionLeftOffset  [MAX_LAYERS];
+  Int       m_refRegionTopOffset   [MAX_LAYERS];
+  Int       m_refRegionRightOffset [MAX_LAYERS];
+  Int       m_refRegionBottomOffset[MAX_LAYERS];
+#endif
+#if P0312_VERT_PHASE_ADJ
   Bool      m_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  Int       m_phaseHorLuma  [MAX_LAYERS];
+  Int       m_phaseVerLuma  [MAX_LAYERS];
+  Int       m_phaseHorChroma[MAX_LAYERS];
+  Int       m_phaseVerChroma[MAX_LAYERS];
+  Bool      m_resamplePhaseSetPresentFlag [MAX_LAYERS];
 #endif
 
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -112,6 +125,29 @@ protected:
 #if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
 #endif
+#if Q0074_COLOUR_REMAPPING_SEI
+  string    m_colourRemapSEIFile;                           ///< Colour Remapping Information SEI message parameters file
+  Int       m_colourRemapSEIId;
+  Bool      m_colourRemapSEICancelFlag;
+  Bool      m_colourRemapSEIPersistenceFlag;
+  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool      m_colourRemapSEIFullRangeFlag;
+  Int       m_colourRemapSEIPrimaries;
+  Int       m_colourRemapSEITransferFunction;
+  Int       m_colourRemapSEIMatrixCoefficients;
+  Int       m_colourRemapSEIInputBitDepth;
+  Int       m_colourRemapSEIBitDepth;
+  Int       m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPreLutCodedValue[3];
+  Int*      m_colourRemapSEIPreLutTargetValue[3];
+  Bool      m_colourRemapSEIMatrixPresentFlag;
+  Int       m_colourRemapSEILog2MatrixDenom;
+  Int       m_colourRemapSEICoeffs[3][3];
+  Int       m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPostLutCodedValue[3];
+  Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
+
 public:
   TAppEncLayerCfg();
   virtual ~TAppEncLayerCfg();
@@ -121,11 +157,7 @@ public:
   Void  destroy   ();                                         ///< destroy option handling class
   bool  parseCfg  ( const string& cfgFileName );              ///< parse layer configuration file to fill member variables
 
-#if AVC_SYNTAX
-  Void  xPrintParameter( UInt layerId );
-#else
   Void  xPrintParameter();
-#endif
   Bool  xCheckParameter( Bool isField );
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
@@ -139,10 +171,10 @@ public:
   Int     getConformanceMode()        { return m_conformanceMode; }
   Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }
-  Int     getConfLeft()               {return m_confLeft;         }
-  Int     getConfRight()              {return m_confRight;        }
-  Int     getConfTop()                {return m_confTop;          }
-  Int     getConfBottom()             {return m_confBottom;       }
+  Int     getConfWinLeft()            {return m_confWinLeft;         }
+  Int     getConfWinRight()           {return m_confWinRight;        }
+  Int     getConfWinTop()             {return m_confWinTop;          }
+  Int     getConfWinBottom()          {return m_confWinBottom;       }
 #if AUXILIARY_PICTURES
   ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
   ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }

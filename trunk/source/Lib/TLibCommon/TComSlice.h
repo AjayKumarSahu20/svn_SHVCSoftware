@@ -369,6 +369,25 @@ public:
   Void setNumDU                              ( UInt value ) { m_numDU = value;                            }
   UInt getNumDU                              ( )            { return m_numDU;          }
   Bool getCpbDpbDelaysPresentFlag() { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
+
+#if VPS_VUI_BSP_HRD_PARAMS
+Void copyCommonInformation( TComHRD *refHrd )
+{
+  m_nalHrdParametersPresentFlag         = refHrd->getNalHrdParametersPresentFlag();
+  m_vclHrdParametersPresentFlag         = refHrd->getVclHrdParametersPresentFlag();
+  m_subPicCpbParamsPresentFlag          = refHrd->getSubPicCpbParamsPresentFlag();
+  m_tickDivisorMinus2                   = refHrd->getTickDivisorMinus2();
+  m_duCpbRemovalDelayLengthMinus1       = refHrd->getDuCpbRemovalDelayLengthMinus1();
+  m_subPicCpbParamsInPicTimingSEIFlag   = refHrd->getSubPicCpbParamsInPicTimingSEIFlag();
+  m_dpbOutputDelayDuLengthMinus1        = refHrd->getDpbOutputDelayDuLengthMinus1();
+  m_bitRateScale                        = refHrd->getBitRateScale();
+  m_cpbSizeScale                        = refHrd->getCpbSizeScale();
+  m_ducpbSizeScale                      = refHrd->getDuCpbSizeScale();
+  m_initialCpbRemovalDelayLengthMinus1  = refHrd->getInitialCpbRemovalDelayLengthMinus1();
+  m_cpbRemovalDelayLengthMinus1         = refHrd->getCpbRemovalDelayLengthMinus1();
+  m_dpbOutputDelayLengthMinus1          = refHrd->getDpbOutputDelayLengthMinus1();
+}
+#endif
 };
 
 class TimingInfo
@@ -402,6 +421,77 @@ public:
   Void setNumTicksPocDiffOneMinus1          (Int x       ) { m_numTicksPocDiffOneMinus1 = x;               }
 };
 
+class Window
+{
+private:
+  Bool          m_enabledFlag;
+  Int           m_winLeftOffset;
+  Int           m_winRightOffset;
+  Int           m_winTopOffset;
+  Int           m_winBottomOffset;
+#if P0312_VERT_PHASE_ADJ
+  Bool          m_vertPhasePositionEnableFlag;
+#endif
+public:
+  Window()
+  : m_enabledFlag (false)
+  , m_winLeftOffset     (0)
+  , m_winRightOffset    (0)
+  , m_winTopOffset      (0)
+  , m_winBottomOffset   (0)
+#if P0312_VERT_PHASE_ADJ
+  , m_vertPhasePositionEnableFlag(false)  
+#endif
+  { }
+
+  Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
+#if P0312_VERT_PHASE_ADJ
+  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
+#else
+  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
+#endif
+  Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
+  Void          setWindowLeftOffset(Int val)      { if(val) {m_winLeftOffset = val; m_enabledFlag = true;} }
+  Int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
+  Void          setWindowRightOffset(Int val)     { if(val) {m_winRightOffset = val; m_enabledFlag = true;} }
+  Int           getWindowTopOffset() const        { return m_enabledFlag ? m_winTopOffset : 0; }
+  Void          setWindowTopOffset(Int val)       { if(val) {m_winTopOffset = val; m_enabledFlag = true;} }
+  Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
+  Void          setWindowBottomOffset(Int val)    { if(val) {m_winBottomOffset = val; m_enabledFlag = true;} }
+#if P0312_VERT_PHASE_ADJ
+  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
+  Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
+#endif
+#if REF_REGION_OFFSET && RESAMPLING_FIX
+  Bool          hasEqualOffset(const Window& ref) const
+  {
+    return (    this->getWindowLeftOffset()   == ref.getWindowLeftOffset()
+             && this->getWindowTopOffset()    == ref.getWindowTopOffset()
+             && this->getWindowRightOffset()  == ref.getWindowRightOffset()
+             && this->getWindowBottomOffset() == ref.getWindowBottomOffset() );
+  }
+#endif
+
+#if P0312_VERT_PHASE_ADJ
+  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
+#else
+  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
+#endif
+  {
+    if(offsetLeft || offsetLRight || offsetLTop || offsetLBottom) 
+    {
+      m_enabledFlag       = true;
+      m_winLeftOffset     = offsetLeft;
+      m_winRightOffset    = offsetLRight;
+      m_winTopOffset      = offsetLTop;
+      m_winBottomOffset   = offsetLBottom;
+    }
+#if P0312_VERT_PHASE_ADJ
+    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
+#endif
+  }
+};
+
 #if REPN_FORMAT_IN_VPS
 class RepFormat
 {
@@ -418,6 +508,10 @@ class RepFormat
   Int  m_picHeightVpsInLumaSamples;
   Int  m_bitDepthVpsLuma;               // coded as minus8
   Int  m_bitDepthVpsChroma;             // coded as minus8
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window m_conformanceWindowVps;
+#endif
 
 public:
   RepFormat();
@@ -453,12 +547,21 @@ public:
 
   Int  getBitDepthVpsChroma()           { return m_bitDepthVpsChroma;   }
   Void setBitDepthVpsChroma(Int x)      { m_bitDepthVpsChroma = x;      }
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window& getConformanceWindowVps()                           { return  m_conformanceWindowVps;             }
+  Void    setConformanceWindowVps(Window& conformanceWindow ) { m_conformanceWindowVps = conformanceWindow; }
+#endif
 };
 #endif
 class TComVPS
 {
 private:
   Int         m_VPSId;
+#if VPS_RESERVED_FLAGS
+  Bool        m_baseLayerInternalFlag;
+  Bool        m_baseLayerAvailableFlag;
+#endif
   UInt        m_uiMaxTLayers;
   UInt        m_uiMaxLayers;
   Bool        m_bTemporalIdNestingFlag;
@@ -484,8 +587,13 @@ private:
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
+#if NECESSARY_LAYER_FLAG
+  std::vector< std::vector<Int> >     m_layerSetLayerIdList;
+  std::vector<Int>                      m_numLayerInIdList;;
+#else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
+#endif
 #else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -509,7 +617,11 @@ private:
   // Variables related to VPS extensions
   // ------------------------------------------
 #if VPS_EXTN_MASK_AND_DIM_INFO
+#if VPS_AVC_BL_FLAG_REMOVAL
+  Bool       m_nonHEVCBaseLayerFlag; 
+#else
   Bool       m_avcBaseLayerFlag;                                // For now, always set to true.
+#endif
   Bool       m_splittingFlag;
   Bool       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
   UInt       m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
@@ -575,7 +687,11 @@ private:
   Bool       m_defaultOneTargetOutputLayerFlag;
 #endif
 #endif
+#if PER_LAYER_PTL
+  std::vector< std::vector<Int> >  m_profileLevelTierIdx;
+#else
   Int        m_profileLevelTierIdx[64];     
+#endif
   Bool       m_maxOneActiveRefLayerFlag;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
@@ -716,6 +832,18 @@ private:
 
 #if O0164_MULTI_LAYER_HRD
   Bool       m_vpsVuiBspHrdPresentFlag;
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int                 m_vpsNumAddHrdParams;
+  std::vector<Bool>   m_cprmsAddPresentFlag;
+  std::vector<Int>    m_numSubLayerHrdMinus1;
+  std::vector<TComHRD> m_bspHrd;
+  Int    m_numSignalledPartitioningSchemes[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+  Int    m_numPartitionsInSchemeMinus1    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16];
+  Int    m_layerIncludedInPartitionFlag   [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_LAYERS][MAX_LAYERS];
+  Int    m_numBspSchedulesMinus1          [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER];
+  Int    m_bspHrdIdx                      [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+  Int    m_bspSchedIdx                    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+#else
   UInt       m_vpsNumBspHrdParametersMinus1;
   Bool       m_bspCprmsPresentFlag[MAX_VPS_LAYER_SETS_PLUS1];
   TComHRD    *m_bspHrd;
@@ -724,6 +852,7 @@ private:
   UInt       m_numBspSchedCombinations[MAX_VPS_LAYER_SETS_PLUS1];
   UInt       m_bspCombHrdIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
   UInt       m_bspCombSchedIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
+#endif
 #endif
 
 #if P0182_VPS_VUI_PS_FLAG
@@ -740,13 +869,27 @@ private:
 #if P0307_VPS_NON_VUI_EXTENSION
   Int        m_vpsNonVuiExtLength;
 #endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool       m_vpsPocLsbAlignedFlag;
+#endif
 #if RESOLUTION_BASED_DPB
   Int        m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
+#endif
+#if NECESSARY_LAYER_FLAG
+  std::vector< std::vector<Bool> > m_necessaryLayerFlag;
+  std::vector<Int>               m_numNecessaryLayers;
 #endif
 #endif //SVC_EXTENSION
 public:
   TComVPS();
   virtual ~TComVPS();
+
+#if VPS_RESERVED_FLAGS
+  Void        setBaseLayerInternalFlag(Bool x) { m_baseLayerInternalFlag = x; }
+  Bool        getBaseLayerInternalFlag()         { return m_baseLayerInternalFlag; }
+  Void        setBaseLayerAvailableFlag(Bool x) { m_baseLayerAvailableFlag = x; }
+  Bool        getBaseLayerAvailableFlag()         { return m_baseLayerAvailableFlag; }
+#endif
 
   Void    createHrdParamBuffer()
   {
@@ -758,7 +901,13 @@ public:
 #if O0164_MULTI_LAYER_HRD
   Void    createBspHrdParamBuffer(UInt numHrds)
   {
+#if VPS_VUI_BSP_HRD_PARAMS
+    m_bspHrd.resize( numHrds );
+    m_cprmsAddPresentFlag.resize( numHrds );
+    m_numSubLayerHrdMinus1.resize( numHrds );
+#else
     m_bspHrd    = new TComHRD[ numHrds ];
+#endif
 //    m_hrdOpSetIdx      = new UInt   [ getNumHrdParameters() ];
 //    m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
   }
@@ -766,7 +915,11 @@ public:
 #if HRD_BPB
   Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
   {
+#if VPS_VUI_BSP_HRD_PARAMS
+    return m_bspHrd[i].getCpbCntMinus1(sl);
+#else
     return m_bspHrd->getCpbCntMinus1(sl);
+#endif
   }
 #endif
 
@@ -816,10 +969,10 @@ public:
 #if SVC_EXTENSION
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
-  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x   ; }
+  Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
 
   Int     getNumLayersInIdList(Int set)                          { return m_numLayerInIdList[set]; }
-  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x   ; }
+  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x;    }
 
   Void    deriveLayerIdListVariables();
 #endif
@@ -860,8 +1013,13 @@ Void      deriveNumberOfSubDpbs();
   UInt    getNumLayerSets()                                     { return m_numLayerSets; }
   Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
 #if VPS_EXTN_MASK_AND_DIM_INFO
+#if VPS_AVC_BL_FLAG_REMOVAL
+  Bool   getNonHEVCBaseLayerFlag()                              { return m_nonHEVCBaseLayerFlag;       }
+  Void   setNonHEVCBaseLayerFlag(Bool x)                        { m_nonHEVCBaseLayerFlag = x;          }
+#else
   Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
   Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
+#endif
 
   Bool   getSplittingFlag()                                     { return m_splittingFlag;          }
   Void   setSplittingFlag(Bool x)                               { m_splittingFlag = x;             }
@@ -963,13 +1121,26 @@ Void      deriveNumberOfSubDpbs();
   Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
 #endif
 #endif
+#if PER_LAYER_PTL
+  Bool getNecessaryLayerFlag(Int const i, Int const j) { return m_necessaryLayerFlag[i][j]; }
+  std::vector< std::vector<Int> >* getProfileLevelTierIdx() { return &m_profileLevelTierIdx; }
+  std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
+  Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
+  Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
+  Int calculateLenOfSyntaxElement( Int const numVal );
+#else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
+#endif
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag; }
+  Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x; }
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
@@ -1073,6 +1244,36 @@ Void      deriveNumberOfSubDpbs();
 #if O0164_MULTI_LAYER_HRD
   Bool     getVpsVuiBspHrdPresentFlag()                         { return m_vpsVuiBspHrdPresentFlag;      }
   Void     setVpsVuiBspHrdPresentFlag(Bool x)                   { m_vpsVuiBspHrdPresentFlag = x;         }
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int      getVpsNumAddHrdParams()                              { return m_vpsNumAddHrdParams; }
+  Void     setVpsNumAddHrdParams(Int  i)                   { m_vpsNumAddHrdParams = i;    }
+
+  Bool     getCprmsAddPresentFlag(Int i)                        { return m_cprmsAddPresentFlag[i];       }
+  Void     setCprmsAddPresentFlag(Int  i, Bool  val)  { m_cprmsAddPresentFlag[i] = val;        }
+
+  Int      getNumSubLayerHrdMinus1(Int i)           { return m_numSubLayerHrdMinus1[i]; }
+  Void     setNumSubLayerHrdMinus1(Int i, Int val)  { m_numSubLayerHrdMinus1[i] = val; }
+
+  TComHRD*  getBspHrd(Int i)           {return &m_bspHrd[i];}
+
+  Int      getNumSignalledPartitioningSchemes(Int  i)                    { return m_numSignalledPartitioningSchemes[i];    }
+  Void     setNumSignalledPartitioningSchemes(Int  i, Int  val)          { m_numSignalledPartitioningSchemes[i] = val;     }
+
+  Int      getNumPartitionsInSchemeMinus1(Int  i, Int j)  { return m_numPartitionsInSchemeMinus1[i][j];}
+  Void     setNumPartitionsInSchemeMinus1(Int i, Int j, Int val) { m_numPartitionsInSchemeMinus1[i][j] = val; }
+
+  Int      getLayerIncludedInPartitionFlag(Int  i, Int j, Int k, Int l)  { return m_layerIncludedInPartitionFlag[i][j][k][l];}
+  Void     setLayerIncludedInPartitionFlag(Int i, Int j, Int k, Int l, Int val) { m_layerIncludedInPartitionFlag[i][j][k][l] = val; }
+
+  Int      getNumBspSchedulesMinus1(Int  i, Int j, Int k)         { return m_numBspSchedulesMinus1[i][j][k];}
+  Void     setNumBspSchedulesMinus1(Int i, Int j, Int k, Int val) { m_numBspSchedulesMinus1[i][j][k] = val; }
+
+  Int      getBspSchedIdx(Int  i, Int j, Int k, Int l, Int m)  { return m_bspSchedIdx[i][j][k][l][m];}
+  Void     setBspSchedIdx(Int  i, Int j, Int k, Int l, Int m, Int val) { m_bspSchedIdx[i][j][k][l][m] = val; }
+
+  Int      getBspHrdIdx(Int  i, Int j, Int k, Int l, Int m)  { return m_bspHrdIdx[i][j][k][l][m];}
+  Void     setBspHrdIdx(Int  i, Int j, Int k, Int l, Int m, Int val) { m_bspHrdIdx[i][j][k][l][m] = val; }
+#else
   UInt     getVpsNumBspHrdParametersMinus1()                    { return m_vpsNumBspHrdParametersMinus1; }
   Void     setVpsNumBspHrdParametersMinus1(UInt i)              { m_vpsNumBspHrdParametersMinus1 = i;    }
   Bool     getBspCprmsPresentFlag(UInt i)                       { return m_bspCprmsPresentFlag[i];       }
@@ -1088,6 +1289,7 @@ Void      deriveNumberOfSubDpbs();
   Void     setBspCombHrdIdx(UInt h, UInt i, UInt j, UInt val)   { m_bspCombHrdIdx[h][i][j] = val;        }
   UInt     getBspCombSchedIdx(UInt h, UInt i, UInt j)           { return m_bspCombSchedIdx[h][i][j];     }
   Void     setBspCombSchedIdx(UInt h, UInt i, UInt j, UInt val) { m_bspCombSchedIdx[h][i][j] = val;      }
+#endif
 #endif
 #if P0182_VPS_VUI_PS_FLAG
   Int    getSPSId       (Int layer)                   { return m_SPSId[layer];       }
@@ -1204,66 +1406,16 @@ Void      deriveNumberOfSubDpbs();
 #if O0164_MULTI_LAYER_HRD
   Void setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
 #endif
+#if NECESSARY_LAYER_FLAG
+  Void  deriveNecessaryLayerFlag();
+  Void  deriveNecessaryLayerFlag(Int const olsIdx);
+  Void  checkNecessaryLayerFlagCondition();
+#endif
+#if SUB_LAYERS_IN_LAYER_SET
+  Void  calculateMaxSLInLayerSets();
+#endif
 #endif //SVC_EXTENSION
 };
-
-class Window
-{
-private:
-  Bool          m_enabledFlag;
-  Int           m_winLeftOffset;
-  Int           m_winRightOffset;
-  Int           m_winTopOffset;
-  Int           m_winBottomOffset;
-#if P0312_VERT_PHASE_ADJ
-  Bool          m_vertPhasePositionEnableFlag;
-#endif
-public:
-  Window()
-  : m_enabledFlag (false)
-  , m_winLeftOffset     (0)
-  , m_winRightOffset    (0)
-  , m_winTopOffset      (0)
-  , m_winBottomOffset   (0)
-#if P0312_VERT_PHASE_ADJ
-  , m_vertPhasePositionEnableFlag(false)  
-#endif
-  { }
-
-  Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
-#if P0312_VERT_PHASE_ADJ 
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
-#else
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0;} 
-#endif
-  Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
-  Void          setWindowLeftOffset(Int val)      { m_winLeftOffset = val; m_enabledFlag = true; }
-  Int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
-  Void          setWindowRightOffset(Int val)     { m_winRightOffset = val; m_enabledFlag = true; }
-  Int           getWindowTopOffset() const        { return m_enabledFlag ? m_winTopOffset : 0; }
-  Void          setWindowTopOffset(Int val)       { m_winTopOffset = val; m_enabledFlag = true; }
-  Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
-  Void          setWindowBottomOffset(Int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
-
-#if P0312_VERT_PHASE_ADJ
-  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
-  Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
-#else
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
-#endif
-  {
-    m_enabledFlag       = true;
-    m_winLeftOffset     = offsetLeft;
-    m_winRightOffset    = offsetLRight;
-    m_winTopOffset      = offsetLTop;
-    m_winBottomOffset   = offsetLBottom;
-#if P0312_VERT_PHASE_ADJ
-    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
-#endif
-  }
-};
-
 
 class TComVUI
 {
@@ -1444,6 +1596,10 @@ private:
 
   UInt        m_uiMaxTLayers;           // maximum number of temporal layers
 
+#if R0279_REP_FORMAT_INBL
+  Bool        m_bV1CompatibleSPSFlag;
+#endif
+
   // Structure
   UInt        m_picWidthInLumaSamples;
   UInt        m_picHeightInLumaSamples;
@@ -1513,15 +1669,20 @@ private:
   UInt        m_layerId;
   Bool        m_extensionFlag;
   UInt        m_numScaledRefLayerOffsets;
+#if R0042_PROFILE_INDICATION  
+  Int         m_NumDirectRefLayers;
+#endif
 #if P0312_VERT_PHASE_ADJ
  Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
+#if !MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
   UInt        m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window      m_scaledRefLayerWindow[MAX_LAYERS];
+#endif
 #if REPN_FORMAT_IN_VPS
-  Bool        m_updateRepFormatFlag;
+  Bool m_updateRepFormatFlag;
 #if O0096_REP_FORMAT_INDEX
   UInt        m_updateRepFormatIndex;
 #endif
@@ -1531,6 +1692,7 @@ private:
   UInt        m_scalingListRefLayerId;
 #endif
 #endif //SVC_EXTENSION
+
 public:
   TComSPS();
   virtual ~TComSPS();
@@ -1553,7 +1715,12 @@ public:
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc > 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
 #endif
-  
+
+#if R0279_REP_FORMAT_INBL //These two functions shall be used / called when the syntax element sps_ext_or_max_sub_layers_minus1 and V1CompatibleSPSFlag are implemented
+  Bool getV1CompatibleSPSFlag()        {return m_bV1CompatibleSPSFlag;}
+  Void setV1CompatibleSPSFlag(Bool x)       { m_bV1CompatibleSPSFlag = x;}
+#endif
+
   // structure
   Void setPicWidthInLumaSamples       ( UInt u ) { m_picWidthInLumaSamples = u;        }
   UInt getPicWidthInLumaSamples       ()         { return  m_picWidthInLumaSamples;    }
@@ -1672,6 +1839,11 @@ public:
   UInt     getLayerId()                        { return m_layerId;    }
   Int      getExtensionFlag()                  { return m_extensionFlag;  }
   Void     setExtensionFlag(Int n)             { m_extensionFlag = n;     }
+#if R0042_PROFILE_INDICATION
+  Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
+  Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
+#endif
+#if !MOVE_SCALED_OFFSET_TO_PPS
   UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
   Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
 #if P0312_VERT_PHASE_ADJ
@@ -1684,6 +1856,7 @@ public:
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
 #endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
+#endif
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
@@ -1760,13 +1933,13 @@ private:
   Bool        m_entropyCodingSyncEnabledFlag;  //!< Indicates the presence of wavefronts
   
   Bool     m_loopFilterAcrossTilesEnabledFlag;
-  Int      m_uniformSpacingFlag;
-  Int      m_iNumColumnsMinus1;
-  UInt*    m_puiColumnWidth;
-  Int      m_iNumRowsMinus1;
-  UInt*    m_puiRowHeight;
+  Bool             m_uniformSpacingFlag;
+  Int              m_numTileColumnsMinus1;
+  Int              m_numTileRowsMinus1;
+  std::vector<Int> m_tileColumnWidth;
+  std::vector<Int> m_tileRowHeight;
 
-  Int      m_iNumSubstreams;
+  Int      m_numSubstreams;
 
   Int      m_signHideFlag;
 
@@ -1795,6 +1968,25 @@ private:
 #endif
 #if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
+#endif
+#if MOVE_SCALED_OFFSET_TO_PPS
+  UInt     m_numScaledRefLayerOffsets;
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     m_scaledRefLayerId[MAX_LAYERS];
+#endif
+  Window   m_scaledRefLayerWindow[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  Window   m_refLayerWindow[MAX_LAYERS];
+  Bool     m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
+  Bool     m_refRegionOffsetPresentFlag[MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  Int      m_phaseHorLuma[MAX_LAYERS];
+  Int      m_phaseVerLuma[MAX_LAYERS];
+  Int      m_phaseHorChroma[MAX_LAYERS];
+  Int      m_phaseVerChroma[MAX_LAYERS];
+  Bool     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Int      m_nCGSFlag;
@@ -1854,44 +2046,24 @@ public:
   Bool    getLoopFilterAcrossTilesEnabledFlag  ()          { return m_loopFilterAcrossTilesEnabledFlag;   }
   Bool    getDependentSliceSegmentsEnabledFlag() const     { return m_dependentSliceSegmentsEnabledFlag; }
   Void    setDependentSliceSegmentsEnabledFlag(Bool val)   { m_dependentSliceSegmentsEnabledFlag = val; }
-  Bool    getTilesEnabledFlag() const                      { return m_tilesEnabledFlag; }
-  Void    setTilesEnabledFlag(Bool val)                    { m_tilesEnabledFlag = val; }
   Bool    getEntropyCodingSyncEnabledFlag() const          { return m_entropyCodingSyncEnabledFlag; }
   Void    setEntropyCodingSyncEnabledFlag(Bool val)        { m_entropyCodingSyncEnabledFlag = val; }
-  Void     setUniformSpacingFlag            ( Bool b )          { m_uniformSpacingFlag = b; }
-  Bool     getUniformSpacingFlag            ()                  { return m_uniformSpacingFlag; }
-  Void     setNumColumnsMinus1              ( Int i )           { m_iNumColumnsMinus1 = i; }
-  Int      getNumColumnsMinus1              ()                  { return m_iNumColumnsMinus1; }
-  Void     setColumnWidth ( UInt* columnWidth )
-  {
-    if( m_uniformSpacingFlag == 0 && m_iNumColumnsMinus1 > 0 )
-    {
-      m_puiColumnWidth = new UInt[ m_iNumColumnsMinus1 ];
 
-      for(Int i=0; i<m_iNumColumnsMinus1; i++)
-      {
-        m_puiColumnWidth[i] = columnWidth[i];
-      }
-    }
-  }
-  UInt     getColumnWidth  (UInt columnIdx) { return *( m_puiColumnWidth + columnIdx ); }
-  Void     setNumRowsMinus1( Int i )        { m_iNumRowsMinus1 = i; }
-  Int      getNumRowsMinus1()               { return m_iNumRowsMinus1; }
-  Void     setRowHeight    ( UInt* rowHeight )
-  {
-    if( m_uniformSpacingFlag == 0 && m_iNumRowsMinus1 > 0 )
-    {
-      m_puiRowHeight = new UInt[ m_iNumRowsMinus1 ];
+  Void     setTilesEnabledFlag       (Bool val)                             { m_tilesEnabledFlag = val; }
+  Bool     getTilesEnabledFlag       () const                               { return m_tilesEnabledFlag; }
+  Void     setTileUniformSpacingFlag (Bool b)                               { m_uniformSpacingFlag = b; }
+  Bool     getTileUniformSpacingFlag () const                               { return m_uniformSpacingFlag; }
+  Void     setNumTileColumnsMinus1   (Int i)                                { m_numTileColumnsMinus1 = i; }
+  Int      getNumTileColumnsMinus1   () const                               { return m_numTileColumnsMinus1; }
+  Void     setTileColumnWidth        (const std::vector<Int>& columnWidth ) { m_tileColumnWidth = columnWidth; }
+  UInt     getTileColumnWidth        (UInt columnIdx) const                 { return  m_tileColumnWidth[columnIdx]; }
+  Void     setNumTileRowsMinus1      (Int i)                                { m_numTileRowsMinus1 = i; }
+  Int      getTileNumRowsMinus1      () const                               { return m_numTileRowsMinus1; }
+  Void     setTileRowHeight          (const std::vector<Int>& rowHeight)    { m_tileRowHeight = rowHeight;  }
+  UInt     getTileRowHeight          (UInt rowIdx) const                    { return m_tileRowHeight[rowIdx]; }
 
-      for(Int i=0; i<m_iNumRowsMinus1; i++)
-      {
-        m_puiRowHeight[i] = rowHeight[i];
-      }
-    }
-  }
-  UInt     getRowHeight           (UInt rowIdx)    { return *( m_puiRowHeight + rowIdx ); }
-  Void     setNumSubstreams(Int iNumSubstreams)               { m_iNumSubstreams = iNumSubstreams; }
-  Int      getNumSubstreams()                                 { return m_iNumSubstreams; }
+  Void     setNumSubstreams    (Int numSubstreams)                     { m_numSubstreams = numSubstreams; }
+  Int      getNumSubstreams    ()                                      { return m_numSubstreams; }
 
   Void      setSignHideFlag( Int signHideFlag ) { m_signHideFlag = signHideFlag; }
   Int       getSignHideFlag()                    { return m_signHideFlag; }
@@ -1944,6 +2116,39 @@ public:
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
 #endif
+#if MOVE_SCALED_OFFSET_TO_PPS
+  UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
+  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
+#if O0098_SCALED_REF_LAYER_ID
+  UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
+  Window&  getScaledRefLayerWindowForLayer( Int layerId );
+#endif
+  Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
+#if REF_REGION_OFFSET
+  Window&  getRefLayerWindowForLayer( Int layerId );
+  Window&  getRefLayerWindow( Int x )   { return m_refLayerWindow[x]; }
+  Bool getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
+  Void setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
+  Bool getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
+  Void setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
+#endif
+#if R0209_GENERIC_PHASE
+  Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
+  Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
+  Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
+  Int getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
+  Void setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
+  Void setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
+  Void setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
+  Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
+  Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
+  Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
+#if RESAMPLING_FIX
+  Bool hasZeroResamplingPhase(Int layerId);
+#endif
+#endif
+#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int     getCGSFlag()                { return m_nCGSFlag;  }
   Void    setCGSFlag(Int n)           { m_nCGSFlag = n;     }
@@ -1993,7 +2198,6 @@ private:
 #if POC_RESET_IDC_ENCODER
   Int         m_associatedIrapPocBeforeReset;
 #endif
-
   NalUnitType m_iAssociatedIRAPType;
   static Int  m_prevTid0POC;
   TComReferencePictureSet *m_pcRPS;
@@ -2084,6 +2288,9 @@ private:
   Bool       m_LFCrossSliceBoundaryFlag;
 
   Bool       m_enableTMVPFlag;
+#if R0226_SLICE_TMVP
+  Bool       m_availableForTMVPRefFlag;
+#endif
 
 #if SVC_EXTENSION
   UInt        m_layerId;
@@ -2119,6 +2326,10 @@ private:
   Int         m_pocMsbVal;
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool        m_pocMsbValNeeded;
+  Int         m_pocResetDeltaPoc;
+#endif
 #endif
 #if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
@@ -2391,6 +2602,11 @@ public:
   Void      setEnableTMVPFlag     ( Bool   b )    { m_enableTMVPFlag = b; }
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
+#if R0226_SLICE_TMVP
+  Void      setAvailableForTMVPRefFlag     ( Bool   b )    { m_availableForTMVPRefFlag = b; }
+  Bool      getAvailableForTMVPRefFlag     ()              { return m_availableForTMVPRefFlag;}
+#endif
+
 #if SVC_EXTENSION
   Bool      setBaseColPic       ( TComList<TComPic*>& rcListPic , UInt refLayerIdc );
   Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)     { m_pcBaseColPic[refLayerIdc] = p; }
@@ -2406,16 +2622,8 @@ public:
   Void        setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
   TComPicYuv* getFullPelBaseRec   (UInt refLayerIdc)               { return  m_pcFullPelBaseRec[refLayerIdc];  }
 
-#if AVC_SYNTAX
-  Void      initBaseLayerRPL( TComSlice *pcSlice );
-#endif
-
   Void      setRefPicListModificationSvc();
   Int       getNumILRRefIdx     ( )                     { return  m_pcVPS->getNumDirectRefLayers( m_layerId ); }
-
-#if REF_IDX_MFM
-  Void      setRefPOCListILP(TComPic** ilpPic, TComPic** pcRefPicRL);
-#endif
 
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
@@ -2443,6 +2651,22 @@ public:
   Bool     isRADL()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_R); }
   Bool     isRASL()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_R); }
 
+#if POC_RESET_RESTRICTIONS
+  Bool     isIDR()    { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP); }
+  Bool     isCRA()    { return m_eNalUnitType == NAL_UNIT_CODED_SLICE_CRA; }
+  Bool     isBLA()    { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_BLA_N_LP ); }
+  Bool     isSLNR()   { return (m_eNalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_TSA_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_STSA_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RADL_N
+                                  || m_eNalUnitType == NAL_UNIT_CODED_SLICE_RASL_N
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N10
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N12
+                                  || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N14 ); }
+#endif
 #if POC_RESET_FLAG
   Bool      getPocResetFlag  ()                              { return m_bPocResetFlag;       }
   Void      setPocResetFlag  (Bool b)                        { m_bPocResetFlag = b;          }
@@ -2472,6 +2696,10 @@ public:
   UInt getBitDepthC();
   Int  getQpBDOffsetY();
   Int  getQpBDOffsetC();
+
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+  Window& getConformanceWindow();
+#endif
 #endif
 
   Void setILRPic(TComPic **pcIlpPic);
@@ -2484,6 +2712,12 @@ public:
   Void      setFullPocResetFlag  (Bool b)                        { m_fullPocResetFlag = b;          }
   Int       getPocLsbVal         ()                              { return m_pocLsbVal;       }
   Void      setPocLsbVal       (Int b)                           { m_pocLsbVal = b;          }
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Void      setPocMsbNeeded      (Bool x)                        { m_pocMsbValNeeded = x; }
+  Bool      getPocMsbNeeded      ()                              { return m_pocMsbValNeeded; }
+  Int       getPocResetDeltaPoc  ()                              { return m_pocResetDeltaPoc; }
+  Void      setPocResetDeltaPoc  (Int x)                         { m_pocResetDeltaPoc = x; }
+#endif
   Int       getPocMsbVal         ()                              { return m_pocMsbVal;       }
   Void      setPocMsbVal       (Int b)                           { m_pocMsbVal = b;          }
   Bool      getPocMsbValPresentFlag ()                           { return m_pocMsbValPresentFlag; }
@@ -2511,7 +2745,7 @@ public:
   Void      decrementRefPocValues(Int const decrementValue);
   Int       getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal );
 #endif
-
+  Int       getReferenceLayerIdc( UInt refLayerId );
 
 #endif //SVC_EXTENSION
 protected:
@@ -2566,18 +2800,6 @@ public:
     return (m_paramsetMap.begin() == m_paramsetMap.end() ) ? NULL : m_paramsetMap.begin()->second;
   }
 
-#if Q0078_ADD_LAYER_SETS
-  Void removePS(Int psId)
-  {
-    assert(psId < m_maxId);
-    if (m_paramsetMap.find(psId) != m_paramsetMap.end())
-    {
-      m_paramsetMap.erase(psId);
-    }
-  }
-#endif
-
-
 private:
   std::map<Int,T *> m_paramsetMap;
   Int               m_maxId;
@@ -2600,18 +2822,12 @@ public:
   //! get pointer to existing sequence parameter set  
   TComSPS* getSPS(Int spsId)  { return m_spsMap.getPS(spsId); };
   TComSPS* getFirstSPS()      { return m_spsMap.getFirstPS(); };
-#if Q0078_ADD_LAYER_SETS
-  Void     removeSPS(Int spsId) { m_spsMap.removePS(spsId); };
-#endif
 
   //! store picture parameter set and take ownership of it 
   Void storePPS(TComPPS *pps) { m_ppsMap.storePS( pps->getPPSId(), pps); };
   //! get pointer to existing picture parameter set  
   TComPPS* getPPS(Int ppsId)  { return m_ppsMap.getPS(ppsId); };
   TComPPS* getFirstPPS()      { return m_ppsMap.getFirstPS(); };
-#if Q0078_ADD_LAYER_SETS
-  Void     removePPS(Int ppsId) { m_ppsMap.removePS(ppsId); };
-#endif
 
   //! activate a SPS from a active parameter sets SEI message
   //! \returns true, if activation is successful
@@ -2629,11 +2845,13 @@ protected:
 
 #if SVC_EXTENSION
   static ParameterSetMap<TComVPS> m_vpsMap;
+  static ParameterSetMap<TComSPS> m_spsMap; 
+  static ParameterSetMap<TComPPS> m_ppsMap;
 #else
   ParameterSetMap<TComVPS> m_vpsMap;
-#endif
   ParameterSetMap<TComSPS> m_spsMap; 
   ParameterSetMap<TComPPS> m_ppsMap;
+#endif
 
 #if SVC_EXTENSION
   static Int m_activeVPSId;
@@ -2647,3 +2865,4 @@ protected:
 //! \}
 
 #endif // __TCOMSLICE__
+

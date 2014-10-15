@@ -97,9 +97,9 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf( g_hTrace, "=========== Knee Function Information SEI message ===========\n");
     break;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  case SEI::COLOR_MAPPING_INFO:
-    fprintf( g_hTrace, "===========Color Mapping Info SEI message ===========\n");
+#if Q0074_COLOUR_REMAPPING_SEI
+  case SEI::COLOUR_REMAPPING_INFO:
+    fprintf( g_hTrace, "===========Colour Remapping Information SEI message ===========\n");
     break;
 #endif
   case SEI::SOP_DESCRIPTION:
@@ -131,9 +131,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
   case SEI::BSP_INITIAL_ARRIVAL_TIME:
     fprintf( g_hTrace, "=========== Bitstream parition initial arrival time SEI message ===========\n");
     break;
+#if !REMOVE_BSP_HRD_SEI
   case SEI::BSP_HRD:
     fprintf( g_hTrace, "=========== Bitstream parition HRD parameters SEI message ===========\n");
     break;
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
   case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -248,7 +250,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIDecodingUnitInfo; 
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps);
+#endif
       }
       break; 
     case SEI::BUFFERING_PERIOD:
@@ -259,7 +265,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIBufferingPeriod;
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps);
+#endif
       }
       break;
     case SEI::PICTURE_TIMING:
@@ -270,7 +280,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIPictureTiming;
+#if VPS_VUI_BSP_HRD_PARAMS
+        xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps, nestingSei, bspNestingSei, vps);
+#else
         xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps);
+#endif
       }
       break;
     case SEI::RECOVERY_POINT:
@@ -303,10 +317,10 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       xParseSEIKneeFunctionInfo((SEIKneeFunctionInfo&) *sei, payloadSize);
       break;
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-    case SEI::COLOR_MAPPING_INFO:
-      sei = new SEIColorMappingInfo;
-      xParseSEIColorMappingInfo((SEIColorMappingInfo&) *sei, payloadSize);
+#if Q0074_COLOUR_REMAPPING_SEI
+    case SEI::COLOUR_REMAPPING_INFO:
+      sei = new SEIColourRemappingInfo;
+      xParseSEIColourRemappingInfo((SEIColourRemappingInfo&) *sei, payloadSize);
       break;
 #endif
     case SEI::SOP_DESCRIPTION:
@@ -344,7 +358,11 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
 #if SUB_BITSTREAM_PROPERTY_SEI
    case SEI::SUB_BITSTREAM_PROPERTY:
      sei = new SEISubBitstreamProperty;
+#if OLS_IDX_CHK
+     xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei, vps);
+#else
      xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei);
+#endif
      break;
 #endif
 #if O0164_MULTI_LAYER_HRD
@@ -360,10 +378,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      sei = new SEIBspInitialArrivalTime;
      xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei);
      break;
+#if !REMOVE_BSP_HRD_SEI
    case SEI::BSP_HRD:
      sei = new SEIBspHrd;
      xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei);
      break;
+#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
    case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -579,24 +599,76 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt /
   READ_UVLC(   val, "num_sps_ids_minus1"); sei.numSpsIdsMinus1 = val;
 
   sei.activeSeqParameterSetId.resize(sei.numSpsIdsMinus1 + 1);
+#if R0247_SEI_ACTIVE
+  sei.layerSpsIdx.resize(sei.numSpsIdsMinus1 + 1);
+#endif
   for (Int i=0; i < (sei.numSpsIdsMinus1 + 1); i++)
   {
     READ_UVLC(val, "active_seq_parameter_set_id");      sei.activeSeqParameterSetId[i] = val; 
   }
-
+#if R0247_SEI_ACTIVE
+  for (Int i=1; i < (sei.numSpsIdsMinus1 + 1); i++)
+  {
+    READ_UVLC(val, "layer_sps_idx"); sei.layerSpsIdx[i] = val; 
+  }
+#endif
   xParseByteAlign();
 }
 
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   UInt val;
   READ_UVLC(val, "decoding_unit_idx");
   sei.m_decodingUnitIdx = val;
 
-  TComVUI *vui = sps->getVuiParameters();
-  if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *hrd;
+  if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
-    READ_CODE( ( vui->getHrdParameters()->getDuCpbRemovalDelayLengthMinus1() + 1 ), val, "du_spt_cpb_removal_delay");
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(Int i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+        assert( hrdVec[i]->getSubPicCpbParamsInPicTimingSEIFlag()   == hrdVec[i-1]->getSubPicCpbParamsInPicTimingSEIFlag() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        // To be done: Check CpbDpbDelaysPresentFlag
+      }
+    }
+    hrd = hrdVec[0];
+  }
+  else
+  {
+    TComVUI *vui = sps->getVuiParameters();
+    hrd = vui->getHrdParameters();
+  }
+#else
+  TComVUI *vui = sps->getVuiParameters();
+  TComHrd *hrd = vui->getHrdParameters();
+#endif
+  if(hrd->getSubPicCpbParamsInPicTimingSEIFlag())
+  {
+    READ_CODE( ( hrd->getDuCpbRemovalDelayLengthMinus1() + 1 ), val, "du_spt_cpb_removal_delay");
     sei.m_duSptCpbRemovalDelay = val;
   }
   else
@@ -606,19 +678,62 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt /*paylo
   READ_FLAG( val, "dpb_output_du_delay_present_flag"); sei.m_dpbOutputDuDelayPresentFlag = val ? true : false;
   if(sei.m_dpbOutputDuDelayPresentFlag)
   {
-    READ_CODE(vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, val, "pic_spt_dpb_output_du_delay"); 
+    READ_CODE(hrd->getDpbOutputDelayDuLengthMinus1() + 1, val, "pic_spt_dpb_output_du_delay"); 
     sei.m_picSptDpbOutputDuDelay = val;
   }
   xParseByteAlign();
 }
 
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   Int i, nalOrVcl;
   UInt code;
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *pHRD;
+  if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
+  {
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getCpbRemovalDelayLengthMinus1()   == hrdVec[i-1]->getCpbRemovalDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+      }
+    }
+    pHRD = hrdVec[i];
+  }
+  else
+  {
+    TComVUI *vui = sps->getVuiParameters();
+    pHRD = vui->getHrdParameters();
+  }
+  // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
+#else
   TComVUI *pVUI = sps->getVuiParameters();
   TComHRD *pHRD = pVUI->getHrdParameters();
+#endif
 
   READ_UVLC( code, "bp_seq_parameter_set_id" );                         sei.m_bpSeqParameterSetId     = code;
   if( !pHRD->getSubPicCpbParamsPresentFlag() )
@@ -670,13 +785,60 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt /*payload
 
   xParseByteAlign();
 }
+#if VPS_VUI_BSP_HRD_PARAMS
+Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize*/, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt /*payloadSize*/, TComSPS *sps)
+#endif
 {
   Int i;
   UInt code;
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  TComHRD *hrd;    
+  TComVUI *vui = sps->getVuiParameters(); 
+  if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
+  {
+    assert( nestingSei );
+    Int psIdx = bspNestingSei->m_seiPartitioningSchemeIdx;
+    Int seiOlsIdx = bspNestingSei->m_seiOlsIdx;
+    Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
+    Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+    std::vector<Int> hrdIdx(maxValues, 0);
+    std::vector<TComHRD *> hrdVec;
+    std::vector<Int> syntaxElemLen(maxValues, 0);
+    for(i = 0; i < maxValues; i++)
+    {
+      hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
+      hrdVec.push_back(vps->getBspHrd(hrdIdx[i]));
+    
+      syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+      if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+      {
+        assert( syntaxElemLen[i] == 24 ); // Default of value init_cpb_removal_delay_length_minus1 is 23
+      }
+      if( i > 0 )
+      {
+        assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
+        assert( hrdVec[i]->getSubPicCpbParamsInPicTimingSEIFlag()   == hrdVec[i-1]->getSubPicCpbParamsInPicTimingSEIFlag() );
+        assert( hrdVec[i]->getCpbRemovalDelayLengthMinus1()  == hrdVec[i-1]->getCpbRemovalDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayLengthMinus1() );
+        assert( hrdVec[i]->getDpbOutputDelayDuLengthMinus1()  == hrdVec[i-1]->getDpbOutputDelayDuLengthMinus1() );
+        assert( hrdVec[i]->getDuCpbRemovalDelayLengthMinus1()  == hrdVec[i-1]->getDuCpbRemovalDelayLengthMinus1() );
+        // To be done: Check CpbDpbDelaysPresentFlag
+      }
+    }
+    hrd = hrdVec[0];
+  }
+  else
+  {
+    hrd = vui->getHrdParameters();
+  }
+  // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
+#else
   TComVUI *vui = sps->getVuiParameters();
   TComHRD *hrd = vui->getHrdParameters();
+#endif
 
   if( vui->getFrameFieldInfoPresentFlag() )
   {
@@ -920,86 +1082,83 @@ Void SEIReader::xParseSEIKneeFunctionInfo(SEIKneeFunctionInfo& sei, UInt /*paylo
 }
 #endif
 
-#if Q0074_SEI_COLOR_MAPPING
-Void SEIReader::xParseSEIColorMappingInfo(SEIColorMappingInfo& sei, UInt /*payloadSize*/)
+#if Q0074_COLOUR_REMAPPING_SEI
+Void SEIReader::xParseSEIColourRemappingInfo(SEIColourRemappingInfo& sei, UInt /*payloadSize*/)
 {
   UInt  uiVal;
   Int   iVal;
 
-  READ_UVLC( uiVal, "colour_map_id" );          sei.m_colorMapId = uiVal;
-  READ_FLAG( uiVal, "colour_map_cancel_flag" ); sei.m_colorMapCancelFlag = uiVal;
-  if( !sei.m_colorMapCancelFlag ) 
+  READ_UVLC( uiVal, "colour_remap_id" );          sei.m_colourRemapId = uiVal;
+  READ_FLAG( uiVal, "colour_remap_cancel_flag" ); sei.m_colourRemapCancelFlag = uiVal;
+  if( !sei.m_colourRemapCancelFlag ) 
   {
-    READ_FLAG( uiVal, "colour_map_persistence_flag" );                sei.m_colorMapPersistenceFlag = uiVal;
-    READ_FLAG( uiVal, "colour_map_video_signal_type_present_flag" );  sei.m_colorMap_video_signal_type_present_flag = uiVal;
-    if ( sei.m_colorMap_video_signal_type_present_flag ) {
-      READ_FLAG( uiVal,     "colour_map_video_full_range_flag" );     sei.m_colorMap_video_full_range_flag = uiVal;
-      READ_CODE( 8, uiVal,  "colour_map_primaries" );                 sei.m_colorMap_primaries = uiVal;
-      READ_CODE( 8, uiVal,  "colour_map_transfer_characteristics" );  sei.m_colorMap_transfer_characteristics = uiVal;
-      READ_CODE( 8, uiVal,  "colour_map_matrix_coeffs" );             sei.m_colorMap_matrix_coeffs = uiVal;
+    READ_FLAG( uiVal, "colour_remap_persistence_flag" );                sei.m_colourRemapPersistenceFlag = uiVal;
+    READ_FLAG( uiVal, "colour_remap_video_signal_info_present_flag" );  sei.m_colourRemapVideoSignalInfoPresentFlag = uiVal;
+    if ( sei.m_colourRemapVideoSignalInfoPresentFlag )
+    {
+      READ_FLAG( uiVal,    "colour_remap_full_range_flag" );           sei.m_colourRemapFullRangeFlag = uiVal;
+      READ_CODE( 8, uiVal, "colour_remap_primaries" );                 sei.m_colourRemapPrimaries = uiVal;
+      READ_CODE( 8, uiVal, "colour_remap_transfer_function" );         sei.m_colourRemapTransferFunction = uiVal;
+      READ_CODE( 8, uiVal, "colour_remap_matrix_coefficients" );       sei.m_colourRemapMatrixCoefficients = uiVal;
     }
-  }
-
-  READ_CODE( 5, uiVal,  "colour_map_coded_data_bit_depth" );  sei.m_colour_map_coded_data_bit_depth = uiVal;
-  READ_CODE( 5, uiVal,  "colour_map_target_bit_depth" );      sei.m_colour_map_target_bit_depth = uiVal;
-  READ_UVLC( uiVal, "colour_map_model_id" );                  sei.m_colorMapModelId = uiVal;
-
-  assert( sei.m_colorMapModelId == 0 );
+    READ_CODE( 8, uiVal, "colour_remap_input_bit_depth" ); sei.m_colourRemapInputBitDepth = uiVal;
+    READ_CODE( 8, uiVal, "colour_remap_bit_depth" ); sei.m_colourRemapBitDepth = uiVal;
   
-  for( Int i=0 ; i<3 ; i++ )
-  {
-    READ_CODE( 8, uiVal, "num_input_pivots_minus1[i]" ); sei.m_num_input_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
-    sei.m_coded_input_pivot_value[i]   = new Int[ sei.m_num_input_pivots[i] ];
-    sei.m_target_input_pivot_value[i]  = new Int[ sei.m_num_input_pivots[i] ];
-    if( uiVal > 0 )
+    for( Int c=0 ; c<3 ; c++ )
     {
-      for ( Int j=0 ; j<sei.m_num_input_pivots[i] ; j++ )
+      READ_CODE( 8, uiVal, "pre_lut_num_val_minus1[c]" ); sei.m_preLutNumValMinus1[c] = (uiVal==0) ? 1 : uiVal;
+      sei.m_preLutCodedValue[c].resize(sei.m_preLutNumValMinus1[c]+1);
+      sei.m_preLutTargetValue[c].resize(sei.m_preLutNumValMinus1[c]+1);
+      if( uiVal> 0 )
+        for ( Int i=0 ; i<=sei.m_preLutNumValMinus1[c] ; i++ )
+        {
+          READ_CODE( (( sei.m_colourRemapInputBitDepth   + 7 ) >> 3 ) << 3, uiVal, "pre_lut_coded_value[c][i]" );  sei.m_preLutCodedValue[c][i]  = uiVal;
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "pre_lut_target_value[c][i]" ); sei.m_preLutTargetValue[c][i] = uiVal;
+        }
+      else // pre_lut_num_val_minus1[c] == 0
       {
-        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_input_pivot_value[i][j]" );  sei.m_coded_input_pivot_value[i][j] = uiVal;
-        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_input_pivot_value[i][j]" ); sei.m_target_input_pivot_value[i][j] = uiVal;
+        sei.m_preLutCodedValue[c][0]  = 0;
+        sei.m_preLutTargetValue[c][0] = 0;
+        sei.m_preLutCodedValue[c][1]  = (1 << sei.m_colourRemapInputBitDepth) - 1 ;
+        sei.m_preLutTargetValue[c][1] = (1 << sei.m_colourRemapBitDepth) - 1 ;
       }
     }
-    else
-    {
-      sei.m_coded_input_pivot_value[i][0]  = 0;
-      sei.m_target_input_pivot_value[i][0] = 0;
-      sei.m_coded_input_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
-      sei.m_target_input_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
-    }
-  }
 
-  READ_FLAG( uiVal,           "matrix_flag" ); sei.m_matrix_flag = uiVal;
-  if( sei.m_matrix_flag )
-  {
-    READ_CODE( 4, uiVal,         "log2_matrix_denom" ); sei.m_log2_matrix_denom = uiVal;
-    for ( Int i=0 ; i<3 ; i++ )
+    READ_FLAG( uiVal,      "colour_remap_matrix_present_flag" ); sei.m_colourRemapMatrixPresentFlag = uiVal;
+    if( sei.m_colourRemapMatrixPresentFlag )
     {
-      for ( Int j=0 ; j<3 ; j++ )
-      {
-        READ_SVLC( iVal,        "matrix_coef[i][j]" ); sei.m_matrix_coef[i][j] = iVal;
-      }
+      READ_CODE( 4, uiVal, "log2_matrix_denom" ); sei.m_log2MatrixDenom = uiVal;
+      for ( Int c=0 ; c<3 ; c++ )
+        for ( Int i=0 ; i<3 ; i++ )
+        {
+          READ_SVLC( iVal, "colour_remap_coeffs[c][i]" ); sei.m_colourRemapCoeffs[c][i] = iVal;
+        }
     }
-  }
-
-  for ( Int i=0 ; i<3 ; i++ )
-  {
-    READ_CODE( 8, uiVal, "num_output_pivots_minus1[i]" ); sei.m_num_output_pivots[i] = (uiVal==0) ? 2 : (uiVal + 1) ;
-    sei.m_coded_output_pivot_value[i]   = new Int[ sei.m_num_output_pivots[i] ];
-    sei.m_target_output_pivot_value[i]  = new Int[ sei.m_num_output_pivots[i] ];
-    if( uiVal > 0 )
+    else // setting default matrix (I3)
     {
-      for ( Int j=0 ; j<sei.m_num_output_pivots[i] ; j++ )
-      {
-        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "coded_output_pivot_value[i][j]" );  sei.m_coded_output_pivot_value[i][j] = uiVal;
-        READ_CODE( (( sei.m_colour_map_coded_data_bit_depth + 7 ) >> 3 ) << 3, uiVal, "target_output_pivot_value[i][j]" ); sei.m_target_output_pivot_value[i][j] = uiVal;
-      }
+      sei.m_log2MatrixDenom = 0;
+      for ( Int c=0 ; c<3 ; c++ )
+        for ( Int i=0 ; i<3 ; i++ )
+          sei.m_colourRemapCoeffs[c][i] = (c==i) ? 1 : 0;
     }
-    else
+    for( Int c=0 ; c<3 ; c++ )
     {
-      sei.m_coded_output_pivot_value[i][0]  = 0;
-      sei.m_target_output_pivot_value[i][0] = 0;
-      sei.m_coded_output_pivot_value[i][1]  = (1 << sei.m_colour_map_coded_data_bit_depth) - 1 ;
-      sei.m_target_output_pivot_value[i][1] = (1 << sei.m_colour_map_target_bit_depth) - 1 ;
+      READ_CODE( 8, uiVal, "post_lut_num_val_minus1[c]" ); sei.m_postLutNumValMinus1[c] = (uiVal==0) ? 1 : uiVal;
+      sei.m_postLutCodedValue[c].resize(sei.m_postLutNumValMinus1[c]+1);
+      sei.m_postLutTargetValue[c].resize(sei.m_postLutNumValMinus1[c]+1);
+      if( uiVal > 0 )
+        for ( Int i=0 ; i<=sei.m_postLutNumValMinus1[c] ; i++ )
+        {
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_coded_value[c][i]" );  sei.m_postLutCodedValue[c][i] = uiVal;
+          READ_CODE( (( sei.m_colourRemapBitDepth + 7 ) >> 3 ) << 3, uiVal, "post_lut_target_value[c][i]" ); sei.m_postLutTargetValue[c][i] = uiVal;
+        }
+      else
+      {
+        sei.m_postLutCodedValue[c][0]  = 0;
+        sei.m_postLutTargetValue[c][0] = 0;
+        sei.m_postLutTargetValue[c][1] = (1 << sei.m_colourRemapBitDepth) - 1;
+        sei.m_postLutCodedValue[c][1]  = (1 << sei.m_colourRemapBitDepth) - 1;
+      }
     }
   }
 
@@ -1193,7 +1352,11 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
 }
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
+#if OLS_IDX_CHK
+Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei, TComVPS *vps)
+#else
 Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
+#endif
 {
   UInt uiCode;
   READ_CODE( 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
@@ -1202,7 +1365,12 @@ Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei)
   for( Int i = 0; i < sei.m_numAdditionalSubStreams; i++ )
   {
     READ_CODE(  2, uiCode, "sub_bitstream_mode[i]"           ); sei.m_subBitstreamMode[i] = uiCode;
-    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  ); sei.m_outputLayerSetIdxToVps[i] = uiCode;
+    READ_UVLC(     uiCode, "output_layer_set_idx_to_vps[i]"  );
+#if OLS_IDX_CHK
+      // The value of output_layer_set_idx_to_vps[ i ]  shall be in the range of 0 to NumOutputLayerSets − 1, inclusive.
+      assert(uiCode > 0 && uiCode <= vps->getNumOutputLayerSets()-1);
+#endif
+      sei.m_outputLayerSetIdxToVps[i] = uiCode;
     READ_CODE(  3, uiCode, "highest_sub_layer_id[i]"         ); sei.m_highestSublayerId[i] = uiCode;
     READ_CODE( 16, uiCode, "avg_bit_rate[i]"                 ); sei.m_avgBitRate[i] = uiCode;
     READ_CODE( 16, uiCode, "max_bit_rate[i]"                 ); sei.m_maxBitRate[i] = uiCode;
@@ -1231,6 +1399,15 @@ Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUni
   sei.m_callerOwnsSEIs = false;
 
   // read nested SEI messages
+#if NESTING_SEI_EXTENSIBILITY
+  Int numSeiMessages = 0;
+  READ_UVLC( uiCode, "num_seis_in_bsp_minus1" );  assert( uiCode <= MAX_SEIS_IN_BSP_NESTING );
+  numSeiMessages = uiCode;
+  for(Int i = 0; i < numSeiMessages; i++)
+  {
+    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &nestingSei, &sei);
+  }
+#else
   do {
 #if LAYERS_NOT_PRESENT_SEI
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, &nestingSei, &sei);
@@ -1238,12 +1415,53 @@ Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUni
     xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, &nestingSei);
 #endif
   } while (m_pcBitstream->getNumBitsLeft() > 8);
+#endif
 }
 
 Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)
 {
   assert(vps->getVpsVuiPresentFlag());
 
+#if VPS_VUI_BSP_HRD_PARAMS
+  UInt uiCode;
+  Int psIdx         = bspNestingSei.m_seiPartitioningSchemeIdx;
+  Int seiOlsIdx     = bspNestingSei.m_seiOlsIdx;
+  Int maxTemporalId = nestingSei.m_nestingMaxTemporalIdPlus1[0];
+  Int maxValues     = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
+  std::vector<Int> hrdIdx(0, maxValues);
+  std::vector<TComHRD *> hrdVec;
+  std::vector<Int> syntaxElemLen;
+  for(Int i = 0; i < maxValues; i++)
+  {
+    hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei.m_bspIdx);
+    hrdVec[i] = vps->getBspHrd(hrdIdx[i]);
+    
+    syntaxElemLen[i] = hrdVec[i]->getInitialCpbRemovalDelayLengthMinus1() + 1;
+    if ( !(hrdVec[i]->getNalHrdParametersPresentFlag() || hrdVec[i]->getVclHrdParametersPresentFlag()) )
+    {
+      assert( syntaxElemLen[i] == 24 ); // Default value of init_cpb_removal_delay_length_minus1 is 23
+    }
+    if( i > 0 )
+    {
+      assert( hrdVec[i]->getNalHrdParametersPresentFlag() == hrdVec[i-1]->getNalHrdParametersPresentFlag() );
+      assert( hrdVec[i]->getVclHrdParametersPresentFlag() == hrdVec[i-1]->getVclHrdParametersPresentFlag() );
+    }
+  }
+  if (hrdVec[0]->getNalHrdParametersPresentFlag())
+  {
+    for(UInt i = 0; i < maxValues; i++)
+    {
+      READ_CODE( syntaxElemLen[i], uiCode, "nal_initial_arrival_delay[i]" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
+    }
+  }
+  if( hrdVec[0]->getVclHrdParametersPresentFlag() )
+  {
+    for(UInt i = 0; i < maxValues; i++)
+    {
+      READ_CODE( syntaxElemLen[i], uiCode, "vcl_initial_arrival_delay[i]" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
+    }
+  }
+#else
   UInt schedCombCnt = vps->getNumBspSchedCombinations(nestingSei.m_nestingOpIdx[0]);
   UInt len;
   UInt hrdIdx;
@@ -1276,15 +1494,21 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
       READ_CODE( len, uiCode, "nal_initial_arrival_delay" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
     }
   }
+#if BSP_INIT_ARRIVAL_SEI
+  if( hrd->getVclHrdParametersPresentFlag() )
+#else
   else
+#endif
   {
     for(UInt i = 0; i < schedCombCnt; i++)
     {
       READ_CODE( len, uiCode, "vcl_initial_arrival_delay" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
     }
   }
+#endif
 }
 
+#if !REMOVE_BSP_HRD_SEI
 Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei)
 {
   UInt uiCode;
@@ -1370,6 +1594,7 @@ Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableN
     }
   }
 }
+#endif
 
 Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1)
 {

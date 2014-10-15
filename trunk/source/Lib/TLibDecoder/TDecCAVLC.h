@@ -85,6 +85,9 @@ public:
 #if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
 #endif
+#if VPS_VUI_BSP_HRD_PARAMS
+  Void  parseVpsVuiBspHrdParams( TComVPS *vps );
+#endif
 #if SPS_DPB_PARAMS
   Void  parseSPS            ( TComSPS* pcSPS ); // it should be removed after macro clean up
 #else
@@ -142,6 +145,13 @@ protected:
 #if Q0048_CGS_3D_ASYMLUT
   Void xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
   Void xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+#if R0300_CGS_RES_COEFF_CODING
+  Void xReadParam( Int& param, Int flc_bits );
+#else
+  Void xReadParam( Int& param );
+#endif
+#endif
 #endif
 };
 

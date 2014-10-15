@@ -109,11 +109,13 @@ public:
 private:
 #if SVC_EXTENSION
   static ParameterSetMap<TComVPS> m_vpsBuffer;
+  static ParameterSetMap<TComSPS> m_spsBuffer; 
+  static ParameterSetMap<TComPPS> m_ppsBuffer;
 #else
   ParameterSetMap<TComVPS> m_vpsBuffer;
-#endif
   ParameterSetMap<TComSPS> m_spsBuffer; 
   ParameterSetMap<TComPPS> m_ppsBuffer;
+#endif
 };
 
 

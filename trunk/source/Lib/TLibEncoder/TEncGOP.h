@@ -206,9 +206,8 @@ protected:
 
 protected:
   
-  Void xInitGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Bool isField );
-  Void  xInitGOP          ( Int iPOC, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut );
-  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr, Bool isField );
+  Void  xInitGOP          ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, bool isField );
+  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr, bool isField );
   
   Void  xCalculateAddPSNR ( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime );
   Void  xCalculateInterlacedAddPSNR( TComPic* pcPicOrgTop, TComPic* pcPicOrgBottom, TComPicYuv* pcPicRecTop, TComPicYuv* pcPicRecBottom, const AccessUnit& accessUnit, Double dEncTime );
@@ -225,8 +224,8 @@ protected:
 #if P0050_KNEE_FUNCTION_SEI
   SEIKneeFunctionInfo*    xCreateSEIKneeFunctionInfo();
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  SEIColorMappingInfo*    xCreateSEIColorMappingInfo( Char* file );
+#if Q0074_COLOUR_REMAPPING_SEI
+  SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
 #endif
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
@@ -253,7 +252,11 @@ protected:
   SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
 #endif
 #if O0164_MULTI_LAYER_HRD
+#if VPS_VUI_BSP_HRD_PARAMS
+  SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
+#else
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );

@@ -44,7 +44,7 @@
 #include "TComPicYuv.h"
 #include "TComBitStream.h"
 #include "SEI.h"
-#if AVC_BASE || SYNTAX_OUTPUT
+#if AVC_BASE
 #include <fstream>
 #endif
 
@@ -87,6 +87,9 @@ private:
   UInt                  m_layerId;              //  Layer ID
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
+#if REF_IDX_MFM
+  Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS]; 
+#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
@@ -202,6 +205,8 @@ public:
   Bool          isILR( UInt currLayerId )   { return ( m_bIsLongTerm && m_layerId < currLayerId ); }
 #endif
 #if REF_IDX_MFM
+  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc]; }
+  Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;    }
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
 #endif
@@ -212,12 +217,6 @@ public:
   ChromaFormat  getChromaFormat() const { return m_apcPicYuv[1]->getChromaFormat(); }
 #endif
   Void  copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
-#if AVC_SYNTAX
-  Void readBLSyntax( fstream* filestream, UInt numBytes );
-#endif
-#endif
-#if SYNTAX_OUTPUT
-  Void wrireBLSyntax( fstream* filestream, UInt numBytes );
 #endif
 
 #if Q0048_CGS_3D_ASYMLUT
@@ -227,6 +226,9 @@ public:
 #if POC_RESET_IDC_DECODER
   Bool isCurrAu() { return m_currAuFlag; }
   Void setCurrAuFlag(Bool x) {m_currAuFlag = x; }
+#endif
+#if WPP_FIX
+  UInt          getSubstreamForLCUAddr(const UInt uiLCUAddr, const Bool bAddressInRaster, TComSlice *pcSlice);
 #endif
 };// END CLASS DEFINITION TComPic
 

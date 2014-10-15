@@ -134,7 +134,9 @@ struct DpbStatus
   // Number of AUs and pictures
   Int m_numAUsNotDisplayed;
   Int m_numPicsNotDisplayedInLayer[MAX_LAYERS];
+#if RESOLUTION_BASED_DPB
   Int m_numPicsInLayer[MAX_LAYERS];   // Pictures marked as used_for_reference or needed for output in the layer
+#endif
   Int m_numPicsInSubDpb[MAX_LAYERS];  // Pictures marked as used_for_reference or needed for output in the sub-DPB
   Bool m_maxLatencyIncrease;
   Int m_maxLatencyPictures;
@@ -151,7 +153,9 @@ struct DpbStatus
     m_numAUsNotDisplayed = 0;
     m_maxLatencyIncrease  = false;
     m_maxLatencyPictures  = 0;
+#if RESOLUTION_BASED_DPB
     ::memset( m_numPicsInLayer,  0, sizeof(m_numPicsInLayer)  );
+#endif
     ::memset( m_numPicsInSubDpb, 0, sizeof(m_numPicsInSubDpb) );
     ::memset(m_numPicsNotDisplayedInLayer, 0, sizeof(m_numPicsNotDisplayedInLayer) );
     m_numSubDpbs = -1;
