@@ -66,11 +66,17 @@ namespace po = df::program_options_lite;
 TAppEncCfg::TAppEncCfg()
 : m_pBitstreamFile()
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+, m_nonHEVCBaseLayerFlag(0)
+#else
 , m_avcBaseLayerFlag(0)
 #endif
+#endif
 , m_maxTidRefPresentFlag(1)
-, m_pColumnWidth()
-, m_pRowHeight()
+#if OUTPUT_LAYER_SETS_CONFIG
+, m_defaultTargetOutputLayerIdc (-1)
+, m_numOutputLayerSets          (-1)
+#endif
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
 {
@@ -86,21 +92,32 @@ TAppEncCfg::TAppEncCfg()
 , m_pchBitstreamFile()
 , m_pchReconFile()
 , m_pchdQPFile()
-, m_pColumnWidth()
-, m_pRowHeight()
 , m_scalingListFile()
 {
   m_aidQP = NULL;
   m_startOfCodedInterval = NULL;
   m_codedPivotValue = NULL;
   m_targetPivotValue = NULL;
+#if Q0074_COLOUR_REMAPPING_SEI
+  for( Int c=0 ; c<3 ; c++)
+  {
+    m_colourRemapSEIPreLutCodedValue[c]   = NULL;
+    m_colourRemapSEIPreLutTargetValue[c]  = NULL;
+    m_colourRemapSEIPostLutCodedValue[c]  = NULL;
+    m_colourRemapSEIPostLutTargetValue[c] = NULL;
+  }
+#endif
 }
 #endif
 
 TAppEncCfg::~TAppEncCfg()
 {
 #if SVC_EXTENSION
-  free(m_pBitstreamFile);
+  if( m_pBitstreamFile )
+  {
+    free(m_pBitstreamFile);
+    m_pBitstreamFile = NULL;
+  }
 #else  
   if ( m_aidQP )
   {
@@ -127,9 +144,28 @@ TAppEncCfg::~TAppEncCfg()
 #if !SVC_EXTENSION  
   free(m_pchReconFile);
   free(m_pchdQPFile);
+#if Q0074_COLOUR_REMAPPING_SEI
+  for( Int c=0 ; c<3 ; c++)
+  {
+    if ( m_colourRemapSEIPreLutCodedValue[c] )
+    {
+      delete[] m_colourRemapSEIPreLutCodedValue[c];
+    }
+    if ( m_colourRemapSEIPreLutTargetValue[c] )
+    {
+      delete[] m_colourRemapSEIPreLutTargetValue[c];
+    }
+    if ( m_colourRemapSEIPostLutCodedValue[c] )
+    {
+      delete[] m_colourRemapSEIPostLutCodedValue[c];
+    }
+    if ( m_colourRemapSEIPostLutTargetValue[c] )
+    {
+      delete[] m_colourRemapSEIPostLutTargetValue[c];
+    }
+  }
 #endif
-  free(m_pColumnWidth);
-  free(m_pRowHeight);
+#endif
   free(m_scalingListFile);
 }
 
@@ -336,10 +372,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_InputFile      [MAX_LAYERS];
   string* cfg_ReconFile      [MAX_LAYERS];
   Double* cfg_fQP            [MAX_LAYERS];
-#if Q0074_SEI_COLOR_MAPPING
-  string* cfg_seiColorMappingFile[MAX_LAYERS];
-#endif
-
 #if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
 #endif
@@ -385,8 +417,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
   Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  string    cfg_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
+  string    cfg_refRegionOffsetPresentFlag      [MAX_LAYERS];
+  string    cfg_refRegionLeftOffset   [MAX_LAYERS];
+  string    cfg_refRegionTopOffset    [MAX_LAYERS];
+  string    cfg_refRegionRightOffset  [MAX_LAYERS];
+  string    cfg_refRegionBottomOffset [MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  string    cfg_resamplePhaseSetPresentFlag [MAX_LAYERS];
+  string    cfg_phaseHorLuma   [MAX_LAYERS];
+  string    cfg_phaseVerLuma   [MAX_LAYERS];
+  string    cfg_phaseHorChroma [MAX_LAYERS];
+  string    cfg_phaseVerChroma [MAX_LAYERS];
+#else
 #if P0312_VERT_PHASE_ADJ
   string    cfg_vertPhasePositionEnableFlag[MAX_LAYERS];
+#endif
 #endif
 
 #if O0098_SCALED_REF_LAYER_ID
@@ -396,6 +444,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
   string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
+#if REF_REGION_OFFSET
+  string*    cfg_scaledRefLayerOffsetPresentFlagPtr [MAX_LAYERS];
+  string*    cfg_refRegionOffsetPresentFlagPtr      [MAX_LAYERS];
+  string*    cfg_refRegionLeftOffsetPtr   [MAX_LAYERS];
+  string*    cfg_refRegionTopOffsetPtr    [MAX_LAYERS];
+  string*    cfg_refRegionRightOffsetPtr  [MAX_LAYERS];
+  string*    cfg_refRegionBottomOffsetPtr [MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  string*    cfg_resamplePhaseSetPresentFlagPtr [MAX_LAYERS];
+  string*    cfg_phaseHorLumaPtr   [MAX_LAYERS];
+  string*    cfg_phaseVerLumaPtr   [MAX_LAYERS];
+  string*    cfg_phaseHorChromaPtr [MAX_LAYERS];
+  string*    cfg_phaseVerChromaPtr [MAX_LAYERS];
+#endif
 #if P0312_VERT_PHASE_ADJ
   string*    cfg_vertPhasePositionEnableFlagPtr[MAX_LAYERS];
 #endif
@@ -418,11 +481,19 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_OutputBitDepthC   [MAX_LAYERS];
 #endif
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
+#if Q0074_COLOUR_REMAPPING_SEI
+  string* cfg_colourRemapSEIFile[MAX_LAYERS];
+#endif
+  Int*    cfg_waveFrontSynchro[MAX_LAYERS];
+
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
     cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
     cfg_fQP[layer]          = &m_acLayerCfg[layer].m_fQP;
+#if Q0074_COLOUR_REMAPPING_SEI
+    cfg_colourRemapSEIFile[layer] = &m_acLayerCfg[layer].m_colourRemapSEIFile;
+#endif
 #if REPN_FORMAT_IN_VPS
     cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
 #endif
@@ -431,9 +502,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
-#if Q0074_SEI_COLOR_MAPPING
-    cfg_seiColorMappingFile[layer] = &m_acLayerCfg[layer].m_cSeiColorMappingFile;
-#endif
 #if LAYER_CTB
     // coding unit (CU) definition
     cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
@@ -456,6 +524,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
     cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+    cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
 #if O0098_SCALED_REF_LAYER_ID
@@ -467,6 +536,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_scaledRefLayerBottomOffsetPtr[layer] = &cfg_scaledRefLayerBottomOffset[layer];
 #if P0312_VERT_PHASE_ADJ
       cfg_vertPhasePositionEnableFlagPtr[layer] = &cfg_vertPhasePositionEnableFlag[layer];
+#endif
+#if REF_REGION_OFFSET
+      cfg_scaledRefLayerOffsetPresentFlagPtr [layer] = &cfg_scaledRefLayerOffsetPresentFlag [layer];
+      cfg_refRegionOffsetPresentFlagPtr      [layer] = &cfg_refRegionOffsetPresentFlag      [layer];
+      cfg_refRegionLeftOffsetPtr  [layer] = &cfg_refRegionLeftOffset  [layer];
+      cfg_refRegionTopOffsetPtr   [layer] = &cfg_refRegionTopOffset   [layer];
+      cfg_refRegionRightOffsetPtr [layer] = &cfg_refRegionRightOffset [layer];
+      cfg_refRegionBottomOffsetPtr[layer] = &cfg_refRegionBottomOffset[layer];
+#endif
+#if R0209_GENERIC_PHASE
+      cfg_resamplePhaseSetPresentFlagPtr [layer] = &cfg_resamplePhaseSetPresentFlag [layer];
+      cfg_phaseHorLumaPtr   [layer] = &cfg_phaseHorLuma   [layer];
+      cfg_phaseVerLumaPtr   [layer] = &cfg_phaseVerLuma   [layer];
+      cfg_phaseHorChromaPtr [layer] = &cfg_phaseHorChroma [layer];
+      cfg_phaseVerChromaPtr [layer] = &cfg_phaseVerChroma [layer];
 #endif
     }
 #if RC_SHVC_HARMONIZATION
@@ -506,11 +590,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
   }
 #endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  string* cfg_numLayersInOutputLayerSet = new string;
+  string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+  string* cfg_outputLayerSetIdx      = new string;
+#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
-#endif
-#if AVC_SYNTAX
-  string  cfg_BLSyntaxFile;
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   string  cfg_tileSets;
@@ -520,9 +606,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
+#if Q0074_COLOUR_REMAPPING_SEI
+  string cfg_colourRemapSEIFile;
+#endif
 #endif //SVC_EXTENSION
-  string cfg_ColumnWidth;
-  string cfg_RowHeight;
+  string cfgColumnWidth;
+  string cfgRowHeight;
   string cfg_ScalingListFile;
   string cfg_startOfCodedInterval;
   string cfg_codedPivotValue;
@@ -531,6 +620,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_kneeSEIInputKneePointValue;
   string cfg_kneeSEIOutputKneePointValue;
 #endif
+
   po::Options opts;
   opts.addOptions()
   ("help", do_help, false, "this help text")
@@ -561,12 +651,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("NumLayers",               m_numLayers, 1, "Number of layers to code")
 #if Q0078_ADD_LAYER_SETS
+#if OUTPUT_LAYER_SETS_CONFIG
+  ("NumLayerSets",            m_numLayerSets, 1, "Number of layer sets")
+#else
   ("NumLayerSets",            m_numLayerSets, 0, "Number of layer sets")
+#endif
   ("NumLayerInIdList%d",      cfg_numLayerInIdList, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of layers in the set")
   ("LayerSetLayerIdList%d",   cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set")
   ("NumAddLayerSets",         m_numAddLayerSets, 0, "Number of additional layer sets")
   ("NumHighestLayerIdx%d",    cfg_numHighestLayerIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Number of highest layer idx")
   ("HighestLayerIdx%d",       cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Highest layer idx for an additional layer set")
+#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  ("DefaultTargetOutputLayerIdc",    m_defaultTargetOutputLayerIdc, 1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
+  ("NumOutputLayerSets",            m_numOutputLayerSets, 1, "Number of output layer sets excluding the 0-th output layer set")
+  ("NumLayersInOutputLayerSet",   cfg_numLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
+  ("ListOfOutputLayers%d",          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
+  ("OutputLayerSetIdx",            cfg_outputLayerSetIdx, string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
 #if AUXILIARY_PICTURES
   ("InputChromaFormat%d",     cfg_tmpInputChromaFormat,  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
@@ -601,8 +702,30 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                  " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d", cfg_scaledRefLayerBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
   " bottom-right luma sample of the EL picture, in units of two luma samples")
+#if REF_REGION_OFFSET
+  ("ScaledRefLayerOffsetPresentFlag%d",      cfg_scaledRefLayerOffsetPresentFlagPtr,     string(""), MAX_LAYERS, "presense flag of scaled reference layer offsets")
+  ("RefRegionOffsetPresentFlag%d",           cfg_refRegionOffsetPresentFlagPtr,          string(""), MAX_LAYERS, "presense flag of reference region offsets")
+  ("RefRegionLeftOffset%d",   cfg_refRegionLeftOffsetPtr,  string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of ref region with respect to"
+                                                                 " top-left luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionTopOffset%d",    cfg_refRegionTopOffsetPtr,   string(""), MAX_LAYERS,   "Vertical offset of top-left luma sample of ref region with respect to"
+                                                                 " top-left luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionRightOffset%d",  cfg_refRegionRightOffsetPtr, string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of ref region with respect to"
+                                                                 " bottom-right luma sample of the BL picture, in units of two luma samples")
+  ("RefRegionBottomOffset%d", cfg_refRegionBottomOffsetPtr,string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of ref region with respect to"
+                                                                 " bottom-right luma sample of the BL picture, in units of two luma samples")
+#endif
+#if R0209_GENERIC_PHASE
+  ("ResamplePhaseSetPresentFlag%d",  cfg_resamplePhaseSetPresentFlagPtr, string(""), MAX_LAYERS, "presense flag of resample phase set")
+  ("PhaseHorLuma%d",   cfg_phaseHorLumaPtr,   string(""), MAX_LAYERS, "luma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerLuma%d",   cfg_phaseVerLumaPtr,   string(""), MAX_LAYERS, "luma shift in the vertical   direction used in resampling proces")
+  ("PhaseHorChroma%d", cfg_phaseHorChromaPtr, string(""), MAX_LAYERS, "chroma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerChroma%d", cfg_phaseVerChromaPtr, string(""), MAX_LAYERS, "chroma shift in the vertical   direction used in resampling proces")
+#endif
 #if P0312_VERT_PHASE_ADJ
   ("VertPhasePositionEnableFlag%d", cfg_vertPhasePositionEnableFlagPtr,string(""), MAX_LAYERS, "VertPhasePositionEnableFlag for layer %d")
+#endif
+#if Q0074_COLOUR_REMAPPING_SEI
+  ("SEIColourRemappingInfoFile%d", cfg_colourRemapSEIFile, string(""), MAX_LAYERS, "Colour Remapping Information SEI parameters file name for layer %d")
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   ("InputBitDepth%d",       cfg_InputBitDepthY,    8, MAX_LAYERS, "Bit-depth of input file for layer %d")
@@ -626,16 +749,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterLayerWeightedPred", m_useInterLayerWeightedPred, false, "enable IL WP parameters estimation at encoder" )  
 #endif
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  ("NonHEVCBase,-nonhevc",            m_nonHEVCBaseLayerFlag,     0, "BL is available but not internal")
+#else
   ("AvcBase,-avc",            m_avcBaseLayerFlag,     0, "avc_base_layer_flag")
-  ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
-#if AVC_SYNTAX
-  ("InputBLSyntaxFile,-ibs",  cfg_BLSyntaxFile,     string(""), "Base layer syntax input file name")
 #endif
+  ("InputBLFile,-ibl",        cfg_BLInputFile,     string(""), "Base layer rec YUV input file name")
 #endif
   ("EnableElRapB,-use-rap-b",  m_elRapSliceBEnabled, 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
-#if Q0074_SEI_COLOR_MAPPING
-  ("SEIColorMappingFile%d", cfg_seiColorMappingFile, string(""), MAX_LAYERS, "File Containing SEI Color Mapping data")
-#endif
 #else //SVC_EXTENSION
   ("InputFile,i",           cfg_InputFile,     string(""), "Original YUV input file name")
   ("BitstreamFile,b",       cfg_BitstreamFile, string(""), "Bitstream output file name")
@@ -653,14 +774,22 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputChromaFormat",     tmpInputChromaFormat,                       420, "InputChromaFormatIDC")
   ("ChromaFormatIDC,-cf",   tmpChromaFormat,                             0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
 #endif
-  ("ConformanceMode",       m_conformanceMode,     0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
-  ("HorizontalPadding,-pdx",m_aiPad[0],            0, "Horizontal source padding for conformance window mode 2")
-  ("VerticalPadding,-pdy",  m_aiPad[1],            0, "Vertical source padding for conformance window mode 2")
-  ("ConfLeft",              m_confLeft,            0, "Left offset for window conformance mode 3")
-  ("ConfRight",             m_confRight,           0, "Right offset for window conformance mode 3")
-  ("ConfTop",               m_confTop,             0, "Top offset for window conformance mode 3")
-  ("ConfBottom",            m_confBottom,          0, "Bottom offset for window conformance mode 3")
+  ("ConformanceMode",       m_conformanceWindowMode,  0, "Deprecated alias of ConformanceWindowMode")
+  ("ConformanceWindowMode", m_conformanceWindowMode,  0, "Window conformance mode (0: no window, 1:automatic padding, 2:padding, 3:conformance")
+  ("HorizontalPadding,-pdx",m_aiPad[0],               0, "Horizontal source padding for conformance window mode 2")
+  ("VerticalPadding,-pdy",  m_aiPad[1],               0, "Vertical source padding for conformance window mode 2")
+  ("ConfLeft",              m_confWinLeft,            0, "Deprecated alias of ConfWinLeft")
+  ("ConfRight",             m_confWinRight,           0, "Deprecated alias of ConfWinRight")
+  ("ConfTop",               m_confWinTop,             0, "Deprecated alias of ConfWinTop")
+  ("ConfBottom",            m_confWinBottom,          0, "Deprecated alias of ConfWinBottom")
+  ("ConfWinLeft",           m_confWinLeft,            0, "Left offset for window conformance mode 3")
+  ("ConfWinRight",          m_confWinRight,           0, "Right offset for window conformance mode 3")
+  ("ConfWinTop",            m_confWinTop,             0, "Top offset for window conformance mode 3")
+  ("ConfWinBottom",         m_confWinBottom,          0, "Bottom offset for window conformance mode 3")
   ("FrameRate,-fr",         m_iFrameRate,          0, "Frame rate")
+#if Q0074_COLOUR_REMAPPING_SEI
+  ("SEIColourRemappingInfoFile", cfg_colourRemapSEIFile, string(""), "Colour Remapping Information SEI parameters file name")
+#endif
 #endif //SVC_EXTENSION
   ("FrameSkip,-fs",         m_FrameSkip,          0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",   m_framesToBeEncoded,   0, "Number of frames to be encoded (default=all)")
@@ -820,13 +949,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("WeightedPredP,-wpP",          m_useWeightedPred,               false,      "Use weighted prediction in P slices")
   ("WeightedPredB,-wpB",          m_useWeightedBiPred,             false,      "Use weighted (bidirectional) prediction in B slices")
   ("Log2ParallelMergeLevel",      m_log2ParallelMergeLevel,     2u,          "Parallel merge estimation region")
-  ("UniformSpacingIdc",           m_iUniformSpacingIdr,            0,          "Indicates if the column and row boundaries are distributed uniformly")
-  ("NumTileColumnsMinus1",        m_iNumColumnsMinus1,             0,          "Number of columns in a picture minus 1")
-  ("ColumnWidthArray",            cfg_ColumnWidth,                 string(""), "Array containing ColumnWidth values in units of LCU")
-  ("NumTileRowsMinus1",           m_iNumRowsMinus1,                0,          "Number of rows in a picture minus 1")
-  ("RowHeightArray",              cfg_RowHeight,                   string(""), "Array containing RowHeight values in units of LCU")
+
+  //deprecated copies of renamed tile parameters
+  ("UniformSpacingIdc",           m_tileUniformSpacingFlag,        false,      "deprecated alias of TileUniformSpacing")
+  ("ColumnWidthArray",            cfgColumnWidth,                  string(""), "deprecated alias of TileColumnWidthArray")
+  ("RowHeightArray",              cfgRowHeight,                    string(""), "deprecated alias of TileRowHeightArray")
+
+  ("TileUniformSpacing",          m_tileUniformSpacingFlag,        false,      "Indicates that tile columns and rows are distributed uniformly")
+  ("NumTileColumnsMinus1",        m_numTileColumnsMinus1,          0,          "Number of tile columns in a picture minus 1")
+  ("NumTileRowsMinus1",           m_numTileRowsMinus1,             0,          "Number of rows in a picture minus 1")
+  ("TileColumnWidthArray",        cfgColumnWidth,                  string(""), "Array containing tile column width values in units of LCU")
+  ("TileRowHeightArray",          cfgRowHeight,                    string(""), "Array containing tile row height values in units of LCU")
   ("LFCrossTileBoundaryFlag",      m_bLFCrossTileBoundaryFlag,             true,          "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
+#if SVC_EXTENSION
+  ("WaveFrontSynchro%d",          cfg_waveFrontSynchro,             0,  MAX_LAYERS,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+#else
   ("WaveFrontSynchro",            m_iWaveFrontSynchro,             0,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+#endif
   ("ScalingList",                 m_useScalingListId,              0,          "0: no scaling list, 1: default scaling lists, 2: scaling lists specified in ScalingListFile")
   ("ScalingListFile",             cfg_ScalingListFile,             string(""), "Scaling list file name")
   ("SignHideFlag,-SBH",                m_signHideFlag, 1)
@@ -883,7 +1022,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("VideoFullRange",                 m_videoFullRangeFlag,                 false, "Indicates the black level and range of luma and chroma signals")
   ("ColourDescriptionPresent",       m_colourDescriptionPresentFlag,       false, "Signals whether colour_primaries, transfer_characteristics and matrix_coefficients are present")
   ("ColourPrimaries",                m_colourPrimaries,                        2, "Indicates chromaticity coordinates of the source primaries")
-  ("TransferCharateristics",         m_transferCharacteristics,                2, "Indicates the opto-electronic transfer characteristics of the source")
+  ("TransferCharacteristics",        m_transferCharacteristics,                2, "Indicates the opto-electronic transfer characteristics of the source")
   ("MatrixCoefficients",             m_matrixCoefficients,                     2, "Describes the matrix coefficients used in deriving luma and chroma from RGB primaries")
   ("ChromaLocInfoPresent",           m_chromaLocInfoPresentFlag,           false, "Signals whether chroma_sample_loc_type_top_field and chroma_sample_loc_type_bottom_field are present")
   ("ChromaSampleLocTypeTopField",    m_chromaSampleLocTypeTopField,            0, "Specifies the location of chroma samples for top field")
@@ -1003,6 +1142,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
   ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
   ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  ("CGSAdaptC",     m_nCGSAdaptiveChroma , 1, "adaptive chroma partition (only for the case of two chroma partitions)")
+#endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  ("CGSSizeRDO",     m_nCGSLutSizeRDO , 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
+#endif
 #endif
 #if Q0108_TSA_STSA
   ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
@@ -1088,42 +1233,48 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /* convert std::string to c string for compatability */
 #if SVC_EXTENSION
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  if( m_nonHEVCBaseLayerFlag )
+#else
   if( m_avcBaseLayerFlag )
+#endif
   {
     *cfg_InputFile[0] = cfg_BLInputFile;
   }
 #endif
   m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
-#if AVC_SYNTAX
-  m_BLSyntaxFile = cfg_BLSyntaxFile.empty() ? NULL : strdup(cfg_BLSyntaxFile.c_str());
-#endif
 #else //SVC_EXTENSION
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
-#endif //SVC_EXTENSION 
+#if Q0074_COLOUR_REMAPPING_SEI
+  m_colourRemapSEIFile = cfg_colourRemapSEIFile.empty() ? NULL : strdup(cfg_colourRemapSEIFile.c_str());
+#endif
+#endif //SVC_EXTENSION
 
-  Char* pColumnWidth = cfg_ColumnWidth.empty() ? NULL: strdup(cfg_ColumnWidth.c_str());
-  Char* pRowHeight = cfg_RowHeight.empty() ? NULL : strdup(cfg_RowHeight.c_str());
-  if( m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0 )
+
+  Char* pColumnWidth = cfgColumnWidth.empty() ? NULL: strdup(cfgColumnWidth.c_str());
+  Char* pRowHeight = cfgRowHeight.empty() ? NULL : strdup(cfgRowHeight.c_str());
+
+  if( !m_tileUniformSpacingFlag && m_numTileColumnsMinus1 > 0 )
   {
-    char *columnWidth;
+    char *str;
     int  i=0;
-    m_pColumnWidth = new UInt[m_iNumColumnsMinus1];
-    columnWidth = strtok(pColumnWidth, " ,-");
-    while(columnWidth!=NULL)
+    m_tileColumnWidth.resize( m_numTileColumnsMinus1 );
+    str = strtok(pColumnWidth, " ,-");
+    while(str!=NULL)
     {
-      if( i>=m_iNumColumnsMinus1 )
+      if( i >= m_numTileColumnsMinus1 )
       {
         printf( "The number of columns whose width are defined is larger than the allowed number of columns.\n" );
         exit( EXIT_FAILURE );
       }
-      *( m_pColumnWidth + i ) = atoi( columnWidth );
-      columnWidth = strtok(NULL, " ,-");
+      m_tileColumnWidth[i] = atoi( str );
+      str = strtok(NULL, " ,-");
       i++;
     }
-    if( i<m_iNumColumnsMinus1 )
+    if( i < m_numTileColumnsMinus1 )
     {
       printf( "The width of some columns is not defined.\n" );
       exit( EXIT_FAILURE );
@@ -1131,27 +1282,27 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
   else
   {
-    m_pColumnWidth = NULL;
+    m_tileColumnWidth.clear();
   }
 
-  if( m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0 )
+  if( !m_tileUniformSpacingFlag && m_numTileRowsMinus1 > 0 )
   {
-    char *rowHeight;
+    char *str;
     int  i=0;
-    m_pRowHeight = new UInt[m_iNumRowsMinus1];
-    rowHeight = strtok(pRowHeight, " ,-");
-    while(rowHeight!=NULL)
+    m_tileRowHeight.resize(m_numTileRowsMinus1);
+    str = strtok(pRowHeight, " ,-");
+    while(str!=NULL)
     {
-      if( i>=m_iNumRowsMinus1 )
+      if( i>=m_numTileRowsMinus1 )
       {
         printf( "The number of rows whose height are defined is larger than the allowed number of rows.\n" );
         exit( EXIT_FAILURE );
       }
-      *( m_pRowHeight + i ) = atoi( rowHeight );
-      rowHeight = strtok(NULL, " ,-");
+      m_tileRowHeight[i] = atoi( str );
+      str = strtok(NULL, " ,-");
       i++;
     }
-    if( i<m_iNumRowsMinus1 )
+    if( i < m_numTileRowsMinus1 )
     {
       printf( "The height of some rows is not defined.\n" );
       exit( EXIT_FAILURE );
@@ -1159,9 +1310,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
   else
   {
-    m_pRowHeight = NULL;
+    m_tileRowHeight.clear();
   }
 #if SVC_EXTENSION
+  if( pColumnWidth )
+  {
+    free( pColumnWidth );
+    pColumnWidth = NULL;
+  }
+
+  if( pRowHeight )
+  {
+    free( pRowHeight );
+    pRowHeight = NULL;
+  }
+
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
@@ -1170,6 +1333,28 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0098_SCALED_REF_LAYER_ID
       assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
 #endif
+#if REF_REGION_OFFSET
+      Bool srloFlag =
+        strcmp(cfg_scaledRefLayerLeftOffset   [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerRightOffset  [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerTopOffset    [layer].c_str(), "") ||
+        strcmp(cfg_scaledRefLayerBottomOffset [layer].c_str(), "");
+      Bool rroFlag =
+        strcmp(cfg_refRegionLeftOffset   [layer].c_str(), "") ||
+        strcmp(cfg_refRegionRightOffset  [layer].c_str(), "") ||
+        strcmp(cfg_refRegionTopOffset    [layer].c_str(), "") ||
+        strcmp(cfg_refRegionBottomOffset [layer].c_str(), "");
+#if R0209_GENERIC_PHASE
+      Bool phaseSetFlag =
+        strcmp(cfg_phaseHorLuma   [layer].c_str(), "") ||
+        strcmp(cfg_phaseVerLuma  [layer].c_str(), "") ||
+        strcmp(cfg_phaseHorChroma    [layer].c_str(), "") ||
+        strcmp(cfg_phaseVerChroma [layer].c_str(), "");
+      assert( srloFlag || rroFlag || phaseSetFlag);
+#else
+      assert( srloFlag || rroFlag );
+#endif
+#else
 #if P0312_VERT_PHASE_ADJ
       assert( strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  "") ||
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
@@ -1181,6 +1366,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
               strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(), "") ||
               strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),   "") ||
               strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),"") ); 
+#endif
 #endif
     }
 
@@ -1196,6 +1382,22 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerId[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+
+#if REF_REGION_OFFSET
+    // Presense Flag //
+    if(strcmp(cfg_scaledRefLayerOffsetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerOffsetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -1272,7 +1474,152 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
 #endif
+#if REF_REGION_OFFSET
+    // Presense Flag //
+    if(strcmp(cfg_refRegionOffsetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionOffsetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Left offset //
+    if(strcmp(cfg_refRegionLeftOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionLeftOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionLeftOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Top offset //
+    if(strcmp(cfg_refRegionTopOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionTopOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionTopOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Right offset //
+    if(strcmp(cfg_refRegionRightOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionRightOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionRightOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Bottom offset //
+    if(strcmp(cfg_refRegionBottomOffset[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionBottomOffset");
+      if(tempArray)
+      {
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        {
+          m_acLayerCfg[layer].m_refRegionBottomOffset[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
+#if R0209_GENERIC_PHASE
+    Int numPhaseSet = m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+
+    // Presense Flag //
+    if(strcmp(cfg_resamplePhaseSetPresentFlag[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_resamplePhaseSetPresentFlag[layer], numPhaseSet, "resamplePhaseSetPresentFlag");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Luma horizontal phase //
+    if(strcmp(cfg_phaseHorLuma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseHorLuma[layer], numPhaseSet, "phaseHorLuma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseHorLuma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Luma vertical phase //
+    if(strcmp(cfg_phaseVerLuma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseVerLuma[layer], numPhaseSet, "phaseVerLuma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseVerLuma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Chroma horizontal phase //
+    if(strcmp(cfg_phaseHorChroma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseHorChroma[layer], numPhaseSet, "phaseHorChroma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseHorChroma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+
+    // Chroma vertical phase //
+    if(strcmp(cfg_phaseVerChroma[layer].c_str(),  ""))
+    {
+      cfgStringToArray( &tempArray, cfg_phaseVerChroma[layer], numPhaseSet, "phaseVerChroma");
+      if(tempArray)
+      {
+        for(Int i = 0; i < numPhaseSet; i++)
+        {
+          m_acLayerCfg[layer].m_phaseVerChroma[i] = tempArray[i];
+        }
+        delete [] tempArray; tempArray = NULL;
+      }
+    }
+#endif
   }
+
 #if VPS_EXTN_DIRECT_REF_LAYERS
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -1304,6 +1651,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_acLayerCfg[layer].m_samplePredRefLayerIds = NULL;
     }
+
+    if( pSamplePredRefLayerIds )
+    {
+      free( pSamplePredRefLayerIds );
+      pSamplePredRefLayerIds = NULL;
+    }
   }
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -1334,6 +1687,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     else
     {
       m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
+    }
+
+    if( pMotionPredRefLayerIds )
+    {
+      free( pMotionPredRefLayerIds );
+      pMotionPredRefLayerIds = NULL;
     }
   }
 
@@ -1374,9 +1733,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_acLayerCfg[layer].m_predLayerIds = NULL;
     }
+
+    if( pPredLayerIds )
+    {
+      free( pPredLayerIds );
+      pPredLayerIds = NULL;
+    }
   }
 #endif
 #if Q0078_ADD_LAYER_SETS
+#if OUTPUT_LAYER_SETS_CONFIG
+  for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
+  {
+    // Simplifying the code in the #else section, and allowing 0-th layer set t
+    assert( scanStringToArray( cfg_layerSetLayerIdList[layerSet], m_numLayerInIdList[layerSet], "NumLayerInIdList", m_layerSetLayerIdList[layerSet] ) );
+#else
   for (Int layerSet = 0; layerSet < m_numLayerSets; layerSet++)
   {
     if (m_numLayerInIdList[layerSet] > 0)
@@ -1395,10 +1766,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         layerId = strtok(NULL, " ,-");
         i++;
       }
+
+      if( layerSetLayerIdListDup )
+      {
+        free( layerSetLayerIdListDup );
+        layerSetLayerIdListDup = NULL;
+      }
     }
+#endif
   }
   for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
   {
+#if OUTPUT_LAYER_SETS_CONFIG
+    // Simplifying the code in the #else section
+    assert( scanStringToArray( cfg_layerSetLayerIdList[addLayerSet], m_numLayerInIdList[addLayerSet], "NumLayerInIdList",  m_highestLayerIdx[addLayerSet] ) );
+#else
     if (m_numHighestLayerIdx[addLayerSet] > 0)
     {
       Char* highestLayrIdxListDup = cfg_highestLayerIdx[addLayerSet].empty() ? NULL : strdup(cfg_highestLayerIdx[addLayerSet].c_str());
@@ -1415,8 +1797,63 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         layerIdx = strtok(NULL, " ,-");
         i++;
       }
+
+      if( highestLayrIdxListDup )
+      {
+        free( highestLayrIdxListDup );
+        highestLayrIdxListDup = NULL;
+      }
+    }
+#endif
+  }
+#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  if( m_defaultTargetOutputLayerIdc != -1 )
+  {
+    assert( m_defaultTargetOutputLayerIdc >= 0 && m_defaultTargetOutputLayerIdc <= 3 );
+  }
+  assert( m_numOutputLayerSets != 0 );
+  assert( m_numOutputLayerSets >= m_numLayerSets + m_numAddLayerSets ); // Number of output layer sets must be at least as many as layer sets.
+
+  // If output layer Set Idx is specified, only specify it for the non-default output layer sets
+  Int numNonDefaultOls = m_numOutputLayerSets - (m_numLayerSets + m_numAddLayerSets);
+  if( numNonDefaultOls )
+  {
+    assert( scanStringToArray( *cfg_outputLayerSetIdx, numNonDefaultOls, "OutputLayerSetIdx", m_outputLayerSetIdx ) ); 
+    for(Int i = 0; i < numNonDefaultOls; i++)
+    {
+      assert( m_outputLayerSetIdx[i] >= 0 && m_outputLayerSetIdx[i] < (m_numLayerSets + m_numAddLayerSets) );
     }
   }
+
+  // Number of output layers in output layer sets
+  scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
+  m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
+  // Layers in the output layer set
+  m_listOfOutputLayers.resize(m_numOutputLayerSets);
+  Int startOlsCtr = 1;
+  if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
+  {
+    // Default output layer sets defined
+    startOlsCtr = m_numLayerSets + m_numAddLayerSets;
+  }
+  for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
+  {
+    if( olsCtr < startOlsCtr )
+    {
+      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
+      {
+        std::cout << "Default OLS defined. Ignoring ListOfOutputLayers" << olsCtr << endl;
+      }
+    }
+    else
+    {
+      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
+    }
+  }
+  delete cfg_numLayersInOutputLayerSet;
+  delete [] cfg_listOfOutputLayers;
+  delete cfg_outputLayerSetIdx;
 #endif
 #endif //SVC_EXTENSION
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
@@ -1441,12 +1878,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
 #if !SVC_EXTENSION
   // TODO:ChromaFmt assumes 4:2:0 below
-  switch (m_conformanceMode)
+  switch (m_conformanceWindowMode)
   {
   case 0:
     {
       // no conformance or padding
-      m_confLeft = m_confRight = m_confTop = m_confBottom = 0;
+      m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
       m_aiPad[1] = m_aiPad[0] = 0;
       break;
     }
@@ -1456,17 +1893,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
       if (m_iSourceWidth % minCuSize)
       {
-        m_aiPad[0] = m_confRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
-        m_iSourceWidth  += m_confRight;
+        m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
+        m_iSourceWidth  += m_confWinRight;
       }
       if (m_iSourceHeight % minCuSize)
       {
-        m_aiPad[1] = m_confBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
-        m_iSourceHeight += m_confBottom;
+        m_aiPad[1] = m_confWinBottom = ((m_iSourceHeight / minCuSize) + 1) * minCuSize - m_iSourceHeight;
+        m_iSourceHeight += m_confWinBottom;
         if ( m_isField )
         {
-          m_iSourceHeightOrg += m_confBottom << 1;
-          m_aiPad[1] = m_confBottom << 1;
+          m_iSourceHeightOrg += m_confWinBottom << 1;
+          m_aiPad[1] = m_confWinBottom << 1;
         }
       }
       if (m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0)
@@ -1486,14 +1923,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
-      m_confRight  = m_aiPad[0];
-      m_confBottom = m_aiPad[1];
+      m_confWinRight  = m_aiPad[0];
+      m_confWinBottom = m_aiPad[1];
       break;
     }
   case 3:
     {
       // conformance
-      if ((m_confLeft == 0) && (m_confRight == 0) && (m_confTop == 0) && (m_confBottom == 0))
+      if ((m_confWinLeft == 0) && (m_confWinRight == 0) && (m_confWinTop == 0) && (m_confWinBottom == 0))
       {
         fprintf(stderr, "Warning: Conformance window enabled, but all conformance window parameters set to zero\n");
       }
@@ -1600,6 +2037,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_codedPivotValue = NULL;
       m_targetPivotValue = NULL;
     }
+
+    if( pcStartOfCodedInterval )
+    {
+      free( pcStartOfCodedInterval );
+      pcStartOfCodedInterval = NULL;
+    }
+
+    if( pcCodedPivotValue )
+    {
+      free( pcCodedPivotValue );
+      pcCodedPivotValue = NULL;
+    }
+
+    if( pcTargetPivotValue )
+    {
+      free( pcTargetPivotValue );
+      pcTargetPivotValue = NULL;
+    }
   }
 #if P0050_KNEE_FUNCTION_SEI
   if( m_kneeSEIEnabled && !m_kneeSEICancelFlag )
@@ -1625,13 +2080,183 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       OutputVal = strtok(NULL, " .,");
       i++;
     }
+
+    if( pcInputKneePointValue )
+    {
+      free( pcInputKneePointValue );
+      pcInputKneePointValue = NULL;
+    }
+
+    if( pcOutputKneePointValue )
+    {
+      free( pcOutputKneePointValue );
+      pcOutputKneePointValue = NULL;
+    }
   }
 #endif
+#if Q0074_COLOUR_REMAPPING_SEI
+#if !SVC_EXTENSION
+  // reading external Colour Remapping Information SEI message parameters from file
+  if( m_colourRemapSEIFile.size() > 0 )
+  {
+    FILE* fic;
+    Int retval;
+    if((fic = fopen(m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
+    {
+      fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile.c_str());
+      exit(EXIT_FAILURE);
+    }
 
+    retval = fscanf( fic, "%d", &m_colourRemapSEIId );
+    retval = fscanf( fic, "%d", &m_colourRemapSEICancelFlag );
+    if( !m_colourRemapSEICancelFlag )
+    {
+      retval = fscanf( fic, "%d", &m_colourRemapSEIPersistenceFlag );
+      retval = fscanf( fic, "%d", &m_colourRemapSEIVideoSignalInfoPresentFlag);
+      if( m_colourRemapSEIVideoSignalInfoPresentFlag )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEIFullRangeFlag  );
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
+        retval = fscanf( fic, "%d", &m_colourRemapSEITransferFunction );
+        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoefficients );
+      }
+
+      retval = fscanf( fic, "%d", &m_colourRemapSEIInputBitDepth );
+      retval = fscanf( fic, "%d", &m_colourRemapSEIBitDepth );
+  
+      for( Int c=0 ; c<3 ; c++ )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutNumValMinus1[c] );
+        if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        {
+          m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          m_colourRemapSEIPreLutTargetValue[c] = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
+          {
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutTargetValue[c][i] );
+          }
+        }
+      }
+
+      retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixPresentFlag );
+      if( m_colourRemapSEIMatrixPresentFlag )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEILog2MatrixDenom );
+        for( Int c=0 ; c<3 ; c++ )
+          for( Int i=0 ; i<3 ; i++ )
+            retval = fscanf( fic, "%d", &m_colourRemapSEICoeffs[c][i] );
+      }
+
+      for( Int c=0 ; c<3 ; c++ )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutNumValMinus1[c] );
+        if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        {
+          m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          m_colourRemapSEIPostLutTargetValue[c] = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
+          {
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutTargetValue[c][i] );
+          }
+        }
+      }
+    }
+
+    fclose( fic );
+    if( retval != 1 )
+    {
+      fprintf(stderr, "Error while reading Colour Remapping Information SEI parameters file\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+#else
+   // Reading external Colour Remapping Information SEI message parameters from file
+  // It seems that TAppEncLayerCfg::parseCfg is not used
+  for(UInt layer = 0; layer < m_numLayers; layer++)
+  {
+    if( cfg_colourRemapSEIFile[layer]->length() )
+    {
+      FILE* fic;
+      Int retval;
+      if((fic = fopen(cfg_colourRemapSEIFile[layer]->c_str(),"r")) == (FILE*)NULL)
+      {
+        fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", cfg_colourRemapSEIFile[layer]->c_str());
+        exit(EXIT_FAILURE);
+      }
+      Int tempCode;
+      retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIId );
+      retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
+      if( !m_acLayerCfg[layer].m_colourRemapSEICancelFlag )
+      {
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag = tempCode ? 1 : 0;
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
+        if( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag )
+        {
+          retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEITransferFunction );
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIMatrixCoefficients );
+        }
+
+        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIInputBitDepth );
+        retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIBitDepth );
+  
+        for( Int c=0 ; c<3 ; c++ )
+        {
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1[c] );
+          if( m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+          {
+            m_acLayerCfg[layer].m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1[c]+1];
+            m_acLayerCfg[layer].m_colourRemapSEIPreLutTargetValue[c] = new Int[m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1[c]+1];
+            for( Int i=0 ; i<=m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
+            {
+              retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPreLutCodedValue[c][i] );
+              retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPreLutTargetValue[c][i] );
+            }
+          }
+        }
+
+        retval = fscanf( fic, "%d", &tempCode ); m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
+        if( m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag )
+        {
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEILog2MatrixDenom );
+          for( Int c=0 ; c<3 ; c++ )
+            for( Int i=0 ; i<3 ; i++ )
+              retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEICoeffs[c][i] );
+        }
+
+        for( Int c=0 ; c<3 ; c++ )
+        {
+          retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1[c] );
+          if( m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+          {
+            m_acLayerCfg[layer].m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1[c]+1];
+            m_acLayerCfg[layer].m_colourRemapSEIPostLutTargetValue[c] = new Int[m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1[c]+1];
+            for( Int i=0 ; i<=m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
+            {
+              retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPostLutCodedValue[c][i] );
+              retval = fscanf( fic, "%d", &m_acLayerCfg[layer].m_colourRemapSEIPostLutTargetValue[c][i] );
+            }
+          }
+        }
+      }
+
+      fclose( fic );
+      if( retval != 1 )
+      {
+        fprintf(stderr, "Error while reading Colour Remapping Information SEI parameters file\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+#endif
+#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if (m_interLayerConstrainedTileSetsSEIEnabled)
   {
-    if (m_iNumColumnsMinus1 == 0 && m_iNumRowsMinus1 == 0)
+    if (m_numTileColumnsMinus1 == 0 && m_numTileRowsMinus1 == 0)
     {
       printf( "Tiles are not defined (needed for inter-layer comnstrained tile sets SEI).\n" );
       exit( EXIT_FAILURE );
@@ -1670,6 +2295,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       exit( EXIT_FAILURE );
     }
     m_skippedTileSetPresentFlag = false;
+
+    if( pTileSets )
+    {
+      free( pTileSets );
+      pTileSets = NULL;
+    }
   }
 #endif
   // check validity of input parameters
@@ -1836,21 +2467,31 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_sliceSegmentArgument < 1 ,         "SliceSegmentArgument should be larger than or equal to 1" );
   }
   
-  Bool tileFlag = (m_iNumColumnsMinus1 > 0 || m_iNumRowsMinus1 > 0 );
+#if !SVC_EXTENSION
+  Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
   xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 
   //TODO:ChromaFmt assumes 4:2:0 below
-#if !SVC_EXTENSION
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_iSourceHeight % TComSPS::getWinUnitY(CHROMA_420) != 0, "Picture height must be an integer multiple of the specified chroma subsampling");
 
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
-  xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confWinLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confWinRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confWinTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
+  xConfirmPara( m_confWinBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
+
+  xConfirmPara( m_defaultDisplayWindowFlag && !m_vuiParametersPresentFlag, "VUI needs to be enabled for default display window");
+
+  if (m_defaultDisplayWindowFlag)
+  {
+    xConfirmPara( m_defDispWinLeftOffset   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left default display window offset must be an integer multiple of the specified chroma subsampling");
+    xConfirmPara( m_defDispWinRightOffset  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right default display window offset must be an integer multiple of the specified chroma subsampling");
+    xConfirmPara( m_defDispWinTopOffset    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top default display window offset must be an integer multiple of the specified chroma subsampling");
+    xConfirmPara( m_defDispWinBottomOffset % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom default display window offset must be an integer multiple of the specified chroma subsampling");
+  }
 #endif
 
 #if !LAYER_CTB
@@ -1954,7 +2595,11 @@ Void TAppEncCfg::xCheckParameter()
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
   
   // it can be updated after AVC BL support will be added to the WD
+#if VPS_AVC_BL_FLAG_REMOVAL
+  if( m_nonHEVCBaseLayerFlag )
+#else
   if( m_avcBaseLayerFlag )
+#endif
   {
     m_crossLayerIrapAlignFlag = false;
     m_crossLayerPictureTypeAlignFlag = false;
@@ -2592,7 +3237,12 @@ Void TAppEncCfg::xCheckParameter()
     Int m_uiMaxCUWidth = m_acLayerCfg[layer].m_uiMaxCUWidth;
     Int m_uiMaxCUHeight = m_acLayerCfg[layer].m_uiMaxCUHeight;
 #endif
+
+    Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
+    Int m_iWaveFrontSynchro = m_acLayerCfg[layer].m_waveFrontSynchro;
+    xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 #endif
+
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   { 
     Int PicSizeInSamplesY =  m_iSourceWidth * m_iSourceHeight;
@@ -2602,50 +3252,50 @@ Void TAppEncCfg::xCheckParameter()
       Int maxTileHeight = 0;
       Int widthInCU = (m_iSourceWidth % m_uiMaxCUWidth) ? m_iSourceWidth/m_uiMaxCUWidth + 1: m_iSourceWidth/m_uiMaxCUWidth;
       Int heightInCU = (m_iSourceHeight % m_uiMaxCUHeight) ? m_iSourceHeight/m_uiMaxCUHeight + 1: m_iSourceHeight/m_uiMaxCUHeight;
-      if(m_iUniformSpacingIdr)
+      if(m_tileUniformSpacingFlag)
       {
-        maxTileWidth = m_uiMaxCUWidth*((widthInCU+m_iNumColumnsMinus1)/(m_iNumColumnsMinus1+1));
-        maxTileHeight = m_uiMaxCUHeight*((heightInCU+m_iNumRowsMinus1)/(m_iNumRowsMinus1+1));
+        maxTileWidth = m_uiMaxCUWidth*((widthInCU+m_numTileColumnsMinus1)/(m_numTileColumnsMinus1+1));
+        maxTileHeight = m_uiMaxCUHeight*((heightInCU+m_numTileRowsMinus1)/(m_numTileRowsMinus1+1));
         // if only the last tile-row is one treeblock higher than the others 
         // the maxTileHeight becomes smaller if the last row of treeblocks has lower height than the others
-        if(!((heightInCU-1)%(m_iNumRowsMinus1+1)))
+        if(!((heightInCU-1)%(m_numTileRowsMinus1+1)))
         {
           maxTileHeight = maxTileHeight - m_uiMaxCUHeight + (m_iSourceHeight % m_uiMaxCUHeight);
         }     
         // if only the last tile-column is one treeblock wider than the others 
         // the maxTileWidth becomes smaller if the last column of treeblocks has lower width than the others   
-        if(!((widthInCU-1)%(m_iNumColumnsMinus1+1)))
+        if(!((widthInCU-1)%(m_numTileColumnsMinus1+1)))
         {
           maxTileWidth = maxTileWidth - m_uiMaxCUWidth + (m_iSourceWidth % m_uiMaxCUWidth);
         }
       }
       else // not uniform spacing
       {
-        if(m_iNumColumnsMinus1<1)
+        if(m_numTileColumnsMinus1<1)
         {
           maxTileWidth = m_iSourceWidth;
         }
         else
         {
           Int accColumnWidth = 0;
-          for(Int col=0; col<(m_iNumColumnsMinus1); col++)
+          for(Int col=0; col<(m_numTileColumnsMinus1); col++)
           {
-            maxTileWidth = m_pColumnWidth[col]>maxTileWidth ? m_pColumnWidth[col]:maxTileWidth;
-            accColumnWidth += m_pColumnWidth[col];
+            maxTileWidth = m_tileColumnWidth[col]>maxTileWidth ? m_tileColumnWidth[col]:maxTileWidth;
+            accColumnWidth += m_tileColumnWidth[col];
           }
           maxTileWidth = (widthInCU-accColumnWidth)>maxTileWidth ? m_uiMaxCUWidth*(widthInCU-accColumnWidth):m_uiMaxCUWidth*maxTileWidth;
         }
-        if(m_iNumRowsMinus1<1)
+        if(m_numTileRowsMinus1<1)
         {
           maxTileHeight = m_iSourceHeight;
         }
         else
         {
           Int accRowHeight = 0;
-          for(Int row=0; row<(m_iNumRowsMinus1); row++)
+          for(Int row=0; row<(m_numTileRowsMinus1); row++)
           {
-            maxTileHeight = m_pRowHeight[row]>maxTileHeight ? m_pRowHeight[row]:maxTileHeight;
-            accRowHeight += m_pRowHeight[row];
+            maxTileHeight = m_tileRowHeight[row]>maxTileHeight ? m_tileRowHeight[row]:maxTileHeight;
+            accRowHeight += m_tileRowHeight[row];
           }
           maxTileHeight = (heightInCU-accRowHeight)>maxTileHeight ? m_uiMaxCUHeight*(heightInCU-accRowHeight):m_uiMaxCUHeight*maxTileHeight;
         }
@@ -2669,8 +3319,8 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   }
 #endif
-  xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
 #if !SVC_EXTENSION
+  xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
   xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
   xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 #endif
@@ -2701,6 +3351,39 @@ Void TAppEncCfg::xCheckParameter()
       }
     }
   }
+#endif
+#if Q0074_COLOUR_REMAPPING_SEI
+#if !SVC_EXTENSION
+  if ( ( m_colourRemapSEIFile.size() > 0 ) && !m_colourRemapSEICancelFlag )
+  {
+    xConfirmPara( m_colourRemapSEIInputBitDepth < 8 || m_colourRemapSEIInputBitDepth > 16 , "colour_remap_input_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmPara( m_colourRemapSEIBitDepth < 8 || m_colourRemapSEIBitDepth > 16, "colour_remap_bit_depth shall be in the range of 8 to 16, inclusive");
+    for( Int c=0 ; c<3 ; c++)
+    {
+      xConfirmPara( m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
+        {
+          xConfirmPara( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_input_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
+        }
+      xConfirmPara( m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
+        {
+          xConfirmPara( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
+          xConfirmPara( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
+        }
+    }
+    if ( m_colourRemapSEIMatrixPresentFlag )
+    {
+      xConfirmPara( m_colourRemapSEILog2MatrixDenom < 0 || m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
+      for( Int c=0 ; c<3 ; c++)
+        for( Int i=0 ; i<3 ; i++)
+          xConfirmPara( m_colourRemapSEICoeffs[c][i] < -32768 || m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
+    }
+  }
+#endif
 #endif
 
 #if RC_SHVC_HARMONIZATION
@@ -2908,7 +3591,11 @@ Void TAppEncCfg::xPrintParameter()
   printf("Multiview                     : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
   printf("Scalable                      : %d\n", m_scalabilityMask[SCALABILITY_ID] );
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  printf("Base layer                    : %s\n", m_nonHEVCBaseLayerFlag ? "Non-HEVC" : "HEVC");
+#else
   printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
+#endif
 #endif
 #if AUXILIARY_PICTURES
   printf("Auxiliary pictures            : %d\n", m_scalabilityMask[AUX_ID] );
@@ -2932,22 +3619,18 @@ Void TAppEncCfg::xPrintParameter()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
-#if AVC_SYNTAX
-    m_acLayerCfg[layer].xPrintParameter( layer );
-#else
     m_acLayerCfg[layer].xPrintParameter();
-#endif
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
   printf("Bitstream      File          : %s\n", m_pBitstreamFile      );
-#else
+#else //SVC_EXTENSION
   printf("Input          File          : %s\n", m_pchInputFile          );
   printf("Bitstream      File          : %s\n", m_pchBitstreamFile      );
   printf("Reconstruction File          : %s\n", m_pchReconFile          );
-  printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confLeft - m_confRight, m_iSourceHeight - m_confTop - m_confBottom, m_iFrameRate );
+  printf("Real     Format              : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
   printf("Internal Format              : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
-#endif
+#endif //SVC_EXTENSION
   if (m_isField)
   {
     printf("Frame/Field          : Field based coding\n");
@@ -3083,6 +3766,13 @@ Void TAppEncCfg::xPrintParameter()
 #if Q0048_CGS_3D_ASYMLUT
   printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
 #endif
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  printf("CGSAdaptC:%d " , m_nCGSAdaptiveChroma );
+#endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  printf("CGSSizeRDO:%d " , m_nCGSLutSizeRDO );
+#endif
+
   printf("\n\n");
   
   fflush(stdout);
@@ -3098,7 +3788,11 @@ Bool confirmPara(Bool bflag, const Char* message)
 }
 
 #if SVC_EXTENSION
+#if OUTPUT_LAYER_SETS_CONFIG
+Void TAppEncCfg::cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString)
+#else
 Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
+#endif
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
   if( numEntries > 0 )
@@ -3107,7 +3801,18 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     Int i = 0;
     *arr = new Int[numEntries];
 
+#if OUTPUT_LAYER_SETS_CONFIG
+    if( tempChar == NULL )
+    {
+      arrayEntry = NULL;
+    }
+    else
+    {
+      arrayEntry = strtok( tempChar, " ,");
+    }
+#else
     arrayEntry = strtok( tempChar, " ,");
+#endif
     while(arrayEntry != NULL)
     {
       if( i >= numEntries )
@@ -3129,7 +3834,48 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
   {
     *arr = NULL;
   }
+
+  if( tempChar )
+  {
+    free( tempChar );
+    tempChar = NULL;
+  }
 }
 
+#if OUTPUT_LAYER_SETS_CONFIG
+Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray)
+{
+  Int *tempArray = NULL;
+  // For all layer sets
+  cfgStringToArray( &tempArray, cfgString, numEntries, logString );
+  if(tempArray)
+  {
+    for(Int i = 0; i < numEntries; i++)
+    {
+      returnArray[i] = tempArray[i];
+    }
+    delete [] tempArray; tempArray = NULL;
+    return true;
+  }
+  return false;
+}
+Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> & returnVector)
+{
+  Int *tempArray = NULL;
+  // For all layer sets
+  cfgStringToArray( &tempArray, cfgString, numEntries, logString );
+  if(tempArray)
+  {
+    returnVector.empty();
+    for(Int i = 0; i < numEntries; i++)
+    {
+      returnVector.push_back(tempArray[i]);
+    }
+    delete [] tempArray; tempArray = NULL;
+    return true;
+  }
+  return false;
+}
+#endif
 #endif //SVC_EXTENSION
 //! \}

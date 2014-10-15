@@ -93,10 +93,12 @@ public:
 #if O0164_MULTI_LAYER_HRD
     BSP_NESTING                          = 140,
     BSP_INITIAL_ARRIVAL_TIME             = 141,
+#if !REMOVE_BSP_HRD_SEI
     BSP_HRD                              = 142,
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-    COLOR_MAPPING_INFO                   = 143,
+#endif
+#if Q0074_COLOUR_REMAPPING_SEI
+    COLOUR_REMAPPING_INFO                = 143,
 #endif
 #if Q0078_ADD_LAYER_SETS
     OUTPUT_LAYER_SET_NESTING             = 144,
@@ -172,6 +174,9 @@ public:
   Bool m_noParameterSetUpdateFlag;
   Int numSpsIdsMinus1;
   std::vector<Int> activeSeqParameterSetId; 
+#if R0247_SEI_ACTIVE
+  std::vector<Int> layerSpsIdx; 
+#endif
 };
 
 class SEIBufferingPeriod : public SEI
@@ -198,8 +203,8 @@ public:
 
   UInt m_bpSeqParameterSetId;
   Bool m_rapCpbParamsPresentFlag;
-  Bool m_cpbDelayOffset;
-  Bool m_dpbDelayOffset;
+  UInt m_cpbDelayOffset;
+  UInt m_dpbDelayOffset;
   UInt m_initialCpbRemovalDelay         [MAX_CPB_CNT][2];
   UInt m_initialCpbRemovalDelayOffset   [MAX_CPB_CNT][2];
   UInt m_initialAltCpbRemovalDelay      [MAX_CPB_CNT][2];
@@ -444,39 +449,33 @@ public:
   std::vector<Int> m_kneeOutputKneePoint;
 };
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-class SEIColorMappingInfo : public SEI
+#if Q0074_COLOUR_REMAPPING_SEI
+class SEIColourRemappingInfo : public SEI
 {
 public:
-  PayloadType payloadType() const { return COLOR_MAPPING_INFO; }
-  SEIColorMappingInfo() {
-  }
-  virtual ~SEIColorMappingInfo() {}
-
-  Int   m_colorMapId;
-  Bool  m_colorMapCancelFlag;
-  Bool  m_colorMapPersistenceFlag;
-  Bool  m_colorMap_video_signal_type_present_flag;
-  Bool  m_colorMap_video_full_range_flag;
-  Int   m_colorMap_primaries;
-  Int   m_colorMap_transfer_characteristics;
-  Int   m_colorMap_matrix_coeffs;
-  Int   m_colorMapModelId;
-
-  Int   m_colour_map_coded_data_bit_depth;
-  Int   m_colour_map_target_bit_depth;
-
-  Int   m_num_input_pivots[3];
-  Int*  m_coded_input_pivot_value[3];
-  Int*  m_target_input_pivot_value[3];
-  
-  Bool  m_matrix_flag;
-  Int   m_log2_matrix_denom;
-  Int   m_matrix_coef[3][3];
-
-  Int   m_num_output_pivots[3];
-  Int*  m_coded_output_pivot_value[3];
-  Int*  m_target_output_pivot_value[3];
+  PayloadType payloadType() const { return COLOUR_REMAPPING_INFO; }
+  SEIColourRemappingInfo() {}
+  ~SEIColourRemappingInfo() {}
+ 
+  Int   m_colourRemapId;
+  Bool  m_colourRemapCancelFlag;
+  Bool  m_colourRemapPersistenceFlag;
+  Bool  m_colourRemapVideoSignalInfoPresentFlag;
+  Bool  m_colourRemapFullRangeFlag;
+  Int   m_colourRemapPrimaries;
+  Int   m_colourRemapTransferFunction;
+  Int   m_colourRemapMatrixCoefficients;
+  Int   m_colourRemapInputBitDepth;
+  Int   m_colourRemapBitDepth;
+  Int   m_preLutNumValMinus1[3];
+  std::vector<Int> m_preLutCodedValue[3];
+  std::vector<Int> m_preLutTargetValue[3];
+  Bool  m_colourRemapMatrixPresentFlag;
+  Int   m_log2MatrixDenom;
+  Int   m_colourRemapCoeffs[3][3];
+  Int   m_postLutNumValMinus1[3];
+  std::vector<Int> m_postLutCodedValue[3];
+  std::vector<Int> m_postLutTargetValue[3];
 };
 #endif
 
@@ -592,6 +591,10 @@ public:
   Int  m_bspIdx;
   Bool  m_callerOwnsSEIs;
   SEIMessages m_nestedSEIs;
+#if VPS_VUI_BSP_HRD_PARAMS
+  Int  m_seiPartitioningSchemeIdx;
+  Int  m_seiOlsIdx;
+#endif
 };
 
 class SEIBspInitialArrivalTime : public SEI
@@ -606,6 +609,7 @@ public:
   UInt m_vclInitialArrivalDelay[256];
 };
 
+#if !REMOVE_BSP_HRD_SEI
 class SEIBspHrd : public SEI
 {
 public:
@@ -626,6 +630,7 @@ public:
 
   TComHRD *hrd;
 };
+#endif
 
 #endif
 

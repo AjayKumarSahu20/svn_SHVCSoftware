@@ -110,10 +110,18 @@ public:
   //  Memory management
   // ------------------------------------------------------------------------------------------------
 #if SVC_EXTENSION
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+#if AUXILIARY_PICTURES
+  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow = NULL);
+#else
+  Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow = NULL);
+#endif
+#else
 #if AUXILIARY_PICTURES
   Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
 #else
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
+#endif
 #endif
 #else
   Void  create      ( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth );
@@ -190,8 +198,8 @@ public:
   ChromaFormat  getChromaFormat   ()                     const { return m_chromaFormatIDC; }
   Void convertToMonochrome();
 #endif
-  Void dump( Char* pFileName, Bool bAdd, Int bitDepth );
 #endif //SVC_EXTENSION
+  Void dump( Char* pFileName, Bool bAdd, Int bitDepth );
 
 };// END CLASS DEFINITION TComPicYuv
 

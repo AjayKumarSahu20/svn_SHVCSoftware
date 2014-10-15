@@ -106,7 +106,6 @@ protected:
   Int       m_FrameSkip;
   Int       m_iSourceWidth;
   Int       m_iSourceHeight;
-  Int       m_conformanceMode;
   Window    m_conformanceWindow;
   Int       m_framesToBeEncoded;
   Double    m_adLambdaModifier[ MAX_TLAYER ];
@@ -207,11 +206,11 @@ protected:
   UInt      m_uiPCMBitDepthChroma;
   Bool      m_bPCMFilterDisableFlag;
   Bool      m_loopFilterAcrossTilesEnabledFlag;
-  Int       m_iUniformSpacingIdr;
+  Bool      m_tileUniformSpacingFlag;
   Int       m_iNumColumnsMinus1;
-  UInt*     m_puiColumnWidth;
   Int       m_iNumRowsMinus1;
-  UInt*     m_puiRowHeight;
+  std::vector<Int> m_tileColumnWidth;
+  std::vector<Int> m_tileRowHeight;
 
   Int       m_iWaveFrontSynchro;
   Int       m_iWaveFrontSubstreams;
@@ -247,23 +246,6 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
-#if P0050_KNEE_FUNCTION_SEI
-  Bool      m_kneeSEIEnabled;
-  Int       m_kneeSEIId;
-  Bool      m_kneeSEICancelFlag;
-  Bool      m_kneeSEIPersistenceFlag;
-  Bool      m_kneeSEIMappingFlag;
-  Int       m_kneeSEIInputDrange;
-  Int       m_kneeSEIInputDispLuminance;
-  Int       m_kneeSEIOutputDrange;
-  Int       m_kneeSEIOutputDispLuminance;
-  Int       m_kneeSEINumKneePointsMinus1;
-  Int*      m_kneeSEIInputKneePoint;
-  Int*      m_kneeSEIOutputKneePoint;
-#endif
-#if Q0074_SEI_COLOR_MAPPING
-  Char*     m_seiColorMappingFile;
-#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -275,9 +257,6 @@ protected:
   Int       m_decodingUnitInfoSEIEnabled;
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
-#if Q0189_TMVP_CONSTRAINTS
-  Int       m_TMVPConstraintsSEIEnabled;
-#endif
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
   Bool      m_useWeightedBiPred;    //< Use of Bi-directional Weighting Prediction (B_SLICE)
@@ -387,20 +366,62 @@ protected:
   Int  m_nCGSMaxOctantDepth;
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Int  m_nCGSAdaptiveChroma;
+#endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int  m_nCGSLutSizeRDO;
+#endif
+#endif
+#if P0050_KNEE_FUNCTION_SEI
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Bool      m_kneeSEIMappingFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
 #endif
 #endif //SVC_EXTENSION
+#if Q0074_COLOUR_REMAPPING_SEI
+  Char*     m_colourRemapSEIFile;          ///< SEI Colour Remapping File (initialized from external file)
+  Int       m_colourRemapSEIId;
+  Bool      m_colourRemapSEICancelFlag;
+  Bool      m_colourRemapSEIPersistenceFlag;
+  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool      m_colourRemapSEIFullRangeFlag;
+  Int       m_colourRemapSEIPrimaries;
+  Int       m_colourRemapSEITransferFunction;
+  Int       m_colourRemapSEIMatrixCoefficients;
+  Int       m_colourRemapSEIInputBitDepth;
+  Int       m_colourRemapSEIBitDepth;
+  Int       m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPreLutCodedValue[3];
+  Int*      m_colourRemapSEIPreLutTargetValue[3];
+  Bool      m_colourRemapSEIMatrixPresentFlag;
+  Int       m_colourRemapSEILog2MatrixDenom;
+  Int       m_colourRemapSEICoeffs[3][3];
+  Int       m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPostLutCodedValue[3];
+  Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
 
 public:
   TEncCfg()
-  : m_puiColumnWidth()
-  , m_puiRowHeight()
+  : m_tileColumnWidth()
+  , m_tileRowHeight()
   {}
 
   virtual ~TEncCfg()
-  {
-    delete[] m_puiColumnWidth;
-    delete[] m_puiRowHeight;
-  }
+  {}
   
   Void setProfile(Profile::Name profile) { m_profile = profile; }
   Void setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }
@@ -411,7 +432,7 @@ public:
   Void      setSourceHeight                 ( Int   i )      { m_iSourceHeight = i; }
 
   Window   &getConformanceWindow()                           { return m_conformanceWindow; }
-#if P0312_VERT_PHASE_ADJ 
+#if P0312_VERT_PHASE_ADJ && !R0209_GENERIC_PHASE
   Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom, false); }
 #else
   Void      setConformanceWindow (Int confLeft, Int confRight, Int confTop, Int confBottom ) { m_conformanceWindow.setWindow (confLeft, confRight, confTop, confBottom); }
@@ -436,7 +457,7 @@ public:
   Int       getMaxRefPicNum                 ()                              { return m_iMaxRefPicNum;           }
   Void      setMaxRefPicNum                 ( Int iMaxRefPicNum )           { m_iMaxRefPicNum = iMaxRefPicNum;  }
 
-  Bool      getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
+  Int       getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
   Void      setMaxTempLayer                 ( Int maxTempLayer )            { m_maxTempLayer = maxTempLayer;      }
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
@@ -581,42 +602,16 @@ public:
   Bool  getSaoLcuBoundary              ()              { return m_saoLcuBoundary; }
   Void  setLFCrossTileBoundaryFlag               ( Bool   val  )       { m_loopFilterAcrossTilesEnabledFlag = val; }
   Bool  getLFCrossTileBoundaryFlag               ()                    { return m_loopFilterAcrossTilesEnabledFlag;   }
-  Void  setUniformSpacingIdr           ( Int i )           { m_iUniformSpacingIdr = i; }
-  Int   getUniformSpacingIdr           ()                  { return m_iUniformSpacingIdr; }
+  Void  setTileUniformSpacingFlag      ( Bool b )          { m_tileUniformSpacingFlag = b; }
+  Bool  getTileUniformSpacingFlag      ()                  { return m_tileUniformSpacingFlag; }
   Void  setNumColumnsMinus1            ( Int i )           { m_iNumColumnsMinus1 = i; }
   Int   getNumColumnsMinus1            ()                  { return m_iNumColumnsMinus1; }
-  Void  setColumnWidth ( UInt* columnWidth )
-  {
-    if( m_iUniformSpacingIdr == 0 && m_iNumColumnsMinus1 > 0 )
-    {
-      Int  m_iWidthInCU = ( m_iSourceWidth%g_uiMaxCUWidth ) ? m_iSourceWidth/g_uiMaxCUWidth + 1 : m_iSourceWidth/g_uiMaxCUWidth;
-      m_puiColumnWidth = new UInt[ m_iNumColumnsMinus1 ];
-
-      for(Int i=0; i<m_iNumColumnsMinus1; i++)
-      {
-        m_puiColumnWidth[i] = columnWidth[i];
-        printf("col: m_iWidthInCU= %4d i=%4d width= %4d\n",m_iWidthInCU,i,m_puiColumnWidth[i]); //AFU
-      }
-    }
-  }
-  UInt  getColumnWidth                 ( UInt columnidx )  { return *( m_puiColumnWidth + columnidx ); }
+  Void  setColumnWidth ( const std::vector<Int>& columnWidth ) { m_tileColumnWidth = columnWidth; }
+  UInt  getColumnWidth                 ( UInt columnIdx )      { return m_tileColumnWidth[columnIdx]; }
   Void  setNumRowsMinus1               ( Int i )           { m_iNumRowsMinus1 = i; }
   Int   getNumRowsMinus1               ()                  { return m_iNumRowsMinus1; }
-  Void  setRowHeight (UInt* rowHeight)
-  {
-    if( m_iUniformSpacingIdr == 0 && m_iNumRowsMinus1 > 0 )
-    {
-      Int  m_iHeightInCU = ( m_iSourceHeight%g_uiMaxCUHeight ) ? m_iSourceHeight/g_uiMaxCUHeight + 1 : m_iSourceHeight/g_uiMaxCUHeight;
-      m_puiRowHeight = new UInt[ m_iNumRowsMinus1 ];
-
-      for(Int i=0; i<m_iNumRowsMinus1; i++)
-      {
-        m_puiRowHeight[i] = rowHeight[i];
-        printf("row: m_iHeightInCU=%4d i=%4d height=%4d\n",m_iHeightInCU,i,m_puiRowHeight[i]); //AFU
-      }
-    }
-  }
-  UInt  getRowHeight                   ( UInt rowIdx )     { return *( m_puiRowHeight + rowIdx ); }
+  Void  setRowHeight ( const std::vector<Int>& rowHeight)      { m_tileRowHeight = rowHeight; }
+  UInt  getRowHeight                   ( UInt rowIdx )         { return m_tileRowHeight[rowIdx]; }
   Void  xCheckGSParameters();
   Void  setWaveFrontSynchro(Int iWaveFrontSynchro)       { m_iWaveFrontSynchro = iWaveFrontSynchro; }
   Int   getWaveFrontsynchro()                            { return m_iWaveFrontSynchro; }
@@ -710,9 +705,47 @@ public:
   Void  setKneeSEIOutputKneePoint(Int *p)                    { m_kneeSEIOutputKneePoint = p; }
   Int*  getKneeSEIOutputKneePoint()                          { return m_kneeSEIOutputKneePoint; }
 #endif
-#if Q0074_SEI_COLOR_MAPPING
-  Void  setColorMappingInfoSEIFile( Char* nameFile )         {  m_seiColorMappingFile = nameFile; }
-  Char* getColorMappingInfoSEIFile()                         {  return m_seiColorMappingFile; }
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void  setCRISEIFile( Char* pch )                           { m_colourRemapSEIFile = pch; }
+  Char* getCRISEIFile()                                      { return m_colourRemapSEIFile; }
+  Void  setCRISEIId(Int i)                                   { m_colourRemapSEIId = i; }
+  Int   getCRISEIId()                                        { return m_colourRemapSEIId; }
+  Void  setCRISEICancelFlag(Bool b)                          { m_colourRemapSEICancelFlag = b; }
+  Bool  getCRISEICancelFlag()                                { return m_colourRemapSEICancelFlag; }
+  Void  setCRISEIPersistenceFlag(Bool b)                     { m_colourRemapSEIPersistenceFlag = b; }
+  Bool  getCRISEIPersistenceFlag()                           { return m_colourRemapSEIPersistenceFlag; }
+  Void  setCRISEIVideoSignalInfoPresentFlag(Bool b)          { m_colourRemapSEIVideoSignalInfoPresentFlag = b; }
+  Bool  getCRISEIVideoSignalInfoPresentFlag()                { return m_colourRemapSEIVideoSignalInfoPresentFlag; }
+  Void  setCRISEIFullRangeFlag(Bool b)                       { m_colourRemapSEIFullRangeFlag = b; }
+  Bool  getCRISEIFullRangeFlag()                             { return m_colourRemapSEIFullRangeFlag; }
+  Void  setCRISEIPrimaries(Int i)                            { m_colourRemapSEIPrimaries = i; }
+  Int   getCRISEIPrimaries()                                 { return m_colourRemapSEIPrimaries; }  
+  Void  setCRISEITransferFunction(Int i)                     { m_colourRemapSEITransferFunction = i; }
+  Int   getCRISEITransferFunction()                          { return m_colourRemapSEITransferFunction; }  
+  Void  setCRISEIMatrixCoefficients(Int i)                   { m_colourRemapSEIMatrixCoefficients = i; }
+  Int   getCRISEIMatrixCoefficients()                        { return m_colourRemapSEIMatrixCoefficients; }
+  Void  setCRISEIInputBitDepth(Int i)                        { m_colourRemapSEIInputBitDepth = i; }
+  Int   getCRISEIInputBitDepth()                             { return m_colourRemapSEIInputBitDepth; } 
+  Void  setCRISEIBitDepth(Int i)                             { m_colourRemapSEIBitDepth = i; }
+  Int   getCRISEIBitDepth()                                  { return m_colourRemapSEIBitDepth; } 
+  Void  setCRISEIPreLutNumValMinus1(Int *i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutNumValMinus1[c] = i[c]; }
+  Int   getCRISEIPreLutNumValMinus1(Int i)                   { return m_colourRemapSEIPreLutNumValMinus1[i]; }
+  Void  setCRISEIPreLutCodedValue(Int **i)                   { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutCodedValue[c] = i[c]; }
+  Int*  getCRISEIPreLutCodedValue(Int i)                     { return m_colourRemapSEIPreLutCodedValue[i]; }
+  Void  setCRISEIPreLutTargetValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutTargetValue[c] = i[c]; }
+  Int*  getCRISEIPreLutTargetValue(Int i)                    { return m_colourRemapSEIPreLutTargetValue[i]; }
+  Void  setCRISEIMatrixPresentFlag(Bool b)                   { m_colourRemapSEIMatrixPresentFlag = b; }
+  Bool  getCRISEIMatrixPresentFlag()                         { return m_colourRemapSEIMatrixPresentFlag; }
+  Void  setCRISEILog2MatrixDenom(Int i)                      { m_colourRemapSEILog2MatrixDenom = i; }
+  Int   getCRISEILog2MatrixDenom()                           { return m_colourRemapSEILog2MatrixDenom; } 
+  Void  setCRISEICoeffs(Int i[3][3])                         { for(Int c=0 ; c<3 ; c++) for(Int j=0 ; j<3 ; j++) m_colourRemapSEICoeffs[c][j] = i[c][j]; }
+  Int*  getCRISEICoeffs(Int i)                               { return m_colourRemapSEICoeffs[i]; }
+  Void  setCRISEIPostLutNumValMinus1(Int *i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutNumValMinus1[c] = i[c]; }
+  Int   getCRISEIPostLutNumValMinus1(Int i)                  { return m_colourRemapSEIPostLutNumValMinus1[i]; }
+  Void  setCRISEIPostLutCodedValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutCodedValue[c] = i[c]; }
+  Int*  getCRISEIPostLutCodedValue(Int i)                    { return m_colourRemapSEIPostLutCodedValue[i]; }
+  Void  setCRISEIPostLutTargetValue(Int **i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutTargetValue[c] = i[c]; }
+  Int*  getCRISEIPostLutTargetValue(Int i)                   { return m_colourRemapSEIPostLutTargetValue[i]; }
 #endif
   Void  setFramePackingArrangementSEIEnabled(Int b)      { m_framePackingSEIEnabled = b; }
   Int   getFramePackingArrangementSEIEnabled()           { return m_framePackingSEIEnabled; }
@@ -864,7 +897,6 @@ public:
   Void      setLayerId            (UInt layer) { m_layerId = layer; }
   UInt      getNumLayer           () { return m_numLayer;             }  
   Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
-  Void      setConformanceMode    (Int mode)     { m_conformanceMode = mode; }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
   Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
   Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
@@ -970,6 +1002,14 @@ public:
   Int       getCGSMaxYPartNumLog2()       { return m_nCGSMaxYPartNumLog2; }
   Void      setCGSLUTBit(Int n)           { m_nCGSLUTBit = n;    }
   Int       getCGSLUTBit()                { return m_nCGSLUTBit; }
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Void      setCGSAdaptChroma(Int n)      { m_nCGSAdaptiveChroma = n;  }
+  Int       getCGSAdaptChroma()           { return m_nCGSAdaptiveChroma; }
+#endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Void      setCGSLutSizeRDO(Int n)      { m_nCGSLutSizeRDO = n;  }
+  Int       getCGSLutSizeRDO()           { return m_nCGSLutSizeRDO; }
+#endif
 #endif
 #endif
 };

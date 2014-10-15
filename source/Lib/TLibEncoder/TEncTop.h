@@ -124,9 +124,6 @@ private:
 #if SVC_EXTENSION
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
-#if AVC_SYNTAX
-  fstream*                m_pBLSyntaxFile;
-#endif
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
@@ -138,6 +135,20 @@ private:
   UInt                    m_scaledRefLayerId[MAX_LAYERS];
 #endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
+#if REF_REGION_OFFSET
+  UInt                    m_numRefLayerOffsets;
+  UInt                    m_refLayerId[MAX_LAYERS];
+  Window                  m_refLayerWindow[MAX_LAYERS];
+  Bool                    m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
+  Bool                    m_refRegionOffsetPresentFlag[MAX_LAYERS];
+#endif
+#if R0209_GENERIC_PHASE
+  Int                     m_phaseHorLuma  [MAX_LAYERS];
+  Int                     m_phaseVerLuma  [MAX_LAYERS];
+  Int                     m_phaseHorChroma[MAX_LAYERS];
+  Int                     m_phaseVerChroma[MAX_LAYERS];
+  Int                     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
+#endif
 #if P0312_VERT_PHASE_ADJ
   Bool                    m_vertPhasePositionEnableFlag[MAX_LAYERS];
 #endif
@@ -155,6 +166,10 @@ private:
 #endif
 #if Q0078_ADD_LAYER_SETS
   int                     m_numAddLayerSets;
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Bool                    m_pocDecrementedInDPBFlag;
+  Int                     m_currPocMsb;
 #endif
 #endif //SVC_EXTENSION
 protected:
@@ -231,9 +246,33 @@ public:
   Window&   getScaledRefLayerWindowForLayer(Int layerId);
 #endif
   Window&   getScaledRefLayerWindow(Int x)                 { return m_scaledRefLayerWindow[x];        }
+#if REF_REGION_OFFSET
+  Void      setNumRefLayerOffsets(Int x) { m_numRefLayerOffsets = x; }
+  UInt      getNumRefLayerOffsets() { return m_numRefLayerOffsets; }
+  Void      setRefLayerId(Int x, UInt id) { m_refLayerId[x] = id;   }
+  UInt      getRefLayerId(Int x)          { return m_refLayerId[x]; }
+  Window&   getRefLayerWindowForLayer(Int layerId);
+  Window&   getRefLayerWindow(Int x)            { return m_refLayerWindow[x]; }
+  Bool      getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
+  Void      setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
+  Bool      getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
+  Void      setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
+#endif
 #if P0312_VERT_PHASE_ADJ
   Void      setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b;    }
   UInt      getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
+#endif
+#if R0209_GENERIC_PHASE
+  Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
+  Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
+  Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
+  Int getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
+  Void setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
+  Void setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
+  Void setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
+  Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
+  Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
+  Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
 #endif
 
   TComPic** getIlpList() { return m_cIlpPic; }
@@ -244,10 +283,6 @@ public:
 #if O0194_WEIGHTED_PREDICTION_CGS
   Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
   Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
-#endif
-#if AVC_SYNTAX
-  Void      setBLSyntaxFile( fstream* pFile ) { m_pBLSyntaxFile = pFile; }
-  fstream*  getBLSyntaxFile() { return m_pBLSyntaxFile; }
 #endif
   Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg );
@@ -273,6 +308,12 @@ public:
 #if Q0078_ADD_LAYER_SETS
   Void setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
   Int  getNumAddLayerSets()                  { return m_numAddLayerSets; }
+#endif
+#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+  Void setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
+  Bool getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
+  Void setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
+  Int  getCurrPocMsb()                       { return m_currPocMsb; }
 #endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,

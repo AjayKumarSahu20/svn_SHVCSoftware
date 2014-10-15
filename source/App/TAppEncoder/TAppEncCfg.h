@@ -45,6 +45,7 @@
 #include "TAppEncLayerCfg.h"
 #endif
 #include <sstream>
+#include <vector>
 //! \ingroup TAppEncoder
 //! \{
 
@@ -67,10 +68,11 @@ protected:
   UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
+#if VPS_AVC_BL_FLAG_REMOVAL
+  Int       m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
+#else
   Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
 #endif
-#if AVC_SYNTAX
-  Char*     m_BLSyntaxFile;                                   ///< input syntax file
 #endif
   Bool      m_maxTidRefPresentFlag; 
 #if Q0078_ADD_LAYER_SETS
@@ -80,6 +82,13 @@ protected:
   Int       m_numAddLayerSets;
   Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  std::vector<Int>                m_outputLayerSetIdx;
+  Int       m_defaultTargetOutputLayerIdc;
+  Int       m_numOutputLayerSets;
+  std::vector<Int>                m_numLayersInOutputLayerSet;
+  std::vector< std::vector<Int> > m_listOfOutputLayers;
 #endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
@@ -95,11 +104,11 @@ protected:
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
   
   
-  Int       m_conformanceMode;
-  Int       m_confLeft;
-  Int       m_confRight;
-  Int       m_confTop;
-  Int       m_confBottom;
+  Int       m_conformanceWindowMode;
+  Int       m_confWinLeft;
+  Int       m_confWinRight;
+  Int       m_confWinTop;
+  Int       m_confWinBottom;
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
@@ -221,7 +230,7 @@ protected:
   Bool      m_bUseHADME;                                      ///< flag for using HAD in sub-pel ME
   Bool      m_useRDOQ;                                       ///< flag for using RD optimized quantization
   Bool      m_useRDOQTS;                                     ///< flag for using RD optimized quantization for transform skip
-  Int      m_rdPenalty;                                      ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty) 
+  Int       m_rdPenalty;                                      ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty) 
   Int       m_iFastSearch;                                    ///< ME mode, 0 = full, 1 = diamond, 2 = PMVFAST
   Int       m_iSearchRange;                                   ///< ME search range
   Int       m_bipredSearchRange;                              ///< ME search range for bipred refinement
@@ -242,20 +251,16 @@ protected:
 
   Bool      m_bLFCrossSliceBoundaryFlag;  ///< 1: filter across slice boundaries 0: do not filter across slice boundaries
   Bool      m_bLFCrossTileBoundaryFlag;   ///< 1: filter across tile boundaries  0: do not filter across tile boundaries
-  Int       m_iUniformSpacingIdr;
-  Int       m_iNumColumnsMinus1;
-  Char*     m_pchColumnWidth;
-  Int       m_iNumRowsMinus1;
-  Char*     m_pchRowHeight;
-  UInt*     m_pColumnWidth;
-  UInt*     m_pRowHeight;
-  Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+  Bool      m_tileUniformSpacingFlag;
+  Int       m_numTileColumnsMinus1;
+  Int       m_numTileRowsMinus1;
+  std::vector<Int> m_tileColumnWidth;
+  std::vector<Int> m_tileRowHeight;
 #if !SVC_EXTENSION
+  Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
   Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
-
   Bool      m_bUseConstrainedIntraPred;                       ///< flag for using constrained intra prediction
-  
   Int       m_decodedPictureHashSEIEnabled;                    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
   Int       m_recoveryPointSEIEnabled;
   Int       m_bufferingPeriodSEIEnabled;
@@ -287,9 +292,6 @@ protected:
   Int*      m_startOfCodedInterval;
   Int*      m_codedPivotValue;
   Int*      m_targetPivotValue;
-#if Q0074_SEI_COLOR_MAPPING
-  Char*     m_pchSEIColorMappingFile;             ///< SEI Color Mapping File (initialized from external file)
-#endif
   Int       m_framePackingSEIEnabled;
   Int       m_framePackingSEIType;
   Int       m_framePackingSEIId;
@@ -376,6 +378,30 @@ protected:
 #if SVC_EXTENSION
   Int       m_elRapSliceBEnabled;
 #endif
+#if Q0074_COLOUR_REMAPPING_SEI
+#if !SVC_EXTENSION
+  string    m_colourRemapSEIFile;
+  Int       m_colourRemapSEIId;
+  Bool      m_colourRemapSEICancelFlag;
+  Bool      m_colourRemapSEIPersistenceFlag;
+  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool      m_colourRemapSEIFullRangeFlag;
+  Int       m_colourRemapSEIPrimaries;
+  Int       m_colourRemapSEITransferFunction;
+  Int       m_colourRemapSEIMatrixCoefficients;
+  Int       m_colourRemapSEIInputBitDepth;
+  Int       m_colourRemapSEIBitDepth;
+  Int       m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPreLutCodedValue[3];
+  Int*      m_colourRemapSEIPreLutTargetValue[3];
+  Bool      m_colourRemapSEIMatrixPresentFlag;
+  Int       m_colourRemapSEILog2MatrixDenom;
+  Int       m_colourRemapSEICoeffs[3][3];
+  Int       m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*      m_colourRemapSEIPostLutCodedValue[3];
+  Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
+#endif
   // internal member functions
 #if LAYER_CTB
   Void  xSetGlobal      (UInt layerId);                       ///< set global variables
@@ -438,7 +464,13 @@ protected:
   Int  m_nCGSMaxOctantDepth;
   Int  m_nCGSMaxYPartNumLog2;
   Int  m_nCGSLUTBit;
+#if R0151_CGS_3D_ASYMLUT_IMPROVE
+  Int  m_nCGSAdaptiveChroma;
 #endif
+#if R0179_ENC_OPT_3DLUT_SIZE
+  Int  m_nCGSLutSizeRDO;
+#endif
+#endif 
 #endif //SVC_EXTENSION
 public:
   TAppEncCfg();
@@ -467,12 +499,15 @@ public:
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
 #endif
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
-  Int  getWaveFrontSynchro()        { return m_iWaveFrontSynchro; }
+  Int  getWaveFrontSynchro(Int layerId)        { return m_acLayerCfg[layerId].m_waveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
-#if AVC_SYNTAX
-  Char* getBLSyntaxFile()           { return m_BLSyntaxFile;      }
-#endif
+#if OUTPUT_LAYER_SETS_CONFIG
+  Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
+  Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> &  returnVector);
+  Void cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString);
+#else
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
+#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
 #endif

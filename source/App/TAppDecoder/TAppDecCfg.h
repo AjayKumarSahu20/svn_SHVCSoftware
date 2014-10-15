@@ -68,6 +68,9 @@ protected:
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+#if Q0074_COLOUR_REMAPPING_SEI
+  Bool          m_colourRemapSEIEnabled;              ///< Enable the Colour Remapping Information SEI message if available (remapping decoded pictures)
+#endif
 
 #if SVC_EXTENSION
   Int           m_tgtLayerId;                        ///< target layer ID
@@ -77,19 +80,7 @@ protected:
   Int           m_iBLSourceWidth;
   Int           m_iBLSourceHeight;
 #endif
-#if AVC_SYNTAX
-  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name  
 #endif
-#endif
-#endif
-
-#if SYNTAX_OUTPUT
-  Char*         m_pchBLSyntaxFile;                     ///< input BL syntax file name
-#if !REPN_FORMAT_IN_VPS
-  Int           m_iBLSourceWidth;
-  Int           m_iBLSourceHeight;
-#endif
-  Int           m_iBLFrames;
 #endif
 
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
@@ -109,16 +100,14 @@ public:
   , m_outputBitDepthC(0)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
+#if Q0074_COLOUR_REMAPPING_SEI
+  , m_colourRemapSEIEnabled(0)
+#endif
 #if SVC_EXTENSION
   , m_tgtLayerId(0)
 #if AVC_BASE && !REPN_FORMAT_IN_VPS
   , m_iBLSourceWidth(0)
   , m_iBLSourceHeight(0)
-#endif
-#if SYNTAX_OUTPUT
-  , m_iBLSourceWidth(0)
-  , m_iBLSourceHeight(0)
-  , m_iBLFrames(0)
 #endif
 #endif
   , m_respectDefDispWindow(0)
