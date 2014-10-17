@@ -2669,11 +2669,19 @@ Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
   m_numLayerInIdList.push_back(1);
+#if FIX_LAYER_ID_INIT
+  m_layerSetLayerIdList.resize(m_vpsNumLayerSetsMinus1 + 1);
+#else
   m_layerSetLayerIdList.resize(m_numLayerSets);
+#endif
   m_layerSetLayerIdList[0].push_back(0);
   
   // For other layers
+#if FIX_LAYER_ID_INIT
+  for (Int i = 1; i <= m_vpsNumLayerSetsMinus1; i++)
+#else
   for( Int i = 1; i < m_numLayerSets; i++ )
+#endif
   {
     for( Int m = 0; m <= m_maxLayerId; m++)
     {
@@ -2852,6 +2860,27 @@ Void TComVPS::setTreePartitionLayerIdList()
   m_numIndependentLayers = numIndependentLayers;
 }
 
+#if FIX_LAYER_ID_INIT
+void TComVPS::deriveLayerIdListVariablesForAddLayerSets()
+{
+  m_layerSetLayerIdList.resize(m_vpsNumLayerSetsMinus1 + 1 + m_numAddLayerSets);
+
+  for (UInt i = 0; i < m_numAddLayerSets; i++)
+  {
+    Int layerNum = 0;
+    Int lsIdx = m_vpsNumLayerSetsMinus1 + 1 + i;
+    for (Int treeIdx = 1; treeIdx < m_numIndependentLayers; treeIdx++)
+    {
+      for (Int layerCnt = 0; layerCnt < m_highestLayerIdxPlus1[i][treeIdx]; layerCnt++)
+      {
+        m_layerSetLayerIdList[lsIdx].push_back(m_treePartitionLayerIdList[treeIdx][layerCnt]);
+        layerNum++;
+      }
+    }
+    m_numLayerInIdList.push_back(layerNum);
+  }
+}
+#else
 void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
 {
   for (UInt i = 0; i < m_numAddLayerSets; i++)
@@ -2877,6 +2906,7 @@ void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
     }
   }
 }
+#endif
 
 #endif
 

@@ -1779,7 +1779,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
 #if OUTPUT_LAYER_SETS_CONFIG
     // Simplifying the code in the #else section
+#if FIX_LAYER_ID_INIT
+    assert( scanStringToArray( cfg_highestLayerIdx[addLayerSet], m_numHighestLayerIdx[addLayerSet], "HighestLayerIdx", m_highestLayerIdx[addLayerSet] ) );
+#else
     assert( scanStringToArray( cfg_layerSetLayerIdList[addLayerSet], m_numLayerInIdList[addLayerSet], "NumLayerInIdList",  m_highestLayerIdx[addLayerSet] ) );
+#endif
 #else
     if (m_numHighestLayerIdx[addLayerSet] > 0)
     {
