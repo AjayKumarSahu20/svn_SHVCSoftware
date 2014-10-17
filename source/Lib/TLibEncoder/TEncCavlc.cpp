@@ -587,7 +587,11 @@ Void TEncCavlc::codeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt
 Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 {
 #if R0042_PROFILE_INDICATION
+#if FIX_LAYER_ID_INIT
+  Bool bMultiLayerExtSpsFlag = (pcSPS->getLayerId() != 0 && pcSPS->getNumDirectRefLayers() != 0);
+#else
   Bool bMultiLayerExtSpsFlag = (pcSPS->getNumDirectRefLayers() != 0 ) ; 
+#endif
 #endif
 #if ENC_DEC_TRACE  
   xTraceSPSHeader (pcSPS);
@@ -1002,9 +1006,11 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
       WRITE_FLAG( pcVPS->getLayerIdIncludedFlag( opsIdx, i ) ? 1 : 0, "layer_id_included_flag[opsIdx][i]" );
     }
   }
+#if !FIX_LAYER_ID_INIT  // It was still called because NECESSARY_FLAG does not exist and is by default "false"
 #if !NECESSARY_FLAG   // Already called once in TAppEncTop.cpp
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   pcVPS->deriveLayerIdListVariables();
+#endif
 #endif
 #endif
   TimingInfo *timingInfo = pcVPS->getTimingInfo();

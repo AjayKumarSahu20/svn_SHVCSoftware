@@ -1457,10 +1457,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+#if FIX_LAYER_ID_INIT
+  // The Layer ID List variables should be derived here.
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  vps->deriveLayerIdListVariables();
+#endif
+#endif
 #if Q0078_ADD_LAYER_SETS
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
+#if FIX_LAYER_ID_INIT
+  vps->deriveLayerIdListVariablesForAddLayerSets();
+#else
   vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
 #endif
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
@@ -1518,9 +1528,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
  #if VPS_DPB_SIZE_TABLE
+#if !FIX_LAYER_ID_INIT  // must be derived earlier to not delete additional layer sets
   // The Layer ID List variables can be derived here.  
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   vps->deriveLayerIdListVariables();
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   vps->assignSubDpbIndices();

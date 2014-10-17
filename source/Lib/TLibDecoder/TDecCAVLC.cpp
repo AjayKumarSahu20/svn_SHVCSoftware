@@ -1525,7 +1525,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
     vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
+#if FIX_LAYER_ID_INIT
+    vps->deriveLayerIdListVariablesForAddLayerSets();
+#else
     vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
   }
 #endif
 #endif
