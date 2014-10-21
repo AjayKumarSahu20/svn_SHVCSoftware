@@ -2028,7 +2028,12 @@ Void TAppEncTop::encode()
         m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], m_acLayerCfg[layer].getPad() );
 
 #if AUXILIARY_PICTURES
+#if R0062_AUX_PSEUDO_MONOCHROME
+        if ( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 ||
+             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(3) && (m_acLayerCfg[layer].getAuxId() == 1 || m_acLayerCfg[layer].getAuxId() == 2)) )
+#else
         if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
+#endif
         {
           pcPicYuvOrg[layer]->convertToMonochrome();
         }
