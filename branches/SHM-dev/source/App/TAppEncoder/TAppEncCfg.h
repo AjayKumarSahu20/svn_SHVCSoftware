@@ -450,6 +450,29 @@ protected:
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
 #endif
+#if Q0096_OVERLAY_SEI
+  Bool                                m_overlaySEIEnabled;
+  Bool                                m_overlayInfoCancelFlag;
+  UInt                                m_overlayContentAuxIdMinus128;
+  UInt                                m_overlayLabelAuxIdMinus128;
+  UInt                                m_overlayAlphaAuxIdMinus128;
+  UInt                                m_overlayElementLabelValueLengthMinus8;
+  UInt                                m_numOverlaysMinus1;
+  std::vector<UInt>                   m_overlayIdx;  
+  std::vector<Bool>                   m_overlayLanguagePresentFlag;
+  std::vector<UInt>                   m_overlayContentLayerId;
+  std::vector<Bool>                   m_overlayLabelPresentFlag;
+  std::vector<UInt>                   m_overlayLabelLayerId;
+  std::vector<Bool>                   m_overlayAlphaPresentFlag;
+  std::vector<UInt>                   m_overlayAlphaLayerId;
+  std::vector<UInt>                   m_numOverlayElementsMinus1;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMin;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMax;
+  std::vector<string>                 m_overlayLanguage;  
+  std::vector<string>                 m_overlayName;  
+  std::vector< std::vector<string> >  m_overlayElementName;  
+  Bool                                m_overlayInfoPersistenceFlag;
+#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
 #endif

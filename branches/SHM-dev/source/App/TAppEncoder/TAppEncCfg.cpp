@@ -620,6 +620,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_kneeSEIInputKneePointValue;
   string cfg_kneeSEIOutputKneePointValue;
 #endif
+#if Q0096_OVERLAY_SEI
+  const Int CFG_MAX_OVERLAYS = 3;
+  UInt   cfg_overlaySEIIdx[CFG_MAX_OVERLAYS];  
+  Bool   cfg_overlaySEILanguagePresentFlag[CFG_MAX_OVERLAYS];  
+  UInt   cfg_overlaySEIContentLayerId[CFG_MAX_OVERLAYS];
+  Bool   cfg_overlaySEILabelPresentFlag[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEILabelLayerId[CFG_MAX_OVERLAYS];
+  Bool   cfg_overlaySEIAlphaPresentFlag[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEIAlphaLayerId[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEINumElementsMinus1[CFG_MAX_OVERLAYS];
+  string cfg_overlaySEIElementLabelRanges[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEILanguage[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEIName[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEIElementNames[CFG_MAX_OVERLAYS];  
+#endif
 
   po::Options opts;
   opts.addOptions()
@@ -1116,6 +1131,55 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIKneeFunctionNumKneePointsMinus1",  m_kneeSEINumKneePointsMinus1,       2, "Specifies the number of knee points - 1")
   ("SEIKneeFunctionInputKneePointValue",  cfg_kneeSEIInputKneePointValue,     string("600 800 900"), "Array of input knee point")
   ("SEIKneeFunctionOutputKneePointValue", cfg_kneeSEIOutputKneePointValue,    string("100 250 450"), "Array of output knee point")
+#endif
+#if Q0096_OVERLAY_SEI
+  ("SEIOverlayInfo",                          m_overlaySEIEnabled,                      false, "Control generation of Selectable Overlays SEI messages")
+  ("SEIOverlayCancelFlag",                    m_overlayInfoCancelFlag,                   true, "Indicates that Selectable Overlay SEI message cancels the persistance or follows (default: 1)")
+  ("SEIOverlayContentAuxIdMinus128",          m_overlayContentAuxIdMinus128,          UInt(0), "Indicates the AuxId value of auxiliary pictures containing overlay content - 128")
+  ("SEIOverlayLabelAuxIdMinus128",            m_overlayLabelAuxIdMinus128,            UInt(1), "Indicates the AuxId value of auxiliary pictures containing label content - 128")
+  ("SEIOverlayAlphaAuxIdMinus128",            m_overlayAlphaAuxIdMinus128,            UInt(2), "Indicates the AuxId value of auxiliary pictures containing alpha content - 128")
+  ("SEIOverlayElementLabelValueLengthMinus8", m_overlayElementLabelValueLengthMinus8, UInt(0), "Indicates the number of bits used for coding min and max label values - 8")
+  ("SEIOverlayNumOverlaysMinus1",             m_numOverlaysMinus1,                    UInt(0), "Specifies the number of overlays described by this SEI message - 1")
+  ("SEIOverlayIdx0",                          cfg_overlaySEIIdx[0],                   UInt(0), "Indicates the index of overlay 0")
+  ("SEIOverlayIdx1",                          cfg_overlaySEIIdx[1],                   UInt(1), "Indicates the index of overlay 1")
+  ("SEIOverlayIdx2",                          cfg_overlaySEIIdx[2],                   UInt(2), "Indicates the index of overlay 2")
+  ("SEIOverlayLanguagePresentFlag0",          cfg_overlaySEILanguagePresentFlag[0],     false, "Indicates if the language for overlay 0 is specified")
+  ("SEIOverlayLanguagePresentFlag1",          cfg_overlaySEILanguagePresentFlag[1],     false, "Indicates if the language for overlay 1 is specified")
+  ("SEIOverlayLanguagePresentFlag2",          cfg_overlaySEILanguagePresentFlag[2],     false, "Indicates if the language for overlay 2 is specified")
+  ("SEIOverlayContentLayerId0",               cfg_overlaySEIContentLayerId[0],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 0")  
+  ("SEIOverlayContentLayerId1",               cfg_overlaySEIContentLayerId[1],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 1")  
+  ("SEIOverlayContentLayerId2",               cfg_overlaySEIContentLayerId[2],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 2")  
+  ("SEIOverlayLabelPresentFlag0",             cfg_overlaySEILabelPresentFlag[0],        false, "Specifies if label content 0 is present")  
+  ("SEIOverlayLabelPresentFlag1",             cfg_overlaySEILabelPresentFlag[1],        false, "Specifies if label content 1 is present")  
+  ("SEIOverlayLabelPresentFlag2",             cfg_overlaySEILabelPresentFlag[2],        false, "Specifies if label content 2 is present")  
+  ("SEIOverlayLabelLayerId0",                 cfg_overlaySEILabelLayerId[0],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 0")  
+  ("SEIOverlayLabelLayerId1",                 cfg_overlaySEILabelLayerId[1],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 1")  
+  ("SEIOverlayLabelLayerId2",                 cfg_overlaySEILabelLayerId[2],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 2")  
+  ("SEIOverlayAlphaPresentFlag0",             cfg_overlaySEIAlphaPresentFlag[0],        false, "Specifies if alpha content 0 is present")  
+  ("SEIOverlayAlphaPresentFlag1",             cfg_overlaySEIAlphaPresentFlag[1],        false, "Specifies if alpha content 1 is present")  
+  ("SEIOverlayAlphaPresentFlag2",             cfg_overlaySEIAlphaPresentFlag[2],        false, "Specifies if alpha content 2 is present")  
+  ("SEIOverlayAlphaLayerId0",                 cfg_overlaySEIAlphaLayerId[0],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 0")  
+  ("SEIOverlayAlphaLayerId1",                 cfg_overlaySEIAlphaLayerId[1],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 1")  
+  ("SEIOverlayAlphaLayerId2",                 cfg_overlaySEIAlphaLayerId[2],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 2")  
+  ("SEIOverlayNumElementsMinus1_0",           cfg_overlaySEINumElementsMinus1[0],     UInt(0), "Specifies the number of overlay elements in overlay 0")  
+  ("SEIOverlayNumElementsMinus1_1",           cfg_overlaySEINumElementsMinus1[1],     UInt(0), "Specifies the number of overlay elements in overlay 1")  
+  ("SEIOverlayNumElementsMinus1_2",           cfg_overlaySEINumElementsMinus1[2],     UInt(0), "Specifies the number of overlay elements in overlay 2")  
+  ("SEIOverlayElementLabelRange0",            cfg_overlaySEIElementLabelRanges[0], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 0")    
+  ("SEIOverlayElementLabelRange1",            cfg_overlaySEIElementLabelRanges[1], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 1")    
+  ("SEIOverlayElementLabelRange2",            cfg_overlaySEIElementLabelRanges[2], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 2")  
+  ("SEIOverlayLanguage0",                     cfg_overlaySEILanguage[0],           string(""), "Indicates the language of overlay 0 by a language tag according to RFC 5646")
+  ("SEIOverlayLanguage1",                     cfg_overlaySEILanguage[1],           string(""), "Indicates the language of overlay 1 by a language tag according to RFC 5646")
+  ("SEIOverlayLanguage2",                     cfg_overlaySEILanguage[2],           string(""), "Indicates the language of overlay 2 by a language tag according to RFC 5646")
+  ("SEIOverlayName0",                         cfg_overlaySEIName[0],       string("Overlay0"), "Indicates the name of overlay 0")
+  ("SEIOverlayName1",                         cfg_overlaySEIName[1],       string("Overlay1"), "Indicates the name of overlay 1")
+  ("SEIOverlayName2",                         cfg_overlaySEIName[2],       string("Overlay2"), "Indicates the name of overlay 2")
+  ("SEIOverlayElementNames0",                 cfg_overlaySEIElementNames[0],       string(""), "Indicates the names of all overlay elements of overlay 0 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayElementNames1",                 cfg_overlaySEIElementNames[1],       string(""), "Indicates the names of all overlay elements of overlay 1 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayElementNames2",                 cfg_overlaySEIElementNames[2],       string(""), "Indicates the names of all overlay elements of overlay 2 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayPersistenceFlag",               m_overlayInfoPersistenceFlag,              true, "Indicates if the SEI message applies to the current picture only (0) or also to following pictures (1)")
 #endif
 #if Q0189_TMVP_CONSTRAINTS
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
@@ -2096,6 +2160,81 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pcOutputKneePointValue );
       pcOutputKneePointValue = NULL;
     }
+  }
+#endif
+#if Q0096_OVERLAY_SEI
+  if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
+  {
+    m_overlayIdx.resize                 ( m_numOverlaysMinus1+1 );  
+    m_overlayLanguagePresentFlag.resize ( m_numOverlaysMinus1+1 );
+    m_overlayContentLayerId.resize      ( m_numOverlaysMinus1+1 );
+    m_overlayLabelPresentFlag.resize    ( m_numOverlaysMinus1+1 );
+    m_overlayLabelLayerId.resize        ( m_numOverlaysMinus1+1 );
+    m_overlayAlphaPresentFlag.resize    ( m_numOverlaysMinus1+1 );
+    m_overlayAlphaLayerId.resize        ( m_numOverlaysMinus1+1 );
+    m_numOverlayElementsMinus1.resize   ( m_numOverlaysMinus1+1 );
+    m_overlayElementLabelMin.resize     ( m_numOverlaysMinus1+1 );
+    m_overlayElementLabelMax.resize     ( m_numOverlaysMinus1+1 );  
+    m_overlayLanguage.resize            ( m_numOverlaysMinus1+1 );     
+    m_overlayName.resize                ( m_numOverlaysMinus1+1 );     
+    m_overlayElementName.resize         ( m_numOverlaysMinus1+1 );     
+    for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++)
+    {
+      m_overlayIdx[i]                  = cfg_overlaySEIIdx[i];
+      m_overlayLanguagePresentFlag[i]  = cfg_overlaySEILanguagePresentFlag[i];
+      m_overlayContentLayerId[i]       = cfg_overlaySEIContentLayerId[i];
+      m_overlayLabelPresentFlag[i]     = cfg_overlaySEILabelPresentFlag[i];
+      m_overlayLabelLayerId[i]         = cfg_overlaySEILabelLayerId[i];
+      m_overlayAlphaPresentFlag[i]     = cfg_overlaySEIAlphaPresentFlag[i];
+      m_overlayAlphaLayerId[i]         = cfg_overlaySEIAlphaLayerId[i];
+      m_numOverlayElementsMinus1[i]    = cfg_overlaySEINumElementsMinus1[i];
+      m_overlayLanguage[i]             = cfg_overlaySEILanguage[i];
+      m_overlayName[i]                 = cfg_overlaySEIName[i];
+      
+      //parse min and max values of label elements
+      istringstream ranges(cfg_overlaySEIElementLabelRanges[i]);
+      string range;          
+      UInt val;        
+      vector<UInt> vRanges;
+      while ( getline(ranges, range, ' ') ) 
+      {        
+        istringstream(range) >> val;        
+        vRanges.push_back(val);
+      }      
+      assert( vRanges.size()%2==0 );
+      assert( vRanges.size()==2*(m_numOverlayElementsMinus1[i]+1) );
+      m_overlayElementLabelMin[i].resize( m_numOverlayElementsMinus1[i]+1 );
+      m_overlayElementLabelMax[i].resize( m_numOverlayElementsMinus1[i]+1 );
+      for (Int j=0 ; j<=m_numOverlayElementsMinus1[i] ; j++)
+      {
+        m_overlayElementLabelMin[i][j] = vRanges[2*j];
+        m_overlayElementLabelMax[i][j] = vRanges[2*j+1];
+      }
+      
+      //parse overlay element names
+      istringstream elementNames(cfg_overlaySEIElementNames[i]);
+      string elementName;                
+      vector<string> vElementName;                
+      while ( getline(elementNames, elementName, '|') ) 
+      {        
+        vElementName.push_back(elementName);         
+      }      
+      if ( m_overlayLabelPresentFlag[i] )
+      {
+        m_overlayElementName[i].resize( m_numOverlayElementsMinus1[i]+1 );     
+        for (Int j=0 ; j<=m_numOverlayElementsMinus1[i] ; j++)
+        {
+          if (j < vElementName.size())
+          {
+            m_overlayElementName[i][j] = vElementName[j];
+          }
+          else
+          {
+            m_overlayElementName[i][j] = string("NoElementName");
+          }
+        }
+      }            
+    }        
   }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -3353,6 +3492,20 @@ Void TAppEncCfg::xCheckParameter()
       {
         xConfirmPara( m_kneeSEIInputKneePoint[i-1] >= m_kneeSEIInputKneePoint[i],  "The i-th SEIKneeFunctionInputKneePointValue must be greather than the (i-1)-th value");
       }
+    }
+  }
+#endif
+#if Q0096_OVERLAY_SEI
+  if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
+  {
+    xConfirmPara( m_overlayContentAuxIdMinus128 < 0 || m_overlayContentAuxIdMinus128 > 31, "SEIOverlayContentAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayLabelAuxIdMinus128 < 0 || m_overlayLabelAuxIdMinus128 > 31, "SEIOverlayLabelAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayAlphaAuxIdMinus128 < 0 || m_overlayAlphaAuxIdMinus128 > 31, "SEIOverlayAlphaAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_numOverlaysMinus1 < 0 || m_numOverlaysMinus1 > 15, "SEIOverlayNumOverlaysMinus1 must be in the range of 0 to 15");
+    for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++ )
+    {
+      xConfirmPara( m_overlayIdx[i] < 0 || m_overlayIdx[i] > 255, "SEIOverlayIdx must be in the range of 0 to 255");
+      xConfirmPara( m_numOverlayElementsMinus1[i] < 0 || m_numOverlayElementsMinus1[i] > 255, "SEIOverlayNumElementsMinus1 must be in the range of 0 to 255");
     }
   }
 #endif

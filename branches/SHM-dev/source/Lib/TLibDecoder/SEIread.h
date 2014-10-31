@@ -145,6 +145,9 @@ Void   xParseSEISubBitstreamProperty   (SEISubBitstreamProperty &sei);
 #if Q0247_FRAME_FIELD_INFO
   Void xParseSEIFrameFieldInfo    (SEIFrameFieldInfo& sei, UInt payloadSize);
 #endif
+#if Q0096_OVERLAY_SEI
+  Void xParseSEIOverlayInfo           (SEIOverlayInfo& sei, UInt payloadSize);
+#endif
   Void xParseByteAlign();
 };
 
