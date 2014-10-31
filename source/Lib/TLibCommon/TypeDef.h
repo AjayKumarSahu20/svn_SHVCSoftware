@@ -319,6 +319,12 @@ enum ScalabilityType
 #define Q0189_TMVP_CONSTRAINTS           1      ///< JCTVC-Q0189: indicate constraints on TMVP
 #define Q0247_FRAME_FIELD_INFO           1      ///< JCTVC-Q0247: field_frame_info SEI message
 #define R0247_SEI_ACTIVE                 1      ///< JCTVC-R0247: active parameter sets SEI message
+#define Q0096_OVERLAY_SEI                1      ///< JCTVC-Q0096, JCTVC-Q0045: selectable overlays SEI message
+#if Q0096_OVERLAY_SEI 
+# define MAX_OVERLAYS                    16
+# define MAX_OVERLAY_ELEMENTS            256
+# define MAX_OVERLAY_STRING_BYTES        256
+#endif
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information

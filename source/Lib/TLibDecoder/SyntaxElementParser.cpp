@@ -84,6 +84,16 @@ Void  SyntaxElementParser::xReadFlagTr           (UInt& rValue, const Char *pSym
   fflush ( g_hTrace );
 }
 
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementParser::xReadStringTr        (UInt buSize, UChar *pValue, UInt& rLength, const Char *pSymbolName)
+{
+  xReadString(buSize, pValue, rLength);
+  fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
+  fprintf( g_hTrace, "%-50s st(v=%d)  : %s\n", pSymbolName, rLength, pValue );
+  fflush ( g_hTrace );
+}
+#endif
+
 #endif
 
 
@@ -152,6 +162,26 @@ Void SyntaxElementParser::xReadFlag (UInt& ruiCode)
   m_pcBitstream->read( 1, ruiCode );
 }
 
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementParser::xReadString  (UInt bufSize, UChar *pVal, UInt& rLength)
+{
+  assert( m_pcBitstream->getNumBitsRead() % 8 == 0 ); //always start reading at a byte-aligned position
+  assert ( bufSize > 1 ); //last byte always used for null-termination
+  UInt val;
+  UInt i;
+  for (i=0 ; i<bufSize ; ++i ) 
+  {
+    m_pcBitstream->readByte( val );
+    pVal[i] = val;
+    if ( val == 0)
+    {
+      break;
+    }
+  }
+  rLength = i;
+  assert( pVal[rLength] == 0 );
+}
+#endif
 
 //! \}
 

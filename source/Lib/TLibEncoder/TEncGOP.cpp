@@ -381,6 +381,86 @@ SEIKneeFunctionInfo* TEncGOP::xCreateSEIKneeFunctionInfo()
 }
 #endif
 
+#if Q0096_OVERLAY_SEI
+SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
+{  
+  SEIOverlayInfo *sei = new SEIOverlayInfo();  
+  sei->m_overlayInfoCancelFlag = m_pcCfg->getOverlaySEICancelFlag();    
+  if ( !sei->m_overlayInfoCancelFlag )
+  {
+    sei->m_overlayContentAuxIdMinus128          = m_pcCfg->getOverlaySEIContentAuxIdMinus128(); 
+    sei->m_overlayLabelAuxIdMinus128            = m_pcCfg->getOverlaySEILabelAuxIdMinus128();  
+    sei->m_overlayAlphaAuxIdMinus128            = m_pcCfg->getOverlaySEIAlphaAuxIdMinus128(); 
+    sei->m_overlayElementLabelValueLengthMinus8 = m_pcCfg->getOverlaySEIElementLabelValueLengthMinus8(); 
+    sei->m_numOverlaysMinus1                    = m_pcCfg->getOverlaySEINumOverlaysMinus1();     
+    sei->m_overlayIdx                           = m_pcCfg->getOverlaySEIIdx();            
+    sei->m_languageOverlayPresentFlag           = m_pcCfg->getOverlaySEILanguagePresentFlag();
+    sei->m_overlayContentLayerId                = m_pcCfg->getOverlaySEIContentLayerId();   
+    sei->m_overlayLabelPresentFlag              = m_pcCfg->getOverlaySEILabelPresentFlag();   
+    sei->m_overlayLabelLayerId                  = m_pcCfg->getOverlaySEILabelLayerId();   
+    sei->m_overlayAlphaPresentFlag              = m_pcCfg->getOverlaySEIAlphaPresentFlag();   
+    sei->m_overlayAlphaLayerId                  = m_pcCfg->getOverlaySEIAlphaLayerId();   
+    sei->m_numOverlayElementsMinus1             = m_pcCfg->getOverlaySEINumElementsMinus1();
+    sei->m_overlayElementLabelMin               = m_pcCfg->getOverlaySEIElementLabelMin();
+    sei->m_overlayElementLabelMax               = m_pcCfg->getOverlaySEIElementLabelMax();    
+    sei->m_overlayLanguage.resize               ( sei->m_numOverlaysMinus1+1, NULL );
+    sei->m_overlayLanguageLength.resize         ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayName.resize                   ( sei->m_numOverlaysMinus1+1, NULL );
+    sei->m_overlayNameLength.resize             ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayElementName.resize            ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayElementNameLength.resize      ( sei->m_numOverlaysMinus1+1 );  
+
+    Int i,j;
+    string strTmp;
+    Int nBytes;
+    assert( m_pcCfg->getOverlaySEILanguage().size()    == sei->m_numOverlaysMinus1+1 );
+    assert( m_pcCfg->getOverlaySEIName().size()        == sei->m_numOverlaysMinus1+1 );
+    assert( m_pcCfg->getOverlaySEIElementName().size() == sei->m_numOverlaysMinus1+1 );
+    
+    for ( i=0 ; i<=sei->m_numOverlaysMinus1; i++ )
+    {      
+      //language tag
+      if ( sei->m_languageOverlayPresentFlag[i] )
+      {                
+        strTmp = m_pcCfg->getOverlaySEILanguage()[i];
+        nBytes = m_pcCfg->getOverlaySEILanguage()[i].size();        
+        assert( nBytes>0 );
+        sei->m_overlayLanguage[i] = new UChar[nBytes];
+        memcpy(sei->m_overlayLanguage[i], strTmp.c_str(), nBytes);        
+        sei->m_overlayLanguageLength[i] = nBytes;        
+      }
+
+      //overlay name
+      strTmp = m_pcCfg->getOverlaySEIName()[i];
+      nBytes = m_pcCfg->getOverlaySEIName()[i].size();        
+      assert( nBytes>0 );
+      sei->m_overlayName[i] = new UChar[nBytes];      
+      memcpy(sei->m_overlayName[i], strTmp.c_str(), nBytes);        
+      sei->m_overlayNameLength[i] = nBytes;
+
+      //overlay element names
+      if ( sei->m_overlayLabelPresentFlag[i] )
+      {        
+        sei->m_overlayElementName[i].resize( sei->m_numOverlayElementsMinus1[i]+1, NULL );
+        sei->m_overlayElementNameLength[i].resize( sei->m_numOverlayElementsMinus1[i]+1 );
+        assert( m_pcCfg->getOverlaySEIElementName()[i].size() == sei->m_numOverlayElementsMinus1[i]+1 );        
+        for ( j=0 ; j<=sei->m_numOverlayElementsMinus1[i] ; j++)
+        {
+          strTmp = m_pcCfg->getOverlaySEIElementName()[i][j];
+          nBytes = m_pcCfg->getOverlaySEIElementName()[i][j].size();        
+          assert( nBytes>0 );
+          sei->m_overlayElementName[i][j] = new UChar[nBytes];
+          memcpy(sei->m_overlayElementName[i][j], strTmp.c_str(), nBytes);        
+          sei->m_overlayElementNameLength[i][j] = nBytes;
+        }
+      }
+    }
+  sei->m_overlayInfoPersistenceFlag = true;
+  }
+  return sei;
+}
+#endif
+
 #if Q0074_COLOUR_REMAPPING_SEI
 SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
 {
@@ -573,6 +653,22 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     SEIInterLayerConstrainedTileSets *sei = xCreateSEIInterLayerConstrainedTileSets ();
 
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
+
+#if Q0096_OVERLAY_SEI
+  if(m_pcCfg->getOverlaySEIEnabled())
+  {    
+    SEIOverlayInfo *sei = xCreateSEIOverlayInfo();       
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 #if O0164_MULTI_LAYER_HRD
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 

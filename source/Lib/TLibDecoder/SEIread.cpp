@@ -145,6 +145,11 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
     fprintf(g_hTrace, "=========== VPS rewriting SEI message ===========\n");
     break;
 #endif
+#if Q0096_OVERLAY_SEI
+  case SEI::OVERLAY_INFO:
+    fprintf( g_hTrace, "=========== Overlay Information SEI message ===========\n");
+    break;
+#endif
 #endif //SVC_EXTENSION
   default:
     fprintf( g_hTrace, "=========== Unknown SEI message ===========\n");
@@ -409,6 +414,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
    case SEI::FRAME_FIELD_INFO:
      sei =  new SEIFrameFieldInfo;
      xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize); 
+     break;
+#endif
+#if Q0096_OVERLAY_SEI
+   case SEI::OVERLAY_INFO:
+     sei = new SEIOverlayInfo;
+     xParseSEIOverlayInfo((SEIOverlayInfo&) *sei, payloadSize);
      break;
 #endif
 #endif //SVC_EXTENSION
@@ -1723,6 +1734,110 @@ Void SEIReader::xParseSEIVPSRewriting(SEIVPSRewriting &sei)
 {
 }
 
+#endif
+
+#if Q0096_OVERLAY_SEI
+Void SEIReader::xParseSEIOverlayInfo(SEIOverlayInfo& sei, UInt /*payloadSize*/){
+  Int i, j;
+  UInt val;
+  READ_FLAG( val, "overlay_info_cancel_flag" );                 sei.m_overlayInfoCancelFlag = val;
+  if ( !sei.m_overlayInfoCancelFlag )
+  {
+    READ_UVLC( val, "overlay_content_aux_id_minus128" );            sei.m_overlayContentAuxIdMinus128 = val;
+    READ_UVLC( val, "overlay_label_aux_id_minus128" );              sei.m_overlayLabelAuxIdMinus128 = val;
+    READ_UVLC( val, "overlay_alpha_aux_id_minus128" );              sei.m_overlayAlphaAuxIdMinus128 = val;
+    READ_UVLC( val, "overlay_element_label_value_length_minus8" );  sei.m_overlayElementLabelValueLengthMinus8 = val;
+    READ_UVLC( val, "num_overlays_minus1" );                        sei.m_numOverlaysMinus1 = val;
+
+    assert( sei.m_numOverlaysMinus1 < MAX_OVERLAYS );
+    sei.m_overlayIdx.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_languageOverlayPresentFlag.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayContentLayerId.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayLabelPresentFlag.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayLabelLayerId.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayAlphaPresentFlag.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayAlphaLayerId.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_numOverlayElementsMinus1.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayElementLabelMin.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayElementLabelMax.resize( sei.m_numOverlaysMinus1+1 );
+    for ( i=0 ; i<=sei.m_numOverlaysMinus1 ; i++ )
+    {
+      READ_UVLC( val, "overlay_idx" );                      sei.m_overlayIdx[i] = val;
+      READ_FLAG( val, "language_overlay_present_flag" );    sei.m_languageOverlayPresentFlag[i] = val;
+      READ_CODE( 6, val, "overlay_content_layer_id");       sei.m_overlayContentLayerId[i] = val;
+      READ_FLAG( val, "overlay_label_present_flag" );       sei.m_overlayLabelPresentFlag[i] = val;
+      if ( sei.m_overlayLabelPresentFlag[i] )
+      {
+        READ_CODE( 6, val, "overlay_label_layer_id");     sei.m_overlayLabelLayerId[i] = val;
+      }
+      READ_FLAG( val, "overlay_alpha_present_flag" );       sei.m_overlayAlphaPresentFlag[i] = val;
+      if ( sei.m_overlayAlphaPresentFlag[i] )
+      {
+        READ_CODE( 6, val, "overlay_alpha_layer_id");     sei.m_overlayAlphaLayerId[i] = val;
+      }
+      if ( sei.m_overlayLabelPresentFlag[i] )
+      {
+        READ_UVLC( val, "num_overlay_elements_minus1");   sei.m_numOverlayElementsMinus1[i] = val;
+        assert( sei.m_numOverlayElementsMinus1[i] < MAX_OVERLAY_ELEMENTS );
+        sei.m_overlayElementLabelMin[i].resize( sei.m_numOverlayElementsMinus1[i]+1 );
+        sei.m_overlayElementLabelMax[i].resize( sei.m_numOverlayElementsMinus1[i]+1 );
+        for ( j=0 ; j<=sei.m_numOverlayElementsMinus1[i] ; j++ )
+        {
+          READ_CODE(sei.m_overlayElementLabelValueLengthMinus8 + 8, val, "overlay_element_label_min"); sei.m_overlayElementLabelMin[i][j] = val;
+          READ_CODE(sei.m_overlayElementLabelValueLengthMinus8 + 8, val, "overlay_element_label_max"); sei.m_overlayElementLabelMax[i][j] = val;
+        }      
+      }
+      else
+      {
+        sei.m_numOverlayElementsMinus1[i] = 0;
+      }
+    }
+
+    // byte alignment
+    while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
+    {
+      READ_FLAG( val, "overlay_zero_bit" );
+      assert( val==0 );
+    }
+
+    UChar* sval = new UChar[MAX_OVERLAY_STRING_BYTES];
+    UInt slen;    
+    sei.m_overlayLanguage.resize( sei.m_numOverlaysMinus1+1, NULL );
+    sei.m_overlayLanguageLength.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayName.resize( sei.m_numOverlaysMinus1+1, NULL );
+    sei.m_overlayNameLength.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayElementName.resize( sei.m_numOverlaysMinus1+1 );
+    sei.m_overlayElementNameLength.resize( sei.m_numOverlaysMinus1+1 );
+    for ( i=0 ; i<=sei.m_numOverlaysMinus1 ; i++ )
+    {
+      if ( sei.m_languageOverlayPresentFlag[i] )
+      {
+        READ_STRING( MAX_OVERLAY_STRING_BYTES, sval, slen, "overlay_language" );
+        sei.m_overlayLanguage[i] = new UChar[slen];
+        memcpy(sei.m_overlayLanguage[i], sval, slen);
+        sei.m_overlayLanguageLength[i] = slen;
+      }
+      READ_STRING( MAX_OVERLAY_STRING_BYTES, sval, slen, "overlay_name" );
+      sei.m_overlayName[i] = new UChar[slen];
+      memcpy(sei.m_overlayName[i], sval, slen);
+      sei.m_overlayNameLength[i] = slen;
+      if ( sei.m_overlayLabelPresentFlag[i] )
+      {
+        sei.m_overlayElementName[i].resize( sei.m_numOverlayElementsMinus1[i]+1, NULL );
+        sei.m_overlayElementNameLength[i].resize( sei.m_numOverlayElementsMinus1[i]+1 );
+        for ( j=0 ; j<=sei.m_numOverlayElementsMinus1[i] ; j++)
+        {
+          READ_STRING( MAX_OVERLAY_STRING_BYTES, sval, slen, "overlay_element_name" );
+          sei.m_overlayElementName[i][j] = new UChar[slen];
+          memcpy(sei.m_overlayElementName[i][j], sval, slen);
+          sei.m_overlayElementNameLength[i][j] = slen;
+        }
+      }
+    }
+    READ_FLAG( val, "overlay_info_persistence_flag" );        sei.m_overlayInfoPersistenceFlag = val;
+  }
+  xParseByteAlign();
+}
 #endif
 
 #endif //SVC_EXTENSION
