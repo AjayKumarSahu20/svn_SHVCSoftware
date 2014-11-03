@@ -2300,11 +2300,23 @@ UInt TComSlice::getBitDepthY()
 #if O0096_REP_FORMAT_INDEX
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
 #else
   if ( layerId == 0 )
-#endif
   {
-    retVal = sps->getBitDepthY();
+#endif
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
+    }
+    else
+    {
+      retVal = sps->getBitDepthY();
+    }
   }
   else
   {
@@ -2330,11 +2342,23 @@ UInt TComSlice::getBitDepthC()
 #if O0096_REP_FORMAT_INDEX
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
 #else
   if ( layerId == 0 )
-#endif
   {
-    retVal = sps->getBitDepthC();
+#endif
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
+    }
+    else
+    {
+      retVal = sps->getBitDepthC();
+    }
   }
   else
   {
