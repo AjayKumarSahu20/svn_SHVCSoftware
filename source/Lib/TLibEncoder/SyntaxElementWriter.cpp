@@ -90,6 +90,18 @@ Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
   }
 }
 
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementWriter::xWriteStringTr( UChar* value, UInt length, const Char *pSymbolName)
+{
+  xWriteString(value, length);
+  if( g_HLSTraceEnable )
+  {
+    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
+    fprintf( g_hTrace, "%-50s st(v=%d)  : %s\n", pSymbolName, length, value ); 
+  }
+}
+#endif
+
 #endif
 
 
@@ -128,5 +140,17 @@ Void SyntaxElementWriter::xWriteFlag( UInt uiCode )
 {
   m_pcBitIf->write( uiCode, 1 );
 }
+
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementWriter::xWriteString( UChar* sCode, UInt uiLength)
+{
+  assert(m_pcBitIf->getNumberOfWrittenBits() % 8 == 0 );
+  for (Int i=0 ; i<uiLength; i++)
+  {
+    m_pcBitIf->write( sCode[i], 8 );
+  }
+  m_pcBitIf->write( 0, 8 ); //zero-termination byte
+}
+#endif
 
 //! \}

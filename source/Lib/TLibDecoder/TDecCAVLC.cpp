@@ -547,6 +547,10 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
       pcPPS->setCGSFlag( uiCode );
       if( pcPPS->getCGSFlag() )
       {
+#if R0157_RESTRICT_PPSID_FOR_CGS_LUT
+        // when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
+        assert( pcPPS->getPPSId() < 8 );
+#endif
         xParse3DAsymLUT( pc3DAsymLUT );
         pcPPS->setCGSOutputBitDepthY( pc3DAsymLUT->getOutputBitDepthY() );
         pcPPS->setCGSOutputBitDepthC( pc3DAsymLUT->getOutputBitDepthC() );
@@ -1525,7 +1529,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
     vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
+#if FIX_LAYER_ID_INIT
+    vps->deriveLayerIdListVariablesForAddLayerSets();
+#else
     vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
   }
 #endif
 #endif

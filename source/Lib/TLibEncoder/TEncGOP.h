@@ -258,6 +258,9 @@ protected:
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
 #endif
 #endif
+#if Q0096_OVERLAY_SEI
+  SEIOverlayInfo* xCreateSEIOverlayInfo();
+#endif
 #if Q0048_CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
   Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest);

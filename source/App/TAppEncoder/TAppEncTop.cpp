@@ -549,6 +549,29 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setKneeSEIInputKneePoint                     ( m_kneeSEIInputKneePoint );
     m_acTEncTop[layer].setKneeSEIOutputKneePoint                    ( m_kneeSEIOutputKneePoint );
 #endif
+#if Q0096_OVERLAY_SEI
+    m_acTEncTop[layer].setOverlaySEIEnabled                         ( m_overlaySEIEnabled );
+    m_acTEncTop[layer].setOverlaySEICancelFlag                      ( m_overlayInfoCancelFlag );
+    m_acTEncTop[layer].setOverlaySEIContentAuxIdMinus128            ( m_overlayContentAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEILabelAuxIdMinus128              ( m_overlayLabelAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEIAlphaAuxIdMinus128              ( m_overlayAlphaAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEIElementLabelValueLengthMinus8   ( m_overlayElementLabelValueLengthMinus8 );
+    m_acTEncTop[layer].setOverlaySEINumOverlaysMinus1               ( m_numOverlaysMinus1 );
+    m_acTEncTop[layer].setOverlaySEIIdx                             ( m_overlayIdx );
+    m_acTEncTop[layer].setOverlaySEILanguagePresentFlag             ( m_overlayLanguagePresentFlag );
+    m_acTEncTop[layer].setOverlaySEIContentLayerId                  ( m_overlayContentLayerId );
+    m_acTEncTop[layer].setOverlaySEILabelPresentFlag                ( m_overlayLabelPresentFlag );
+    m_acTEncTop[layer].setOverlaySEILabelLayerId                    ( m_overlayLabelLayerId );
+    m_acTEncTop[layer].setOverlaySEIAlphaPresentFlag                ( m_overlayAlphaPresentFlag );
+    m_acTEncTop[layer].setOverlaySEIAlphaLayerId                    ( m_overlayAlphaLayerId );
+    m_acTEncTop[layer].setOverlaySEINumElementsMinus1               ( m_numOverlayElementsMinus1 );
+    m_acTEncTop[layer].setOverlaySEIElementLabelMin                 ( m_overlayElementLabelMin );
+    m_acTEncTop[layer].setOverlaySEIElementLabelMax                 ( m_overlayElementLabelMax );
+    m_acTEncTop[layer].setOverlaySEILanguage                        ( m_overlayLanguage );
+    m_acTEncTop[layer].setOverlaySEIName                            ( m_overlayName );
+    m_acTEncTop[layer].setOverlaySEIElementName                     ( m_overlayElementName );
+    m_acTEncTop[layer].setOverlaySEIPersistenceFlag                 ( m_overlayInfoPersistenceFlag );
+#endif
 #if Q0074_COLOUR_REMAPPING_SEI
     m_acTEncTop[layer].setCRISEIFile                                ( const_cast<Char*>(m_acLayerCfg[layer].m_colourRemapSEIFile.c_str()) );
     m_acTEncTop[layer].setCRISEIId                                  ( m_acLayerCfg[layer].m_colourRemapSEIId );
@@ -1457,10 +1480,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+#if FIX_LAYER_ID_INIT
+  // The Layer ID List variables should be derived here.
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  vps->deriveLayerIdListVariables();
+#endif
+#endif
 #if Q0078_ADD_LAYER_SETS
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
+#if FIX_LAYER_ID_INIT
+  vps->deriveLayerIdListVariablesForAddLayerSets();
+#else
   vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
 #endif
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
@@ -1518,9 +1551,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
  #if VPS_DPB_SIZE_TABLE
+#if !FIX_LAYER_ID_INIT  // must be derived earlier to not delete additional layer sets
   // The Layer ID List variables can be derived here.  
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   vps->deriveLayerIdListVariables();
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   vps->assignSubDpbIndices();
@@ -2016,7 +2051,12 @@ Void TAppEncTop::encode()
         m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], m_acLayerCfg[layer].getPad() );
 
 #if AUXILIARY_PICTURES
+#if R0062_AUX_PSEUDO_MONOCHROME
+        if ( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 ||
+             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(3) && (m_acLayerCfg[layer].getAuxId() == 1 || m_acLayerCfg[layer].getAuxId() == 2)) )
+#else
         if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
+#endif
         {
           pcPicYuvOrg[layer]->convertToMonochrome();
         }

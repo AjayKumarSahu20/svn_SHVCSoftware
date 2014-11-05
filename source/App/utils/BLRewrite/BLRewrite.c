@@ -196,13 +196,16 @@ int main(int argc, char **argv)
   FILE *inFile;
   FILE *outFile;
   int assignedBaseLayerId;
+  int tIdTarget = 6;
   NalUnitHeader nalu;
   int numStartCodeZeros;
-  int isSpsPpsEosEob;
+  int nalIsSpsPpsEob;
+  int removeNal;
 
-  if (argc < 3)
+  if (argc < 4 || argc > 5)
   {
-    printf("Usage: Splicer <infile> <outfile> <assigned base layer ID>\n", argv[0]);
+    fprintf(stderr, "Usage: BLRewrite <infile> <outfile> <assigned base layer ID> [<max temporal ID>]\n");
+    exit(1);
   }
 
   inFile = fopen(argv[1], "rb");
@@ -220,6 +223,21 @@ int main(int argc, char **argv)
   }
 
   assignedBaseLayerId = atoi(argv[3]);
+  if (assignedBaseLayerId < 1 || assignedBaseLayerId > 7)
+  {
+    fprintf(stderr, "Invalid assigned base layer ID (must be in range 1-7)\n");
+    exit(1);
+  }
+
+  if (argc == 5)
+  {
+    tIdTarget = atoi(argv[4]);
+    if (tIdTarget < 0 || tIdTarget > 6)
+    {
+      fprintf(stderr, "Invalid maximum temporal ID (must be in range 0-6)\n");
+      exit(1);
+    }
+  }
 
   while (1)
   {
@@ -234,9 +252,14 @@ int main(int argc, char **argv)
 
     printf("NAL unit type: %i,  NUH layer ID: %i,  NUH Temporal ID: %i\n", nalu.nalUnitType, nalu.nuhLayerId, nalu.nuhTemporalIdPlus1 - 1);
 
-    isSpsPpsEosEob = (nalu.nalUnitType == NAL_UNIT_SPS || nalu.nalUnitType == NAL_UNIT_PPS || nalu.nalUnitType == NAL_UNIT_EOS || nalu.nalUnitType == NAL_UNIT_EOB);
+    nalIsSpsPpsEob = (nalu.nalUnitType == NAL_UNIT_SPS || nalu.nalUnitType == NAL_UNIT_PPS || nalu.nalUnitType == NAL_UNIT_EOB);
 
-    if ((isSpsPpsEosEob && nalu.nuhLayerId == 0) || (!isSpsPpsEosEob && nalu.nuhLayerId == assignedBaseLayerId))
+    removeNal = (!nalIsSpsPpsEob && (nalu.nuhLayerId != assignedBaseLayerId))
+             || (nalIsSpsPpsEob && (nalu.nuhLayerId != 0) && (nalu.nuhLayerId != assignedBaseLayerId))
+             || (nalu.nalUnitType == NAL_UNIT_VPS)
+             || ((nalu.nuhTemporalIdPlus1 - 1) > tIdTarget);
+
+    if (!removeNal)
     {
       /* Write current NAL unit to output bitstream */
 

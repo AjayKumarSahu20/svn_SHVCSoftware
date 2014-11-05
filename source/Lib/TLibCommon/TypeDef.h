@@ -185,6 +185,7 @@
 #define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
+#define FIX_LAYER_ID_INIT                1
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 
@@ -211,6 +212,7 @@
 
 #define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
+#define R0062_AUX_PSEUDO_MONOCHROME      1      ///> JCVVC-R0063: pseudo monochrome for auxiliary pictures
 
 #define O0062_POC_LSB_NOT_PRESENT_FLAG   1      ///< JCTVC-O0062: signal poc_lsb_not_present_flag for each layer in VPS extension
 #define SHM_FIX7                         1      ///< fix for SHVC WD ticket #7
@@ -281,6 +283,7 @@
 #define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
 #endif
 #endif
+#define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
 
 /// scalability types
 enum ScalabilityType
@@ -317,6 +320,12 @@ enum ScalabilityType
 #define Q0189_TMVP_CONSTRAINTS           1      ///< JCTVC-Q0189: indicate constraints on TMVP
 #define Q0247_FRAME_FIELD_INFO           1      ///< JCTVC-Q0247: field_frame_info SEI message
 #define R0247_SEI_ACTIVE                 1      ///< JCTVC-R0247: active parameter sets SEI message
+#define Q0096_OVERLAY_SEI                1      ///< JCTVC-Q0096, JCTVC-Q0045: selectable overlays SEI message
+#if Q0096_OVERLAY_SEI 
+# define MAX_OVERLAYS                    16
+# define MAX_OVERLAY_ELEMENTS            256
+# define MAX_OVERLAY_STRING_BYTES        256
+#endif
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
