@@ -35,8 +35,8 @@
     \brief    context model 3D buffer class (header)
 */
 
-#ifndef _HM_CONTEXT_MODEL_3DBUFFER_H_
-#define _HM_CONTEXT_MODEL_3DBUFFER_H_
+#ifndef __CONTEXTMODEL3DBUFFER__
+#define __CONTEXTMODEL3DBUFFER__
 
 #include <stdio.h>
 #include <assert.h>
@@ -86,7 +86,7 @@ public:
   /** copy from another buffer
    * \param src buffer to copy from
    */
-  Void copyFrom( ContextModel3DBuffer* src )
+  Void copyFrom( const ContextModel3DBuffer* src )
   {
     assert( m_sizeXYZ == src->m_sizeXYZ );
     ::memcpy( m_contextModel, src->m_contextModel, sizeof(ContextModel) * m_sizeXYZ );

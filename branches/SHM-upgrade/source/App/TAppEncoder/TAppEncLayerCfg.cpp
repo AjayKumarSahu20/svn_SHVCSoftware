@@ -191,8 +191,8 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   m_cReconFile = cfg_ReconFile;
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #if AUXILIARY_PICTURES
-  m_InputChromaFormat = numberToChromaFormat(tmpInputChromaFormat);
-  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormat) : (numberToChromaFormat(tmpChromaFormat)));
+  m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
+  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
   m_colourRemapSEIFile = cfg_colourRemapSEIFile.empty() ? NULL : strdup(cfg_colourRemapSEIFile.c_str());
@@ -308,10 +308,35 @@ Void TAppEncLayerCfg::xPrintParameter()
 #endif
   printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepthY   , m_inputBitDepthC    );
-  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
-  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthY : m_internalBitDepthY, m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthC : m_internalBitDepthC );
+  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
 #endif
+  std::cout << std::setw(43) << "Input ChromaFormatIDC = ";
+  switch (m_InputChromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << "  4:0:0"; break;
+  case CHROMA_420:  std::cout << "  4:2:0"; break;
+  case CHROMA_422:  std::cout << "  4:2:2"; break;
+  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << std::endl;
+
+  std::cout << std::setw(43) << "Output (internal) ChromaFormatIDC = ";
+  switch (m_chromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << "  4:0:0"; break;
+  case CHROMA_420:  std::cout << "  4:2:0"; break;
+  case CHROMA_422:  std::cout << "  4:2:2"; break;
+  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << "\n" << std::endl;
 #if LAYER_CTB
   printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
@@ -455,10 +480,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   }
 
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY(layer) - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-  }
+  xConfirmPara( m_iQP <  -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 #else
   xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 #endif
