@@ -299,20 +299,24 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
 
 Void TAppEncLayerCfg::xPrintParameter()
 {
-  printf("Input File                    : %s\n", m_cInputFile.c_str()  );
-  printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
+  printf("Input File                        : %s\n", m_cInputFile.c_str()  );
+  printf("Reconstruction File               : %s\n", m_cReconFile.c_str()  );
 #if REPN_FORMAT_IN_VPS
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
+  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
 #else
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
+  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
 #endif
-  printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+  printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
-  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
-  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("PCM sample bit depth              : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
 #endif
+#if SVC_EXTENSION
+  std::cout << "Input ChromaFormatIDC             :";
+#else
   std::cout << std::setw(43) << "Input ChromaFormatIDC = ";
+#endif
   switch (m_InputChromaFormatIDC)
   {
   case CHROMA_400:  std::cout << "  4:0:0"; break;
@@ -325,7 +329,11 @@ Void TAppEncLayerCfg::xPrintParameter()
   }
   std::cout << std::endl;
 
+#if SVC_EXTENSION
+  std::cout << "Output (internal) ChromaFormatIDC :";
+#else
   std::cout << std::setw(43) << "Output (internal) ChromaFormatIDC = ";
+#endif
   switch (m_chromaFormatIDC)
   {
   case CHROMA_400:  std::cout << "  4:0:0"; break;
@@ -338,28 +346,29 @@ Void TAppEncLayerCfg::xPrintParameter()
   }
   std::cout << "\n" << std::endl;
 #if LAYER_CTB
-  printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
-  printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
-  printf("Max RQT depth inter           : %d\n", m_uiQuadtreeTUMaxDepthInter);
-  printf("Max RQT depth intra           : %d\n", m_uiQuadtreeTUMaxDepthIntra);
+  printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
+  printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
+  printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
+  printf("Max RQT depth intra               : %d\n", m_uiQuadtreeTUMaxDepthIntra);
 #endif
-  printf("QP                            : %5.2f\n", m_fQP );
-  printf("Intra period                  : %d\n", m_iIntraPeriod );
-#if RC_SHVC_HARMONIZATION
-  printf("RateControl                   : %d\n", m_RCEnableRateControl );
+  printf("QP                                : %5.2f\n", m_fQP );
+  printf("Intra period                      : %d\n", m_iIntraPeriod );
+#if RC_SHVC_HARMONIZATION                    
+  printf("RateControl                       : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
   {
-    printf("TargetBitrate                 : %d\n", m_RCTargetBitrate );
-    printf("KeepHierarchicalBit           : %d\n", m_RCKeepHierarchicalBit );
-    printf("LCULevelRC                    : %d\n", m_RCLCULevelRC );
-    printf("UseLCUSeparateModel           : %d\n", m_RCUseLCUSeparateModel );
-    printf("InitialQP                     : %d\n", m_RCInitialQP );
-    printf("ForceIntraQP                  : %d\n", m_RCForceIntraQP );
+    printf("TargetBitrate                     : %d\n", m_RCTargetBitrate );
+    printf("KeepHierarchicalBit               : %d\n", m_RCKeepHierarchicalBit );
+    printf("LCULevelRC                        : %d\n", m_RCLCULevelRC );
+    printf("UseLCUSeparateModel               : %d\n", m_RCUseLCUSeparateModel );
+    printf("InitialQP                         : %d\n", m_RCInitialQP );
+    printf("ForceIntraQP                      : %d\n", m_RCForceIntraQP );
   }
 #endif
-  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_waveFrontSynchro, m_iWaveFrontSubstreams);
+  printf("WaveFrontSynchro                  : %d\n", m_waveFrontSynchro);
+  printf("WaveFrontSubstreams               : %d\n", m_iWaveFrontSubstreams);
 #if LAYER_CTB
-  printf("PCM:%d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
+  printf("PCM                               : %d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
 }
 

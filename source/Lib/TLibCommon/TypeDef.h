@@ -227,7 +227,6 @@
 #define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
 #define Q0195_REP_FORMAT_CLEANUP         1      ///< JCTVC-Q0195: restructureing of rep_format() signaling
-#define REP_FORMAT_FIX                   1      ///< update_rep_format_flag should be inferred to be equal to 0
 
 #define R0156_CONF_WINDOW_IN_REP_FORMAT  O0096_REP_FORMAT_INDEX ///< JCTVC-R0156: add conformance window cropping offsets to rep_format()
 
@@ -295,8 +294,6 @@ enum ScalabilityType
   AUX_ID            = 3,
 };
 
-#define WPP_FIX                          1
-
 /// normative encoder constraints --------
 #define MFM_ENCCONSTRAINT                1      ///< JCTVC-O0216: Encoder constraint for motion field mapping
 #define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
@@ -312,7 +309,6 @@ enum ScalabilityType
 #define LAYER_CTB                        0      ///< enable layer-specific CTB structure
 
 /// SEI messages -------------------------
-#define P0050_KNEE_FUNCTION_SEI          1      ///< JCTVC-P0050: Knee function SEI
 #define SUB_BITSTREAM_PROPERTY_SEI       1      ///< JCTVC-P0204: Sub-bitstream property SEI message
 #if SUB_BITSTREAM_PROPERTY_SEI
 #define MAX_SUB_STREAMS                  1024
