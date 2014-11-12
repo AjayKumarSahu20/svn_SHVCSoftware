@@ -180,7 +180,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
 
   //-- For time output for each slice
 #if SVC_EXTENSION
-  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP%3d ) ", pcSlice->getPOC(),
+  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP%3d ) ", pcSlice->getPOC(),
                                                     pcPic->getLayerId(),
                                                     pcSlice->getTLayer(),
                                                     c,
