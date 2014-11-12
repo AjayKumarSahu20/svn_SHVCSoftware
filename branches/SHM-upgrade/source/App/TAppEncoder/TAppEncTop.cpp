@@ -2320,28 +2320,24 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
 
   //-- all
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     m_gcAnalyzeAll[layer].printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     m_gcAnalyzeI[layer].printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     m_gcAnalyzeP[layer].printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     m_gcAnalyzeB[layer].printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
@@ -2364,6 +2360,9 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
 #endif
     }
   }
+
+  printf("\n");
+  //printf("\nRVM: %.3lf\n" , xCalculateRVM());
 }
 
 #else

@@ -164,13 +164,25 @@ public:
       case CHROMA_400:
         if (printMSEBasedSNR)
         {
+#if SVC_EXTENSION
+          if( layer == 0 )
+          {
+#endif
           printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR" );
 
           if (printSequenceMSE) printf( "    Y-MSE\n" );
           else printf("\n");
 
           //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+          }
+
+          printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
+                 layer,
+
+#else
           printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf",
+#endif
                  getNumPic(), cDelim,
                  getBits() * dScale,
                  getPsnr(COMPONENT_Y) / (Double)getNumPic() );
@@ -181,7 +193,12 @@ public:
           }
           else printf("\n");
 
+#if SVC_EXTENSION
+          printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
+                 layer,
+#else
           printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
+#endif
                  getNumPic(), cDelim,
                  getBits() * dScale,
                  MSEBasedSNR[COMPONENT_Y] );
@@ -195,7 +212,7 @@ public:
 
           //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
 #if SVC_EXTENSION
-          printf( "    L%d\t %8d    %c "          "%12.4lf  "    "%8.4lf",
+          printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
                  layer,
 #else
           printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf",
@@ -222,13 +239,23 @@ public:
 
           if (printMSEBasedSNR)
           {
+#if SVC_EXTENSION
+            if( layer == 0 )
+            {
+#endif
             printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
 
             if (printSequenceMSE) printf( " Y-MSE     "  "U-MSE     "  "V-MSE    "  "YUV-MSE \n" );
             else printf("\n");
 
             //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+            }
+            printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+                   layer,
+#else
             printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+#endif
                    getNumPic(), cDelim,
                    getBits() * dScale,
                    getPsnr(COMPONENT_Y) / (Double)getNumPic(),
@@ -246,7 +273,12 @@ public:
             }
             else printf("\n");
 
+#if SVC_EXTENSION
+            printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+                   layer,
+#else
             printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+#endif
                    getNumPic(), cDelim,
                    getBits() * dScale,
                    MSEBasedSNR[COMPONENT_Y],
@@ -256,13 +288,23 @@ public:
           }
           else
           {
+#if SVC_EXTENSION
+            if( layer == 0 )
+            {
+#endif
             printf( "\tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
             
             if (printSequenceMSE) printf( " Y-MSE     "  "U-MSE     "  "V-MSE    "  "YUV-MSE \n" );
             else printf("\n");
 
             //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+            }
+            printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+                   layer,
+#else
             printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+#endif
                    getNumPic(), cDelim,
                    getBits() * dScale,
                    getPsnr(COMPONENT_Y) / (Double)getNumPic(),

@@ -4539,38 +4539,39 @@ Void TAppEncCfg::xPrintParameter()
 {
   printf("\n");
 #if SVC_EXTENSION  
-  printf("Total number of layers        : %d\n", m_numLayers       );
-  printf("Multiview                     : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
-  printf("Scalable                      : %d\n", m_scalabilityMask[SCALABILITY_ID] );
+  printf("Total number of layers            : %d\n", m_numLayers       );
+  printf("Multiview                         : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
+  printf("Scalable                          : %d\n", m_scalabilityMask[SCALABILITY_ID] );
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
-  printf("Base layer                    : %s\n", m_nonHEVCBaseLayerFlag ? "Non-HEVC" : "HEVC");
+  printf("Base layer                        : %s\n", m_nonHEVCBaseLayerFlag ? "Non-HEVC" : "HEVC");
 #else
-  printf("Base layer                    : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
+  printf("Base layer                        : %s\n", m_avcBaseLayerFlag ? "AVC" : "HEVC");
 #endif
 #endif
 #if AUXILIARY_PICTURES
-  printf("Auxiliary pictures            : %d\n", m_scalabilityMask[AUX_ID] );
+  printf("Auxiliary pictures                : %d\n", m_scalabilityMask[AUX_ID] );
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  printf("Adaptive Resolution Change    : %d\n", m_adaptiveResolutionChange );
+  printf("Adaptive Resolution Change        : %d\n", m_adaptiveResolutionChange );
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
-  printf("Skip picture at ARC switch    : %d\n", m_skipPictureAtArcSwitch );
+  printf("Skip picture at ARC switch        : %d\n", m_skipPictureAtArcSwitch );
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
-  printf("Align picture type            : %d\n", m_crossLayerPictureTypeAlignFlag );
+  printf("Align picture type                : %d\n", m_crossLayerPictureTypeAlignFlag );
 #endif
-  printf("Cross layer IRAP alignment    : %d\n", m_crossLayerIrapAlignFlag );
+  printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-  printf("IDR only for IRAP             : %d\n", m_crossLayerAlignedIdrOnlyFlag );
+  printf("IDR only for IRAP                 : %d\n", m_crossLayerAlignedIdrOnlyFlag );
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
-  printf("InterLayerWeightedPred        : %d\n", m_useInterLayerWeightedPred );
+  printf("InterLayerWeightedPred            : %d\n", m_useInterLayerWeightedPred );
 #endif
-#if O0215_PHASE_ALIGNMENT
-  printf("Cross-layer sample alignment : %d\n", m_phaseAlignFlag);
+#if O0215_PHASE_ALIGNMENT  
+  printf("Cross-layer sample alignment      : %d\n", m_phaseAlignFlag);
 #endif
+  printf("\n");
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
@@ -4578,7 +4579,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
-  printf("Bitstream      File          : %s\n", m_pBitstreamFile      );
+  printf("Bitstream      File               : %s\n", m_pBitstreamFile      );
 #else //SVC_EXTENSION
   printf("Input          File               : %s\n", m_pchInputFile          );
   printf("Bitstream      File               : %s\n", m_pchBitstreamFile      );
