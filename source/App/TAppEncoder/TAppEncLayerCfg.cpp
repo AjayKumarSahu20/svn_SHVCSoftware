@@ -344,7 +344,11 @@ Void TAppEncLayerCfg::xPrintParameter()
     std::cerr << "Invalid";
     exit(1);
   }
+#if SVC_EXTENSION
+  printf("\n");
+#else
   std::cout << "\n" << std::endl;
+#endif
 #if LAYER_CTB
   printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
