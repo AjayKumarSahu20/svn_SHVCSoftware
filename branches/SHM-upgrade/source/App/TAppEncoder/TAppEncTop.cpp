@@ -1121,7 +1121,7 @@ Void TAppEncTop::xCreateLib()
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //2
-    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+    for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
@@ -1205,7 +1205,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //3
-    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
@@ -2069,7 +2069,7 @@ Void TAppEncTop::encode()
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //6
-        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
           g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
@@ -2163,7 +2163,7 @@ Void TAppEncTop::encode()
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //7
-        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
           g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
@@ -2228,9 +2228,9 @@ Void TAppEncTop::encode()
     {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
       //8
-      for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+      for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
       {
-        g_bitDepth[channelTypeIndex]      = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+        g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       }
 #endif

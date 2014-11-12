@@ -3834,8 +3834,7 @@ Void TAppEncCfg::xCheckParameter()
     // verify layer configuration parameters
     for(UInt layer=0; layer<m_numLayers; layer++)
     {
-      Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
-      if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
+      if ( (m_acLayerCfg[layer].m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
       {
         for(Int i=0; i<m_iGOPSize; i++)
         {

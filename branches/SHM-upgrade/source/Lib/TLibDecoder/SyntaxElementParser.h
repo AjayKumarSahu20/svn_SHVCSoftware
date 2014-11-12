@@ -63,7 +63,7 @@
 #define READ_SVLC(        code, name)     xReadSvlc (         code, name )
 #define READ_FLAG(        code, name)     xReadFlag (         code, name )
 #if Q0096_OVERLAY_SEI
-#define READ_STRING(bufSize, code, length, name)   xReadStringTr ( bufSize, code, length, name )
+#define READ_STRING(bufSize, code, length, name)   xReadString ( bufSize, code, length, name )
 #endif
 
 #else
@@ -102,7 +102,7 @@ protected:
   Void  xReadSvlc    ( Int&   val, const Char *pSymbolName );
   Void  xReadFlag    ( UInt&  val, const Char *pSymbolName );
 #if Q0096_OVERLAY_SEI
-  Void  xReadStringTr(UInt bufSize, UChar *pValue, UInt& rLength, const Char *pSymbolName);
+  Void  xReadString  (UInt bufSize, UChar *pValue, UInt& rLength, const Char *pSymbolName);
 #endif
 #else
   Void  xReadCode    ( UInt   length, UInt& val );

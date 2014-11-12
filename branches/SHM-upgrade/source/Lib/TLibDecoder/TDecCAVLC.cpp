@@ -182,7 +182,7 @@ Void TDecCavlc::parseShortTermRefPicSet( TComSPS* sps, TComReferencePictureSet* 
 }
 
 #if Q0048_CGS_3D_ASYMLUT
-Void TDecCavlc::parsePPS(TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID)
+Void TDecCavlc::parsePPS(TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT, Int nLayerID)
 #else
 Void TDecCavlc::parsePPS(TComPPS* pcPPS)
 #endif
@@ -412,13 +412,13 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
 
 #if REF_REGION_OFFSET
             READ_UVLC( uiCode,      "num_ref_loc_offsets" ); pcPPS->setNumScaledRefLayerOffsets(uiCode);
-            for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
             {
-              READ_CODE( 6, uiCode,  "ref_loc_offset_layer_id" );  pcPPS->setScaledRefLayerId( i, uiCode );
-              READ_FLAG( uiCode, "scaled_ref_layer_offset_present_flag" );   pcPPS->setScaledRefLayerOffsetPresentFlag( i, uiCode );
+              READ_CODE( 6, uiCode,  "ref_loc_offset_layer_id" );  pcPPS->setScaledRefLayerId( k, uiCode );
+              READ_FLAG( uiCode, "scaled_ref_layer_offset_present_flag" );   pcPPS->setScaledRefLayerOffsetPresentFlag( k, uiCode );
               if (uiCode)
               {
-                Window& scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+                Window& scaledWindow = pcPPS->getScaledRefLayerWindow(k);
                 READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
                 READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
                 READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
@@ -427,41 +427,41 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
                 READ_FLAG( uiCode, "vert_phase_position_enable_flag" ); scaledWindow.setVertPhasePositionEnableFlag(uiCode);  pcPPS->setVertPhasePositionEnableFlag( pcPPS->getScaledRefLayerId(i), uiCode);
 #endif
               }
-              READ_FLAG( uiCode, "ref_region_offset_present_flag" );   pcPPS->setRefRegionOffsetPresentFlag( i, uiCode );
+              READ_FLAG( uiCode, "ref_region_offset_present_flag" );   pcPPS->setRefRegionOffsetPresentFlag( k, uiCode );
               if (uiCode)
               {
-                Window& refWindow = pcPPS->getRefLayerWindow(i);
+                Window& refWindow = pcPPS->getRefLayerWindow(k);
                 READ_SVLC( iCode, "ref_region_left_offset" );    refWindow.setWindowLeftOffset  (iCode << 1);
                 READ_SVLC( iCode, "ref_region_top_offset" );     refWindow.setWindowTopOffset   (iCode << 1);
                 READ_SVLC( iCode, "ref_region_right_offset" );   refWindow.setWindowRightOffset (iCode << 1);
                 READ_SVLC( iCode, "ref_region_bottom_offset" );  refWindow.setWindowBottomOffset(iCode << 1);
               }
 #if R0209_GENERIC_PHASE
-              READ_FLAG( uiCode, "resample_phase_set_present_flag" );   pcPPS->setResamplePhaseSetPresentFlag( i, uiCode );
+              READ_FLAG( uiCode, "resample_phase_set_present_flag" );   pcPPS->setResamplePhaseSetPresentFlag( k, uiCode );
               if (uiCode)
               {
-                READ_UVLC( uiCode, "phase_hor_luma" );    pcPPS->setPhaseHorLuma ( i, uiCode );
-                READ_UVLC( uiCode, "phase_ver_luma" );    pcPPS->setPhaseVerLuma ( i, uiCode );
-                READ_UVLC( uiCode, "phase_hor_chroma_plus8" );  pcPPS->setPhaseHorChroma (i, uiCode - 8);
-                READ_UVLC( uiCode, "phase_ver_chroma_plus8" );  pcPPS->setPhaseVerChroma (i, uiCode - 8);
+                READ_UVLC( uiCode, "phase_hor_luma" );    pcPPS->setPhaseHorLuma ( k, uiCode );
+                READ_UVLC( uiCode, "phase_ver_luma" );    pcPPS->setPhaseVerLuma ( k, uiCode );
+                READ_UVLC( uiCode, "phase_hor_chroma_plus8" );  pcPPS->setPhaseHorChroma (k, uiCode - 8);
+                READ_UVLC( uiCode, "phase_ver_chroma_plus8" );  pcPPS->setPhaseVerChroma (k, uiCode - 8);
               }
 #endif
             }
 #else
 #if MOVE_SCALED_OFFSET_TO_PPS
             READ_UVLC( uiCode,      "num_scaled_ref_layer_offsets" ); pcPPS->setNumScaledRefLayerOffsets(uiCode);
-            for(Int i = 0; i < pcPPS->getNumScaledRefLayerOffsets(); i++)
+            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
             {
-              Window& scaledWindow = pcPPS->getScaledRefLayerWindow(i);
+              Window& scaledWindow = pcPPS->getScaledRefLayerWindow(k);
 #if O0098_SCALED_REF_LAYER_ID
-              READ_CODE( 6,  uiCode,  "scaled_ref_layer_id" );       pcPPS->setScaledRefLayerId( i, uiCode );
+              READ_CODE( 6,  uiCode,  "scaled_ref_layer_id" );       pcPPS->setScaledRefLayerId( k, uiCode );
 #endif
               READ_SVLC( iCode, "scaled_ref_layer_left_offset" );    scaledWindow.setWindowLeftOffset  (iCode << 1);
               READ_SVLC( iCode, "scaled_ref_layer_top_offset" );     scaledWindow.setWindowTopOffset   (iCode << 1);
               READ_SVLC( iCode, "scaled_ref_layer_right_offset" );   scaledWindow.setWindowRightOffset (iCode << 1);
               READ_SVLC( iCode, "scaled_ref_layer_bottom_offset" );  scaledWindow.setWindowBottomOffset(iCode << 1);
 #if P0312_VERT_PHASE_ADJ
-              READ_FLAG( uiCode, "vert_phase_position_enable_flag" ); scaledWindow.setVertPhasePositionEnableFlag(uiCode);  pcPPS->setVertPhasePositionEnableFlag( pcPPS->getScaledRefLayerId(i), uiCode);
+              READ_FLAG( uiCode, "vert_phase_position_enable_flag" ); scaledWindow.setVertPhasePositionEnableFlag(uiCode);  pcPPS->setVertPhasePositionEnableFlag( pcPPS->getScaledRefLayerId(k), uiCode);
 #endif
             }
 #endif

@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>TLibCommon</ProjectName>
-    <ProjectGuid>{78018D78-F890-47E3-A0B7-09D273F0B11D}</ProjectGuid>
-    <RootNamespace>TLibCommon</RootNamespace>
+    <ProjectName>TLibDecoderAnalyser</ProjectName>
+    <ProjectGuid>{68C1251A-55D8-47C9-9052-62F785BD437A}</ProjectGuid>
+    <RootNamespace>TLibDecoderAnalyser</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -86,7 +86,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\source\Lib\;$(SolutionDir)\..\compat\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;RExt__DECODER_DEBUG_BIT_STATISTICS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -116,7 +116,7 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\source\Lib\;$(SolutionDir)\..\compat\msvc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;RExt__DECODER_DEBUG_BIT_STATISTICS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -143,76 +143,33 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\source\Lib\TLibCommon\ContextModel.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\ContextModel3DBuffer.cpp" />
-    <ClCompile Include="..\..\source\Lib\libmd5\libmd5.c" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\Debug.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\SEI.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComBitStream.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComCABACTables.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComChromaFormat.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComDataCU.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComInterpolationFilter.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComLoopFilter.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComMotionInfo.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPattern.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPic.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPicSym.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPicYuv.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPicYuvMD5.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComPrediction.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComRdCost.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComRdCostWeightPrediction.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComRom.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComSampleAdaptiveOffset.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComSlice.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComTrQuant.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComTU.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComUpsampleFilter.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComWeightPrediction.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibCommon\TComYuv.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\AnnexBread.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\NALread.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\SEIread.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\SyntaxElementParser.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecBinCoderCABAC.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecCAVLC.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecCu.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecEntropy.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecGop.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecSbac.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecSlice.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibDecoder\TDecTop.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\source\Lib\TLibCommon\AccessUnit.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\CommonDef.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\ContextModel.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\ContextModel3DBuffer.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\ContextTables.h" />
-    <ClInclude Include="..\..\source\Lib\libmd5\libmd5.h" />
-    <ClInclude Include="..\..\source\Lib\libmd5\MD5.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\Debug.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\NAL.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\SEI.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComBitCounter.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComBitStream.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComCABACTables.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComChromaFormat.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComCodingStatistics.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComDataCU.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComInterpolationFilter.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComList.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComLoopFilter.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComMotionInfo.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComMv.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComPattern.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComPic.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComPicSym.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComPicYuv.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComPrediction.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComRdCost.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComRdCostWeightPrediction.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComRectangle.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComRom.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComSampleAdaptiveOffset.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComSlice.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComTrQuant.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComTU.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComUpsampleFilter.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComWeightPrediction.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComYuv.h" />
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TypeDef.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\AnnexBread.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\NALread.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\SEIread.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\SyntaxElementParser.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecBinCoder.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecBinCoderCABAC.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecCAVLC.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecCu.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecEntropy.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecGop.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecSbac.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecSlice.h" />
+    <ClInclude Include="..\..\source\Lib\TLibDecoder\TDecTop.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

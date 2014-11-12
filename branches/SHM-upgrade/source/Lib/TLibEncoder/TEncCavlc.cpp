@@ -317,46 +317,46 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 
 #if REF_REGION_OFFSET
             WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_ref_loc_offsets" );
-            for(Int num = 0; num < pcPPS->getNumScaledRefLayerOffsets(); num++)
+            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
             {
-              WRITE_CODE( pcPPS->getScaledRefLayerId(num), 6, "ref_loc_offset_layer_id" );
-              WRITE_FLAG( pcPPS->getScaledRefLayerOffsetPresentFlag(num) ? 1 : 0, "scaled_ref_layer_offset_prsent_flag" );
-              if (pcPPS->getScaledRefLayerOffsetPresentFlag(num))
+              WRITE_CODE( pcPPS->getScaledRefLayerId(k), 6, "ref_loc_offset_layer_id" );
+              WRITE_FLAG( pcPPS->getScaledRefLayerOffsetPresentFlag(k) ? 1 : 0, "scaled_ref_layer_offset_prsent_flag" );
+              if (pcPPS->getScaledRefLayerOffsetPresentFlag(k))
               {
-                Window scaledWindow = pcPPS->getScaledRefLayerWindow(num);
+                Window scaledWindow = pcPPS->getScaledRefLayerWindow(k);
                 WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
                 WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
                 WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
                 WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
               }
-              WRITE_FLAG( pcPPS->getRefRegionOffsetPresentFlag(num) ? 1 : 0, "ref_region_offset_prsent_flag" );
-              if (pcPPS->getRefRegionOffsetPresentFlag(num))
+              WRITE_FLAG( pcPPS->getRefRegionOffsetPresentFlag(k) ? 1 : 0, "ref_region_offset_prsent_flag" );
+              if (pcPPS->getRefRegionOffsetPresentFlag(k))
               {
-                Window refWindow = pcPPS->getRefLayerWindow(num);
+                Window refWindow = pcPPS->getRefLayerWindow(k);
                 WRITE_SVLC( refWindow.getWindowLeftOffset()   >> 1, "ref_region_left_offset" );
                 WRITE_SVLC( refWindow.getWindowTopOffset()    >> 1, "ref_region_top_offset" );
                 WRITE_SVLC( refWindow.getWindowRightOffset()  >> 1, "ref_region_right_offset" );
                 WRITE_SVLC( refWindow.getWindowBottomOffset() >> 1, "ref_region_bottom_offset" );
               }
 #if R0209_GENERIC_PHASE
-              WRITE_FLAG( pcPPS->getResamplePhaseSetPresentFlag(num) ? 1 : 0, "resample_phase_set_present_flag" );
-              if (pcPPS->getResamplePhaseSetPresentFlag(num))
+              WRITE_FLAG( pcPPS->getResamplePhaseSetPresentFlag(k) ? 1 : 0, "resample_phase_set_present_flag" );
+              if (pcPPS->getResamplePhaseSetPresentFlag(k))
               {
-                WRITE_UVLC( pcPPS->getPhaseHorLuma(num), "phase_hor_luma" );
-                WRITE_UVLC( pcPPS->getPhaseVerLuma(num), "phase_ver_luma" );
-                WRITE_UVLC( pcPPS->getPhaseHorChroma(num) + 8, "phase_hor_chroma_plus8" );
-                WRITE_UVLC( pcPPS->getPhaseVerChroma(num) + 8, "phase_ver_chroma_plus8" );
+                WRITE_UVLC( pcPPS->getPhaseHorLuma(k), "phase_hor_luma" );
+                WRITE_UVLC( pcPPS->getPhaseVerLuma(k), "phase_ver_luma" );
+                WRITE_UVLC( pcPPS->getPhaseHorChroma(k) + 8, "phase_hor_chroma_plus8" );
+                WRITE_UVLC( pcPPS->getPhaseVerChroma(k) + 8, "phase_ver_chroma_plus8" );
               }
 #endif
             }
 #else
 #if MOVE_SCALED_OFFSET_TO_PPS
             WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
-            for(Int num = 0; num < pcPPS->getNumScaledRefLayerOffsets(); num++)
+            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
             {
-              Window scaledWindow = pcPPS->getScaledRefLayerWindow(num);
+              Window scaledWindow = pcPPS->getScaledRefLayerWindow(k);
 #if O0098_SCALED_REF_LAYER_ID
-              WRITE_CODE( pcPPS->getScaledRefLayerId(num), 6,          "scaled_ref_layer_id" );
+              WRITE_CODE( pcPPS->getScaledRefLayerId(k), 6,          "scaled_ref_layer_id" );
 #endif
               WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
               WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
