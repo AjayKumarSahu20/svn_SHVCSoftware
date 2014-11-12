@@ -253,10 +253,10 @@ Void TAppDecTop::decode()
     }
 
 #if POC_RESET_IDC_DECODER
-    if ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS &&
+    if ( ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
         !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
 #else
-    if (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS &&
+    if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS) &&
         !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
 #endif
     {

@@ -42,6 +42,9 @@
 #include "TLibCommon/TComRom.h"
 #include "TLibCommon/TComBitStream.h"
 #include "SyntaxElementParser.h"
+#if RExt__DECODER_DEBUG_BIT_STATISTICS
+#include "TLibCommon/TComCodingStatistics.h"
+#endif
 
 #if ENC_DEC_TRACE
 
@@ -218,7 +221,11 @@ Void SyntaxElementParser::xReadFlag (UInt& ruiCode)
 }
 
 #if Q0096_OVERLAY_SEI
-Void  SyntaxElementParser::xReadString  (UInt bufSize, UChar *pVal, UInt& rLength)
+#if RExt__DECODER_DEBUG_BIT_STATISTICS
+Void SyntaxElementParser::xReadString (UInt bufSize, UChar *pVal, UInt& rLength, const Char *pSymbolName)
+#else
+Void  SyntaxElementParser::xReadString (UInt bufSize, UChar *pVal, UInt& rLength)
+#endif
 {
   assert( m_pcBitstream->getNumBitsRead() % 8 == 0 ); //always start reading at a byte-aligned position
   assert ( bufSize > 1 ); //last byte always used for null-termination
