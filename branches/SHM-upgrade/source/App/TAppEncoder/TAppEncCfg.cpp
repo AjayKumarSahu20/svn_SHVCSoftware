@@ -3039,9 +3039,9 @@ Void TAppEncCfg::xCheckParameter(UInt layerId)
 {
   Bool m_useExtendedPrecision                = m_acLayerCfg[layerId].m_useExtendedPrecision;
   Bool m_useHighPrecisionPredictionWeighting = m_acLayerCfg[layerId].m_useHighPrecisionPredictionWeighting;
-  m_chromaFormatIDC             = m_acLayerCfg[layerId].m_chromaFormatIDC;
-  m_chromaFormatConstraint      = m_acLayerCfg[layerId].m_chromaFormatConstraint;
-  m_bitDepthConstraint                  = m_acLayerCfg[layerId].m_bitDepthConstraint;
+  m_chromaFormatIDC                          = m_acLayerCfg[layerId].m_chromaFormatIDC;
+  m_chromaFormatConstraint                   = m_acLayerCfg[layerId].m_chromaFormatConstraint;
+  m_bitDepthConstraint                       = m_acLayerCfg[layerId].m_bitDepthConstraint;
 
   Int m_inputBitDepth[]       = {m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
   Int m_internalBitDepth[]    = {m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
