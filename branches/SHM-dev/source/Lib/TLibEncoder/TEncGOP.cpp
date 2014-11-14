@@ -1630,16 +1630,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if(lTid==pcSlice->getTLayer()) 
           {
             TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0;jj<nRPS->getNumberOfPictures();jj++)
+            for(Int jj=0;(jj<nRPS->getNumberOfPictures() && isSTSA==true);jj++)
             {
               if(nRPS->getUsed(jj)) 
               {
                 Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
                 Int kk=0;
-                for(kk=0;kk<m_pcCfg->getGOPSize();kk++)
+                for(kk=0;kk<iGOPid;kk++)
                 {
                   if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
+                  {
+                    isSTSA=false;
                     break;
+                  }
                 }
                 Int tTid=m_pcCfg->getGOPEntry(kk).m_temporalId;
                 if(tTid >= pcSlice->getTLayer())
@@ -1789,6 +1792,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           )
         )
     {
+      if(pcSlice->isStepwiseTemporalLayerSwitchingPointCandidate(rcListPic))
+      {
         Bool isSTSA=true;
         Bool isIntra=false;
 
@@ -1811,16 +1816,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if(lTid==pcSlice->getTLayer()) 
           {
             TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0; jj<nRPS->getNumberOfPictures(); jj++)
+            for(Int jj=0;(jj<nRPS->getNumberOfPictures() && isSTSA==true);jj++)
             {
               if(nRPS->getUsed(jj)) 
               {
                 Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
                 Int kk=0;
-                for(kk=0; kk<m_pcCfg->getGOPSize(); kk++)
+                for(kk=0;kk<iGOPid;kk++)
                 {
                   if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
                   {
+                    isSTSA=false;
                     break;
                   }
                 }
@@ -1845,6 +1851,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
           }
         }
+      }
     }
 #endif
 
