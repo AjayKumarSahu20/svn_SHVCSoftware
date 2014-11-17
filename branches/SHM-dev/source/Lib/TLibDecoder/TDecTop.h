@@ -166,6 +166,10 @@ private:
   Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
                                            // When new VPS is activated, this should be re-initialized to -1
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool m_confModeFlag;
+  std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
+#endif
 public:
 #if POC_RESET_RESTRICTIONS
   static Bool                    m_checkPocRestrictionsForCurrAu;
@@ -294,6 +298,10 @@ public:
   Int  getSubDpbIdx()           { return m_subDpbIdx; }
   Void assignSubDpbs(TComVPS *vps);
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
+  // std::string const getDecodedYuvLayerFileName(Int layerId) { return m_decodedYuvLayerFileName[layerId]; }
+#endif
 #endif //SVC_EXTENSION
 
 protected:
@@ -332,6 +340,11 @@ protected:
 #endif
 #if POC_RESET_RESTRICTIONS
   Void resetPocRestrictionCheckParameters();
+#endif
+  public:
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool const getConfModeFlag() { return m_confModeFlag; }
+  Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
 #endif
 };// END CLASS DEFINITION TDecTop
 
