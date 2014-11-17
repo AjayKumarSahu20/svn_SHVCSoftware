@@ -45,11 +45,17 @@
 #if SVC_EXTENSION
 #include "TDecTop.h"
 #endif
-
+#include <algorithm>
 #include <time.h>
 
 extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
 
+#if CONFORMANCE_BITSTREAM_MODE
+Bool pocCompareFunction( TComPic &pic1, TComPic &pic2 )
+{
+  return (pic1.getPOC() < pic2.getPOC());
+}
+#endif
 //! \ingroup TLibDecoder
 //! \{
 static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
@@ -255,6 +261,15 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
     }
     calcAndPrintHashStatus(*rpcPic->getPicYuvRec(), hash);
   }
+#if CONFORMANCE_BITSTREAM_MODE
+  if( this->getLayerDec(rpcPic->getLayerId())->getConfModeFlag() ) 
+  {
+    // Add this reconstructed picture to the parallel buffer.
+    std::vector<TComPic> *thisLayerBuffer = (this->getLayerDec(rpcPic->getLayerId()))->getConfListPic();
+    thisLayerBuffer->push_back(*rpcPic);
+    std::sort( thisLayerBuffer->begin(), thisLayerBuffer->end(), pocCompareFunction );
+  }
+#endif
 #if Q0074_COLOUR_REMAPPING_SEI
   if (m_colourRemapSEIEnabled)
   {

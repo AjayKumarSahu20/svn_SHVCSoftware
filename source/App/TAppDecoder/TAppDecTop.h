@@ -70,7 +70,9 @@ private:
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
 #endif
-  
+#if CONFORMANCE_BITSTREAM_MODE
+  TVideoIOYuv   m_confReconFile[63];        ///< decode YUV files
+#endif  
   // for output control  
 #if SVC_EXTENSION
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order

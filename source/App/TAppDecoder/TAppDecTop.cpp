@@ -44,6 +44,8 @@
 #include "TAppDecTop.h"
 #include "TLibDecoder/AnnexBread.h"
 #include "TLibDecoder/NALread.h"
+#include "TLibCommon/TComPicYuv.h"
+#include "libmd5/MD5.h"
 //! \ingroup TAppDecoder
 //! \{
 
@@ -575,6 +577,12 @@ Void TAppDecTop::xInitDecLib()
     m_acTDecTop[layer].setCommonDecoderParams( this->getCommonDecoderParams() );
 #endif
   }
+#if CONFORMANCE_BITSTREAM_MODE
+  for(UInt layer = 0; layer <= MAX_LAYERS; layer++)
+  {
+    m_acTDecTop[layer].setConfModeFlag ( this->getConfModeFlag() );
+  }
+#endif
 #else
   m_cTDecTop.init();
   m_cTDecTop.setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
@@ -1100,6 +1108,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
       conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
   }
+
   // update POC of display order
   pocLastDisplay = pic->getPOC();
 
@@ -1312,6 +1321,71 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       TComPic *pic = *iterPic;
 
       xOutputAndMarkPic( pic, m_pchReconFile[layerIdx], layerIdx, m_aiPOCLastDisplay[layerIdx], dpbStatus );
+
+#if CONFORMANCE_BITSTREAM_MODE
+  FILE *fptr;
+  if( this->getConfModeFlag() )
+  {
+    if( this->getMetadataFileRefresh() )
+    {
+      fptr = fopen( this->getMetadataFileName().c_str(), "w" );
+      fprintf(fptr, " LayerId      POC    MD5\n");
+      fprintf(fptr, "------------------------\n");
+    }
+    else
+    {
+      fptr = fopen( this->getMetadataFileName().c_str(), "a+" );
+    }
+    this->setMetadataFileRefresh(false);
+    UChar recon_digest[3][16];
+    calcMD5(*pic->getPicYuvRec(), recon_digest);
+    fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, 16));
+    fclose(fptr);
+
+    // Output all picutres "decoded" in that layer that have POC less than the current picture
+    std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(pic->getLayerId()))->getConfListPic();
+    // Write all pictures to the file.
+    if( this->getDecodedYuvLayerRefresh(layerIdx) )
+    {
+      if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
+      if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
+
+      char tempFileName[256];
+      strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
+      m_confReconFile[layerIdx].open(tempFileName, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
+      this->setDecodedYuvLayerRefresh( layerIdx, false );
+    }
+    const Window &conf = pic->getConformanceWindow();
+    const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
+    Int xScal =  1, yScal = 1;
+  #if REPN_FORMAT_IN_VPS
+    UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
+    xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+    yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+  #endif
+    std::vector<TComPic>::iterator iterPic;
+    for(iterPic = layerBuffer->begin(); iterPic != layerBuffer->end(); iterPic++)
+    {
+       TComPic checkPic = *iterPic;
+       if( checkPic.getPOC() <= pic->getPOC() )
+       {
+         TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
+         m_confReconFile[layerIdx].write( pPicCYuvRec,
+                                  conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+                                  conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+                                  conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+                                  conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+         layerBuffer->erase(iterPic);
+         iterPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
+         if(layerBuffer->size() == 0)
+         {
+           break;
+         }
+       }
+    }
+  }
+  // Now to remove the pictures that have been output
+#endif
 
       listOfPocsInEachLayer[layerIdx].erase( it );
       listOfPocsPositionInEachLayer[layerIdx].erase( listOfPocsPositionInEachLayer[layerIdx].begin() + picPosition );

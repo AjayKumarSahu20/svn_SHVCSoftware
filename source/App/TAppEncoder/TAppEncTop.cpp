@@ -1562,7 +1562,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #else
   vps->deriveNumberOfSubDpbs();
 #endif
-
+  vps->setOutputLayerFlag( 0, 0, 1 );
   // derive OutputLayerFlag[i][j] 
 #if !OUTPUT_LAYER_SETS_CONFIG
   if( vps->getDefaultTargetOutputLayerIdc() == 1 )
