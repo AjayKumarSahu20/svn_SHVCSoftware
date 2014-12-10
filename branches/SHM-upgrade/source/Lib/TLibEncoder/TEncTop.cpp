@@ -955,6 +955,9 @@ Void TEncTop::xInitSPS()
 
   for ( i = 0; i < min(m_cSPS.getMaxTLayers(),(UInt) MAX_TLAYER); i++ )
   {
+#if SVC_EXTENSION
+    assert(i < MAX_TLAYER);
+#endif
     m_cSPS.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     m_cSPS.setNumReorderPics(m_numReorderPics[i], i);
   }

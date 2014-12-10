@@ -222,7 +222,7 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool 
 
   TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
 #if REPN_FORMAT_IN_VPS
-  if( ( uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples() ) )
+  if( ( uiRPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples() ) )
 #else
   if( ( uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
 #endif

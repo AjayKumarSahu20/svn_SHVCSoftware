@@ -2954,8 +2954,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       const Int log2subWidthCxsubHeightC = (pcPic->getComponentScaleX(COMPONENT_Cb)+pcPic->getComponentScaleY(COMPONENT_Cb));
       const Int minCuWidth  = pcPic->getMinCUWidth();
       const Int minCuHeight = pcPic->getMinCUHeight();
+#if REPN_FORMAT_IN_VPS
+      const Int paddedWidth = ((pcSlice->getPicWidthInLumaSamples()  + minCuWidth  - 1) / minCuWidth) * minCuWidth;
+      const Int paddedHeight= ((pcSlice->getPicHeightInLumaSamples() + minCuHeight - 1) / minCuHeight) * minCuHeight;
+#else
       const Int paddedWidth = ((pcSlice->getSPS()->getPicWidthInLumaSamples()  + minCuWidth  - 1) / minCuWidth) * minCuWidth;
       const Int paddedHeight= ((pcSlice->getSPS()->getPicHeightInLumaSamples() + minCuHeight - 1) / minCuHeight) * minCuHeight;
+#endif
       const Int rawBits = paddedWidth * paddedHeight *
                              (g_bitDepth[CHANNEL_TYPE_LUMA] + 2*(g_bitDepth[CHANNEL_TYPE_CHROMA]>>log2subWidthCxsubHeightC));
       const Int64 threshold = (32LL/3)*numBytesInVclNalUnits + (rawBits/32);
