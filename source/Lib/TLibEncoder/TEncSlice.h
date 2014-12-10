@@ -98,7 +98,7 @@ private:
   TEncSbac                m_lastSliceSegmentEndContextState;    ///< context storage for state at the end of the previous slice-segment (used for dependent slices only).
   TEncSbac                m_entropyCodingSyncContextState;      ///< context storate for state of contexts at the wavefront/WPP/entropy-coding-sync second CTU of tile-row
 
-#if SVC_EXTENSION
+#if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
   Void     setUpLambda(TComSlice* slice, Double dLambda, Int iQP, Int dpeth = -1);
 #else
   Void     setUpLambda(TComSlice* slice, const Double dLambda, Int iQP);

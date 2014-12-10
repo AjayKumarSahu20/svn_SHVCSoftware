@@ -325,8 +325,13 @@ Bool TComDataCU::isLastSubCUOfCtu(const UInt absPartIdx)
   TComPic* pcPic = getPic();
   TComSlice * pcSlice = pcPic->getSlice(pcPic->getCurrSliceIdx());
 
+#if REPN_FORMAT_IN_VPS
+  const UInt picWidth = pcSlice->getPicWidthInLumaSamples();
+  const UInt picHeight = pcSlice->getPicHeightInLumaSamples();
+#else
   const UInt picWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
   const UInt picHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
+#endif
   const UInt granularityWidth = g_uiMaxCUWidth;
 
   const UInt cuPosX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[absPartIdx] ];

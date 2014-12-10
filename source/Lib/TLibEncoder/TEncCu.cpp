@@ -409,8 +409,13 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
   if( (g_uiMaxCUWidth>>uiDepth) >= rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() )
   {
     Int idQP = m_pcEncCfg->getMaxDeltaQP();
+#if REPN_FORMAT_IN_VPS
+    iMinQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffsetY(), MAX_QP, iBaseQP-idQP );
+    iMaxQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffsetY(), MAX_QP, iBaseQP+idQP );
+#else
     iMinQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
     iMaxQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
+#endif
   }
   else
   {
@@ -466,9 +471,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     else
     {
 #endif
-#if (ENCODER_FAST_MODE)
+#if ENCODER_FAST_MODE
     Bool testInter = true;
-    if (rpcBestCU->getLayerId() > 0)
+    if( rpcBestCU->getLayerId() > 0 )
     {
       if(pcSlice->getSliceType() == P_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx())
       {
@@ -504,7 +509,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
       rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
 
       // do inter modes, SKIP and 2Nx2N
-#if (ENCODER_FAST_MODE == 1)
+#if ENCODER_FAST_MODE == 1
       if( rpcBestCU->getSlice()->getSliceType() != I_SLICE && testInter )
 #else
       if( rpcBestCU->getSlice()->getSliceType() != I_SLICE )
@@ -520,7 +525,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         xCheckRDCostMerge2Nx2N( rpcBestCU, rpcTempCU DEBUG_STRING_PASS_INTO(sDebug), &earlyDetectionSkipMode );//by Merge for inter_2Nx2N
         rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
         
-#if (ENCODER_FAST_MODE == 2)
+#if ENCODER_FAST_MODE == 2
         if (testInter)
         {
 #endif
@@ -534,7 +539,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
             doNotBlockPu = rpcBestCU->getQtRootCbf( 0 ) != 0;
           }
         }
-#if (ENCODER_FAST_MODE == 2)
+#if ENCODER_FAST_MODE == 2
         }
 #endif
       }
@@ -559,7 +564,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
 
         // do inter modes, NxN, 2NxN, and Nx2N
-#if (ENCODER_FAST_MODE)
+#if ENCODER_FAST_MODE
         if( rpcBestCU->getSlice()->getSliceType() != I_SLICE && testInter )
 #else
         if( rpcBestCU->getSlice()->getSliceType() != I_SLICE )
@@ -713,8 +718,8 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 
         if((rpcBestCU->getSlice()->getSliceType() == I_SLICE)                                     ||
 #if ENCODER_FAST_MODE
-          ( rpcBestCU->getPredictionMode(0) != MODE_INTRA && rpcBestCU->getPredictionMode(0) != MODE_INTER )   ||  // if there is no valid inter prediction
-          !testInter                                                                                           ||
+          rpcBestCU->getPredictionMode(0) == NUMBER_OF_PREDICTION_MODES                           ||  // if there is no valid inter prediction
+          !testInter                                                                              ||
 #endif
            (rpcBestCU->getCbf( 0, COMPONENT_Y  ) != 0)                                            ||
           ((rpcBestCU->getCbf( 0, COMPONENT_Cb ) != 0) && (numberValidComponents > COMPONENT_Cb)) ||
