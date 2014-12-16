@@ -764,6 +764,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_SourceHeight  [MAX_LAYERS];
   Int*    cfg_FrameRate     [MAX_LAYERS];
   Int*    cfg_IntraPeriod   [MAX_LAYERS];
+  Int*    cfg_confWinLeft   [MAX_LAYERS];
+  Int*    cfg_confWinRight  [MAX_LAYERS];
+  Int*    cfg_confWinTop    [MAX_LAYERS];
+  Int*    cfg_confWinBottom [MAX_LAYERS];
+  Int*    cfg_aiPadX        [MAX_LAYERS];
+  Int*    cfg_aiPadY        [MAX_LAYERS];
   Int*    cfg_conformanceMode  [MAX_LAYERS];
   Bool*   cfg_useExtendedPrecision [MAX_LAYERS];
 #if LAYER_CTB
@@ -880,11 +886,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if REPN_FORMAT_IN_VPS
     cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
 #endif
-    cfg_SourceWidth[layer]  = &m_acLayerCfg[layer].m_iSourceWidth;
-    cfg_SourceHeight[layer] = &m_acLayerCfg[layer].m_iSourceHeight;
-    cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
-    cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
-    cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+    cfg_SourceWidth[layer]          = &m_acLayerCfg[layer].m_iSourceWidth;
+    cfg_SourceHeight[layer]         = &m_acLayerCfg[layer].m_iSourceHeight;
+    cfg_FrameRate[layer]            = &m_acLayerCfg[layer].m_iFrameRate; 
+    cfg_IntraPeriod[layer]          = &m_acLayerCfg[layer].m_iIntraPeriod; 
+    cfg_conformanceMode[layer]      = &m_acLayerCfg[layer].m_conformanceMode;
+    cfg_confWinLeft[layer]          = &m_acLayerCfg[layer].m_confWinLeft;
+    cfg_confWinRight[layer]         = &m_acLayerCfg[layer].m_confWinRight;
+    cfg_confWinTop[layer]           = &m_acLayerCfg[layer].m_confWinTop;
+    cfg_confWinBottom[layer]        = &m_acLayerCfg[layer].m_confWinBottom;
+    cfg_aiPadX[layer]               = &m_acLayerCfg[layer].m_aiPad[0];
+    cfg_aiPadY[layer]               = &m_acLayerCfg[layer].m_aiPad[1];
     cfg_useExtendedPrecision[layer] = &m_acLayerCfg[layer].m_useExtendedPrecision;
 #if LAYER_CTB
     // coding unit (CU) definition
@@ -1106,6 +1118,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("ExtendedPrecision%d",                           cfg_useExtendedPrecision,                false, MAX_LAYERS, "Increased internal accuracies to support high bit depths (not valid in V1 profiles)")
   ("ConformanceMode%d",                             cfg_conformanceMode,                         0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+  ("ConfLeft%d",                                    cfg_confWinLeft,                             0, MAX_LAYERS, "Deprecated alias of ConfWinLeft")
+  ("ConfRight%d",                                   cfg_confWinRight,                            0, MAX_LAYERS, "Deprecated alias of ConfWinRight")
+  ("ConfTop%d",                                     cfg_confWinTop,                              0, MAX_LAYERS, "Deprecated alias of ConfWinTop")
+  ("ConfBottom%d",                                  cfg_confWinBottom,                           0, MAX_LAYERS, "Deprecated alias of ConfWinBottom")
+  ("ConfWinLeft%d",                                 cfg_confWinLeft,                             0, MAX_LAYERS, "Left offset for window conformance mode 3")
+  ("ConfWinRight%d",                                cfg_confWinRight,                            0, MAX_LAYERS, "Right offset for window conformance mode 3")
+  ("ConfWinTop%d",                                  cfg_confWinTop,                              0, MAX_LAYERS, "Top offset for window conformance mode 3")
+  ("ConfWinBottom%d",                               cfg_confWinBottom,                           0, MAX_LAYERS, "Bottom offset for window conformance mode 3")
+  ("HorizontalPadding%d,-pdx%d",                    cfg_aiPadX,                                  0, MAX_LAYERS, "Horizontal source padding for conformance window mode 2")
+  ("VerticalPadding%d,-pdy%d",                      cfg_aiPadY,                                  0, MAX_LAYERS, "Vertical source padding for conformance window mode 2")
   ("ScalabilityMask1",                              m_scalabilityMask[VIEW_ORDER_INDEX],                     0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",                              m_scalabilityMask[SCALABILITY_ID],                       1, "scalability_mask[2] (scalable)" )
 #if AUXILIARY_PICTURES

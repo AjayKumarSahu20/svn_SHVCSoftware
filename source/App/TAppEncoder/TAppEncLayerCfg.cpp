@@ -391,6 +391,16 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   case 1:
     {
+      // conformance
+      if ((m_confWinLeft != 0) || (m_confWinRight != 0) || (m_confWinTop != 0) || (m_confWinBottom != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but cropping parameters are set. Undesired size possible.\n");
+      }
+      if ((m_aiPad[1] != 0) || (m_aiPad[0] != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but padding parameters are also set\n");
+      }
+
       // automatic padding to minimum CU size
 #if LAYER_CTB
       Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
@@ -422,6 +432,12 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   case 2:
     {
+      // conformance
+      if ((m_confWinLeft != 0) || (m_confWinRight != 0) || (m_confWinTop != 0) || (m_confWinBottom != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but cropping parameters are set. Undesired size possible.\n");
+      }
+
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
