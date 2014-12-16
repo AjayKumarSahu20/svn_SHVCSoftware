@@ -128,6 +128,9 @@ TDecTop::TDecTop()
   m_pocResettingFlag        = false;
   m_pocDecrementedInDPBFlag = false;
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  m_confModeFlag = false;
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -2959,9 +2962,13 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
+#if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
+#endif
     Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
+#if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
+#endif
 
     Bool layerSetMatchFlag = true;
     for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)

@@ -93,6 +93,14 @@ protected:
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams             m_commonDecoderParams;
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool          m_confModeFlag;
+  std::string   m_confPrefix;
+  std::string   m_metadataFileName;
+  Bool          m_metadataFileRefresh;
+  std::string   m_decodedYuvLayerFileName[63];
+  Bool          m_decodedYuvLayerRefresh[63];
+#endif
 
 public:
   TAppDecCfg()
@@ -129,6 +137,17 @@ public:
   Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
+#endif
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool const getConfModeFlag() { return m_confModeFlag;  }
+  std::string const getConfPrefix() { return m_confPrefix;}
+  std::string const getMetadataFileName() { return m_metadataFileName; }
+  Bool const getMetadataFileRefresh() {return m_metadataFileRefresh; }
+  Void setMetadataFileRefresh(Bool const x) {m_metadataFileRefresh = x; }
+  Void setDecodedYuvLayerFileName(Int layerId, std::string x) {  m_decodedYuvLayerFileName[layerId] = x; }
+  std::string const getDecodedYuvLayerFileName(Int layerId) {  return m_decodedYuvLayerFileName[layerId]; }
+  Bool const getDecodedYuvLayerRefresh(Int const layerId) {return m_decodedYuvLayerRefresh[layerId]; }
+  Void setDecodedYuvLayerRefresh(Int const layerId, Bool const x) {m_decodedYuvLayerRefresh[layerId] = x; }
 #endif
 };
 

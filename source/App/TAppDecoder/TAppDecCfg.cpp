@@ -72,6 +72,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if OUTPUT_LAYER_SET_INDEX
   Int olsIdx;
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  string cfg_confPrefix;
+#endif
 #if AVC_BASE
   string cfg_BLReconFile;
 #endif
@@ -101,6 +104,10 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
 #if OUTPUT_LAYER_SET_INDEX
   ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
+#endif
+#if CONFORMANCE_BITSTREAM_MODE
+  ("ConformanceBitstremMode,-confMode", m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
+  ("ConformanceMetadataPrefix,-confPrefix", cfg_confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
 #endif
 #else
   ("ReconFile,o",               cfg_ReconFile,                         string(""), "reconstructed YUV output file name\n"
@@ -159,7 +166,35 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if O0137_MAX_LAYERID
   assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
 #endif
-#if OUTPUT_LAYER_SET_INDEX  
+#if OUTPUT_LAYER_SET_INDEX
+#if CONFORMANCE_BITSTREAM_MODE
+  if( m_confModeFlag )
+  {
+    assert( olsIdx != -1 ); // In the conformance mode, target output layer set index is to be explicitly specified.
+
+    if( cfg_confPrefix.empty() )
+    {
+      m_confPrefix = string("decodedBitstream");
+    }
+    else
+    {
+      m_confPrefix = cfg_confPrefix;
+    }
+      // Open metadata file and write
+    char fileNameSuffix[255];
+    sprintf(fileNameSuffix, "%s-OLS%d.opl", m_confPrefix.c_str(), olsIdx);  // olsIdx is the target output layer set index.
+    m_metadataFileName = string(fileNameSuffix);
+    m_metadataFileRefresh = true;
+
+    // Decoded layer YUV files
+    for(UInt layer=0; layer<= m_tgtLayerId; layer++)
+    {
+      sprintf(fileNameSuffix, "%s-L%d.yuv", m_confPrefix.c_str(), layer);  // olsIdx is the target output layer set index.
+      m_decodedYuvLayerFileName[layer] = std::string( fileNameSuffix );
+      m_decodedYuvLayerRefresh[layer] = true;
+    }
+  }
+#endif
   this->getCommonDecoderParams()->setTargetOutputLayerSetIdx( olsIdx       );
   this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
 #endif
