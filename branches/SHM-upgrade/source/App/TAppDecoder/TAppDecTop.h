@@ -73,6 +73,9 @@ private:
   
   // for output control  
 #if SVC_EXTENSION
+#if CONFORMANCE_BITSTREAM_MODE
+  TVideoIOYuv                      m_confReconFile[63];        ///< decode YUV files
+#endif 
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
 #else
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
