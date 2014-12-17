@@ -51,9 +51,9 @@
 extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
 
 #if CONFORMANCE_BITSTREAM_MODE
-Bool pocCompareFunction( TComPic &pic1, TComPic &pic2 )
+Bool pocCompareFunction( const TComPic &pic1, const TComPic &pic2 )
 {
-  return (pic1.getPOC() < pic2.getPOC());
+  return (const_cast<TComPic&>(pic1).getPOC() < const_cast<TComPic&>(pic2).getPOC());
 }
 #endif
 //! \ingroup TLibDecoder

@@ -1323,68 +1323,68 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       xOutputAndMarkPic( pic, m_pchReconFile[layerIdx], layerIdx, m_aiPOCLastDisplay[layerIdx], dpbStatus );
 
 #if CONFORMANCE_BITSTREAM_MODE
-  FILE *fptr;
-  if( this->getConfModeFlag() )
-  {
-    if( this->getMetadataFileRefresh() )
-    {
-      fptr = fopen( this->getMetadataFileName().c_str(), "w" );
-      fprintf(fptr, " LayerId      POC    MD5\n");
-      fprintf(fptr, "------------------------\n");
-    }
-    else
-    {
-      fptr = fopen( this->getMetadataFileName().c_str(), "a+" );
-    }
-    this->setMetadataFileRefresh(false);
-    UChar recon_digest[3][16];
-    calcMD5(*pic->getPicYuvRec(), recon_digest);
-    fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, 16));
-    fclose(fptr);
+      FILE *fptr;
+      if( this->getConfModeFlag() )
+      {
+        if( this->getMetadataFileRefresh() )
+        {
+          fptr = fopen( this->getMetadataFileName().c_str(), "w" );
+          fprintf(fptr, " LayerId      POC    MD5\n");
+          fprintf(fptr, "------------------------\n");
+        }
+        else
+        {
+          fptr = fopen( this->getMetadataFileName().c_str(), "a+" );
+        }
+        this->setMetadataFileRefresh(false);
+        UChar recon_digest[3][16];
+        calcMD5(*pic->getPicYuvRec(), recon_digest);
+        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, 16));
+        fclose(fptr);
 
-    // Output all picutres "decoded" in that layer that have POC less than the current picture
-    std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(pic->getLayerId()))->getConfListPic();
-    // Write all pictures to the file.
-    if( this->getDecodedYuvLayerRefresh(layerIdx) )
-    {
-      if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
-      if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
+        // Output all picutres "decoded" in that layer that have POC less than the current picture
+        std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(pic->getLayerId()))->getConfListPic();
+        // Write all pictures to the file.
+        if( this->getDecodedYuvLayerRefresh(layerIdx) )
+        {
+          if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
+          if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
 
-      char tempFileName[256];
-      strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
-      m_confReconFile[layerIdx].open(tempFileName, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
-      this->setDecodedYuvLayerRefresh( layerIdx, false );
-    }
-    const Window &conf = pic->getConformanceWindow();
-    const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
-    Int xScal =  1, yScal = 1;
-  #if REPN_FORMAT_IN_VPS
-    UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
-    xScal = TComSPS::getWinUnitX( chromaFormatIdc );
-    yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-  #endif
-    std::vector<TComPic>::iterator iterPic;
-    for(iterPic = layerBuffer->begin(); iterPic != layerBuffer->end(); iterPic++)
-    {
-       TComPic checkPic = *iterPic;
-       if( checkPic.getPOC() <= pic->getPOC() )
-       {
-         TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
-         m_confReconFile[layerIdx].write( pPicCYuvRec,
-                                  conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
-                                  conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
-                                  conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-                                  conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
-         layerBuffer->erase(iterPic);
-         iterPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
-         if(layerBuffer->size() == 0)
-         {
-           break;
-         }
-       }
-    }
-  }
-  // Now to remove the pictures that have been output
+          char tempFileName[256];
+          strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
+          m_confReconFile[layerIdx].open(tempFileName, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
+          this->setDecodedYuvLayerRefresh( layerIdx, false );
+        }
+        const Window &conf = pic->getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
+        Int xScal =  1, yScal = 1;
+#if REPN_FORMAT_IN_VPS
+        UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
+        xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+        yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
+        std::vector<TComPic>::iterator itPic;
+        for(itPic = layerBuffer->begin(); itPic != layerBuffer->end(); itPic++)
+        {
+          TComPic checkPic = *itPic;
+          if( checkPic.getPOC() <= pic->getPOC() )
+          {
+            TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
+            m_confReconFile[layerIdx].write( pPicCYuvRec,
+              conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+              conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+              conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+              conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+            layerBuffer->erase(itPic);
+            itPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
+            if(layerBuffer->size() == 0)
+            {
+              break;
+            }
+          }
+        }
+      }
+      // Now to remove the pictures that have been output
 #endif
 
       listOfPocsInEachLayer[layerIdx].erase( it );
