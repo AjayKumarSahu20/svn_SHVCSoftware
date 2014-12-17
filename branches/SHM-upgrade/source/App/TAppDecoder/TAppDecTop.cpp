@@ -1435,8 +1435,8 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         this->setMetadataFileRefresh(false);
 
         TComDigest recon_digest;
-        calcMD5(*pic->getPicYuvRec(), recon_digest);
-        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, 16));
+        Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest);
+        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, numChar).c_str());
         fclose(fptr);
 
         // Output all picutres "decoded" in that layer that have POC less than the current picture
@@ -1460,10 +1460,10 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         xScal = TComSPS::getWinUnitX( chromaFormatIdc );
         yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
-        std::vector<TComPic>::iterator iterPic;
-        for(iterPic = layerBuffer->begin(); iterPic != layerBuffer->end(); iterPic++)
+        std::vector<TComPic>::iterator itPic;
+        for(itPic = layerBuffer->begin(); itPic != layerBuffer->end(); itPic++)
         {
-          TComPic checkPic = *iterPic;
+          TComPic checkPic = *itPic;
           if( checkPic.getPOC() <= pic->getPOC() )
           {
             TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
@@ -1472,8 +1472,8 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
               conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
               conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
               conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
-            layerBuffer->erase(iterPic);
-            iterPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
+            layerBuffer->erase(itPic);
+            itPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
             if(layerBuffer->size() == 0)
             {
               break;
