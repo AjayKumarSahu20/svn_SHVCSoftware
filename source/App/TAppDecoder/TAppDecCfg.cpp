@@ -184,6 +184,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   for(UInt layer=0; layer<= m_tgtLayerId; layer++)
   {
+    assert( layer < MAX_LAYERS );
     m_pchReconFile[layer] = cfg_ReconFile[layer].empty() ? NULL : strdup(cfg_ReconFile[layer].c_str());
   }
 #if AVC_BASE

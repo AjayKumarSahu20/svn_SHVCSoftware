@@ -578,9 +578,9 @@ Void TAppDecTop::xInitDecLib()
 #endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
-  for(UInt layer = 0; layer <= MAX_LAYERS; layer++)
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
-    m_acTDecTop[layer].setConfModeFlag ( this->getConfModeFlag() );
+    m_acTDecTop[layer].setConfModeFlag( m_confModeFlag );
   }
 #endif
 #else
