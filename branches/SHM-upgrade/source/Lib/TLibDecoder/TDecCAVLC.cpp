@@ -706,6 +706,11 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   else
   {
     READ_CODE( 3,  uiCode, "sps_ext_or_max_sub_layers_minus1" );     uiTmp = uiCode;
+
+    if( uiTmp != 7 )
+    {
+      pcSPS->setMaxTLayers(uiTmp + 1);
+    }
   }
 
   Bool V1CompatibleSPSFlag = !( pcSPS->getLayerId() != 0 && uiTmp == 7 );
