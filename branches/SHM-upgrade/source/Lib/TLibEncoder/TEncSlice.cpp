@@ -164,8 +164,11 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
 #if JCTVC_M0259_LAMBDAREFINEMENT
     if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerId()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
     {
+      dLambdas[0] = dLambda * 1.1;
+      m_pcRdCost->setLambda( dLambdas[0] );
+
       m_pcRdCost->setDistortionWeight(compID, tmpWeight * 1.15);
-      dLambdas[compIdx]=dLambda * 1.1/ tmpWeight / 1.15;
+      dLambdas[compIdx] = dLambdas[0] / tmpWeight / 1.15;
     }
     else
     {
