@@ -402,7 +402,7 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
 
             if( pcPPS->getInferScalingListFlag() )
             {
-              READ_UVLC( uiCode, "pps_scaling_list_ref_layer_id" ); 
+              READ_CODE( 6, uiCode, "pps_scaling_list_ref_layer_id" ); 
               pcPPS->setScalingListRefLayerId( uiCode );
               // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
               assert( pcPPS->getScalingListRefLayerId() <= 62 );
@@ -884,9 +884,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
     if( pcSPS->getInferScalingListFlag() )
     {
-      READ_UVLC( uiCode, "sps_scaling_list_ref_layer_id" ); pcSPS->setScalingListRefLayerId( uiCode );
+      READ_CODE( 6, uiCode, "sps_scaling_list_ref_layer_id" ); pcSPS->setScalingListRefLayerId( uiCode );
 
-      // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
+      // The value of sps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
       assert( pcSPS->getScalingListRefLayerId() <= 62 );
 
       pcSPS->setScalingListPresentFlag( false );
