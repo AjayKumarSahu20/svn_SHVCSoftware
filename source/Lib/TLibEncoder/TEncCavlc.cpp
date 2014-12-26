@@ -311,7 +311,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
             {
               // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
               assert( pcPPS->getScalingListRefLayerId() <= 62 );
-              WRITE_UVLC( pcPPS->getScalingListRefLayerId(), "pps_scaling_list_ref_layer_id" );
+              WRITE_CODE( pcPPS->getScalingListRefLayerId(), 6, "pps_scaling_list_ref_layer_id" );
             }
 #endif
 
@@ -673,7 +673,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
       // The value of pps_scaling_list_ref_layer_id shall be in the range of 0 to 62, inclusive
       assert( pcSPS->getScalingListRefLayerId() <= 62 );
 
-      WRITE_UVLC( pcSPS->getScalingListRefLayerId(), "sps_scaling_list_ref_layer_id" );
+      WRITE_CODE( pcSPS->getScalingListRefLayerId(), 6, "sps_scaling_list_ref_layer_id" );
     }
     else
     {
