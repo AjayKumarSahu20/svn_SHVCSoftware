@@ -119,6 +119,7 @@ protected:
   Bool      m_isTopFieldFirst;
 
   // profile/level
+#if !MULTIPLE_PTL_SUPPORT
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
   Level::Name   m_level;
@@ -126,7 +127,19 @@ protected:
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
-  
+#else
+  Int           m_numPTLInfo;
+  Int           m_layerPTLIdx[MAX_VPS_LAYER_ID_PLUS1]; ///< scalability_mask
+  Profile::Name m_profileList[NUM_POSSIBLE_LEVEL];
+  Level::Tier   m_levelTierList[NUM_POSSIBLE_LEVEL];
+  Level::Name   m_levelList[NUM_POSSIBLE_LEVEL];
+  Bool          m_progressiveSourceFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_interlacedSourceFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_nonPackedConstraintFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_frameOnlyConstraintFlagList[NUM_POSSIBLE_LEVEL];
+
+  std::vector< std::vector<Int> > m_listOfLayerPTLofOlss;
+#endif
   // coding structure
 #if !SVC_EXTENSION
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)

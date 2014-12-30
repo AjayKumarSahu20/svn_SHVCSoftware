@@ -353,7 +353,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #else
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
-    //TODO: HENDRY -- Do the checking here.
 #endif
   }
 #else
@@ -1087,9 +1086,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     m_isNoOutputPriorPics = false;
   }
-
-  //TODO: HENDRY -- Probably do the checking for max number of positive and negative pics here
-
 
   //For inference of PicOutputFlag
   if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)

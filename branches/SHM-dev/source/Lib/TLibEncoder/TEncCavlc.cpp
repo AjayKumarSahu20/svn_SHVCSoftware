@@ -1087,7 +1087,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if LIST_OF_PTL
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
+#if !MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
+#else
+    codePTL( vps->getPTL(1), false, vps->getMaxTLayers() - 1 );
+#endif
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -1253,12 +1257,19 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif
 #if LIST_OF_PTL
+#if !MULTIPLE_PTL_SUPPORT
   assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
+#else
+  //Do something here to make sure the loop is correct to consider base layer internal stuff
+#endif
   for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #else
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #endif
   {
+#if MULTIPLE_PTL_SUPPORT
+    vps->setProfilePresentFlag(idx, true);
+#endif
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
 #if !P0048_REMOVE_PROFILE_REF
     if( !vps->getProfilePresentFlag(idx) )
@@ -1266,7 +1277,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_CODE( vps->getProfileLayerSetRef(idx) - 1, 6, "profile_ref_minus1[i]" );
     }
 #endif
+#if !MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+#else
+    codePTL( vps->getPTL(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+#endif
   }
 #endif
 

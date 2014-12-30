@@ -69,6 +69,9 @@
 #define VPS_VUI_BSP_HRD_PARAMS           1      ///< JCTVC-R0231: Define the VPS VUI BSP hrd_params() as a separate function, and apply changes adopted.
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
+#define MULTIPLE_PTL_SUPPORT             1      ///< Fixing profile, tier and level signalling
+#define NUM_POSSIBLE_LEVEL               13     ///< Number of possible level as described in R1013
+
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
 #define R0279_REP_FORMAT_INBL            1      ///< JCTVC-R0279, For any independent non-base layer the used representation format is the one that is signalled in the active SPS for the layer
