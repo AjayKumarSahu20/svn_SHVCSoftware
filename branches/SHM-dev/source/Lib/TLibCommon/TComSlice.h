@@ -583,12 +583,13 @@ private:
 #endif
 #if !MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTL;
-#else
-  TComPTL     m_pcPTLList[NUM_POSSIBLE_LEVEL];
 #endif
   TimingInfo  m_timingInfo;
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL     m_pcPTLList[NUM_POSSIBLE_LEVEL];
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
 #if NECESSARY_LAYER_FLAG
@@ -971,13 +972,15 @@ public:
 
 #if !MULTIPLE_PTL_SUPPORT
   TComPTL* getPTL() { return &m_pcPTL; }
-#else
-  TComPTL* getPTL() { return &m_pcPTLList[0]; }
-  TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
 #endif
+
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL* getPTL() { return &m_pcPTLList[0]; }
+  TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
@@ -1147,7 +1150,7 @@ Void      deriveNumberOfSubDpbs();
 #if MULTIPLE_PTL_SUPPORT
   Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
 #endif
-  Int calculateLenOfSyntaxElement( Int const numVal );
+  Int    calculateLenOfSyntaxElement( Int const numVal );
 #else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }

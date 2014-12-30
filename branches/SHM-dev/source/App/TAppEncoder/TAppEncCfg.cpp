@@ -839,16 +839,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   
   // Profile and level
-#if !MULTIPLE_PTL_SUPPORT
-  ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
-  ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
-  ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
-
-  ("ProgressiveSource", m_progressiveSourceFlag, false, "Indicate that source is progressive")
-  ("InterlacedSource",  m_interlacedSourceFlag,  false, "Indicate that source is interlaced")
-  ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
-  ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
-#else
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
   ("NumProfileTierLevel", m_numPTLInfo, 2, "Number of Profile, Tier and Level information")
   ("Profile%d", m_profileList,   Profile::NONE, NUM_POSSIBLE_LEVEL, "Profile to be used when encoding (Incomplete)")
   ("Level%d",   m_levelList,     Level::NONE, NUM_POSSIBLE_LEVEL, "Level limit to be used, eg 5.1 (Incomplete)")
@@ -861,6 +852,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     
   ("LayerPTLIndex%d", m_layerPTLIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
   ("ListOfProfileTierLevelOls%d", cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_LAYER_ID_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+#else
+  ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
+  ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
+  ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
+
+  ("ProgressiveSource", m_progressiveSourceFlag, false, "Indicate that source is progressive")
+  ("InterlacedSource",  m_interlacedSourceFlag,  false, "Indicate that source is interlaced")
+  ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
+  ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
 #endif
 
 #if LAYER_CTB
@@ -2540,21 +2540,8 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "******************************************************************\n");
   }
   
-#if !MULTIPLE_PTL_SUPPORT
-  if( m_profile==Profile::NONE )
-  {
-    fprintf(stderr, "***************************************************************************\n");
-    fprintf(stderr, "** WARNING: For conforming bitstreams a valid Profile value must be set! **\n");
-    fprintf(stderr, "***************************************************************************\n");
-  }
-  if( m_level==Level::NONE )
-  {
-    fprintf(stderr, "***************************************************************************\n");
-    fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
-    fprintf(stderr, "***************************************************************************\n");
-  }
-#else
-  int ii = 0;
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+  Int ii = 0;
   while ( ii < m_numPTLInfo )
   {
     if( m_profileList[ii] == Profile::NONE )
@@ -2570,6 +2557,19 @@ Void TAppEncCfg::xCheckParameter()
       fprintf(stderr, "***************************************************************************\n");
     }
     ii++;
+  }
+#else
+  if( m_profile==Profile::NONE )
+  {
+    fprintf(stderr, "***************************************************************************\n");
+    fprintf(stderr, "** WARNING: For conforming bitstreams a valid Profile value must be set! **\n");
+    fprintf(stderr, "***************************************************************************\n");
+  }
+  if( m_level==Level::NONE )
+  {
+    fprintf(stderr, "***************************************************************************\n");
+    fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
+    fprintf(stderr, "***************************************************************************\n");
   }
 #endif
 
