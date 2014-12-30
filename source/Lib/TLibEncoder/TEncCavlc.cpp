@@ -1087,10 +1087,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if LIST_OF_PTL
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
-#if !MULTIPLE_PTL_SUPPORT
-    codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
-#else
+#if MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTL(1), false, vps->getMaxTLayers() - 1 );
+#else
+    codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
 #endif
   }
 #endif
@@ -1257,10 +1257,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif
 #if LIST_OF_PTL
-#if !MULTIPLE_PTL_SUPPORT
-  assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
-#else
+#if MULTIPLE_PTL_SUPPORT
   //Do something here to make sure the loop is correct to consider base layer internal stuff
+#else
+  assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
 #endif
   for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #else
@@ -1277,10 +1277,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_CODE( vps->getProfileLayerSetRef(idx) - 1, 6, "profile_ref_minus1[i]" );
     }
 #endif
-#if !MULTIPLE_PTL_SUPPORT
-    codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
-#else
+#if MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTL(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+#else
+    codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
 #endif
   }
 #endif

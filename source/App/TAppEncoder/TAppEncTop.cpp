@@ -261,20 +261,20 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setConformanceWindow            ( m_acLayerCfg[layer].m_confWinLeft, m_acLayerCfg[layer].m_confWinRight, m_acLayerCfg[layer].m_confWinTop, m_acLayerCfg[layer].m_confWinBottom );
     m_acTEncTop[layer].setFramesToBeEncoded            ( m_framesToBeEncoded );
 
-#if !MULTIPLE_PTL_SUPPORT
-    m_acTEncTop[layer].setProfile(m_profile);
-    m_acTEncTop[layer].setLevel(m_levelTier, m_level);
-    m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlag);
-    m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlag);
-    m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
-    m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
-#else
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
     m_acTEncTop[layer].setProfile(m_profileList[m_layerPTLIdx[layer]]);
     m_acTEncTop[layer].setLevel(m_levelTierList[m_layerPTLIdx[layer]], m_levelList[m_layerPTLIdx[layer]]);
     m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlagList[m_layerPTLIdx[layer]]);
     m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlagList[m_layerPTLIdx[layer]]);
     m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[m_layerPTLIdx[layer]]);
     m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[m_layerPTLIdx[layer]]);
+#else
+    m_acTEncTop[layer].setProfile(m_profile);
+    m_acTEncTop[layer].setLevel(m_levelTier, m_level);
+    m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlag);
+    m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlag);
+    m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
+    m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
 #endif
 
 #if REF_IDX_MFM
