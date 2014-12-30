@@ -607,6 +607,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
 #endif
+#if MULTIPLE_PTL_SUPPORT
+  string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
@@ -836,6 +839,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   
   // Profile and level
+#if !MULTIPLE_PTL_SUPPORT
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
   ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
@@ -844,6 +848,20 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterlacedSource",  m_interlacedSourceFlag,  false, "Indicate that source is interlaced")
   ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
   ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
+#else
+  ("NumProfileTierLevel", m_numPTLInfo, 2, "Number of Profile, Tier and Level information")
+  ("Profile%d", m_profileList,   Profile::NONE, NUM_POSSIBLE_LEVEL, "Profile to be used when encoding (Incomplete)")
+  ("Level%d",   m_levelList,     Level::NONE, NUM_POSSIBLE_LEVEL, "Level limit to be used, eg 5.1 (Incomplete)")
+  ("Tier%d",    m_levelTierList, Level::MAIN, NUM_POSSIBLE_LEVEL, "Tier to use for interpretation of --Level")
+
+  ("ProgressiveSource%d", m_progressiveSourceFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source is progressive")
+  ("InterlacedSource%d",  m_interlacedSourceFlagList,  false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source is interlaced")
+  ("NonPackedSource%d",   m_nonPackedConstraintFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",         m_frameOnlyConstraintFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that the bitstream contains only frames")
+    
+  ("LayerPTLIndex%d", m_layerPTLIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
+  ("ListOfProfileTierLevelOls%d", cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_LAYER_ID_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+#endif
 
 #if LAYER_CTB
   // Unit definition parameters
@@ -1921,6 +1939,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
+
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss.resize(m_numOutputLayerSets);
+#endif
+
   Int startOlsCtr = 1;
   if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
   {
@@ -1940,7 +1963,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
+#if MULTIPLE_PTL_SUPPORT
+    if (olsCtr > m_numLayerSets)
+    {
+      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - m_numLayerSets]], "ListOfOutputLayers", m_listOfLayerPTLofOlss[olsCtr] );
+    }
+    else
+    {
+      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsCtr], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
+    }
+#endif
   }
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss[0].push_back(m_layerPTLIdx[0]);
+  delete [] cfg_listOfLayerPTLOfOlss;
+#endif
   delete cfg_numLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
@@ -2502,6 +2539,8 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "**          decoder requires this option to be enabled.         **\n");
     fprintf(stderr, "******************************************************************\n");
   }
+  
+#if !MULTIPLE_PTL_SUPPORT
   if( m_profile==Profile::NONE )
   {
     fprintf(stderr, "***************************************************************************\n");
@@ -2514,6 +2553,25 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
     fprintf(stderr, "***************************************************************************\n");
   }
+#else
+  int ii = 0;
+  while ( ii < m_numPTLInfo )
+  {
+    if( m_profileList[ii] == Profile::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Profile value must be set! **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    if( m_levelList[ii] == Level::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    ii++;
+  }
+#endif
 
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)

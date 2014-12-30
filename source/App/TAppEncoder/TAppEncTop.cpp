@@ -199,6 +199,40 @@ Void TAppEncTop::xInitLibCfg()
   delete [] mapIdxToLayer;
 #endif
 
+#if MULTIPLE_PTL_SUPPORT
+  //Populate PTL in VPS
+  TComVPS *pVPS = m_acTEncTop[0].getVPS();
+  ProfileTierLevel& profileTierLevel = *(pVPS->getPTL(0)->getGeneralPTL());
+  for (int ii = 0; ii < m_numPTLInfo; ii++)
+  {
+    profileTierLevel = *(pVPS->getPTL(ii)->getGeneralPTL());
+
+    profileTierLevel.setLevelIdc(m_levelList[ii]);
+    profileTierLevel.setTierFlag(m_levelTierList[ii]);
+    profileTierLevel.setProfileIdc(m_profileList[ii]);
+    profileTierLevel.setProfileCompatibilityFlag(m_profileList[ii], 1);
+    profileTierLevel.setProgressiveSourceFlag(m_progressiveSourceFlagList[ii]);
+    profileTierLevel.setInterlacedSourceFlag(m_interlacedSourceFlagList[ii]);
+    profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[ii]);
+    profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[ii]);
+  }
+  pVPS->setNumProfileTierLevel(m_numPTLInfo);
+
+  std::vector<int> myvector;
+  vps->getProfileLevelTierIdx()->resize(m_numOutputLayerSets);
+  for (int ii = 0; ii < m_numOutputLayerSets; ii++)
+  {
+    myvector =  m_listOfLayerPTLofOlss[ii];
+    vps->getProfileLevelTierIdx()->resize(myvector.size());
+    for (std::vector<int>::iterator it = myvector.begin() ; it != myvector.end(); ++it)
+    {
+      pVPS->addProfileLevelTierIdx(ii, it[0]);
+    }
+  }
+
+  //pVPS->setProfileLevelTierIdx(
+#endif
+
   assert( m_numLayers <= MAX_LAYERS );
 
   for(UInt layer=0; layer<m_numLayers; layer++)
@@ -227,12 +261,21 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setConformanceWindow            ( m_acLayerCfg[layer].m_confWinLeft, m_acLayerCfg[layer].m_confWinRight, m_acLayerCfg[layer].m_confWinTop, m_acLayerCfg[layer].m_confWinBottom );
     m_acTEncTop[layer].setFramesToBeEncoded            ( m_framesToBeEncoded );
 
+#if !MULTIPLE_PTL_SUPPORT
     m_acTEncTop[layer].setProfile(m_profile);
     m_acTEncTop[layer].setLevel(m_levelTier, m_level);
     m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlag);
     m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlag);
     m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
     m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
+#else
+    m_acTEncTop[layer].setProfile(m_profileList[m_layerPTLIdx[layer]]);
+    m_acTEncTop[layer].setLevel(m_levelTierList[m_layerPTLIdx[layer]], m_levelList[m_layerPTLIdx[layer]]);
+    m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlagList[m_layerPTLIdx[layer]]);
+    m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlagList[m_layerPTLIdx[layer]]);
+    m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[m_layerPTLIdx[layer]]);
+    m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[m_layerPTLIdx[layer]]);
+#endif
 
 #if REF_IDX_MFM
 #if AVC_BASE
@@ -1384,7 +1427,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
     vps->setIlpSshSignalingEnabledFlag(false);
 #if VPS_EXTN_PROFILE_INFO
-
+#if !MULTIPLE_PTL_SUPPORT
 #if LIST_OF_PTL
   vps->getPTLForExtnPtr()->resize(1);   // Dummy object - unused.
   for(i = 0; i < vps->getMaxLayers(); i++)
@@ -1413,6 +1456,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // Note - may need to be changed for other layer structures.
     *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
   }
+#endif
 #endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -1523,11 +1567,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
   // Target output layer
+#if !MULTIPLE_PTL_SUPPORT
 #if LIST_OF_PTL
   vps->setNumProfileTierLevel( vps->getPTLForExtnPtr()->size() ); // +1 for the base VPS PTL()
 #else
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
+#endif
 #endif
 #if !OUTPUT_LAYER_SETS_CONFIG // Taken care by configuration file parameter
 #if P0295_DEFAULT_OUT_LAYER_IDC
@@ -1618,6 +1664,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
 #endif
+#if !MULTIPLE_PTL_SUPPORT
 #if PER_LAYER_PTL
   vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0 ); // Default 0-th output layer set
@@ -1638,6 +1685,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
+#endif
 #endif
 #if SUB_LAYERS_IN_LAYER_SET
   vps->calculateMaxSLInLayerSets();
