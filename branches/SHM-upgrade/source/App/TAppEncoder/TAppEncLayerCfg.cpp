@@ -308,7 +308,7 @@ Void TAppEncLayerCfg::xPrintParameter()
 #endif
   printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 #if MULTIPLE_PTL_SUPPORT
-  printf("PTL index                         : %d", m_layerPTLIdx );
+  printf("PTL index                         : %d\n", m_layerPTLIdx );
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
