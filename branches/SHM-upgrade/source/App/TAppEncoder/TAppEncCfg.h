@@ -119,13 +119,27 @@ protected:
   InputColourSpaceConversion m_inputColourSpaceConvert;       ///< colour space conversion to apply to input video
   Bool      m_snrInternalColourSpace;                       ///< if true, then no colour space conversion is applied for snr calculation, otherwise inverse of input is applied.
   Bool      m_outputInternalColourSpace;                    ///< if true, then no colour space conversion is applied for reconstructed video, otherwise inverse of input is applied.
+#if !SVC_EXTENSION
   ChromaFormat m_InputChromaFormatIDC;
+#endif
 
   Bool      m_printMSEBasedSequencePSNR;
   Bool      m_printFrameMSE;
   Bool      m_printSequenceMSE;
   Bool      m_cabacZeroWordPaddingEnabled;
 
+#if MULTIPLE_PTL_SUPPORT
+  Int           m_numPTLInfo;
+  Profile::Name m_profileList[NUM_POSSIBLE_LEVEL];
+  Level::Tier   m_levelTierList[NUM_POSSIBLE_LEVEL];
+  Level::Name   m_levelList[NUM_POSSIBLE_LEVEL];
+  Bool          m_progressiveSourceFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_interlacedSourceFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_nonPackedConstraintFlagList[NUM_POSSIBLE_LEVEL];
+  Bool          m_frameOnlyConstraintFlagList[NUM_POSSIBLE_LEVEL];
+
+  std::vector< std::vector<Int> > m_listOfLayerPTLofOlss;
+#else
   // profile/level
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
@@ -138,6 +152,7 @@ protected:
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
+#endif
 
   // coding structure
 #if !SVC_EXTENSION
@@ -226,7 +241,9 @@ protected:
   Bool      m_useHighPrecisionPredictionWeighting;
 #endif
   //coding tools (chroma format)
+#if !SVC_EXTENSION
   ChromaFormat m_chromaFormatIDC;
+#endif
 
   // coding tools (PCM bit-depth)
   Bool      m_bPCMInputBitDepthFlag;                          ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.

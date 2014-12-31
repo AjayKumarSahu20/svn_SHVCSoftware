@@ -244,6 +244,8 @@
 #if Q0078_ADD_LAYER_SETS
 #define MAX_NUM_ADD_LAYER_SETS           1023
 #endif
+#define MULTIPLE_PTL_SUPPORT             1      ///< Profile, tier and level signalling
+#define NUM_POSSIBLE_LEVEL               13
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
@@ -926,10 +928,6 @@ namespace Profile
     MAINSTILLPICTURE = 3,
     MAINREXT = 4,
     HIGHTHROUGHPUTREXT = 5,
-#if SVC_EXTENSION
-    SCALABLE = 6,
-    SCALABLE10 = 7,
-#endif
   };
 }
 

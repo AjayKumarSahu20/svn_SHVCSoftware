@@ -307,48 +307,40 @@ Void TAppEncLayerCfg::xPrintParameter()
   printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
 #endif
   printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+#if MULTIPLE_PTL_SUPPORT
+  printf("PTL index                         : %d", m_layerPTLIdx );
+#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("PCM sample bit depth              : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
 #endif
-#if SVC_EXTENSION
   std::cout << "Input ChromaFormatIDC             :";
-#else
-  std::cout << std::setw(43) << "Input ChromaFormatIDC = ";
-#endif
+
   switch (m_InputChromaFormatIDC)
   {
-  case CHROMA_400:  std::cout << "  4:0:0"; break;
-  case CHROMA_420:  std::cout << "  4:2:0"; break;
-  case CHROMA_422:  std::cout << "  4:2:2"; break;
-  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
   default:
     std::cerr << "Invalid";
     exit(1);
   }
   std::cout << std::endl;
 
-#if SVC_EXTENSION
   std::cout << "Output (internal) ChromaFormatIDC :";
-#else
-  std::cout << std::setw(43) << "Output (internal) ChromaFormatIDC = ";
-#endif
   switch (m_chromaFormatIDC)
   {
-  case CHROMA_400:  std::cout << "  4:0:0"; break;
-  case CHROMA_420:  std::cout << "  4:2:0"; break;
-  case CHROMA_422:  std::cout << "  4:2:2"; break;
-  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
   default:
     std::cerr << "Invalid";
     exit(1);
   }
-#if SVC_EXTENSION
   printf("\n");
-#else
-  std::cout << "\n" << std::endl;
-#endif
 #if LAYER_CTB
   printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
