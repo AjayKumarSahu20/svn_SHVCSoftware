@@ -41,7 +41,9 @@ private:
 public:
   TComUpsampleFilter(void);
   ~TComUpsampleFilter(void);
-
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
   Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag );
@@ -57,6 +59,7 @@ public:
 #endif
 #else
   Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
+#endif
 #endif
 #endif
 

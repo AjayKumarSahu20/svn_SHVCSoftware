@@ -44,7 +44,7 @@
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
-
+#define O0215_PHASE_ALIGNMENT_REMOVAL    1
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 #define SIGNALLING_BITRATE_PICRATE_FIX   1      ///< Fix for signalling of bitrate and picture rate info in VPS VUI to be more aligned to JCTVC-R1008
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
@@ -212,8 +212,9 @@
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define N0065_LAYER_POC_ALIGNMENT        1
-
+#if !O0215_PHASE_ALIGNMENT_REMOVAL
 #define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
+#endif
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define R0062_AUX_PSEUDO_MONOCHROME      1      ///> JCVVC-R0063: pseudo monochrome for auxiliary pictures
 
