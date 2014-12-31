@@ -3175,7 +3175,6 @@ Void TAppEncCfg::xCheckParameter(UInt layerId)
 #if MULTIPLE_PTL_SUPPORT
   Int layerPTLIdx = m_acLayerCfg[layerId].m_layerPTLIdx;
   Profile::Name m_profile           = m_profileList[layerPTLIdx];
-  Level::Name m_level               = m_levelList[layerPTLIdx];
   UInt m_bitDepthConstraint         = m_acLayerCfg[layerId].m_bitDepthConstraint;
   Bool m_intraConstraintFlag        = m_acLayerCfg[layerId].m_intraConstraintFlag;
   Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerId].m_lowerBitRateConstraintFlag;
