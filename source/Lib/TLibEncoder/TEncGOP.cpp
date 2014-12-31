@@ -1342,6 +1342,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
               pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
             }
 #endif
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec() );
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
@@ -1372,6 +1375,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
             m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
 #endif

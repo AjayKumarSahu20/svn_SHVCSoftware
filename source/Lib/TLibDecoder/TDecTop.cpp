@@ -2191,6 +2191,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           // check for the sample prediction picture type
           if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
           {
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec());
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
@@ -2225,6 +2228,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
             m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
             m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
 #endif
