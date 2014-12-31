@@ -859,6 +859,12 @@ Bool TComPrediction::UseDPCMForFirstPassIntraEstimation(TComTU &rTu, const UInt 
 }
 
 #if SVC_EXTENSION
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
+{
+  m_cUsf.upsampleBasePic( currSlice, refLayerIdc, pcUsPic, pcBasePic, pcTempPic );
+}
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
@@ -889,6 +895,7 @@ Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TCo
 {
   m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
 }
+#endif
 #endif
 #endif
 #endif //SVC_EXTENSION
