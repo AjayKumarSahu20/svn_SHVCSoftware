@@ -620,11 +620,15 @@ private:
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 #endif
-
+#if !MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTL;
+#endif
   TimingInfo  m_timingInfo;
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL     m_pcPTLList[NUM_POSSIBLE_LEVEL];
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
 #if NECESSARY_LAYER_FLAG
@@ -688,7 +692,9 @@ private:
 #if !P0048_REMOVE_PROFILE_REF
   UInt       m_profileLayerSetRef[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
 #endif
+#if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>    m_pcPTLForExtn;  
+#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // .. More declarations here
@@ -1003,10 +1009,17 @@ public:
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
 
+#if !MULTIPLE_PTL_SUPPORT
   TComPTL* getPTL() { return &m_pcPTL; }
+#endif
+
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL* getPTL() { return &m_pcPTLList[0]; }
+  TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
@@ -1104,8 +1117,10 @@ Void      deriveNumberOfSubDpbs();
   Void   setProfileLayerSetRef(Int id, Bool x)                  { m_profileLayerSetRef[id] = x;    }
 #endif
 
+#if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
   TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
+#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling related
@@ -1171,7 +1186,10 @@ Void      deriveNumberOfSubDpbs();
   std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
   Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
   Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
-  Int calculateLenOfSyntaxElement( Int const numVal );
+#if MULTIPLE_PTL_SUPPORT
+  Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
+#endif
+  Int    calculateLenOfSyntaxElement( Int const numVal );
 #else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }

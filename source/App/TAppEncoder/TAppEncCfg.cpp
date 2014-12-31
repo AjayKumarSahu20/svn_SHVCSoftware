@@ -87,10 +87,7 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MAIN_444_10_INTRA = 2310,
   MAIN_444_12_INTRA = 2312,
   MAIN_444_16_INTRA = 2316,
-#if SVC_EXTENSION
-  SCALABLE          = 6,
-  SCALABLE10        = 7,
-#endif
+
 };
 
 
@@ -340,10 +337,6 @@ strToProfile[] =
   {"main-still-picture",   Profile::MAINSTILLPICTURE   },
   {"main-RExt",            Profile::MAINREXT           },
   {"high-throughput-RExt", Profile::HIGHTHROUGHPUTREXT },
-#if SVC_EXTENSION
-  {"scalable",             Profile::SCALABLE           },
-  {"scalable10",           Profile::SCALABLE10         },
-#endif
 };
 
 static const struct MapStrToExtendedProfile
@@ -378,10 +371,6 @@ strToExtendedProfile[] =
     {"main_444_10_intra",  MAIN_444_10_INTRA},
     {"main_444_12_intra",  MAIN_444_12_INTRA},
     {"main_444_16_intra",  MAIN_444_16_INTRA},
-#if SVC_EXTENSION
-    {"scalable",           SCALABLE         },
-    {"scalable10",         SCALABLE10       },
-#endif
 };
 
 static const ExtendedProfileName validRExtProfileNames[2/* intraConstraintFlag*/][4/* bit depth constraint 8=0, 10=1, 12=2, 16=3*/][4/*chroma format*/]=
@@ -785,8 +774,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   UInt*      cfg_uiQuadtreeTUMaxDepthInter[MAX_LAYERS];
   UInt*      cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
 #endif
-  Int      cfg_tmpChromaFormatIDC  [MAX_LAYERS];
-  Int      cfg_tmpInputChromaFormat[MAX_LAYERS];
 #if AUXILIARY_PICTURES
   Int*     cfg_auxId               [MAX_LAYERS];
 #endif
@@ -874,6 +861,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_colourRemapSEIFile[MAX_LAYERS];
 #endif
   Int*    cfg_waveFrontSynchro[MAX_LAYERS];
+
+#if MULTIPLE_PTL_SUPPORT
+  Bool    tmpIntraConstraintFlag;
+  Bool    tmpLowerBitRateConstraintFlag;
+  UInt    tmpBitDepthConstraint;
+  Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_ID_PLUS1];
+#endif
 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -970,6 +964,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
+#if MULTIPLE_PTL_SUPPORT
+    cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
+#endif
   }
 #if Q0078_ADD_LAYER_SETS
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -990,6 +987,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_numLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
+#endif
+#if MULTIPLE_PTL_SUPPORT
+  string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
 #endif
 #if AVC_BASE
   string  cfg_BLInputFile;
@@ -1012,7 +1012,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int tmpInputChromaFormat;
   Int tmpConstraintChromaFormat;
   string inputColourSpaceConvert;
+#if MULTIPLE_PTL_SUPPORT
+  ExtendedProfileName extendedProfile[NUM_POSSIBLE_LEVEL];
+#else
   ExtendedProfileName extendedProfile;
+#endif
   Int saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];
 
   // Multi-value input fields:                                // minval, maxval (incl), min_entries, max_entries (incl) [, default values, number of default values]
@@ -1111,8 +1115,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ListOfOutputLayers%d",                          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
   ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                       string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
-  ("InputChromaFormat%d",                           cfg_tmpInputChromaFormat,                  420, MAX_LAYERS, "InputChromaFormatIDC for layer %d")
-  ("ChromaFormatIDC%d,-cf",                         cfg_tmpChromaFormatIDC,                    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
 #if AUXILIARY_PICTURES
   ("AuxId%d",                                       cfg_auxId,                                   0, MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
@@ -1262,6 +1264,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff",                              m_isTopFieldFirst,                                false, "In case of field based coding, signals whether if it's a top field first or not")
 
   // Profile and level
+#if MULTIPLE_PTL_SUPPORT
+  ("NumProfileTierLevel",                             m_numPTLInfo,                                         2, "Number of Profile, Tier and Level information")
+  ("Profile%d",                                       extendedProfile,               NONE, NUM_POSSIBLE_LEVEL,  "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
+  ("Level%d",                                         m_levelList,            Level::NONE, NUM_POSSIBLE_LEVEL, "Level limit to be used, eg 5.1, or none")
+  ("Tier%d",                                          m_levelTierList,        Level::MAIN, NUM_POSSIBLE_LEVEL, "Tier to use for interpretation of --Level (main or high only)")
+  ("MaxBitDepthConstraint",                           tmpBitDepthConstraint,                               0u, "Bit depth to use for profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
+  ("MaxChromaFormatConstraint",                       tmpConstraintChromaFormat,                            0, "Chroma-format to use for the profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
+  ("IntraConstraintFlag",                             tmpIntraConstraintFlag,                           false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
+  ("LowerBitRateConstraintFlag",                      tmpLowerBitRateConstraintFlag,                     true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
+  
+  ("ProgressiveSource%d",                             m_progressiveSourceFlagList,   false, NUM_POSSIBLE_LEVEL, "Indicate that source is progressive")
+  ("InterlacedSource%d",                              m_interlacedSourceFlagList,    false, NUM_POSSIBLE_LEVEL, "Indicate that source is interlaced")
+  ("NonPackedSource%d",                               m_nonPackedConstraintFlagList, false, NUM_POSSIBLE_LEVEL, "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",                                     m_frameOnlyConstraintFlagList, false, NUM_POSSIBLE_LEVEL, "Indicate that the bitstream contains only frames")
+  
+  ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
+  ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_LAYER_ID_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+#else
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level",                                           m_level,                                    Level::NONE, "Level limit to be used, eg 5.1, or none")
   ("Tier",                                            m_levelTier,                                Level::MAIN, "Tier to use for interpretation of --Level (main or high only)")
@@ -1274,6 +1294,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterlacedSource",                                m_interlacedSourceFlag,                           false, "Indicate that source is interlaced")
   ("NonPackedSource",                                 m_nonPackedConstraintFlag,                        false, "Indicate that source does not contain frame packing")
   ("FrameOnly",                                       m_frameOnlyConstraintFlag,                        false, "Indicate that the bitstream contains only frames")
+#endif
 
 #if LAYER_CTB
   // Unit definition parameters
@@ -1873,8 +1894,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
-    if (m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0) { m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-    if (m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
+    m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
+    m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
+
     if (m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
     if (m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
     if (m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
@@ -1882,7 +1904,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     if (m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
 
     m_acLayerCfg[layer].m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
-    m_acLayerCfg[layer].m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));    
+    m_acLayerCfg[layer].m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_acLayerCfg[layer].m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
+
+    m_acLayerCfg[layer].m_useHighPrecisionPredictionWeighting = false;
+    m_acLayerCfg[layer].m_useExtendedPrecision = false;
   }
 #else
   /* rules for input, output and internal bitdepths as per help text */
@@ -1898,6 +1923,90 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 
+#if MULTIPLE_PTL_SUPPORT
+  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
+  {
+    m_acLayerCfg[layer].m_bitDepthConstraint = tmpBitDepthConstraint;
+    m_acLayerCfg[layer].m_intraConstraintFlag = tmpIntraConstraintFlag;
+    m_acLayerCfg[layer].m_lowerBitRateConstraintFlag = tmpLowerBitRateConstraintFlag;    
+
+    for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
+    {
+      m_acLayerCfg[layer].m_saoOffsetBitShift[channelType] = 0;
+    }
+        
+    Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
+
+    if( extendedProfile[layerPTLIdx] >= 1000 && extendedProfile[layerPTLIdx] <= 2316 )
+    {
+      m_profileList[layerPTLIdx] = Profile::MAINREXT;            
+
+      if( m_acLayerCfg[layer].m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0)
+      {
+        fprintf(stderr, "Error: The bit depth and chroma format constraints are not used when an explicit RExt profile is specified\n");
+        exit(EXIT_FAILURE);
+      }
+      m_acLayerCfg[layer].m_bitDepthConstraint  = (extendedProfile[layerPTLIdx]%100);
+      m_acLayerCfg[layer].m_intraConstraintFlag = (extendedProfile[layerPTLIdx]>=2000);
+      switch ((extendedProfile[layerPTLIdx]/100)%10)
+      {
+      case 0:  tmpConstraintChromaFormat=400; break;
+      case 1:  tmpConstraintChromaFormat=420; break;
+      case 2:  tmpConstraintChromaFormat=422; break;
+      default: tmpConstraintChromaFormat=444; break;
+      }
+    }
+    else
+    {
+      m_profileList[layerPTLIdx] = Profile::Name(extendedProfile[layerPTLIdx]);
+    }
+
+    if( m_profileList[layerPTLIdx] == Profile::HIGHTHROUGHPUTREXT )
+    {
+      if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 ) m_acLayerCfg[layer].m_bitDepthConstraint = 16;
+      m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_444 : numberToChromaFormat(tmpConstraintChromaFormat);
+    }
+    else if( m_profileList[layerPTLIdx] == Profile::MAINREXT )
+    {
+      if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0 )
+      {
+        // produce a valid combination, if possible.
+        const Bool bUsingGeneralRExtTools  = m_useResidualRotation                    ||
+          m_useSingleSignificanceMapContext        ||
+          m_useResidualDPCM[RDPCM_SIGNAL_IMPLICIT] ||
+          m_useResidualDPCM[RDPCM_SIGNAL_EXPLICIT] ||
+          !m_enableIntraReferenceSmoothing         ||
+          m_useGolombRiceParameterAdaptation       ||
+          m_transformSkipLog2MaxSize!=2;
+        const Bool bUsingChromaQPAdjustment= m_maxCUChromaQpAdjustmentDepth >= 0;
+        const Bool bUsingExtendedPrecision = m_acLayerCfg[layer].m_useExtendedPrecision;
+        m_acLayerCfg[layer].m_chromaFormatConstraint = NUM_CHROMA_FORMAT;
+        automaticallySelectRExtProfile(bUsingGeneralRExtTools,
+          bUsingChromaQPAdjustment,
+          bUsingExtendedPrecision,
+          m_acLayerCfg[layer].m_intraConstraintFlag,
+          m_acLayerCfg[layer].m_bitDepthConstraint,
+          m_acLayerCfg[layer].m_chromaFormatConstraint,
+          m_acLayerCfg[layer].m_chromaFormatIDC==CHROMA_400 ? m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA] : std::max(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]),
+          m_acLayerCfg[layer].m_chromaFormatIDC);
+      }
+      else if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 || tmpConstraintChromaFormat == 0)
+      {
+        fprintf(stderr, "Error: The bit depth and chroma format constraints must either both be specified or both be configured automatically\n");
+        exit(EXIT_FAILURE);
+      }
+      else
+      {
+        m_acLayerCfg[layer].m_chromaFormatConstraint = numberToChromaFormat(tmpConstraintChromaFormat);
+      }
+    }
+    else
+    {
+      m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_acLayerCfg[layer].m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
+      m_acLayerCfg[layer].m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10?10:8);
+    }
+  }
+#else
   if (extendedProfile >= 1000 && extendedProfile <= 2316)
   {
     m_profile = Profile::MAINREXT;
@@ -1921,6 +2030,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     m_profile = Profile::Name(extendedProfile);
   }
 
+#if SVC_EXTENSION
+  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[0].m_chromaFormatIDC;
+#endif
+
   if (m_profile == Profile::HIGHTHROUGHPUTREXT )
   {
     if (m_bitDepthConstraint == 0) m_bitDepthConstraint = 16;
@@ -1931,8 +2044,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     if (m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0)
     {
 #if SVC_EXTENSION
-      Bool m_useExtendedPrecision = m_acLayerCfg[0].m_useExtendedPrecision;
-      Int  m_internalBitDepth[]   = {m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
+      Bool m_useExtendedPrecision    = m_acLayerCfg[0].m_useExtendedPrecision;
+      Int  m_internalBitDepth[]      = {m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
+      ChromaFormat m_chromaFormatIDC = m_acLayerCfg[0].m_chromaFormatIDC;
 #endif
       // produce a valid combination, if possible.
       const Bool bUsingGeneralRExtTools  = m_useResidualRotation                    ||
@@ -1964,49 +2078,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_chromaFormatConstraint = numberToChromaFormat(tmpConstraintChromaFormat);
     }
   }
-#if SVC_EXTENSION
-  else if( m_profile == Profile::SCALABLE || m_profile == Profile::SCALABLE10 )
-  {
-    for(Int layer = 0; layer < m_numLayers; layer++)
-    {
-      m_acLayerCfg[layer].m_bitDepthConstraint     = (m_profile == Profile::SCALABLE10 ? 10 : 8);
-      m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_420 : numberToChromaFormat(tmpConstraintChromaFormat);
-
-      for(UInt ch=0; ch<MAX_NUM_CHANNEL_TYPE; ch++)
-      {
-        m_acLayerCfg[layer].m_MSBExtendedBitDepth[ch] = m_acLayerCfg[layer].m_inputBitDepth[ch];
-
-        if (saoOffsetBitShift[ch]<0)
-        {
-          if (m_acLayerCfg[layer].m_internalBitDepth[ch]>10)
-          {
-            m_acLayerCfg[layer].m_saoOffsetBitShift[ch]=UInt(Clip3<Int>(0, m_acLayerCfg[layer].m_internalBitDepth[ch]-10, Int(m_acLayerCfg[layer].m_internalBitDepth[ch]-10 + 0.165*m_acLayerCfg[layer].m_iQP - 3.22 + 0.5) ) );
-          }
-          else
-          {
-            m_acLayerCfg[layer].m_saoOffsetBitShift[ch]=0;
-          }
-        }
-        else
-        {
-          m_acLayerCfg[layer].m_saoOffsetBitShift[ch]=UInt(saoOffsetBitShift[ch]);
-        }
-      }
-    }
-  }
-#endif
   else
   {
     m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
     m_bitDepthConstraint = (m_profile == Profile::MAIN10?10:8);
   }
-
+#endif
 
   m_inputColourSpaceConvert = stringToInputColourSpaceConvert(inputColourSpaceConvert, true);
 
 #if SVC_EXTENSION
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
+#if !MULTIPLE_PTL_SUPPORT
+    m_acLayerCfg[layer].m_chromaFormatConstraint = m_chromaFormatConstraint;
+    m_acLayerCfg[layer].m_bitDepthConstraint = m_bitDepthConstraint;
+#endif
+
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
     if(m_acLayerCfg[layer].m_numScaledRefLayerOffsets)
     {
@@ -2376,13 +2464,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 
-#if AUXILIARY_PICTURES
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    m_acLayerCfg[layer].m_InputChromaFormatIDC =  numberToChromaFormat(cfg_tmpChromaFormatIDC[layer]);
-    m_acLayerCfg[layer].m_chromaFormatIDC = ((cfg_tmpChromaFormatIDC[layer] == 0) ? (m_acLayerCfg[layer].m_InputChromaFormatIDC ) : (numberToChromaFormat(cfg_tmpChromaFormatIDC[layer])));
-  }
-#endif
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
@@ -2515,6 +2596,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
+
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss.resize(m_numOutputLayerSets);
+#endif
+
   Int startOlsCtr = 1;
   if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
   {
@@ -2534,7 +2620,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
+#if MULTIPLE_PTL_SUPPORT
+    if( olsCtr > m_numLayerSets )
+    {
+      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - m_numLayerSets]], "ListOfOutputLayers", m_listOfLayerPTLofOlss[olsCtr] );
+    }
+    else
+    {
+      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsCtr], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
+    }
+#endif
   }
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss[0].push_back(*cfg_layerPTLIdx[0]);
+  delete [] cfg_listOfLayerPTLOfOlss;
+#endif
   delete cfg_numLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
@@ -3061,9 +3161,9 @@ Void TAppEncCfg::xCheckParameter(UInt layerId)
 {
   Bool m_useExtendedPrecision                = m_acLayerCfg[layerId].m_useExtendedPrecision;
   Bool m_useHighPrecisionPredictionWeighting = m_acLayerCfg[layerId].m_useHighPrecisionPredictionWeighting;
-  m_chromaFormatIDC                          = m_acLayerCfg[layerId].m_chromaFormatIDC;
-  m_chromaFormatConstraint                   = m_acLayerCfg[layerId].m_chromaFormatConstraint;
-  m_bitDepthConstraint                       = m_acLayerCfg[layerId].m_bitDepthConstraint;
+  ChromaFormat m_chromaFormatIDC             = m_acLayerCfg[layerId].m_chromaFormatIDC;
+  ChromaFormat m_chromaFormatConstraint      = m_acLayerCfg[layerId].m_chromaFormatConstraint;
+  ChromaFormat m_InputChromaFormatIDC        = m_acLayerCfg[layerId].m_InputChromaFormatIDC;
 
   Int m_inputBitDepth[]       = {m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
   Int m_internalBitDepth[]    = {m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
@@ -3071,6 +3171,15 @@ Void TAppEncCfg::xCheckParameter(UInt layerId)
 
   m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_saoOffsetBitShift[CHANNEL_TYPE_LUMA];
   m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA];
+
+#if MULTIPLE_PTL_SUPPORT
+  Int layerPTLIdx = m_acLayerCfg[layerId].m_layerPTLIdx;
+  Profile::Name m_profile           = m_profileList[layerPTLIdx];
+  Level::Name m_level               = m_levelList[layerPTLIdx];
+  UInt m_bitDepthConstraint         = m_acLayerCfg[layerId].m_bitDepthConstraint;
+  Bool m_intraConstraintFlag        = m_acLayerCfg[layerId].m_intraConstraintFlag;
+  Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerId].m_lowerBitRateConstraintFlag;
+#endif
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -3084,6 +3193,25 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "**          decoder requires this option to be enabled.         **\n");
     fprintf(stderr, "******************************************************************\n");
   }
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+  Int ii = 0;
+  while( ii < m_numPTLInfo )
+  {
+    if( m_profileList[ii] == Profile::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Profile value must be set! **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    if( m_levelList[ii] == Level::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    ii++;
+  }
+#else
   if( m_profile==Profile::NONE )
   {
     fprintf(stderr, "***************************************************************************\n");
@@ -3096,6 +3224,7 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
     fprintf(stderr, "***************************************************************************\n");
   }
+#endif
 
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
@@ -3145,27 +3274,6 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara( m_intraConstraintFlag    != 1,          "intra constraint flag must be 1 in the High Throughput 4:4:4 16-bit Intra profile.");
     }
   }
-#if SVC_EXTENSION
-  else if( m_profile==Profile::SCALABLE || m_profile==Profile::SCALABLE10 )
-  {
-    xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::SCALABLE10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 profile.");
-    xConfirmPara(m_chromaFormatConstraint!=CHROMA_420, "ChromaFormatConstraint must be 420 for non main-RExt profiles.");
-    xConfirmPara(m_intraConstraintFlag==true, "IntraConstraintFlag must be false for non main_RExt profiles.");
-    xConfirmPara(m_lowerBitRateConstraintFlag==false, "LowerBitrateConstraintFlag must be true for non main-RExt profiles.");
-
-    xConfirmPara(m_useCrossComponentPrediction==true, "CrossComponentPrediction must not be used for non main-RExt profiles.");
-    xConfirmPara(m_transformSkipLog2MaxSize!=2, "Transform Skip Log2 Max Size must be 2 for V1 profiles.");
-    xConfirmPara(m_useResidualRotation==true, "UseResidualRotation must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useSingleSignificanceMapContext==true, "UseSingleSignificanceMapContext must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useResidualDPCM[RDPCM_SIGNAL_IMPLICIT]==true, "ImplicitResidualDPCM must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useResidualDPCM[RDPCM_SIGNAL_EXPLICIT]==true, "ExplicitResidualDPCM must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useGolombRiceParameterAdaptation==true, "GolombRiceParameterAdaption must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useExtendedPrecision==true, "UseExtendedPrecision must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_useHighPrecisionPredictionWeighting==true, "UseHighPrecisionPredictionWeighting must not be enabled for non main-RExt profiles.");
-    xConfirmPara(m_enableIntraReferenceSmoothing==false, "EnableIntraReferenceSmoothing must be enabled for non main-RExt profiles.");
-    xConfirmPara(m_alignCABACBeforeBypass, "AlignCABACBeforeBypass cannot be enabled for non main-RExt profiles.");
-  }
-#endif
   else
   {
     xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 profile.");
@@ -4507,6 +4615,7 @@ Void TAppEncCfg::xSetGlobal()
   Bool m_useExtendedPrecision = m_acLayerCfg[layerId].m_useExtendedPrecision;
   Int m_internalBitDepth[]    = {m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
   Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};
+  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[layerId].m_chromaFormatIDC;
 #endif
 
   // set max CU width & height
@@ -4625,6 +4734,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("Frame/Field                       : Frame based coding\n");
     printf("Frame index                       : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
   }
+#if !MULTIPLE_PTL_SUPPORT
   if (m_profile == Profile::MAINREXT)
   {
     const UInt intraIdx = m_intraConstraintFlag ? 1:0;
@@ -4640,6 +4750,7 @@ Void TAppEncCfg::xPrintParameter()
   {
     printf("Profile                           : %s\n", profileToString(m_profile) );
   }
+#endif
 #if !LAYER_CTB
   printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );

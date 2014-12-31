@@ -2233,10 +2233,14 @@ Void TDecCavlc::parsePTL( TComPTL *rpcPTL, Bool profilePresentFlag, Int maxNumSu
 
   for (Int i = 0; i < maxNumSubLayersMinus1; i++)
   {
+#if MULTIPLE_PTL_SUPPORT
+    READ_FLAG( uiCode, "sub_layer_profile_present_flag[i]" ); rpcPTL->setSubLayerProfilePresentFlag(i, uiCode);
+#else
     if(profilePresentFlag)
     {
       READ_FLAG( uiCode, "sub_layer_profile_present_flag[i]" ); rpcPTL->setSubLayerProfilePresentFlag(i, uiCode);
     }
+#endif
     READ_FLAG( uiCode, "sub_layer_level_present_flag[i]"   ); rpcPTL->setSubLayerLevelPresentFlag  (i, uiCode);
   }
 
@@ -2251,7 +2255,11 @@ Void TDecCavlc::parsePTL( TComPTL *rpcPTL, Bool profilePresentFlag, Int maxNumSu
 
   for(Int i = 0; i < maxNumSubLayersMinus1; i++)
   {
+#if MULTIPLE_PTL_SUPPORT
+    if( rpcPTL->getSubLayerProfilePresentFlag(i) )
+#else
     if( profilePresentFlag && rpcPTL->getSubLayerProfilePresentFlag(i) )
+#endif
     {
       parseProfileTier(rpcPTL->getSubLayerPTL(i));
     }
@@ -2743,10 +2751,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
     vps->setProfilePresentFlag(1, false);
+#if MULTIPLE_PTL_SUPPORT
+    parsePTL( vps->getPTL(1), vps->getProfilePresentFlag(1), vps->getMaxTLayers() - 1 );
+#else
     vps->getPTLForExtnPtr()->empty();
     vps->getPTLForExtnPtr()->resize(2);
     vps->getPTLForExtn(1)->copyProfileInfo( vps->getPTL() );
     parsePTL( vps->getPTLForExtn(1), vps->getProfilePresentFlag(1), vps->getMaxTLayers() - 1 );
+#endif
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -2973,7 +2985,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #if PER_LAYER_PTL
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
 #endif
+#if !MULTIPLE_PTL_SUPPORT
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
+#endif
 #if LIST_OF_PTL
   for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #else
@@ -2985,7 +2999,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
 #if P0048_REMOVE_PROFILE_REF
       // Copy profile information from previous one
+#if MULTIPLE_PTL_SUPPORT
+      vps->getPTL(idx)->copyProfileInfo( vps->getPTL( idx - 1 ) );
+#else
       vps->getPTLForExtn(idx)->copyProfileInfo( (idx==1) ? vps->getPTL() : vps->getPTLForExtn( idx - 1 ) );
+#endif
 #else
       READ_CODE( 6, uiCode, "profile_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
 #if O0109_PROF_REF_MINUS1
@@ -2997,7 +3015,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
 #endif
     }
+#if MULTIPLE_PTL_SUPPORT
+    parsePTL( vps->getPTL(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+#else
     parsePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
+#endif
   }
 #endif
 

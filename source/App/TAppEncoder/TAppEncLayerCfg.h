@@ -46,6 +46,8 @@ protected:
   ChromaFormat m_InputChromaFormatIDC;
   ChromaFormat m_chromaFormatConstraint;
   UInt      m_bitDepthConstraint;
+  Bool      m_intraConstraintFlag;
+  Bool      m_lowerBitRateConstraintFlag;
 #if AUXILIARY_PICTURES
   Int       m_auxId;
 #endif
@@ -149,6 +151,11 @@ protected:
   Int       m_colourRemapSEIPostLutNumValMinus1[3];
   Int*      m_colourRemapSEIPostLutCodedValue[3];
   Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
+
+#if MULTIPLE_PTL_SUPPORT
+  // profile/level
+  Int       m_layerPTLIdx;
 #endif
 
 public:
