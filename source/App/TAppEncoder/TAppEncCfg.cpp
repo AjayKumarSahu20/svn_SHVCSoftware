@@ -603,7 +603,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
-  string* cfg_numLayersInOutputLayerSet = new string;
+  string* cfg_numOutputLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
 #endif
@@ -695,7 +695,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if OUTPUT_LAYER_SETS_CONFIG
   ("DefaultTargetOutputLayerIdc",    m_defaultTargetOutputLayerIdc, 1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
   ("NumOutputLayerSets",            m_numOutputLayerSets, 1, "Number of output layer sets excluding the 0-th output layer set")
-  ("NumLayersInOutputLayerSet",   cfg_numLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
+  ("NumOutputLayersInOutputLayerSet",   cfg_numOutputLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
   ("ListOfOutputLayers%d",          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
   ("OutputLayerSetIdx",            cfg_outputLayerSetIdx, string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
@@ -1935,8 +1935,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   // Number of output layers in output layer sets
-  scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
-  m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
+  scanStringToArray( *cfg_numOutputLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumOutputLayersInOutputLayerSets", m_numOutputLayersInOutputLayerSet );
+  m_numOutputLayersInOutputLayerSet.insert(m_numOutputLayersInOutputLayerSet.begin(), 1);
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
 
@@ -1954,14 +1954,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     if( olsCtr < startOlsCtr )
     {
-      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
+      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
       {
         std::cout << "Default OLS defined. Ignoring ListOfOutputLayers" << olsCtr << endl;
       }
     }
     else
     {
-      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
+      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
     if (olsCtr > startOlsCtr) // Non-default OLS
@@ -1978,7 +1978,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_listOfLayerPTLofOlss[0].push_back(m_layerPTLIdx[0]);
   delete [] cfg_listOfLayerPTLOfOlss;
 #endif
-  delete cfg_numLayersInOutputLayerSet;
+  delete cfg_numOutputLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
 #endif
