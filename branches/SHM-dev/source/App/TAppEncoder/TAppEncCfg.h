@@ -87,7 +87,7 @@ protected:
   std::vector<Int>                m_outputLayerSetIdx;
   Int       m_defaultTargetOutputLayerIdc;
   Int       m_numOutputLayerSets;
-  std::vector<Int>                m_numLayersInOutputLayerSet;
+  std::vector<Int>                m_numOutputLayersInOutputLayerSet;
   std::vector< std::vector<Int> > m_listOfOutputLayers;
 #endif
 #else
