@@ -1964,9 +1964,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
-    if (olsCtr > m_numLayerSets)
+    if (olsCtr > startOlsCtr) // Non-default OLS
     {
-      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - m_numLayerSets]], "ListOfOutputLayers", m_listOfLayerPTLofOlss[olsCtr] );
+      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - startOlsCtr - 1]], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
     }
     else
     {
