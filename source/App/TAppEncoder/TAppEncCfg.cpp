@@ -289,6 +289,13 @@ static const struct MapStrToProfile {
   {"main", Profile::MAIN},
   {"main10", Profile::MAIN10},
   {"main-still-picture", Profile::MAINSTILLPICTURE},
+#if MULTIPLE_PTL_SUPPORT
+  {"range-extension", Profile::RANGEEXTENSION},       //This is not used in this software
+  {"range-extension-high", Profile::RANGEEXTENSIONHIGH},       //This is not used in this software
+  {"multiview-main", Profile::MULTIVIEWMAIN},       //This is not used in this software
+  {"scalable-main", Profile::SCALABLEMAIN},
+  {"scalable-main10", Profile::SCALABLEMAIN10},
+#endif
 };
 
 static const struct MapStrToTier {
@@ -840,18 +847,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   
   // Profile and level
 #if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
-  ("NumProfileTierLevel", m_numPTLInfo, 2, "Number of Profile, Tier and Level information")
-  ("Profile%d", m_profileList,   Profile::NONE, NUM_POSSIBLE_LEVEL, "Profile to be used when encoding (Incomplete)")
-  ("Level%d",   m_levelList,     Level::NONE, NUM_POSSIBLE_LEVEL, "Level limit to be used, eg 5.1 (Incomplete)")
-  ("Tier%d",    m_levelTierList, Level::MAIN, NUM_POSSIBLE_LEVEL, "Tier to use for interpretation of --Level")
-
-  ("ProgressiveSource%d", m_progressiveSourceFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source is progressive")
-  ("InterlacedSource%d",  m_interlacedSourceFlagList,  false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source is interlaced")
-  ("NonPackedSource%d",   m_nonPackedConstraintFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that source does not contain frame packing")
-  ("FrameOnly%d",         m_frameOnlyConstraintFlagList, false, MAX_VPS_LAYER_ID_PLUS1, "Indicate that the bitstream contains only frames")
+  ("NumProfileTierLevel", m_numPTLInfo, 1, "Number of Profile, Tier and Level information")
+  ("Profile%d", m_profileList,   Profile::NONE, MAX_NUM_LAYER_IDS + 1, "Profile to be used when encoding (Incomplete)")
+  ("Level%d",   m_levelList,     Level::NONE, MAX_NUM_LAYER_IDS + 1, "Level limit to be used, eg 5.1 (Incomplete)")
+  ("Tier%d",    m_levelTierList, Level::MAIN, MAX_NUM_LAYER_IDS + 1, "Tier to use for interpretation of --Level")
+  ("ProfileCompatibility%d", m_profileCompatibility,   Profile::NONE, MAX_NUM_LAYER_IDS + 1, "Compatible profile to be used when encoding")
+  ("ProgressiveSource%d", m_progressiveSourceFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that source is progressive")
+  ("InterlacedSource%d",  m_interlacedSourceFlagList,  false, MAX_NUM_LAYER_IDS + 1, "Indicate that source is interlaced")
+  ("NonPackedSource%d",   m_nonPackedConstraintFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",         m_frameOnlyConstraintFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that the bitstream contains only frames")
     
   ("LayerPTLIndex%d", m_layerPTLIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
-  ("ListOfProfileTierLevelOls%d", cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_LAYER_ID_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+  ("ListOfProfileTierLevelOls%d", cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
 #else
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
@@ -1964,14 +1971,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
-    if (olsCtr > startOlsCtr) // Non-default OLS
+    Int olsToLsIndex = (olsCtr > startOlsCtr) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
+    scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
+    //For conformance checking
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
+    for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
     {
-      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - startOlsCtr - 1]], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
-    }
-    else
-    {
-      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsCtr], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
-    }
+      if (m_layerSetLayerIdList[ii - 1] != 0 && m_layerSetLayerIdList[ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+      {
+        assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
+                (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
+                (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+      }
+    }   
 #endif
   }
 #if MULTIPLE_PTL_SUPPORT

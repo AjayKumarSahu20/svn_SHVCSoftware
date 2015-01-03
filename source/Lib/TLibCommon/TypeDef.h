@@ -70,7 +70,6 @@
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define MULTIPLE_PTL_SUPPORT             1      ///< Fixing profile, tier and level signalling
-#define NUM_POSSIBLE_LEVEL               13     ///< Number of possible level as described in R1013
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
@@ -804,6 +803,13 @@ namespace Profile
     MAIN = 1,
     MAIN10 = 2,
     MAINSTILLPICTURE = 3,
+#if MULTIPLE_PTL_SUPPORT
+    RANGEEXTENSION = 4,
+    RANGEEXTENSIONHIGH = 5,
+    MULTIVIEWMAIN = 6,
+    SCALABLEMAIN = 7,
+    SCALABLEMAIN10 = 7,
+#endif
   };
 }
 
