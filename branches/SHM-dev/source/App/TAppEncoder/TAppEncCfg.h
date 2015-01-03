@@ -122,13 +122,14 @@ protected:
 #if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
   Int           m_numPTLInfo;
   Int           m_layerPTLIdx[MAX_VPS_LAYER_ID_PLUS1]; ///< scalability_mask
-  Profile::Name m_profileList[NUM_POSSIBLE_LEVEL];
-  Level::Tier   m_levelTierList[NUM_POSSIBLE_LEVEL];
-  Level::Name   m_levelList[NUM_POSSIBLE_LEVEL];
-  Bool          m_progressiveSourceFlagList[NUM_POSSIBLE_LEVEL];
-  Bool          m_interlacedSourceFlagList[NUM_POSSIBLE_LEVEL];
-  Bool          m_nonPackedConstraintFlagList[NUM_POSSIBLE_LEVEL];
-  Bool          m_frameOnlyConstraintFlagList[NUM_POSSIBLE_LEVEL];
+  Profile::Name m_profileList[MAX_NUM_LAYER_IDS + 1];
+  Level::Tier   m_levelTierList[MAX_NUM_LAYER_IDS + 1];
+  Level::Name   m_levelList[MAX_NUM_LAYER_IDS + 1];
+  Profile::Name m_profileCompatibility[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_progressiveSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_interlacedSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_nonPackedConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_frameOnlyConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
 
   std::vector< std::vector<Int> > m_listOfLayerPTLofOlss;
 #else

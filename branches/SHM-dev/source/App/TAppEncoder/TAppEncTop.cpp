@@ -210,7 +210,7 @@ Void TAppEncTop::xInitLibCfg()
     profileTierLevel.setLevelIdc(m_levelList[ii]);
     profileTierLevel.setTierFlag(m_levelTierList[ii]);
     profileTierLevel.setProfileIdc(m_profileList[ii]);
-    profileTierLevel.setProfileCompatibilityFlag(m_profileList[ii], 1);
+    profileTierLevel.setProfileCompatibilityFlag(m_profileCompatibility[ii], 1);
     profileTierLevel.setProgressiveSourceFlag(m_progressiveSourceFlagList[ii]);
     profileTierLevel.setInterlacedSourceFlag(m_interlacedSourceFlagList[ii]);
     profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[ii]);
