@@ -1216,6 +1216,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 #else
   READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( uiCode + 1 );
 #endif
+  assert(pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1);
 #else
   READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
 #endif

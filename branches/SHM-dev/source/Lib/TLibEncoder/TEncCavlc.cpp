@@ -940,7 +940,8 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
 #endif
 #if SVC_EXTENSION
-  WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );            
+  WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );
+  assert(pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1);
 #else
   WRITE_CODE( 0,                                    6,        "vps_reserved_zero_6bits" );
 #endif
