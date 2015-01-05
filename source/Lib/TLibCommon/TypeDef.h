@@ -45,6 +45,7 @@
 #define O0215_PHASE_ALIGNMENT_REMOVAL    1
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 #define FIX_CONF_MODE                    1
+#define FIX_NON_OUTPUT_LAYER             1
 #define SIGNALLING_BITRATE_PICRATE_FIX   1      ///< Fix for signalling of bitrate and picture rate info in VPS VUI to be more aligned to JCTVC-R1008
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
 #define CROSS_LAYER_BLA_FLAG_FIX         1      ///< Fix for earlier implementation mistake that omit the signalling of cross_layer_bla_flag

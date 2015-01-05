@@ -126,6 +126,9 @@ TDecTop::TDecTop()
 #if CONFORMANCE_BITSTREAM_MODE
   m_confModeFlag = false;
 #endif
+#if FIX_NON_OUTPUT_LAYER
+  m_isOutputLayerFlag = false;
+#endif
 }
 
 TDecTop::~TDecTop()
@@ -568,6 +571,13 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
 
   // Execute Deblock + Cleanup
   m_cGopDecoder.filterPicture(pcPic);
+
+#if FIX_NON_OUTPUT_LAYER
+  if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
+  {
+    pcPic->setOutputMark( false );
+  }
+#endif
 
   TComSlice::sortPicList( m_cListPic ); // sorting for application output
   poc                 = pcPic->getSlice(m_uiSliceIdx-1)->getPOC();
@@ -2912,7 +2922,9 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
 
+#if !FIX_CONF_MODE
   assert( params->getTargetLayerId() < vps->getMaxLayers() );
+#endif
 
   if( params->getValueCheckedFlag() )
   {
@@ -3015,6 +3027,16 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   Int targetOlsIdx = params->getTargetOutputLayerSetIdx();
   Int targetLsIdx = vps->getOutputLayerSetIdx( targetOlsIdx );
   params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
+#endif
+#if FIX_NON_OUTPUT_LAYER
+  // Check if the current layer is an output layer
+  for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
+  {
+    if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
+    {
+      this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
+    }
+  }
 #endif
 }
 #endif

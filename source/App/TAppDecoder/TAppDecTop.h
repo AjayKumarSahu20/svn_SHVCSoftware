@@ -168,7 +168,7 @@ struct DpbStatus
     m_numLayers = -1;
 #if FIX_ALIGN_BUMPING
     ::memset( m_targetDecLayerIdList, 0, sizeof(m_targetDecLayerIdList) );
-    for(Int i = 0; i < MAX_LAYERS; i++)
+    for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
     {
       m_layerIdToSubDpbIdMap[i] = -1;
     }
