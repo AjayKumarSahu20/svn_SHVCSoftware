@@ -3010,6 +3010,12 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     params->setValueCheckedFlag( true );
 
   }
+#if FIX_CONF_MODE
+  // Set correct value of targetLayerId
+  Int targetOlsIdx = params->getTargetOutputLayerSetIdx();
+  Int targetLsIdx = vps->getOutputLayerSetIdx( targetOlsIdx );
+  params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
+#endif
 }
 #endif
 #if RESOLUTION_BASED_DPB

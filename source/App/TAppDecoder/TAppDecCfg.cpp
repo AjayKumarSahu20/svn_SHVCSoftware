@@ -105,7 +105,11 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepth,d", m_outputBitDepthY, 0, "bit depth of YUV output luma component (default: use 0 for native depth)")
   ("OutputBitDepthC,d", m_outputBitDepthC, 0, "bit depth of YUV output chroma component (default: use 0 for native depth)")
 #if SVC_EXTENSION
+#if FIX_CONF_MODE
+  ("LayerNum,-ls", nLayerNum, MAX_NUM_LAYER_IDS, "Number of layers to be decoded.")
+#else
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
+#endif
 #if OUTPUT_LAYER_SET_INDEX
   ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
 #endif
