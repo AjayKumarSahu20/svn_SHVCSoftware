@@ -2618,7 +2618,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
     else
     {
-      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
+      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
     if( olsCtr > startOlsCtr ) // Non-default OLS
