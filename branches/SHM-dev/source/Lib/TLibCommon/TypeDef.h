@@ -44,6 +44,7 @@
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 #define O0215_PHASE_ALIGNMENT_REMOVAL    1
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
+#define FIX_CONF_MODE                    1
 #define SIGNALLING_BITRATE_PICRATE_FIX   1      ///< Fix for signalling of bitrate and picture rate info in VPS VUI to be more aligned to JCTVC-R1008
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
 #define CROSS_LAYER_BLA_FLAG_FIX         1      ///< Fix for earlier implementation mistake that omit the signalling of cross_layer_bla_flag
@@ -97,6 +98,7 @@
 #define RESOLUTION_BASED_DPB             0      ///< JCTVC-Q0154 - remove sharing of sub-DPB across layers
                                                 ///< JCTVC-P0192: Assign layers to sub-DPBs based on the rep_format() signaled in the VPS
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
+#define FIX_ALIGN_BUMPING                1
 #define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
