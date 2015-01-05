@@ -225,7 +225,7 @@ Void TAppEncTop::xInitLibCfg()
   for (int ii = 0; ii < m_numOutputLayerSets; ii++)
   {
     myvector =  m_listOfLayerPTLofOlss[ii];
-    vps->getProfileLevelTierIdx()->resize(myvector.size());
+
     for (std::vector<int>::iterator it = myvector.begin() ; it != myvector.end(); ++it)
     {
       pVPS->addProfileLevelTierIdx(ii, it[0]);
