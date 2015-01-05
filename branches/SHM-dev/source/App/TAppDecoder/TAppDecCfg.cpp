@@ -150,7 +150,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   m_tgtLayerId = nLayerNum - 1;
   assert( m_tgtLayerId >= 0 );
-  assert( m_tgtLayerId < MAX_LAYERS );
+#if !FIX_CONF_MODE
+  assert( m_tgtLayerId < MAX_LAYERS );  // If this is wrong, it should be caught by asserts in other locations.
+#endif
 #if O0137_MAX_LAYERID
   assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
 #endif
@@ -175,7 +177,11 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     m_metadataFileRefresh = true;
 
     // Decoded layer YUV files
+#if FIX_CONF_MODE
+    for(Int layer= 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++ )
+#else
     for(UInt layer=0; layer<= m_tgtLayerId; layer++)
+#endif
     {
       sprintf(fileNameSuffix, "%s-L%d.yuv", m_confPrefix.c_str(), layer);  // olsIdx is the target output layer set index.
       m_decodedYuvLayerFileName[layer] = std::string( fileNameSuffix );
@@ -186,9 +192,14 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   this->getCommonDecoderParams()->setTargetOutputLayerSetIdx( olsIdx       );
   this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
 #endif
+#if FIX_CONF_MODE
+  for(Int layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++ )
+  {
+#else
   for(UInt layer=0; layer<= m_tgtLayerId; layer++)
   {
     assert( layer < MAX_LAYERS );
+#endif
     m_pchReconFile[layer] = cfg_ReconFile[layer].empty() ? NULL : strdup(cfg_ReconFile[layer].c_str());
   }
 #if AVC_BASE

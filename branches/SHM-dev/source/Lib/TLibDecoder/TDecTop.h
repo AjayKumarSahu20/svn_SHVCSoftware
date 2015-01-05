@@ -170,6 +170,9 @@ private:
   Bool m_confModeFlag;
   std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
 #endif
+#if FIX_NON_OUTPUT_LAYER
+  Bool m_isOutputLayerFlag;
+#endif
 public:
 #if POC_RESET_RESTRICTIONS
   static Bool                    m_checkPocRestrictionsForCurrAu;
