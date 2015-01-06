@@ -1981,7 +1981,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
     for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
     {
-      if (m_layerSetLayerIdList[ii - 1] != 0 && m_layerSetLayerIdList[ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+      if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
       {
         assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
                 (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
