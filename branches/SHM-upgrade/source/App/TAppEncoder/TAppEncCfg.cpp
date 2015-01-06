@@ -67,7 +67,7 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
 #if MULTIPLE_PTL_SUPPORT
   MULTIVIEWMAIN = 6,
   SCALABLEMAIN = 7,
-  SCALABLEMAIN10 = 7,
+  SCALABLEMAIN10 = 8,
 #endif
   // The following are RExt profiles, which would map to the MAINREXT profile idc.
   // The enumeration indicates the bit-depth constraint in the bottom 2 digits

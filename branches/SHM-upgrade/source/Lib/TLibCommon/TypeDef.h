@@ -934,7 +934,7 @@ namespace Profile
 #if MULTIPLE_PTL_SUPPORT
     MULTIVIEWMAIN = 6,
     SCALABLEMAIN = 7,
-    SCALABLEMAIN10 = 7,
+    SCALABLEMAIN10 = 8,
 #endif
   };
 }
