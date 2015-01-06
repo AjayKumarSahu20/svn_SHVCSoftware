@@ -64,6 +64,11 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MAINSTILLPICTURE = 3,
   MAINREXT = 4,
   HIGHTHROUGHPUTREXT = 5, // Placeholder profile for development
+#if MULTIPLE_PTL_SUPPORT
+  MULTIVIEWMAIN = 6,
+  SCALABLEMAIN = 7,
+  SCALABLEMAIN10 = 7,
+#endif
   // The following are RExt profiles, which would map to the MAINREXT profile idc.
   // The enumeration indicates the bit-depth constraint in the bottom 2 digits
   //                           the chroma format in the next digit
@@ -337,6 +342,11 @@ strToProfile[] =
   {"main-still-picture",   Profile::MAINSTILLPICTURE   },
   {"main-RExt",            Profile::MAINREXT           },
   {"high-throughput-RExt", Profile::HIGHTHROUGHPUTREXT },
+#if MULTIPLE_PTL_SUPPORT
+  {"multiview-main",       Profile::MULTIVIEWMAIN      },       //This is not used in this software
+  {"scalable-main",        Profile::SCALABLEMAIN       },
+  {"scalable-main10",      Profile::SCALABLEMAIN10     },
+#endif
 };
 
 static const struct MapStrToExtendedProfile
@@ -371,6 +381,11 @@ strToExtendedProfile[] =
     {"main_444_10_intra",  MAIN_444_10_INTRA},
     {"main_444_12_intra",  MAIN_444_12_INTRA},
     {"main_444_16_intra",  MAIN_444_16_INTRA},
+#if MULTIPLE_PTL_SUPPORT
+    {"multiview-main",     MULTIVIEWMAIN    },
+    {"scalable-main",      SCALABLEMAIN     },
+    {"scalable-main10",    SCALABLEMAIN10   },
+#endif
 };
 
 static const ExtendedProfileName validRExtProfileNames[2/* intraConstraintFlag*/][4/* bit depth constraint 8=0, 10=1, 12=2, 16=3*/][4/*chroma format*/]=
@@ -514,6 +529,16 @@ static inline istream& operator >> (istream &in, ScalingListMode &mode)
 {
   return readStrToEnum(strToScalingListMode, sizeof(strToScalingListMode)/sizeof(*strToScalingListMode), in, mode);
 }
+
+#if MULTIPLE_PTL_SUPPORT
+namespace Profile
+{
+  static inline istream& operator >> (istream &in, Name &profile)
+  {
+    return readStrToEnum(strToProfile, sizeof(strToProfile)/sizeof(*strToProfile), in, profile);
+  }
+}
+#endif
 
 template <class T>
 struct SMultiValueInput
@@ -1013,7 +1038,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int tmpConstraintChromaFormat;
   string inputColourSpaceConvert;
 #if MULTIPLE_PTL_SUPPORT
-  ExtendedProfileName extendedProfile[NUM_POSSIBLE_LEVEL];
+  ExtendedProfileName extendedProfile[MAX_NUM_LAYER_IDS + 1];
 #else
   ExtendedProfileName extendedProfile;
 #endif
@@ -1265,22 +1290,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   // Profile and level
 #if MULTIPLE_PTL_SUPPORT
-  ("NumProfileTierLevel",                             m_numPTLInfo,                                         2, "Number of Profile, Tier and Level information")
-  ("Profile%d",                                       extendedProfile,               NONE, NUM_POSSIBLE_LEVEL,  "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
-  ("Level%d",                                         m_levelList,            Level::NONE, NUM_POSSIBLE_LEVEL, "Level limit to be used, eg 5.1, or none")
-  ("Tier%d",                                          m_levelTierList,        Level::MAIN, NUM_POSSIBLE_LEVEL, "Tier to use for interpretation of --Level (main or high only)")
+  ("NumProfileTierLevel",                             m_numPTLInfo,                                         1, "Number of Profile, Tier and Level information")
+  ("Profile%d",                                       extendedProfile,          NONE, (MAX_NUM_LAYER_IDS + 1),  "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
+  ("Level%d",                                         m_levelList,       Level::NONE, (MAX_NUM_LAYER_IDS + 1), "Level limit to be used, eg 5.1, or none")
+  ("Tier%d",                                          m_levelTierList,   Level::MAIN, (MAX_NUM_LAYER_IDS + 1), "Tier to use for interpretation of --Level (main or high only)")
   ("MaxBitDepthConstraint",                           tmpBitDepthConstraint,                               0u, "Bit depth to use for profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
   ("MaxChromaFormatConstraint",                       tmpConstraintChromaFormat,                            0, "Chroma-format to use for the profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
   ("IntraConstraintFlag",                             tmpIntraConstraintFlag,                           false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
   ("LowerBitRateConstraintFlag",                      tmpLowerBitRateConstraintFlag,                     true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
-  
-  ("ProgressiveSource%d",                             m_progressiveSourceFlagList,   false, NUM_POSSIBLE_LEVEL, "Indicate that source is progressive")
-  ("InterlacedSource%d",                              m_interlacedSourceFlagList,    false, NUM_POSSIBLE_LEVEL, "Indicate that source is interlaced")
-  ("NonPackedSource%d",                               m_nonPackedConstraintFlagList, false, NUM_POSSIBLE_LEVEL, "Indicate that source does not contain frame packing")
-  ("FrameOnly%d",                                     m_frameOnlyConstraintFlagList, false, NUM_POSSIBLE_LEVEL, "Indicate that the bitstream contains only frames")
+
+  ("ProfileCompatibility%d",                          m_profileCompatibility, Profile::NONE, (MAX_NUM_LAYER_IDS + 1), "Compatible profile to be used when encoding")
+  ("ProgressiveSource%d",                             m_progressiveSourceFlagList,   false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is progressive")
+  ("InterlacedSource%d",                              m_interlacedSourceFlagList,    false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is interlaced")
+  ("NonPackedSource%d",                               m_nonPackedConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",                                     m_frameOnlyConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that the bitstream contains only frames")
   
   ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
-  ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_LAYER_ID_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+  ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
 #else
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level",                                           m_level,                                    Level::NONE, "Level limit to be used, eg 5.1, or none")
@@ -2621,14 +2647,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
-    if( olsCtr > startOlsCtr ) // Non-default OLS
+    Int olsToLsIndex = (olsCtr > startOlsCtr) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
+    scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
+    //For conformance checking
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
+    for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
     {
-      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[m_outputLayerSetIdx[olsCtr - startOlsCtr - 1]], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
-    }
-    else
-    {
-      scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsCtr], "List of PTL for each layer in OLS", m_listOfLayerPTLofOlss[olsCtr] );
-    }
+      if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+      {
+        assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
+                (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
+                (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+      }
+    }   
 #endif
   }
 #if MULTIPLE_PTL_SUPPORT

@@ -3162,8 +3162,23 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       if( vps->getNecessaryLayerFlag(i, j) )
       {
-        READ_CODE( numBitsForPtlIdx, uiCode, "profile_level_tier_idx[i]" ); 
+        READ_CODE( numBitsForPtlIdx, uiCode, "profile_level_tier_idx[i]" );
         vps->setProfileLevelTierIdx(i, j, uiCode );
+
+#if MULTIPLE_PTL_SUPPORT
+        //For conformance checking
+        //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
+        //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+        //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
+        //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+        //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
+        if (j > 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j - 1) != 0)
+        {
+          assert(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc() == vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc() ||
+                 vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc()) ||  
+                 vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc())  );
+        }
+#endif
       }
     }
 #else
