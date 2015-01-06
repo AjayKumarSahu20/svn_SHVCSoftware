@@ -142,6 +142,10 @@ struct DpbStatus
   Int m_numPicsInLayer[MAX_LAYERS];   // Pictures marked as used_for_reference or needed for output in the layer
 #endif
   Int m_numPicsInSubDpb[MAX_LAYERS];  // Pictures marked as used_for_reference or needed for output in the sub-DPB
+#if FIX_ALIGN_BUMPING
+  Int m_layerIdToSubDpbIdMap[MAX_VPS_LAYER_ID_PLUS1];
+  Int m_targetDecLayerIdList[MAX_LAYERS];
+#endif
   Bool m_maxLatencyIncrease;
   Int m_maxLatencyPictures;
   
@@ -164,6 +168,13 @@ struct DpbStatus
     ::memset(m_numPicsNotDisplayedInLayer, 0, sizeof(m_numPicsNotDisplayedInLayer) );
     m_numSubDpbs = -1;
     m_numLayers = -1;
+#if FIX_ALIGN_BUMPING
+    ::memset( m_targetDecLayerIdList, 0, sizeof(m_targetDecLayerIdList) );
+    for(Int i = 0; i < MAX_LAYERS; i++)
+    {
+      m_layerIdToSubDpbIdMap[i] = -1;
+    }
+#endif
   }
 };
 #endif

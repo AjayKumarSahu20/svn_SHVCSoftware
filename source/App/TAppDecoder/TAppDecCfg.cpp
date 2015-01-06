@@ -101,7 +101,11 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
 #endif
 #endif
+#if FIX_CONF_MODE
+  ("LayerNum,-ls", nLayerNum, MAX_NUM_LAYER_IDS, "Number of layers to be decoded.")
+#else
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
+#endif
 #if OUTPUT_LAYER_SET_INDEX
   ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
 #endif
