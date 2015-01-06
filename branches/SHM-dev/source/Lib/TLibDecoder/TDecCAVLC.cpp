@@ -4173,9 +4173,24 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl)
   READ_FLAG(uiCode, "general_frame_only_constraint_flag");
   ptl->setFrameOnlyConstraintFlag(uiCode ? true : false);
 
+#if MULTIPLE_PTL_SUPPORT
+  READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
+  READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
+  READ_FLAG(    uiCode, "general_max_8bit_constraint_flag"  ); ptl->setProfileIdc  ((uiCode) ? Profile::SCALABLEMAIN : Profile::SCALABLEMAIN10);
+  READ_FLAG(    uiCode, "general_max_422chroma_constraint_flag"  ); assert (uiCode == 1);
+  READ_FLAG(    uiCode, "general_max_420chroma_constraint_flag"  ); assert (uiCode == 1);
+  READ_FLAG(    uiCode, "general_max_monochrome_constraint_flag" ); assert (uiCode == 0);
+  READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
+  READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
+  READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
+  READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[0..15]");
+  READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[16..31]");
+  READ_CODE(3,  uiCode, "XXX_reserved_zero_35bits[32..34]");
+#else
   READ_CODE(16, uiCode, "XXX_reserved_zero_44bits[0..15]");
   READ_CODE(16, uiCode, "XXX_reserved_zero_44bits[16..31]");
   READ_CODE(12, uiCode, "XXX_reserved_zero_44bits[32..43]");
+#endif
 }
 
 Void TDecCavlc::parseTerminatingBit( UInt& ruiBit )

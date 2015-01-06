@@ -2626,7 +2626,11 @@ Void TEncCavlc::codeProfileTier( ProfileTierLevel* ptl )
 {
   WRITE_CODE( ptl->getProfileSpace(), 2 ,     "XXX_profile_space[]");
   WRITE_FLAG( ptl->getTierFlag    (),         "XXX_tier_flag[]"    );
+#if MULTIPLE_PTL_SUPPORT
+  WRITE_CODE( (ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10) ? 7 : Int(ptl->getProfileIdc()), 5 ,  "XXX_profile_idc[]"  );
+#else
   WRITE_CODE( ptl->getProfileIdc  (), 5 ,     "XXX_profile_idc[]"  );   
+#endif
   for(Int j = 0; j < 32; j++)
   {
     WRITE_FLAG( ptl->getProfileCompatibilityFlag(j), "XXX_profile_compatibility_flag[][j]");   
@@ -2636,10 +2640,25 @@ Void TEncCavlc::codeProfileTier( ProfileTierLevel* ptl )
   WRITE_FLAG(ptl->getInterlacedSourceFlag(),    "general_interlaced_source_flag");
   WRITE_FLAG(ptl->getNonPackedConstraintFlag(), "general_non_packed_constraint_flag");
   WRITE_FLAG(ptl->getFrameOnlyConstraintFlag(), "general_frame_only_constraint_flag");
-  
+
+#if MULTIPLE_PTL_SUPPORT
+  WRITE_FLAG(true, "general_max_12bit_constraint_flag");
+  WRITE_FLAG(true, "general_max_10bit_constraint_flag");
+  WRITE_FLAG((ptl->getProfileIdc() == Profile::SCALABLEMAIN) ? true : false, "general_max_8bit_constraint_flag");
+  WRITE_FLAG(true, "general_max_422chroma_constraint_flag");
+  WRITE_FLAG(true, "general_max_420chroma_constraint_flag");
+  WRITE_FLAG(false, "general_max_monochrome_constraint_flag");
+  WRITE_FLAG(false, "general_intra_constraint_flag");
+  WRITE_FLAG(false, "general_one_picture_only_constraint_flag");
+  WRITE_FLAG(true, "general_lower_bit_rate_constraint_flag");
+  WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
+  WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
+  WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
+#else
   WRITE_CODE(0 , 16, "XXX_reserved_zero_44bits[0..15]");
   WRITE_CODE(0 , 16, "XXX_reserved_zero_44bits[16..31]");
   WRITE_CODE(0 , 12, "XXX_reserved_zero_44bits[32..43]");
+#endif
 }
 
 /**
