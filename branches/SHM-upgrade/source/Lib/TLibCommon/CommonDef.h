@@ -310,12 +310,16 @@ class CommonDecoderParams
 {
   Int m_targetLayerId;
   Int m_targetOutputLayerSetIdx;
-  std::vector<Int> *m_targetDecLayerIdSet; 
+  std::vector<Int> *m_targetDecLayerIdSet;
   Bool m_valueCheckedFlag;
   Int m_highestTId;
 public:
-  CommonDecoderParams(): 
+  CommonDecoderParams():
+#if FIX_CONF_MODE
+    m_targetLayerId(MAX_VPS_LAYER_ID_PLUS1)
+#else
     m_targetLayerId(0)
+#endif
     , m_targetOutputLayerSetIdx(-1)
     , m_targetDecLayerIdSet(NULL)
     , m_valueCheckedFlag(false)
