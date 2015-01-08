@@ -419,7 +419,7 @@ Void TAppEncTop::xInitLibCfg()
         Int rlSubWidthC  = 2;
         Int rlSubHeightC = 2;
 #endif
-        m_acTEncTop[layer].setRefRegionOffsetPresentFlag( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag );
+        m_acTEncTop[layer].setRefRegionOffsetPresentFlag( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] );
         m_acTEncTop[layer].getRefLayerWindow(i).setWindow( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
                                                            rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
       }
