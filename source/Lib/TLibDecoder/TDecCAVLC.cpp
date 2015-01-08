@@ -4218,18 +4218,38 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl)
   ptl->setFrameOnlyConstraintFlag(uiCode ? true : false);
 
 #if MULTIPLE_PTL_SUPPORT
-  READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
-  READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
-  READ_FLAG(    uiCode, "general_max_8bit_constraint_flag"  ); ptl->setProfileIdc  ((uiCode) ? Profile::SCALABLEMAIN : Profile::SCALABLEMAIN10);
-  READ_FLAG(    uiCode, "general_max_422chroma_constraint_flag"  ); assert (uiCode == 1);
-  READ_FLAG(    uiCode, "general_max_420chroma_constraint_flag"  ); assert (uiCode == 1);
-  READ_FLAG(    uiCode, "general_max_monochrome_constraint_flag" ); assert (uiCode == 0);
-  READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
-  READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
-  READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
-  READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[0..15]");
-  READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[16..31]");
-  READ_CODE(3,  uiCode, "XXX_reserved_zero_35bits[32..34]");
+  if( ptl->getProfileIdc() == 4 || ptl->getProfileCompatibilityFlag(4) || 
+      ptl->getProfileIdc() == 5 || ptl->getProfileCompatibilityFlag(5) || 
+      ptl->getProfileIdc() == 6 || ptl->getProfileCompatibilityFlag(6) || 
+      ptl->getProfileIdc() == 7 || ptl->getProfileCompatibilityFlag(7)    )
+  {
+    READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_8bit_constraint_flag"  ); ptl->setProfileIdc  ((uiCode) ? Profile::SCALABLEMAIN : Profile::SCALABLEMAIN10);
+    READ_FLAG(    uiCode, "general_max_422chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_420chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_monochrome_constraint_flag" ); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
+    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+  }
+  else
+  {
+    READ_CODE(32,  uiCode, "general_reserved_zero_43bits");  READ_CODE(11,  uiCode, "general_reserved_zero_43bits");
+  }
+
+  if( ( ptl->getProfileIdc() >= 1 && ptl->getProfileIdc() <= 5 ) || 
+      ptl->getProfileCompatibilityFlag(1) || ptl->getProfileCompatibilityFlag(2) || 
+      ptl->getProfileCompatibilityFlag(3) || ptl->getProfileCompatibilityFlag(4) || 
+      ptl->getProfileCompatibilityFlag(5)                                           )
+  {
+    READ_FLAG(uiCode, "general_inbld_flag");
+  }
+  else
+  {
+    READ_FLAG(uiCode, "general_reserved_zero_bit");
+  }
 #else
   READ_CODE(16, uiCode, "XXX_reserved_zero_44bits[0..15]");
   READ_CODE(16, uiCode, "XXX_reserved_zero_44bits[16..31]");
