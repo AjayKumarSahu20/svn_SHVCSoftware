@@ -1523,33 +1523,50 @@ Void TEncCavlc::codeProfileTier( ProfileTierLevel* ptl )
     WRITE_FLAG(ptl->getIntraConstraintFlag(),        "general_intra_constraint_flag");
     WRITE_FLAG(0,                                    "general_one_picture_only_constraint_flag");
     WRITE_FLAG(ptl->getLowerBitRateConstraintFlag(), "general_lower_bit_rate_constraint_flag");
-    WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
-    WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
-    WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
-  }
 #if MULTIPLE_PTL_SUPPORT
-  else if (ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10)
+    WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
+  }
+  else if( ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10 )      // at encoder side, scalable-main10 profile has a profile idc equal to 8, which is converted to 7 during signalling
   {
-    WRITE_FLAG(true, "general_max_12bit_constraint_flag");
-    WRITE_FLAG(true, "general_max_10bit_constraint_flag");
+    WRITE_FLAG(true,   "general_max_12bit_constraint_flag");
+    WRITE_FLAG(true,   "general_max_10bit_constraint_flag");
     WRITE_FLAG((ptl->getProfileIdc() == Profile::SCALABLEMAIN) ? true : false, "general_max_8bit_constraint_flag");
-    WRITE_FLAG(true, "general_max_422chroma_constraint_flag");
-    WRITE_FLAG(true, "general_max_420chroma_constraint_flag");
-    WRITE_FLAG(false, "general_max_monochrome_constraint_flag");
-    WRITE_FLAG(false, "general_intra_constraint_flag");
-    WRITE_FLAG(false, "general_one_picture_only_constraint_flag");
-    WRITE_FLAG(true, "general_lower_bit_rate_constraint_flag");
+    WRITE_FLAG(true,   "general_max_422chroma_constraint_flag");
+    WRITE_FLAG(true,   "general_max_420chroma_constraint_flag");
+    WRITE_FLAG(false,  "general_max_monochrome_constraint_flag");
+    WRITE_FLAG(false,  "general_intra_constraint_flag");
+    WRITE_FLAG(false,  "general_one_picture_only_constraint_flag");
+    WRITE_FLAG(true,   "general_lower_bit_rate_constraint_flag");
+    WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
+  }
+  else
+  {
+    WRITE_CODE(0, 32,  "general_reserved_zero_43bits");  WRITE_CODE(0, 11,  "general_reserved_zero_43bits");
+  }
+
+  if( ( ptl->getProfileIdc() >= 1 && ptl->getProfileIdc() <= 5 ) || 
+      ptl->getProfileCompatibilityFlag(1) || ptl->getProfileCompatibilityFlag(2) || 
+      ptl->getProfileCompatibilityFlag(3) || ptl->getProfileCompatibilityFlag(4) || 
+      ptl->getProfileCompatibilityFlag(5)                                           )
+  {
+    WRITE_FLAG(false, "general_inbld_flag");
+  }
+  else
+  {
+    WRITE_FLAG(false, "general_reserved_zero_bit");
+  }
+#else
     WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
     WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
     WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
   }
-#endif
   else
   {
     WRITE_CODE(0x0000 , 16, "XXX_reserved_zero_44bits[0..15]");
     WRITE_CODE(0x0000 , 16, "XXX_reserved_zero_44bits[16..31]");
     WRITE_CODE(0x000  , 12, "XXX_reserved_zero_44bits[32..43]");
   }
+#endif
 }
 
 /**

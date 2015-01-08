@@ -2308,12 +2308,10 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl)
     READ_FLAG(    uiCode, "general_intra_constraint_flag");          ptl->setIntraConstraintFlag(uiCode != 0);
     READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag");
     READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); ptl->setLowerBitRateConstraintFlag(uiCode != 0);
-    READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[0..15]");
-    READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[16..31]");
-    READ_CODE(3,  uiCode, "XXX_reserved_zero_35bits[32..34]");
-  }
 #if MULTIPLE_PTL_SUPPORT
-  else if (ptl->getProfileIdc() == Profile::SCALABLEMAIN )
+    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+  }
+  else if( ptl->getProfileIdc() == Profile::SCALABLEMAIN )
   {
     READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
     READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
@@ -2324,11 +2322,33 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl)
     READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
     READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
     READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
+    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+  }
+  else
+  {
+    ptl->setBitDepthConstraint((ptl->getProfileIdc() == Profile::MAIN10)?10:8);
+    ptl->setChromaFormatConstraint(CHROMA_420);
+    ptl->setIntraConstraintFlag(false);
+    ptl->setLowerBitRateConstraintFlag(true);
+    READ_CODE(32,  uiCode, "general_reserved_zero_43bits");  READ_CODE(11,  uiCode, "general_reserved_zero_43bits");
+  }
+
+  if( ( ptl->getProfileIdc() >= 1 && ptl->getProfileIdc() <= 5 ) || 
+      ptl->getProfileCompatibilityFlag(1) || ptl->getProfileCompatibilityFlag(2) || 
+      ptl->getProfileCompatibilityFlag(3) || ptl->getProfileCompatibilityFlag(4) || 
+      ptl->getProfileCompatibilityFlag(5)                                           )
+  {
+    READ_FLAG(uiCode, "general_inbld_flag");
+  }
+  else
+  {
+    READ_FLAG(uiCode, "general_reserved_zero_bit");
+  }
+#else
     READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[0..15]");
     READ_CODE(16, uiCode, "XXX_reserved_zero_35bits[16..31]");
     READ_CODE(3,  uiCode, "XXX_reserved_zero_35bits[32..34]");
   }
-#endif
   else
   {
     ptl->setBitDepthConstraint((ptl->getProfileIdc() == Profile::MAIN10)?10:8);
@@ -2339,6 +2359,7 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl)
     READ_CODE(16, uiCode, "XXX_reserved_zero_44bits[16..31]");
     READ_CODE(12, uiCode, "XXX_reserved_zero_44bits[32..43]");
   }
+#endif
 }
 
 Void TDecCavlc::parseTerminatingBit( UInt& ruiBit )
