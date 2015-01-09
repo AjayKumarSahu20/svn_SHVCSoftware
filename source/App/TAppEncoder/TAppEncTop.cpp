@@ -202,19 +202,16 @@ Void TAppEncTop::xInitLibCfg()
 #if MULTIPLE_PTL_SUPPORT
   //Populate PTL in VPS
   TComVPS *pVPS = m_acTEncTop[0].getVPS();
-  ProfileTierLevel& profileTierLevel = *(pVPS->getPTL(0)->getGeneralPTL());
   for (int ii = 0; ii < m_numPTLInfo; ii++)
   {
-    profileTierLevel = *(pVPS->getPTL(ii)->getGeneralPTL());
-
-    profileTierLevel.setLevelIdc(m_levelList[ii]);
-    profileTierLevel.setTierFlag(m_levelTierList[ii]);
-    profileTierLevel.setProfileIdc(m_profileList[ii]);
-    profileTierLevel.setProfileCompatibilityFlag(m_profileCompatibility[ii], 1);
-    profileTierLevel.setProgressiveSourceFlag(m_progressiveSourceFlagList[ii]);
-    profileTierLevel.setInterlacedSourceFlag(m_interlacedSourceFlagList[ii]);
-    profileTierLevel.setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[ii]);
-    profileTierLevel.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setLevelIdc(m_levelList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setTierFlag(m_levelTierList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProfileIdc(m_profileList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProfileCompatibilityFlag(m_profileCompatibility[ii], 1);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProgressiveSourceFlag(m_progressiveSourceFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setInterlacedSourceFlag(m_interlacedSourceFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[ii]);
   }
   pVPS->setNumProfileTierLevel(m_numPTLInfo);
 
