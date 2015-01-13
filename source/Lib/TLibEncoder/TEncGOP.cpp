@@ -121,6 +121,10 @@ TEncGOP::TEncGOP()
 #if POC_RESET_IDC_ENCODER
   m_lastPocPeriodId = -1;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_noRaslOutputFlag = false;
+  m_prevPicHasEos    = false;
+#endif
 #endif //SVC_EXTENSION
   return;
 }
@@ -945,6 +949,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       continue;
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    if (pocCurr > m_pcEncTop->getLayerSwitchOffBegin() && pocCurr < m_pcEncTop->getLayerSwitchOffEnd())
+    {
+      continue;
+    }
+#endif
 
     if( getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_N_LP )
     {
@@ -1099,6 +1109,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setCrossLayerBLAFlag(false);
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    // Set the nal unit type
+    pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
+#endif
 #if NO_CLRAS_OUTPUT_FLAG
     if (m_layerId == 0 &&
         (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -1112,6 +1126,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      else if (m_prevPicHasEos)
+      {
+        m_pcEncTop->setNoClrasOutputFlag(true);
+      }
+#endif
       else if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
@@ -1138,6 +1158,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
     }
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    xCheckLayerReset(pcSlice);
+    xSetNoRaslOutputFlag(pcSlice);
+    xSetLayerInitializedFlag(pcSlice);
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId == 1 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
@@ -1251,8 +1276,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setSliceType(I_SLICE);
     }
     
+#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
+#endif
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
@@ -2852,6 +2879,20 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      if (pcSlice->isIRAP())
+      {
+        //the inference for NoOutputPriorPicsFlag
+        // KJS: This cannot happen at the encoder
+        if (!m_bFirst && pcSlice->isIRAP() && m_noRaslOutputFlag)
+        {
+          if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+          {
+            pcSlice->setNoOutputPriorPicsFlag(true);
+          }
+        }
+      }
+#else
       pcSlice->setNoRaslOutputFlag(false);
       if (pcSlice->isIRAP())
       {
@@ -2869,6 +2910,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           }
         }
       }
+#endif
 
       tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
       m_pcEntropyCoder->encodeSliceHeader(pcSlice);
@@ -3361,6 +3403,30 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
     }
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    m_prevPicHasEos = false;
+    if (m_pcCfg->getLayerSwitchOffBegin() < m_pcCfg->getLayerSwitchOffEnd())
+    {
+      Int pocNext;
+      if (iGOPid == m_iGopSize - 1)
+      {
+        pocNext = iPOCLast - iNumPicRcvd + m_iGopSize + m_pcCfg->getGOPEntry(0).m_POC;
+      }
+      else
+      {
+        pocNext = iPOCLast - iNumPicRcvd + m_pcCfg->getGOPEntry(iGOPid + 1).m_POC;
+      }
+
+      if (pocNext > m_pcCfg->getLayerSwitchOffBegin() && pocCurr < m_pcCfg->getLayerSwitchOffEnd())
+      {
+        OutputNALUnit nalu(NAL_UNIT_EOS, pcSlice->getTLayer(), pcSlice->getLayerId());
+        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+        accessUnit.push_back(new NALUnitEBSP(nalu));
+        m_prevPicHasEos = true;
+      }
+    }
+#endif
 
     xResetNonNestedSEIPresentFlags();
     xResetNestedSEIPresentFlags();
@@ -5204,6 +5270,125 @@ Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
   }
 }
 #endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+Void TEncGOP::xCheckLayerReset(TComSlice *slice)
+{
+  Bool layerResetFlag;
+  Int dolLayerId;
+
+  if (slice->isIRAP() && slice->getLayerId() > 0)
+  {
+    if (m_prevPicHasEos)
+    {
+      layerResetFlag = true;
+      dolLayerId = slice->getLayerId();
+    }
+    else if ((slice->isCRA() && slice->getHandleCraAsBlaFlag()) || (slice->isIDR() && slice->getCrossLayerBLAFlag()) || slice->isBLA())
+    {
+      layerResetFlag = true;
+      dolLayerId = slice->getLayerId();
+    }
+    else
+    {
+      layerResetFlag = false;
+    }
+
+    if (layerResetFlag)
+    {
+      for (Int i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        Int iLayerId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
+        m_ppcTEncTop[iLayerId]->setLayerInitializedFlag(false);
+        m_ppcTEncTop[iLayerId]->setFirstPicInLayerDecodedFlag(false);
+      }
+
+      // Each picture that is in the DPB and has nuh_layer_id equal to dolLayerId is marked as "unused for reference".
+      for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[dolLayerId]->getListPic()->begin(); pic != m_ppcTEncTop[dolLayerId]->getListPic()->end(); pic++)
+      {
+        if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
+        {
+          (*pic)->getSlice(0)->setReferenced(false);
+        }
+      }
+
+      // Each picture that is in DPB and has nuh_layer_id equal to any value of IdPredictedLayer[dolLayerId][i]
+      // for the values of i in range of 0 to NumPredictedLayers[dolLayerId] - 1, inclusive, is marked as "unused for reference"
+      for (UInt i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt predLId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
+        for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[predLId]->getListPic()->begin(); pic != m_ppcTEncTop[predLId]->getListPic()->end(); pic++)
+        {
+          if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
+          {
+            (*pic)->getSlice(0)->setReferenced(false);
+          }
+        }
+      }
+    }
+  }
+}
+
+Void TEncGOP::xSetNoRaslOutputFlag(TComSlice *slice)
+{
+  if (slice->isIRAP())
+  {
+    m_noRaslOutputFlag = slice->getHandleCraAsBlaFlag();  // default value
+    if (slice->isIDR() || slice->isBLA() || m_bFirst || m_prevPicHasEos)
+    {
+      m_noRaslOutputFlag = true;
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_noRaslOutputFlag = true;
+      }
+    }
+  }
+}
+
+Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
+{
+  if (slice->isIRAP() && m_noRaslOutputFlag)
+  {
+    if (m_layerId == 0)
+    {
+      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag() && slice->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
+    {
+      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+      }
+    }
+  }
+}
+#endif // R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+
 #endif //SVC_EXTENSION
 
 //! \}

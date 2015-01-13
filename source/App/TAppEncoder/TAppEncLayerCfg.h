@@ -153,6 +153,11 @@ protected:
   Int*      m_colourRemapSEIPostLutTargetValue[3];
 #endif
 
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Int       m_layerSwitchOffBegin;
+  Int       m_layerSwitchOffEnd;
+#endif
+
 #if MULTIPLE_PTL_SUPPORT
   // profile/level
   Int       m_layerPTLIdx;
