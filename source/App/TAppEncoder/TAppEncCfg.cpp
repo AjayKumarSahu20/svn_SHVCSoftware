@@ -2679,7 +2679,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
-    Int olsToLsIndex = (olsCtr > startOlsCtr) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
+    Int olsToLsIndex = (olsCtr >= startOlsCtr) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
     scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
     //For conformance checking
     //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
