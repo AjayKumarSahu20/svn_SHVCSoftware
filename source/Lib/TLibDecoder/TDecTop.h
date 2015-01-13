@@ -119,6 +119,9 @@ private:
 #if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Bool                    m_lastPicHasEos;
+#endif
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
@@ -348,6 +351,11 @@ protected:
 #if CONFORMANCE_BITSTREAM_MODE
   Bool const getConfModeFlag() { return m_confModeFlag; }
   Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Void xCheckLayerReset();
+  Void xSetNoRaslOutputFlag();
+  Void xSetLayerInitializedFlag();
 #endif
 };// END CLASS DEFINITION TDecTop
 

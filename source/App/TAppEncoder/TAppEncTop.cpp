@@ -776,6 +776,10 @@ Void TAppEncTop::xInitLibCfg()
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     m_acTEncTop[layer].setAdaptiveResolutionChange( m_adaptiveResolutionChange );
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    m_acTEncTop[layer].setLayerSwitchOffBegin(m_acLayerCfg[layer].m_layerSwitchOffBegin);
+    m_acTEncTop[layer].setLayerSwitchOffEnd(m_acLayerCfg[layer].m_layerSwitchOffEnd);
+#endif
 #if AUXILIARY_PICTURES
     m_acTEncTop[layer].setChromaFormatIDC( m_acLayerCfg[layer].m_chromaFormatIDC );
 #endif

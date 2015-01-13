@@ -321,6 +321,10 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  int       m_layerSwitchOffBegin;
+  int       m_layerSwitchOffEnd;
+#endif
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      m_altOutputLayerFlag;
 #endif
@@ -926,6 +930,12 @@ public:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Void      setLayerSwitchOffBegin(Int x) { m_layerSwitchOffBegin = x;    }
+  Int       getLayerSwitchOffBegin()      { return m_layerSwitchOffBegin; }
+  Void      setLayerSwitchOffEnd(Int x)   { m_layerSwitchOffEnd = x;      }
+  Int       getLayerSwitchOffEnd()        { return m_layerSwitchOffEnd;   }
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   Void      setSkipPictureAtArcSwitch(Int x) { m_skipPictureAtArcSwitch = x;    }
