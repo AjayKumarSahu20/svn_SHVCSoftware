@@ -104,6 +104,9 @@ TDecTop::TDecTop()
 #if Q0177_EOS_CHECKS
   m_isLastNALWasEos = false;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_lastPicHasEos = false;
+#endif
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
@@ -971,6 +974,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       setNoClrasOutputFlag(true);
     }
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    else if( m_lastPicHasEos )
+    {
+      setNoClrasOutputFlag(true);
+    }
+#endif
     else if ( m_apcSlicePilot->getBlaPicFlag() )
     {
       setNoClrasOutputFlag(true);
@@ -1662,6 +1671,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    xCheckLayerReset();
+    xSetLayerInitializedFlag();
+#endif
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff(m_apcSlicePilot->getSPS()->getChromaFormatIdc());
 #if ALIGNED_BUMPING
@@ -2246,6 +2259,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   setFirstPicInLayerDecodedFlag(true);
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_lastPicHasEos = false;
+#endif
 
   m_bFirstSliceInPicture = false;
   m_uiSliceIdx++;
@@ -2525,13 +2541,18 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_EOS:
 #if Q0177_EOS_CHECKS
       assert( m_isLastNALWasEos == false );
+#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
       //Check layer id of the nalu. if it is not 0, give a warning message and just return without doing anything.
       if (nalu.m_layerId > 0)
       {
         printf( "\nThis bitstream has EOS with non-zero layer id.\n" );
         return false;
       }
+#endif
       m_isLastNALWasEos = true;
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      m_lastPicHasEos = true;
+#endif
 #endif
       m_associatedIRAPType = NAL_UNIT_INVALID;
       m_pocCRA = 0;
@@ -3090,6 +3111,94 @@ Void TDecTop::resetPocRestrictionCheckParameters()
   TDecTop::m_picNonIdrNoLpPresentFlag            = false;
 }
 #endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+Void TDecTop::xCheckLayerReset()
+{
+  if (m_apcSlicePilot->isIRAP() && m_layerId > 0)
+  {
+    Bool layerResetFlag;
+    UInt dolLayerId;
+    if (m_lastPicHasEos)
+    {
+      layerResetFlag = true;
+      dolLayerId = m_layerId;
+    }
+    else if ((m_apcSlicePilot->isCRA() && m_apcSlicePilot->getHandleCraAsBlaFlag()) ||
+      (m_apcSlicePilot->isIDR() && m_apcSlicePilot->getCrossLayerBLAFlag()) || m_apcSlicePilot->isBLA())
+    {
+      layerResetFlag = true;
+      dolLayerId = m_layerId;
+    }
+    else
+    {
+      layerResetFlag = false;
+    }
+
+    if (layerResetFlag)
+    {
+      for (Int i = 0; i < m_apcSlicePilot->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt iLayerId = m_apcSlicePilot->getVPS()->getPredictedLayerId(dolLayerId, i);
+        m_ppcTDecTop[iLayerId]->m_layerInitializedFlag = false;
+        m_ppcTDecTop[iLayerId]->m_firstPicInLayerDecodedFlag = false;
+      }
+
+      for (TComList<TComPic*>::iterator i = m_cListPic.begin(); i != m_cListPic.end(); i++)
+      {
+        if ((*i)->getPOC() != m_apcSlicePilot->getPOC())
+        {
+          (*i)->getSlice(0)->setReferenced(false);
+        }
+      }
+
+      for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt predLId = m_apcSlicePilot->getVPS()->getPredictedLayerId(dolLayerId, i);
+        for (TComList<TComPic*>::iterator pic = m_ppcTDecTop[predLId]->getListPic()->begin(); pic != m_ppcTDecTop[predLId]->getListPic()->end(); pic++)
+        {
+          if ((*pic)->getSlice(0)->getPOC() != m_apcSlicePilot->getPOC())
+          {
+            (*pic)->getSlice(0)->setReferenced(false);
+          }
+        }
+      }
+    }
+  }
+}
+
+Void TDecTop::xSetLayerInitializedFlag()
+{
+  if (m_apcSlicePilot->isIRAP() && m_apcSlicePilot->getNoRaslOutputFlag())
+  {
+    if (m_layerId == 0)
+    {
+      m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTDecTop[m_layerId]->getLayerInitializedFlag() && m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
+    {
+      m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTDecTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = m_apcSlicePilot->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTDecTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+      }
+    }
+  }
+}
+#endif
+
 #endif //SVC_EXTENSION
 
 

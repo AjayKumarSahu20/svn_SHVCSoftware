@@ -887,6 +887,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   Int*    cfg_waveFrontSynchro[MAX_LAYERS];
 
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
+  Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
+#endif
+
 #if MULTIPLE_PTL_SUPPORT
   Bool    tmpIntraConstraintFlag;
   Bool    tmpLowerBitRateConstraintFlag;
@@ -988,6 +993,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1;
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    cfg_layerSwitchOffBegin[layer] = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
+    cfg_layerSwitchOffEnd[layer]   = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
 #endif
 #if MULTIPLE_PTL_SUPPORT
     cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
@@ -1733,6 +1742,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
+  ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
+#endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
 #endif
@@ -1947,6 +1960,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
   m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
+#endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  for (Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if (m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd)
+    {
+      if (m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0)
+      {
+        printf("LayerSwitchOffBegin%d: Must be multiple of GOP size.\n", layer);
+        exit(EXIT_FAILURE);
+      }
+      if (m_acLayerCfg[layer].m_iIntraPeriod > 0 && (m_acLayerCfg[layer].m_layerSwitchOffEnd % m_acLayerCfg[layer].m_iIntraPeriod) != 0)
+      {
+        printf("LayerSwitchOffEnd%d: Must be IRAP picture.\n", layer);
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
 #endif
 
 #if MULTIPLE_PTL_SUPPORT

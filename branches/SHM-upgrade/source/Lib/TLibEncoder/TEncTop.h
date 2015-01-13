@@ -162,6 +162,9 @@ private:
   Bool                    m_pocDecrementedInDPBFlag;
   Int                     m_currPocMsb;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Bool                    m_prevPicHasEos;
+#endif
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
