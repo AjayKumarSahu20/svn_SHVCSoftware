@@ -2132,9 +2132,17 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setDefaultDirectDependecyType(uiCode);
   }
 #endif
-  for(i = 1; i < vps->getMaxLayers(); i++)
+#if VPS_FIX_TO_MATCH_SPEC
+  for (i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++)
+#else
+  for (i = 1; i < vps->getMaxLayers(); i++)
+#endif
   {
-    for(j = 0; j < i; j++)
+#if VPS_FIX_TO_MATCH_SPEC
+    for (j = vps->getBaseLayerInternalFlag() ? 0 : 1; j < i; j++)
+#else
+    for (j = 0; j < i; j++)
+#endif
     {
       if (vps->getDirectDependencyFlag(i, j))
       {
