@@ -3547,9 +3547,18 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setDefaultDirectDependecyType(uiCode);
   }
 #endif
+
+#if VPS_FIX_TO_MATCH_SPEC
+  for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
+#else
   for(i = 1; i < vps->getMaxLayers(); i++)
+#endif
   {
+#if VPS_FIX_TO_MATCH_SPEC
+    for( j = vps->getBaseLayerInternalFlag() ? 0 : 1; j < i; j++ )
+#else
     for(j = 0; j < i; j++)
+#endif
     {
       if (vps->getDirectDependencyFlag(i, j))
       {
@@ -4745,19 +4754,15 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
 #if VPS_FIX_TO_MATCH_SPEC
               if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 1 )
               {
-#endif
-#if VPS_FIX_TO_MATCH_SPEC
                 Int numBits = 1;
                 while ((1 << numBits) < (vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams()))
                 {
                   numBits++;
                 }
                 READ_CODE(numBits, uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
-#else
-                READ_UVLC(uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
-#endif
-#if VPS_FIX_TO_MATCH_SPEC
               }
+#else
+              READ_UVLC(uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
 #endif
               READ_UVLC(uiCode, "bsp_comb_sched_idx[h][i][t][j][k]");    vps->setBspSchedIdx(h, i, t, j, k, uiCode);
             }
