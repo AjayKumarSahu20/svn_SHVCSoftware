@@ -3582,7 +3582,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         if (pocNext > m_pcCfg->getLayerSwitchOffBegin() && pocCurr < m_pcCfg->getLayerSwitchOffEnd())
         {
-          OutputNALUnit nalu(NAL_UNIT_EOS, pcSlice->getTLayer(), pcSlice->getLayerId());
+          OutputNALUnit nalu(NAL_UNIT_EOS, 0, pcSlice->getLayerId());
           m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
           accessUnit.push_back(new NALUnitEBSP(nalu));
           m_prevPicHasEos = true;
