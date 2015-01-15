@@ -1967,7 +1967,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
   {
     // Default output layer sets defined
-    startOlsCtr = m_numLayerSets + m_numAddLayerSets;
+    startOlsCtr = m_numLayerSets;
   }
   for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
   {
@@ -1983,7 +1983,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
 #if MULTIPLE_PTL_SUPPORT
-    Int olsToLsIndex = (olsCtr >= startOlsCtr) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
+    Int olsToLsIndex = (olsCtr >= (m_numLayerSets + m_numAddLayerSets)) ? m_outputLayerSetIdx[olsCtr - m_numLayerSets] : olsCtr;
     scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
     //For conformance checking
     //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
