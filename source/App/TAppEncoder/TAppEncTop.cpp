@@ -1366,6 +1366,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setHighestLayerIdxPlus1(setId, j + 1, m_highestLayerIdx[setId][j] + 1);
       }
     }
+    //TODO: We need to populate the list of layers that belong to each of additional layer set.
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -1676,7 +1677,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
 
     // Include the highest layer as output layer for each layer set
-    for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
+    for(Int lsIdx = 1; lsIdx <= vps->getVpsNumLayerSetsMinus1(); lsIdx++)
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
       {
@@ -1702,7 +1703,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
 #if OUTPUT_LAYER_SETS_CONFIG
-    for( Int olsIdx = vps->getNumLayerSets(); olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
+    for( Int olsIdx = vps->getVpsNumLayerSetsMinus1() + 1; olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
       {
