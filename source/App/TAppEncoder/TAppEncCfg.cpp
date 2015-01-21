@@ -2605,6 +2605,14 @@ Void TAppEncCfg::xCheckParameter()
     }
     ii++;
   }
+  if (m_numLayers > 1 && m_numPTLInfo > 1 && !m_nonHEVCBaseLayerFlag)
+  {
+    assert(m_profileList[0] <= Profile::MULTIVIEWMAIN);  //Profile IDC of PTL in VPS shall be one of single-layer profile IDCs
+    assert(m_profileList[0] == m_profileList[1]);        //Profile IDC of VpsProfileTierLevel[ 0 ] and VpsProfileTierLevel[ 1 ] shall be the same when BL is HEVC compatible
+    assert(m_levelList[0] >= m_levelList[1]);            //Level IDC of VpsProfileTierLevel[ 0 ] should not be less than level IDC of VpsProfileTierLevel[ 1 ]. 
+                                                         //NOTE that this is not conformance constraint but it would be nice if our encoder can prevent inefficient level IDC assignment
+    if (m_levelList[0] == m_levelList[1]) printf("Warning: Level0 is set the same as Level1\n");
+  }
 #else
   if( m_profile==Profile::NONE )
   {
