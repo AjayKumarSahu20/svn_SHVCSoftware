@@ -2183,7 +2183,7 @@ UInt TComSlice::getPicWidthInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getPicWidthVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getPicWidthVpsInLumaSamples();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2226,7 +2226,7 @@ UInt TComSlice::getPicHeightInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getPicHeightVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getPicHeightVpsInLumaSamples();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2278,7 +2278,7 @@ UInt TComSlice::getChromaFormatIdc()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getChromaFormatVpsIdc();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getChromaFormatVpsIdc();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2320,7 +2320,7 @@ UInt TComSlice::getBitDepthY()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getBitDepthVpsLuma();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getBitDepthVpsLuma();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2362,7 +2362,7 @@ UInt TComSlice::getBitDepthC()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getBitDepthVpsChroma();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getBitDepthVpsChroma();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2415,7 +2415,7 @@ Window& TComSlice::getConformanceWindow()
   }
   else
   {
-    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getConformanceWindowVps();
+    return vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(layerId))->getConformanceWindowVps();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
