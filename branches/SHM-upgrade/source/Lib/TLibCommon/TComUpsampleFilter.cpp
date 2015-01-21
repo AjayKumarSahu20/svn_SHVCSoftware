@@ -645,7 +645,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if R0220_REMOVE_EL_CLIP
       Int y = j;
 #if R0209_GENERIC_PHASE
-      refPos16 = (((y - srlTOffsetC)*scaleX - addY) >> shiftYM4) + refOffsetYC;
+      refPos16 = (((y - srlTOffsetC)*scaleY - addY) >> shiftYM4) + refOffsetYC;
 #else
 #if REF_REGION_OFFSET
       refPos16 = (((y - srlTOffsetC)*scaleY + addY) >> shiftYM4) - deltaY + refOffsetYC;
