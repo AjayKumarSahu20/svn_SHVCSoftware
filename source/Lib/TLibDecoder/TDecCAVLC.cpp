@@ -3963,7 +3963,7 @@ if( sliceHeaderExtensionLength > 0 )
     rpcSlice->setPocResetIdc( 0 );
   }
 #if Q0142_POC_LSB_NOT_PRESENT
-  if ( rpcSlice->getVPS()->getPocLsbNotPresentFlag(rpcSlice->getLayerId()) && iPOClsb > 0 )
+  if ( vps->getPocLsbNotPresentFlag(layerIdx) && iPOClsb > 0 )
   {
     assert( rpcSlice->getPocResetIdc() != 2 );
   }
@@ -3983,7 +3983,7 @@ if( sliceHeaderExtensionLength > 0 )
     READ_FLAG( uiCode,        "full_poc_reset_flag"); rpcSlice->setFullPocResetFlag((uiCode == 1) ? true : false);
     READ_CODE(rpcSlice->getSPS()->getBitsForPOC(), uiCode,"poc_lsb_val"); rpcSlice->setPocLsbVal(uiCode);
 #if Q0142_POC_LSB_NOT_PRESENT
-    if ( rpcSlice->getVPS()->getPocLsbNotPresentFlag(rpcSlice->getLayerId()) && rpcSlice->getFullPocResetFlag() )
+    if ( vps->getPocLsbNotPresentFlag(layerIdx) && rpcSlice->getFullPocResetFlag() )
     {
       assert( rpcSlice->getPocLsbVal() == 0 );
     }
