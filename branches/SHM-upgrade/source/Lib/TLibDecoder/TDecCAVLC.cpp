@@ -1709,7 +1709,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       }
       else
       {
-        format = pcSlice->getVPS()->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : pcSlice->getVPS()->getVpsRepFormatIdx(sps->getLayerId()) )->getChromaFormatVpsIdc();
+        format = pcSlice->getVPS()->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : pcSlice->getVPS()->getVpsRepFormatIdx( pcSlice->getVPS()->getLayerIdInVps(sps->getLayerId()) ) )->getChromaFormatVpsIdc();
 #if Q0195_REP_FORMAT_CLEANUP
         assert( (sps->getUpdateRepFormatFlag()==false && pcSlice->getVPS()->getVpsNumRepFormats()==1) || pcSlice->getVPS()->getVpsNumRepFormats() > 1 ); //conformance check
 #endif
@@ -3408,9 +3408,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   if( vps->getRepFormatIdxPresentFlag() )
   {
 #if VPS_FIX_TO_MATCH_SPEC
-      for( i = vps->getBaseLayerInternalFlag() ? 1 : 0; i < vps->getMaxLayers(); i++ )
+    for( i = vps->getBaseLayerInternalFlag() ? 1 : 0; i < vps->getMaxLayers(); i++ )
 #else
-      for (i = 1; i < vps->getMaxLayers(); i++)
+    for (i = 1; i < vps->getMaxLayers(); i++)
 #endif
     {
       Int numBits = 1;
