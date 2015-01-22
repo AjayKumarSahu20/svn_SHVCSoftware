@@ -1261,14 +1261,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setLayerIdIncludedFlag(false, setId, layerId);
       }
     }
-    for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
+    for( Int setId = 1; setId < vps->getNumLayerSets(); setId++ )
     {
 #if OUTPUT_LAYER_SETS_CONFIG
-      for (Int i = 0; i < m_numLayerInIdList[setId]; i++)
+      for( i = 0; i < m_numLayerInIdList[setId]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId][i];
 #else
-      for (Int i = 0; i < m_numLayerInIdList[setId-1]; i++)
+      for( i = 0; i < m_numLayerInIdList[setId-1]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId-1][i];
 #endif
