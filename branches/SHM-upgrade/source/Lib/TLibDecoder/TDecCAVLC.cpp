@@ -2057,7 +2057,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       pcSlice->setPocResetIdc( 0 );
     }
 #if Q0142_POC_LSB_NOT_PRESENT
-    if ( pcSlice->getVPS()->getPocLsbNotPresentFlag(pcSlice->getLayerId()) && iPOClsb > 0 )
+    if ( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdInVps(pcSlice->getLayerId()) ) && iPOClsb > 0 )
     {
       assert( pcSlice->getPocResetIdc() != 2 );
     }
@@ -2077,7 +2077,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       READ_FLAG( uiCode,        "full_poc_reset_flag"); pcSlice->setFullPocResetFlag((uiCode == 1) ? true : false);
       READ_CODE(pcSlice->getSPS()->getBitsForPOC(), uiCode,"poc_lsb_val"); pcSlice->setPocLsbVal(uiCode);
 #if Q0142_POC_LSB_NOT_PRESENT
-      if ( pcSlice->getVPS()->getPocLsbNotPresentFlag(pcSlice->getLayerId()) && pcSlice->getFullPocResetFlag() )
+      if ( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdInVps(pcSlice->getLayerId()) ) && pcSlice->getFullPocResetFlag() )
       {
         assert( pcSlice->getPocLsbVal() == 0 );
       }
