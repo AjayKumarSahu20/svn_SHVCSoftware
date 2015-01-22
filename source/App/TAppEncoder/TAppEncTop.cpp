@@ -1366,7 +1366,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setHighestLayerIdxPlus1(setId, j + 1, m_highestLayerIdx[setId][j] + 1);
       }
     }
-    //TODO: We need to populate the list of layers that belong to each of additional layer set.
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
@@ -1693,7 +1692,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
             case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
               break;
             case 2:
-            case 3: vps->setOutputLayerFlag( lsIdx, layer, std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), layer) != m_listOfOutputLayers[lsIdx].end() );
+            case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
+                                                                                                           : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
               break;
           }
 #else
@@ -1707,7 +1707,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
       {
-        vps->setOutputLayerFlag( olsIdx, layer, std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), layer) != m_listOfOutputLayers[olsIdx].end());
+        vps->setOutputLayerFlag( olsIdx, layer, (layer != vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)) - 1) ? std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer)) != m_listOfOutputLayers[olsIdx].end()
+                                                                                                                            : m_listOfOutputLayers[olsIdx][m_listOfOutputLayers[olsIdx].size()-1] == vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer) );
       }
     }
 #endif
