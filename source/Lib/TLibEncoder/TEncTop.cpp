@@ -1102,11 +1102,13 @@ Void TEncTop::xInitSPS()
   }
 
 #if REPN_FORMAT_IN_VPS
-  m_cSPS.setBitDepthY( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma() );
-  m_cSPS.setBitDepthC( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  );
+  UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
 
-  m_cSPS.setQpBDOffsetY ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma()  - 8) );
-  m_cSPS.setQpBDOffsetC ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  - 8) );
+  m_cSPS.setBitDepthY( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsLuma() );
+  m_cSPS.setBitDepthC( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsChroma()  );
+
+  m_cSPS.setQpBDOffsetY ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsLuma() - 8) );
+  m_cSPS.setQpBDOffsetC ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsChroma() - 8) );
 #else
   m_cSPS.setBitDepthY( g_bitDepthY );
   m_cSPS.setBitDepthC( g_bitDepthC );
@@ -1728,9 +1730,9 @@ Void TEncTop::xInitILRP()
 Void TEncTop::xInitILRP()
 {
 #if O0096_REP_FORMAT_INDEX
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_layerId ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
 #else
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
 #endif
   Int bitDepthY,bitDepthC,picWidth,picHeight;
 
