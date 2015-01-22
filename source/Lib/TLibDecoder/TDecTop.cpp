@@ -763,23 +763,23 @@ Void TDecTop::xActivateParameterSets()
 #endif
 
 #if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
+  UInt layerIdx = activeVPS->getLayerIdInVps(m_apcSlicePilot->getLayerId());
+
   if ( activeVPS->getVpsExtensionFlag() == 1 && (m_apcSlicePilot->getLayerId() == 0 || sps->getV1CompatibleSPSFlag() == 1) )
   {
-    UInt layerId = m_apcSlicePilot->getLayerId();
-    assert( sps->getPicWidthInLumaSamples()  <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId) )->getPicWidthVpsInLumaSamples() );
-    assert( sps->getPicHeightInLumaSamples() <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId) )->getPicHeightVpsInLumaSamples() );
-    assert( sps->getChromaFormatIdc()        <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId) )->getChromaFormatVpsIdc() );
-    assert( sps->getBitDepth(CHANNEL_TYPE_LUMA)              <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId) )->getBitDepthVpsLuma() );
-    assert( sps->getBitDepth(CHANNEL_TYPE_CHROMA)            <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId) )->getBitDepthVpsChroma() );
+    assert( sps->getPicWidthInLumaSamples()        <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx) )->getPicWidthVpsInLumaSamples() );
+    assert( sps->getPicHeightInLumaSamples()       <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx) )->getPicHeightVpsInLumaSamples() );
+    assert( sps->getChromaFormatIdc()              <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx) )->getChromaFormatVpsIdc() );
+    assert( sps->getBitDepth(CHANNEL_TYPE_LUMA)    <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx) )->getBitDepthVpsLuma() );
+    assert( sps->getBitDepth(CHANNEL_TYPE_CHROMA)  <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx) )->getBitDepthVpsChroma() );
   }
   else if ( activeVPS->getVpsExtensionFlag() == 1 )
   {
-    UInt layerId = m_apcSlicePilot->getLayerId();
-    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerId))->getPicWidthVpsInLumaSamples()  <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId))->getPicWidthVpsInLumaSamples());
-    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerId))->getPicHeightVpsInLumaSamples() <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId))->getPicHeightVpsInLumaSamples());
-    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerId))->getChromaFormatVpsIdc()        <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId))->getChromaFormatVpsIdc());
-    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerId))->getBitDepthVpsLuma()           <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId))->getBitDepthVpsLuma());
-    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerId))->getBitDepthVpsChroma()         <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerId))->getBitDepthVpsChroma());
+    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getPicWidthVpsInLumaSamples()  <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getPicWidthVpsInLumaSamples());
+    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getPicHeightVpsInLumaSamples() <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getPicHeightVpsInLumaSamples());
+    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getChromaFormatVpsIdc()        <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getChromaFormatVpsIdc());
+    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsLuma()           <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsLuma());
+    assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma()         <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma());
   }
 #endif
 

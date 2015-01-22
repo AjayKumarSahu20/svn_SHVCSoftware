@@ -1248,6 +1248,26 @@ Void TAppEncTop::xDestroyLib()
 Void TAppEncTop::xInitLib(Bool isFieldCoding)
 {
 #if SVC_EXTENSION
+  TComVPS* vps = m_acTEncTop[0].getVPS();
+  m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
+
+  UInt i = 0, dimIdLen = 0;
+
+  while((1 << dimIdLen) < m_numLayers)
+  {
+    dimIdLen++;
+  }
+  vps->setDimensionIdLen(0, dimIdLen);
+  vps->setNuhLayerIdPresentFlag(false);
+  vps->setLayerIdInNuh(0, 0);
+  vps->setLayerIdInVps(0, 0);
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    vps->setLayerIdInNuh(i, i);
+    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+    vps->setDimensionId(i, 0, i);
+  }
+
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
@@ -1275,9 +1295,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     m_acTEncTop[layer].getVPS()->setPPSId(layer, m_acTEncTop[layer].getPPS()->getPPSId());
 #endif
   }
-  m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
+
 #if VPS_EXTN_OP_LAYER_SETS
-  TComVPS* vps = m_acTEncTop[0].getVPS();
   vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
 
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
@@ -1369,7 +1388,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
-  UInt i = 0, dimIdLen = 0;
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
   vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
@@ -1407,20 +1425,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     vps->setNumScalabilityTypes(0);
   }
-  while((1 << dimIdLen) < m_numLayers)
-  {
-    dimIdLen++;
-  }
-  vps->setDimensionIdLen(0, dimIdLen);
-  vps->setNuhLayerIdPresentFlag(false);
-  vps->setLayerIdInNuh(0, 0);
-  vps->setLayerIdInVps(0, 0);
-  for(i = 1; i < vps->getMaxLayers(); i++)
-  {
-    vps->setLayerIdInNuh(i, i);
-    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
-    vps->setDimensionId(i, 0, i);
-  }
+  
 #if AUXILIARY_PICTURES
   if (m_scalabilityMask[3])
   {
