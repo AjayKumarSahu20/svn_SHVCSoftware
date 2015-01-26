@@ -1075,7 +1075,11 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
 #if NO_CLRAS_OUTPUT_FLAG
+#if R0235_SMALLEST_LAYER_ID
+Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag, UInt smallestLayerId )
+#else
 Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag )
+#endif
 {
   if( !isIRAP() )
   {
@@ -1085,9 +1089,13 @@ Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noCl
   Int pocCurr = getPOC();
   TComPic* rpcPic = NULL;
 
-  // When the current picture is an IRAP picture with nuh_layer_id equal to 0 and NoClrasOutputFlag is equal to 1, 
+  // When the current picture is an IRAP picture with nuh_layer_id equal to SmallestLayerId and NoClrasOutputFlag is equal to 1, 
   // all reference pictures with any value of nuh_layer_id currently in the DPB (if any) are marked as "unused for reference".
+#if R0235_SMALLEST_LAYER_ID
+  if (m_layerId == smallestLayerId && noClrasOutputFlag)
+#else
   if( m_layerId == 0 && noClrasOutputFlag )
+#endif
   {
     // mark all pictures for all layers as not used for reference
     TComList<TComPic*>::iterator iterPic = rcListPic.begin();

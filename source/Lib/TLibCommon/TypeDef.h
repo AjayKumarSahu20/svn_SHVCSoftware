@@ -80,6 +80,7 @@
 #define R0227_REP_FORMAT_CONSTRAINT      1      ///< JCTVC-R0227, Conformance checking such that representation format of a particular layer shall not be greater than the one defined in VPS for that layer
 #define R0227_BR_PR_ADD_LAYER_SET        1      ///< JCTVC-R0227, Signalling of bit-rate and picture rate for additional layer set
 #define R0042_PROFILE_INDICATION         1      ///< JCTVC-R0042, Profile indication for additional layer sets
+#define R0235_SMALLEST_LAYER_ID          1      ///< JCTVC-R0235, SmallestLayerId semantics 
 
 #define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present

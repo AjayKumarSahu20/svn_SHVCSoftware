@@ -83,6 +83,9 @@ TDecTop::TDecTop()
 #endif
 #if SVC_EXTENSION 
   m_layerId = 0;
+#if R0235_SMALLEST_LAYER_ID
+  m_smallestLayerId = 0;
+#endif
 #if AVC_BASE
   m_pBLReconFile = NULL;
 #endif
@@ -1010,7 +1013,24 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
-  checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+#if R0235_SMALLEST_LAYER_ID
+  if (!m_apcSlicePilot->getVPS()->getBaseLayerAvailableFlag())
+  {
+    assert(nalu.m_layerId != 0);
+    assert(m_apcSlicePilot->getVPS()->getNumAddLayerSets() > 0);
+    if (getCommonDecoderParams()->getTargetOutputLayerSetIdx() >= 0)
+    {
+      UInt layerIdx = m_apcSlicePilot->getVPS()->getOutputLayerSetIdx(getCommonDecoderParams()->getTargetOutputLayerSetIdx());
+      assert(layerIdx > m_apcSlicePilot->getVPS()->getVpsNumLayerSetsMinus1());
+    }
+  }
+  if (m_apcSlicePilot->getVPS()->getNumAddLayerSets() == 0)
+  {
+    checkValueOfTargetOutputLayerSetIdx(m_apcSlicePilot->getVPS());
+  }
+#else
+  checkValueOfTargetOutputLayerSetIdx(m_apcSlicePilot->getVPS());
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   // Following assignment should go wherever a new VPS is activated
@@ -1142,7 +1162,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
+#if R0235_SMALLEST_LAYER_ID
+  if (m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag())
+#else
   if (m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() )
+#endif
   {
     if (m_bFirstSliceInSequence)
     {
@@ -1174,7 +1198,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     setNoClrasOutputFlag(false);
   }
 
+#if R0235_SMALLEST_LAYER_ID
+  m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag, m_smallestLayerId );
+#else
   m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag );
+#endif
 #endif
 
   // Derive the value of NoOutputOfPriorPicsFlag
@@ -2640,6 +2668,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         cListPic->clear();
       }
 #endif
+#if R0235_SMALLEST_LAYER_ID
+      xDeriveSmallestLayerId(m_parameterSetManagerDecoder.getPrefetchedVPS(0));
+#endif
       return false;
       
     case NAL_UNIT_SPS:
@@ -3125,7 +3156,11 @@ Void TDecTop::resetPocRestrictionCheckParameters()
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
 Void TDecTop::xCheckLayerReset()
 {
+#if R0235_SMALLEST_LAYER_ID
+  if (m_apcSlicePilot->isIRAP() && m_layerId > m_smallestLayerId)
+#else
   if (m_apcSlicePilot->isIRAP() && m_layerId > 0)
+#endif
   {
     Bool layerResetFlag;
     UInt dolLayerId;
@@ -3205,6 +3240,43 @@ Void TDecTop::xSetLayerInitializedFlag()
         m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
       }
     }
+  }
+}
+#endif
+
+#if R0235_SMALLEST_LAYER_ID
+Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
+{
+  UInt smallestLayerId;
+  UInt targetOlsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
+  UInt targetDecLayerSetIdx = vps->getOutputLayerSetIdx(targetOlsIdx);
+  UInt lsIdx = targetDecLayerSetIdx;
+  UInt targetDecLayerIdList[MAX_LAYERS] = {0};
+
+  for (UInt i = 0, j = 0; i < vps->getNumLayersInIdList(lsIdx); i++)
+  {
+    if (vps->getNecessaryLayerFlag(targetOlsIdx, i))
+    {
+      targetDecLayerIdList[j++] = vps->getLayerSetLayerIdList(lsIdx, i);
+    }
+  }
+
+  if (targetDecLayerSetIdx <= vps->getVpsNumLayerSetsMinus1())
+  {
+    smallestLayerId = 0;
+  }
+  else if (vps->getNumLayersInIdList(targetDecLayerSetIdx) == 1)
+  {
+    smallestLayerId = 0;
+  }
+  else
+  {
+    smallestLayerId = targetDecLayerIdList[0];
+  }
+
+  for (UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1 - 1; layer++)
+  {
+    m_ppcTDecTop[layer]->m_smallestLayerId = smallestLayerId;
   }
 }
 #endif
