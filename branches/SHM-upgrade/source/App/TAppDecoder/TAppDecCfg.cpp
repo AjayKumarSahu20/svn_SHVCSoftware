@@ -264,11 +264,13 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
         }
       }
       fclose (targetDecLayerIdSetFile);
+#if !R0235_SMALLEST_LAYER_ID  // LayerId=0 is not required anymore in some cases
       if ( m_targetDecLayerIdSet.size() > 0 && !isLayerIdZeroIncluded )
       {
         fprintf(stderr, "TargetDecLayerIdSet must contain LayerId=0, aborting" );
         return false;
       }
+#endif
     }
     else
     {

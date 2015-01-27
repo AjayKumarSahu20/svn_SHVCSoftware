@@ -1524,7 +1524,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
           Int chkAssert=0;
           for(Int kk = 0; kk < pcSlice->getVPS()->getNumLayersInIdList(layerSetIdxForOutputLayerSet); kk++)
           {
+#if R0235_SMALLEST_LAYER_ID
+            if( pcSlice->getVPS()->getNecessaryLayerFlag(ii, kk) && pcSlice->getLayerId() == pcSlice->getVPS()->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, kk) )
+#else
             if(pcSlice->getLayerId() == pcSlice->getVPS()->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, kk))
+#endif
             {
               chkAssert=1;
             }
@@ -3217,7 +3221,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       if( vps->getNecessaryLayerFlag(i, j) )
 #endif
       {
-        READ_CODE( numBitsForPtlIdx, uiCode, "profile_level_tier_idx[i]" ); 
+        READ_CODE( numBitsForPtlIdx, uiCode, "profile_tier_level_idx[i]" ); 
         vps->setProfileLevelTierIdx(i, j, uiCode );
 
 #if MULTIPLE_PTL_SUPPORT
@@ -3227,12 +3231,20 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
         //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
         //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
+#if R0235_SMALLEST_LAYER_ID
+        // The assertion below is not valid for independent non-base layers 
+        if (vps->getNumAddLayerSets() == 0)
+        {
+#endif
         if (j > 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j - 1) != 0)
         {
           assert(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc() == vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc() ||
                  vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc()) ||  
                  vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc())  );
         }
+#if R0235_SMALLEST_LAYER_ID
+        }
+#endif
 #endif
       }
     }
@@ -3242,7 +3254,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       numBits++;
     }
-    READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
+    READ_CODE( numBits, uiCode, "profile_tier_level_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
 #endif
 #if P0300_ALT_OUTPUT_LAYER_FLAG
     NumOutputLayersInOutputLayerSet[i] = 0;
