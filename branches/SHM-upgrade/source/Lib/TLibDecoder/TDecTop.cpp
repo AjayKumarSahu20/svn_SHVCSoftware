@@ -850,11 +850,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       UInt layerIdx = m_apcSlicePilot->getVPS()->getOutputLayerSetIdx(getCommonDecoderParams()->getTargetOutputLayerSetIdx());
       assert(layerIdx > m_apcSlicePilot->getVPS()->getVpsNumLayerSetsMinus1());
     }
-  }
-  if (m_apcSlicePilot->getVPS()->getNumAddLayerSets() == 0)
-  {
-    checkValueOfTargetOutputLayerSetIdx(m_apcSlicePilot->getVPS());
-  }
+  }  
 #else
   checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
 #endif
@@ -2303,6 +2299,9 @@ Void TDecTop::xDecodeVPS()
 
   m_cEntropyDecoder.decodeVPS( vps );
   m_parameterSetManagerDecoder.storePrefetchedVPS(vps);
+#if R0235_SMALLEST_LAYER_ID
+  checkValueOfTargetOutputLayerSetIdx(vps);
+#endif
 }
 
 #if SVC_EXTENSION
@@ -3030,6 +3029,9 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
+#if R0235_SMALLEST_LAYER_ID
+    assert( params->getTargetOutputLayerSetIdx() < vps->getNumOutputLayerSets() );
+#endif
 #if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
 #endif
@@ -3037,7 +3039,8 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 #if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
 #endif
-
+    
+#if !R0235_SMALLEST_LAYER_ID
     Bool layerSetMatchFlag = true;
     for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
     {
@@ -3049,6 +3052,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     }
 
     assert(layerSetMatchFlag);    // Signaled output layer set index does not match targetOutputLayerId.
+#endif
     
     // Check if the targetdeclayerIdlist matches the output layer set
     if( params->getTargetDecLayerIdSet() )
@@ -3238,7 +3242,9 @@ Void TDecTop::xSetLayerInitializedFlag()
 Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
 {
   UInt smallestLayerId;
-  UInt targetOlsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
+  Int  targetOlsIdx = m_commonDecoderParams->getTargetOutputLayerSetIdx();
+  assert( targetOlsIdx >= 0 );
+
   UInt targetDecLayerSetIdx = vps->getOutputLayerSetIdx(targetOlsIdx);
   UInt lsIdx = targetDecLayerSetIdx;
   UInt targetDecLayerIdList[MAX_LAYERS] = {0};

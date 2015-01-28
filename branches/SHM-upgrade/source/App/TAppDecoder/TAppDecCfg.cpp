@@ -205,8 +205,8 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #endif
-  this->getCommonDecoderParams()->setTargetOutputLayerSetIdx( olsIdx       );
-  this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
+  m_commonDecoderParams.setTargetOutputLayerSetIdx( olsIdx );
+  m_commonDecoderParams.setTargetLayerId( m_tgtLayerId );
 #endif
 #if FIX_CONF_MODE
   for(Int layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++ )
