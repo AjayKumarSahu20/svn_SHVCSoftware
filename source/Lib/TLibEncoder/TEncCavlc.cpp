@@ -2838,16 +2838,21 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #endif 
 #if IRAP_ALIGN_FLAG_IN_VPS_VUI
     WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-    if(vps->getCrossLayerIrapAlignFlag())
-    {
-       WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "all_layers_idr_aligned_flag");
-    }
-#endif
 #endif 
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
+  else
+  {
+    vps->setCrossLayerIrapAlignFlag(vps->getVpsVuiPresentFlag()); // When not present, the value of cross_layer_irap_aligned_flag is inferred to be equal to vps_vui_present_flag
+  }
 #endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  if(vps->getCrossLayerIrapAlignFlag())
+  {
+    WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "all_layers_idr_aligned_flag");
+  }
+#endif
+
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
 

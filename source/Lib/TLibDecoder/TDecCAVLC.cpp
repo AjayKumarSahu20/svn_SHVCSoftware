@@ -4008,19 +4008,19 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #if IRAP_ALIGN_FLAG_IN_VPS_VUI
     READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
     vps->setCrossLayerIrapAlignFlag(uiCode);
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-    if( uiCode )
-    {
-      READ_FLAG( uiCode, "all_layers_idr_aligned_flag" );
-      vps->setCrossLayerAlignedIdrOnlyFlag(uiCode);
-    }
-#endif
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
   else
   {
     vps->setCrossLayerIrapAlignFlag(true);
+  }
+#endif
+#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
+  if( uiCode )
+  {
+    READ_FLAG( uiCode, "all_layers_idr_aligned_flag" );
+    vps->setCrossLayerAlignedIdrOnlyFlag(uiCode);
   }
 #endif
 
@@ -4198,9 +4198,9 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   if (!uiCode)
   {
 #if VPS_FIX_TO_MATCH_SPEC
-      for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
+    for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
 #else
-      for (i = 0; i < vps->getMaxLayers(); i++)
+    for (i = 0; i < vps->getMaxLayers(); i++)
 #endif
     {
       READ_FLAG( uiCode, "tiles_in_use_flag[ i ]" ); vps->setTilesInUseFlag(i, (uiCode == 1));
