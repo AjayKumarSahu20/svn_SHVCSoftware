@@ -1791,6 +1791,34 @@ Void TEncTop::xInitILRP()
         }
       }
     }
+
+#if P0182_VPS_VUI_PS_FLAG
+    if( m_cVPS.getNumRefLayers( m_layerId ) == 0 )
+    {
+      UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
+      RepFormat* repFormat = m_cVPS.getVpsRepFormat(m_cVPS.getVpsRepFormatIdx(layerIdx));
+      
+      if( m_cPPS.getLayerId() == 0 && 
+          m_cSPS.getLayerId() == 0 &&
+          repFormat->getChromaFormatVpsIdc() == m_cSPS.getChromaFormatIdc() &&
+          repFormat->getSeparateColourPlaneVpsFlag() == 0 &&
+          repFormat->getPicHeightVpsInLumaSamples() == m_cSPS.getPicHeightInLumaSamples() &&
+          repFormat->getPicWidthVpsInLumaSamples()  == m_cSPS.getPicWidthInLumaSamples() &&
+          repFormat->getBitDepthVpsLuma()   == m_cSPS.getBitDepthY() &&
+          repFormat->getBitDepthVpsChroma() == m_cSPS.getBitDepthC() &&
+          repFormat->getConformanceWindowVps().getWindowLeftOffset()   == m_cSPS.getConformanceWindow().getWindowLeftOffset() &&
+          repFormat->getConformanceWindowVps().getWindowRightOffset()  == m_cSPS.getConformanceWindow().getWindowRightOffset() &&
+          repFormat->getConformanceWindowVps().getWindowTopOffset()    == m_cSPS.getConformanceWindow().getWindowTopOffset() &&
+          repFormat->getConformanceWindowVps().getWindowBottomOffset() == m_cSPS.getConformanceWindow().getWindowBottomOffset() )
+      {
+        m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 1);
+      }
+      else
+      {
+        m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 0);
+      }
+    }
+#endif
   }
 }
 #endif

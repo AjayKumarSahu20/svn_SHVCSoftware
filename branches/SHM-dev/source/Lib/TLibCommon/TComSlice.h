@@ -863,8 +863,6 @@ private:
 #endif
 
 #if P0182_VPS_VUI_PS_FLAG
-  UInt       m_SPSId[MAX_LAYERS];
-  UInt       m_PPSId[MAX_LAYERS];
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
 #endif
 
@@ -1315,10 +1313,6 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #endif
 #if P0182_VPS_VUI_PS_FLAG
-  Int    getSPSId       (Int layer)                   { return m_SPSId[layer];       }
-  Void   setSPSId       (Int layer, Int val)          { m_SPSId[layer] = val;        }
-  Int    getPPSId       (Int layer)                   { return m_PPSId[layer];       }
-  Void   setPPSId       (Int layer, Int val)          { m_PPSId[layer] = val;        }
   Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
   Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
