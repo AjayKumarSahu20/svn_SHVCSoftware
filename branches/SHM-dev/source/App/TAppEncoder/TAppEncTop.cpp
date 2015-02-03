@@ -1233,10 +1233,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
     m_acTEncTop[layer].init(isFieldCoding);
-#if P0182_VPS_VUI_PS_FLAG
-    m_acTEncTop[layer].getVPS()->setSPSId(layer, m_acTEncTop[layer].getSPS()->getSPSId());
-    m_acTEncTop[layer].getVPS()->setPPSId(layer, m_acTEncTop[layer].getPPS()->getPPSId());
-#endif
   }
 
 #if VPS_EXTN_OP_LAYER_SETS
