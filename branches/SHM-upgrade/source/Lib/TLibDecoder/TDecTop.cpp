@@ -762,6 +762,28 @@ Void TDecTop::xActivateParameterSets()
       sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
 #endif
     }
+
+#if P0182_VPS_VUI_PS_FLAG
+    UInt layerIdx = activeVPS->getLayerIdInVps( m_layerId );
+
+    if( activeVPS->getBaseLayerPSCompatibilityFlag(layerIdx) )
+    {
+      RepFormat* repFormat = activeVPS->getVpsRepFormat(activeVPS->getVpsRepFormatIdx(layerIdx));
+
+      assert( pps->getLayerId() == 0 );
+      assert( sps->getLayerId() == 0 );
+      assert( repFormat->getChromaFormatVpsIdc() == sps->getChromaFormatIdc() );
+      assert( repFormat->getSeparateColourPlaneVpsFlag() == 0 );
+      assert( repFormat->getPicHeightVpsInLumaSamples() == sps->getPicHeightInLumaSamples() );
+      assert( repFormat->getPicWidthVpsInLumaSamples()  == sps->getPicWidthInLumaSamples() );
+      assert( repFormat->getBitDepthVpsLuma()   == sps->getBitDepth(CHANNEL_TYPE_LUMA) );
+      assert( repFormat->getBitDepthVpsChroma() == sps->getBitDepth(CHANNEL_TYPE_CHROMA) );
+      assert( repFormat->getConformanceWindowVps().getWindowLeftOffset()   == sps->getConformanceWindow().getWindowLeftOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowRightOffset()  == sps->getConformanceWindow().getWindowRightOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowTopOffset()    == sps->getConformanceWindow().getWindowTopOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowBottomOffset() == sps->getConformanceWindow().getWindowBottomOffset() );
+    }    
+#endif
   }
 #endif
 
