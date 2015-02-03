@@ -2963,6 +2963,10 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setLayerIdIncludedFlagsForAddLayerSets();
 #endif
   }
+  else
+  {
+    vps->setNumAddLayerSets(0);
+  }
 #endif
 #endif
 #if VPS_TSLAYERS
@@ -3236,7 +3240,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         if (vps->getNumAddLayerSets() == 0)
         {
 #endif
-        if (j > 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j - 1) != 0)
+        if( j > 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j - 1) != 0 && vps->getNecessaryLayerFlag(i, j-1) )
         {
           assert(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc() == vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc() ||
                  vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc()) ||  
