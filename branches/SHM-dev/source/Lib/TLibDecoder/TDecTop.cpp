@@ -2459,7 +2459,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if(pcSlice->getSPS()->getScalingListFlag())
   {
     pcSlice->setScalingList ( pcSlice->getSPS()->getScalingList()  );
+
+#if SCALINGLIST_INFERRING
+    if( pcSlice->getPPS()->getScalingListPresentFlag() || pcSlice->getPPS()->getInferScalingListFlag() )
+#else
     if(pcSlice->getPPS()->getScalingListPresentFlag())
+#endif
     {
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
