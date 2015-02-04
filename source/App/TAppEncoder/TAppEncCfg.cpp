@@ -2061,7 +2061,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     else
     {
       m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_acLayerCfg[layer].m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
-      m_acLayerCfg[layer].m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10?10:8);
+      m_acLayerCfg[layer].m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10 || m_profileList[layerPTLIdx] == Profile::SCALABLEMAIN10) ? 10 : 8;
     }
   }
 #else
@@ -3369,7 +3369,11 @@ Void TAppEncCfg::xCheckParameter()
   }
   else
   {
+#if MULTIPLE_PTL_SUPPORT
+    xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10 || m_profile==Profile::SCALABLEMAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 or Scalable-main10 profile.");
+#else
     xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 profile.");
+#endif
     xConfirmPara(m_chromaFormatConstraint!=CHROMA_420, "ChromaFormatConstraint must be 420 for non main-RExt profiles.");
     xConfirmPara(m_intraConstraintFlag==true, "IntraConstraintFlag must be false for non main_RExt profiles.");
     xConfirmPara(m_lowerBitRateConstraintFlag==false, "LowerBitrateConstraintFlag must be true for non main-RExt profiles.");
