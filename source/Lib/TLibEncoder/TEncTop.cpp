@@ -1798,20 +1798,20 @@ Void TEncTop::xInitILRP()
     if( m_cVPS.getNumRefLayers( m_layerId ) == 0 )
     {
       UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
-      RepFormat* repFormat = m_cVPS.getVpsRepFormat(m_cVPS.getVpsRepFormatIdx(layerIdx));
+      RepFormat* repFmt = m_cVPS.getVpsRepFormat(m_cVPS.getVpsRepFormatIdx(layerIdx));
       
       if( m_cPPS.getLayerId() == 0 && 
           m_cSPS.getLayerId() == 0 &&
-          repFormat->getChromaFormatVpsIdc() == m_cSPS.getChromaFormatIdc() &&
-          repFormat->getSeparateColourPlaneVpsFlag() == 0 &&
-          repFormat->getPicHeightVpsInLumaSamples() == m_cSPS.getPicHeightInLumaSamples() &&
-          repFormat->getPicWidthVpsInLumaSamples()  == m_cSPS.getPicWidthInLumaSamples() &&
-          repFormat->getBitDepthVpsLuma()   == m_cSPS.getBitDepthY() &&
-          repFormat->getBitDepthVpsChroma() == m_cSPS.getBitDepthC() &&
-          repFormat->getConformanceWindowVps().getWindowLeftOffset()   == m_cSPS.getConformanceWindow().getWindowLeftOffset() &&
-          repFormat->getConformanceWindowVps().getWindowRightOffset()  == m_cSPS.getConformanceWindow().getWindowRightOffset() &&
-          repFormat->getConformanceWindowVps().getWindowTopOffset()    == m_cSPS.getConformanceWindow().getWindowTopOffset() &&
-          repFormat->getConformanceWindowVps().getWindowBottomOffset() == m_cSPS.getConformanceWindow().getWindowBottomOffset() )
+          repFmt->getChromaFormatVpsIdc() == m_cSPS.getChromaFormatIdc() &&
+          repFmt->getSeparateColourPlaneVpsFlag() == 0 &&
+          repFmt->getPicHeightVpsInLumaSamples() == m_cSPS.getPicHeightInLumaSamples() &&
+          repFmt->getPicWidthVpsInLumaSamples()  == m_cSPS.getPicWidthInLumaSamples() &&
+          repFmt->getBitDepthVpsLuma()   == m_cSPS.getBitDepthY() &&
+          repFmt->getBitDepthVpsChroma() == m_cSPS.getBitDepthC() &&
+          repFmt->getConformanceWindowVps().getWindowLeftOffset()   == m_cSPS.getConformanceWindow().getWindowLeftOffset() &&
+          repFmt->getConformanceWindowVps().getWindowRightOffset()  == m_cSPS.getConformanceWindow().getWindowRightOffset() &&
+          repFmt->getConformanceWindowVps().getWindowTopOffset()    == m_cSPS.getConformanceWindow().getWindowTopOffset() &&
+          repFmt->getConformanceWindowVps().getWindowBottomOffset() == m_cSPS.getConformanceWindow().getWindowBottomOffset() )
       {
         m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 1);
       }
