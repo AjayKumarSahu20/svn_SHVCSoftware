@@ -341,6 +341,7 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
   READ_FLAG( uiCode, "pps_extension_flag");
 #else
   READ_FLAG( uiCode, "pps_extension_present_flag");
+  UInt ppsExtension6bits = 0;
 #endif
 
 #if !R0042_PROFILE_INDICATION
@@ -466,8 +467,12 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
     assert(uiCode == 0);
     READ_FLAG( uiCode, "pps_multilayer_extension_flag" );
     assert(uiCode == 1);
+#if SVC_EXTENSION
+    READ_CODE(6, ppsExtension6bits, "pps_extension_6bits");
+#else
     READ_CODE(6, uiCode, "pps_extension_6bits");
     assert(uiCode == 0);
+#endif
 
     READ_FLAG( uiCode, "poc_reset_info_present_flag" );
     pcPPS->setPocResetInfoPresentFlag(uiCode ? true : false);
@@ -557,6 +562,16 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS
       }
 #endif
   }
+
+#if SVC_EXTENSION
+  if( ppsExtension6bits )
+  {
+    while( xMoreRbspData() )
+    {
+      READ_FLAG( uiCode, "pps_extension_data_flag" );
+    }
+  }
+#endif
 #endif
 
 }
@@ -1113,6 +1128,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
 #if SVC_EXTENSION
   pcSPS->setExtensionFlag( uiCode ? true : false );
+  UInt spsExtension6bits = 0;
 
   if( pcSPS->getExtensionFlag() )
   {
@@ -1146,11 +1162,17 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     assert(uiCode == 0);
     READ_FLAG( uiCode, "sps_multilayer_extension_flag" );
     assert(uiCode == 1);
-    READ_CODE(6, uiCode, "sps_extension_6bits");
-    assert(uiCode == 0);
+    READ_CODE(6, spsExtension6bits, "sps_extension_6bits");
     parseSPSExtension( pcSPS );
   }
 #endif
+  if( spsExtension6bits )
+  {
+    while( xMoreRbspData() )
+    {
+      READ_FLAG( uiCode, "sps_extension_data_flag" );
+    }
+  }
 #else
   if (uiCode)
   {
