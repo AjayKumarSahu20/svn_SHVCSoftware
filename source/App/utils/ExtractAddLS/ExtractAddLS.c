@@ -276,7 +276,7 @@ int main(int argc, char **argv)
   int tIdTarget = 6;
   NalUnitHeader nalu;
   int numStartCodeZeros;
-  int nalIsSpsPpsEob;
+  int nalIsVpsSpsPpsEob;
   int nalIsVpsSpsPpsEos;
   int removeNal;
   int layerIdListTarget[8];
@@ -288,8 +288,9 @@ int main(int argc, char **argv)
   if (argc < 5 || argc > 10)
   {
     fprintf(stderr, "\n  Usage: ExtractAddLS <infile> <outfile> <max temporal ID> <list of layer IDs> \n\n");
-    fprintf(stderr, "  If only one layer ID is given, independent non-base layer rewriting process\n");
-    fprintf(stderr, "  is performed\n");
+    fprintf(stderr, "  If only one layer ID 0 is given, base layer extration process is performed\n");
+    fprintf(stderr, "  If only one non-zero layer ID is given, independent non-base layer rewriting\n");
+    fprintf(stderr, "  process is performed\n");
     fprintf(stderr, "  If more than one layer ID is given, sub-bitstream extraction process for\n");
     fprintf(stderr, "  additional layer sets is performed (Layer ID list should exactly match\n");
     fprintf(stderr, "  an additional layer set defined in VPS)\n");
@@ -320,7 +321,7 @@ int main(int argc, char **argv)
   for (i = 4, layerIdx = 0; i < argc; i++, layerIdx++)
   {
     layerIdListTarget[layerIdx] = atoi(argv[i]);
-    if (layerIdListTarget[layerIdx] < 1 || layerIdListTarget[layerIdx] > 7)
+    if (layerIdListTarget[layerIdx] < 0 || layerIdListTarget[layerIdx] > 7)
     {
       fprintf(stderr, "Invalid layer ID (must be in range 1-7)\n");
       exit(1);
@@ -344,15 +345,13 @@ int main(int argc, char **argv)
 
     if (numLayerIds == 1)
     {
-      /* independent non-base layer rewriting process */
+      /* base layer or independent non-base layer bitstream extraction */
 
-      nalIsSpsPpsEob = (nalu.nalUnitType == NAL_UNIT_SPS || nalu.nalUnitType == NAL_UNIT_PPS || nalu.nalUnitType == NAL_UNIT_EOB);
-
-      removeNal = (!nalIsSpsPpsEob && (nalu.nuhLayerId != assignedBaseLayerId))
-                || (nalIsSpsPpsEob && (nalu.nuhLayerId != 0) && (nalu.nuhLayerId != assignedBaseLayerId))
-                || (nalu.nalUnitType == NAL_UNIT_VPS)
-                || ((nalu.nuhTemporalIdPlus1 - 1) > tIdTarget);
-
+      /* temporary keep VPS so the extracted/rewriting bitstream can be decoded by HM */
+      nalIsVpsSpsPpsEob = (nalu.nalUnitType == NAL_UNIT_VPS || nalu.nalUnitType == NAL_UNIT_SPS || nalu.nalUnitType == NAL_UNIT_PPS || nalu.nalUnitType == NAL_UNIT_EOB);
+      removeNal = (!nalIsVpsSpsPpsEob && (nalu.nuhLayerId != assignedBaseLayerId))
+                  || (nalIsVpsSpsPpsEob && (nalu.nuhLayerId != 0))
+                  || ((nalu.nuhTemporalIdPlus1 - 1) > tIdTarget);
       nalu.nuhLayerId = 0;
     }
     else /* numLayerIds > 1 */
@@ -402,7 +401,19 @@ int main(int argc, char **argv)
 
       i = 0;
 
-      if (numLayerIds > 1 && nalu.nalUnitType == NAL_UNIT_VPS)
+      if (numLayerIds == 1 && nalu.nalUnitType == NAL_UNIT_VPS)
+      {
+        char nalByte = fgetc(inFile);
+        nalByte = nalByte | (0x0C);  // set vps_max_layers_minus1 bits(5-4) to 0 for HM decoder
+        nalByte = nalByte & ~(0x03); // set vps_max_layers_minus1 bits(3-0) to 0 for HM decoder
+        fputc(nalByte, outFile); 
+        i++;
+        nalByte = fgetc(inFile);
+        nalByte = nalByte & ~(0xF0);
+        fputc(nalByte, outFile); 
+        i++;
+      }
+      else if (numLayerIds > 1 && nalu.nalUnitType == NAL_UNIT_VPS)
       {
         /* sub-bitstream extraction process for additional layer sets */
         int nalByte = fgetc(inFile);
