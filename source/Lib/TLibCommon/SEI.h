@@ -110,6 +110,9 @@ public:
 #if Q0247_FRAME_FIELD_INFO
     FRAME_FIELD_INFO                     = 147,
 #endif
+#if Q0096_OVERLAY_SEI
+    OVERLAY_INFO                         = 166,    
+#endif
   };
   
   SEI() {}
@@ -695,6 +698,54 @@ public:
   virtual ~SEIVPSRewriting() {}
 
   NALUnit* nalu;
+};
+#endif
+
+#if Q0096_OVERLAY_SEI
+class SEIOverlayInfo : public SEI
+{
+public:
+  PayloadType payloadType() const { return OVERLAY_INFO; }
+  SEIOverlayInfo() 
+    :  m_numOverlaysMinus1(-1) 
+    {}
+
+  virtual ~SEIOverlayInfo() 
+  {
+    for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++)
+    { 
+      delete [] m_overlayLanguage[i];          
+      delete [] m_overlayName[i];
+      for (Int j=0 ; j<=m_numOverlayElementsMinus1[i] ; j++)
+      {
+        delete [] m_overlayElementName[i][j];
+      }
+    }
+  }
+
+  Bool                                m_overlayInfoCancelFlag;
+  UInt                                m_overlayContentAuxIdMinus128;
+  UInt                                m_overlayLabelAuxIdMinus128;
+  UInt                                m_overlayAlphaAuxIdMinus128;
+  UInt                                m_overlayElementLabelValueLengthMinus8;
+  UInt                                m_numOverlaysMinus1;
+  std::vector<UInt>                   m_overlayIdx;
+  std::vector<Bool>                   m_languageOverlayPresentFlag;
+  std::vector<UInt>                   m_overlayContentLayerId;
+  std::vector<Bool>                   m_overlayLabelPresentFlag;
+  std::vector<UInt>                   m_overlayLabelLayerId;
+  std::vector<Bool>                   m_overlayAlphaPresentFlag;
+  std::vector<UInt>                   m_overlayAlphaLayerId;
+  std::vector<UInt>                   m_numOverlayElementsMinus1;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMin;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMax;
+  std::vector<UChar*>                 m_overlayLanguage;
+  std::vector<UInt>                   m_overlayLanguageLength;
+  std::vector<UChar*>                 m_overlayName;
+  std::vector<UInt>                   m_overlayNameLength;
+  std::vector< std::vector<UChar*> >  m_overlayElementName;
+  std::vector< std::vector<UInt> >    m_overlayElementNameLength;
+  Bool                                m_overlayInfoPersistenceFlag;
 };
 #endif
 

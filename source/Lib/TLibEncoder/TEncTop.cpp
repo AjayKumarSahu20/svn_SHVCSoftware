@@ -324,7 +324,9 @@ Void TEncTop::init(Bool isFieldCoding)
   xInitSPS();
   
   /* set the VPS profile information */
+#if !MULTIPLE_PTL_SUPPORT
   *m_cVPS.getPTL() = *m_cSPS.getPTL();
+#endif
 #if VPS_VUI_BSP_HRD_PARAMS
   m_cVPS.getTimingInfo()->setTimingInfoPresentFlag       ( true );
 #else
@@ -997,7 +999,7 @@ Void TEncTop::xInitSPS()
 #if SVC_EXTENSION
   m_cSPS.setExtensionFlag( m_layerId > 0 ? true : false );
 #if R0042_PROFILE_INDICATION
-  m_cSPS.setNumDirectRefLayers(m_numAddLayerSets);
+  m_cSPS.setNumDirectRefLayers(m_numDirectRefLayers);
 #endif
 #if Q0078_ADD_LAYER_SETS
   if( !m_numDirectRefLayers && m_numAddLayerSets )
@@ -1102,11 +1104,13 @@ Void TEncTop::xInitSPS()
   }
 
 #if REPN_FORMAT_IN_VPS
-  m_cSPS.setBitDepthY( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma() );
-  m_cSPS.setBitDepthC( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  );
+  UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
 
-  m_cSPS.setQpBDOffsetY ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsLuma()  - 8) );
-  m_cSPS.setQpBDOffsetC ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) )->getBitDepthVpsChroma()  - 8) );
+  m_cSPS.setBitDepthY( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsLuma() );
+  m_cSPS.setBitDepthC( m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsChroma()  );
+
+  m_cSPS.setQpBDOffsetY ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsLuma() - 8) );
+  m_cSPS.setQpBDOffsetC ( 6*(m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( layerIdx ) )->getBitDepthVpsChroma() - 8) );
 #else
   m_cSPS.setBitDepthY( g_bitDepthY );
   m_cSPS.setBitDepthC( g_bitDepthC );
@@ -1121,6 +1125,9 @@ Void TEncTop::xInitSPS()
   m_cSPS.setTemporalIdNestingFlag( ( m_maxTempLayer == 1 ) ? true : false );
   for ( i = 0; i < min(m_cSPS.getMaxTLayers(),(UInt) MAX_TLAYER); i++ )
   {
+#if SVC_EXTENSION
+    assert(i < MAX_TLAYER);
+#endif
     m_cSPS.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     m_cSPS.setNumReorderPics(m_numReorderPics[i], i);
   }
@@ -1310,11 +1317,11 @@ Void TEncTop::xInitPPS()
     m_cPPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
 #if REF_REGION_OFFSET
     m_cPPS.getRefLayerWindow(i) = m_refLayerWindow[i];
-    m_cPPS.setScaledRefLayerOffsetPresentFlag( m_scaledRefLayerId[i], m_scaledRefLayerOffsetPresentFlag[i] );
-    m_cPPS.setRefRegionOffsetPresentFlag( m_scaledRefLayerId[i], m_refRegionOffsetPresentFlag[i] );
+    m_cPPS.setScaledRefLayerOffsetPresentFlag( i, m_scaledRefLayerOffsetPresentFlag[i] );
+    m_cPPS.setRefRegionOffsetPresentFlag( i, m_refRegionOffsetPresentFlag[i] );
 #endif
 #if R0209_GENERIC_PHASE
-    m_cPPS.setResamplePhaseSetPresentFlag( m_scaledRefLayerId[i], m_resamplePhaseSetPresentFlag[i] );
+    m_cPPS.setResamplePhaseSetPresentFlag( i, m_resamplePhaseSetPresentFlag[i] );
     m_cPPS.setPhaseHorLuma( m_scaledRefLayerId[i], m_phaseHorLuma[i] );
     m_cPPS.setPhaseVerLuma( m_scaledRefLayerId[i], m_phaseVerLuma[i] );
     m_cPPS.setPhaseHorChroma( m_scaledRefLayerId[i], m_phaseHorChroma[i] );
@@ -1725,9 +1732,9 @@ Void TEncTop::xInitILRP()
 Void TEncTop::xInitILRP()
 {
 #if O0096_REP_FORMAT_INDEX
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_layerId ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
 #else
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_layerId ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
 #endif
   Int bitDepthY,bitDepthC,picWidth,picHeight;
 
@@ -1786,6 +1793,34 @@ Void TEncTop::xInitILRP()
         }
       }
     }
+
+#if P0182_VPS_VUI_PS_FLAG
+    if( m_cVPS.getNumRefLayers( m_layerId ) == 0 )
+    {
+      UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
+      RepFormat* repFmt = m_cVPS.getVpsRepFormat(m_cVPS.getVpsRepFormatIdx(layerIdx));
+      
+      if( m_cPPS.getLayerId() == 0 && 
+          m_cSPS.getLayerId() == 0 &&
+          repFmt->getChromaFormatVpsIdc() == m_cSPS.getChromaFormatIdc() &&
+          repFmt->getSeparateColourPlaneVpsFlag() == 0 &&
+          repFmt->getPicHeightVpsInLumaSamples() == m_cSPS.getPicHeightInLumaSamples() &&
+          repFmt->getPicWidthVpsInLumaSamples()  == m_cSPS.getPicWidthInLumaSamples() &&
+          repFmt->getBitDepthVpsLuma()   == m_cSPS.getBitDepthY() &&
+          repFmt->getBitDepthVpsChroma() == m_cSPS.getBitDepthC() &&
+          repFmt->getConformanceWindowVps().getWindowLeftOffset()   == m_cSPS.getConformanceWindow().getWindowLeftOffset() &&
+          repFmt->getConformanceWindowVps().getWindowRightOffset()  == m_cSPS.getConformanceWindow().getWindowRightOffset() &&
+          repFmt->getConformanceWindowVps().getWindowTopOffset()    == m_cSPS.getConformanceWindow().getWindowTopOffset() &&
+          repFmt->getConformanceWindowVps().getWindowBottomOffset() == m_cSPS.getConformanceWindow().getWindowBottomOffset() )
+      {
+        m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 1);
+      }
+      else
+      {
+        m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 0);
+      }
+    }
+#endif
   }
 }
 #endif

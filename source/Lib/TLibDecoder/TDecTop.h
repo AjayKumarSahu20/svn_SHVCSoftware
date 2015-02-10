@@ -119,6 +119,9 @@ private:
 #if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Bool                    m_lastPicHasEos;
+#endif
 #if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
@@ -126,6 +129,9 @@ private:
   UInt                    m_layerId;      
   UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
+#if R0235_SMALLEST_LAYER_ID
+  UInt                    m_smallestLayerId;
+#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool                    m_pocResettingFlag;
   Bool                    m_pocDecrementedInDPBFlag;
@@ -165,6 +171,13 @@ private:
 #if RESOLUTION_BASED_DPB
   Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
                                            // When new VPS is activated, this should be re-initialized to -1
+#endif
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool m_confModeFlag;
+  std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
+#endif
+#if FIX_NON_OUTPUT_LAYER
+  Bool m_isOutputLayerFlag;
 #endif
 public:
 #if POC_RESET_RESTRICTIONS
@@ -236,6 +249,9 @@ public:
   TComList<TComPic*>*      getListPic() { return &m_cListPic; }
   Void      setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
   TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
+#if R0235_SMALLEST_LAYER_ID
+  Void      xDeriveSmallestLayerId(TComVPS* vps);
+#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec(UInt refLayerIdc);
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
@@ -294,6 +310,10 @@ public:
   Int  getSubDpbIdx()           { return m_subDpbIdx; }
   Void assignSubDpbs(TComVPS *vps);
 #endif
+#if CONFORMANCE_BITSTREAM_MODE
+  std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
+  // std::string const getDecodedYuvLayerFileName(Int layerId) { return m_decodedYuvLayerFileName[layerId]; }
+#endif
 #endif //SVC_EXTENSION
 
 protected:
@@ -332,6 +352,16 @@ protected:
 #endif
 #if POC_RESET_RESTRICTIONS
   Void resetPocRestrictionCheckParameters();
+#endif
+  public:
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool const getConfModeFlag() { return m_confModeFlag; }
+  Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Void xCheckLayerReset();
+  Void xSetNoRaslOutputFlag();
+  Void xSetLayerInitializedFlag();
 #endif
 };// END CLASS DEFINITION TDecTop
 

@@ -118,6 +118,10 @@ TEncGOP::TEncGOP()
 #if POC_RESET_IDC_ENCODER
   m_lastPocPeriodId = -1;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_noRaslOutputFlag = false;
+  m_prevPicHasEos    = false;
+#endif
 #endif //SVC_EXTENSION
   return;
 }
@@ -381,6 +385,86 @@ SEIKneeFunctionInfo* TEncGOP::xCreateSEIKneeFunctionInfo()
 }
 #endif
 
+#if Q0096_OVERLAY_SEI
+SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
+{  
+  SEIOverlayInfo *sei = new SEIOverlayInfo();  
+  sei->m_overlayInfoCancelFlag = m_pcCfg->getOverlaySEICancelFlag();    
+  if ( !sei->m_overlayInfoCancelFlag )
+  {
+    sei->m_overlayContentAuxIdMinus128          = m_pcCfg->getOverlaySEIContentAuxIdMinus128(); 
+    sei->m_overlayLabelAuxIdMinus128            = m_pcCfg->getOverlaySEILabelAuxIdMinus128();  
+    sei->m_overlayAlphaAuxIdMinus128            = m_pcCfg->getOverlaySEIAlphaAuxIdMinus128(); 
+    sei->m_overlayElementLabelValueLengthMinus8 = m_pcCfg->getOverlaySEIElementLabelValueLengthMinus8(); 
+    sei->m_numOverlaysMinus1                    = m_pcCfg->getOverlaySEINumOverlaysMinus1();     
+    sei->m_overlayIdx                           = m_pcCfg->getOverlaySEIIdx();            
+    sei->m_languageOverlayPresentFlag           = m_pcCfg->getOverlaySEILanguagePresentFlag();
+    sei->m_overlayContentLayerId                = m_pcCfg->getOverlaySEIContentLayerId();   
+    sei->m_overlayLabelPresentFlag              = m_pcCfg->getOverlaySEILabelPresentFlag();   
+    sei->m_overlayLabelLayerId                  = m_pcCfg->getOverlaySEILabelLayerId();   
+    sei->m_overlayAlphaPresentFlag              = m_pcCfg->getOverlaySEIAlphaPresentFlag();   
+    sei->m_overlayAlphaLayerId                  = m_pcCfg->getOverlaySEIAlphaLayerId();   
+    sei->m_numOverlayElementsMinus1             = m_pcCfg->getOverlaySEINumElementsMinus1();
+    sei->m_overlayElementLabelMin               = m_pcCfg->getOverlaySEIElementLabelMin();
+    sei->m_overlayElementLabelMax               = m_pcCfg->getOverlaySEIElementLabelMax();    
+    sei->m_overlayLanguage.resize               ( sei->m_numOverlaysMinus1+1, NULL );
+    sei->m_overlayLanguageLength.resize         ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayName.resize                   ( sei->m_numOverlaysMinus1+1, NULL );
+    sei->m_overlayNameLength.resize             ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayElementName.resize            ( sei->m_numOverlaysMinus1+1 );
+    sei->m_overlayElementNameLength.resize      ( sei->m_numOverlaysMinus1+1 );  
+
+    Int i,j;
+    string strTmp;
+    Int nBytes;
+    assert( m_pcCfg->getOverlaySEILanguage().size()    == sei->m_numOverlaysMinus1+1 );
+    assert( m_pcCfg->getOverlaySEIName().size()        == sei->m_numOverlaysMinus1+1 );
+    assert( m_pcCfg->getOverlaySEIElementName().size() == sei->m_numOverlaysMinus1+1 );
+    
+    for ( i=0 ; i<=sei->m_numOverlaysMinus1; i++ )
+    {      
+      //language tag
+      if ( sei->m_languageOverlayPresentFlag[i] )
+      {                
+        strTmp = m_pcCfg->getOverlaySEILanguage()[i];
+        nBytes = m_pcCfg->getOverlaySEILanguage()[i].size();        
+        assert( nBytes>0 );
+        sei->m_overlayLanguage[i] = new UChar[nBytes];
+        memcpy(sei->m_overlayLanguage[i], strTmp.c_str(), nBytes);        
+        sei->m_overlayLanguageLength[i] = nBytes;        
+      }
+
+      //overlay name
+      strTmp = m_pcCfg->getOverlaySEIName()[i];
+      nBytes = m_pcCfg->getOverlaySEIName()[i].size();        
+      assert( nBytes>0 );
+      sei->m_overlayName[i] = new UChar[nBytes];      
+      memcpy(sei->m_overlayName[i], strTmp.c_str(), nBytes);        
+      sei->m_overlayNameLength[i] = nBytes;
+
+      //overlay element names
+      if ( sei->m_overlayLabelPresentFlag[i] )
+      {        
+        sei->m_overlayElementName[i].resize( sei->m_numOverlayElementsMinus1[i]+1, NULL );
+        sei->m_overlayElementNameLength[i].resize( sei->m_numOverlayElementsMinus1[i]+1 );
+        assert( m_pcCfg->getOverlaySEIElementName()[i].size() == sei->m_numOverlayElementsMinus1[i]+1 );        
+        for ( j=0 ; j<=sei->m_numOverlayElementsMinus1[i] ; j++)
+        {
+          strTmp = m_pcCfg->getOverlaySEIElementName()[i][j];
+          nBytes = m_pcCfg->getOverlaySEIElementName()[i][j].size();        
+          assert( nBytes>0 );
+          sei->m_overlayElementName[i][j] = new UChar[nBytes];
+          memcpy(sei->m_overlayElementName[i][j], strTmp.c_str(), nBytes);        
+          sei->m_overlayElementNameLength[i][j] = nBytes;
+        }
+      }
+    }
+  sei->m_overlayInfoPersistenceFlag = true;
+  }
+  return sei;
+}
+#endif
+
 #if Q0074_COLOUR_REMAPPING_SEI
 SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
 {
@@ -573,6 +657,22 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
     SEIInterLayerConstrainedTileSets *sei = xCreateSEIInterLayerConstrainedTileSets ();
 
     nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+#else
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
+
+#if Q0096_OVERLAY_SEI
+  if(m_pcCfg->getOverlaySEIEnabled())
+  {    
+    SEIOverlayInfo *sei = xCreateSEIOverlayInfo();       
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 #if O0164_MULTI_LAYER_HRD
     m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
@@ -816,6 +916,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       continue;
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    if (pocCurr > m_pcEncTop->getLayerSwitchOffBegin() && pocCurr < m_pcEncTop->getLayerSwitchOffEnd())
+    {
+      continue;
+    }
+#endif
 
     if( getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_N_LP )
     {
@@ -970,6 +1076,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setCrossLayerBLAFlag(false);
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    // Set the nal unit type
+    pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
+#endif
 #if NO_CLRAS_OUTPUT_FLAG
     if (m_layerId == 0 &&
         (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -983,6 +1093,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      else if (m_prevPicHasEos)
+      {
+        m_pcEncTop->setNoClrasOutputFlag(true);
+      }
+#endif
       else if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
@@ -1009,6 +1125,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
     }
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    xCheckLayerReset(pcSlice);
+    xSetNoRaslOutputFlag(pcSlice);
+    xSetLayerInitializedFlag(pcSlice);
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId == 1 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
@@ -1120,8 +1241,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setSliceType(I_SLICE);
     }
 
+#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
+#endif
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
@@ -1246,6 +1369,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
               pcSlice->setVertPhasePositionFlag( pcSlice->getPOC()%2, refLayerIdc );
             }
 #endif
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec() );
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
@@ -1276,6 +1402,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
             m_pcPredSearch->upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
 #endif
@@ -1534,16 +1661,19 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if(lTid==pcSlice->getTLayer()) 
           {
             TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0;jj<nRPS->getNumberOfPictures();jj++)
+            for(Int jj=0;(jj<nRPS->getNumberOfPictures() && isSTSA==true);jj++)
             {
               if(nRPS->getUsed(jj)) 
               {
                 Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
                 Int kk=0;
-                for(kk=0;kk<m_pcCfg->getGOPSize();kk++)
+                for(kk=0;kk<iGOPid;kk++)
                 {
                   if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
+                  {
+                    isSTSA=false;
                     break;
+                  }
                 }
                 Int tTid=m_pcCfg->getGOPEntry(kk).m_temporalId;
                 if(tTid >= pcSlice->getTLayer())
@@ -1693,6 +1823,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           )
         )
     {
+      if(pcSlice->isStepwiseTemporalLayerSwitchingPointCandidate(rcListPic))
+      {
         Bool isSTSA=true;
         Bool isIntra=false;
 
@@ -1715,16 +1847,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if(lTid==pcSlice->getTLayer()) 
           {
             TComReferencePictureSet* nRPS = pcSlice->getSPS()->getRPSList()->getReferencePictureSet(ii);
-            for(Int jj=0; jj<nRPS->getNumberOfPictures(); jj++)
+            for(Int jj=0;(jj<nRPS->getNumberOfPictures() && isSTSA==true);jj++)
             {
               if(nRPS->getUsed(jj)) 
               {
                 Int tPoc=m_pcCfg->getGOPEntry(ii).m_POC+nRPS->getDeltaPOC(jj);
                 Int kk=0;
-                for(kk=0; kk<m_pcCfg->getGOPSize(); kk++)
+                for(kk=0;kk<iGOPid;kk++)
                 {
                   if(m_pcCfg->getGOPEntry(kk).m_POC==tPoc)
                   {
+                    isSTSA=false;
                     break;
                   }
                 }
@@ -1749,6 +1882,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_STSA_R);
           }
         }
+      }
     }
 #endif
 
@@ -2832,6 +2966,20 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
 #if SETTING_NO_OUT_PIC_PRIOR
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+          if (pcSlice->isIRAP())
+          {
+            //the inference for NoOutputPriorPicsFlag
+            // KJS: This cannot happen at the encoder
+            if (!m_bFirst && pcSlice->isIRAP() && m_noRaslOutputFlag)
+            {
+              if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA)
+              {
+                pcSlice->setNoOutputPriorPicsFlag(true);
+              }
+            }
+          }
+#else
           pcSlice->setNoRaslOutputFlag(false);
           if (pcSlice->isIRAP())
           {
@@ -2849,6 +2997,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
               }
             }
           }
+#endif
 #endif
 
           tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
@@ -3416,6 +3565,31 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           }
         }
       }
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      m_prevPicHasEos = false;
+      if (m_pcCfg->getLayerSwitchOffBegin() < m_pcCfg->getLayerSwitchOffEnd())
+      {
+        Int pocNext;
+        if (iGOPid == m_iGopSize - 1)
+        {
+          pocNext = iPOCLast - iNumPicRcvd + m_iGopSize + m_pcCfg->getGOPEntry(0).m_POC;
+        }
+        else
+        {
+          pocNext = iPOCLast - iNumPicRcvd + m_pcCfg->getGOPEntry(iGOPid + 1).m_POC;
+        }
+
+        if (pocNext > m_pcCfg->getLayerSwitchOffBegin() && pocCurr < m_pcCfg->getLayerSwitchOffEnd())
+        {
+          OutputNALUnit nalu(NAL_UNIT_EOS, 0, pcSlice->getLayerId());
+          m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
+          accessUnit.push_back(new NALUnitEBSP(nalu));
+          m_prevPicHasEos = true;
+        }
+      }
+#endif
+
       xResetNonNestedSEIPresentFlags();
       xResetNestedSEIPresentFlags();
       pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
@@ -5270,6 +5444,125 @@ Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
   }
 }
 #endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+Void TEncGOP::xCheckLayerReset(TComSlice *slice)
+{
+  Bool layerResetFlag;
+  Int dolLayerId;
+
+  if (slice->isIRAP() && slice->getLayerId() > 0)
+  {
+    if (m_prevPicHasEos)
+    {
+      layerResetFlag = true;
+      dolLayerId = slice->getLayerId();
+    }
+    else if ((slice->isCRA() && slice->getHandleCraAsBlaFlag()) || (slice->isIDR() && slice->getCrossLayerBLAFlag()) || slice->isBLA())
+    {
+      layerResetFlag = true;
+      dolLayerId = slice->getLayerId();
+    }
+    else
+    {
+      layerResetFlag = false;
+    }
+
+    if (layerResetFlag)
+    {
+      for (Int i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        Int iLayerId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
+        m_ppcTEncTop[iLayerId]->setLayerInitializedFlag(false);
+        m_ppcTEncTop[iLayerId]->setFirstPicInLayerDecodedFlag(false);
+      }
+
+      // Each picture that is in the DPB and has nuh_layer_id equal to dolLayerId is marked as "unused for reference".
+      for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[dolLayerId]->getListPic()->begin(); pic != m_ppcTEncTop[dolLayerId]->getListPic()->end(); pic++)
+      {
+        if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
+        {
+          (*pic)->getSlice(0)->setReferenced(false);
+        }
+      }
+
+      // Each picture that is in DPB and has nuh_layer_id equal to any value of IdPredictedLayer[dolLayerId][i]
+      // for the values of i in range of 0 to NumPredictedLayers[dolLayerId] - 1, inclusive, is marked as "unused for reference"
+      for (UInt i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt predLId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
+        for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[predLId]->getListPic()->begin(); pic != m_ppcTEncTop[predLId]->getListPic()->end(); pic++)
+        {
+          if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
+          {
+            (*pic)->getSlice(0)->setReferenced(false);
+          }
+        }
+      }
+    }
+  }
+}
+
+Void TEncGOP::xSetNoRaslOutputFlag(TComSlice *slice)
+{
+  if (slice->isIRAP())
+  {
+    m_noRaslOutputFlag = slice->getHandleCraAsBlaFlag();  // default value
+    if (slice->isIDR() || slice->isBLA() || m_bFirst || m_prevPicHasEos)
+    {
+      m_noRaslOutputFlag = true;
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_noRaslOutputFlag = true;
+      }
+    }
+  }
+}
+
+Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
+{
+  if (slice->isIRAP() && m_noRaslOutputFlag)
+  {
+    if (m_layerId == 0)
+    {
+      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag() && slice->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
+    {
+      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+      }
+    }
+  }
+}
+#endif // R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+
 #endif //SVC_EXTENSION
 
 //! \}

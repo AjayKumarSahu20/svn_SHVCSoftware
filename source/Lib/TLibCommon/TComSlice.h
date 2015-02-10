@@ -581,10 +581,15 @@ private:
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
 #endif
+#if !MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTL;
+#endif
   TimingInfo  m_timingInfo;
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL     m_pcPTLList[MAX_NUM_LAYER_IDS + 1];
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
 #if NECESSARY_LAYER_FLAG
@@ -648,7 +653,9 @@ private:
 #if !P0048_REMOVE_PROFILE_REF
   UInt       m_profileLayerSetRef[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
 #endif
-  std::vector<TComPTL>    m_pcPTLForExtn;  
+#if !MULTIPLE_PTL_SUPPORT
+  std::vector<TComPTL>    m_pcPTLForExtn;
+#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // .. More declarations here
@@ -856,8 +863,6 @@ private:
 #endif
 
 #if P0182_VPS_VUI_PS_FLAG
-  UInt       m_SPSId[MAX_LAYERS];
-  UInt       m_PPSId[MAX_LAYERS];
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
 #endif
 
@@ -963,10 +968,17 @@ public:
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
 
+#if !MULTIPLE_PTL_SUPPORT
   TComPTL* getPTL() { return &m_pcPTL; }
+#endif
+
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 
 #if SVC_EXTENSION
+#if MULTIPLE_PTL_SUPPORT
+  TComPTL* getPTL() { return &m_pcPTLList[0]; }
+  TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
+#endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
@@ -988,7 +1000,11 @@ Void      deriveNumberOfSubDpbs();
   Void    setNumRefLayers();
 #endif
 #if Q0078_ADD_LAYER_SETS
+#if FIX_LAYER_ID_INIT
+  void    deriveLayerIdListVariablesForAddLayerSets();
+#else
   void    setLayerIdIncludedFlagsForAddLayerSets();
+#endif
   UInt    getVpsNumLayerSetsMinus1()                                             { return m_vpsNumLayerSetsMinus1; }
   Void    setVpsNumLayerSetsMinus1(UInt x)                                       { m_vpsNumLayerSetsMinus1 = x; }
   UInt    getNumAddLayerSets()                                                   { return m_numAddLayerSets; }
@@ -1060,8 +1076,10 @@ Void      deriveNumberOfSubDpbs();
   Void   setProfileLayerSetRef(Int id, Bool x)                  { m_profileLayerSetRef[id] = x;    }
 #endif
 
+#if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
   TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
+#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling related
@@ -1127,7 +1145,10 @@ Void      deriveNumberOfSubDpbs();
   std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
   Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
   Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
-  Int calculateLenOfSyntaxElement( Int const numVal );
+#if MULTIPLE_PTL_SUPPORT
+  Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
+#endif
+  Int    calculateLenOfSyntaxElement( Int const numVal );
 #else
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
@@ -1292,10 +1313,6 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #endif
 #if P0182_VPS_VUI_PS_FLAG
-  Int    getSPSId       (Int layer)                   { return m_SPSId[layer];       }
-  Void   setSPSId       (Int layer, Int val)          { m_SPSId[layer] = val;        }
-  Int    getPPSId       (Int layer)                   { return m_PPSId[layer];       }
-  Void   setPPSId       (Int layer, Int val)          { m_PPSId[layer] = val;        }
   Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
   Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
@@ -2439,7 +2456,11 @@ public:
   Bool      isIRAP              () const                        { return (getNalUnitType() >= 16) && (getNalUnitType() <= 23); }  
   Void      checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
 #if NO_CLRAS_OUTPUT_FLAG
+#if R0235_SMALLEST_LAYER_ID
+  Void      decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag, UInt smallestLayerId = 0 );
+#else
   Void      decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag );
+#endif
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
 #else
   Void      decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);

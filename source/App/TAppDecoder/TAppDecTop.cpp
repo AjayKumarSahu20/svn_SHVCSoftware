@@ -44,6 +44,8 @@
 #include "TAppDecTop.h"
 #include "TLibDecoder/AnnexBread.h"
 #include "TLibDecoder/NALread.h"
+#include "TLibCommon/TComPicYuv.h"
+#include "libmd5/MD5.h"
 //! \ingroup TAppDecoder
 //! \{
 
@@ -79,7 +81,11 @@ Void TAppDecTop::destroy()
     m_pchBitstreamFile = NULL;
   }
 #if SVC_EXTENSION
+#if FIX_CONF_MODE
+  for(Int i = 0; i <= MAX_VPS_LAYER_ID_PLUS1-1; i++ )
+#else
   for( Int i = 0; i <= m_tgtLayerId; i++ )
+#endif
   {
     if( m_pchReconFile[i] )
     {
@@ -139,7 +145,11 @@ Void TAppDecTop::decode()
   Bool loopFiltered[MAX_LAYERS];
   memset( loopFiltered, false, sizeof( loopFiltered ) );
 
+#if FIX_CONF_MODE
+  for(UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++)
+#else
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
+#endif
   {
     openedReconFile[layer] = false;
     m_aiPOCLastDisplay[layer] += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
@@ -188,7 +198,11 @@ Void TAppDecTop::decode()
     {
       read(nalu, nalUnit);
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
+#if FIX_CONF_MODE
+        (nalu.m_layerId > this->getCommonDecoderParams()->getTargetLayerId()) )
+#else
         (nalu.m_layerId > m_tgtLayerId) )
+#endif
       {
         bNewPicture = false;
       }
@@ -346,7 +360,11 @@ Void TAppDecTop::decode()
   }
   pcBLPic.destroy();
 
+#if FIX_CONF_MODE
+  for(UInt layer = layerIdmin; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++)
+#else
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
+#endif
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
@@ -515,8 +533,11 @@ Void TAppDecTop::xCreateDecLib()
 #if SVC_EXTENSION
   // initialize global variables
   initROM();
-
+#if FIX_CONF_MODE
+  for(UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++)
+#else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+#endif
   {
     // set layer ID
     m_acTDecTop[layer].setLayerId                      ( layer );
@@ -537,8 +558,11 @@ Void TAppDecTop::xDestroyDecLib()
 #if SVC_EXTENSION
   // destroy ROM
   destroyROM();
-
+#if FIX_CONF_MODE
+  for(UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++)
+#else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+#endif
   {
     if ( m_pchReconFile[layer] )
     {
@@ -563,18 +587,36 @@ Void TAppDecTop::xInitDecLib()
 {
   // initialize decoder class
 #if SVC_EXTENSION
+#if FIX_CONF_MODE
+  for(UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1-1; layer++)
+#else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+#endif
   {
     m_acTDecTop[layer].init();
     m_acTDecTop[layer].setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
 #if Q0074_COLOUR_REMAPPING_SEI
     m_acTDecTop[layer].setColourRemappingInfoSEIEnabled(m_colourRemapSEIEnabled);
 #endif
+#if FIX_CONF_MODE
+    m_acTDecTop[layer].setNumLayer( MAX_LAYERS );
+#else
     m_acTDecTop[layer].setNumLayer( m_tgtLayerId + 1 );
+#endif
 #if OUTPUT_LAYER_SET_INDEX
     m_acTDecTop[layer].setCommonDecoderParams( this->getCommonDecoderParams() );
 #endif
   }
+#if CONFORMANCE_BITSTREAM_MODE
+#if FIX_CONF_MODE
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+#else
+  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+#endif
+  {
+    m_acTDecTop[layer].setConfModeFlag ( this->getConfModeFlag() );
+  }
+#endif
 #else
   m_cTDecTop.init();
   m_cTDecTop.setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
@@ -1070,6 +1112,12 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   {
     return true;
   }
+#if R0235_SMALLEST_LAYER_ID
+  if (nalu->m_layerId == 0 && (nalu->m_nalUnitType == NAL_UNIT_VPS || nalu->m_nalUnitType == NAL_UNIT_SPS || nalu->m_nalUnitType == NAL_UNIT_PPS || nalu->m_nalUnitType == NAL_UNIT_EOS))
+  {
+    return true;
+  }
+#endif
   for (std::vector<Int>::iterator it = m_targetDecLayerIdSet.begin(); it != m_targetDecLayerIdSet.end(); it++)
   {
     if ( nalu->m_reservedZero6Bits == (*it) )
@@ -1100,6 +1148,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
       conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
   }
+
   // update POC of display order
   pocLastDisplay = pic->getPOC();
 
@@ -1117,7 +1166,11 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
 #if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInLayer[layerIdx]--;
 #endif
+#if FIX_ALIGN_BUMPING
+    dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerIdx]]--;
+#else
     dpbStatus.m_numPicsInSubDpb[layerIdx]--;
+#endif
   }
 }
 
@@ -1129,8 +1182,13 @@ Void TAppDecTop::flushAllPictures(Int layerId, Bool outputPictures)
   if( outputPictures )  // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
   {
     std::vector<Int>  listOfPocs;
+#if FIX_ALIGN_BUMPING
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+#else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+#endif
     DpbStatus dpbStatus;
 
     // Find the status of the DPB
@@ -1156,8 +1214,13 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
   if( outputPictures )  // All pictures in the DPB are to be output
   {
     std::vector<Int>  listOfPocs;
+#if FIX_ALIGN_BUMPING
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+#else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+#endif
     DpbStatus dpbStatus;
 
     // Find the status of the DPB
@@ -1179,7 +1242,11 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
 
 Void TAppDecTop::markAllPicturesAsErased()
 {
+#if FIX_ALIGN_BUMPING
+  for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+#else
   for(Int i = 0; i < MAX_LAYERS; i++)
+#endif
   {
     markAllPicturesAsErased(i);
   }
@@ -1218,8 +1285,13 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 {
     
   std::vector<Int>  listOfPocs;
+#if FIX_ALIGN_BUMPING
+  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+#else
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+#endif
   DpbStatus dpbStatus;
 
   // First "empty" all pictures that are not used for reference and not needed for output
@@ -1251,7 +1323,13 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
     subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
   }
 #else
+#if FIX_ALIGN_BUMPING
+  Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 
+                  ? dpbStatus.m_layerIdToSubDpbIdMap[0] 
+                  : dpbStatus.m_layerIdToSubDpbIdMap[layerIdx];
+#else
   Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 ? 0 : layerIdx;
+#endif
   findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
 #endif
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
@@ -1264,8 +1342,13 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 Void TAppDecTop::checkOutputAfterDecoding()
 {    
   std::vector<Int>  listOfPocs;
+#if FIX_ALIGN_BUMPING
+  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+#else
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+#endif
   DpbStatus dpbStatus;
 
   // First "empty" all pictures that are not used for reference and not needed for output
@@ -1297,8 +1380,14 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
   Int pocValue = *(listOfPocs.begin());
   std::vector<int>::iterator it;
   TComList<TComPic*>::iterator iterPic;
+#if FIX_ALIGN_BUMPING
+  for( Int dpbLayerCtr = 0; dpbLayerCtr < dpbStatus.m_numLayers; dpbLayerCtr++)
+  {
+    Int layerIdx  = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
+#else
   for( Int layerIdx = 0; layerIdx < dpbStatus.m_numLayers; layerIdx++)
   {
+#endif
     // Check if picture with pocValue is present.
     it = find( listOfPocsInEachLayer[layerIdx].begin(), listOfPocsInEachLayer[layerIdx].end(), pocValue );
     if( it != listOfPocsInEachLayer[layerIdx].end() )  // picture found.
@@ -1313,20 +1402,100 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
 
       xOutputAndMarkPic( pic, m_pchReconFile[layerIdx], layerIdx, m_aiPOCLastDisplay[layerIdx], dpbStatus );
 
+#if CONFORMANCE_BITSTREAM_MODE
+      FILE *fptr;
+      if( this->getConfModeFlag() )
+      {
+        if( this->getMetadataFileRefresh() )
+        {
+          fptr = fopen( this->getMetadataFileName().c_str(), "w" );
+          fprintf(fptr, " LayerId      POC    MD5\n");
+          fprintf(fptr, "------------------------\n");
+        }
+        else
+        {
+          fptr = fopen( this->getMetadataFileName().c_str(), "a+" );
+        }
+        this->setMetadataFileRefresh(false);
+        UChar recon_digest[3][16];
+        calcMD5(*pic->getPicYuvRec(), recon_digest);
+        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, 16));
+        fclose(fptr);
+      }
+#endif
+
+
       listOfPocsInEachLayer[layerIdx].erase( it );
       listOfPocsPositionInEachLayer[layerIdx].erase( listOfPocsPositionInEachLayer[layerIdx].begin() + picPosition );
+#if FIX_ALIGN_BUMPING
+      dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerIdx]]--;
+#endif
     }
   }
-  // Update sub-DPB status
+#if !FIX_ALIGN_BUMPING
+#  // Update sub-DPB status
   for( Int subDpbIdx = 0; subDpbIdx < dpbStatus.m_numSubDpbs; subDpbIdx++)
   {
     dpbStatus.m_numPicsInSubDpb[subDpbIdx]--;
   }
+#endif
   dpbStatus.m_numAUsNotDisplayed--;    
 
+#if CONFORMANCE_BITSTREAM_MODE
+  if( this->getConfModeFlag() )
+  {
+    for( Int dpbLayerCtr = 0; dpbLayerCtr < dpbStatus.m_numLayers; dpbLayerCtr++)
+    {
+      Int layerIdx  = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
+      // Output all picutres "decoded" in that layer that have POC less than the current picture
+      std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(layerIdx))->getConfListPic();
+      // Write all pictures to the file.
+      if( this->getDecodedYuvLayerRefresh(layerIdx) )
+      {
+        if (!m_outputBitDepthY) { m_outputBitDepthY = g_bitDepthY; }
+        if (!m_outputBitDepthC) { m_outputBitDepthC = g_bitDepthC; }
+
+        char tempFileName[256];
+        strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
+        m_confReconFile[layerIdx].open(tempFileName, true, m_outputBitDepthY, m_outputBitDepthC, g_bitDepthY, g_bitDepthC ); // write mode
+        this->setDecodedYuvLayerRefresh( layerIdx, false );
+      }
+
+      std::vector<TComPic>::iterator itPic;
+      for(itPic = layerBuffer->begin(); itPic != layerBuffer->end(); itPic++)
+      {
+        TComPic checkPic = *itPic;
+        const Window &conf = checkPic.getConformanceWindow();
+        const Window &defDisp = m_respectDefDispWindow ? checkPic.getDefDisplayWindow() : Window();
+        Int xScal =  1, yScal = 1;
+  #if REPN_FORMAT_IN_VPS
+        UInt chromaFormatIdc = checkPic.getSlice(0)->getChromaFormatIdc();
+        xScal = TComSPS::getWinUnitX( chromaFormatIdc );
+        yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+  #endif
+        if( checkPic.getPOC() <= pocValue )
+        {
+          TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
+          m_confReconFile[layerIdx].write( pPicCYuvRec,
+            conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
+            conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
+            conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+          layerBuffer->erase(itPic);
+          itPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
+          if(layerBuffer->size() == 0)
+          {
+            break;
+          }
+        }
+      }
+    }
+  }
+#endif
   // Remove the picture from the listOfPocs
   listOfPocs.erase( listOfPocs.begin() );
 }
+
 
 TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit)
 {
@@ -1364,7 +1533,11 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     // -------------------------------------
     // Find the VPS used for the pictures
     // -------------------------------------
+#if FIX_ALIGN_BUMPING
+    for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+#else
     for(Int i = 0; i < MAX_LAYERS; i++)
+#endif
     {
       if( m_acTDecTop[i].getListPic()->empty() )
       {
@@ -1412,7 +1585,11 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
 }
 Void TAppDecTop::emptyUnusedPicturesNotNeededForOutput()
 {
+#if FIX_ALIGN_BUMPING
+  for(Int layerIdx = 0; layerIdx < MAX_VPS_LAYER_ID_PLUS1; layerIdx++)
+#else
   for(Int layerIdx = 0; layerIdx < MAX_LAYERS; layerIdx++)
+#endif
   {
     TComList <TComPic*> *pcListPic = m_acTDecTop[layerIdx].getListPic();
     TComList<TComPic*>::iterator iterPic = pcListPic->begin();
@@ -1467,7 +1644,11 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
 {
   TComVPS *vps = NULL;
   dpbStatus.init();
+#if FIX_ALIGN_BUMPING
+  for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++ )
+#else
   for( Int i = 0; i < MAX_LAYERS; i++ )
+#endif
   {
     if( m_acTDecTop[i].getListPic()->empty() )
     {
@@ -1525,10 +1706,23 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   // Update status
   dpbStatus.m_numAUsNotDisplayed = listOfPocs.size();   // Number of AUs not displayed
   dpbStatus.m_numLayers = vps->getNumLayersInIdList( targetLsIdx );
+#if FIX_ALIGN_BUMPING
+  for(Int i = 0; i < dpbStatus.m_numLayers; i++)
+  {
+    dpbStatus.m_layerIdToSubDpbIdMap[vps->getLayerSetLayerIdList(targetLsIdx, i)] = i;
+    dpbStatus.m_targetDecLayerIdList[i] = vps->getLayerSetLayerIdList(targetLsIdx, i);  // Layer Id stored in a particular sub-DPB
+  }
+  dpbStatus.m_numSubDpbs = vps->getNumSubDpbs( targetLsIdx ); 
+#else
   dpbStatus.m_numSubDpbs = vps->getNumSubDpbs( vps->getOutputLayerSetIdx(
                                                       this->getCommonDecoderParams()->getTargetOutputLayerSetIdx() ) );
+#endif
 
+#if FIX_ALIGN_BUMPING
+  for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+#else
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
+#endif
   {
     dpbStatus.m_numPicsNotDisplayedInLayer[i] = listOfPocsInEachLayer[i].size();
 #if RESOLUTION_BASED_DPB
@@ -1544,8 +1738,13 @@ Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
 {
   { // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
     std::vector<Int>  listOfPocs;
+#if FIX_ALIGN_BUMPING
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+#else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
+#endif
     DpbStatus dpbStatus;
 
     // Find the status of the DPB

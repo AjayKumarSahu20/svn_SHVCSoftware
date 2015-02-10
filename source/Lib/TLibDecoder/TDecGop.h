@@ -114,9 +114,9 @@ Void  init      ( TDecTop**               ppcDecTop,
   Void  decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic );
   Void  filterPicture  (TComPic*& rpcPic );
 
-  void setDecodedPictureHashSEIEnabled(Int enabled) { m_decodedPictureHashSEIEnabled = enabled; }
+  Void setDecodedPictureHashSEIEnabled(Int enabled) { m_decodedPictureHashSEIEnabled = enabled; }
 #if Q0074_COLOUR_REMAPPING_SEI
-  void setColourRemappingInfoSEIEnabled(Int enabled) { m_colourRemapSEIEnabled = enabled; }
+  Void setColourRemappingInfoSEIEnabled(Int enabled) { m_colourRemapSEIEnabled = enabled; }
 #endif
 #if SVC_EXTENSION
   TDecTop*   getLayerDec(UInt LayerId)  { return m_ppcTDecTop[LayerId]; }

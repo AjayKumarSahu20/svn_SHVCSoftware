@@ -50,6 +50,9 @@
 #define READ_UVLC(        code, name)     xReadUvlcTr (         code, name )
 #define READ_SVLC(        code, name)     xReadSvlcTr (         code, name )
 #define READ_FLAG(        code, name)     xReadFlagTr (         code, name )
+#if Q0096_OVERLAY_SEI
+#define READ_STRING(bufSize, code, length, name)   xReadStringTr ( bufSize, code, length, name )
+#endif
 
 #else
 
@@ -57,6 +60,9 @@
 #define READ_UVLC(        code, name)     xReadUvlc (         code )
 #define READ_SVLC(        code, name)     xReadSvlc (         code )
 #define READ_FLAG(        code, name)     xReadFlag (         code )
+#if Q0096_OVERLAY_SEI
+#define READ_STRING(bufSize, code, length, name)   xReadString ( bufSize, code, length )
+#endif
 
 #endif
 
@@ -81,11 +87,17 @@ protected:
   Void  xReadUvlc    ( UInt&  val );
   Void  xReadSvlc    ( Int&   val );
   Void  xReadFlag    ( UInt&  val );
+#if Q0096_OVERLAY_SEI
+  Void  xReadString  (UInt bufSize, UChar *val, UInt& length);
+#endif
 #if ENC_DEC_TRACE
   Void  xReadCodeTr  (UInt  length, UInt& rValue, const Char *pSymbolName);
   Void  xReadUvlcTr  (              UInt& rValue, const Char *pSymbolName);
   Void  xReadSvlcTr  (               Int& rValue, const Char *pSymbolName);
   Void  xReadFlagTr  (              UInt& rValue, const Char *pSymbolName);
+#if Q0096_OVERLAY_SEI
+  Void  xReadStringTr(UInt bufSize, UChar *pValue, UInt& rLength, const Char *pSymbolName);
+#endif
 #endif
 public:
   Void  setBitstream ( TComInputBitstream* p )   { m_pcBitstream = p; }

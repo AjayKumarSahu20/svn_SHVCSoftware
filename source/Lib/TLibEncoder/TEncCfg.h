@@ -321,6 +321,10 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  int       m_layerSwitchOffBegin;
+  int       m_layerSwitchOffEnd;
+#endif
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      m_altOutputLayerFlag;
 #endif
@@ -386,6 +390,29 @@ protected:
   Int       m_kneeSEINumKneePointsMinus1;
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
+#endif
+#if Q0096_OVERLAY_SEI
+  Bool                                m_overlaySEIEnabled;
+  Bool                                m_overlayInfoCancelFlag;
+  UInt                                m_overlayContentAuxIdMinus128;
+  UInt                                m_overlayLabelAuxIdMinus128;
+  UInt                                m_overlayAlphaAuxIdMinus128;
+  UInt                                m_overlayElementLabelValueLengthMinus8;
+  UInt                                m_numOverlaysMinus1;
+  std::vector<UInt>                   m_overlayIdx;  
+  std::vector<Bool>                   m_overlayLanguagePresentFlag;
+  std::vector<UInt>                   m_overlayContentLayerId;
+  std::vector<Bool>                   m_overlayLabelPresentFlag;
+  std::vector<UInt>                   m_overlayLabelLayerId;
+  std::vector<Bool>                   m_overlayAlphaPresentFlag;
+  std::vector<UInt>                   m_overlayAlphaLayerId;
+  std::vector<UInt>                   m_numOverlayElementsMinus1;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMin;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMax;
+  std::vector<string>                 m_overlayLanguage;  
+  std::vector<string>                 m_overlayName;  
+  std::vector< std::vector<string> >  m_overlayElementName;  
+  Bool                                m_overlayInfoPersistenceFlag;
 #endif
 #if Q0189_TMVP_CONSTRAINTS
   Int       m_TMVPConstraintsSEIEnabled;
@@ -904,6 +931,12 @@ public:
   Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Void      setLayerSwitchOffBegin(Int x) { m_layerSwitchOffBegin = x;    }
+  Int       getLayerSwitchOffBegin()      { return m_layerSwitchOffBegin; }
+  Void      setLayerSwitchOffEnd(Int x)   { m_layerSwitchOffEnd = x;      }
+  Int       getLayerSwitchOffEnd()        { return m_layerSwitchOffEnd;   }
+#endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   Void      setSkipPictureAtArcSwitch(Int x) { m_skipPictureAtArcSwitch = x;    }
   Int       getSkipPictureAtArcSwitch()      { return m_skipPictureAtArcSwitch; }
@@ -992,6 +1025,50 @@ public:
     }
   }
   UInt  getIlcIdc(UInt b)                                  { return m_ilcIdc[b]; }
+#endif
+#if Q0096_OVERLAY_SEI  
+  Void                                setOverlaySEIEnabled(Int b)                                              { m_overlaySEIEnabled = b; }
+  Bool                                getOverlaySEIEnabled()                                                   { return m_overlaySEIEnabled; }
+  Void                                setOverlaySEICancelFlag(Int b)                                           { m_overlayInfoCancelFlag = b; } 
+  Bool                                getOverlaySEICancelFlag()                                                { return m_overlayInfoCancelFlag; } 
+  Void                                setOverlaySEIContentAuxIdMinus128(UInt b)                                { m_overlayContentAuxIdMinus128 = b; }     
+  UInt                                getOverlaySEIContentAuxIdMinus128()                                      { return m_overlayContentAuxIdMinus128; }     
+  Void                                setOverlaySEILabelAuxIdMinus128(UInt b)                                  { m_overlayLabelAuxIdMinus128 = b; }     
+  UInt                                getOverlaySEILabelAuxIdMinus128()                                        { return m_overlayLabelAuxIdMinus128; }  
+  Void                                setOverlaySEIAlphaAuxIdMinus128(UInt b)                                  { m_overlayAlphaAuxIdMinus128 = b; }     
+  UInt                                getOverlaySEIAlphaAuxIdMinus128()                                        { return m_overlayAlphaAuxIdMinus128; }  
+  Void                                setOverlaySEIElementLabelValueLengthMinus8(UInt b)                       { m_overlayElementLabelValueLengthMinus8 = b; }     
+  UInt                                getOverlaySEIElementLabelValueLengthMinus8()                             { return m_overlayElementLabelValueLengthMinus8; }  
+  Void                                setOverlaySEINumOverlaysMinus1(UInt b)                                   { m_numOverlaysMinus1 = b; }     
+  UInt                                getOverlaySEINumOverlaysMinus1()                                         { return m_numOverlaysMinus1; }     
+  Void                                setOverlaySEIIdx(const std::vector<UInt>& b)                             { m_overlayIdx = b; }      
+  std::vector<UInt>                   getOverlaySEIIdx()                                                       { return m_overlayIdx; }      
+  Void                                setOverlaySEILanguagePresentFlag(const std::vector<Bool>& b)             { m_overlayLanguagePresentFlag = b; }      
+  std::vector<Bool>                   getOverlaySEILanguagePresentFlag()                                       { return m_overlayLanguagePresentFlag; }   
+  Void                                setOverlaySEIContentLayerId(const std::vector<UInt>& b)                  { m_overlayContentLayerId = b; }      
+  std::vector<UInt>                   getOverlaySEIContentLayerId()                                            { return m_overlayContentLayerId; }      
+  Void                                setOverlaySEILabelPresentFlag(const std::vector<Bool>& b)                { m_overlayLabelPresentFlag = b; }      
+  std::vector<Bool>                   getOverlaySEILabelPresentFlag()                                          { return m_overlayLabelPresentFlag; } 
+  Void                                setOverlaySEILabelLayerId(const std::vector<UInt>& b)                    { m_overlayLabelLayerId = b; }      
+  std::vector<UInt>                   getOverlaySEILabelLayerId()                                              { return m_overlayLabelLayerId; }   
+  Void                                setOverlaySEIAlphaPresentFlag(const std::vector<Bool>& b)                { m_overlayAlphaPresentFlag = b; }      
+  std::vector<Bool>                   getOverlaySEIAlphaPresentFlag()                                          { return m_overlayAlphaPresentFlag; }     
+  Void                                setOverlaySEIAlphaLayerId(const std::vector<UInt>& b)                    { m_overlayAlphaLayerId = b; }      
+  std::vector<UInt>                   getOverlaySEIAlphaLayerId()                                              { return m_overlayAlphaLayerId; }   
+  Void                                setOverlaySEINumElementsMinus1(const std::vector<UInt>& b)               { m_numOverlayElementsMinus1 = b; }      
+  std::vector<UInt>                   getOverlaySEINumElementsMinus1()                                         { return m_numOverlayElementsMinus1; }     
+  Void                                setOverlaySEIElementLabelMin(const std::vector< std::vector<UInt> >& b)  { m_overlayElementLabelMin = b; }      
+  std::vector< std::vector<UInt> >    getOverlaySEIElementLabelMin()                                           { return m_overlayElementLabelMin; }   
+  Void                                setOverlaySEIElementLabelMax(const std::vector< std::vector<UInt> >& b)  { m_overlayElementLabelMax = b; }      
+  std::vector< std::vector<UInt> >    getOverlaySEIElementLabelMax()                                           { return m_overlayElementLabelMax; }              
+  Void                                setOverlaySEILanguage(const std::vector<string>& b)                      { m_overlayLanguage = b; }      
+  std::vector<string>                 getOverlaySEILanguage()                                                  { return m_overlayLanguage; }   
+  Void                                setOverlaySEIName(const std::vector<string>& b)                          { m_overlayName = b; }      
+  std::vector<string>                 getOverlaySEIName()                                                      { return m_overlayName; }   
+  Void                                setOverlaySEIElementName(const std::vector< std::vector<string> >& b)    { m_overlayElementName = b; }      
+  std::vector< std::vector<string> >  getOverlaySEIElementName()                                               { return m_overlayElementName; }   
+  Void                                setOverlaySEIPersistenceFlag(Int b)                                      { m_overlayInfoPersistenceFlag = b; } 
+  Bool                                getOverlaySEIPersistenceFlag()                                           { return m_overlayInfoPersistenceFlag; } 
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Void      setCGSFlag(Int n)             { m_nCGSFlag = n;    }

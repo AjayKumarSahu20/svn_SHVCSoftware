@@ -87,7 +87,7 @@ protected:
   std::vector<Int>                m_outputLayerSetIdx;
   Int       m_defaultTargetOutputLayerIdc;
   Int       m_numOutputLayerSets;
-  std::vector<Int>                m_numLayersInOutputLayerSet;
+  std::vector<Int>                m_numOutputLayersInOutputLayerSet;
   std::vector< std::vector<Int> > m_listOfOutputLayers;
 #endif
 #else
@@ -119,6 +119,20 @@ protected:
   Bool      m_isTopFieldFirst;
 
   // profile/level
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+  Int           m_numPTLInfo;
+  Int           m_layerPTLIdx[MAX_VPS_LAYER_ID_PLUS1]; ///< scalability_mask
+  Profile::Name m_profileList[MAX_NUM_LAYER_IDS + 1];
+  Level::Tier   m_levelTierList[MAX_NUM_LAYER_IDS + 1];
+  Level::Name   m_levelList[MAX_NUM_LAYER_IDS + 1];
+  Profile::Name m_profileCompatibility[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_progressiveSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_interlacedSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_nonPackedConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_frameOnlyConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
+
+  std::vector< std::vector<Int> > m_listOfLayerPTLofOlss;
+#else
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
   Level::Name   m_level;
@@ -126,7 +140,8 @@ protected:
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
-  
+#endif
+
   // coding structure
 #if !SVC_EXTENSION
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
@@ -450,6 +465,29 @@ protected:
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
 #endif
+#if Q0096_OVERLAY_SEI
+  Bool                                m_overlaySEIEnabled;
+  Bool                                m_overlayInfoCancelFlag;
+  UInt                                m_overlayContentAuxIdMinus128;
+  UInt                                m_overlayLabelAuxIdMinus128;
+  UInt                                m_overlayAlphaAuxIdMinus128;
+  UInt                                m_overlayElementLabelValueLengthMinus8;
+  UInt                                m_numOverlaysMinus1;
+  std::vector<UInt>                   m_overlayIdx;  
+  std::vector<Bool>                   m_overlayLanguagePresentFlag;
+  std::vector<UInt>                   m_overlayContentLayerId;
+  std::vector<Bool>                   m_overlayLabelPresentFlag;
+  std::vector<UInt>                   m_overlayLabelLayerId;
+  std::vector<Bool>                   m_overlayAlphaPresentFlag;
+  std::vector<UInt>                   m_overlayAlphaLayerId;
+  std::vector<UInt>                   m_numOverlayElementsMinus1;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMin;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMax;
+  std::vector<string>                 m_overlayLanguage;  
+  std::vector<string>                 m_overlayName;  
+  std::vector< std::vector<string> >  m_overlayElementName;  
+  Bool                                m_overlayInfoPersistenceFlag;
+#endif
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
 #endif
@@ -505,6 +543,11 @@ public:
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString);
+#if R0235_SMALLEST_LAYER_ID
+  Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, Int * const returnArray);
+  Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
+  Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
+#endif
 #else
   Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
 #endif

@@ -83,6 +83,9 @@ TDecTop::TDecTop()
 #endif
 #if SVC_EXTENSION 
   m_layerId = 0;
+#if R0235_SMALLEST_LAYER_ID
+  m_smallestLayerId = 0;
+#endif
 #if AVC_BASE
   m_pBLReconFile = NULL;
 #endif
@@ -98,6 +101,9 @@ TDecTop::TDecTop()
 #endif
 #if Q0177_EOS_CHECKS
   m_isLastNALWasEos = false;
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_lastPicHasEos = false;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
@@ -122,6 +128,12 @@ TDecTop::TDecTop()
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   m_pocResettingFlag        = false;
   m_pocDecrementedInDPBFlag = false;
+#endif
+#if CONFORMANCE_BITSTREAM_MODE
+  m_confModeFlag = false;
+#endif
+#if FIX_NON_OUTPUT_LAYER
+  m_isOutputLayerFlag = false;
 #endif
 }
 
@@ -350,7 +362,6 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #else
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
-    //TODO: HENDRY -- Do the checking here.
 #endif
   }
 #else
@@ -566,6 +577,13 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
 
   // Execute Deblock + Cleanup
   m_cGopDecoder.filterPicture(pcPic);
+
+#if FIX_NON_OUTPUT_LAYER
+  if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
+  {
+    pcPic->setOutputMark( false );
+  }
+#endif
 
   TComSlice::sortPicList( m_cListPic ); // sorting for application output
   poc                 = pcPic->getSlice(m_uiSliceIdx-1)->getPOC();
@@ -915,6 +933,28 @@ Void TDecTop::xActivateParameterSets()
       sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
 #endif
     }
+    
+#if P0182_VPS_VUI_PS_FLAG
+    UInt layerIdx = activeVPS->getLayerIdInVps( m_layerId );
+
+    if( activeVPS->getBaseLayerPSCompatibilityFlag(layerIdx) )
+    {
+      RepFormat* repFormat = activeVPS->getVpsRepFormat(activeVPS->getVpsRepFormatIdx(layerIdx));
+
+      assert( pps->getLayerId() == 0 );
+      assert( sps->getLayerId() == 0 );
+      assert( repFormat->getChromaFormatVpsIdc() == sps->getChromaFormatIdc() );
+      assert( repFormat->getSeparateColourPlaneVpsFlag() == 0 );
+      assert( repFormat->getPicHeightVpsInLumaSamples() == sps->getPicHeightInLumaSamples() );
+      assert( repFormat->getPicWidthVpsInLumaSamples()  == sps->getPicWidthInLumaSamples() );
+      assert( repFormat->getBitDepthVpsLuma()   == sps->getBitDepthY() );
+      assert( repFormat->getBitDepthVpsChroma() == sps->getBitDepthC() );
+      assert( repFormat->getConformanceWindowVps().getWindowLeftOffset()   == sps->getConformanceWindow().getWindowLeftOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowRightOffset()  == sps->getConformanceWindow().getWindowRightOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowTopOffset()    == sps->getConformanceWindow().getWindowTopOffset() );
+      assert( repFormat->getConformanceWindowVps().getWindowBottomOffset() == sps->getConformanceWindow().getWindowBottomOffset() );
+    }    
+#endif
   }
 #endif
 
@@ -995,7 +1035,20 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
-  checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
+#if R0235_SMALLEST_LAYER_ID
+  if (!m_apcSlicePilot->getVPS()->getBaseLayerAvailableFlag())
+  {
+    assert(nalu.m_layerId != 0);
+    assert(m_apcSlicePilot->getVPS()->getNumAddLayerSets() > 0);
+    if (getCommonDecoderParams()->getTargetOutputLayerSetIdx() >= 0)
+    {
+      UInt layerIdx = m_apcSlicePilot->getVPS()->getOutputLayerSetIdx(getCommonDecoderParams()->getTargetOutputLayerSetIdx());
+      assert(layerIdx > m_apcSlicePilot->getVPS()->getVpsNumLayerSetsMinus1());
+    }
+  }
+#else
+  checkValueOfTargetOutputLayerSetIdx(m_apcSlicePilot->getVPS());
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   // Following assignment should go wherever a new VPS is activated
@@ -1085,9 +1138,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_isNoOutputPriorPics = false;
   }
 
-  //TODO: HENDRY -- Probably do the checking for max number of positive and negative pics here
-
-
   //For inference of PicOutputFlag
   if (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N || m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R)
   {
@@ -1130,12 +1180,22 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
+#if R0235_SMALLEST_LAYER_ID
+  if (m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag())
+#else
   if (m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() )
+#endif
   {
     if (m_bFirstSliceInSequence)
     {
       setNoClrasOutputFlag(true);
     }
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    else if (m_lastPicHasEos)
+    {
+      setNoClrasOutputFlag(true);
+    }
+#endif
     else if ( m_apcSlicePilot->getBlaPicFlag() )
     {
       setNoClrasOutputFlag(true);
@@ -1156,7 +1216,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     setNoClrasOutputFlag(false);
   }
 
+#if R0235_SMALLEST_LAYER_ID
+  m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag, m_smallestLayerId );
+#else
   m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag );
+#endif
 #endif
 
   // Derive the value of NoOutputOfPriorPicsFlag
@@ -1823,6 +1887,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    xCheckLayerReset();
+    xSetLayerInitializedFlag();
+#endif
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff();
 #if ALIGNED_BUMPING
@@ -2192,6 +2260,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           // check for the sample prediction picture type
           if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
           {
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec());
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 #if Q0048_CGS_3D_ASYMLUT 
@@ -2226,6 +2297,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
             m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), scalEL );
 #else
             m_cPrediction.upsampleBasePic( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), pcPic->getPicYuvRec(), scalEL );
+#endif
 #endif
 #endif
 #endif
@@ -2387,7 +2459,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   if(pcSlice->getSPS()->getScalingListFlag())
   {
     pcSlice->setScalingList ( pcSlice->getSPS()->getScalingList()  );
+
+#if SCALINGLIST_INFERRING
+    if( pcSlice->getPPS()->getScalingListPresentFlag() || pcSlice->getPPS()->getInferScalingListFlag() )
+#else
     if(pcSlice->getPPS()->getScalingListPresentFlag())
+#endif
     {
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
@@ -2413,6 +2490,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   setFirstPicInLayerDecodedFlag(true);
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  m_lastPicHasEos = false;
+#endif
 
   m_bFirstSliceInPicture = false;
   m_uiSliceIdx++;
@@ -2425,7 +2505,10 @@ Void TDecTop::xDecodeVPS()
   TComVPS* vps = new TComVPS();
   
   m_cEntropyDecoder.decodeVPS( vps );
-  m_parameterSetManagerDecoder.storePrefetchedVPS(vps);  
+  m_parameterSetManagerDecoder.storePrefetchedVPS(vps);
+#if R0235_SMALLEST_LAYER_ID
+  checkValueOfTargetOutputLayerSetIdx(vps);
+#endif
 }
 
 #if SVC_EXTENSION
@@ -2611,6 +2694,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         cListPic->clear();
       }
 #endif
+#if R0235_SMALLEST_LAYER_ID
+      xDeriveSmallestLayerId(m_parameterSetManagerDecoder.getPrefetchedVPS(0));
+#endif
       return false;
       
     case NAL_UNIT_SPS:
@@ -2676,13 +2762,18 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_EOS:
 #if Q0177_EOS_CHECKS
       assert( m_isLastNALWasEos == false );
+#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
       //Check layer id of the nalu. if it is not 0, give a warning message and just return without doing anything.
       if (nalu.m_layerId > 0)
       {
         printf( "\nThis bitstream has EOS with non-zero layer id.\n" );
         return false;
       }
+#endif
       m_isLastNALWasEos = true;
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+      m_lastPicHasEos = true;
+#endif
 #endif
       m_associatedIRAPType = NAL_UNIT_INVALID;
       m_pocCRA = 0;
@@ -2909,7 +3000,9 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
 
+#if !FIX_CONF_MODE
   assert( params->getTargetLayerId() < vps->getMaxLayers() );
+#endif
 
   if( params->getValueCheckedFlag() )
   {
@@ -2973,10 +3066,17 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
+#if R0235_SMALLEST_LAYER_ID
+    assert( params->getTargetOutputLayerSetIdx() < vps->getNumOutputLayerSets() );
+#endif
+#if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
+#endif
     Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
+#if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
-
+#endif
+#if !R0235_SMALLEST_LAYER_ID
     Bool layerSetMatchFlag = true;
     for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
     {
@@ -2988,6 +3088,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     }
 
     assert(layerSetMatchFlag);    // Signaled output layer set index does not match targetOutputLayerId.
+#endif
     
     // Check if the targetdeclayerIdlist matches the output layer set
     if( params->getTargetDecLayerIdSet() )
@@ -3003,6 +3104,22 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     params->setValueCheckedFlag( true );
 
   }
+#if FIX_CONF_MODE
+  // Set correct value of targetLayerId
+  Int targetOlsIdx = params->getTargetOutputLayerSetIdx();
+  Int targetLsIdx = vps->getOutputLayerSetIdx( targetOlsIdx );
+  params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
+#endif
+#if FIX_NON_OUTPUT_LAYER
+  // Check if the current layer is an output layer
+  for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
+  {
+    if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
+    {
+      this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
+    }
+  }
+#endif
 }
 #endif
 #if RESOLUTION_BASED_DPB
@@ -3065,6 +3182,137 @@ Void TDecTop::resetPocRestrictionCheckParameters()
   TDecTop::m_picNonIdrNoLpPresentFlag            = false;
 }
 #endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+Void TDecTop::xCheckLayerReset()
+{
+#if R0235_SMALLEST_LAYER_ID
+  if (m_apcSlicePilot->isIRAP() && m_layerId > m_smallestLayerId)
+#else
+  if (m_apcSlicePilot->isIRAP() && m_layerId > 0)
+#endif
+  {
+    Bool layerResetFlag;
+    UInt dolLayerId;
+    if (m_lastPicHasEos)
+    {
+      layerResetFlag = true;
+      dolLayerId = m_layerId;
+    }
+    else if ((m_apcSlicePilot->isCRA() && m_apcSlicePilot->getHandleCraAsBlaFlag()) ||
+      (m_apcSlicePilot->isIDR() && m_apcSlicePilot->getCrossLayerBLAFlag()) || m_apcSlicePilot->isBLA())
+    {
+      layerResetFlag = true;
+      dolLayerId = m_layerId;
+    }
+    else
+    {
+      layerResetFlag = false;
+    }
+
+    if (layerResetFlag)
+    {
+      for (Int i = 0; i < m_apcSlicePilot->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt iLayerId = m_apcSlicePilot->getVPS()->getPredictedLayerId(dolLayerId, i);
+        m_ppcTDecTop[iLayerId]->m_layerInitializedFlag = false;
+        m_ppcTDecTop[iLayerId]->m_firstPicInLayerDecodedFlag = false;
+      }
+
+      for (TComList<TComPic*>::iterator i = m_cListPic.begin(); i != m_cListPic.end(); i++)
+      {
+        if ((*i)->getPOC() != m_apcSlicePilot->getPOC())
+        {
+          (*i)->getSlice(0)->setReferenced(false);
+        }
+      }
+
+      for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getNumPredictedLayers(dolLayerId); i++)
+      {
+        UInt predLId = m_apcSlicePilot->getVPS()->getPredictedLayerId(dolLayerId, i);
+        for (TComList<TComPic*>::iterator pic = m_ppcTDecTop[predLId]->getListPic()->begin(); pic != m_ppcTDecTop[predLId]->getListPic()->end(); pic++)
+        {
+          if ((*pic)->getSlice(0)->getPOC() != m_apcSlicePilot->getPOC())
+          {
+            (*pic)->getSlice(0)->setReferenced(false);
+          }
+        }
+      }
+    }
+  }
+}
+
+Void TDecTop::xSetLayerInitializedFlag()
+{
+  if (m_apcSlicePilot->isIRAP() && m_apcSlicePilot->getNoRaslOutputFlag())
+  {
+    if (m_layerId == 0)
+    {
+      m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTDecTop[m_layerId]->getLayerInitializedFlag() && m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
+    {
+      m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+    }
+    else if (!m_ppcTDecTop[m_layerId]->getLayerInitializedFlag())
+    {
+      Bool refLayersInitialized = true;
+      for (UInt j = 0; j < m_apcSlicePilot->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      {
+        UInt refLayerId = m_apcSlicePilot->getVPS()->getRefLayerId(m_layerId, j);
+        if (!m_ppcTDecTop[refLayerId]->getLayerInitializedFlag())
+        {
+          refLayersInitialized = false;
+        }
+      }
+      if (refLayersInitialized)
+      {
+        m_ppcTDecTop[m_layerId]->setLayerInitializedFlag(true);
+      }
+    }
+  }
+}
+#endif
+
+#if R0235_SMALLEST_LAYER_ID
+Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
+{
+  UInt smallestLayerId;
+  Int  targetOlsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
+  assert( targetOlsIdx >= 0 );
+
+  UInt targetDecLayerSetIdx = vps->getOutputLayerSetIdx(targetOlsIdx);
+  UInt lsIdx = targetDecLayerSetIdx;
+  UInt targetDecLayerIdList[MAX_LAYERS] = {0};
+
+  for (UInt i = 0, j = 0; i < vps->getNumLayersInIdList(lsIdx); i++)
+  {
+    if (vps->getNecessaryLayerFlag(targetOlsIdx, i))
+    {
+      targetDecLayerIdList[j++] = vps->getLayerSetLayerIdList(lsIdx, i);
+    }
+  }
+
+  if (targetDecLayerSetIdx <= vps->getVpsNumLayerSetsMinus1())
+  {
+    smallestLayerId = 0;
+  }
+  else if (vps->getNumLayersInIdList(targetDecLayerSetIdx) == 1)
+  {
+    smallestLayerId = 0;
+  }
+  else
+  {
+    smallestLayerId = targetDecLayerIdList[0];
+  }
+
+  for (UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1 - 1; layer++)
+  {
+    m_ppcTDecTop[layer]->m_smallestLayerId = smallestLayerId;
+  }
+}
+#endif
+
 #endif //SVC_EXTENSION
 
 

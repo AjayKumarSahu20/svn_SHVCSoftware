@@ -1075,7 +1075,11 @@ Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& poc
  * If the current picture has a nal_ref_idc that is not 0, it will remain marked as "used for reference".
  */
 #if NO_CLRAS_OUTPUT_FLAG
+#if R0235_SMALLEST_LAYER_ID
+Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag, UInt smallestLayerId )
+#else
 Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag )
+#endif
 {
   if( !isIRAP() )
   {
@@ -1085,9 +1089,13 @@ Void TComSlice::decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noCl
   Int pocCurr = getPOC();
   TComPic* rpcPic = NULL;
 
-  // When the current picture is an IRAP picture with nuh_layer_id equal to 0 and NoClrasOutputFlag is equal to 1, 
+  // When the current picture is an IRAP picture with nuh_layer_id equal to SmallestLayerId and NoClrasOutputFlag is equal to 1, 
   // all reference pictures with any value of nuh_layer_id currently in the DPB (if any) are marked as "unused for reference".
+#if R0235_SMALLEST_LAYER_ID
+  if (m_layerId == smallestLayerId && noClrasOutputFlag)
+#else
   if( m_layerId == 0 && noClrasOutputFlag )
+#endif
   {
     // mark all pictures for all layers as not used for reference
     TComList<TComPic*>::iterator iterPic = rcListPic.begin();
@@ -2183,7 +2191,7 @@ UInt TComSlice::getPicWidthInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getPicWidthVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getPicWidthVpsInLumaSamples();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2192,7 +2200,7 @@ UInt TComSlice::getPicWidthInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getPicWidthVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)) )->getPicWidthVpsInLumaSamples();
   }
 #endif
   return retVal;
@@ -2226,7 +2234,7 @@ UInt TComSlice::getPicHeightInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getPicHeightVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getPicHeightVpsInLumaSamples();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2235,7 +2243,7 @@ UInt TComSlice::getPicHeightInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getPicHeightVpsInLumaSamples();
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)) )->getPicHeightVpsInLumaSamples();
   }
 #endif
   return retVal;
@@ -2278,7 +2286,7 @@ UInt TComSlice::getChromaFormatIdc()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getChromaFormatVpsIdc();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getChromaFormatVpsIdc();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2287,7 +2295,7 @@ UInt TComSlice::getChromaFormatIdc()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getChromaFormatVpsIdc();
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)) )->getChromaFormatVpsIdc();
   }
 #endif
   return retVal;
@@ -2300,15 +2308,27 @@ UInt TComSlice::getBitDepthY()
 #if O0096_REP_FORMAT_INDEX
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
 #else
   if ( layerId == 0 )
-#endif
   {
-    retVal = sps->getBitDepthY();
+#endif
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
+    }
+    else
+    {
+      retVal = sps->getBitDepthY();
+    }
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getBitDepthVpsLuma();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getBitDepthVpsLuma();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2317,7 +2337,7 @@ UInt TComSlice::getBitDepthY()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getBitDepthVpsLuma();
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)) )->getBitDepthVpsLuma();
   }
 #endif
   return retVal;
@@ -2330,15 +2350,27 @@ UInt TComSlice::getBitDepthC()
 #if O0096_REP_FORMAT_INDEX
 #if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  {
 #else
   if ( layerId == 0 )
-#endif
   {
-    retVal = sps->getBitDepthC();
+#endif
+#if VPS_AVC_BL_FLAG_REMOVAL
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+#else
+    if( layerId == 0 && vps->getAvcBaseLayerFlag() )
+#endif
+    {
+      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
+    }
+    else
+    {
+      retVal = sps->getBitDepthC();
+    }
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getBitDepthVpsChroma();
+    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getBitDepthVpsChroma();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2347,7 +2379,7 @@ UInt TComSlice::getBitDepthC()
   }
   else
   {
-    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getBitDepthVpsChroma();
+    retVal = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)) )->getBitDepthVpsChroma();
   }
 #endif
   return retVal;
@@ -2391,7 +2423,7 @@ Window& TComSlice::getConformanceWindow()
   }
   else
   {
-    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : layerId) )->getConformanceWindowVps();
+    return vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdInVps(layerId)))->getConformanceWindowVps();
   }
 #else
   if( ( layerId == 0 ) || sps->getUpdateRepFormatFlag() )
@@ -2400,7 +2432,7 @@ Window& TComSlice::getConformanceWindow()
   }
   else
   {
-    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(layerId) )->getConformanceWindowVps();
+    return vps->getVpsRepFormat( vps->getVpsRepFormatIdx(vps->getLayerIdInVps(vps->getLayerIdInVps(layerId))) )->getConformanceWindowVps();
   }
 #endif
 }
@@ -2669,11 +2701,19 @@ Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
   m_numLayerInIdList.push_back(1);
+#if FIX_LAYER_ID_INIT
+  m_layerSetLayerIdList.resize(m_vpsNumLayerSetsMinus1 + 1);
+#else
   m_layerSetLayerIdList.resize(m_numLayerSets);
+#endif
   m_layerSetLayerIdList[0].push_back(0);
   
   // For other layers
+#if FIX_LAYER_ID_INIT
+  for (Int i = 1; i <= m_vpsNumLayerSetsMinus1; i++)
+#else
   for( Int i = 1; i < m_numLayerSets; i++ )
+#endif
   {
     for( Int m = 0; m <= m_maxLayerId; m++)
     {
@@ -2852,6 +2892,27 @@ Void TComVPS::setTreePartitionLayerIdList()
   m_numIndependentLayers = numIndependentLayers;
 }
 
+#if FIX_LAYER_ID_INIT
+void TComVPS::deriveLayerIdListVariablesForAddLayerSets()
+{
+  m_layerSetLayerIdList.resize(m_vpsNumLayerSetsMinus1 + 1 + m_numAddLayerSets);
+
+  for (UInt i = 0; i < m_numAddLayerSets; i++)
+  {
+    Int layerNum = 0;
+    Int lsIdx = m_vpsNumLayerSetsMinus1 + 1 + i;
+    for (Int treeIdx = 1; treeIdx < m_numIndependentLayers; treeIdx++)
+    {
+      for (Int layerCnt = 0; layerCnt < m_highestLayerIdxPlus1[i][treeIdx]; layerCnt++)
+      {
+        m_layerSetLayerIdList[lsIdx].push_back(m_treePartitionLayerIdList[treeIdx][layerCnt]);
+        layerNum++;
+      }
+    }
+    m_numLayerInIdList.push_back(layerNum);
+  }
+}
+#else
 void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
 {
   for (UInt i = 0; i < m_numAddLayerSets; i++)
@@ -2877,6 +2938,7 @@ void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
     }
   }
 }
+#endif
 
 #endif
 

@@ -289,6 +289,13 @@ static const struct MapStrToProfile {
   {"main", Profile::MAIN},
   {"main10", Profile::MAIN10},
   {"main-still-picture", Profile::MAINSTILLPICTURE},
+#if MULTIPLE_PTL_SUPPORT
+  {"range-extension", Profile::RANGEEXTENSION},       //This is not used in this software
+  {"range-extension-high", Profile::RANGEEXTENSIONHIGH},       //This is not used in this software
+  {"multiview-main", Profile::MULTIVIEWMAIN},       //This is not used in this software
+  {"scalable-main", Profile::SCALABLEMAIN},
+  {"scalable-main10", Profile::SCALABLEMAIN10},
+#endif
 };
 
 static const struct MapStrToTier {
@@ -379,7 +386,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_SourceHeight  [MAX_LAYERS];
   Int*    cfg_FrameRate     [MAX_LAYERS];
   Int*    cfg_IntraPeriod   [MAX_LAYERS];
-  Int*    cfg_conformanceMode  [MAX_LAYERS];
+  Int*    cfg_conformanceMode[MAX_LAYERS];
+  Int*    cfg_confWinLeft   [MAX_LAYERS];
+  Int*    cfg_confWinRight  [MAX_LAYERS];
+  Int*    cfg_confWinTop    [MAX_LAYERS];
+  Int*    cfg_confWinBottom [MAX_LAYERS];
+  Int*    cfg_aiPadX        [MAX_LAYERS];
+  Int*    cfg_aiPadY        [MAX_LAYERS];
 #if LAYER_CTB
   // coding unit (CU) definition
   UInt*      cfg_uiMaxCUWidth[MAX_LAYERS];                                   ///< max. CU width in pixel
@@ -485,6 +498,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_colourRemapSEIFile[MAX_LAYERS];
 #endif
   Int*    cfg_waveFrontSynchro[MAX_LAYERS];
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
+  Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
+#endif
 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
   {
@@ -502,6 +519,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_FrameRate[layer]    = &m_acLayerCfg[layer].m_iFrameRate; 
     cfg_IntraPeriod[layer]  = &m_acLayerCfg[layer].m_iIntraPeriod; 
     cfg_conformanceMode[layer] = &m_acLayerCfg[layer].m_conformanceMode;
+    cfg_confWinLeft[layer]  = &m_acLayerCfg[layer].m_confWinLeft;
+    cfg_confWinRight[layer] = &m_acLayerCfg[layer].m_confWinRight;
+    cfg_confWinTop[layer]   = &m_acLayerCfg[layer].m_confWinTop;
+    cfg_confWinBottom[layer]= &m_acLayerCfg[layer].m_confWinBottom;
+    cfg_aiPadX[layer] = &m_acLayerCfg[layer].m_aiPad[0];
+    cfg_aiPadY[layer] = &m_acLayerCfg[layer].m_aiPad[1];
 #if LAYER_CTB
     // coding unit (CU) definition
     cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
@@ -574,6 +597,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    cfg_layerSwitchOffBegin[layer] = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
+    cfg_layerSwitchOffEnd[layer]   = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
+#endif
   }
 #if Q0078_ADD_LAYER_SETS
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -591,9 +618,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
-  string* cfg_numLayersInOutputLayerSet = new string;
+  string* cfg_numOutputLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
+#endif
+#if MULTIPLE_PTL_SUPPORT
+  string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
 #endif
 #if AVC_BASE
   string  cfg_BLInputFile;
@@ -619,6 +649,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if P0050_KNEE_FUNCTION_SEI
   string cfg_kneeSEIInputKneePointValue;
   string cfg_kneeSEIOutputKneePointValue;
+#endif
+#if Q0096_OVERLAY_SEI
+  const Int CFG_MAX_OVERLAYS = 3;
+  UInt   cfg_overlaySEIIdx[CFG_MAX_OVERLAYS];  
+  Bool   cfg_overlaySEILanguagePresentFlag[CFG_MAX_OVERLAYS];  
+  UInt   cfg_overlaySEIContentLayerId[CFG_MAX_OVERLAYS];
+  Bool   cfg_overlaySEILabelPresentFlag[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEILabelLayerId[CFG_MAX_OVERLAYS];
+  Bool   cfg_overlaySEIAlphaPresentFlag[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEIAlphaLayerId[CFG_MAX_OVERLAYS];
+  UInt   cfg_overlaySEINumElementsMinus1[CFG_MAX_OVERLAYS];
+  string cfg_overlaySEIElementLabelRanges[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEILanguage[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEIName[CFG_MAX_OVERLAYS];  
+  string cfg_overlaySEIElementNames[CFG_MAX_OVERLAYS];  
 #endif
 
   po::Options opts;
@@ -665,7 +710,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if OUTPUT_LAYER_SETS_CONFIG
   ("DefaultTargetOutputLayerIdc",    m_defaultTargetOutputLayerIdc, 1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
   ("NumOutputLayerSets",            m_numOutputLayerSets, 1, "Number of output layer sets excluding the 0-th output layer set")
-  ("NumLayersInOutputLayerSet",   cfg_numLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
+  ("NumOutputLayersInOutputLayerSet",   cfg_numOutputLayersInOutputLayerSet, string(""), 1 , "List containing number of output layers in the output layer sets")
   ("ListOfOutputLayers%d",          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
   ("OutputLayerSetIdx",            cfg_outputLayerSetIdx, string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
@@ -674,7 +719,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ChromaFormatIDC%d,-cf",   cfg_tmpChromaFormatIDC,    420, MAX_LAYERS, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat) for layer %d")
   ("AuxId%d",                 cfg_auxId,                 0,   MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
-  ("ConformanceMode%d",       cfg_conformanceMode,0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+  ("ConformanceMode%d",      cfg_conformanceMode,        0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+  ("ConfLeft%d",             cfg_confWinLeft,            0, MAX_LAYERS, "Deprecated alias of ConfWinLeft")
+  ("ConfRight%d",            cfg_confWinRight,           0, MAX_LAYERS, "Deprecated alias of ConfWinRight")
+  ("ConfTop%d",              cfg_confWinTop,             0, MAX_LAYERS, "Deprecated alias of ConfWinTop")
+  ("ConfBottom%d",           cfg_confWinBottom,          0, MAX_LAYERS, "Deprecated alias of ConfWinBottom")
+  ("ConfWinLeft%d",          cfg_confWinLeft,            0, MAX_LAYERS, "Left offset for window conformance mode 3")
+  ("ConfWinRight%d",         cfg_confWinRight,           0, MAX_LAYERS, "Right offset for window conformance mode 3")
+  ("ConfWinTop%d",           cfg_confWinTop,             0, MAX_LAYERS, "Top offset for window conformance mode 3")
+  ("ConfWinBottom%d",        cfg_confWinBottom,          0, MAX_LAYERS, "Bottom offset for window conformance mode 3")
+  ("HorizontalPadding%d,-pdx%d", cfg_aiPadX,             0, MAX_LAYERS, "Horizontal source padding for conformance window mode 2")
+  ("VerticalPadding%d,-pdy%d",   cfg_aiPadY,             0, MAX_LAYERS, "Vertical source padding for conformance window mode 2")
   ("ScalabilityMask1",        m_scalabilityMask[1], 0, "scalability_mask[1] (multiview)")
   ("ScalabilityMask2",        m_scalabilityMask[2], 1, "scalability_mask[2] (scalable)" )
 #if AUXILIARY_PICTURES
@@ -799,6 +854,20 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff", m_isTopFieldFirst, false, "In case of field based coding, signals whether if it's a top field first or not")
   
   // Profile and level
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+  ("NumProfileTierLevel", m_numPTLInfo, 1, "Number of Profile, Tier and Level information")
+  ("Profile%d", m_profileList,   Profile::NONE, MAX_NUM_LAYER_IDS + 1, "Profile to be used when encoding (Incomplete)")
+  ("Level%d",   m_levelList,     Level::NONE, MAX_NUM_LAYER_IDS + 1, "Level limit to be used, eg 5.1 (Incomplete)")
+  ("Tier%d",    m_levelTierList, Level::MAIN, MAX_NUM_LAYER_IDS + 1, "Tier to use for interpretation of --Level")
+  ("ProfileCompatibility%d", m_profileCompatibility,   Profile::NONE, MAX_NUM_LAYER_IDS + 1, "Compatible profile to be used when encoding")
+  ("ProgressiveSource%d", m_progressiveSourceFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that source is progressive")
+  ("InterlacedSource%d",  m_interlacedSourceFlagList,  false, MAX_NUM_LAYER_IDS + 1, "Indicate that source is interlaced")
+  ("NonPackedSource%d",   m_nonPackedConstraintFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",         m_frameOnlyConstraintFlagList, false, MAX_NUM_LAYER_IDS + 1, "Indicate that the bitstream contains only frames")
+    
+  ("LayerPTLIndex%d", m_layerPTLIdx, 0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
+  ("ListOfProfileTierLevelOls%d", cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+#else
   ("Profile", m_profile,   Profile::NONE, "Profile to be used when encoding (Incomplete)")
   ("Level",   m_level,     Level::NONE,   "Level limit to be used, eg 5.1 (Incomplete)")
   ("Tier",    m_levelTier, Level::MAIN,   "Tier to use for interpretation of --Level")
@@ -807,6 +876,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterlacedSource",  m_interlacedSourceFlag,  false, "Indicate that source is interlaced")
   ("NonPackedSource",   m_nonPackedConstraintFlag, false, "Indicate that source does not contain frame packing")
   ("FrameOnly",         m_frameOnlyConstraintFlag, false, "Indicate that the bitstream contains only frames")
+#endif
 
 #if LAYER_CTB
   // Unit definition parameters
@@ -1117,11 +1187,64 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIKneeFunctionInputKneePointValue",  cfg_kneeSEIInputKneePointValue,     string("600 800 900"), "Array of input knee point")
   ("SEIKneeFunctionOutputKneePointValue", cfg_kneeSEIOutputKneePointValue,    string("100 250 450"), "Array of output knee point")
 #endif
+#if Q0096_OVERLAY_SEI
+  ("SEIOverlayInfo",                          m_overlaySEIEnabled,                      false, "Control generation of Selectable Overlays SEI messages")
+  ("SEIOverlayCancelFlag",                    m_overlayInfoCancelFlag,                   true, "Indicates that Selectable Overlay SEI message cancels the persistance or follows (default: 1)")
+  ("SEIOverlayContentAuxIdMinus128",          m_overlayContentAuxIdMinus128,          UInt(0), "Indicates the AuxId value of auxiliary pictures containing overlay content - 128")
+  ("SEIOverlayLabelAuxIdMinus128",            m_overlayLabelAuxIdMinus128,            UInt(1), "Indicates the AuxId value of auxiliary pictures containing label content - 128")
+  ("SEIOverlayAlphaAuxIdMinus128",            m_overlayAlphaAuxIdMinus128,            UInt(2), "Indicates the AuxId value of auxiliary pictures containing alpha content - 128")
+  ("SEIOverlayElementLabelValueLengthMinus8", m_overlayElementLabelValueLengthMinus8, UInt(0), "Indicates the number of bits used for coding min and max label values - 8")
+  ("SEIOverlayNumOverlaysMinus1",             m_numOverlaysMinus1,                    UInt(0), "Specifies the number of overlays described by this SEI message - 1")
+  ("SEIOverlayIdx0",                          cfg_overlaySEIIdx[0],                   UInt(0), "Indicates the index of overlay 0")
+  ("SEIOverlayIdx1",                          cfg_overlaySEIIdx[1],                   UInt(1), "Indicates the index of overlay 1")
+  ("SEIOverlayIdx2",                          cfg_overlaySEIIdx[2],                   UInt(2), "Indicates the index of overlay 2")
+  ("SEIOverlayLanguagePresentFlag0",          cfg_overlaySEILanguagePresentFlag[0],     false, "Indicates if the language for overlay 0 is specified")
+  ("SEIOverlayLanguagePresentFlag1",          cfg_overlaySEILanguagePresentFlag[1],     false, "Indicates if the language for overlay 1 is specified")
+  ("SEIOverlayLanguagePresentFlag2",          cfg_overlaySEILanguagePresentFlag[2],     false, "Indicates if the language for overlay 2 is specified")
+  ("SEIOverlayContentLayerId0",               cfg_overlaySEIContentLayerId[0],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 0")  
+  ("SEIOverlayContentLayerId1",               cfg_overlaySEIContentLayerId[1],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 1")  
+  ("SEIOverlayContentLayerId2",               cfg_overlaySEIContentLayerId[2],        UInt(0), "Indicates the nuh_layer_id value of the overlay content of overlay 2")  
+  ("SEIOverlayLabelPresentFlag0",             cfg_overlaySEILabelPresentFlag[0],        false, "Specifies if label content 0 is present")  
+  ("SEIOverlayLabelPresentFlag1",             cfg_overlaySEILabelPresentFlag[1],        false, "Specifies if label content 1 is present")  
+  ("SEIOverlayLabelPresentFlag2",             cfg_overlaySEILabelPresentFlag[2],        false, "Specifies if label content 2 is present")  
+  ("SEIOverlayLabelLayerId0",                 cfg_overlaySEILabelLayerId[0],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 0")  
+  ("SEIOverlayLabelLayerId1",                 cfg_overlaySEILabelLayerId[1],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 1")  
+  ("SEIOverlayLabelLayerId2",                 cfg_overlaySEILabelLayerId[2],          UInt(0), "Specifies the nuh_layer_id value of the label content of overlay 2")  
+  ("SEIOverlayAlphaPresentFlag0",             cfg_overlaySEIAlphaPresentFlag[0],        false, "Specifies if alpha content 0 is present")  
+  ("SEIOverlayAlphaPresentFlag1",             cfg_overlaySEIAlphaPresentFlag[1],        false, "Specifies if alpha content 1 is present")  
+  ("SEIOverlayAlphaPresentFlag2",             cfg_overlaySEIAlphaPresentFlag[2],        false, "Specifies if alpha content 2 is present")  
+  ("SEIOverlayAlphaLayerId0",                 cfg_overlaySEIAlphaLayerId[0],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 0")  
+  ("SEIOverlayAlphaLayerId1",                 cfg_overlaySEIAlphaLayerId[1],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 1")  
+  ("SEIOverlayAlphaLayerId2",                 cfg_overlaySEIAlphaLayerId[2],          UInt(0), "Specifies the nuh_layer_id value of the alpha content of overlay 2")  
+  ("SEIOverlayNumElementsMinus1_0",           cfg_overlaySEINumElementsMinus1[0],     UInt(0), "Specifies the number of overlay elements in overlay 0")  
+  ("SEIOverlayNumElementsMinus1_1",           cfg_overlaySEINumElementsMinus1[1],     UInt(0), "Specifies the number of overlay elements in overlay 1")  
+  ("SEIOverlayNumElementsMinus1_2",           cfg_overlaySEINumElementsMinus1[2],     UInt(0), "Specifies the number of overlay elements in overlay 2")  
+  ("SEIOverlayElementLabelRange0",            cfg_overlaySEIElementLabelRanges[0], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 0")    
+  ("SEIOverlayElementLabelRange1",            cfg_overlaySEIElementLabelRanges[1], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 1")    
+  ("SEIOverlayElementLabelRange2",            cfg_overlaySEIElementLabelRanges[2], string(""), "Array of minimum and maximum values in order min0, max0, min1, max1, etc.\n"""
+                                                                                               "indicating the range of sample values corresponding to overlay elements of overlay 2")  
+  ("SEIOverlayLanguage0",                     cfg_overlaySEILanguage[0],           string(""), "Indicates the language of overlay 0 by a language tag according to RFC 5646")
+  ("SEIOverlayLanguage1",                     cfg_overlaySEILanguage[1],           string(""), "Indicates the language of overlay 1 by a language tag according to RFC 5646")
+  ("SEIOverlayLanguage2",                     cfg_overlaySEILanguage[2],           string(""), "Indicates the language of overlay 2 by a language tag according to RFC 5646")
+  ("SEIOverlayName0",                         cfg_overlaySEIName[0],       string("Overlay0"), "Indicates the name of overlay 0")
+  ("SEIOverlayName1",                         cfg_overlaySEIName[1],       string("Overlay1"), "Indicates the name of overlay 1")
+  ("SEIOverlayName2",                         cfg_overlaySEIName[2],       string("Overlay2"), "Indicates the name of overlay 2")
+  ("SEIOverlayElementNames0",                 cfg_overlaySEIElementNames[0],       string(""), "Indicates the names of all overlay elements of overlay 0 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayElementNames1",                 cfg_overlaySEIElementNames[1],       string(""), "Indicates the names of all overlay elements of overlay 1 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayElementNames2",                 cfg_overlaySEIElementNames[2],       string(""), "Indicates the names of all overlay elements of overlay 2 in the format name1|name2|name3|...")                                                                                       
+  ("SEIOverlayPersistenceFlag",               m_overlayInfoPersistenceFlag,              true, "Indicates if the SEI message applies to the current picture only (0) or also to following pictures (1)")
+#endif
 #if Q0189_TMVP_CONSTRAINTS
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
+  ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
 #endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
@@ -1779,7 +1902,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
 #if OUTPUT_LAYER_SETS_CONFIG
     // Simplifying the code in the #else section
+#if FIX_LAYER_ID_INIT
+    assert( scanStringToArray( cfg_highestLayerIdx[addLayerSet], m_numHighestLayerIdx[addLayerSet], "HighestLayerIdx", m_highestLayerIdx[addLayerSet] ) );
+#else
     assert( scanStringToArray( cfg_layerSetLayerIdList[addLayerSet], m_numLayerInIdList[addLayerSet], "NumLayerInIdList",  m_highestLayerIdx[addLayerSet] ) );
+#endif
 #else
     if (m_numHighestLayerIdx[addLayerSet] > 0)
     {
@@ -1827,31 +1954,79 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   // Number of output layers in output layer sets
-  scanStringToArray( *cfg_numLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumLayersInOutputLayerSets", m_numLayersInOutputLayerSet );
-  m_numLayersInOutputLayerSet.insert(m_numLayersInOutputLayerSet.begin(), 1);
+  scanStringToArray( *cfg_numOutputLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumOutputLayersInOutputLayerSets", m_numOutputLayersInOutputLayerSet );
+  m_numOutputLayersInOutputLayerSet.insert(m_numOutputLayersInOutputLayerSet.begin(), 1);
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
+
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss.resize(m_numOutputLayerSets);
+#endif
+
   Int startOlsCtr = 1;
   if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
   {
     // Default output layer sets defined
-    startOlsCtr = m_numLayerSets + m_numAddLayerSets;
+    startOlsCtr = m_numLayerSets;
   }
   for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
   {
     if( olsCtr < startOlsCtr )
     {
-      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
+      if(scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) )
       {
         std::cout << "Default OLS defined. Ignoring ListOfOutputLayers" << olsCtr << endl;
       }
     }
     else
     {
-      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
+      assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
+#if MULTIPLE_PTL_SUPPORT
+    Int olsToLsIndex = (olsCtr >= (m_numLayerSets + m_numAddLayerSets)) ? m_outputLayerSetIdx[olsCtr - (m_numLayerSets + m_numAddLayerSets)] : olsCtr;
+#if R0235_SMALLEST_LAYER_ID
+    // This is a fix to allow setting of PTL for additional layer sets
+    if (olsCtr >= m_numLayerSets && olsCtr < (m_numLayerSets + m_numAddLayerSets))
+    {
+      scanStringToArrayNumEntries(cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr]);
+    }
+    else
+    {
+      scanStringToArray(cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr]);
+    }
+#else
+    Int olsToLsIndex = (olsCtr >= (m_numLayerSets + m_numAddLayerSets)) ? m_outputLayerSetIdx[olsCtr - (m_numLayerSets + m_numAddLayerSets)] : olsCtr;
+    scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
+#endif
+    //For conformance checking
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
+    //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
+    //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
+#if R0235_SMALLEST_LAYER_ID
+    if (m_numAddLayerSets == 0)
+    {
+#endif
+    for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
+    {
+      if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+      {
+        assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
+                (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
+                (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+      }
+    }   
+#if R0235_SMALLEST_LAYER_ID
+    }
+#endif
+#endif
   }
-  delete cfg_numLayersInOutputLayerSet;
+#if MULTIPLE_PTL_SUPPORT
+  m_listOfLayerPTLofOlss[0].push_back(m_layerPTLIdx[0]);
+  delete [] cfg_listOfLayerPTLOfOlss;
+#endif
+  delete cfg_numOutputLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
 #endif
@@ -1874,6 +2049,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   if (!m_inputBitDepthC) { m_inputBitDepthC = m_inputBitDepthY; }
   if (!m_outputBitDepthY) { m_outputBitDepthY = m_internalBitDepthY; }
   if (!m_outputBitDepthC) { m_outputBitDepthC = m_internalBitDepthC; }
+#endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  for (Int layer = 0; layer < MAX_LAYERS; layer++)
+  {
+    if (m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd)
+    {
+      if (m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0)
+      {
+        printf("LayerSwitchOffBegin%d: Must be multiple of GOP size.\n", layer);
+        exit(EXIT_FAILURE);
+      }
+      if (m_acLayerCfg[layer].m_iIntraPeriod > 0 && (m_acLayerCfg[layer].m_layerSwitchOffEnd % m_acLayerCfg[layer].m_iIntraPeriod) != 0)
+      {
+        printf("LayerSwitchOffEnd%d: Must be IRAP picture.\n", layer);
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
 #endif
 
 #if !SVC_EXTENSION
@@ -2092,6 +2286,81 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pcOutputKneePointValue );
       pcOutputKneePointValue = NULL;
     }
+  }
+#endif
+#if Q0096_OVERLAY_SEI
+  if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
+  {
+    m_overlayIdx.resize                 ( m_numOverlaysMinus1+1 );  
+    m_overlayLanguagePresentFlag.resize ( m_numOverlaysMinus1+1 );
+    m_overlayContentLayerId.resize      ( m_numOverlaysMinus1+1 );
+    m_overlayLabelPresentFlag.resize    ( m_numOverlaysMinus1+1 );
+    m_overlayLabelLayerId.resize        ( m_numOverlaysMinus1+1 );
+    m_overlayAlphaPresentFlag.resize    ( m_numOverlaysMinus1+1 );
+    m_overlayAlphaLayerId.resize        ( m_numOverlaysMinus1+1 );
+    m_numOverlayElementsMinus1.resize   ( m_numOverlaysMinus1+1 );
+    m_overlayElementLabelMin.resize     ( m_numOverlaysMinus1+1 );
+    m_overlayElementLabelMax.resize     ( m_numOverlaysMinus1+1 );  
+    m_overlayLanguage.resize            ( m_numOverlaysMinus1+1 );     
+    m_overlayName.resize                ( m_numOverlaysMinus1+1 );     
+    m_overlayElementName.resize         ( m_numOverlaysMinus1+1 );     
+    for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++)
+    {
+      m_overlayIdx[i]                  = cfg_overlaySEIIdx[i];
+      m_overlayLanguagePresentFlag[i]  = cfg_overlaySEILanguagePresentFlag[i];
+      m_overlayContentLayerId[i]       = cfg_overlaySEIContentLayerId[i];
+      m_overlayLabelPresentFlag[i]     = cfg_overlaySEILabelPresentFlag[i];
+      m_overlayLabelLayerId[i]         = cfg_overlaySEILabelLayerId[i];
+      m_overlayAlphaPresentFlag[i]     = cfg_overlaySEIAlphaPresentFlag[i];
+      m_overlayAlphaLayerId[i]         = cfg_overlaySEIAlphaLayerId[i];
+      m_numOverlayElementsMinus1[i]    = cfg_overlaySEINumElementsMinus1[i];
+      m_overlayLanguage[i]             = cfg_overlaySEILanguage[i];
+      m_overlayName[i]                 = cfg_overlaySEIName[i];
+      
+      //parse min and max values of label elements
+      istringstream ranges(cfg_overlaySEIElementLabelRanges[i]);
+      string range;          
+      UInt val;        
+      vector<UInt> vRanges;
+      while ( getline(ranges, range, ' ') ) 
+      {        
+        istringstream(range) >> val;        
+        vRanges.push_back(val);
+      }      
+      assert( vRanges.size()%2==0 );
+      assert( vRanges.size()==2*(m_numOverlayElementsMinus1[i]+1) );
+      m_overlayElementLabelMin[i].resize( m_numOverlayElementsMinus1[i]+1 );
+      m_overlayElementLabelMax[i].resize( m_numOverlayElementsMinus1[i]+1 );
+      for (Int j=0 ; j<=m_numOverlayElementsMinus1[i] ; j++)
+      {
+        m_overlayElementLabelMin[i][j] = vRanges[2*j];
+        m_overlayElementLabelMax[i][j] = vRanges[2*j+1];
+      }
+      
+      //parse overlay element names
+      istringstream elementNames(cfg_overlaySEIElementNames[i]);
+      string elementName;                
+      vector<string> vElementName;                
+      while ( getline(elementNames, elementName, '|') ) 
+      {        
+        vElementName.push_back(elementName);         
+      }      
+      if ( m_overlayLabelPresentFlag[i] )
+      {
+        m_overlayElementName[i].resize( m_numOverlayElementsMinus1[i]+1 );     
+        for (Int j=0 ; j<=m_numOverlayElementsMinus1[i] ; j++)
+        {
+          if (j < vElementName.size())
+          {
+            m_overlayElementName[i][j] = vElementName[j];
+          }
+          else
+          {
+            m_overlayElementName[i][j] = string("NoElementName");
+          }
+        }
+      }            
+    }        
   }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -2337,6 +2606,34 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "**          decoder requires this option to be enabled.         **\n");
     fprintf(stderr, "******************************************************************\n");
   }
+  
+#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+  Int ii = 0;
+  while ( ii < m_numPTLInfo )
+  {
+    if( m_profileList[ii] == Profile::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Profile value must be set! **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    if( m_levelList[ii] == Level::NONE )
+    {
+      fprintf(stderr, "***************************************************************************\n");
+      fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
+      fprintf(stderr, "***************************************************************************\n");
+    }
+    ii++;
+  }
+  if (m_numLayers > 1 && m_numPTLInfo > 1 && !m_nonHEVCBaseLayerFlag)
+  {
+    assert(m_profileList[0] <= Profile::MULTIVIEWMAIN);  //Profile IDC of PTL in VPS shall be one of single-layer profile IDCs
+    assert(m_profileList[0] == m_profileList[1]);        //Profile IDC of VpsProfileTierLevel[ 0 ] and VpsProfileTierLevel[ 1 ] shall be the same when BL is HEVC compatible
+    assert(m_levelList[0] >= m_levelList[1]);            //Level IDC of VpsProfileTierLevel[ 0 ] should not be less than level IDC of VpsProfileTierLevel[ 1 ]. 
+                                                         //NOTE that this is not conformance constraint but it would be nice if our encoder can prevent inefficient level IDC assignment
+    if (m_levelList[0] == m_levelList[1]) printf("Warning: Level0 is set the same as Level1\n");
+  }
+#else
   if( m_profile==Profile::NONE )
   {
     fprintf(stderr, "***************************************************************************\n");
@@ -2349,6 +2646,7 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "** WARNING: For conforming bitstreams a valid Level value must be set!   **\n");
     fprintf(stderr, "***************************************************************************\n");
   }
+#endif
 
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
@@ -3352,6 +3650,20 @@ Void TAppEncCfg::xCheckParameter()
     }
   }
 #endif
+#if Q0096_OVERLAY_SEI
+  if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
+  {
+    xConfirmPara( m_overlayContentAuxIdMinus128 < 0 || m_overlayContentAuxIdMinus128 > 31, "SEIOverlayContentAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayLabelAuxIdMinus128 < 0 || m_overlayLabelAuxIdMinus128 > 31, "SEIOverlayLabelAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayAlphaAuxIdMinus128 < 0 || m_overlayAlphaAuxIdMinus128 > 31, "SEIOverlayAlphaAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_numOverlaysMinus1 < 0 || m_numOverlaysMinus1 > 15, "SEIOverlayNumOverlaysMinus1 must be in the range of 0 to 15");
+    for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++ )
+    {
+      xConfirmPara( m_overlayIdx[i] < 0 || m_overlayIdx[i] > 255, "SEIOverlayIdx must be in the range of 0 to 255");
+      xConfirmPara( m_numOverlayElementsMinus1[i] < 0 || m_numOverlayElementsMinus1[i] > 255, "SEIOverlayNumElementsMinus1 must be in the range of 0 to 255");
+    }
+  }
+#endif
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION
   if ( ( m_colourRemapSEIFile.size() > 0 ) && !m_colourRemapSEICancelFlag )
@@ -3503,8 +3815,12 @@ Void TAppEncCfg::xCheckParameter()
 #if AUXILIARY_PICTURES
   for (UInt layer=0; layer < MAX_LAYERS-1; layer++)
   {
+#if R0062_AUX_PSEUDO_MONOCHROME
+    xConfirmPara(m_acLayerCfg[layer].m_auxId < 0 || m_acLayerCfg[layer].m_auxId > 2, "AuxId must be in range 0 to 2");
+#else
     xConfirmPara(m_acLayerCfg[layer].m_auxId < 0 || m_acLayerCfg[layer].m_auxId > 4, "AuxId must be in range 0 to 4");
     xConfirmPara(m_acLayerCfg[layer].m_auxId > 0 && m_acLayerCfg[layer].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
+#endif
   }
 #endif 
 #if Q0048_CGS_3D_ASYMLUT
@@ -3878,4 +4194,80 @@ Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries,
 }
 #endif
 #endif //SVC_EXTENSION
+
+#if SVC_EXTENSION
+#if R0235_SMALLEST_LAYER_ID
+#if OUTPUT_LAYER_SETS_CONFIG
+Void TAppEncCfg::cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString)
+{
+  Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
+  if (numEntries > 0)
+  {
+    Char *arrayEntry;
+    Int i = 0;
+    *arr = new Int[numEntries];
+
+    if (tempChar == NULL)
+    {
+      arrayEntry = NULL;
+    }
+    else
+    {
+      arrayEntry = strtok(tempChar, " ,");
+    }
+    while (arrayEntry != NULL)
+    {
+      if (i >= numEntries)
+      {
+        printf("%s: The number of entries specified is larger than the allowed number.\n", logString);
+        exit(EXIT_FAILURE);
+      }
+      *(*arr + i) = atoi(arrayEntry);
+      arrayEntry = strtok(NULL, " ,");
+      i++;
+    }
+    numEntries = i;
+    /*
+    if (i < numEntries)
+    {
+      printf("%s: Some entries are not specified.\n", logString);
+      exit(EXIT_FAILURE);
+    }
+    */
+  }
+  else
+  {
+    *arr = NULL;
+  }
+
+  if (tempChar)
+  {
+    free(tempChar);
+    tempChar = NULL;
+  }
+}
+
+Bool TAppEncCfg::scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> & returnVector)
+{
+  Int *tempArray = NULL;
+  numEntries = MAX_LAYERS;
+  // For all layer sets
+  cfgStringToArrayNumEntries(&tempArray, cfgString, numEntries, logString);
+  if (tempArray)
+  {
+    returnVector.empty();
+    for (Int i = 0; i < numEntries; i++)
+    {
+      returnVector.push_back(tempArray[i]);
+    }
+    delete[] tempArray; tempArray = NULL;
+    return true;
+  }
+  return false;
+}
+#endif
+#endif // R0235
+#endif //SVC_EXTENSION
+
+
 //! \}

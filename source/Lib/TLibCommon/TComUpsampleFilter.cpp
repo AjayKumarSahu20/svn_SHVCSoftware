@@ -50,6 +50,9 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 {
 }
 
+#if O0215_PHASE_ALIGNMENT_REMOVAL
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
+#else
 #if O0215_PHASE_ALIGNMENT
 #if O0194_JOINT_US_BITSHIFT
 Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
@@ -65,6 +68,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 #endif
 #else
 Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window )
+#endif
 #endif
 #endif
 {
@@ -641,7 +645,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
 #if R0220_REMOVE_EL_CLIP
       Int y = j;
 #if R0209_GENERIC_PHASE
-      refPos16 = (((y - srlTOffsetC)*scaleX - addY) >> shiftYM4) + refOffsetYC;
+      refPos16 = (((y - srlTOffsetC)*scaleY - addY) >> shiftYM4) + refOffsetYC;
 #else
 #if REF_REGION_OFFSET
       refPos16 = (((y - srlTOffsetC)*scaleY + addY) >> shiftYM4) - deltaY + refOffsetYC;
