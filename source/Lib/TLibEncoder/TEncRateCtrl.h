@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -35,8 +35,8 @@
     \brief    Rate control manager class
 */
 
-#ifndef _HM_TENCRATECTRL_H_
-#define _HM_TENCRATECTRL_H_
+#ifndef __TENCRATECTRL__
+#define __TENCRATECTRL__
 
 #if _MSC_VER > 1000
 #pragma once
@@ -116,7 +116,7 @@ public:
   Int  getFrameRate()                   { return m_frameRate; }
   Int  getGOPSize()                     { return m_GOPSize; }
   Int  getPicWidth()                    { return m_picWidth; }
-  Int  getPicHeight()                   { return m_picHeight; } 
+  Int  getPicHeight()                   { return m_picHeight; }
   Int  getLCUWidth()                    { return m_LCUWidth; }
   Int  getLCUHeight()                   { return m_LCUHeight; }
   Int  getNumberOfLevel()               { return m_numberOfLevel; }
@@ -153,7 +153,7 @@ public:
 private:
   Int m_totalFrames;
   Int m_targetRate;
-  Int m_frameRate; 
+  Int m_frameRate;
   Int m_GOPSize;
   Int m_picWidth;
   Int m_picHeight;
@@ -226,17 +226,17 @@ public:
 
   Int    estimatePicQP    ( Double lambda, list<TEncRCPic*>& listPreviousPictures );
   Int    getRefineBitsForIntra(Int orgBits);
-  Double calculateLambdaIntra(double alpha, double beta, double MADPerPixel, double bitsPerPixel);
+  Double calculateLambdaIntra(Double alpha, Double beta, Double MADPerPixel, Double bitsPerPixel);
   Double estimatePicLambda( list<TEncRCPic*>& listPreviousPictures, SliceType eSliceType);
 
-  Void   updateAlphaBetaIntra(double *alpha, double *beta);
+  Void   updateAlphaBetaIntra(Double *alpha, Double *beta);
 
   Double getLCUTargetBpp(SliceType eSliceType);
   Double getLCUEstLambdaAndQP(Double bpp, Int clipPicQP, Int *estQP);
   Double getLCUEstLambda( Double bpp );
   Int    getLCUEstQP( Double lambda, Int clipPicQP );
 
-  Void updateAfterLCU( Int LCUIdx, Int bits, Int QP, Double lambda, Bool updateLCUParameter = true );
+  Void updateAfterCTU( Int LCUIdx, Int bits, Int QP, Double lambda, Bool updateLCUParameter = true );
   Void updateAfterPicture( Int actualHeaderBits, Int actualTotalBits, Double averageQP, Double averageLambda, SliceType eSliceType);
 
   Void addToPictureLsit( list<TEncRCPic*>& listPreviousPictures );
@@ -294,7 +294,7 @@ private:
 
   TRCLCU* m_LCUs;
   Int m_picActualHeaderBits;    // only SH and potential APS
-  Double m_totalCostIntra; 
+  Double m_totalCostIntra;
   Double m_remainingCostIntra;
   Int m_picActualBits;          // the whole picture, including header
   Int m_picQP;                  // in integer form

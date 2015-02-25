@@ -191,8 +191,8 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   m_cReconFile = cfg_ReconFile;
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #if AUXILIARY_PICTURES
-  m_InputChromaFormat = numberToChromaFormat(tmpInputChromaFormat);
-  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormat) : (numberToChromaFormat(tmpChromaFormat)));
+  m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
+  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
   m_colourRemapSEIFile = cfg_colourRemapSEIFile.empty() ? NULL : strdup(cfg_colourRemapSEIFile.c_str());
@@ -299,42 +299,72 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
 
 Void TAppEncLayerCfg::xPrintParameter()
 {
-  printf("Input File                    : %s\n", m_cInputFile.c_str()  );
-  printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
+  printf("Input File                        : %s\n", m_cInputFile.c_str()  );
+  printf("Reconstruction File               : %s\n", m_cReconFile.c_str()  );
 #if REPN_FORMAT_IN_VPS
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
+  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
 #else
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
+  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
 #endif
-  printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+  printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+#if MULTIPLE_PTL_SUPPORT
+  printf("PTL index                         : %d\n", m_layerPTLIdx );
+#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepthY   , m_inputBitDepthC    );
-  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
-  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthY : m_internalBitDepthY, m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthC : m_internalBitDepthC );
+  printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("PCM sample bit depth              : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
 #endif
+  std::cout << "Input ChromaFormatIDC             :";
+
+  switch (m_InputChromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << std::endl;
+
+  std::cout << "Output (internal) ChromaFormatIDC :";
+  switch (m_chromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  printf("\n");
 #if LAYER_CTB
-  printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
-  printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
-  printf("Max RQT depth inter           : %d\n", m_uiQuadtreeTUMaxDepthInter);
-  printf("Max RQT depth intra           : %d\n", m_uiQuadtreeTUMaxDepthIntra);
+  printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
+  printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
+  printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
+  printf("Max RQT depth intra               : %d\n", m_uiQuadtreeTUMaxDepthIntra);
 #endif
-  printf("QP                            : %5.2f\n", m_fQP );
-  printf("Intra period                  : %d\n", m_iIntraPeriod );
-#if RC_SHVC_HARMONIZATION
-  printf("RateControl                   : %d\n", m_RCEnableRateControl );
+  printf("QP                                : %5.2f\n", m_fQP );
+  printf("Intra period                      : %d\n", m_iIntraPeriod );
+#if RC_SHVC_HARMONIZATION                    
+  printf("RateControl                       : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
   {
-    printf("TargetBitrate                 : %d\n", m_RCTargetBitrate );
-    printf("KeepHierarchicalBit           : %d\n", m_RCKeepHierarchicalBit );
-    printf("LCULevelRC                    : %d\n", m_RCLCULevelRC );
-    printf("UseLCUSeparateModel           : %d\n", m_RCUseLCUSeparateModel );
-    printf("InitialQP                     : %d\n", m_RCInitialQP );
-    printf("ForceIntraQP                  : %d\n", m_RCForceIntraQP );
+    printf("TargetBitrate                     : %d\n", m_RCTargetBitrate );
+    printf("KeepHierarchicalBit               : %d\n", m_RCKeepHierarchicalBit );
+    printf("LCULevelRC                        : %d\n", m_RCLCULevelRC );
+    printf("UseLCUSeparateModel               : %d\n", m_RCUseLCUSeparateModel );
+    printf("InitialQP                         : %d\n", m_RCInitialQP );
+    printf("ForceIntraQP                      : %d\n", m_RCForceIntraQP );
   }
 #endif
-  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_waveFrontSynchro, m_iWaveFrontSubstreams);
+  printf("WaveFrontSynchro                  : %d\n", m_waveFrontSynchro);
+  printf("WaveFrontSubstreams               : %d\n", m_iWaveFrontSubstreams);
 #if LAYER_CTB
-  printf("PCM:%d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
+  printf("PCM                               : %d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
 }
 
@@ -362,6 +392,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       {
         fprintf(stderr, "Warning: Automatic padding enabled, but padding parameters are also set\n");
       }
+
       // automatic padding to minimum CU size
 #if LAYER_CTB
       Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
@@ -398,6 +429,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       {
         fprintf(stderr, "Warning: Automatic padding enabled, but cropping parameters are set. Undesired size possible.\n");
       }
+
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
@@ -469,10 +501,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   }
 
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY(layer) - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-  }
+  xConfirmPara( m_iQP <  -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 #else
   xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 #endif

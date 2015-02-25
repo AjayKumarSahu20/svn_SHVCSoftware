@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -69,21 +69,22 @@ private:
   TEncTop                    m_cTEncTop;                    ///< encoder class
   TVideoIOYuv                m_cTVideoIOYuvInputFile;       ///< input YUV file
   TVideoIOYuv                m_cTVideoIOYuvReconFile;       ///< output reconstruction file
-  
+
   TComList<TComPicYuv*>      m_cListPicYuvRec;              ///< list of reconstruction YUV files
 #endif
   
   Int                        m_iFrameRcvd;                  ///< number of received frames
-  
+
   UInt m_essentialBytes;
   UInt m_totalBytes;
+
 protected:
   // initialization
   Void  xCreateLib        ();                               ///< create files & encoder class
   Void  xInitLibCfg       ();                               ///< initialize internal variables
   Void  xInitLib          (Bool isFieldCoding);             ///< initialize encoder class
   Void  xDestroyLib       ();                               ///< destroy encoder class
-  
+
   /// obtain required buffers
 #if SVC_EXTENSION
   Void xGetBuffer(TComPicYuv*& rpcPicYuvRec, UInt layer);
@@ -93,22 +94,23 @@ protected:
   
   /// delete allocated buffers
   Void  xDeleteBuffer     ();
-  
+
   // file I/O
 #if SVC_EXTENSION
   Void xWriteRecon(UInt layer, Int iNumEncoded);
   Void xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits);
-  Void printOutSummary(Bool isField);
+  Void printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE);
 #else
   Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
+  Void printChromaFormat();
 #endif
-  void rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& stats);
-  void printRateSummary();
+  Void rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& stats);
+  Void printRateSummary();
   
 public:
   TAppEncTop();
   virtual ~TAppEncTop();
-  
+
   Void        encode      ();                               ///< main encoding function
 #if SVC_EXTENSION
   TEncTop&    getTEncTop  (UInt layer)   { return  m_acTEncTop[layer]; }      ///< return encoder class pointer reference

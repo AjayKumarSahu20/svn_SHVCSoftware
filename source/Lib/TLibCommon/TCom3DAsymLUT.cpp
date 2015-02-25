@@ -111,19 +111,19 @@ Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumL
 
 Void TCom3DAsymLUT::colorMapping( TComPicYuv * pcPic, TComPicYuv * pcPicDst )
 {
-  Int nWidth = pcPic->getWidth();
-  Int nHeight = pcPic->getHeight();
-  Int nStrideY = pcPic->getStride();
-  Int nStrideC = pcPic->getCStride();
-  Pel * pY = pcPic->getLumaAddr();
-  Pel * pU = pcPic->getCbAddr();
-  Pel * pV = pcPic->getCrAddr();
+  Int nWidth = pcPic->getWidth(COMPONENT_Y);
+  Int nHeight = pcPic->getHeight(COMPONENT_Y);
+  Int nStrideY = pcPic->getStride(COMPONENT_Y);
+  Int nStrideC = pcPic->getStride(COMPONENT_Cb);
+  Pel * pY = pcPic->getAddr(COMPONENT_Y);
+  Pel * pU = pcPic->getAddr(COMPONENT_Cb);
+  Pel * pV = pcPic->getAddr(COMPONENT_Cr);
 
-  Int nDstStrideY = pcPicDst->getStride();
-  Int nDstStrideC = pcPicDst->getCStride();
-  Pel * pYDst = pcPicDst->getLumaAddr();
-  Pel * pUDst = pcPicDst->getCbAddr();
-  Pel * pVDst = pcPicDst->getCrAddr();
+  Int nDstStrideY = pcPicDst->getStride(COMPONENT_Y);
+  Int nDstStrideC = pcPicDst->getStride(COMPONENT_Cb);
+  Pel * pYDst = pcPicDst->getAddr(COMPONENT_Y);
+  Pel * pUDst = pcPicDst->getAddr(COMPONENT_Cb);
+  Pel * pVDst = pcPicDst->getAddr(COMPONENT_Cr);
 
   Pel *pUPrev = pU;
   Pel *pVPrev = pV;

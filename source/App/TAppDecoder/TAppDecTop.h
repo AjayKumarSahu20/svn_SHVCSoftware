@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -70,24 +70,26 @@ private:
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
 #endif
-#if CONFORMANCE_BITSTREAM_MODE
-  TVideoIOYuv   m_confReconFile[63];        ///< decode YUV files
-#endif  
+  
   // for output control  
 #if SVC_EXTENSION
+#if CONFORMANCE_BITSTREAM_MODE
+  TVideoIOYuv                      m_confReconFile[63];        ///< decode YUV files
+#endif 
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
 #else
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
 #endif
-  
+  std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.  
+
 public:
   TAppDecTop();
   virtual ~TAppDecTop() {}
-  
+
   Void  create            (); ///< create internal members
   Void  destroy           (); ///< destroy internal members
   Void  decode            (); ///< main decoding function
-  
+
 protected:
   Void  xCreateDecLib     (); ///< create internal classes
   Void  xDestroyDecLib    (); ///< destroy internal classes
