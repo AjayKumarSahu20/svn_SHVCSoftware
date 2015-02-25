@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -68,13 +68,13 @@ class TDecTop
 {
 private:
   Int                     m_iMaxRefPicNum;
-  
+
   NalUnitType             m_associatedIRAPType; ///< NAL unit type of the associated IRAP picture
   Int                     m_pocCRA;            ///< POC number of the latest CRA picture
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
-  ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets 
+  ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets
   TComSlice*              m_apcSlicePilot;
 
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
@@ -110,19 +110,22 @@ private:
 #endif
   Bool                    m_prevSliceSkipped;
   Int                     m_skippedPOC;
-#if SETTING_NO_OUT_PIC_PRIOR  
   Bool                    m_bFirstSliceInBitstream;
   Int                     m_lastPOCNoOutputPriorPics;
   Bool                    m_isNoOutputPriorPics;
   Bool                    m_craNoRaslOutputFlag;    //value of variable NoRaslOutputFlag of the last CRA pic
+#if O0043_BEST_EFFORT_DECODING
+  UInt                    m_forceDecodeBitDepth;
 #endif
+  std::ostream           *m_pDecodedSEIOutputStream;
+
+#if SVC_EXTENSION
 #if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
 #endif
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Bool                    m_lastPicHasEos;
 #endif
-#if SVC_EXTENSION
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
   static Bool             m_bFirstSliceInSequence;
@@ -198,11 +201,11 @@ public:
 
   TDecTop();
   virtual ~TDecTop();
-  
+
   Void  create  ();
   Void  destroy ();
 
-  void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
+  Void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
 #if Q0074_COLOUR_REMAPPING_SEI
   void setColourRemappingInfoSEIEnabled(Bool enabled)  { m_cGopDecoder.setColourRemappingInfoSEIEnabled(enabled); }
 #endif
@@ -220,12 +223,18 @@ public:
   TComSPS* getActiveSPS() { return m_parameterSetManagerDecoder.getActiveSPS(); }
 
 
-  Void executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
-#if SETTING_NO_OUT_PIC_PRIOR  
-  Void  checkNoOutputPriorPics (TComList<TComPic*>*& rpcListPic);
-  Bool  getNoOutputPriorPicsFlag ()         { return m_isNoOutputPriorPics; }
+  Void  executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
+  Void  checkNoOutputPriorPics (TComList<TComPic*>* rpcListPic);
+
+  Bool  getNoOutputPriorPicsFlag () { return m_isNoOutputPriorPics; }
   Void  setNoOutputPriorPicsFlag (Bool val) { m_isNoOutputPriorPics = val; }
+  Void  setFirstSliceInPicture (bool val)  { m_bFirstSliceInPicture = val; }
+  Bool  getFirstSliceInSequence ()         { return m_bFirstSliceInSequence; }
+  Void  setFirstSliceInSequence (bool val) { m_bFirstSliceInSequence = val; }
+#if O0043_BEST_EFFORT_DECODING
+  Void  setForceDecodeBitDepth(UInt bitDepth) { m_forceDecodeBitDepth = bitDepth; }
 #endif
+  Void  setDecodedSEIMessageOutputStream(std::ostream *pOpStream) { m_pDecodedSEIOutputStream = pOpStream; }
 
 #if SVC_EXTENSION
 #if EARLY_REF_PIC_MARKING
@@ -313,6 +322,8 @@ public:
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
   // std::string const getDecodedYuvLayerFileName(Int layerId) { return m_decodedYuvLayerFileName[layerId]; }
+  Bool const getConfModeFlag() { return m_confModeFlag; }
+  Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
 #endif
 #endif //SVC_EXTENSION
 
@@ -353,18 +364,12 @@ protected:
 #if POC_RESET_RESTRICTIONS
   Void resetPocRestrictionCheckParameters();
 #endif
-  public:
-#if CONFORMANCE_BITSTREAM_MODE
-  Bool const getConfModeFlag() { return m_confModeFlag; }
-  Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
-#endif
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Void xCheckLayerReset();
   Void xSetNoRaslOutputFlag();
   Void xSetLayerInitializedFlag();
 #endif
 };// END CLASS DEFINITION TDecTop
-
 
 
 //! \}

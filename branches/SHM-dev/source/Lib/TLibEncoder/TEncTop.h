@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include "TLibCommon/TComList.h"
 #include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComTrQuant.h"
+#include "TLibCommon/TComLoopFilter.h"
 #include "TLibCommon/AccessUnit.h"
 
 #include "TLibVideoIO/TVideoIOYuv.h"
@@ -72,11 +73,11 @@ private:
   Int                     m_iNumPicRcvd;                  ///< number of received pictures
   UInt                    m_uiNumAllPicCoded;             ///< number of coded pictures
   TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures
- 
+
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
   //TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder
-  TEncCavlc*              m_pcCavlcCoder;                       ///< CAVLC encoder  
+  TEncCavlc*              m_pcCavlcCoder;                       ///< CAVLC encoder
   // coding tool
   TComTrQuant             m_cTrQuant;                     ///< transform & quantization class
   TComLoopFilter          m_cLoopFilter;                  ///< deblocking filter class
@@ -85,9 +86,7 @@ private:
   TEncCavlc               m_cCavlcCoder;                  ///< CAVLC encoder
   TEncSbac                m_cSbacCoder;                   ///< SBAC encoder
   TEncBinCABAC            m_cBinCoderCABAC;               ///< bin coder CABAC
-  TEncSbac*               m_pcSbacCoders;                 ///< SBAC encoders (to encode substreams )
-  TEncBinCABAC*           m_pcBinCoderCABACs;             ///< bin coders CABAC (one per substream)
-  
+
   // processing unit
   TEncGOP                 m_cGOPEncoder;                  ///< GOP encoder
   TEncSlice               m_cSliceEncoder;                ///< slice encoder
@@ -96,7 +95,6 @@ private:
   TComSPS                 m_cSPS;                         ///< SPS
   TComPPS                 m_cPPS;                         ///< PPS
   // RD cost computation
-  TComBitCounter          m_cBitCounter;                  ///< bit counter for RD optimization
   TComRdCost              m_cRdCost;                      ///< RD cost computation class
   TEncSbac***             m_pppcRDSbacCoder;              ///< temporal storage for RD computation
   TEncSbac                m_cRDGoOnSbacCoder;             ///< going on SBAC model for RD stage
@@ -107,13 +105,6 @@ private:
   TEncBinCABAC***         m_pppcBinCoderCABAC;            ///< temporal CABAC state storage for RD computation
   TEncBinCABAC            m_cRDGoOnBinCoderCABAC;         ///< going on bin coder CABAC for RD stage
 #endif
-  Int                     m_iNumSubstreams;                ///< # of top-level elements allocated.
-  TComBitCounter*         m_pcBitCounters;                 ///< bit counters for RD optimization per substream
-  TComRdCost*             m_pcRdCosts;                     ///< RD cost computation class per substream
-  TEncSbac****            m_ppppcRDSbacCoders;             ///< temporal storage for RD computation per substream
-  TEncSbac*               m_pcRDGoOnSbacCoders;            ///< going on SBAC model for RD stage per substream
-  TEncBinCABAC****        m_ppppcBinCodersCABAC;           ///< temporal CABAC state storage for RD computation per substream
-  TEncBinCABAC*           m_pcRDGoOnBinCodersCABAC;        ///< going on bin coder CABAC for RD stage per substream
 
   // quality control
   TEncPreanalyzer         m_cPreanalyzer;                 ///< image characteristics analyzer for TM5-step3-like adaptive QP
@@ -179,7 +170,7 @@ protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
   Void  xInitPPS          ();                             ///< initialize PPS from encoder options
-  
+
   Void  xInitPPSforTiles  ();
   Void  xInitRPS          (Bool isFieldCoding);           ///< initialize PPS from encoder options
 #if SVC_EXTENSION
@@ -188,21 +179,19 @@ protected:
 public:
   TEncTop();
   virtual ~TEncTop();
-  
+
   Void      create          ();
   Void      destroy         ();
   Void      init            (Bool isFieldCoding);
   Void      deletePicBuffer ();
 
-  Void      createWPPCoders(Int iNumSubstreams);
-  
   // -------------------------------------------------------------------------------------------------------------------
   // member access functions
   // -------------------------------------------------------------------------------------------------------------------
-  
+
   TComList<TComPic*>*     getListPic            () { return  &m_cListPic;             }
   TEncSearch*             getPredSearch         () { return  &m_cSearch;              }
-  
+
   TComTrQuant*            getTrQuant            () { return  &m_cTrQuant;             }
   TComLoopFilter*         getLoopFilter         () { return  &m_cLoopFilter;          }
   TEncSampleAdaptiveOffset* getSAO              () { return  &m_cEncSAO;              }
@@ -213,17 +202,10 @@ public:
   TEncCavlc*              getCavlcCoder         () { return  &m_cCavlcCoder;          }
   TEncSbac*               getSbacCoder          () { return  &m_cSbacCoder;           }
   TEncBinCABAC*           getBinCABAC           () { return  &m_cBinCoderCABAC;       }
-  TEncSbac*               getSbacCoders     () { return  m_pcSbacCoders;      }
-  TEncBinCABAC*           getBinCABACs          () { return  m_pcBinCoderCABACs;      }
-  
-  TComBitCounter*         getBitCounter         () { return  &m_cBitCounter;          }
+
   TComRdCost*             getRdCost             () { return  &m_cRdCost;              }
   TEncSbac***             getRDSbacCoder        () { return  m_pppcRDSbacCoder;       }
   TEncSbac*               getRDGoOnSbacCoder    () { return  &m_cRDGoOnSbacCoder;     }
-  TComBitCounter*         getBitCounters        () { return  m_pcBitCounters;         }
-  TComRdCost*             getRdCosts            () { return  m_pcRdCosts;             }
-  TEncSbac****            getRDSbacCoders       () { return  m_ppppcRDSbacCoders;     }
-  TEncSbac*               getRDGoOnSbacCoders   () { return  m_pcRDGoOnSbacCoders;   }
   TEncRateCtrl*           getRateCtrl           () { return &m_cRateCtrl;             }
   TComSPS*                getSPS                () { return  &m_cSPS;                 }
   TComPPS*                getPPS                () { return  &m_cPPS;                 }
@@ -266,16 +248,16 @@ public:
   UInt      getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
 #endif
 #if R0209_GENERIC_PHASE
-  Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
-  Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
-  Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
-  Int getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
-  Void setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
-  Void setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
-  Void setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
-  Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
-  Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
-  Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
+  Int       getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
+  Int       getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
+  Int       getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
+  Int       getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
+  Void      setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
+  Void      setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
+  Void      setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
+  Void      setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
+  Bool      getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
+  Void      setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
 #endif
 
   TComPic** getIlpList() { return m_cIlpPic; }
@@ -287,10 +269,10 @@ public:
   Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
   Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
 #endif
-  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
-  Void      encodePrep( TComPicYuv* pcPicYuvOrg );
-  Void      encode( TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );
-  Void      encodePrep( TComPicYuv* pcPicYuvOrg, Bool isTff );
+  Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
+  Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg );
+  Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );
+  Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, Bool isTff );
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt refLayerIdc);
 #endif
@@ -299,34 +281,39 @@ public:
   Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
-  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
-  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
-  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
-  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
-  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
-  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
-  Int  getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+  Int       getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void      setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int       getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void      setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int       getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void      setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int       getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
+  Void      setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
 #if Q0078_ADD_LAYER_SETS
-  Void setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
-  Int  getNumAddLayerSets()                  { return m_numAddLayerSets; }
+  Void      setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
+  Int       getNumAddLayerSets()                  { return m_numAddLayerSets; }
 #endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  Void setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
-  Bool getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
-  Void setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
-  Int  getCurrPocMsb()                       { return m_currPocMsb; }
+  Void      setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
+  Bool      getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
+  Void      setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
+  Int       getCurrPocMsb()                       { return m_currPocMsb; }
 #endif
 #else //SVC_EXTENSION
-  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );
+  Void encode( Bool bEos,
+               TComPicYuv* pcPicYuvOrg,
+               TComPicYuv* pcPicYuvTrueOrg, const InputColourSpaceConversion snrCSC, // used for SNR calculations. Picture in original colour space.
+               TComList<TComPicYuv*>& rcListPicYuvRecOut,
+               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded );
 
   /// encode several number of pictures until end-of-sequence
-  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded, Bool isTff);
+  Void encode( Bool bEos, TComPicYuv* pcPicYuvOrg,
+               TComPicYuv* pcPicYuvTrueOrg, const InputColourSpaceConversion snrCSC, // used for SNR calculations. Picture in original colour space.
+               TComList<TComPicYuv*>& rcListPicYuvRecOut,
+               std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded, Bool isTff);
 
-  Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField); }
+  Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField, m_printMSEBasedSequencePSNR, m_printSequenceMSE); }
 #endif //#if SVC_EXTENSION
 };
 

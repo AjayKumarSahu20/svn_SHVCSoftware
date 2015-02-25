@@ -56,18 +56,19 @@
 class TAppDecCfg
 {
 protected:
-  Char*         m_pchBitstreamFile;                   ///< input bitstream file name
+  Char*         m_pchBitstreamFile;                     ///< input bitstream file name
 #if SVC_EXTENSION
   Char*         m_pchReconFile [MAX_LAYERS];          ///< output reconstruction file name
 #else
-  Char*         m_pchReconFile;                       ///< output reconstruction file name
+  Char*         m_pchReconFile;                         ///< output reconstruction file name
 #endif
-  Int           m_iSkipFrame;                         ///< counter for frames prior to the random access point to skip
-  Int           m_outputBitDepthY;                     ///< bit depth used for writing output (luma)
-  Int           m_outputBitDepthC;                     ///< bit depth used for writing output (chroma)t
+  Int           m_iSkipFrame;                           ///< counter for frames prior to the random access point to skip
+  Int           m_outputBitDepth[MAX_NUM_CHANNEL_TYPE]; ///< bit depth used for writing output
+  InputColourSpaceConversion m_outputColourSpaceConvert;
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+  Bool          m_decodedNoDisplaySEIEnabled;         ///< Enable(true)/disable(false) writing only pictures that get displayed based on the no display SEI message
 #if Q0074_COLOUR_REMAPPING_SEI
   Bool          m_colourRemapSEIEnabled;              ///< Enable the Colour Remapping Information SEI message if available (remapping decoded pictures)
 #endif
@@ -84,15 +85,19 @@ protected:
 #endif
 
   std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
-  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window 
+  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
+#if O0043_BEST_EFFORT_DECODING
+  UInt          m_forceDecodeBitDepth;                ///< if non-zero, force the bit depth at the decoder (best effort decoding)
+#endif
+  std::string   m_outputDecodedSEIMessagesFilename;   ///< filename to output decoded SEI messages to. If '-', then use stdout. If empty, do not output details.
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams             m_commonDecoderParams;
 #endif
 #if CONFORMANCE_BITSTREAM_MODE
   Bool          m_confModeFlag;
-  std::string m_confPrefix;
-  std::string m_metadataFileName;
-  Bool m_metadataFileRefresh;
+  std::string   m_confPrefix;
+  std::string   m_metadataFileName;
+  Bool          m_metadataFileRefresh;
   std::string   m_decodedYuvLayerFileName[63];
   Bool          m_decodedYuvLayerRefresh[63];
 #endif
@@ -101,13 +106,13 @@ public:
   TAppDecCfg()
   : m_pchBitstreamFile(NULL)
 #if !SVC_EXTENSION
-  , m_pchReconFile(NULL) 
+  , m_pchReconFile(NULL)
 #endif
   , m_iSkipFrame(0)
-  , m_outputBitDepthY(0)
-  , m_outputBitDepthC(0)
+  , m_outputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
+  , m_decodedNoDisplaySEIEnabled(false)
 #if Q0074_COLOUR_REMAPPING_SEI
   , m_colourRemapSEIEnabled(0)
 #endif
@@ -119,9 +124,16 @@ public:
 #endif
 #endif
   , m_respectDefDispWindow(0)
-  {}
+#if O0043_BEST_EFFORT_DECODING
+  , m_forceDecodeBitDepth(0)
+#endif
+  {
+    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+      m_outputBitDepth[channelTypeIndex] = 0;
+  }
+
   virtual ~TAppDecCfg() {}
-  
+
   Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
