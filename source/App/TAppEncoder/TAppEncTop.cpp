@@ -2245,6 +2245,10 @@ Void TAppEncTop::encode()
     if(bFirstFrame)
     {
       list<AccessUnit>::iterator first_au = outputAccessUnits.begin();
+      if( m_nonHEVCBaseLayerFlag )
+      {
+        first_au++;
+      }
       AccessUnit::iterator it_sps;
       for (it_sps = first_au->begin(); it_sps != first_au->end(); it_sps++)
       {
