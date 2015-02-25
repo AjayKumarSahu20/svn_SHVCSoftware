@@ -1225,8 +1225,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA], 0, MAX_LAYERS, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
   ("OutputBitDepthC%d",                              cfg_OutputBitDepth[CHANNEL_TYPE_CHROMA],   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 #endif
-  ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                             true, "max_tid_ref_present_flag (0: not present, 1: present(default)) " )
-  ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  1, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
+  ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                            false, "max_tid_ref_present_flag (0: not present, 1: present) " )
+  ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  7, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
 #endif
