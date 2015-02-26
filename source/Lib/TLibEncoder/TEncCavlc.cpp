@@ -316,10 +316,10 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 #endif
 
 #if REF_REGION_OFFSET
-            WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_ref_loc_offsets" );
-            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
+            WRITE_UVLC( pcPPS->getNumRefLayerLocationOffsets(),      "num_ref_loc_offsets" );
+            for(Int k = 0; k < pcPPS->getNumRefLayerLocationOffsets(); k++)
             {
-              WRITE_CODE( pcPPS->getScaledRefLayerId(k), 6, "ref_loc_offset_layer_id" );
+              WRITE_CODE( pcPPS->getRefLocationOffsetLayerId(k), 6, "ref_loc_offset_layer_id" );
               WRITE_FLAG( pcPPS->getScaledRefLayerOffsetPresentFlag(k) ? 1 : 0, "scaled_ref_layer_offset_prsent_flag" );
               if (pcPPS->getScaledRefLayerOffsetPresentFlag(k))
               {

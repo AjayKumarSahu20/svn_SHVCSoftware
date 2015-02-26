@@ -2537,7 +2537,7 @@ TComPPS::TComPPS()
 , m_pocResetInfoPresentFlag   (false)
 #endif
 #if MOVE_SCALED_OFFSET_TO_PPS
-, m_numScaledRefLayerOffsets  ( 0 )
+, m_numRefLayerLocationOffsets  ( 0 )
 #endif
 #if Q0048_CGS_3D_ASYMLUT
 , m_nCGSFlag(0)
@@ -3233,9 +3233,9 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
   {
-    if (layerId == m_scaledRefLayerId[i])
+    if (layerId == m_refLocationOffsetLayerId[i])
     {
       return m_scaledRefLayerWindow[i];
     }
@@ -3250,9 +3250,9 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
   {
-    if (layerId == m_scaledRefLayerId[i])
+    if (layerId == m_refLocationOffsetLayerId[i])
     {
       return m_refLayerWindow[i];
     }
@@ -4275,6 +4275,9 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
         pcIlpPic[refLayerIdc]->getPicSym()->getCtu(j)->setLayerId( pcIlpPic[refLayerIdc]->getLayerId() );
       }
       pcIlpPic[refLayerIdc]->setIsLongTerm(1);
+
+      // assign PPS to IRLP to be used for reference location offsets
+      pcIlpPic[refLayerIdc]->getSlice(0)->setPPS( m_pcPic->getSlice(0)->getPPS() );
 
 #if REF_IDX_MFM
       if( m_bMFMEnabledFlag && !(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) )

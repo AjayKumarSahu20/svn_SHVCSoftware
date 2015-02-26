@@ -92,9 +92,9 @@ protected:
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
-  Int       m_numScaledRefLayerOffsets;
+  Int       m_numRefLayerLocationOffsets;
 #if O0098_SCALED_REF_LAYER_ID
-  Int       m_scaledRefLayerId          [MAX_LAYERS];
+  Int       m_refLocationOffsetLayerId  [MAX_LAYERS];
 #endif
   Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];

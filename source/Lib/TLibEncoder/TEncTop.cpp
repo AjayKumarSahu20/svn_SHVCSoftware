@@ -83,7 +83,7 @@ TEncTop::TEncTop()
 #if REF_IDX_MFM
   m_bMFMEnabledFlag = false;
 #endif
-  m_numScaledRefLayerOffsets = 0;
+  m_numRefLayerLocationOffsets = 0;
 #if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   m_pocAdjustmentValue     = 0;
 #endif
@@ -1150,11 +1150,11 @@ Void TEncTop::xInitPPS()
   }
 #endif
 #if MOVE_SCALED_OFFSET_TO_PPS
-  m_cPPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
-  for(Int i = 0; i < m_cPPS.getNumScaledRefLayerOffsets(); i++)
+  m_cPPS.setNumRefLayerLocationOffsets(m_numRefLayerLocationOffsets);
+  for(Int i = 0; i < m_cPPS.getNumRefLayerLocationOffsets(); i++)
   {
 #if O0098_SCALED_REF_LAYER_ID
-    m_cPPS.setScaledRefLayerId(i, m_scaledRefLayerId[i]);
+    m_cPPS.setRefLocationOffsetLayerId(i, m_refLocationOffsetLayerId[i]);
 #endif
     m_cPPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
 #if REF_REGION_OFFSET
@@ -1164,10 +1164,10 @@ Void TEncTop::xInitPPS()
 #endif
 #if R0209_GENERIC_PHASE
     m_cPPS.setResamplePhaseSetPresentFlag( i, m_resamplePhaseSetPresentFlag[i] );
-    m_cPPS.setPhaseHorLuma( m_scaledRefLayerId[i], m_phaseHorLuma[i] );
-    m_cPPS.setPhaseVerLuma( m_scaledRefLayerId[i], m_phaseVerLuma[i] );
-    m_cPPS.setPhaseHorChroma( m_scaledRefLayerId[i], m_phaseHorChroma[i] );
-    m_cPPS.setPhaseVerChroma( m_scaledRefLayerId[i], m_phaseVerChroma[i] );
+    m_cPPS.setPhaseHorLuma( m_refLocationOffsetLayerId[i], m_phaseHorLuma[i] );
+    m_cPPS.setPhaseVerLuma( m_refLocationOffsetLayerId[i], m_phaseVerLuma[i] );
+    m_cPPS.setPhaseHorChroma( m_refLocationOffsetLayerId[i], m_phaseHorChroma[i] );
+    m_cPPS.setPhaseVerChroma( m_refLocationOffsetLayerId[i], m_phaseVerChroma[i] );
 #endif
 #if P0312_VERT_PHASE_ADJ
     m_cPPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
@@ -1677,9 +1677,9 @@ Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
   {
-    if (layerId == m_scaledRefLayerId[i])
+    if (layerId == m_refLocationOffsetLayerId[i])
     {
       return m_scaledRefLayerWindow[i];
     }
@@ -1693,7 +1693,7 @@ Window& TEncTop::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
+  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
   {
     if (layerId == m_refLayerId[i])
     {

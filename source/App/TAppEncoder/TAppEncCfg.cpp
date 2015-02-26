@@ -814,13 +814,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
 #if O0098_SCALED_REF_LAYER_ID
-  string    cfg_scaledRefLayerId [MAX_LAYERS];
+  string    cfg_refLocationOffsetLayerId [MAX_LAYERS];
 #endif
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
-  Int*      cfg_numScaledRefLayerOffsets[MAX_LAYERS];
+  Int*      cfg_numRefLayerLocationOffsets[MAX_LAYERS];
 #if REF_REGION_OFFSET
   string    cfg_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
   string    cfg_refRegionOffsetPresentFlag      [MAX_LAYERS];
@@ -842,7 +842,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 
 #if O0098_SCALED_REF_LAYER_ID
-  string*    cfg_scaledRefLayerIdPtr           [MAX_LAYERS];
+  string*    cfg_refLocationOffsetLayerIdPtr   [MAX_LAYERS];
 #endif
   string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
@@ -943,12 +943,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
     cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
 #endif
-    cfg_numScaledRefLayerOffsets [layer] = &m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+    cfg_numRefLayerLocationOffsets [layer] = &m_acLayerCfg[layer].m_numRefLayerLocationOffsets;
     cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
 #if O0098_SCALED_REF_LAYER_ID
-      cfg_scaledRefLayerIdPtr          [layer] = &cfg_scaledRefLayerId[layer];
+      cfg_refLocationOffsetLayerIdPtr  [layer] = &cfg_refLocationOffsetLayerId[layer];
 #endif
       cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer];
       cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer];
@@ -1179,9 +1179,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepthC",                               m_outputBitDepthC,                                       0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("InternalBitDepthC",                             m_internalBitDepthC,                                     0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #endif
-  ("NumScaledRefLayerOffsets%d",                    cfg_numScaledRefLayerOffsets,                0, MAX_LAYERS,  "Number of scaled offset layer sets ")
+  ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,              0, MAX_LAYERS,  "Number of reference layer offset sets ")
 #if O0098_SCALED_REF_LAYER_ID
-  ("ScaledRefLayerId%d",                            cfg_scaledRefLayerIdPtr,            string(""), MAX_LAYERS, "Layer ID of scaled base layer picture")
+  ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,    string(""), MAX_LAYERS, "Layer ID of reference location offset")
 #endif                                             
   ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,    string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
@@ -2154,10 +2154,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
-    if(m_acLayerCfg[layer].m_numScaledRefLayerOffsets)
+    if(m_acLayerCfg[layer].m_numRefLayerLocationOffsets)
     {
 #if O0098_SCALED_REF_LAYER_ID
-      assert( strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""));
+      assert( strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""));
 #endif
 #if REF_REGION_OFFSET
       Bool srloFlag =
@@ -2200,14 +2200,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
 #if O0098_SCALED_REF_LAYER_ID
     // ID //
-    if(strcmp(cfg_scaledRefLayerId[layer].c_str(),  ""))
+    if(strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerId[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerId");
+      cfgStringToArray( &tempArray, cfg_refLocationOffsetLayerId[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefLocationOffsetLayerId");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerId[i] = tempArray[i];
+          m_acLayerCfg[layer].m_refLocationOffsetLayerId[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2218,10 +2218,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Presense Flag //
     if(strcmp(cfg_scaledRefLayerOffsetPresentFlag[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "ScaledRefLayerOffsetPresentFlag");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "ScaledRefLayerOffsetPresentFlag");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] = tempArray[i];
         }
@@ -2233,10 +2233,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Left offset //
     if(strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerLeftOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "LeftOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerLeftOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "LeftOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i] = tempArray[i];
         }
@@ -2247,10 +2247,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Top offset //
     if(strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerTopOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "TopOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerTopOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "TopOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i] = tempArray[i];
         }
@@ -2261,10 +2261,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Right offset //
     if(strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerRightOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RightOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerRightOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RightOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i] = tempArray[i];
         }
@@ -2275,10 +2275,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Bottom offset //
     if(strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerBottomOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "BottomOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerBottomOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "BottomOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i] = tempArray[i];
         }
@@ -2304,10 +2304,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Presense Flag //
     if(strcmp(cfg_refRegionOffsetPresentFlag[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionOffsetPresentFlag");
+      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionOffsetPresentFlag");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] = tempArray[i];
         }
@@ -2318,10 +2318,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Left offset //
     if(strcmp(cfg_refRegionLeftOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionLeftOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionLeftOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_refRegionLeftOffset[i] = tempArray[i];
         }
@@ -2332,10 +2332,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Top offset //
     if(strcmp(cfg_refRegionTopOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionTopOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionTopOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_refRegionTopOffset[i] = tempArray[i];
         }
@@ -2346,10 +2346,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Right offset //
     if(strcmp(cfg_refRegionRightOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionRightOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionRightOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_refRegionRightOffset[i] = tempArray[i];
         }
@@ -2360,10 +2360,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Bottom offset //
     if(strcmp(cfg_refRegionBottomOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_acLayerCfg[layer].m_numScaledRefLayerOffsets, "RefRegionBottomOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionBottomOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
         {
           m_acLayerCfg[layer].m_refRegionBottomOffset[i] = tempArray[i];
         }
@@ -2372,7 +2372,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 #endif
 #if R0209_GENERIC_PHASE
-    Int numPhaseSet = m_acLayerCfg[layer].m_numScaledRefLayerOffsets;
+    Int numPhaseSet = m_acLayerCfg[layer].m_numRefLayerLocationOffsets;
 
     // Presense Flag //
     if(strcmp(cfg_resamplePhaseSetPresentFlag[layer].c_str(),  ""))
