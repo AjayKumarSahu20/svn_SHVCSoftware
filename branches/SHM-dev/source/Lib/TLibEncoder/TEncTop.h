@@ -121,9 +121,9 @@ private:
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
 #endif
-  UInt                    m_numScaledRefLayerOffsets;
+  UInt                    m_numRefLayerLocationOffsets;
 #if O0098_SCALED_REF_LAYER_ID
-  UInt                    m_scaledRefLayerId[MAX_LAYERS];
+  UInt                    m_refLocationOffsetLayerId[MAX_LAYERS];
 #endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
 #if REF_REGION_OFFSET
@@ -223,11 +223,11 @@ public:
   Int       getPOCLast            ()            { return m_iPOCLast;                 }
   Int       getNumPicRcvd         ()            { return m_iNumPicRcvd;              }
   Void      setNumPicRcvd         ( Int num )   { m_iNumPicRcvd = num;               }
-  Void      setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
-  UInt      getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
+  Void      setNumRefLayerLocationOffsets(Int x)  { m_numRefLayerLocationOffsets = x;    }
+  UInt      getNumRefLayerLocationOffsets()       { return m_numRefLayerLocationOffsets; }
 #if O0098_SCALED_REF_LAYER_ID
-  Void      setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
-  UInt      getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
+  Void      setRefLocationOffsetLayerId(Int x, UInt id) { m_refLocationOffsetLayerId[x] = id;   }
+  UInt      getRefLocationOffsetLayerId(Int x)          { return m_refLocationOffsetLayerId[x]; }
   Window&   getScaledRefLayerWindowForLayer(Int layerId);
 #endif
   Window&   getScaledRefLayerWindow(Int x)                 { return m_scaledRefLayerWindow[x];        }

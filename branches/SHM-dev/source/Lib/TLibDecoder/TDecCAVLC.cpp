@@ -411,10 +411,10 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
 #endif
 
 #if REF_REGION_OFFSET
-            READ_UVLC( uiCode,      "num_ref_loc_offsets" ); pcPPS->setNumScaledRefLayerOffsets(uiCode);
-            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
+            READ_UVLC( uiCode,      "num_ref_loc_offsets" ); pcPPS->setNumRefLayerLocationOffsets(uiCode);
+            for(Int k = 0; k < pcPPS->getNumRefLayerLocationOffsets(); k++)
             {
-              READ_CODE( 6, uiCode,  "ref_loc_offset_layer_id" );  pcPPS->setScaledRefLayerId( k, uiCode );
+              READ_CODE( 6, uiCode,  "ref_loc_offset_layer_id" );  pcPPS->setRefLocationOffsetLayerId( k, uiCode );
               READ_FLAG( uiCode, "scaled_ref_layer_offset_present_flag" );   pcPPS->setScaledRefLayerOffsetPresentFlag( k, uiCode );
               if (uiCode)
               {

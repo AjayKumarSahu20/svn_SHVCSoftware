@@ -420,22 +420,6 @@ Void TAppEncTop::xInitLibCfg()
           m_acTEncTop[layer].setPredLayerId                               ( i, m_acLayerCfg[layer].getPredLayerId(i));
         }
       }
-#if REF_REGION_OFFSET
-      for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
-      {
-#if AUXILIARY_PICTURES
-        Int cf = m_acLayerCfg[i].m_chromaFormatIDC;
-        Int rlSubWidthC  = ( cf == CHROMA_420 || cf == CHROMA_422 ) ? 2 : 1;
-        Int rlSubHeightC = ( cf == CHROMA_420 ) ? 2 : 1;
-#else
-        Int rlSubWidthC  = 2;
-        Int rlSubHeightC = 2;
-#endif
-        m_acTEncTop[layer].setRefRegionOffsetPresentFlag                  ( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] );
-        m_acTEncTop[layer].getRefLayerWindow(i).setWindow                 ( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
-                                                                            rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
-      }
-#endif
     }
     else
     {
@@ -761,23 +745,23 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setLog2MaxMvLengthHorizontal             ( m_log2MaxMvLengthHorizontal );
     m_acTEncTop[layer].setLog2MaxMvLengthVertical               ( m_log2MaxMvLengthVertical );
     m_acTEncTop[layer].setElRapSliceTypeB                       (layer == 0? 0 : m_elRapSliceBEnabled);
+
     if( layer > 0 )
     {
 #if REF_REGION_OFFSET
 #if AUXILIARY_PICTURES
-      Int cf = m_acLayerCfg[layer].m_chromaFormatIDC;
-      Int subWidthC  = ( cf == CHROMA_420 || cf == CHROMA_422 ) ? 2 : 1;
-      Int subHeightC = ( cf == CHROMA_420 ) ? 2 : 1;
+      Int subWidthC  = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
+      Int subHeightC = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
 #else
       Int subWidthC  = 2;
       Int subHeightC = 2;
 #endif
 #endif
-      m_acTEncTop[layer].setNumScaledRefLayerOffsets            ( m_acLayerCfg[layer].m_numScaledRefLayerOffsets );
-      for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+      m_acTEncTop[layer].setNumRefLayerLocationOffsets          ( m_acLayerCfg[layer].m_numRefLayerLocationOffsets );
+      for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
       {
 #if O0098_SCALED_REF_LAYER_ID
-        m_acTEncTop[layer].setScaledRefLayerId                  (i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
+        m_acTEncTop[layer].setRefLocationOffsetLayerId          (i, m_acLayerCfg[layer].m_refLocationOffsetLayerId[i]);
 #endif
 #if REF_REGION_OFFSET
         m_acTEncTop[layer].setScaledRefLayerOffsetPresentFlag   ( i, m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] );
@@ -787,12 +771,18 @@ Void TAppEncTop::xInitLibCfg()
 #if P0312_VERT_PHASE_ADJ
         m_acTEncTop[layer].setVertPhasePositionEnableFlag       ( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
+          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
 #else
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
+          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
 #endif
 #endif
+        Int rlSubWidthC  = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
+        Int rlSubHeightC = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
+
+        m_acTEncTop[layer].setRefRegionOffsetPresentFlag        ( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] );
+        m_acTEncTop[layer].getRefLayerWindow(i).setWindow       ( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
+                                                                  rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
 #if R0209_GENERIC_PHASE
         m_acTEncTop[layer].setResamplePhaseSetPresentFlag       ( i, m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] );
         m_acTEncTop[layer].setPhaseHorLuma                      ( i, m_acLayerCfg[layer].m_phaseHorLuma[i] );
@@ -802,6 +792,7 @@ Void TAppEncTop::xInitLibCfg()
 #endif
       }
     }
+
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
     m_acTEncTop[layer].setAdaptiveResolutionChange               ( m_adaptiveResolutionChange );
 #endif
