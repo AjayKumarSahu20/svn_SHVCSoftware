@@ -161,6 +161,9 @@ const Char *SEI::getSEIMessageString(SEI::PayloadType payloadType)
 #if Q0096_OVERLAY_SEI
     case SEI::OVERLAY_INFO:                         return "Overlay Information";
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+    case SEI::ALPHA_CHANNEL_INFO:                   return "Alpha Channel Information";
+#endif
 #endif
     default:                                        return "Unknown";
   }

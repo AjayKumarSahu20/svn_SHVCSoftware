@@ -340,6 +340,7 @@ enum AuxType
 # define MAX_OVERLAY_ELEMENTS            256
 # define MAX_OVERLAY_STRING_BYTES        256
 #endif
+#define P0123_ALPHA_CHANNEL_SEI          1      ///< JCTVC-P0123: SEI message for alpha channel information
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information

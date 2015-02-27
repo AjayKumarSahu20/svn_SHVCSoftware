@@ -130,6 +130,9 @@ Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
   Void xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps);
   Void xWriteSEIVPSRewriting(const SEIVPSRewriting &sei);
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Void xWriteSEIAlphaChannelInfo(const SEIAlphaChannelInfo &sei);
+#endif
 #if Q0096_OVERLAY_SEI
   Void xWriteSEIOverlayInfo(const SEIOverlayInfo &sei);
 #endif
