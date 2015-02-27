@@ -2198,6 +2198,7 @@ TComVPS::TComVPS()
   ::memset( m_maxVpsLatencyIncreasePlus1,   0, sizeof(m_maxVpsLatencyIncreasePlus1 )  );
   ::memset( m_numSubDpbs                ,   0, sizeof(m_numSubDpbs)                   );
 #endif
+  ::memset( m_baseLayerPSCompatibilityFlag, 0, sizeof(m_baseLayerPSCompatibilityFlag) );
 }
 #else
 TComVPS::TComVPS()
