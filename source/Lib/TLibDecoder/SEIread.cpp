@@ -382,6 +382,12 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize, pDecodedMessageOutputStream);
      break;
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+   case SEI::ALPHA_CHANNEL_INFO:
+     sei = new SEIAlphaChannelInfo;
+     xParseSEIAlphaChannelInfo((SEIAlphaChannelInfo &) *sei, payloadSize, pDecodedMessageOutputStream);
+     break;
+#endif
 #if Q0096_OVERLAY_SEI
    case SEI::OVERLAY_INFO:
      sei = new SEIOverlayInfo;
@@ -389,19 +395,18 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      break;
 #endif
 #endif //SVC_EXTENSION
-      break;
-    default:
-      for (UInt i = 0; i < payloadSize; i++)
-      {
-        UInt seiByte;
-        sei_read_code (NULL, 8, seiByte, "unknown prefix SEI payload byte");
-      }
-      printf ("Unknown prefix SEI message (payloadType = %d) was found!\n", payloadType);
-      if (pDecodedMessageOutputStream)
-      {
-        (*pDecodedMessageOutputStream) << "Unknown prefix SEI message (payloadType = " << payloadType << ") was found!\n";
-      }
-      break;
+   default:
+     for (UInt i = 0; i < payloadSize; i++)
+     {
+       UInt seiByte;
+       sei_read_code (NULL, 8, seiByte, "unknown prefix SEI payload byte");
+     }
+     printf ("Unknown prefix SEI message (payloadType = %d) was found!\n", payloadType);
+     if (pDecodedMessageOutputStream)
+     {
+       (*pDecodedMessageOutputStream) << "Unknown prefix SEI message (payloadType = " << payloadType << ") was found!\n";
+     }
+     break;
     }
   }
   else
@@ -1873,6 +1878,27 @@ Void SEIReader::xParseSEIVPSRewriting(SEIVPSRewriting &sei, std::ostream *pDecod
 {
 }
 
+#endif
+
+#if P0123_ALPHA_CHANNEL_SEI
+void SEIReader::xParseSEIAlphaChannelInfo(SEIAlphaChannelInfo &sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream)
+{
+  UInt value;
+  sei_read_flag(pDecodedMessageOutputStream, value, "alpha_channel_cancel_flag"); sei.m_alphaChannelCancelFlag = value;
+  if(!sei.m_alphaChannelCancelFlag)
+  {
+    sei_read_code(pDecodedMessageOutputStream, 3, value, "alpha_channel_use_idc");          sei.m_alphaChannelUseIdc = value;
+    sei_read_code(pDecodedMessageOutputStream, 3, value, "alpha_channel_bit_depth_minus8"); sei.m_alphaChannelBitDepthMinus8 = value;
+    sei_read_code(pDecodedMessageOutputStream, sei.m_alphaChannelBitDepthMinus8 + 9, value, "alpha_transparent_value"); sei.m_alphaTransparentValue = value;
+    sei_read_code(pDecodedMessageOutputStream, sei.m_alphaChannelBitDepthMinus8 + 9, value, "alpha_opaque_value"); sei.m_alphaOpaqueValue = value;
+    sei_read_flag(pDecodedMessageOutputStream, value, "alpha_channel_incr_flag");        sei.m_alphaChannelIncrFlag = value;
+    sei_read_flag(pDecodedMessageOutputStream, value, "alpha_channel_clip_flag");        sei.m_alphaChannelClipFlag = value;
+    if(sei.m_alphaChannelClipFlag)
+    {
+      sei_read_flag(pDecodedMessageOutputStream, value, "alpha_channel_clip_type_flag"); sei.m_alphaChannelClipTypeFlag = value;
+    }
+  }  
+}
 #endif
 
 #if Q0096_OVERLAY_SEI

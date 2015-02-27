@@ -611,6 +611,17 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setKneeSEIInputKneePoint                             ( m_kneeSEIInputKneePoint );
     m_acTEncTop[layer].setKneeSEIOutputKneePoint                            ( m_kneeSEIOutputKneePoint );
     m_acTEncTop[layer].setMasteringDisplaySEI                               ( m_masteringDisplay );
+#if P0123_ALPHA_CHANNEL_SEI
+    m_acTEncTop[layer].setAlphaSEIEnabled                                   ( m_alphaSEIEnabled );
+    m_acTEncTop[layer].setAlphaCancelFlag                                   ( m_alphaCancelFlag );
+    m_acTEncTop[layer].setAlphaUseIdc                                       ( m_alphaUseIdc );
+    m_acTEncTop[layer].setAlphaBitDepthMinus8                               ( m_alphaBitDepthMinus8 );
+    m_acTEncTop[layer].setAlphaTransparentValue                             ( m_alphaTransparentValue );
+    m_acTEncTop[layer].setAlphaOpaqueValue                                  ( m_alphaOpaqueValue );
+    m_acTEncTop[layer].setAlphaIncrementFlag                                ( m_alphaIncrementFlag );
+    m_acTEncTop[layer].setAlphaClipFlag                                     ( m_alphaClipFlag );
+    m_acTEncTop[layer].setAlphaClipTypeFlag                                 ( m_alphaClipTypeFlag );
+#endif
 #if Q0096_OVERLAY_SEI
     m_acTEncTop[layer].setOverlaySEIEnabled                                 ( m_overlaySEIEnabled );
     m_acTEncTop[layer].setOverlaySEICancelFlag                              ( m_overlayInfoCancelFlag );

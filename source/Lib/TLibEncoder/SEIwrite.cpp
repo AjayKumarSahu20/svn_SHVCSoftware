@@ -208,6 +208,11 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      xWriteSEIFrameFieldInfo(*static_cast<const SEIFrameFieldInfo*>(&sei));
      break;
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+   case SEI::ALPHA_CHANNEL_INFO:
+     xWriteSEIAlphaChannelInfo(*static_cast<const SEIAlphaChannelInfo*>(&sei));
+     break;
+#endif
 #if Q0096_OVERLAY_SEI
    case SEI::OVERLAY_INFO:
      xWriteSEIOverlayInfo(*static_cast<const SEIOverlayInfo*>(&sei));
@@ -1414,6 +1419,27 @@ Void SEIWriter::xWriteSEIVPSRewriting(const SEIVPSRewriting &sei)
   //sei.nalu->
 }
 
+#endif
+
+#if P0123_ALPHA_CHANNEL_SEI
+Void SEIWriter::xWriteSEIAlphaChannelInfo(const SEIAlphaChannelInfo &sei)
+{
+  WRITE_FLAG(sei.m_alphaChannelCancelFlag, "alpha_channel_cancel_flag");
+  if(!sei.m_alphaChannelCancelFlag)
+  {
+    WRITE_CODE(sei.m_alphaChannelUseIdc, 3, "alpha_channel_use_idc");
+    WRITE_CODE(sei.m_alphaChannelBitDepthMinus8, 3, "alpha_channel_bit_depth_minus8");
+    WRITE_CODE(sei.m_alphaTransparentValue, sei.m_alphaChannelBitDepthMinus8 + 9, "alpha_transparent_value");
+    WRITE_CODE(sei.m_alphaOpaqueValue, sei.m_alphaChannelBitDepthMinus8 + 9, "alpha_opaque_value");
+    WRITE_FLAG(sei.m_alphaChannelIncrFlag, "alpha_channel_incr_flag");
+    WRITE_FLAG(sei.m_alphaChannelClipFlag, "alpha_channel_clip_flag");
+    if(sei.m_alphaChannelClipFlag)
+    {
+      WRITE_FLAG(sei.m_alphaChannelClipTypeFlag, "alpha_channel_clip_type_flag");
+    }
+  }
+  xWriteByteAlign();
+}
 #endif
 
 #if Q0096_OVERLAY_SEI

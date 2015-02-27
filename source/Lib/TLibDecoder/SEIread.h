@@ -153,6 +153,9 @@ Void   xParseSEISubBitstreamProperty          (SEISubBitstreamProperty &sei, std
 #if Q0247_FRAME_FIELD_INFO
   Void xParseSEIFrameFieldInfo                (SEIFrameFieldInfo& sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream);
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Void xParseSEIAlphaChannelInfo              (SEIAlphaChannelInfo& sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream);
+#endif
 #if Q0096_OVERLAY_SEI
   Void xParseSEIOverlayInfo                   (SEIOverlayInfo& sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream);
 #endif

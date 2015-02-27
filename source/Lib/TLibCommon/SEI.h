@@ -120,7 +120,10 @@ public:
     FRAME_FIELD_INFO                     = 152,
 #endif
 #if Q0096_OVERLAY_SEI
-    OVERLAY_INFO                         = 153,    
+    OVERLAY_INFO                         = 153,
+#endif
+#if P0123_ALPHA_CHANNEL_SEI
+    ALPHA_CHANNEL_INFO                   = 165,
 #endif
   };
   
@@ -666,6 +669,24 @@ public:
   virtual ~SEIVPSRewriting() {}
 
   NALUnit* nalu;
+};
+#endif
+
+#if P0123_ALPHA_CHANNEL_SEI
+class SEIAlphaChannelInfo : public SEI
+{
+public:
+  PayloadType payloadType() const { return ALPHA_CHANNEL_INFO; }
+  SEIAlphaChannelInfo() {}
+  virtual ~SEIAlphaChannelInfo() {}
+  Bool m_alphaChannelCancelFlag;
+  UInt m_alphaChannelUseIdc;
+  UInt m_alphaChannelBitDepthMinus8;
+  UInt m_alphaTransparentValue;
+  UInt m_alphaOpaqueValue;
+  Bool m_alphaChannelIncrFlag;
+  Bool m_alphaChannelClipFlag;
+  Bool m_alphaChannelClipTypeFlag;
 };
 #endif
 

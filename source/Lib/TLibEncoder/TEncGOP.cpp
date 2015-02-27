@@ -690,6 +690,22 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
   }
 #endif
 
+#if P0123_ALPHA_CHANNEL_SEI
+  if( m_pcCfg->getAlphaSEIEnabled() && m_pcEncTop->getVPS()->getScalabilityId(m_layerId, AUX_ID) && m_pcEncTop->getVPS()->getDimensionId(m_layerId, m_pcEncTop->getVPS()->getNumScalabilityTypes() - 1) == AUX_ALPHA )
+  {
+    SEIAlphaChannelInfo *sei = xCreateSEIAlphaChannelInfo();
+    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if O0164_MULTI_LAYER_HRD
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
+#else
+    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    accessUnit.push_back(new NALUnitEBSP(nalu));
+    delete sei;
+  }
+#endif
+
 #if Q0096_OVERLAY_SEI
   if(m_pcCfg->getOverlaySEIEnabled())
   {    
@@ -4363,6 +4379,24 @@ Void TEncGOP::dblMetric( TComPic* pcPic, UInt uiNumSlices )
   free(rowSAD);
 }
 
+#if P0123_ALPHA_CHANNEL_SEI
+SEIAlphaChannelInfo* TEncGOP::xCreateSEIAlphaChannelInfo()
+{
+  SEIAlphaChannelInfo *sei = new SEIAlphaChannelInfo();
+  sei->m_alphaChannelCancelFlag = m_pcCfg->getAlphaCancelFlag();
+  if(!sei->m_alphaChannelCancelFlag)
+  {
+    sei->m_alphaChannelUseIdc = m_pcCfg->getAlphaUseIdc();
+    sei->m_alphaChannelBitDepthMinus8 = m_pcCfg->getAlphaBitDepthMinus8();
+    sei->m_alphaTransparentValue = m_pcCfg->getAlphaTransparentValue();
+    sei->m_alphaOpaqueValue = m_pcCfg->getAlphaOpaqueValue();
+    sei->m_alphaChannelIncrFlag = m_pcCfg->getAlphaIncrementFlag();
+    sei->m_alphaChannelClipFlag = m_pcCfg->getAlphaClipFlag();
+    sei->m_alphaChannelClipTypeFlag = m_pcCfg->getAlphaClipTypeFlag();
+  }
+  return sei;
+}
+#endif
 #if Q0096_OVERLAY_SEI
 SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
 {  

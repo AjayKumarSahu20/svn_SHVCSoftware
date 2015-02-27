@@ -414,16 +414,27 @@ protected:
   UInt      m_ilcIdc[1024];
 #endif
 #if Q0048_CGS_3D_ASYMLUT
-  Int  m_nCGSFlag;
-  Int  m_nCGSMaxOctantDepth;
-  Int  m_nCGSMaxYPartNumLog2;
-  Int  m_nCGSLUTBit;
+  Int       m_nCGSFlag;
+  Int       m_nCGSMaxOctantDepth;
+  Int       m_nCGSMaxYPartNumLog2;
+  Int       m_nCGSLUTBit;
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
-  Int  m_nCGSAdaptiveChroma;
+  Int       m_nCGSAdaptiveChroma;
 #endif
 #if R0179_ENC_OPT_3DLUT_SIZE
-  Int  m_nCGSLutSizeRDO;
+  Int       m_nCGSLutSizeRDO;
 #endif
+#endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Bool      m_alphaSEIEnabled;
+  Bool      m_alphaCancelFlag;
+  Int       m_alphaUseIdc;
+  Int       m_alphaBitDepthMinus8;
+  Int       m_alphaTransparentValue;
+  Int       m_alphaOpaqueValue;
+  Bool      m_alphaIncrementFlag;
+  Int       m_alphaClipFlag;
+  Int       m_alphaClipTypeFlag;
 #endif
 #if Q0096_OVERLAY_SEI
   Bool                                m_overlaySEIEnabled;
@@ -993,9 +1004,29 @@ public:
   Void      setChromaSamplingVerFilterIdc(Int i)                     { m_chromaSamplingVerFilterIdc = i;}
 
 #if Q0189_TMVP_CONSTRAINTS
-  Void  setTMVPConstraintsSEIEnabled(Int b)                { m_TMVPConstraintsSEIEnabled = b; }
-  Int   getTMVPConstraintsSEIEnabled()                {  return m_TMVPConstraintsSEIEnabled; }
+  Void  setTMVPConstraintsSEIEnabled(Int b)                  { m_TMVPConstraintsSEIEnabled = b; }
+  Int   getTMVPConstraintsSEIEnabled()                       {  return m_TMVPConstraintsSEIEnabled; }
 
+#endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Void  setAlphaSEIEnabled(Bool b)                           { m_alphaSEIEnabled       = b; }
+  Bool  getAlphaSEIEnabled()                                 { return m_alphaSEIEnabled; }
+  Void  setAlphaCancelFlag(Bool b)                           { m_alphaCancelFlag       = b; }
+  Bool  getAlphaCancelFlag()                                 { return m_alphaCancelFlag; }
+  Void  setAlphaUseIdc(Int idc)                              { m_alphaUseIdc           = idc; }
+  Int   getAlphaUseIdc()                                     { return m_alphaUseIdc; }
+  Void  setAlphaBitDepthMinus8(Int d)                        { m_alphaBitDepthMinus8   = d; }
+  Int   getAlphaBitDepthMinus8()                             { return m_alphaBitDepthMinus8; }
+  Void  setAlphaTransparentValue(Int v)                      { m_alphaTransparentValue = v; }
+  Int   getAlphaTransparentValue()                           { return m_alphaTransparentValue; }
+  Void  setAlphaOpaqueValue(Int v)                           { m_alphaOpaqueValue      = v; }
+  Int   getAlphaOpaqueValue()                                { return m_alphaOpaqueValue; }
+  Void  setAlphaIncrementFlag(Bool b)                        { m_alphaIncrementFlag    = b; }
+  Int   getAlphaIncrementFlag()                              { return m_alphaIncrementFlag; }
+  Void  setAlphaClipFlag(Bool b)                             { m_alphaClipFlag         = b; }
+  Bool  getAlphaClipFlag()                                   { return m_alphaClipFlag; }
+  Void  setAlphaClipTypeFlag(Bool b)                         { m_alphaClipTypeFlag     = b; }
+  Bool  getAlphaClipTypeFlag()                               { return m_alphaClipTypeFlag; }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
   Void  setCRISEIFile( Char* pch )                           { m_colourRemapSEIFile = pch; }

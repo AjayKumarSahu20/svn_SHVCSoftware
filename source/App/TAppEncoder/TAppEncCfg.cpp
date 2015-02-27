@@ -1687,6 +1687,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIMasteringDisplayPrimaries",                    cfg_DisplayPrimariesCode,       cfg_DisplayPrimariesCode, "Mastering display primaries for all three colour planes in CIE xy coordinates in increments of 1/50000 (results in the ranges 0 to 50000 inclusive)")
   ("SEIMasteringDisplayWhitePoint",                   cfg_DisplayWhitePointCode,     cfg_DisplayWhitePointCode, "Mastering display white point CIE xy coordinates in normalised increments of 1/50000 (e.g. 0.333 = 16667)")
     
+#if P0123_ALPHA_CHANNEL_SEI
+  ("SEIAlphaChannelInfo",                     m_alphaSEIEnabled,                        false, "Enables transmission of information associated with alpha channel (default : 0)")
+  ("SEIAlphaCancelFlag",                      m_alphaCancelFlag,                         true, "Denotes that this SEI message cancels the persistence of any previously received alpha channel SEI message (default : 1)")
+  ("SEIAlphaUseIdc",                          m_alphaUseIdc,                                2, "Denotes the use of the received alpha channel in final picture composition (e.g. pre-multiplied alpha, default : 2)")
+  ("SEIAlphaBitDepthMinus8",                  m_alphaBitDepthMinus8,                        0, "Denotes the bit depth associated with the received alpha channel (default : 0)")
+  ("SEIAlphaTransparentValue",                m_alphaTransparentValue,                      0, "Denotes the sample value which is considered transparent for alpha blending purposes (default : 0)")
+  ("SEIAlphaOpaqueValue",                     m_alphaOpaqueValue,                         255, "Denotes the sample value which is considered opaque for alpha blending purposes (default : 255)")
+  ("SEIAlphaIncrementFlag",                   m_alphaIncrementFlag,                     false, "Denotes whether the sample values should be incremented by one for the purposes of alpha blending (default : 0)")
+  ("SEIAlphaClipFlag",                        m_alphaClipFlag,                          false, "Denotes whether clipping is applied to the sample values (default : 0)")
+  ("SEIAlphaClipType",                        m_alphaClipTypeFlag,                      false, "Denotes the type of clipping applied to the sample values (0 = binary, 1 = linear, default : 0)")
+#endif
 #if Q0096_OVERLAY_SEI
   ("SEIOverlayInfo",                          m_overlaySEIEnabled,                      false, "Control generation of Selectable Overlays SEI messages")
   ("SEIOverlayCancelFlag",                    m_overlayInfoCancelFlag,                   true, "Indicates that Selectable Overlay SEI message cancels the persistance or follows (default: 1)")
@@ -4472,6 +4483,13 @@ Void TAppEncCfg::xCheckParameter()
     }
   }
 
+#if P0123_ALPHA_CHANNEL_SEI
+  if( m_alphaSEIEnabled && !m_alphaCancelFlag )
+  {
+    xConfirmPara(0 < m_alphaUseIdc || m_alphaUseIdc > 2, "SEIAlphaUseIdc greater than 2 is reserved for future use by ITU-T | ISO/IEC");
+    xConfirmPara(m_alphaBitDepthMinus8 < 0 || m_alphaBitDepthMinus8 > 7, "SEIAlphaBitDepthMinus8 shall be in the range 0 to 7 inclusive");
+  }
+#endif
 #if Q0096_OVERLAY_SEI
   if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
   {

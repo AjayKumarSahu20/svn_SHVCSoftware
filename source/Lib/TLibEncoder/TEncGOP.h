@@ -261,6 +261,9 @@ protected:
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
 #endif
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+  SEIAlphaChannelInfo* xCreateSEIAlphaChannelInfo();
+#endif
 #if Q0096_OVERLAY_SEI
   SEIOverlayInfo* xCreateSEIOverlayInfo();
 #endif

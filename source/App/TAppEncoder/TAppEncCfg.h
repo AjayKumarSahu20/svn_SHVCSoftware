@@ -435,7 +435,17 @@ protected:
 #if LAYERS_NOT_PRESENT_SEI
   Int       m_layersNotPresentSEIEnabled;
 #endif
-
+#if P0123_ALPHA_CHANNEL_SEI
+  Bool      m_alphaSEIEnabled;
+  Bool      m_alphaCancelFlag;
+  Int       m_alphaUseIdc;
+  Int       m_alphaBitDepthMinus8;
+  Int       m_alphaTransparentValue;
+  Int       m_alphaOpaqueValue;
+  Bool      m_alphaIncrementFlag;
+  Bool      m_alphaClipFlag;
+  Bool      m_alphaClipTypeFlag;
+#endif
 #if SVC_EXTENSION
 #if FAST_INTRA_SHVC
   Bool      m_useFastIntraScalable;                          ///< flag for using Fast Intra Decision for Scalable HEVC
