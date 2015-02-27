@@ -3234,7 +3234,7 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
+  for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
     if( layerId == m_refLocationOffsetLayerId[i] )
     {
@@ -3251,7 +3251,7 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
+  for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
     if( layerId == m_refLocationOffsetLayerId[i] )
     {
@@ -3281,7 +3281,7 @@ Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int&
   phaseSetPresentFlag = false;
   phaseHorLuma = 0, phaseVerLuma = 0, phaseHorChroma = 0, phaseVerChroma = 0;
 
-  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
+  for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
     if( refLayerId == m_refLocationOffsetLayerId[i] )
     {

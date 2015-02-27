@@ -89,7 +89,7 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindow(refLayerIdc);
 #endif
 #if REF_REGION_OFFSET
-  const Window &windowRL = currSlice->getPPS()->getRefLayerWindow(refLayerIdc);
+  const Window &windowRL = currSlice->getPPS()->getRefLayerWindow(refLayerId);
 #endif
 #else
 #if O0098_SCALED_REF_LAYER_ID
