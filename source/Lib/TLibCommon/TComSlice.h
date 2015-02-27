@@ -2248,7 +2248,8 @@ public:
   Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
   Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
 #if RESAMPLING_FIX
-  Bool hasZeroResamplingPhase(Int layerId);
+  Bool hasZeroResamplingPhase(Int refLayerId);
+  Void getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int& phaseHorLuma, Int& phaseVerLuma, Int& phaseHorChroma, Int& phaseVerChroma);
 #endif
 #endif
 #endif
