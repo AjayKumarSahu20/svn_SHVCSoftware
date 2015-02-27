@@ -1414,10 +1414,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
   
 #if AUXILIARY_PICTURES
-  if (m_scalabilityMask[3])
+  if (m_scalabilityMask[AUX_ID])
   {
     UInt maxAuxId = 0;
     UInt auxDimIdLen = 1;
+    Int  auxId = vps->getNumScalabilityTypes() - 1;
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       if (m_acLayerCfg[i].getAuxId() > maxAuxId)
@@ -1429,10 +1430,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       auxDimIdLen++;
     }
-    vps->setDimensionIdLen(1, auxDimIdLen);
+    vps->setDimensionIdLen(auxId, auxDimIdLen);
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
-      vps->setDimensionId(i, 1, m_acLayerCfg[i].getAuxId());
+      vps->setDimensionId(i, auxId, m_acLayerCfg[i].getAuxId());
     }
   }
 #endif
@@ -2138,7 +2139,7 @@ Void TAppEncTop::encode()
 #if AUXILIARY_PICTURES
 #if R0062_AUX_PSEUDO_MONOCHROME
         if ( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 ||
-             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(3) && (m_acLayerCfg[layer].getAuxId() == 1 || m_acLayerCfg[layer].getAuxId() == 2)) )
+             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
 #else
         if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
 #endif

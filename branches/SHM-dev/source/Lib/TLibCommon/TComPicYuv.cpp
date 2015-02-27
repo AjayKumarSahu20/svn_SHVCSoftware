@@ -329,13 +329,15 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
 #if AUXILIARY_PICTURES
 Void TComPicYuv::convertToMonochrome()
 {
-  Int numPix = ((m_iPicWidth >> 1) + (m_iMarginX << 1)) * ((m_iPicHeight >> 1) + (m_iMarginY << 1));
   Pel grayVal = (1 << (g_bitDepth[CHANNEL_TYPE_CHROMA] - 1));
 
-  for (UInt i = 0; i < numPix; i++)
+  for( UInt comp = 1; comp < getNumberValidComponents(); comp++ )
   {
-    m_apiPicBuf[COMPONENT_Cb][i] = grayVal;
-    m_apiPicBuf[COMPONENT_Cr][i] = grayVal;
+    const ComponentID ch=ComponentID(comp);
+    for( UInt i = 0; i < getStride(ch) * getTotalHeight(ch); i++ )
+    {
+      m_apiPicBuf[ch][i] = grayVal;
+    }
   }
 }
 #endif
