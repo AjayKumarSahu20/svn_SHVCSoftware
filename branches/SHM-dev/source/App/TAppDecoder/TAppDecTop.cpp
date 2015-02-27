@@ -1550,8 +1550,8 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       // Write all pictures to the file.
       if( this->getDecodedYuvLayerRefresh(layerIdx) )
       {
-        if (!m_outputBitDepth[CHANNEL_TYPE_LUMA]) { m_outputBitDepth[CHANNEL_TYPE_LUMA] = g_bitDepth[CHANNEL_TYPE_LUMA]; }
-        if (!m_outputBitDepth[CHANNEL_TYPE_CHROMA]) { m_outputBitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepth[CHANNEL_TYPE_CHROMA]; }
+        m_outputBitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerIdx];
+        m_outputBitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerIdx];
 
         char tempFileName[256];
         strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
