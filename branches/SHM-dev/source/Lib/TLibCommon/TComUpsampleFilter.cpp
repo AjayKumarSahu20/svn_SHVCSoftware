@@ -117,15 +117,11 @@ Void TComUpsampleFilter::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic,
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
 #if R0209_GENERIC_PHASE
-  Int phaseHorLuma   = currSlice->getPPS()->getPhaseHorLuma(refLayerIdc);
-  Int phaseVerLuma   = currSlice->getPPS()->getPhaseVerLuma(refLayerIdc);
-  Int phaseHorChroma = currSlice->getPPS()->getPhaseHorChroma(refLayerIdc);
-  Int phaseVerChroma;
-  if (currSlice->getPPS()->getResamplePhaseSetPresentFlag(refLayerIdc))
-  {
-    phaseVerChroma = currSlice->getPPS()->getPhaseVerChroma(refLayerIdc);
-  }
-  else
+  Bool phaseSetPresentFlag;
+  Int phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma;  
+  currSlice->getPPS()->getResamplingPhase( refLayerId, phaseSetPresentFlag, phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma );
+
+  if( !phaseSetPresentFlag )
   {
     Int refRegionHeight = heightBL - windowRL.getWindowTopOffset() - windowRL.getWindowBottomOffset();
     phaseVerChroma = (4 * heightEL + (refRegionHeight >> 1)) / refRegionHeight - 4;

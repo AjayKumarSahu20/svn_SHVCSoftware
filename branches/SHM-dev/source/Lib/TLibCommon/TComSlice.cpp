@@ -3234,9 +3234,9 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
+  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
   {
-    if (layerId == m_refLocationOffsetLayerId[i])
+    if( layerId == m_refLocationOffsetLayerId[i] )
     {
       return m_scaledRefLayerWindow[i];
     }
@@ -3251,9 +3251,9 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
 
-  for (Int i = 0; i < m_numRefLayerLocationOffsets; i++)
+  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
   {
-    if (layerId == m_refLocationOffsetLayerId[i])
+    if( layerId == m_refLocationOffsetLayerId[i] )
     {
       return m_refLayerWindow[i];
     }
@@ -3266,13 +3266,34 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 
 #if RESAMPLING_FIX
 #if R0209_GENERIC_PHASE
-Bool TComPPS::hasZeroResamplingPhase(Int refLayerIdc)
+Bool TComPPS::hasZeroResamplingPhase(Int refLayerId)
 {
-  Int phaseHorLuma   = this->getPhaseHorLuma(refLayerIdc);
-  Int phaseVerLuma   = this->getPhaseVerLuma(refLayerIdc);
-  Int phaseHorChroma = this->getPhaseHorChroma(refLayerIdc);
-  Int phaseVerChroma = this->getPhaseVerChroma(refLayerIdc);
+  Bool phaseSetPresentFlag;
+  Int phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma;
+
+  getResamplingPhase(refLayerId, phaseSetPresentFlag, phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma);
+
   return ( phaseHorLuma == 0 && phaseHorChroma == 0 && phaseVerLuma == 0 && phaseVerChroma == 0);
+}
+
+Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int& phaseHorLuma, Int& phaseVerLuma, Int& phaseHorChroma, Int& phaseVerChroma)
+{
+  phaseSetPresentFlag = false;
+  phaseHorLuma = 0, phaseVerLuma = 0, phaseHorChroma = 0, phaseVerChroma = 0;
+
+  for( Int i = m_numRefLayerLocationOffsets; i > 0; i-- )
+  {
+    if( refLayerId == m_refLocationOffsetLayerId[i] )
+    {
+      phaseSetPresentFlag = m_resamplePhaseSetPresentFlag[i];
+      phaseHorLuma        = m_phaseHorLuma[i];
+      phaseVerLuma        = m_phaseVerLuma[i];
+      phaseHorChroma      = m_phaseHorChroma[i];
+      phaseVerChroma      = m_phaseVerChroma[i];
+
+      return;
+    }
+  }
 }
 #endif
 #endif
