@@ -3446,7 +3446,7 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
 #endif
 
 #if REF_REGION_OFFSET
-  const Window &windowRL = m_pcSlice->getPPS()->getRefLayerWindow(refLayerIdc);
+  const Window &windowRL = m_pcSlice->getPPS()->getRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc));
   Int iBX = (((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
   Int iBY = (((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
 #else
