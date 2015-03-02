@@ -482,7 +482,7 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   m_cGopDecoder.filterPicture(pcPic);
 
 #if FIX_NON_OUTPUT_LAYER
-  if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
+  if( this->getLayerDec(pcPic->getLayerIdx())->m_isOutputLayerFlag == false )
   {
     pcPic->setOutputMark( false );
   }
@@ -763,7 +763,7 @@ Void TDecTop::xActivateParameterSets()
     }
 
 #if P0182_VPS_VUI_PS_FLAG
-    UInt layerIdx = activeVPS->getLayerIdInVps( m_layerId );
+    UInt layerIdx = activeVPS->getLayerIdxInVps( m_layerId );
 
     if( activeVPS->getBaseLayerPSCompatibilityFlag(layerIdx) )
     {
@@ -787,7 +787,7 @@ Void TDecTop::xActivateParameterSets()
 #endif
 
 #if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
-  UInt layerIdx = activeVPS->getLayerIdInVps(m_apcSlicePilot->getLayerId());
+  UInt layerIdx = activeVPS->getLayerIdxInVps(m_apcSlicePilot->getLayerId());
 
   if ( activeVPS->getVpsExtensionFlag() == 1 && (m_apcSlicePilot->getLayerId() == 0 || sps->getV1CompatibleSPSFlag() == 1) )
   {
@@ -2848,7 +2848,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
 }
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
-TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
+TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdx )
 {
   TComVPS* vps = m_parameterSetManagerDecoder.getActiveVPS();
   if( vps->getNumDirectRefLayers( m_layerId ) <= 0 )
@@ -2856,7 +2856,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdc )
     return (TDecTop *)getLayerDec( 0 );
   }
   
-  return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdc ) );
+  return (TDecTop *)getLayerDec( vps->getLayerIdxInVps( vps->getRefLayerId( m_layerId, refLayerIdx ) ) );
 }
 #endif
 
@@ -2896,8 +2896,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
   for( Int i = 1; i < m_numLayer; i++ )
   {
     Int mIdx = 0, sIdx = 0;
-    Int iNuhLId = vps->getLayerIdInNuh(i);
-    TDecTop *decTop = (TDecTop *)getLayerDec(iNuhLId);
+    TDecTop *decTop = (TDecTop *)getLayerDec(i);
     for ( Int j = 0; j < i; j++ )
     {
       if (decTop->getMotionPredEnabledFlag(j))
@@ -2960,7 +2959,7 @@ Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecL
 #if O0225_MAX_TID_FOR_REF_LAYERS
   for ( Int j = latestDecIdx + 1; j < numTargetDecLayers; j++ )
   {
-    Int jLidx = pcSlice->getVPS()->getLayerIdInVps(targetDecLayerIdList[j]);
+    Int jLidx = pcSlice->getVPS()->getLayerIdxInVps(targetDecLayerIdList[j]);
     if ( currTid <= pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(latestDecLayerId,jLidx) - 1 )
     {
 #else
@@ -3108,7 +3107,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   {
     if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
     {
-      this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
+      this->getLayerDec( vps->getLayerIdxInVps( vps->getLayerSetLayerIdList( targetLsIdx, i ) ) )->m_isOutputLayerFlag = true;
     }
   }
 #endif

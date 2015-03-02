@@ -197,8 +197,9 @@ public:
   const SEIMessages& getSEIs() const { return m_SEIs; }
 
 #if SVC_EXTENSION
-  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
+  Void          setLayerId (UInt layerId)   { m_layerId = layerId; }
   UInt          getLayerId ()               { return m_layerId; }
+  UInt          getLayerIdx ()              { return this->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId); }
   Bool          isSpatialEnhLayer(UInt refLayerIdc)             { return m_bSpatialEnhLayer[refLayerIdc]; }
   Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b) { m_bSpatialEnhLayer[refLayerIdc] = b; }
   Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }

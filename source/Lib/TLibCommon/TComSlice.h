@@ -675,7 +675,7 @@ private:
 
   // Below are derived variables
   UInt       m_numScalabilityTypes;
-  UInt       m_layerIdInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
+  UInt       m_layerIdxInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
 #if BITRATE_PICRATE_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
@@ -1097,8 +1097,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getNumScalabilityTypes()                               { return m_numScalabilityTypes;    }
   Void   setNumScalabilityTypes(UInt x)                         { m_numScalabilityTypes = x;       }
 
-  UInt   getLayerIdInVps(Int id)                                { return m_layerIdInVps[id];       }
-  Void   setLayerIdInVps(Int id, UInt x)                        { m_layerIdInVps[id] = x;          }
+  UInt   getLayerIdxInVps(Int layerId)                          { return m_layerIdxInVps[layerId]; }
+  Void   setLayerIdxInVps(Int layerId, UInt x)                  { m_layerIdxInVps[layerId] = x;    }
 #endif
 #if BITRATE_PICRATE_SIGNALLING
   UInt   getMaxSLayersInLayerSetMinus1(Int ls)                  { return m_maxSLInLayerSetMinus1[ls]; }
@@ -1133,8 +1133,8 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct dependency of layers
-  Bool   getDirectDependencyFlag(Int currLayerId, Int refLayerId)               { return m_directDependencyFlag[currLayerId][refLayerId]; }
-  Void   setDirectDependencyFlag(Int currLayerId, Int refLayerId, Bool x)       { m_directDependencyFlag[currLayerId][refLayerId] = x;    }
+  Bool   getDirectDependencyFlag(Int currLayerIdc, Int refLayerIdc)               { return m_directDependencyFlag[currLayerIdc][refLayerIdc]; }
+  Void   setDirectDependencyFlag(Int currLayerIdc, Int refLayerIdc, Bool x)       { m_directDependencyFlag[currLayerIdc][refLayerIdc] = x;    }
   
   UInt   getNumDirectRefLayers(Int layerId)                                     { return m_numDirectRefLayers[layerId];                   }
   Void   setNumDirectRefLayers(Int layerId, UInt refLayerNum)                   { m_numDirectRefLayers[layerId] = refLayerNum;            }
@@ -1395,7 +1395,7 @@ Void      deriveNumberOfSubDpbs();
   Int    getViewIdVal( Int viewOrderIndex )                         { return m_viewIdVal[viewOrderIndex]; } 
   Int    getScalabilityId(Int, ScalabilityType scalType );
 
-  Int    getViewIndex    ( Int layerIdInNuh )                       { return getScalabilityId( getLayerIdInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
+  Int    getViewIndex    ( Int layerIdInNuh )                       { return getScalabilityId( getLayerIdxInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
 
   Int    getNumViews();
   Int    scalTypeToScalIdx( ScalabilityType scalType );

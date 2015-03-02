@@ -1262,11 +1262,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setDimensionIdLen(0, dimIdLen);
   vps->setNuhLayerIdPresentFlag(false);
   vps->setLayerIdInNuh(0, 0);
-  vps->setLayerIdInVps(0, 0);
+  vps->setLayerIdxInVps(0, 0);
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
     vps->setLayerIdInNuh(i, i);
-    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+    vps->setLayerIdxInVps(vps->getLayerIdInNuh(i), i);
     vps->setDimensionId(i, 0, i);
   }
 
@@ -1528,12 +1528,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
   for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
   {
-    vps->setNumDirectRefLayers(layerCtr, m_acTEncTop[layerCtr].getNumDirectRefLayers());
+    UInt layerId = vps->getLayerIdInNuh(layerCtr);
+    vps->setNumDirectRefLayers(layerId, m_acTEncTop[layerCtr].getNumDirectRefLayers());
     maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerCtr));
 
     for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
-      vps->setRefLayerId(layerCtr, i, m_acTEncTop[layerCtr].getRefLayerId(i));
+      vps->setRefLayerId(layerId, i, m_acTEncTop[layerCtr].getRefLayerId(i));
     }
     // Set direct dependency flag
     // Initialize flag to 0
@@ -1543,7 +1544,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
     for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
     {
-      vps->setDirectDependencyFlag(layerCtr, vps->getLayerIdInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
+      vps->setDirectDependencyFlag(layerCtr, vps->getLayerIdxInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }
     // prediction indications
     vps->setDirectDepTypeLen(2); // sample and motion types are encoded
@@ -1738,7 +1739,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     Int numLayerInLayerSet = vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet );
     for(Int j = 0; j < numLayerInLayerSet; j++)
     {
-      Int layerIdxInVps = vps->getLayerIdInVps( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) );
+      Int layerIdxInVps = vps->getLayerIdxInVps( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) );
       if( vps->getNecessaryLayerFlag(i, j) )
       {
         vps->getProfileLevelTierIdx(i)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? layerIdxInVps + 1 : layerIdxInVps);
@@ -1946,7 +1947,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
               {
                 // Only for the default partition
                 Int nuhlayerId = vps->getLayerSetLayerIdList( lsIdx, k);
-                Int layerIdxInVps = vps->getLayerIdInVps( nuhlayerId );
+                Int layerIdxInVps = vps->getLayerIdxInVps( nuhlayerId );
                 vps->setBspHrdIdx(h, i, t, j, k, layerIdxInVps + vps->getNumHrdParameters());
 
                 vps->setBspSchedIdx(h, i, t, j, k, 0);
