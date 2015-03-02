@@ -959,7 +959,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && ((m_layerId == 1 && pocCurr < m_pcEncTop->getAdaptiveResolutionChange()) ||
+    if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && ((m_layerId > 0 && pocCurr < m_pcEncTop->getAdaptiveResolutionChange()) ||
                                                           (m_layerId == 0 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())) )
     {
       continue;
@@ -1181,7 +1181,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     xSetLayerInitializedFlag(pcSlice);
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId == 1 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
+    if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId > 0 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
     {
       pcSlice->setActiveNumILRRefIdx(0);
       pcSlice->setInterLayerPredEnabledFlag(false);
@@ -2370,9 +2370,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       OutputNALUnit nalu( NAL_UNIT_VPS, 0, 0 ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
-      if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) )
+      if( ( m_layerId > 0 && m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) )
 #else
-      if( ( m_layerId == 1 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) )
+      if( ( m_layerId > 0 && m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getAvcBaseLayerFlag() ) )
 #endif
 #else
       if( m_layerId == 0 )
@@ -2458,7 +2458,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 #if O0092_0094_DEPENDENCY_CONSTRAINT
-      assert( pcSlice->getPPS()->getPPSId() == 0 || pcSlice->getPPS()->getPPSId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getPPSId()) );
+      assert( pcSlice->getPPS()->getLayerId() == 0 || pcSlice->getPPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getLayerId()) );
 #endif
 #if Q0048_CGS_3D_ASYMLUT
       m_pcEntropyCoder->encodePPS(pcSlice->getPPS(), &m_Enc3DAsymLUTPPS);
