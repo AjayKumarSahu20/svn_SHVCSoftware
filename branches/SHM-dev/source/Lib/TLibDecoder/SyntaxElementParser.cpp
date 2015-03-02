@@ -106,7 +106,11 @@ Void  SyntaxElementParser::xReadFlagTr           (UInt& rValue, const Char *pSym
 #if Q0096_OVERLAY_SEI
 Void  SyntaxElementParser::xReadStringTr        (UInt buSize, UChar *pValue, UInt& rLength, const Char *pSymbolName)
 {
+#if RExt__DECODER_DEBUG_BIT_STATISTICS
+  xReadString(buSize, pValue, rLength, pSymbolName);
+#else
   xReadString(buSize, pValue, rLength);
+#endif
   fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
   fprintf( g_hTrace, "%-50s st(v=%d)  : %s\n", pSymbolName, rLength, pValue );
   fflush ( g_hTrace );
