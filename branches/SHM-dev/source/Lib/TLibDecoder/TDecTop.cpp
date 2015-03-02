@@ -671,7 +671,7 @@ Void TDecTop::xActivateParameterSets()
 #endif
   {
     TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
-    if( m_layerId == 1 && pBLPic->getPicYuvRec() == NULL )
+    if( m_layerId > 0 && pBLPic->getPicYuvRec() == NULL )
     {
       UInt refLayerId = 0;
       RepFormat* repFormat = activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(refLayerId) );
@@ -1598,9 +1598,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
-    if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
+    if( m_layerId > 0 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
 #else
-    if( m_layerId == 1 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
+    if( m_layerId > 0 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getAvcBaseLayerFlag() )
 #endif
     {
       TComPic* pBLPic = (*m_ppcTDecTop[0]->getListPic()->begin());
