@@ -1076,7 +1076,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 
 #if N0065_LAYER_POC_ALIGNMENT
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
-    if( (pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag())
+    if( (pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag())
 #else
     if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
 #endif
@@ -2746,7 +2746,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
         for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
             Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
-            maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdInVps(lId)));
+            maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdxInVps(lId)));
         }
         MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
 #if BITRATE_PICRATE_SIGNALLING
@@ -2956,7 +2956,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
       {
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
-        layerIdx = vps->getLayerIdInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
+        layerIdx = vps->getLayerIdxInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
         if (vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx)) {
           WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
         }

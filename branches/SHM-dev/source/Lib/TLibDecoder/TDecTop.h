@@ -241,28 +241,28 @@ public:
   Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
 #endif
 #if POC_RESET_IDC_DECODER
-  Int getParseIdc() { return m_parseIdc;}
-  Void        setParseIdc(Int x) { m_parseIdc = x;}
-  Void        markAllPicsAsNoCurrAu();
+  Int       getParseIdc                     ()                              { return m_parseIdc;               }
+  Void      setParseIdc                     (Int x)                         { m_parseIdc = x;                  }
+  Void      markAllPicsAsNoCurrAu();
 
-  Int   getLastPocPeriodId() { return m_lastPocPeriodId; }
-  Void  setLastPocPeriodId(Int x)    { m_lastPocPeriodId = x; }
+  Int       getLastPocPeriodId              ()                              { return m_lastPocPeriodId;        }
+  Void      setLastPocPeriodId              (Int x)                         { m_lastPocPeriodId = x;           }
 
-  Int   getPrevPicOrderCnt() { return m_prevPicOrderCnt; }
-  Void  setPrevPicOrderCnt(Int const x) { m_prevPicOrderCnt = x; }
+  Int       getPrevPicOrderCnt              ()                              { return m_prevPicOrderCnt;        }
+  Void      setPrevPicOrderCnt              (Int const x)                   { m_prevPicOrderCnt = x;           }
 #endif
-  UInt      getLayerId            () { return m_layerId;              }
-  Void      setLayerId            (UInt layer) { m_layerId = layer; }
-  UInt      getNumLayer           () { return m_numLayer;             }
-  Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
-  TComList<TComPic*>*      getListPic() { return &m_cListPic; }
-  Void      setLayerDec(TDecTop **p)    { m_ppcTDecTop = p; }
-  TDecTop*  getLayerDec(UInt layer)     { return m_ppcTDecTop[layer]; }
+  UInt      getLayerId                      ()                              { return m_layerId;                }
+  Void      setLayerId                      (UInt layer)                    { m_layerId = layer;               }
+  UInt      getNumLayer                     ()                              { return m_numLayer;               }
+  Void      setNumLayer                     (UInt uiNum)                    { m_numLayer = uiNum;              }
+  TComList<TComPic*>*  getListPic           ()                              { return &m_cListPic;              }
+  Void      setLayerDec                     (TDecTop **p)                   { m_ppcTDecTop = p;                }
+  TDecTop*  getLayerDec                     (UInt layerIdx)                 { return m_ppcTDecTop[layerIdx];   }
 #if R0235_SMALLEST_LAYER_ID
   Void      xDeriveSmallestLayerId(TComVPS* vps);
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  TDecTop*  getRefLayerDec(UInt refLayerIdc);
+  TDecTop*  getRefLayerDec                  (UInt refLayerIdx);
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
   Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
 

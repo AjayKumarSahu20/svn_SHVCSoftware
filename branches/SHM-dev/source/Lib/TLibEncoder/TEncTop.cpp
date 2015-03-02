@@ -929,8 +929,8 @@ Void TEncTop::xInitSPS()
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
   {
 #if REPN_FORMAT_IN_VPS
-    m_cSPS.setBitDepth    (ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType))            );
-    m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) - 8)));
+    m_cSPS.setBitDepth    (ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType))            );
+    m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) - 8)));
 #else
     m_cSPS.setBitDepth    (ChannelType(channelType), g_bitDepth[channelType]            );
     m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (g_bitDepth[channelType] - 8)));
@@ -1579,9 +1579,9 @@ Void TEncTop::xInitILRP()
 Void TEncTop::xInitILRP()
 {
 #if O0096_REP_FORMAT_INDEX
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
 #else
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdInVps(m_layerId) ) );
+  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
 #endif
   Int bitDepthY,bitDepthC,picWidth,picHeight;
 
@@ -1644,7 +1644,7 @@ Void TEncTop::xInitILRP()
 #if P0182_VPS_VUI_PS_FLAG
     if( m_cVPS.getNumRefLayers( m_layerId ) == 0 )
     {
-      UInt layerIdx = m_cVPS.getLayerIdInVps( m_layerId );
+      UInt layerIdx = m_cVPS.getLayerIdxInVps( m_layerId );
       RepFormat* repFmt = m_cVPS.getVpsRepFormat(m_cVPS.getVpsRepFormatIdx(layerIdx));
       
       if( m_cPPS.getLayerId() == 0 && 
