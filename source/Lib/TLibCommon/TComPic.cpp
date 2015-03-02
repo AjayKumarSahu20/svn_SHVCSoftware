@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -65,51 +65,37 @@ TComPic::TComPic()
   memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
   memset( m_equalPictureSizeAndOffsetFlag, false, sizeof( m_equalPictureSizeAndOffsetFlag ) );
 #endif
-  m_apcPicYuv[0]      = NULL;
-  m_apcPicYuv[1]      = NULL;
+  for(UInt i=0; i<NUM_PIC_YUV; i++)
+  {
+    m_apcPicYuv[i]      = NULL;
+  }
 }
 
 TComPic::~TComPic()
 {
 }
 #if SVC_EXTENSION
-#if AUXILIARY_PICTURES
 Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
-#else
-Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
-                      Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
-#endif
 {
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( chromaFormatIDC, iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
 #if R0156_CONF_WINDOW_IN_REP_FORMAT
-#if AUXILIARY_PICTURES
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+    m_apcPicYuv[PIC_YUV_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
 #else
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+    m_apcPicYuv[PIC_YUV_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #endif
+#if R0156_CONF_WINDOW_IN_REP_FORMAT
+    m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
 #else
-#if AUXILIARY_PICTURES
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#else
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#endif
+    m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #endif
   }
 #if R0156_CONF_WINDOW_IN_REP_FORMAT
-#if AUXILIARY_PICTURES
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
+  m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
 #else
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
-#endif
-#else
-#if AUXILIARY_PICTURES
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#else
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#endif
+  m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
 #endif
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
@@ -117,17 +103,9 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
     if( m_bSpatialEnhLayer[i] )
     {
 #if R0156_CONF_WINDOW_IN_REP_FORMAT
-#if AUXILIARY_PICTURES
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
 #else
-      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
-#endif
-#else
-#if AUXILIARY_PICTURES
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#else
-      m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth, pcSps );
-#endif
 #endif
     }
   }
@@ -153,17 +131,17 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
   return;
 }
 #else
-Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
+Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
                       Int *numReorderPics, Bool bIsVirtual)
-
 {
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( chromaFormatIDC, iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
-    m_apcPicYuv[0]  = new TComPicYuv;  m_apcPicYuv[0]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+    m_apcPicYuv[PIC_YUV_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+    m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   }
-  m_apcPicYuv[1]  = new TComPicYuv;  m_apcPicYuv[1]->create( iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
-  
+  m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+
   // there are no SEI messages associated with this picture initially
   if (m_SEIs.size() > 0)
   {
@@ -173,7 +151,7 @@ Void TComPic::create( Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight
 
   /* store conformance window parameters with picture */
   m_conformanceWindow = conformanceWindow;
-  
+
   /* store display window parameters with picture */
   m_defaultDisplayWindow = defaultDisplayWindow;
 
@@ -192,21 +170,17 @@ Void TComPic::destroy()
     delete m_apcPicSym;
     m_apcPicSym = NULL;
   }
-  
-  if (m_apcPicYuv[0])
+
+  for(UInt i=0; i<NUM_PIC_YUV; i++)
   {
-    m_apcPicYuv[0]->destroy();
-    delete m_apcPicYuv[0];
-    m_apcPicYuv[0]  = NULL;
+    if (m_apcPicYuv[i])
+    {
+      m_apcPicYuv[i]->destroy();
+      delete m_apcPicYuv[i];
+      m_apcPicYuv[i]  = NULL;
+    }
   }
-  
-  if (m_apcPicYuv[1])
-  {
-    m_apcPicYuv[1]->destroy();
-    delete m_apcPicYuv[1];
-    m_apcPicYuv[1]  = NULL;
-  }
-  
+
   deleteSEIs(m_SEIs);
 #if SVC_EXTENSION
   for( Int i = 0; i < MAX_LAYERS; i++ )
@@ -223,19 +197,56 @@ Void TComPic::destroy()
 
 Void TComPic::compressMotion()
 {
-  TComPicSym* pPicSym = getPicSym(); 
-  for ( UInt uiCUAddr = 0; uiCUAddr < pPicSym->getFrameHeightInCU()*pPicSym->getFrameWidthInCU(); uiCUAddr++ )
+  TComPicSym* pPicSym = getPicSym();
+  for ( UInt uiCUAddr = 0; uiCUAddr < pPicSym->getNumberOfCtusInFrame(); uiCUAddr++ )
   {
-    TComDataCU* pcCU = pPicSym->getCU(uiCUAddr);
-    pcCU->compressMV(); 
-  } 
+    TComDataCU* pCtu = pPicSym->getCtu(uiCUAddr);
+    pCtu->compressMV();
+  }
 }
 
 Bool  TComPic::getSAOMergeAvailability(Int currAddr, Int mergeAddr)
 {
-  Bool mergeCtbInSliceSeg = (mergeAddr >= getPicSym()->getCUOrderMap(getCU(currAddr)->getSlice()->getSliceCurStartCUAddr()/getNumPartInCU()));
+  Bool mergeCtbInSliceSeg = (mergeAddr >= getPicSym()->getCtuTsToRsAddrMap(getCtu(currAddr)->getSlice()->getSliceCurStartCtuTsAddr()));
   Bool mergeCtbInTile     = (getPicSym()->getTileIdxMap(mergeAddr) == getPicSym()->getTileIdxMap(currAddr));
   return (mergeCtbInSliceSeg && mergeCtbInTile);
+}
+
+UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRaster, TComSlice *pcSlice)
+{
+  UInt subStrm;
+
+  if (pcSlice->getPPS()->getNumSubstreams() > 1) // wavefronts, and possibly tiles being used.
+  {
+    if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+    {
+      const TComPicSym &picSym            = *(getPicSym());
+      const UInt ctuRsAddr                = bAddressInRaster?ctuAddr : picSym.getCtuTsToRsAddrMap(ctuAddr);
+      const UInt frameWidthInCtus         = picSym.getFrameWidthInCtus();
+      const UInt tileIndex                = picSym.getTileIdxMap(ctuRsAddr);
+      const UInt numTileColumns           = (picSym.getNumTileColumnsMinus1()+1);
+      const TComTile *pTile               = picSym.getTComTile(tileIndex);
+      const UInt firstCtuRsAddrOfTile     = pTile->getFirstCtuRsAddr();
+      const UInt tileYInCtus              = firstCtuRsAddrOfTile / frameWidthInCtus;
+      // independent tiles => substreams are "per tile"
+      const UInt ctuLine                  = ctuRsAddr / frameWidthInCtus;
+      const UInt startingSubstreamForTile =(tileYInCtus*numTileColumns) + (pTile->getTileHeightInCtus()*(tileIndex%numTileColumns));
+      subStrm = startingSubstreamForTile + (ctuLine - tileYInCtus);
+    }
+    else
+    {
+      const TComPicSym &picSym            = *(getPicSym());
+      const UInt ctuRsAddr                = bAddressInRaster?ctuAddr : picSym.getCtuTsToRsAddrMap(ctuAddr);
+      const UInt tileIndex                = picSym.getTileIdxMap(ctuRsAddr);
+      subStrm=tileIndex;
+    }
+  }
+  else
+  {
+    // dependent tiles => substreams are "per frame".
+    subStrm = 0;
+  }
+  return subStrm;
 }
 
 #if SVC_EXTENSION
@@ -258,26 +269,26 @@ Void copyOnetoOnePicture(    // SVC_NONCOLL
 
 Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut)
 {
-  Int upsampledRowWidthLuma = pcPicYuvOut->getStride(); // 2 * pcPicYuvOut->getLumaMargin() + pcPicYuvOut->getWidth(); 
-  Int upsampledRowWidthCroma = pcPicYuvOut->getCStride(); //2 * pcPicYuvOut->getChromaMargin() + (pcPicYuvOut->getWidth()>>1);
+  Int upsampledRowWidthLuma = pcPicYuvOut->getStride(COMPONENT_Y); // 2 * pcPicYuvOut->getLumaMargin() + pcPicYuvOut->getWidth(); 
+  Int upsampledRowWidthCroma = pcPicYuvOut->getStride(COMPONENT_Cb); //2 * pcPicYuvOut->getChromaMargin() + (pcPicYuvOut->getWidth()>>1);
 
   copyOnetoOnePicture(
-    pcPicYuvIn->getLumaAddr(),        
-    pcPicYuvOut->getLumaAddr(),      
-    pcPicYuvOut->getWidth(), 
-    pcPicYuvOut->getHeight(),
+    pcPicYuvIn->getAddr(COMPONENT_Y),        
+    pcPicYuvOut->getAddr(COMPONENT_Y),      
+    pcPicYuvOut->getWidth(COMPONENT_Y), 
+    pcPicYuvOut->getHeight(COMPONENT_Y),
     upsampledRowWidthLuma);
   copyOnetoOnePicture(
-    pcPicYuvIn->getCrAddr(),        
-    pcPicYuvOut->getCrAddr(),      
-    pcPicYuvOut->getWidth()>>1, 
-    pcPicYuvOut->getHeight()>>1,
+    pcPicYuvIn->getAddr(COMPONENT_Cr),        
+    pcPicYuvOut->getAddr(COMPONENT_Cr),      
+    pcPicYuvOut->getWidth(COMPONENT_Y)>>1, 
+    pcPicYuvOut->getHeight(COMPONENT_Y)>>1,
     upsampledRowWidthCroma);
   copyOnetoOnePicture(
-    pcPicYuvIn->getCbAddr(),        
-    pcPicYuvOut->getCbAddr(),      
-    pcPicYuvOut->getWidth()>>1, 
-    pcPicYuvOut->getHeight()>>1,
+    pcPicYuvIn->getAddr(COMPONENT_Cb),        
+    pcPicYuvOut->getAddr(COMPONENT_Cb),      
+    pcPicYuvOut->getWidth(COMPONENT_Y)>>1, 
+    pcPicYuvOut->getHeight(COMPONENT_Y)>>1,
     upsampledRowWidthCroma);
 }
 
@@ -289,9 +300,9 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
   UInt heightMinPU   = g_uiMaxCUHeight/(1<<g_uiMaxCUDepth);
   Int  unitNum       = max (1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
 
-  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
+  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
   {
-    TComDataCU* pcCUDes = getCU(cuIdx);
+    TComDataCU* pcCUDes = getCtu(cuIdx);
 
     for(UInt absPartIdx = 0; absPartIdx < numPartitions; absPartIdx+=unitNum )  //each 16x16 unit
     {
@@ -303,7 +314,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
       TComDataCU *pcColCU = 0;
       pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX, pelY, baseCUAddr, baseAbsPartIdx, true);
 
-      if( pcColCU && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_NONE) && (pcColCU->getPredictionMode(baseAbsPartIdx) != MODE_INTRA) )  //base layer unit not skip and invalid mode
+      if( pcColCU && pcColCU->getPredictionMode(baseAbsPartIdx) == MODE_INTER )  //base layer unit not skip and invalid mode
       {
         for(UInt refPicList = 0; refPicList < 2; refPicList++)  //for each reference list
         {
@@ -338,9 +349,9 @@ Void TComPic::initUpsampledMvField()
 {
   UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
 
-  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCUsInFrame(); cuIdx++)  //each LCU
+  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
   {
-    TComDataCU* pcCUDes = getCU(cuIdx);
+    TComDataCU* pcCUDes = getCtu(cuIdx);
     TComMvField zeroMvField;
     for(UInt list = 0; list < 2; list++)  //each reference list
     {
@@ -355,7 +366,6 @@ Void TComPic::initUpsampledMvField()
   }
   return;
 }
-#endif
 #endif
 
 #if MFM_ENCCONSTRAINT
@@ -399,36 +409,6 @@ Bool TComPic::checkSameRefInfo()
   return( bSameRefInfo );  
 }
 #endif
-
-#if WPP_FIX
-UInt TComPic::getSubstreamForLCUAddr(const UInt uiLCUAddr, const Bool bAddressInRaster, TComSlice *pcSlice)
-{
-  const Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-  UInt uiSubStrm;
-
-  if (iNumSubstreams > 1) // wavefronts, and possibly tiles being used.
-  {
-    TComPicSym &picSym=*(getPicSym());
-    const UInt uiLCUAddrRaster = bAddressInRaster?uiLCUAddr : picSym.getCUOrderMap(uiLCUAddr);
-    const UInt uiWidthInLCUs  = picSym.getFrameWidthInCU();
-    const UInt uiTileIndex=picSym.getTileIdxMap(uiLCUAddrRaster);
-    const UInt widthInTiles=(picSym.getNumColumnsMinus1()+1);
-    TComTile *pTile=picSym.getTComTile(uiTileIndex);
-    const UInt uiTileStartLCU = pTile->getFirstCUAddr();
-    const UInt uiTileLCUY = uiTileStartLCU / uiWidthInLCUs;
-    // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
-    const UInt uiLin = uiLCUAddrRaster / uiWidthInLCUs;
-          UInt uiStartingSubstreamForTile=(uiTileLCUY*widthInTiles) + (pTile->getTileHeight()*(uiTileIndex%widthInTiles));
-    uiSubStrm = uiStartingSubstreamForTile + (uiLin-uiTileLCUY);
-  }
-  else
-  {
-    // dependent tiles => substreams are "per frame".
-    uiSubStrm = 0;//uiLin % iNumSubstreams; // x modulo 1 = 0 !
-  }
-  return uiSubStrm;
-}
-#endif
-
+#endif //SVC_EXTENSION
 
 //! \}

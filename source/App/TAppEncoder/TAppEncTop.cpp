@@ -41,6 +41,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <assert.h>
+#if !SVC_EXTENSION
+#include <iomanip>
+#endif
 
 #include "TAppEncTop.h"
 #include "TLibEncoder/AnnexBwrite.h"
@@ -79,15 +82,15 @@ Void TAppEncTop::xInitLibCfg()
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   vps->setVpsPocLsbAlignedFlag(false);
 #endif
-  vps->setMaxTLayers                       ( m_maxTempLayer );
+  vps->setMaxTLayers                                                      ( m_maxTempLayer );
   if (m_maxTempLayer == 1)
   {
     vps->setTemporalNestingFlag(true);
   }
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
-    vps->setNumReorderPics                 ( m_numReorderPics[i], i );
-    vps->setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
+    vps->setNumReorderPics                                                ( m_numReorderPics[i], i );
+    vps->setMaxDecPicBuffering                                            ( m_maxDecPicBuffering[i], i );
   }
 
 #if REPN_FORMAT_IN_VPS  
@@ -106,7 +109,7 @@ Void TAppEncTop::xInitLibCfg()
           && m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC()
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-          && m_acLayerCfg[layer].m_internalBitDepthY == m_acLayerCfg[idx].m_internalBitDepthY && m_acLayerCfg[layer].m_internalBitDepthC == m_acLayerCfg[idx].m_internalBitDepthC
+          && m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA] == m_acLayerCfg[idx].m_internalBitDepth[CHANNEL_TYPE_LUMA] && m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA] == m_acLayerCfg[idx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]
 #endif
           )
         {
@@ -149,54 +152,82 @@ Void TAppEncTop::xInitLibCfg()
     assert( layer != m_numLayers );   // One of the VPS Rep format indices not set
   }
 
-  vps->setVpsNumRepFormats( maxRepFormatIdx + 1 );
+  vps->setVpsNumRepFormats                                                ( maxRepFormatIdx + 1 );
 
 #if Q0195_REP_FORMAT_CLEANUP
   // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
-  vps->setRepFormatIdxPresentFlag( vps->getVpsNumRepFormats() > 1 ? true : false );
+  vps->setRepFormatIdxPresentFlag                                         ( vps->getVpsNumRepFormats() > 1 ? true : false );
 #else
-  vps->setRepFormatIdxPresentFlag( true );
+  vps->setRepFormatIdxPresentFlag                                         ( true );
 #endif
 
   for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
   {
     RepFormat *repFormat = vps->getVpsRepFormat( idx );
 #if REPN_FORMAT_CONTROL_FLAG
-    repFormat->setChromaAndBitDepthVpsPresentFlag( true ); 
+    repFormat->setChromaAndBitDepthVpsPresentFlag                         ( true ); 
     if (idx==0)
     {
       assert(repFormat->getChromaAndBitDepthVpsPresentFlag() == true); 
     }
 #endif 
-    repFormat->setPicWidthVpsInLumaSamples  ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
-    repFormat->setPicHeightVpsInLumaSamples ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
+    repFormat->setPicWidthVpsInLumaSamples                                ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceWidth()   );
+    repFormat->setPicHeightVpsInLumaSamples                               ( m_acLayerCfg[mapIdxToLayer[idx]].getSourceHeight()  );
 #if AUXILIARY_PICTURES
-    repFormat->setChromaFormatVpsIdc        ( m_acLayerCfg[mapIdxToLayer[idx]].getChromaFormatIDC() );
+    repFormat->setChromaFormatVpsIdc                                      ( m_acLayerCfg[mapIdxToLayer[idx]].getChromaFormatIDC() );
 #else
-    repFormat->setChromaFormatVpsIdc        ( 1                                             );  // Need modification to change for each layer - corresponds to 420
+    repFormat->setChromaFormatVpsIdc                                      ( 1 );  // Need modification to change for each layer - corresponds to 420
 #endif
-    repFormat->setSeparateColourPlaneVpsFlag( 0                                             );  // Need modification to change for each layer
+    repFormat->setSeparateColourPlaneVpsFlag                              ( 0 );  // Need modification to change for each layer
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-    repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY(mapIdxToLayer[idx])      );  // Need modification to change for each layer
-    repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC(mapIdxToLayer[idx])      );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsLuma                                         ( getInternalBitDepth(mapIdxToLayer[idx], CHANNEL_TYPE_LUMA)      );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsChroma                                       ( getInternalBitDepth(mapIdxToLayer[idx], CHANNEL_TYPE_CHROMA)    );  // Need modification to change for each layer
 #else
-    repFormat->setBitDepthVpsLuma           ( getInternalBitDepthY()                        );  // Need modification to change for each layer
-    repFormat->setBitDepthVpsChroma         ( getInternalBitDepthC()                        );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsLuma                                         ( getInternalBitDepth(CHANNEL_TYPE_LUMA)                        );  // Need modification to change for each layer
+    repFormat->setBitDepthVpsChroma                                       ( getInternalBitDepth(CHANNEL_TYPE_CHROMA)                      );  // Need modification to change for each layer
 #endif
 
 #if R0156_CONF_WINDOW_IN_REP_FORMAT
-    repFormat->getConformanceWindowVps().setWindow(
-      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinLeft, 
-      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinRight, 
-      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinTop,
-      m_acLayerCfg[mapIdxToLayer[idx]].m_confWinBottom );
+    repFormat->getConformanceWindowVps().setWindow                        ( m_acLayerCfg[mapIdxToLayer[idx]].m_confWinLeft,                                                                             
+                                                                            m_acLayerCfg[mapIdxToLayer[idx]].m_confWinRight, 
+                                                                            m_acLayerCfg[mapIdxToLayer[idx]].m_confWinTop,
+                                                                            m_acLayerCfg[mapIdxToLayer[idx]].m_confWinBottom );
 #endif
 
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
-    m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch( m_skipPictureAtArcSwitch );
+    m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch             ( m_skipPictureAtArcSwitch );
 #endif
   }
   delete [] mapIdxToLayer;
+#endif
+
+#if MULTIPLE_PTL_SUPPORT
+  //Populate PTL in VPS
+  TComVPS *pVPS = m_acTEncTop[0].getVPS();
+  for( Int ii = 0; ii < m_numPTLInfo; ii++ )
+  {
+    pVPS->getPTL(ii)->getGeneralPTL()->setLevelIdc(m_levelList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setTierFlag(m_levelTierList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProfileIdc(m_profileList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProfileCompatibilityFlag(m_profileCompatibility[ii], 1);
+    pVPS->getPTL(ii)->getGeneralPTL()->setProgressiveSourceFlag(m_progressiveSourceFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setInterlacedSourceFlag(m_interlacedSourceFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setNonPackedConstraintFlag(m_nonPackedConstraintFlagList[ii]);
+    pVPS->getPTL(ii)->getGeneralPTL()->setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlagList[ii]);
+  }
+  pVPS->setNumProfileTierLevel(m_numPTLInfo);
+
+  std::vector<int> myvector;
+  vps->getProfileLevelTierIdx()->resize(m_numOutputLayerSets);
+  for (int ii = 0; ii < m_numOutputLayerSets; ii++)
+  {
+    myvector =  m_listOfLayerPTLofOlss[ii];
+
+    for (std::vector<int>::iterator it = myvector.begin() ; it != myvector.end(); ++it)
+    {
+      pVPS->addProfileLevelTierIdx(ii, it[0]);
+    }
+  }
 #endif
 
   assert( m_numLayers <= MAX_LAYERS );
@@ -205,44 +236,67 @@ Void TAppEncTop::xInitLibCfg()
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //1
-    g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-    g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
+    g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+    g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+    g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+    g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
     // Set this to be used in Upsampling filter in function "TComUpsampleFilter::upsampleBasePic"
-    g_bitDepthYLayer[layer] = g_bitDepthY;
-    g_bitDepthCLayer[layer] = g_bitDepthC;
+    g_bitDepthLayer[CHANNEL_TYPE_LUMA][layer]   = g_bitDepth[CHANNEL_TYPE_LUMA];
+    g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layer] = g_bitDepth[CHANNEL_TYPE_CHROMA];
 
 #if O0194_WEIGHTED_PREDICTION_CGS
-    m_acTEncTop[layer].setInterLayerWeightedPredFlag( m_useInterLayerWeightedPred );
+    m_acTEncTop[layer].setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
 #endif
 #endif
-    //m_acTEncTop[layer].setVPS(&vps);
-    m_acTEncTop[layer].setFrameRate                    ( m_acLayerCfg[layer].getFrameRate() );
-    m_acTEncTop[layer].setFrameSkip                    ( m_FrameSkip );
-    m_acTEncTop[layer].setSourceWidth                  ( m_acLayerCfg[layer].getSourceWidth() );
-    m_acTEncTop[layer].setSourceHeight                 ( m_acLayerCfg[layer].getSourceHeight() );
-    m_acTEncTop[layer].setConformanceWindow            ( m_acLayerCfg[layer].m_confWinLeft, m_acLayerCfg[layer].m_confWinRight, m_acLayerCfg[layer].m_confWinTop, m_acLayerCfg[layer].m_confWinBottom );
-    m_acTEncTop[layer].setFramesToBeEncoded            ( m_framesToBeEncoded );
+    
+#if MULTIPLE_PTL_SUPPORT
+    Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
+    m_acTEncTop[layer].setProfile                                         ( m_profileList[layerPTLIdx] );
+    m_acTEncTop[layer].setLevel                                           ( m_levelTierList[layerPTLIdx], m_levelList[layerPTLIdx] );
+    m_acTEncTop[layer].setProgressiveSourceFlag                           ( m_progressiveSourceFlagList[layerPTLIdx] );
+    m_acTEncTop[layer].setInterlacedSourceFlag                            ( m_interlacedSourceFlagList[layerPTLIdx] );
+    m_acTEncTop[layer].setNonPackedConstraintFlag                         ( m_nonPackedConstraintFlagList[layerPTLIdx] );
+    m_acTEncTop[layer].setFrameOnlyConstraintFlag                         ( m_frameOnlyConstraintFlagList[layerPTLIdx] );
+    m_acTEncTop[layer].setBitDepthConstraintValue                         ( m_acLayerCfg[layer].m_bitDepthConstraint );
+    m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
+    m_acTEncTop[layer].setIntraConstraintFlag                             ( m_acLayerCfg[layer].m_intraConstraintFlag );
+    m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_acLayerCfg[layer].m_lowerBitRateConstraintFlag );
+#else
+    m_acTEncTop[layer].setProfile                                         ( m_profile );
+    m_acTEncTop[layer].setLevel                                           ( m_levelTier, m_level );
+    m_acTEncTop[layer].setProgressiveSourceFlag                           ( m_progressiveSourceFlag );
+    m_acTEncTop[layer].setInterlacedSourceFlag                            ( m_interlacedSourceFlag );
+    m_acTEncTop[layer].setNonPackedConstraintFlag                         ( m_nonPackedConstraintFlag );
+    m_acTEncTop[layer].setFrameOnlyConstraintFlag                         ( m_frameOnlyConstraintFlag );
+    m_acTEncTop[layer].setBitDepthConstraintValue                         ( m_bitDepthConstraint );
+    m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
+    m_acTEncTop[layer].setIntraConstraintFlag                             ( m_intraConstraintFlag );
+    m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_lowerBitRateConstraintFlag );
+#endif
 
-    m_acTEncTop[layer].setProfile(m_profile);
-    m_acTEncTop[layer].setLevel(m_levelTier, m_level);
-    m_acTEncTop[layer].setProgressiveSourceFlag(m_progressiveSourceFlag);
-    m_acTEncTop[layer].setInterlacedSourceFlag(m_interlacedSourceFlag);
-    m_acTEncTop[layer].setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
-    m_acTEncTop[layer].setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
+    m_acTEncTop[layer].setPrintMSEBasedSequencePSNR                       ( m_printMSEBasedSequencePSNR);
+    m_acTEncTop[layer].setPrintFrameMSE                                   ( m_printFrameMSE);
+    m_acTEncTop[layer].setPrintSequenceMSE                                ( m_printSequenceMSE);
+    m_acTEncTop[layer].setCabacZeroWordPaddingEnabled                     ( m_cabacZeroWordPaddingEnabled );
+
+    m_acTEncTop[layer].setFrameRate                                       ( m_acLayerCfg[layer].getFrameRate() );
+    m_acTEncTop[layer].setFrameSkip                                       ( m_FrameSkip );
+    m_acTEncTop[layer].setSourceWidth                                     ( m_acLayerCfg[layer].getSourceWidth() );
+    m_acTEncTop[layer].setSourceHeight                                    ( m_acLayerCfg[layer].getSourceHeight() );
+    m_acTEncTop[layer].setConformanceWindow                               ( m_acLayerCfg[layer].m_confWinLeft, m_acLayerCfg[layer].m_confWinRight, m_acLayerCfg[layer].m_confWinTop, m_acLayerCfg[layer].m_confWinBottom );
+    m_acTEncTop[layer].setFramesToBeEncoded                               ( m_framesToBeEncoded );
 
 #if REF_IDX_MFM
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_nonHEVCBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+    m_acTEncTop[layer].setMFMEnabledFlag                                  (layer == 0 ? false : ( m_nonHEVCBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_avcBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
+    m_acTEncTop[layer].setMFMEnabledFlag                                  (layer == 0 ? false : ( m_avcBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #endif
 #else
-    m_acTEncTop[layer].setMFMEnabledFlag(layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
+    m_acTEncTop[layer].setMFMEnabledFlag                                  (layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
 #endif
 #endif
     // set layer ID
@@ -251,49 +305,49 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setLayerEnc(m_apcTEncTop);
 
     //====== Coding Structure ========
-    m_acTEncTop[layer].setIntraPeriod                  ( m_acLayerCfg[layer].m_iIntraPeriod );
-    m_acTEncTop[layer].setDecodingRefreshType          ( m_iDecodingRefreshType );
-    m_acTEncTop[layer].setGOPSize                      ( m_iGOPSize );
+    m_acTEncTop[layer].setIntraPeriod                                     ( m_acLayerCfg[layer].m_iIntraPeriod );
+    m_acTEncTop[layer].setDecodingRefreshType                             ( m_iDecodingRefreshType );
+    m_acTEncTop[layer].setGOPSize                                         ( m_iGOPSize );
 #if Q0108_TSA_STSA
-    m_acTEncTop[layer].setGopList                      ( layer ? m_EhGOPList[layer] : m_GOPList );
+    m_acTEncTop[layer].setGopList                                         ( layer ? m_EhGOPList[layer] : m_GOPList );
 #else
-    m_acTEncTop[layer].setGopList                      ( m_GOPList );
+    m_acTEncTop[layer].setGopList                                         ( m_GOPList );
 #endif
 
 #if !Q0108_TSA_STSA
-    m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs );
+    m_acTEncTop[layer].setExtraRPSs                                       ( m_extraRPSs );
 #else
-    m_acTEncTop[layer].setExtraRPSs                    ( m_extraRPSs[layer] );
+    m_acTEncTop[layer].setExtraRPSs                                       ( m_extraRPSs[layer] );
 #endif
     for(Int i = 0; i < MAX_TLAYER; i++)
     {
-      m_acTEncTop[layer].setNumReorderPics             ( m_numReorderPics[i], i );
-      m_acTEncTop[layer].setMaxDecPicBuffering         ( m_maxDecPicBuffering[i], i );
+      m_acTEncTop[layer].setNumReorderPics                                ( m_numReorderPics[i], i );
+      m_acTEncTop[layer].setMaxDecPicBuffering                            ( m_maxDecPicBuffering[i], i );
     }
     for( UInt uiLoop = 0; uiLoop < MAX_TLAYER; ++uiLoop )
     {
-      m_acTEncTop[layer].setLambdaModifier( uiLoop, m_adLambdaModifier[ uiLoop ] );
+      m_acTEncTop[layer].setLambdaModifier                                ( uiLoop, m_adLambdaModifier[ uiLoop ] );
     }
-    m_acTEncTop[layer].setQP                           ( m_acLayerCfg[layer].getIntQP() );
+    m_acTEncTop[layer].setQP                                              ( m_acLayerCfg[layer].getIntQP() );
 
-    m_acTEncTop[layer].setPad                          ( m_acLayerCfg[layer].getPad() );
+    m_acTEncTop[layer].setPad                                             ( m_acLayerCfg[layer].getPad() );
 #if !Q0108_TSA_STSA
-    m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+    m_acTEncTop[layer].setMaxTempLayer                                    ( m_maxTempLayer );
 #else
     if (layer== 0)
     {
-      m_acTEncTop[layer].setMaxTempLayer                 ( m_maxTempLayer );
+      m_acTEncTop[layer].setMaxTempLayer                                  ( m_maxTempLayer );
     }
     else
     {
-      m_acTEncTop[layer].setMaxTempLayer                 ( m_EhMaxTempLayer[layer] );
+      m_acTEncTop[layer].setMaxTempLayer                                  ( m_EhMaxTempLayer[layer] );
     }
 #endif
     m_acTEncTop[layer].setUseAMP( m_enableAMP );
 
     if( layer < m_numLayers - 1 )
     {
-       m_acTEncTop[layer].setMaxTidIlRefPicsPlus1 ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1());
+       m_acTEncTop[layer].setMaxTidIlRefPicsPlus1                         ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1());
     }
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -301,39 +355,39 @@ Void TAppEncTop::xInitLibCfg()
     {
       for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
       {
-        m_acTEncTop[layer].setSamplePredEnabledFlag(i, false);
-        m_acTEncTop[layer].setMotionPredEnabledFlag(i, false);
+        m_acTEncTop[layer].setSamplePredEnabledFlag                       (i, false);
+        m_acTEncTop[layer].setMotionPredEnabledFlag                       (i, false);
       }
       if(m_acLayerCfg[layer].getNumSamplePredRefLayers() == -1)
       {
         // Not included in the configuration file; assume that each layer depends on previous layer
-        m_acTEncTop[layer].setNumSamplePredRefLayers   (1);      // One sample pred ref. layer
-        m_acTEncTop[layer].setSamplePredRefLayerId     (0, layer - 1);   // Previous layer
-        m_acTEncTop[layer].setSamplePredEnabledFlag    (layer - 1, true);
+        m_acTEncTop[layer].setNumSamplePredRefLayers                      (1);      // One sample pred ref. layer
+        m_acTEncTop[layer].setSamplePredRefLayerId                        (0, layer - 1);   // Previous layer
+        m_acTEncTop[layer].setSamplePredEnabledFlag                       (layer - 1, true);
       }
       else
       {
-        m_acTEncTop[layer].setNumSamplePredRefLayers   ( m_acLayerCfg[layer].getNumSamplePredRefLayers() );
+        m_acTEncTop[layer].setNumSamplePredRefLayers                      ( m_acLayerCfg[layer].getNumSamplePredRefLayers() );
         for(Int i = 0; i < m_acTEncTop[layer].getNumSamplePredRefLayers(); i++)
         {
-          m_acTEncTop[layer].setSamplePredRefLayerId   ( i, m_acLayerCfg[layer].getSamplePredRefLayerId(i));
-          m_acTEncTop[layer].setSamplePredEnabledFlag  (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
+          m_acTEncTop[layer].setSamplePredRefLayerId                      ( i, m_acLayerCfg[layer].getSamplePredRefLayerId(i));
+          m_acTEncTop[layer].setSamplePredEnabledFlag                     (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
         }
       }
       if(m_acLayerCfg[layer].getNumMotionPredRefLayers() == -1)
       {
         // Not included in the configuration file; assume that each layer depends on previous layer
-        m_acTEncTop[layer].setNumMotionPredRefLayers   (1);      // One motion pred ref. layer
-        m_acTEncTop[layer].setMotionPredRefLayerId     (0, layer - 1);   // Previous layer
-        m_acTEncTop[layer].setMotionPredEnabledFlag    (layer - 1, true);
+        m_acTEncTop[layer].setNumMotionPredRefLayers                      (1);      // One motion pred ref. layer
+        m_acTEncTop[layer].setMotionPredRefLayerId                        (0, layer - 1);   // Previous layer
+        m_acTEncTop[layer].setMotionPredEnabledFlag                       (layer - 1, true);
       }
       else
       {
-        m_acTEncTop[layer].setNumMotionPredRefLayers   ( m_acLayerCfg[layer].getNumMotionPredRefLayers() );
+        m_acTEncTop[layer].setNumMotionPredRefLayers                      ( m_acLayerCfg[layer].getNumMotionPredRefLayers() );
         for(Int i = 0; i < m_acTEncTop[layer].getNumMotionPredRefLayers(); i++)
         {
-          m_acTEncTop[layer].setMotionPredRefLayerId   ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
-          m_acTEncTop[layer].setMotionPredEnabledFlag  (m_acLayerCfg[layer].getMotionPredRefLayerId(i), true);
+          m_acTEncTop[layer].setMotionPredRefLayerId                      ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
+          m_acTEncTop[layer].setMotionPredEnabledFlag                     (m_acLayerCfg[layer].getMotionPredRefLayerId(i), true);
         }
       }
       Int numDirectRefLayers = 0;
@@ -344,15 +398,15 @@ Void TAppEncTop::xInitLibCfg()
       {
         if (m_acTEncTop[layer].getSamplePredEnabledFlag(i) || m_acTEncTop[layer].getMotionPredEnabledFlag(i))
         {
-          m_acTEncTop[layer].setRefLayerId(numDirectRefLayers, i);
+          m_acTEncTop[layer].setRefLayerId                                (numDirectRefLayers, i);
           numDirectRefLayers++;
         }
       }
-      m_acTEncTop[layer].setNumDirectRefLayers(numDirectRefLayers);
+      m_acTEncTop[layer].setNumDirectRefLayers                            (numDirectRefLayers);
 
       if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
       {
-        m_acTEncTop[layer].setNumActiveRefLayers( m_acTEncTop[layer].getNumDirectRefLayers() );
+        m_acTEncTop[layer].setNumActiveRefLayers                          ( m_acTEncTop[layer].getNumDirectRefLayers() );
         for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
         {
           m_acTEncTop[layer].setPredLayerId(i, i);
@@ -360,28 +414,12 @@ Void TAppEncTop::xInitLibCfg()
       }
       else
       {
-        m_acTEncTop[layer].setNumActiveRefLayers       ( m_acLayerCfg[layer].getNumActiveRefLayers() );
+        m_acTEncTop[layer].setNumActiveRefLayers                          ( m_acLayerCfg[layer].getNumActiveRefLayers() );
         for(Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++)
         {
-          m_acTEncTop[layer].setPredLayerId             ( i, m_acLayerCfg[layer].getPredLayerId(i));
+          m_acTEncTop[layer].setPredLayerId                               ( i, m_acLayerCfg[layer].getPredLayerId(i));
         }
       }
-#if REF_REGION_OFFSET
-      for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
-      {
-#if AUXILIARY_PICTURES
-        Int cf = m_acLayerCfg[i].m_chromaFormatIDC;
-        Int rlSubWidthC  = ( cf == CHROMA_420 || cf == CHROMA_422 ) ? 2 : 1;
-        Int rlSubHeightC = ( cf == CHROMA_420 ) ? 2 : 1;
-#else
-        Int rlSubWidthC  = 2;
-        Int rlSubHeightC = 2;
-#endif
-        m_acTEncTop[layer].setRefRegionOffsetPresentFlag( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag );
-        m_acTEncTop[layer].getRefLayerWindow(i).setWindow( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
-                                                           rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
-      }
-#endif
     }
     else
     {
@@ -392,217 +430,264 @@ Void TAppEncTop::xInitLibCfg()
     //===== Slice ========
 
     //====== Loop/Deblock Filter ========
-    m_acTEncTop[layer].setLoopFilterDisable            ( m_bLoopFilterDisable       );
-    m_acTEncTop[layer].setLoopFilterOffsetInPPS        ( m_loopFilterOffsetInPPS );
-    m_acTEncTop[layer].setLoopFilterBetaOffset         ( m_loopFilterBetaOffsetDiv2  );
-    m_acTEncTop[layer].setLoopFilterTcOffset           ( m_loopFilterTcOffsetDiv2    );
-    m_acTEncTop[layer].setDeblockingFilterControlPresent( m_DeblockingFilterControlPresent);
-    m_acTEncTop[layer].setDeblockingFilterMetric       ( m_DeblockingFilterMetric );
+    m_acTEncTop[layer].setLoopFilterDisable                                ( m_bLoopFilterDisable       );
+    m_acTEncTop[layer].setLoopFilterOffsetInPPS                            ( m_loopFilterOffsetInPPS );
+    m_acTEncTop[layer].setLoopFilterBetaOffset                             ( m_loopFilterBetaOffsetDiv2  );
+    m_acTEncTop[layer].setLoopFilterTcOffset                               ( m_loopFilterTcOffsetDiv2    );
+    m_acTEncTop[layer].setDeblockingFilterControlPresent                   ( m_DeblockingFilterControlPresent);
+    m_acTEncTop[layer].setDeblockingFilterMetric                           ( m_DeblockingFilterMetric );
 
     //====== Motion search ========
-    m_acTEncTop[layer].setFastSearch                   ( m_iFastSearch  );
-    m_acTEncTop[layer].setSearchRange                  ( m_iSearchRange );
-    m_acTEncTop[layer].setBipredSearchRange            ( m_bipredSearchRange );
+    m_acTEncTop[layer].setFastSearch                                       ( m_iFastSearch  );
+    m_acTEncTop[layer].setSearchRange                                      ( m_iSearchRange );
+    m_acTEncTop[layer].setBipredSearchRange                                ( m_bipredSearchRange );
 
     //====== Quality control ========
-    m_acTEncTop[layer].setMaxDeltaQP                   ( m_iMaxDeltaQP  );
-    m_acTEncTop[layer].setMaxCuDQPDepth                ( m_iMaxCuDQPDepth  );
+    m_acTEncTop[layer].setMaxDeltaQP                                       ( m_iMaxDeltaQP  );
+    m_acTEncTop[layer].setMaxCuDQPDepth                                    ( m_iMaxCuDQPDepth  );
+    m_acTEncTop[layer].setMaxCUChromaQpAdjustmentDepth                     ( m_maxCUChromaQpAdjustmentDepth );
+    m_acTEncTop[layer].setChromaCbQpOffset                                 ( m_cbQpOffset     );
+    m_acTEncTop[layer].setChromaCrQpOffset                                 ( m_crQpOffset  );
 
-    m_acTEncTop[layer].setChromaCbQpOffset             ( m_cbQpOffset     );
-    m_acTEncTop[layer].setChromaCrQpOffset             ( m_crQpOffset  );
+    m_acTEncTop[layer].setChromaFormatIdc                                  ( m_acLayerCfg[layer].m_chromaFormatIDC  );
 
 #if ADAPTIVE_QP_SELECTION
-    m_acTEncTop[layer].setUseAdaptQpSelect             ( m_bUseAdaptQpSelect   );
+    m_acTEncTop[layer].setUseAdaptQpSelect                                 ( m_bUseAdaptQpSelect   );
 #endif
     
-    m_acTEncTop[layer].setUseAdaptiveQP                ( m_bUseAdaptiveQP  );
-    m_acTEncTop[layer].setQPAdaptationRange            ( m_iQPAdaptationRange );
+    m_acTEncTop[layer].setUseAdaptiveQP                                    ( m_bUseAdaptiveQP  );
+    m_acTEncTop[layer].setQPAdaptationRange                                ( m_iQPAdaptationRange );
+    m_acTEncTop[layer].setUseExtendedPrecision                             ( m_acLayerCfg[layer].m_useExtendedPrecision );
+    m_acTEncTop[layer].setUseHighPrecisionPredictionWeighting              ( m_acLayerCfg[layer].m_useHighPrecisionPredictionWeighting );
 
     //====== Tool list ========    
-    m_acTEncTop[layer].setDeltaQpRD                    ( m_uiDeltaQpRD  );
-    m_acTEncTop[layer].setUseASR                       ( m_bUseASR      );
-    m_acTEncTop[layer].setUseHADME                     ( m_bUseHADME    );    
-    m_acTEncTop[layer].setdQPs                         ( m_acLayerCfg[layer].getdQPs() );
-    m_acTEncTop[layer].setUseRDOQ                      ( m_useRDOQ     );
-    m_acTEncTop[layer].setUseRDOQTS                    ( m_useRDOQTS   );
-    m_acTEncTop[layer].setRDpenalty                    ( m_rdPenalty );
+    m_acTEncTop[layer].setDeltaQpRD                                        ( m_uiDeltaQpRD  );
+    m_acTEncTop[layer].setUseASR                                           ( m_bUseASR      );
+    m_acTEncTop[layer].setUseHADME                                         ( m_bUseHADME    );    
+    m_acTEncTop[layer].setdQPs                                             ( m_acLayerCfg[layer].getdQPs() );
+    m_acTEncTop[layer].setUseRDOQ                                          ( m_useRDOQ     );
+    m_acTEncTop[layer].setUseRDOQTS                                        ( m_useRDOQTS   );
+    m_acTEncTop[layer].setRDpenalty                                        ( m_rdPenalty );
 #if LAYER_CTB
-    m_acTEncTop[layer].setQuadtreeTULog2MaxSize        ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize );
-    m_acTEncTop[layer].setQuadtreeTULog2MinSize        ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize );
-    m_acTEncTop[layer].setQuadtreeTUMaxDepthInter      ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter );
-    m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra      ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra );
+    m_acTEncTop[layer].setQuadtreeTULog2MaxSize                            ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize );
+    m_acTEncTop[layer].setQuadtreeTULog2MinSize                            ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthInter                          ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra                          ( m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra );
 #else
-    m_acTEncTop[layer].setQuadtreeTULog2MaxSize        ( m_uiQuadtreeTULog2MaxSize );
-    m_acTEncTop[layer].setQuadtreeTULog2MinSize        ( m_uiQuadtreeTULog2MinSize );
-    m_acTEncTop[layer].setQuadtreeTUMaxDepthInter      ( m_uiQuadtreeTUMaxDepthInter );
-    m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra      ( m_uiQuadtreeTUMaxDepthIntra );
+    m_acTEncTop[layer].setQuadtreeTULog2MaxSize                            ( m_uiQuadtreeTULog2MaxSize );
+    m_acTEncTop[layer].setQuadtreeTULog2MinSize                            ( m_uiQuadtreeTULog2MinSize );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthInter                          ( m_uiQuadtreeTUMaxDepthInter );
+    m_acTEncTop[layer].setQuadtreeTUMaxDepthIntra                          ( m_uiQuadtreeTUMaxDepthIntra );
 #endif
-    m_acTEncTop[layer].setUseFastEnc                   ( m_bUseFastEnc  );
-    m_acTEncTop[layer].setUseEarlyCU                   ( m_bUseEarlyCU  );
-    m_acTEncTop[layer].setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
-    m_acTEncTop[layer].setUseCbfFastMode               ( m_bUseCbfFastMode  );
-    m_acTEncTop[layer].setUseEarlySkipDetection        ( m_useEarlySkipDetection );
-#if FAST_INTRA_SHVC
-    m_acTEncTop[layer].setUseFastIntraScalable         ( m_useFastIntraScalable );
-#endif
-
-    m_acTEncTop[layer].setUseTransformSkip             ( m_useTransformSkip      );
-    m_acTEncTop[layer].setUseTransformSkipFast         ( m_useTransformSkipFast  );
-    m_acTEncTop[layer].setUseConstrainedIntraPred      ( m_bUseConstrainedIntraPred );
-    m_acTEncTop[layer].setPCMLog2MinSize               ( m_uiPCMLog2MinSize);
-    m_acTEncTop[layer].setUsePCM                       ( m_usePCM );
-    m_acTEncTop[layer].setPCMLog2MaxSize               ( m_pcmLog2MaxSize);
-    m_acTEncTop[layer].setMaxNumMergeCand              ( m_maxNumMergeCand );
+    m_acTEncTop[layer].setUseFastEnc                                       ( m_bUseFastEnc  );
+    m_acTEncTop[layer].setUseEarlyCU                                       ( m_bUseEarlyCU  );
+    m_acTEncTop[layer].setUseFastDecisionForMerge                          ( m_useFastDecisionForMerge  );
+    m_acTEncTop[layer].setUseCbfFastMode                                   ( m_bUseCbfFastMode  );
+    m_acTEncTop[layer].setUseEarlySkipDetection                            ( m_useEarlySkipDetection );
+    m_acTEncTop[layer].setUseCrossComponentPrediction                      ( m_useCrossComponentPrediction );
+    m_acTEncTop[layer].setUseReconBasedCrossCPredictionEstimate            ( m_reconBasedCrossCPredictionEstimate );
+    m_acTEncTop[layer].setSaoOffsetBitShift                                ( CHANNEL_TYPE_LUMA  , m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   );
+    m_acTEncTop[layer].setSaoOffsetBitShift                                ( CHANNEL_TYPE_CHROMA, m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] );
+    m_acTEncTop[layer].setUseTransformSkip                                 ( m_useTransformSkip      );
+    m_acTEncTop[layer].setUseTransformSkipFast                             ( m_useTransformSkipFast  );
+    m_acTEncTop[layer].setUseResidualRotation                              ( m_useResidualRotation   );
+    m_acTEncTop[layer].setUseSingleSignificanceMapContext                  ( m_useSingleSignificanceMapContext   );
+    m_acTEncTop[layer].setUseGolombRiceParameterAdaptation                 ( m_useGolombRiceParameterAdaptation );
+    m_acTEncTop[layer].setAlignCABACBeforeBypass                           ( m_alignCABACBeforeBypass );
+    m_acTEncTop[layer].setTransformSkipLog2MaxSize                         ( m_transformSkipLog2MaxSize  );
+    for (UInt signallingModeIndex = 0; signallingModeIndex < NUMBER_OF_RDPCM_SIGNALLING_MODES; signallingModeIndex++)
+    {
+      m_acTEncTop[layer].setUseResidualDPCM                                ( RDPCMSignallingMode(signallingModeIndex), m_useResidualDPCM[signallingModeIndex]);
+    }
+    m_acTEncTop[layer].setUseConstrainedIntraPred                          ( m_bUseConstrainedIntraPred );
+    m_acTEncTop[layer].setPCMLog2MinSize                                   ( m_uiPCMLog2MinSize);
+    m_acTEncTop[layer].setUsePCM                                           ( m_usePCM );
+    m_acTEncTop[layer].setPCMLog2MaxSize                                   ( m_pcmLog2MaxSize);
+    m_acTEncTop[layer].setMaxNumMergeCand                                  ( m_maxNumMergeCand );
 
 
     //====== Weighted Prediction ========
-    m_acTEncTop[layer].setUseWP                   ( m_useWeightedPred      );
-    m_acTEncTop[layer].setWPBiPred                ( m_useWeightedBiPred   );
+    m_acTEncTop[layer].setUseWP                                            ( m_useWeightedPred      );
+    m_acTEncTop[layer].setWPBiPred                                         ( m_useWeightedBiPred   );
+#if FAST_INTRA_SHVC
+    m_acTEncTop[layer].setUseFastIntraScalable                             ( m_useFastIntraScalable );
+#endif
 #if O0194_WEIGHTED_PREDICTION_CGS
     if( layer != 0 && m_useInterLayerWeightedPred )
     {
       // Enable weighted prediction for enhancement layer
-      m_acTEncTop[layer].setUseWP                 ( true   );
-      m_acTEncTop[layer].setWPBiPred              ( true   );
+      m_acTEncTop[layer].setUseWP                                           ( true   );
+      m_acTEncTop[layer].setWPBiPred                                        ( true   );
     }
 #endif
     //====== Parallel Merge Estimation ========
-    m_acTEncTop[layer].setLog2ParallelMergeLevelMinus2 ( m_log2ParallelMergeLevel - 2 );
+    m_acTEncTop[layer].setLog2ParallelMergeLevelMinus2                      ( m_log2ParallelMergeLevel - 2 );
 
     //====== Slice ========
-    m_acTEncTop[layer].setSliceMode               ( m_sliceMode                );
-    m_acTEncTop[layer].setSliceArgument           ( m_sliceArgument            );
+    m_acTEncTop[layer].setSliceMode                                         ( (SliceConstraint) m_sliceMode );
+    m_acTEncTop[layer].setSliceArgument                                     ( m_sliceArgument            );
 
     //====== Dependent Slice ========
-    m_acTEncTop[layer].setSliceSegmentMode        ( m_sliceSegmentMode         );
-    m_acTEncTop[layer].setSliceSegmentArgument    ( m_sliceSegmentArgument     );
-#if LAYER_CTB
-    Int iNumPartInCU = 1<<(m_acLayerCfg[layer].m_uiMaxCUDepth<<1);
-#else
-    Int iNumPartInCU = 1<<(m_uiMaxCUDepth<<1);
-#endif
-    if(m_sliceSegmentMode==FIXED_NUMBER_OF_LCU)
-    {
-      m_acTEncTop[layer].setSliceSegmentArgument ( m_sliceSegmentArgument * iNumPartInCU );
-    }
-    if(m_sliceMode==FIXED_NUMBER_OF_LCU)
-    {
-      m_acTEncTop[layer].setSliceArgument ( m_sliceArgument * iNumPartInCU );
-    }
-    if(m_sliceMode==FIXED_NUMBER_OF_TILES)
-    {
-      m_acTEncTop[layer].setSliceArgument ( m_sliceArgument );
-    }
+    m_acTEncTop[layer].setSliceSegmentMode                                  ( (SliceConstraint) m_sliceSegmentMode );
+    m_acTEncTop[layer].setSliceSegmentArgument                              ( m_sliceSegmentArgument     );
 
-    if(m_sliceMode == 0 )
+    if(m_sliceMode == NO_SLICES )
     {
       m_bLFCrossSliceBoundaryFlag = true;
     }
-    m_acTEncTop[layer].setLFCrossSliceBoundaryFlag( m_bLFCrossSliceBoundaryFlag );
-    m_acTEncTop[layer].setUseSAO ( m_bUseSAO );
-    m_acTEncTop[layer].setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
 
-    m_acTEncTop[layer].setSaoLcuBoundary (m_saoLcuBoundary);
-    m_acTEncTop[layer].setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
-    m_acTEncTop[layer].setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
+    m_acTEncTop[layer].setLFCrossSliceBoundaryFlag                          ( m_bLFCrossSliceBoundaryFlag );
+    m_acTEncTop[layer].setUseSAO                                            ( m_bUseSAO );
+    m_acTEncTop[layer].setMaxNumOffsetsPerPic                               ( m_maxNumOffsetsPerPic );
 
-    m_acTEncTop[layer].setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
-    m_acTEncTop[layer].setRecoveryPointSEIEnabled( m_recoveryPointSEIEnabled );
-    m_acTEncTop[layer].setBufferingPeriodSEIEnabled( m_bufferingPeriodSEIEnabled );
-    m_acTEncTop[layer].setPictureTimingSEIEnabled( m_pictureTimingSEIEnabled );
-    m_acTEncTop[layer].setToneMappingInfoSEIEnabled                 ( m_toneMappingInfoSEIEnabled );
-    m_acTEncTop[layer].setTMISEIToneMapId                           ( m_toneMapId );
-    m_acTEncTop[layer].setTMISEIToneMapCancelFlag                   ( m_toneMapCancelFlag );
-    m_acTEncTop[layer].setTMISEIToneMapPersistenceFlag              ( m_toneMapPersistenceFlag );
-    m_acTEncTop[layer].setTMISEICodedDataBitDepth                   ( m_toneMapCodedDataBitDepth );
-    m_acTEncTop[layer].setTMISEITargetBitDepth                      ( m_toneMapTargetBitDepth );
-    m_acTEncTop[layer].setTMISEIModelID                             ( m_toneMapModelId );
-    m_acTEncTop[layer].setTMISEIMinValue                            ( m_toneMapMinValue );
-    m_acTEncTop[layer].setTMISEIMaxValue                            ( m_toneMapMaxValue );
-    m_acTEncTop[layer].setTMISEISigmoidMidpoint                     ( m_sigmoidMidpoint );
-    m_acTEncTop[layer].setTMISEISigmoidWidth                        ( m_sigmoidWidth );
-    m_acTEncTop[layer].setTMISEIStartOfCodedInterva                 ( m_startOfCodedInterval );
-    m_acTEncTop[layer].setTMISEINumPivots                           ( m_numPivots );
-    m_acTEncTop[layer].setTMISEICodedPivotValue                     ( m_codedPivotValue );
-    m_acTEncTop[layer].setTMISEITargetPivotValue                    ( m_targetPivotValue );
-    m_acTEncTop[layer].setTMISEICameraIsoSpeedIdc                   ( m_cameraIsoSpeedIdc );
-    m_acTEncTop[layer].setTMISEICameraIsoSpeedValue                 ( m_cameraIsoSpeedValue );
-    m_acTEncTop[layer].setTMISEIExposureCompensationValueSignFlag   ( m_exposureCompensationValueSignFlag );
-    m_acTEncTop[layer].setTMISEIExposureCompensationValueNumerator  ( m_exposureCompensationValueNumerator );
-    m_acTEncTop[layer].setTMISEIExposureCompensationValueDenomIdc   ( m_exposureCompensationValueDenomIdc );
-    m_acTEncTop[layer].setTMISEIRefScreenLuminanceWhite             ( m_refScreenLuminanceWhite );
-    m_acTEncTop[layer].setTMISEIExtendedRangeWhiteLevel             ( m_extendedRangeWhiteLevel );
-    m_acTEncTop[layer].setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
-    m_acTEncTop[layer].setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
-    m_acTEncTop[layer].setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
-#if P0050_KNEE_FUNCTION_SEI
-    m_acTEncTop[layer].setKneeSEIEnabled                            ( m_kneeSEIEnabled );
-    m_acTEncTop[layer].setKneeSEIId                                 ( m_kneeSEIId );
-    m_acTEncTop[layer].setKneeSEICancelFlag                         ( m_kneeSEICancelFlag );
-    m_acTEncTop[layer].setKneeSEIPersistenceFlag                    ( m_kneeSEIPersistenceFlag );
-    m_acTEncTop[layer].setKneeSEIMappingFlag                        ( m_kneeSEIMappingFlag );
-    m_acTEncTop[layer].setKneeSEIInputDrange                        ( m_kneeSEIInputDrange );
-    m_acTEncTop[layer].setKneeSEIInputDispLuminance                 ( m_kneeSEIInputDispLuminance );
-    m_acTEncTop[layer].setKneeSEIOutputDrange                       ( m_kneeSEIOutputDrange );
-    m_acTEncTop[layer].setKneeSEIOutputDispLuminance                ( m_kneeSEIOutputDispLuminance );
-    m_acTEncTop[layer].setKneeSEINumKneePointsMinus1                ( m_kneeSEINumKneePointsMinus1 );
-    m_acTEncTop[layer].setKneeSEIInputKneePoint                     ( m_kneeSEIInputKneePoint );
-    m_acTEncTop[layer].setKneeSEIOutputKneePoint                    ( m_kneeSEIOutputKneePoint );
+    m_acTEncTop[layer].setSaoCtuBoundary                                    ( m_saoCtuBoundary );
+    m_acTEncTop[layer].setPCMInputBitDepthFlag                              ( m_bPCMInputBitDepthFlag);
+    m_acTEncTop[layer].setPCMFilterDisableFlag                              ( m_bPCMFilterDisableFlag);
+
+    m_acTEncTop[layer].setDisableIntraReferenceSmoothing                    (!m_enableIntraReferenceSmoothing );
+    m_acTEncTop[layer].setDecodedPictureHashSEIEnabled                      ( m_decodedPictureHashSEIEnabled );
+    m_acTEncTop[layer].setRecoveryPointSEIEnabled                           ( m_recoveryPointSEIEnabled );
+    m_acTEncTop[layer].setBufferingPeriodSEIEnabled                         ( m_bufferingPeriodSEIEnabled );
+    m_acTEncTop[layer].setPictureTimingSEIEnabled                           ( m_pictureTimingSEIEnabled );
+    m_acTEncTop[layer].setToneMappingInfoSEIEnabled                         ( m_toneMappingInfoSEIEnabled );
+    m_acTEncTop[layer].setTMISEIToneMapId                                   ( m_toneMapId );
+    m_acTEncTop[layer].setTMISEIToneMapCancelFlag                           ( m_toneMapCancelFlag );
+    m_acTEncTop[layer].setTMISEIToneMapPersistenceFlag                      ( m_toneMapPersistenceFlag );
+    m_acTEncTop[layer].setTMISEICodedDataBitDepth                           ( m_toneMapCodedDataBitDepth );
+    m_acTEncTop[layer].setTMISEITargetBitDepth                              ( m_toneMapTargetBitDepth );
+    m_acTEncTop[layer].setTMISEIModelID                                     ( m_toneMapModelId );
+    m_acTEncTop[layer].setTMISEIMinValue                                    ( m_toneMapMinValue );
+    m_acTEncTop[layer].setTMISEIMaxValue                                    ( m_toneMapMaxValue );
+    m_acTEncTop[layer].setTMISEISigmoidMidpoint                             ( m_sigmoidMidpoint );
+    m_acTEncTop[layer].setTMISEISigmoidWidth                                ( m_sigmoidWidth );
+    m_acTEncTop[layer].setTMISEIStartOfCodedInterva                         ( m_startOfCodedInterval );
+    m_acTEncTop[layer].setTMISEINumPivots                                   ( m_numPivots );
+    m_acTEncTop[layer].setTMISEICodedPivotValue                             ( m_codedPivotValue );
+    m_acTEncTop[layer].setTMISEITargetPivotValue                            ( m_targetPivotValue );
+    m_acTEncTop[layer].setTMISEICameraIsoSpeedIdc                           ( m_cameraIsoSpeedIdc );
+    m_acTEncTop[layer].setTMISEICameraIsoSpeedValue                         ( m_cameraIsoSpeedValue );
+    m_acTEncTop[layer].setTMISEIExposureIndexIdc                            ( m_exposureIndexIdc );
+    m_acTEncTop[layer].setTMISEIExposureIndexValue                          ( m_exposureIndexValue );
+    m_acTEncTop[layer].setTMISEIExposureCompensationValueSignFlag           ( m_exposureCompensationValueSignFlag );
+    m_acTEncTop[layer].setTMISEIExposureCompensationValueNumerator          ( m_exposureCompensationValueNumerator );
+    m_acTEncTop[layer].setTMISEIExposureCompensationValueDenomIdc           ( m_exposureCompensationValueDenomIdc );
+    m_acTEncTop[layer].setTMISEIRefScreenLuminanceWhite                     ( m_refScreenLuminanceWhite );
+    m_acTEncTop[layer].setTMISEIExtendedRangeWhiteLevel                     ( m_extendedRangeWhiteLevel );
+    m_acTEncTop[layer].setTMISEINominalBlackLevelLumaCodeValue              ( m_nominalBlackLevelLumaCodeValue );
+    m_acTEncTop[layer].setTMISEINominalWhiteLevelLumaCodeValue              ( m_nominalWhiteLevelLumaCodeValue );
+    m_acTEncTop[layer].setTMISEIExtendedWhiteLevelLumaCodeValue             ( m_extendedWhiteLevelLumaCodeValue );
+    m_acTEncTop[layer].setChromaSamplingFilterHintEnabled                   ( m_chromaSamplingFilterSEIenabled );
+    m_acTEncTop[layer].setChromaSamplingHorFilterIdc                        ( m_chromaSamplingHorFilterIdc );
+    m_acTEncTop[layer].setChromaSamplingVerFilterIdc                        ( m_chromaSamplingVerFilterIdc );
+    m_acTEncTop[layer].setFramePackingArrangementSEIEnabled                 ( m_framePackingSEIEnabled );
+    m_acTEncTop[layer].setFramePackingArrangementSEIType                    ( m_framePackingSEIType );
+    m_acTEncTop[layer].setFramePackingArrangementSEIId                      ( m_framePackingSEIId );
+    m_acTEncTop[layer].setFramePackingArrangementSEIQuincunx                ( m_framePackingSEIQuincunx );
+    m_acTEncTop[layer].setFramePackingArrangementSEIInterpretation          ( m_framePackingSEIInterpretation );
+    m_acTEncTop[layer].setSegmentedRectFramePackingArrangementSEIEnabled    ( m_segmentedRectFramePackingSEIEnabled );
+    m_acTEncTop[layer].setSegmentedRectFramePackingArrangementSEICancel     ( m_segmentedRectFramePackingSEICancel );
+    m_acTEncTop[layer].setSegmentedRectFramePackingArrangementSEIType       ( m_segmentedRectFramePackingSEIType );
+    m_acTEncTop[layer].setSegmentedRectFramePackingArrangementSEIPersistence( m_segmentedRectFramePackingSEIPersistence );
+    m_acTEncTop[layer].setDisplayOrientationSEIAngle                        ( m_displayOrientationSEIAngle );
+    m_acTEncTop[layer].setTemporalLevel0IndexSEIEnabled                     ( m_temporalLevel0IndexSEIEnabled );
+    m_acTEncTop[layer].setGradualDecodingRefreshInfoEnabled                 ( m_gradualDecodingRefreshInfoEnabled );
+    m_acTEncTop[layer].setNoDisplaySEITLayer                                ( m_noDisplaySEITLayer );
+    m_acTEncTop[layer].setDecodingUnitInfoSEIEnabled                        ( m_decodingUnitInfoSEIEnabled );
+    m_acTEncTop[layer].setSOPDescriptionSEIEnabled                          ( m_SOPDescriptionSEIEnabled );
+    m_acTEncTop[layer].setScalableNestingSEIEnabled                         ( m_scalableNestingSEIEnabled );
+    m_acTEncTop[layer].setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
+    m_acTEncTop[layer].setTimeCodeSEIEnabled                                ( m_timeCodeSEIEnabled );
+    m_acTEncTop[layer].setNumberOfTimeSets                                  ( m_timeCodeSEINumTs );
+    for(Int i = 0; i < m_timeCodeSEINumTs; i++) { m_acTEncTop[layer].setTimeSet(m_timeSetArray[i], i); }
+    m_acTEncTop[layer].setKneeSEIEnabled                                    ( m_kneeSEIEnabled );
+    m_acTEncTop[layer].setKneeSEIId                                         ( m_kneeSEIId );
+    m_acTEncTop[layer].setKneeSEICancelFlag                                 ( m_kneeSEICancelFlag );
+    m_acTEncTop[layer].setKneeSEIPersistenceFlag                            ( m_kneeSEIPersistenceFlag );    
+    m_acTEncTop[layer].setKneeSEIInputDrange                                ( m_kneeSEIInputDrange );
+    m_acTEncTop[layer].setKneeSEIInputDispLuminance                         ( m_kneeSEIInputDispLuminance );
+    m_acTEncTop[layer].setKneeSEIOutputDrange                               ( m_kneeSEIOutputDrange );
+    m_acTEncTop[layer].setKneeSEIOutputDispLuminance                        ( m_kneeSEIOutputDispLuminance );
+    m_acTEncTop[layer].setKneeSEINumKneePointsMinus1                        ( m_kneeSEINumKneePointsMinus1 );
+    m_acTEncTop[layer].setKneeSEIInputKneePoint                             ( m_kneeSEIInputKneePoint );
+    m_acTEncTop[layer].setKneeSEIOutputKneePoint                            ( m_kneeSEIOutputKneePoint );
+    m_acTEncTop[layer].setMasteringDisplaySEI                               ( m_masteringDisplay );
+#if P0123_ALPHA_CHANNEL_SEI
+    m_acTEncTop[layer].setAlphaSEIEnabled                                   ( m_alphaSEIEnabled );
+    m_acTEncTop[layer].setAlphaCancelFlag                                   ( m_alphaCancelFlag );
+    m_acTEncTop[layer].setAlphaUseIdc                                       ( m_alphaUseIdc );
+    m_acTEncTop[layer].setAlphaBitDepthMinus8                               ( m_alphaBitDepthMinus8 );
+    m_acTEncTop[layer].setAlphaTransparentValue                             ( m_alphaTransparentValue );
+    m_acTEncTop[layer].setAlphaOpaqueValue                                  ( m_alphaOpaqueValue );
+    m_acTEncTop[layer].setAlphaIncrementFlag                                ( m_alphaIncrementFlag );
+    m_acTEncTop[layer].setAlphaClipFlag                                     ( m_alphaClipFlag );
+    m_acTEncTop[layer].setAlphaClipTypeFlag                                 ( m_alphaClipTypeFlag );
+#endif
+#if Q0096_OVERLAY_SEI
+    m_acTEncTop[layer].setOverlaySEIEnabled                                 ( m_overlaySEIEnabled );
+    m_acTEncTop[layer].setOverlaySEICancelFlag                              ( m_overlayInfoCancelFlag );
+    m_acTEncTop[layer].setOverlaySEIContentAuxIdMinus128                    ( m_overlayContentAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEILabelAuxIdMinus128                      ( m_overlayLabelAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEIAlphaAuxIdMinus128                      ( m_overlayAlphaAuxIdMinus128 );
+    m_acTEncTop[layer].setOverlaySEIElementLabelValueLengthMinus8           ( m_overlayElementLabelValueLengthMinus8 );
+    m_acTEncTop[layer].setOverlaySEINumOverlaysMinus1                       ( m_numOverlaysMinus1 );
+    m_acTEncTop[layer].setOverlaySEIIdx                                     ( m_overlayIdx );
+    m_acTEncTop[layer].setOverlaySEILanguagePresentFlag                     ( m_overlayLanguagePresentFlag );
+    m_acTEncTop[layer].setOverlaySEIContentLayerId                          ( m_overlayContentLayerId );
+    m_acTEncTop[layer].setOverlaySEILabelPresentFlag                        ( m_overlayLabelPresentFlag );
+    m_acTEncTop[layer].setOverlaySEILabelLayerId                            ( m_overlayLabelLayerId );
+    m_acTEncTop[layer].setOverlaySEIAlphaPresentFlag                        ( m_overlayAlphaPresentFlag );
+    m_acTEncTop[layer].setOverlaySEIAlphaLayerId                            ( m_overlayAlphaLayerId );
+    m_acTEncTop[layer].setOverlaySEINumElementsMinus1                       ( m_numOverlayElementsMinus1 );
+    m_acTEncTop[layer].setOverlaySEIElementLabelMin                         ( m_overlayElementLabelMin );
+    m_acTEncTop[layer].setOverlaySEIElementLabelMax                         ( m_overlayElementLabelMax );
+    m_acTEncTop[layer].setOverlaySEILanguage                                ( m_overlayLanguage );
+    m_acTEncTop[layer].setOverlaySEIName                                    ( m_overlayName );
+    m_acTEncTop[layer].setOverlaySEIElementName                             ( m_overlayElementName );
+    m_acTEncTop[layer].setOverlaySEIPersistenceFlag                         ( m_overlayInfoPersistenceFlag );
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-    m_acTEncTop[layer].setCRISEIFile                                ( const_cast<Char*>(m_acLayerCfg[layer].m_colourRemapSEIFile.c_str()) );
-    m_acTEncTop[layer].setCRISEIId                                  ( m_acLayerCfg[layer].m_colourRemapSEIId );
-    m_acTEncTop[layer].setCRISEICancelFlag                          ( m_acLayerCfg[layer].m_colourRemapSEICancelFlag );
-    m_acTEncTop[layer].setCRISEIPersistenceFlag                     ( m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag );
-    m_acTEncTop[layer].setCRISEIVideoSignalInfoPresentFlag          ( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag );
-    m_acTEncTop[layer].setCRISEIFullRangeFlag                       ( m_acLayerCfg[layer].m_colourRemapSEIFullRangeFlag );
-    m_acTEncTop[layer].setCRISEIPrimaries                           ( m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
-    m_acTEncTop[layer].setCRISEITransferFunction                    ( m_acLayerCfg[layer].m_colourRemapSEITransferFunction );
-    m_acTEncTop[layer].setCRISEIMatrixCoefficients                  ( m_acLayerCfg[layer].m_colourRemapSEIMatrixCoefficients );
-    m_acTEncTop[layer].setCRISEIInputBitDepth                       ( m_acLayerCfg[layer].m_colourRemapSEIInputBitDepth );
-    m_acTEncTop[layer].setCRISEIBitDepth                            ( m_acLayerCfg[layer].m_colourRemapSEIBitDepth );
-    m_acTEncTop[layer].setCRISEIPreLutNumValMinus1                  ( m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1 );
-    m_acTEncTop[layer].setCRISEIPreLutCodedValue                    ( m_acLayerCfg[layer].m_colourRemapSEIPreLutCodedValue );
-    m_acTEncTop[layer].setCRISEIPreLutTargetValue                   ( m_acLayerCfg[layer].m_colourRemapSEIPreLutTargetValue );
-    m_acTEncTop[layer].setCRISEIMatrixPresentFlag                   ( m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag );
-    m_acTEncTop[layer].setCRISEILog2MatrixDenom                     ( m_acLayerCfg[layer].m_colourRemapSEILog2MatrixDenom );
-    m_acTEncTop[layer].setCRISEICoeffs                              ( m_acLayerCfg[layer].m_colourRemapSEICoeffs );
-    m_acTEncTop[layer].setCRISEIPostLutNumValMinus1                 ( m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1 );
-    m_acTEncTop[layer].setCRISEIPostLutCodedValue                   ( m_acLayerCfg[layer]. m_colourRemapSEIPostLutCodedValue );
-    m_acTEncTop[layer].setCRISEIPostLutTargetValue                  ( m_acLayerCfg[layer].m_colourRemapSEIPostLutTargetValue );
-#endif
-    m_acTEncTop[layer].setFramePackingArrangementSEIEnabled( m_framePackingSEIEnabled );
-    m_acTEncTop[layer].setFramePackingArrangementSEIType( m_framePackingSEIType );
-    m_acTEncTop[layer].setFramePackingArrangementSEIId( m_framePackingSEIId );
-    m_acTEncTop[layer].setFramePackingArrangementSEIQuincunx( m_framePackingSEIQuincunx );
-    m_acTEncTop[layer].setFramePackingArrangementSEIInterpretation( m_framePackingSEIInterpretation );
-    m_acTEncTop[layer].setDisplayOrientationSEIAngle( m_displayOrientationSEIAngle );
-    m_acTEncTop[layer].setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
-    m_acTEncTop[layer].setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
-    m_acTEncTop[layer].setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
+    m_acTEncTop[layer].setCRISEIFile                            ( const_cast<Char*>(m_acLayerCfg[layer].m_colourRemapSEIFile.c_str()) );
+    m_acTEncTop[layer].setCRISEIId                              ( m_acLayerCfg[layer].m_colourRemapSEIId );
+    m_acTEncTop[layer].setCRISEICancelFlag                      ( m_acLayerCfg[layer].m_colourRemapSEICancelFlag );
+    m_acTEncTop[layer].setCRISEIPersistenceFlag                 ( m_acLayerCfg[layer].m_colourRemapSEIPersistenceFlag );
+    m_acTEncTop[layer].setCRISEIVideoSignalInfoPresentFlag      ( m_acLayerCfg[layer].m_colourRemapSEIVideoSignalInfoPresentFlag );
+    m_acTEncTop[layer].setCRISEIFullRangeFlag                   ( m_acLayerCfg[layer].m_colourRemapSEIFullRangeFlag );
+    m_acTEncTop[layer].setCRISEIPrimaries                       ( m_acLayerCfg[layer].m_colourRemapSEIPrimaries );
+    m_acTEncTop[layer].setCRISEITransferFunction                ( m_acLayerCfg[layer].m_colourRemapSEITransferFunction );
+    m_acTEncTop[layer].setCRISEIMatrixCoefficients              ( m_acLayerCfg[layer].m_colourRemapSEIMatrixCoefficients );
+    m_acTEncTop[layer].setCRISEIInputBitDepth                   ( m_acLayerCfg[layer].m_colourRemapSEIInputBitDepth );
+    m_acTEncTop[layer].setCRISEIBitDepth                        ( m_acLayerCfg[layer].m_colourRemapSEIBitDepth );
+    m_acTEncTop[layer].setCRISEIPreLutNumValMinus1              ( m_acLayerCfg[layer].m_colourRemapSEIPreLutNumValMinus1 );
+    m_acTEncTop[layer].setCRISEIPreLutCodedValue                ( m_acLayerCfg[layer].m_colourRemapSEIPreLutCodedValue );
+    m_acTEncTop[layer].setCRISEIPreLutTargetValue               ( m_acLayerCfg[layer].m_colourRemapSEIPreLutTargetValue );
+    m_acTEncTop[layer].setCRISEIMatrixPresentFlag               ( m_acLayerCfg[layer].m_colourRemapSEIMatrixPresentFlag );
+    m_acTEncTop[layer].setCRISEILog2MatrixDenom                 ( m_acLayerCfg[layer].m_colourRemapSEILog2MatrixDenom );
+    m_acTEncTop[layer].setCRISEICoeffs                          ( m_acLayerCfg[layer].m_colourRemapSEICoeffs );
+    m_acTEncTop[layer].setCRISEIPostLutNumValMinus1             ( m_acLayerCfg[layer].m_colourRemapSEIPostLutNumValMinus1 );
+    m_acTEncTop[layer].setCRISEIPostLutCodedValue               ( m_acLayerCfg[layer]. m_colourRemapSEIPostLutCodedValue );
+    m_acTEncTop[layer].setCRISEIPostLutTargetValue              ( m_acLayerCfg[layer].m_colourRemapSEIPostLutTargetValue );
+#endif    
 #if LAYERS_NOT_PRESENT_SEI
-    m_acTEncTop[layer].setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
-#endif
-    m_acTEncTop[layer].setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
-    m_acTEncTop[layer].setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
+    m_acTEncTop[layer].setLayersNotPresentSEIEnabled            ( m_layersNotPresentSEIEnabled );
+#endif    
 #if Q0189_TMVP_CONSTRAINTS
-    m_acTEncTop[layer].setTMVPConstraintsSEIEnabled( m_TMVPConstraintsSEIEnabled);           
+    m_acTEncTop[layer].setTMVPConstraintsSEIEnabled             ( m_TMVPConstraintsSEIEnabled);           
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
     m_acTEncTop[layer].setInterLayerConstrainedTileSetsSEIEnabled( m_interLayerConstrainedTileSetsSEIEnabled );
-    m_acTEncTop[layer].setIlNumSetsInMessage( m_ilNumSetsInMessage );
-    m_acTEncTop[layer].setSkippedTileSetPresentFlag( m_skippedTileSetPresentFlag );
-    m_acTEncTop[layer].setTopLeftTileIndex( m_topLeftTileIndex );
-    m_acTEncTop[layer].setBottomRightTileIndex( m_bottomRightTileIndex );
-    m_acTEncTop[layer].setIlcIdc( m_ilcIdc );
+    m_acTEncTop[layer].setIlNumSetsInMessage                    ( m_ilNumSetsInMessage );
+    m_acTEncTop[layer].setSkippedTileSetPresentFlag             ( m_skippedTileSetPresentFlag );
+    m_acTEncTop[layer].setTopLeftTileIndex                      ( m_topLeftTileIndex );
+    m_acTEncTop[layer].setBottomRightTileIndex                  ( m_bottomRightTileIndex );
+    m_acTEncTop[layer].setIlcIdc                                ( m_ilcIdc );
 #endif
-    m_acTEncTop[layer].setTileUniformSpacingFlag     ( m_tileUniformSpacingFlag );
-    m_acTEncTop[layer].setNumColumnsMinus1           ( m_numTileColumnsMinus1 );
-    m_acTEncTop[layer].setNumRowsMinus1              ( m_numTileRowsMinus1 );
+    m_acTEncTop[layer].setTileUniformSpacingFlag                ( m_tileUniformSpacingFlag );
+    m_acTEncTop[layer].setNumColumnsMinus1                      ( m_numTileColumnsMinus1 );
+    m_acTEncTop[layer].setNumRowsMinus1                         ( m_numTileRowsMinus1 );
     if(!m_tileUniformSpacingFlag)
     {
-      m_acTEncTop[layer].setColumnWidth              ( m_tileColumnWidth );
-      m_acTEncTop[layer].setRowHeight                ( m_tileRowHeight );
+      m_acTEncTop[layer].setColumnWidth                         ( m_tileColumnWidth );
+      m_acTEncTop[layer].setRowHeight                           ( m_tileRowHeight );
     }
     m_acTEncTop[layer].xCheckGSParameters();
     Int uiTilesCount = (m_numTileRowsMinus1+1) * (m_numTileColumnsMinus1+1);
@@ -610,133 +695,145 @@ Void TAppEncTop::xInitLibCfg()
     {
       m_bLFCrossTileBoundaryFlag = true;
     }
-    m_acTEncTop[layer].setLFCrossTileBoundaryFlag( m_bLFCrossTileBoundaryFlag );
-    m_acTEncTop[layer].setWaveFrontSynchro           ( m_acLayerCfg[layer].m_waveFrontSynchro );
-    m_acTEncTop[layer].setWaveFrontSubstreams        ( m_acLayerCfg[layer].m_iWaveFrontSubstreams );
-    m_acTEncTop[layer].setTMVPModeId ( m_TMVPModeId );
-    m_acTEncTop[layer].setUseScalingListId           ( m_useScalingListId  );
-    m_acTEncTop[layer].setScalingListFile            ( m_scalingListFile   );
-    m_acTEncTop[layer].setSignHideFlag(m_signHideFlag);
+    m_acTEncTop[layer].setLFCrossTileBoundaryFlag               ( m_bLFCrossTileBoundaryFlag );
+    m_acTEncTop[layer].setWaveFrontSynchro                      ( m_acLayerCfg[layer].m_waveFrontSynchro );
+    m_acTEncTop[layer].setWaveFrontSubstreams                   ( m_acLayerCfg[layer].m_iWaveFrontSubstreams );
+    m_acTEncTop[layer].setTMVPModeId                            ( m_TMVPModeId );
+    m_acTEncTop[layer].setUseScalingListId                      ( m_useScalingListId  );
+    m_acTEncTop[layer].setScalingListFile                       ( m_scalingListFile   );
+    m_acTEncTop[layer].setSignHideFlag                          ( m_signHideFlag );
 #if RC_SHVC_HARMONIZATION
-    m_acTEncTop[layer].setUseRateCtrl     (m_acLayerCfg[layer].getRCEnableRateControl());
-    m_acTEncTop[layer].setTargetBitrate   (m_acLayerCfg[layer].getRCTargetBitrate());
-    m_acTEncTop[layer].setKeepHierBit     (m_acLayerCfg[layer].getRCKeepHierarchicalBit());
-    m_acTEncTop[layer].setLCULevelRC      (m_acLayerCfg[layer].getRCLCULevelRC());
-    m_acTEncTop[layer].setUseLCUSeparateModel (m_acLayerCfg[layer].getRCUseLCUSeparateModel());
-    m_acTEncTop[layer].setInitialQP           (m_acLayerCfg[layer].getRCInitialQP());
-    m_acTEncTop[layer].setForceIntraQP        (m_acLayerCfg[layer].getRCForceIntraQP());
+    m_acTEncTop[layer].setUseRateCtrl                           ( m_acLayerCfg[layer].getRCEnableRateControl() );
+    m_acTEncTop[layer].setTargetBitrate                         ( m_acLayerCfg[layer].getRCTargetBitrate() );
+    m_acTEncTop[layer].setKeepHierBit                           ( m_acLayerCfg[layer].getRCKeepHierarchicalBit() );
+    m_acTEncTop[layer].setLCULevelRC                            ( m_acLayerCfg[layer].getRCLCULevelRC() );
+    m_acTEncTop[layer].setUseLCUSeparateModel                   ( m_acLayerCfg[layer].getRCUseLCUSeparateModel() );
+    m_acTEncTop[layer].setInitialQP                             ( m_acLayerCfg[layer].getRCInitialQP() );
+    m_acTEncTop[layer].setForceIntraQP                          ( m_acLayerCfg[layer].getRCForceIntraQP() );
 #else
-    m_acTEncTop[layer].setUseRateCtrl         ( m_RCEnableRateControl );
-    m_acTEncTop[layer].setTargetBitrate       ( m_RCTargetBitrate );
-    m_acTEncTop[layer].setKeepHierBit         ( m_RCKeepHierarchicalBit );
-    m_acTEncTop[layer].setLCULevelRC          ( m_RCLCULevelRC );
-    m_acTEncTop[layer].setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
-    m_acTEncTop[layer].setInitialQP           ( m_RCInitialQP );
-    m_acTEncTop[layer].setForceIntraQP        ( m_RCForceIntraQP );
+    m_acTEncTop[layer].setUseRateCtrl                           ( m_RCEnableRateControl );
+    m_acTEncTop[layer].setTargetBitrate                         ( m_RCTargetBitrate );
+    m_acTEncTop[layer].setKeepHierBit                           ( m_RCKeepHierarchicalBit );
+    m_acTEncTop[layer].setLCULevelRC                            ( m_RCLCULevelRC );
+    m_acTEncTop[layer].setUseLCUSeparateModel                   ( m_RCUseLCUSeparateModel );
+    m_acTEncTop[layer].setInitialQP                             ( m_RCInitialQP );
+    m_acTEncTop[layer].setForceIntraQP                          ( m_RCForceIntraQP );
 #endif
-    m_acTEncTop[layer].setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
-    m_acTEncTop[layer].setCUTransquantBypassFlagForceValue(m_CUTransquantBypassFlagForce);
-    m_acTEncTop[layer].setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
-    m_acTEncTop[layer].setUseStrongIntraSmoothing( m_useStrongIntraSmoothing );
-    m_acTEncTop[layer].setActiveParameterSetsSEIEnabled ( m_activeParameterSetsSEIEnabled );
-    m_acTEncTop[layer].setVuiParametersPresentFlag( m_vuiParametersPresentFlag );
-    m_acTEncTop[layer].setAspectRatioInfoPresentFlag( m_aspectRatioInfoPresentFlag);
-    m_acTEncTop[layer].setAspectRatioIdc( m_aspectRatioIdc );
-    m_acTEncTop[layer].setSarWidth( m_sarWidth );
-    m_acTEncTop[layer].setSarHeight( m_sarHeight );
-    m_acTEncTop[layer].setOverscanInfoPresentFlag( m_overscanInfoPresentFlag );
-    m_acTEncTop[layer].setOverscanAppropriateFlag( m_overscanAppropriateFlag );
-    m_acTEncTop[layer].setVideoSignalTypePresentFlag( m_videoSignalTypePresentFlag );
-    m_acTEncTop[layer].setVideoFormat( m_videoFormat );
-    m_acTEncTop[layer].setVideoFullRangeFlag( m_videoFullRangeFlag );
-    m_acTEncTop[layer].setColourDescriptionPresentFlag( m_colourDescriptionPresentFlag );
-    m_acTEncTop[layer].setColourPrimaries( m_colourPrimaries );
-    m_acTEncTop[layer].setTransferCharacteristics( m_transferCharacteristics );
-    m_acTEncTop[layer].setMatrixCoefficients( m_matrixCoefficients );
-    m_acTEncTop[layer].setChromaLocInfoPresentFlag( m_chromaLocInfoPresentFlag );
-    m_acTEncTop[layer].setChromaSampleLocTypeTopField( m_chromaSampleLocTypeTopField );
-    m_acTEncTop[layer].setChromaSampleLocTypeBottomField( m_chromaSampleLocTypeBottomField );
-    m_acTEncTop[layer].setNeutralChromaIndicationFlag( m_neutralChromaIndicationFlag );
-    m_acTEncTop[layer].setDefaultDisplayWindow( m_defDispWinLeftOffset, m_defDispWinRightOffset, m_defDispWinTopOffset, m_defDispWinBottomOffset );
-    m_acTEncTop[layer].setFrameFieldInfoPresentFlag( m_frameFieldInfoPresentFlag );
-    m_acTEncTop[layer].setPocProportionalToTimingFlag( m_pocProportionalToTimingFlag );
-    m_acTEncTop[layer].setNumTicksPocDiffOneMinus1   ( m_numTicksPocDiffOneMinus1    );
-    m_acTEncTop[layer].setBitstreamRestrictionFlag( m_bitstreamRestrictionFlag );
-    m_acTEncTop[layer].setTilesFixedStructureFlag( m_tilesFixedStructureFlag );
-    m_acTEncTop[layer].setMotionVectorsOverPicBoundariesFlag( m_motionVectorsOverPicBoundariesFlag );
-    m_acTEncTop[layer].setMinSpatialSegmentationIdc( m_minSpatialSegmentationIdc );
-    m_acTEncTop[layer].setMaxBytesPerPicDenom( m_maxBytesPerPicDenom );
-    m_acTEncTop[layer].setMaxBitsPerMinCuDenom( m_maxBitsPerMinCuDenom );
-    m_acTEncTop[layer].setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
-    m_acTEncTop[layer].setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
-    m_acTEncTop[layer].setElRapSliceTypeB(layer == 0? 0 : m_elRapSliceBEnabled);
+    m_acTEncTop[layer].setTransquantBypassEnableFlag            ( m_TransquantBypassEnableFlag );
+    m_acTEncTop[layer].setCUTransquantBypassFlagForceValue      ( m_CUTransquantBypassFlagForce );
+    m_acTEncTop[layer].setCostMode                              ( m_costMode );
+    m_acTEncTop[layer].setUseRecalculateQPAccordingToLambda     ( m_recalculateQPAccordingToLambda );
+    m_acTEncTop[layer].setUseStrongIntraSmoothing               ( m_useStrongIntraSmoothing );
+    m_acTEncTop[layer].setActiveParameterSetsSEIEnabled         ( m_activeParameterSetsSEIEnabled );
+    m_acTEncTop[layer].setVuiParametersPresentFlag              ( m_vuiParametersPresentFlag );
+    m_acTEncTop[layer].setAspectRatioInfoPresentFlag            ( m_aspectRatioInfoPresentFlag);
+    m_acTEncTop[layer].setAspectRatioIdc                        ( m_aspectRatioIdc );
+    m_acTEncTop[layer].setSarWidth                              ( m_sarWidth );
+    m_acTEncTop[layer].setSarHeight                             ( m_sarHeight );
+    m_acTEncTop[layer].setOverscanInfoPresentFlag               ( m_overscanInfoPresentFlag );
+    m_acTEncTop[layer].setOverscanAppropriateFlag               ( m_overscanAppropriateFlag );
+    m_acTEncTop[layer].setVideoSignalTypePresentFlag            ( m_videoSignalTypePresentFlag );
+    m_acTEncTop[layer].setVideoFormat                           ( m_videoFormat );
+    m_acTEncTop[layer].setVideoFullRangeFlag                    ( m_videoFullRangeFlag );
+    m_acTEncTop[layer].setColourDescriptionPresentFlag          ( m_colourDescriptionPresentFlag );
+    m_acTEncTop[layer].setColourPrimaries                       ( m_colourPrimaries );
+    m_acTEncTop[layer].setTransferCharacteristics               ( m_transferCharacteristics );
+    m_acTEncTop[layer].setMatrixCoefficients                    ( m_matrixCoefficients );
+    m_acTEncTop[layer].setChromaLocInfoPresentFlag              ( m_chromaLocInfoPresentFlag );
+    m_acTEncTop[layer].setChromaSampleLocTypeTopField           ( m_chromaSampleLocTypeTopField );
+    m_acTEncTop[layer].setChromaSampleLocTypeBottomField        ( m_chromaSampleLocTypeBottomField );
+    m_acTEncTop[layer].setNeutralChromaIndicationFlag           ( m_neutralChromaIndicationFlag );
+    m_acTEncTop[layer].setDefaultDisplayWindow                  ( m_defDispWinLeftOffset, m_defDispWinRightOffset, m_defDispWinTopOffset, m_defDispWinBottomOffset );
+    m_acTEncTop[layer].setFrameFieldInfoPresentFlag             ( m_frameFieldInfoPresentFlag );
+    m_acTEncTop[layer].setPocProportionalToTimingFlag           ( m_pocProportionalToTimingFlag );
+    m_acTEncTop[layer].setNumTicksPocDiffOneMinus1              ( m_numTicksPocDiffOneMinus1    );
+    m_acTEncTop[layer].setBitstreamRestrictionFlag              ( m_bitstreamRestrictionFlag );
+    m_acTEncTop[layer].setTilesFixedStructureFlag               ( m_tilesFixedStructureFlag );
+    m_acTEncTop[layer].setMotionVectorsOverPicBoundariesFlag    ( m_motionVectorsOverPicBoundariesFlag );
+    m_acTEncTop[layer].setMinSpatialSegmentationIdc             ( m_minSpatialSegmentationIdc );
+    m_acTEncTop[layer].setMaxBytesPerPicDenom                   ( m_maxBytesPerPicDenom );
+    m_acTEncTop[layer].setMaxBitsPerMinCuDenom                  ( m_maxBitsPerMinCuDenom );
+    m_acTEncTop[layer].setLog2MaxMvLengthHorizontal             ( m_log2MaxMvLengthHorizontal );
+    m_acTEncTop[layer].setLog2MaxMvLengthVertical               ( m_log2MaxMvLengthVertical );
+    m_acTEncTop[layer].setElRapSliceTypeB                       (layer == 0? 0 : m_elRapSliceBEnabled);
+
     if( layer > 0 )
     {
 #if REF_REGION_OFFSET
 #if AUXILIARY_PICTURES
-      Int cf = m_acLayerCfg[layer].m_chromaFormatIDC;
-      Int subWidthC  = ( cf == CHROMA_420 || cf == CHROMA_422 ) ? 2 : 1;
-      Int subHeightC = ( cf == CHROMA_420 ) ? 2 : 1;
+      Int subWidthC  = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
+      Int subHeightC = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
 #else
       Int subWidthC  = 2;
       Int subHeightC = 2;
 #endif
 #endif
-      m_acTEncTop[layer].setNumScaledRefLayerOffsets( m_acLayerCfg[layer].m_numScaledRefLayerOffsets );
-      for(Int i = 0; i < m_acLayerCfg[layer].m_numScaledRefLayerOffsets; i++)
+      m_acTEncTop[layer].setNumRefLayerLocationOffsets          ( m_acLayerCfg[layer].m_numRefLayerLocationOffsets );
+      for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
       {
 #if O0098_SCALED_REF_LAYER_ID
-        m_acTEncTop[layer].setScaledRefLayerId(i, m_acLayerCfg[layer].m_scaledRefLayerId[i]);
+        m_acTEncTop[layer].setRefLocationOffsetLayerId          (i, m_acLayerCfg[layer].m_refLocationOffsetLayerId[i]);
 #endif
 #if REF_REGION_OFFSET
-        m_acTEncTop[layer].setScaledRefLayerOffsetPresentFlag( i, m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] );
-        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                                 subHeightC * m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i],  subHeightC * m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
+        m_acTEncTop[layer].setScaledRefLayerOffsetPresentFlag   ( i, m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] );
+        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
+                                                                  subHeightC * m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i],  subHeightC * m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
 #else
 #if P0312_VERT_PHASE_ADJ
-        m_acTEncTop[layer].setVertPhasePositionEnableFlag( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
-        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
+        m_acTEncTop[layer].setVertPhasePositionEnableFlag       ( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
+        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
+          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
 #else
-        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-                                                  2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
+        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
+          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
 #endif
 #endif
+        Int rlSubWidthC  = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
+        Int rlSubHeightC = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
+
+        m_acTEncTop[layer].setRefRegionOffsetPresentFlag        ( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] );
+        m_acTEncTop[layer].getRefLayerWindow(i).setWindow       ( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
+                                                                  rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
 #if R0209_GENERIC_PHASE
-        m_acTEncTop[layer].setResamplePhaseSetPresentFlag( i, m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] );
-        m_acTEncTop[layer].setPhaseHorLuma( i, m_acLayerCfg[layer].m_phaseHorLuma[i] );
-        m_acTEncTop[layer].setPhaseVerLuma( i, m_acLayerCfg[layer].m_phaseVerLuma[i] );
-        m_acTEncTop[layer].setPhaseHorChroma( i, m_acLayerCfg[layer].m_phaseHorChroma[i] );
-        m_acTEncTop[layer].setPhaseVerChroma( i, m_acLayerCfg[layer].m_phaseVerChroma[i] );
+        m_acTEncTop[layer].setResamplePhaseSetPresentFlag       ( i, m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] );
+        m_acTEncTop[layer].setPhaseHorLuma                      ( i, m_acLayerCfg[layer].m_phaseHorLuma[i] );
+        m_acTEncTop[layer].setPhaseVerLuma                      ( i, m_acLayerCfg[layer].m_phaseVerLuma[i] );
+        m_acTEncTop[layer].setPhaseHorChroma                    ( i, m_acLayerCfg[layer].m_phaseHorChroma[i] );
+        m_acTEncTop[layer].setPhaseVerChroma                    ( i, m_acLayerCfg[layer].m_phaseVerChroma[i] );
 #endif
       }
     }
+
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    m_acTEncTop[layer].setAdaptiveResolutionChange( m_adaptiveResolutionChange );
+    m_acTEncTop[layer].setAdaptiveResolutionChange               ( m_adaptiveResolutionChange );
+#endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+    m_acTEncTop[layer].setLayerSwitchOffBegin                    (m_acLayerCfg[layer].m_layerSwitchOffBegin);
+    m_acTEncTop[layer].setLayerSwitchOffEnd                      (m_acLayerCfg[layer].m_layerSwitchOffEnd);
 #endif
 #if AUXILIARY_PICTURES
-    m_acTEncTop[layer].setChromaFormatIDC( m_acLayerCfg[layer].m_chromaFormatIDC );
+    m_acTEncTop[layer].setChromaFormatIDC                        ( m_acLayerCfg[layer].m_chromaFormatIDC );
 #endif
 #if O0153_ALT_OUTPUT_LAYER_FLAG
-    m_acTEncTop[layer].setAltOuputLayerFlag( m_altOutputLayerFlag );
+    m_acTEncTop[layer].setAltOuputLayerFlag                      ( m_altOutputLayerFlag );
 #endif
 #if O0149_CROSS_LAYER_BLA_FLAG
-    m_acTEncTop[layer].setCrossLayerBLAFlag( m_crossLayerBLAFlag );
+    m_acTEncTop[layer].setCrossLayerBLAFlag                      ( m_crossLayerBLAFlag );
 #endif
 #if Q0048_CGS_3D_ASYMLUT
-    m_acTEncTop[layer].setCGSFlag( layer == 0 ? 0 : m_nCGSFlag );
-    m_acTEncTop[layer].setCGSMaxOctantDepth( m_nCGSMaxOctantDepth );
-    m_acTEncTop[layer].setCGSMaxYPartNumLog2( m_nCGSMaxYPartNumLog2 );
-    m_acTEncTop[layer].setCGSLUTBit( m_nCGSLUTBit );
+    m_acTEncTop[layer].setCGSFlag                                ( layer == 0 ? 0 : m_nCGSFlag );
+    m_acTEncTop[layer].setCGSMaxOctantDepth                      ( m_nCGSMaxOctantDepth );
+    m_acTEncTop[layer].setCGSMaxYPartNumLog2                     ( m_nCGSMaxYPartNumLog2 );
+    m_acTEncTop[layer].setCGSLUTBit                              ( m_nCGSLUTBit );
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
-    m_acTEncTop[layer].setCGSAdaptChroma( m_nCGSAdaptiveChroma );
+    m_acTEncTop[layer].setCGSAdaptChroma                         ( m_nCGSAdaptiveChroma );
 #endif
 #if R0179_ENC_OPT_3DLUT_SIZE
-    m_acTEncTop[layer].setCGSLutSizeRDO( m_nCGSLutSizeRDO );
+    m_acTEncTop[layer].setCGSLutSizeRDO                          ( m_nCGSLutSizeRDO );
 #endif
 #endif
 #if Q0078_ADD_LAYER_SETS
-    m_acTEncTop[layer].setNumAddLayerSets( m_numAddLayerSets );
+    m_acTEncTop[layer].setNumAddLayerSets                        ( m_numAddLayerSets );
 #endif
   }
 }
@@ -745,200 +842,233 @@ Void TAppEncTop::xInitLibCfg()
 {
   TComVPS vps;
 
-  vps.setMaxTLayers                       ( m_maxTempLayer );
+  vps.setMaxTLayers                                               ( m_maxTempLayer );
   if (m_maxTempLayer == 1)
   {
     vps.setTemporalNestingFlag(true);
   }
-  vps.setMaxLayers                        ( 1 );
+  vps.setMaxLayers                                                ( 1 );
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
-    vps.setNumReorderPics                 ( m_numReorderPics[i], i );
-    vps.setMaxDecPicBuffering             ( m_maxDecPicBuffering[i], i );
+    vps.setNumReorderPics                                         ( m_numReorderPics[i], i );
+    vps.setMaxDecPicBuffering                                     ( m_maxDecPicBuffering[i], i );
   }
   m_cTEncTop.setVPS(&vps);
 
-  m_cTEncTop.setProfile(m_profile);
-  m_cTEncTop.setLevel(m_levelTier, m_level);
-  m_cTEncTop.setProgressiveSourceFlag(m_progressiveSourceFlag);
-  m_cTEncTop.setInterlacedSourceFlag(m_interlacedSourceFlag);
-  m_cTEncTop.setNonPackedConstraintFlag(m_nonPackedConstraintFlag);
-  m_cTEncTop.setFrameOnlyConstraintFlag(m_frameOnlyConstraintFlag);
+  m_cTEncTop.setProfile                                           ( m_profile);
+  m_cTEncTop.setLevel                                             ( m_levelTier, m_level);
+  m_cTEncTop.setProgressiveSourceFlag                             ( m_progressiveSourceFlag);
+  m_cTEncTop.setInterlacedSourceFlag                              ( m_interlacedSourceFlag);
+  m_cTEncTop.setNonPackedConstraintFlag                           ( m_nonPackedConstraintFlag);
+  m_cTEncTop.setFrameOnlyConstraintFlag                           ( m_frameOnlyConstraintFlag);
+  m_cTEncTop.setBitDepthConstraintValue                           ( m_bitDepthConstraint );
+  m_cTEncTop.setChromaFormatConstraintValue                       ( m_chromaFormatConstraint );
+  m_cTEncTop.setIntraConstraintFlag                               ( m_intraConstraintFlag );
+  m_cTEncTop.setLowerBitRateConstraintFlag                        ( m_lowerBitRateConstraintFlag );
 
-  m_cTEncTop.setFrameRate                    ( m_iFrameRate );
-  m_cTEncTop.setFrameSkip                    ( m_FrameSkip );
-  m_cTEncTop.setSourceWidth                  ( m_iSourceWidth );
-  m_cTEncTop.setSourceHeight                 ( m_iSourceHeight );
-  m_cTEncTop.setConformanceWindow            ( m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
-  m_cTEncTop.setFramesToBeEncoded            ( m_framesToBeEncoded );
+  m_cTEncTop.setPrintMSEBasedSequencePSNR                         ( m_printMSEBasedSequencePSNR);
+  m_cTEncTop.setPrintFrameMSE                                     ( m_printFrameMSE);
+  m_cTEncTop.setPrintSequenceMSE                                  ( m_printSequenceMSE);
+  m_cTEncTop.setCabacZeroWordPaddingEnabled                       ( m_cabacZeroWordPaddingEnabled );
+
+  m_cTEncTop.setFrameRate                                         ( m_iFrameRate );
+  m_cTEncTop.setFrameSkip                                         ( m_FrameSkip );
+  m_cTEncTop.setSourceWidth                                       ( m_iSourceWidth );
+  m_cTEncTop.setSourceHeight                                      ( m_iSourceHeight );
+  m_cTEncTop.setConformanceWindow                                 ( m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
+  m_cTEncTop.setFramesToBeEncoded                                 ( m_framesToBeEncoded );
 
   //====== Coding Structure ========
-  m_cTEncTop.setIntraPeriod                  ( m_iIntraPeriod );
-  m_cTEncTop.setDecodingRefreshType          ( m_iDecodingRefreshType );
-  m_cTEncTop.setGOPSize                      ( m_iGOPSize );
-  m_cTEncTop.setGopList                      ( m_GOPList );
-  m_cTEncTop.setExtraRPSs                    ( m_extraRPSs );
+  m_cTEncTop.setIntraPeriod                                       ( m_iIntraPeriod );
+  m_cTEncTop.setDecodingRefreshType                               ( m_iDecodingRefreshType );
+  m_cTEncTop.setGOPSize                                           ( m_iGOPSize );
+  m_cTEncTop.setGopList                                           ( m_GOPList );
+  m_cTEncTop.setExtraRPSs                                         ( m_extraRPSs );
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
-    m_cTEncTop.setNumReorderPics             ( m_numReorderPics[i], i );
-    m_cTEncTop.setMaxDecPicBuffering         ( m_maxDecPicBuffering[i], i );
+    m_cTEncTop.setNumReorderPics                                  ( m_numReorderPics[i], i );
+    m_cTEncTop.setMaxDecPicBuffering                              ( m_maxDecPicBuffering[i], i );
   }
   for( UInt uiLoop = 0; uiLoop < MAX_TLAYER; ++uiLoop )
   {
-    m_cTEncTop.setLambdaModifier( uiLoop, m_adLambdaModifier[ uiLoop ] );
+    m_cTEncTop.setLambdaModifier                                  ( uiLoop, m_adLambdaModifier[ uiLoop ] );
   }
-  m_cTEncTop.setQP                           ( m_iQP );
+  m_cTEncTop.setQP                                                ( m_iQP );
 
-  m_cTEncTop.setPad                          ( m_aiPad );
+  m_cTEncTop.setPad                                               ( m_aiPad );
 
-  m_cTEncTop.setMaxTempLayer                 ( m_maxTempLayer );
+  m_cTEncTop.setMaxTempLayer                                      ( m_maxTempLayer );
   m_cTEncTop.setUseAMP( m_enableAMP );
 
   //===== Slice ========
 
   //====== Loop/Deblock Filter ========
-  m_cTEncTop.setLoopFilterDisable            ( m_bLoopFilterDisable       );
-  m_cTEncTop.setLoopFilterOffsetInPPS        ( m_loopFilterOffsetInPPS );
-  m_cTEncTop.setLoopFilterBetaOffset         ( m_loopFilterBetaOffsetDiv2  );
-  m_cTEncTop.setLoopFilterTcOffset           ( m_loopFilterTcOffsetDiv2    );
-  m_cTEncTop.setDeblockingFilterControlPresent( m_DeblockingFilterControlPresent);
-  m_cTEncTop.setDeblockingFilterMetric       ( m_DeblockingFilterMetric );
+  m_cTEncTop.setLoopFilterDisable                                 ( m_bLoopFilterDisable       );
+  m_cTEncTop.setLoopFilterOffsetInPPS                             ( m_loopFilterOffsetInPPS );
+  m_cTEncTop.setLoopFilterBetaOffset                              ( m_loopFilterBetaOffsetDiv2  );
+  m_cTEncTop.setLoopFilterTcOffset                                ( m_loopFilterTcOffsetDiv2    );
+  m_cTEncTop.setDeblockingFilterControlPresent                    ( m_DeblockingFilterControlPresent);
+  m_cTEncTop.setDeblockingFilterMetric                            ( m_DeblockingFilterMetric );
 
   //====== Motion search ========
-  m_cTEncTop.setFastSearch                   ( m_iFastSearch  );
-  m_cTEncTop.setSearchRange                  ( m_iSearchRange );
-  m_cTEncTop.setBipredSearchRange            ( m_bipredSearchRange );
+  m_cTEncTop.setFastSearch                                        ( m_iFastSearch  );
+  m_cTEncTop.setSearchRange                                       ( m_iSearchRange );
+  m_cTEncTop.setBipredSearchRange                                 ( m_bipredSearchRange );
 
   //====== Quality control ========
-  m_cTEncTop.setMaxDeltaQP                   ( m_iMaxDeltaQP  );
-  m_cTEncTop.setMaxCuDQPDepth                ( m_iMaxCuDQPDepth  );
+  m_cTEncTop.setMaxDeltaQP                                        ( m_iMaxDeltaQP  );
+  m_cTEncTop.setMaxCuDQPDepth                                     ( m_iMaxCuDQPDepth  );
+  m_cTEncTop.setMaxCUChromaQpAdjustmentDepth                      ( m_maxCUChromaQpAdjustmentDepth );
+  m_cTEncTop.setChromaCbQpOffset                                  ( m_cbQpOffset     );
+  m_cTEncTop.setChromaCrQpOffset                                  ( m_crQpOffset  );
 
-  m_cTEncTop.setChromaCbQpOffset               ( m_cbQpOffset     );
-  m_cTEncTop.setChromaCrQpOffset            ( m_crQpOffset  );
+  m_cTEncTop.setChromaFormatIdc                                   ( m_chromaFormatIDC  );
 
 #if ADAPTIVE_QP_SELECTION
-  m_cTEncTop.setUseAdaptQpSelect             ( m_bUseAdaptQpSelect   );
+  m_cTEncTop.setUseAdaptQpSelect                                  ( m_bUseAdaptQpSelect   );
 #endif
 
-  m_cTEncTop.setUseAdaptiveQP                ( m_bUseAdaptiveQP  );
-  m_cTEncTop.setQPAdaptationRange            ( m_iQPAdaptationRange );
-
+  m_cTEncTop.setUseAdaptiveQP                                     ( m_bUseAdaptiveQP  );
+  m_cTEncTop.setQPAdaptationRange                                 ( m_iQPAdaptationRange );
+  m_cTEncTop.setUseExtendedPrecision                              ( m_useExtendedPrecision );
+  m_cTEncTop.setUseHighPrecisionPredictionWeighting               ( m_useHighPrecisionPredictionWeighting );
   //====== Tool list ========
-  m_cTEncTop.setDeltaQpRD                    ( m_uiDeltaQpRD  );
-  m_cTEncTop.setUseASR                       ( m_bUseASR      );
-  m_cTEncTop.setUseHADME                     ( m_bUseHADME    );
-  m_cTEncTop.setdQPs                         ( m_aidQP        );
-  m_cTEncTop.setUseRDOQ                      ( m_useRDOQ     );
-  m_cTEncTop.setUseRDOQTS                    ( m_useRDOQTS   );
-  m_cTEncTop.setRDpenalty                 ( m_rdPenalty );
-  m_cTEncTop.setQuadtreeTULog2MaxSize        ( m_uiQuadtreeTULog2MaxSize );
-  m_cTEncTop.setQuadtreeTULog2MinSize        ( m_uiQuadtreeTULog2MinSize );
-  m_cTEncTop.setQuadtreeTUMaxDepthInter      ( m_uiQuadtreeTUMaxDepthInter );
-  m_cTEncTop.setQuadtreeTUMaxDepthIntra      ( m_uiQuadtreeTUMaxDepthIntra );
-  m_cTEncTop.setUseFastEnc                   ( m_bUseFastEnc  );
-  m_cTEncTop.setUseEarlyCU                   ( m_bUseEarlyCU  );
-  m_cTEncTop.setUseFastDecisionForMerge      ( m_useFastDecisionForMerge  );
-  m_cTEncTop.setUseCbfFastMode            ( m_bUseCbfFastMode  );
-  m_cTEncTop.setUseEarlySkipDetection            ( m_useEarlySkipDetection );
+  m_cTEncTop.setDeltaQpRD                                         ( m_uiDeltaQpRD  );
+  m_cTEncTop.setUseASR                                            ( m_bUseASR      );
+  m_cTEncTop.setUseHADME                                          ( m_bUseHADME    );
+  m_cTEncTop.setdQPs                                              ( m_aidQP        );
+  m_cTEncTop.setUseRDOQ                                           ( m_useRDOQ     );
+  m_cTEncTop.setUseRDOQTS                                         ( m_useRDOQTS   );
+  m_cTEncTop.setRDpenalty                                         ( m_rdPenalty );
+  m_cTEncTop.setQuadtreeTULog2MaxSize                             ( m_uiQuadtreeTULog2MaxSize );
+  m_cTEncTop.setQuadtreeTULog2MinSize                             ( m_uiQuadtreeTULog2MinSize );
+  m_cTEncTop.setQuadtreeTUMaxDepthInter                           ( m_uiQuadtreeTUMaxDepthInter );
+  m_cTEncTop.setQuadtreeTUMaxDepthIntra                           ( m_uiQuadtreeTUMaxDepthIntra );
+  m_cTEncTop.setUseFastEnc                                        ( m_bUseFastEnc  );
+  m_cTEncTop.setUseEarlyCU                                        ( m_bUseEarlyCU  );
+  m_cTEncTop.setUseFastDecisionForMerge                           ( m_useFastDecisionForMerge  );
+  m_cTEncTop.setUseCbfFastMode                                    ( m_bUseCbfFastMode  );
+  m_cTEncTop.setUseEarlySkipDetection                             ( m_useEarlySkipDetection );
 #if FAST_INTRA_SHVC
-  m_cTEncTop.setUseFastIntraScalable            ( m_useFastIntraScalable );
+  m_cTEncTop.setUseFastIntraScalable                              ( m_useFastIntraScalable );
 #endif
-
-  m_cTEncTop.setUseTransformSkip             ( m_useTransformSkip      );
-  m_cTEncTop.setUseTransformSkipFast         ( m_useTransformSkipFast  );
-  m_cTEncTop.setUseConstrainedIntraPred      ( m_bUseConstrainedIntraPred );
-  m_cTEncTop.setPCMLog2MinSize          ( m_uiPCMLog2MinSize);
-  m_cTEncTop.setUsePCM                       ( m_usePCM );
-  m_cTEncTop.setPCMLog2MaxSize               ( m_pcmLog2MaxSize);
-  m_cTEncTop.setMaxNumMergeCand              ( m_maxNumMergeCand );
+  m_cTEncTop.setUseCrossComponentPrediction                       ( m_useCrossComponentPrediction );
+  m_cTEncTop.setUseReconBasedCrossCPredictionEstimate             ( m_reconBasedCrossCPredictionEstimate );
+  m_cTEncTop.setSaoOffsetBitShift                                 ( CHANNEL_TYPE_LUMA  , m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   );
+  m_cTEncTop.setSaoOffsetBitShift                                 ( CHANNEL_TYPE_CHROMA, m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] );
+  m_cTEncTop.setUseTransformSkip                                  ( m_useTransformSkip      );
+  m_cTEncTop.setUseTransformSkipFast                              ( m_useTransformSkipFast  );
+  m_cTEncTop.setUseResidualRotation                               ( m_useResidualRotation   );
+  m_cTEncTop.setUseSingleSignificanceMapContext                   ( m_useSingleSignificanceMapContext   );
+  m_cTEncTop.setUseGolombRiceParameterAdaptation                  ( m_useGolombRiceParameterAdaptation );
+  m_cTEncTop.setAlignCABACBeforeBypass                            ( m_alignCABACBeforeBypass );
+  m_cTEncTop.setTransformSkipLog2MaxSize                          ( m_transformSkipLog2MaxSize  );
+  for (UInt signallingModeIndex = 0; signallingModeIndex < NUMBER_OF_RDPCM_SIGNALLING_MODES; signallingModeIndex++)
+  {
+    m_cTEncTop.setUseResidualDPCM                                 ( RDPCMSignallingMode(signallingModeIndex), m_useResidualDPCM[signallingModeIndex]);
+  }
+  m_cTEncTop.setUseConstrainedIntraPred                           ( m_bUseConstrainedIntraPred );
+  m_cTEncTop.setPCMLog2MinSize                                    ( m_uiPCMLog2MinSize);
+  m_cTEncTop.setUsePCM                                            ( m_usePCM );
+  m_cTEncTop.setPCMLog2MaxSize                                    ( m_pcmLog2MaxSize);
+  m_cTEncTop.setMaxNumMergeCand                                   ( m_maxNumMergeCand );
 
 
   //====== Weighted Prediction ========
-  m_cTEncTop.setUseWP                   ( m_useWeightedPred      );
-  m_cTEncTop.setWPBiPred                ( m_useWeightedBiPred   );
+  m_cTEncTop.setUseWP                                             ( m_useWeightedPred      );
+  m_cTEncTop.setWPBiPred                                          ( m_useWeightedBiPred   );
   //====== Parallel Merge Estimation ========
-  m_cTEncTop.setLog2ParallelMergeLevelMinus2 ( m_log2ParallelMergeLevel - 2 );
+  m_cTEncTop.setLog2ParallelMergeLevelMinus2                      ( m_log2ParallelMergeLevel - 2 );
 
   //====== Slice ========
-  m_cTEncTop.setSliceMode               ( m_sliceMode                );
-  m_cTEncTop.setSliceArgument           ( m_sliceArgument            );
+  m_cTEncTop.setSliceMode                                         ( (SliceConstraint) m_sliceMode );
+  m_cTEncTop.setSliceArgument                                     ( m_sliceArgument            );
 
   //====== Dependent Slice ========
-  m_cTEncTop.setSliceSegmentMode        ( m_sliceSegmentMode         );
-  m_cTEncTop.setSliceSegmentArgument    ( m_sliceSegmentArgument     );
-  Int iNumPartInCU = 1<<(m_uiMaxCUDepth<<1);
-  if(m_sliceSegmentMode==FIXED_NUMBER_OF_LCU)
-  {
-    m_cTEncTop.setSliceSegmentArgument ( m_sliceSegmentArgument * iNumPartInCU );
-  }
-  if(m_sliceMode==FIXED_NUMBER_OF_LCU)
-  {
-    m_cTEncTop.setSliceArgument ( m_sliceArgument * iNumPartInCU );
-  }
-  if(m_sliceMode==FIXED_NUMBER_OF_TILES)
-  {
-    m_cTEncTop.setSliceArgument ( m_sliceArgument );
-  }
+  m_cTEncTop.setSliceSegmentMode                                  (  (SliceConstraint) m_sliceSegmentMode );
+  m_cTEncTop.setSliceSegmentArgument                              ( m_sliceSegmentArgument     );
 
-  if(m_sliceMode == 0 )
+  if(m_sliceMode == NO_SLICES )
   {
     m_bLFCrossSliceBoundaryFlag = true;
   }
-  m_cTEncTop.setLFCrossSliceBoundaryFlag( m_bLFCrossSliceBoundaryFlag );
-  m_cTEncTop.setUseSAO ( m_bUseSAO );
-  m_cTEncTop.setMaxNumOffsetsPerPic (m_maxNumOffsetsPerPic);
+  m_cTEncTop.setLFCrossSliceBoundaryFlag                          ( m_bLFCrossSliceBoundaryFlag );
+  m_cTEncTop.setUseSAO                                            ( m_bUseSAO );
+  m_cTEncTop.setMaxNumOffsetsPerPic                               ( m_maxNumOffsetsPerPic);
 
-  m_cTEncTop.setSaoLcuBoundary (m_saoLcuBoundary);
-  m_cTEncTop.setPCMInputBitDepthFlag  ( m_bPCMInputBitDepthFlag);
-  m_cTEncTop.setPCMFilterDisableFlag  ( m_bPCMFilterDisableFlag);
+  m_cTEncTop.setSaoCtuBoundary                                    ( m_saoCtuBoundary);
+  m_cTEncTop.setPCMInputBitDepthFlag                              ( m_bPCMInputBitDepthFlag);
+  m_cTEncTop.setPCMFilterDisableFlag                              ( m_bPCMFilterDisableFlag);
 
-  m_cTEncTop.setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
-  m_cTEncTop.setRecoveryPointSEIEnabled( m_recoveryPointSEIEnabled );
-  m_cTEncTop.setBufferingPeriodSEIEnabled( m_bufferingPeriodSEIEnabled );
-  m_cTEncTop.setPictureTimingSEIEnabled( m_pictureTimingSEIEnabled );
-  m_cTEncTop.setToneMappingInfoSEIEnabled                 ( m_toneMappingInfoSEIEnabled );
-  m_cTEncTop.setTMISEIToneMapId                           ( m_toneMapId );
-  m_cTEncTop.setTMISEIToneMapCancelFlag                   ( m_toneMapCancelFlag );
-  m_cTEncTop.setTMISEIToneMapPersistenceFlag              ( m_toneMapPersistenceFlag );
-  m_cTEncTop.setTMISEICodedDataBitDepth                   ( m_toneMapCodedDataBitDepth );
-  m_cTEncTop.setTMISEITargetBitDepth                      ( m_toneMapTargetBitDepth );
-  m_cTEncTop.setTMISEIModelID                             ( m_toneMapModelId );
-  m_cTEncTop.setTMISEIMinValue                            ( m_toneMapMinValue );
-  m_cTEncTop.setTMISEIMaxValue                            ( m_toneMapMaxValue );
-  m_cTEncTop.setTMISEISigmoidMidpoint                     ( m_sigmoidMidpoint );
-  m_cTEncTop.setTMISEISigmoidWidth                        ( m_sigmoidWidth );
-  m_cTEncTop.setTMISEIStartOfCodedInterva                 ( m_startOfCodedInterval );
-  m_cTEncTop.setTMISEINumPivots                           ( m_numPivots );
-  m_cTEncTop.setTMISEICodedPivotValue                     ( m_codedPivotValue );
-  m_cTEncTop.setTMISEITargetPivotValue                    ( m_targetPivotValue );
-  m_cTEncTop.setTMISEICameraIsoSpeedIdc                   ( m_cameraIsoSpeedIdc );
-  m_cTEncTop.setTMISEICameraIsoSpeedValue                 ( m_cameraIsoSpeedValue );
-  m_cTEncTop.setTMISEIExposureIndexIdc                    ( m_exposureIndexIdc );
-  m_cTEncTop.setTMISEIExposureIndexValue                  ( m_exposureIndexValue );
-  m_cTEncTop.setTMISEIExposureCompensationValueSignFlag   ( m_exposureCompensationValueSignFlag );
-  m_cTEncTop.setTMISEIExposureCompensationValueNumerator  ( m_exposureCompensationValueNumerator );
-  m_cTEncTop.setTMISEIExposureCompensationValueDenomIdc   ( m_exposureCompensationValueDenomIdc );
-  m_cTEncTop.setTMISEIRefScreenLuminanceWhite             ( m_refScreenLuminanceWhite );
-  m_cTEncTop.setTMISEIExtendedRangeWhiteLevel             ( m_extendedRangeWhiteLevel );
-  m_cTEncTop.setTMISEINominalBlackLevelLumaCodeValue      ( m_nominalBlackLevelLumaCodeValue );
-  m_cTEncTop.setTMISEINominalWhiteLevelLumaCodeValue      ( m_nominalWhiteLevelLumaCodeValue );
-  m_cTEncTop.setTMISEIExtendedWhiteLevelLumaCodeValue     ( m_extendedWhiteLevelLumaCodeValue );
-#if P0050_KNEE_FUNCTION_SEI
-  m_cTEncTop.setKneeSEIEnabled              ( m_kneeSEIEnabled );
-  m_cTEncTop.setKneeSEIId                   ( m_kneeSEIId );
-  m_cTEncTop.setKneeSEICancelFlag           ( m_kneeSEICancelFlag );
-  m_cTEncTop.setKneeSEIPersistenceFlag      ( m_kneeSEIPersistenceFlag );
-  m_cTEncTop.setKneeSEIMappingFlag          ( m_kneeSEIMappingFlag );
-  m_cTEncTop.setKneeSEIInputDrange          ( m_kneeSEIInputDrange );
-  m_cTEncTop.setKneeSEIInputDispLuminance   ( m_kneeSEIInputDispLuminance );
-  m_cTEncTop.setKneeSEIOutputDrange         ( m_kneeSEIOutputDrange );
-  m_cTEncTop.setKneeSEIOutputDispLuminance  ( m_kneeSEIOutputDispLuminance );
-  m_cTEncTop.setKneeSEINumKneePointsMinus1  ( m_kneeSEINumKneePointsMinus1 );
-  m_cTEncTop.setKneeSEIInputKneePoint       ( m_kneeSEIInputKneePoint );
-  m_cTEncTop.setKneeSEIOutputKneePoint      ( m_kneeSEIOutputKneePoint );
-#endif
+  m_cTEncTop.setDisableIntraReferenceSmoothing                    (!m_enableIntraReferenceSmoothing );
+  m_cTEncTop.setDecodedPictureHashSEIEnabled                      ( m_decodedPictureHashSEIEnabled );
+  m_cTEncTop.setRecoveryPointSEIEnabled                           ( m_recoveryPointSEIEnabled );
+  m_cTEncTop.setBufferingPeriodSEIEnabled                         ( m_bufferingPeriodSEIEnabled );
+  m_cTEncTop.setPictureTimingSEIEnabled                           ( m_pictureTimingSEIEnabled );
+  m_cTEncTop.setToneMappingInfoSEIEnabled                         ( m_toneMappingInfoSEIEnabled );
+  m_cTEncTop.setTMISEIToneMapId                                   ( m_toneMapId );
+  m_cTEncTop.setTMISEIToneMapCancelFlag                           ( m_toneMapCancelFlag );
+  m_cTEncTop.setTMISEIToneMapPersistenceFlag                      ( m_toneMapPersistenceFlag );
+  m_cTEncTop.setTMISEICodedDataBitDepth                           ( m_toneMapCodedDataBitDepth );
+  m_cTEncTop.setTMISEITargetBitDepth                              ( m_toneMapTargetBitDepth );
+  m_cTEncTop.setTMISEIModelID                                     ( m_toneMapModelId );
+  m_cTEncTop.setTMISEIMinValue                                    ( m_toneMapMinValue );
+  m_cTEncTop.setTMISEIMaxValue                                    ( m_toneMapMaxValue );
+  m_cTEncTop.setTMISEISigmoidMidpoint                             ( m_sigmoidMidpoint );
+  m_cTEncTop.setTMISEISigmoidWidth                                ( m_sigmoidWidth );
+  m_cTEncTop.setTMISEIStartOfCodedInterva                         ( m_startOfCodedInterval );
+  m_cTEncTop.setTMISEINumPivots                                   ( m_numPivots );
+  m_cTEncTop.setTMISEICodedPivotValue                             ( m_codedPivotValue );
+  m_cTEncTop.setTMISEITargetPivotValue                            ( m_targetPivotValue );
+  m_cTEncTop.setTMISEICameraIsoSpeedIdc                           ( m_cameraIsoSpeedIdc );
+  m_cTEncTop.setTMISEICameraIsoSpeedValue                         ( m_cameraIsoSpeedValue );
+  m_cTEncTop.setTMISEIExposureIndexIdc                            ( m_exposureIndexIdc );
+  m_cTEncTop.setTMISEIExposureIndexValue                          ( m_exposureIndexValue );
+  m_cTEncTop.setTMISEIExposureCompensationValueSignFlag           ( m_exposureCompensationValueSignFlag );
+  m_cTEncTop.setTMISEIExposureCompensationValueNumerator          ( m_exposureCompensationValueNumerator );
+  m_cTEncTop.setTMISEIExposureCompensationValueDenomIdc           ( m_exposureCompensationValueDenomIdc );
+  m_cTEncTop.setTMISEIRefScreenLuminanceWhite                     ( m_refScreenLuminanceWhite );
+  m_cTEncTop.setTMISEIExtendedRangeWhiteLevel                     ( m_extendedRangeWhiteLevel );
+  m_cTEncTop.setTMISEINominalBlackLevelLumaCodeValue              ( m_nominalBlackLevelLumaCodeValue );
+  m_cTEncTop.setTMISEINominalWhiteLevelLumaCodeValue              ( m_nominalWhiteLevelLumaCodeValue );
+  m_cTEncTop.setTMISEIExtendedWhiteLevelLumaCodeValue             ( m_extendedWhiteLevelLumaCodeValue );
+  m_cTEncTop.setChromaSamplingFilterHintEnabled                   ( m_chromaSamplingFilterSEIenabled );
+  m_cTEncTop.setChromaSamplingHorFilterIdc                        ( m_chromaSamplingHorFilterIdc );
+  m_cTEncTop.setChromaSamplingVerFilterIdc                        ( m_chromaSamplingVerFilterIdc );
+  m_cTEncTop.setFramePackingArrangementSEIEnabled                 ( m_framePackingSEIEnabled );
+  m_cTEncTop.setFramePackingArrangementSEIType                    ( m_framePackingSEIType );
+  m_cTEncTop.setFramePackingArrangementSEIId                      ( m_framePackingSEIId );
+  m_cTEncTop.setFramePackingArrangementSEIQuincunx                ( m_framePackingSEIQuincunx );
+  m_cTEncTop.setFramePackingArrangementSEIInterpretation          ( m_framePackingSEIInterpretation );
+  m_cTEncTop.setSegmentedRectFramePackingArrangementSEIEnabled    ( m_segmentedRectFramePackingSEIEnabled );
+  m_cTEncTop.setSegmentedRectFramePackingArrangementSEICancel     ( m_segmentedRectFramePackingSEICancel );
+  m_cTEncTop.setSegmentedRectFramePackingArrangementSEIType       ( m_segmentedRectFramePackingSEIType );
+  m_cTEncTop.setSegmentedRectFramePackingArrangementSEIPersistence( m_segmentedRectFramePackingSEIPersistence );
+  m_cTEncTop.setDisplayOrientationSEIAngle                        ( m_displayOrientationSEIAngle );
+  m_cTEncTop.setTemporalLevel0IndexSEIEnabled                     ( m_temporalLevel0IndexSEIEnabled );
+  m_cTEncTop.setGradualDecodingRefreshInfoEnabled                 ( m_gradualDecodingRefreshInfoEnabled );
+  m_cTEncTop.setNoDisplaySEITLayer                                ( m_noDisplaySEITLayer );
+  m_cTEncTop.setDecodingUnitInfoSEIEnabled                        ( m_decodingUnitInfoSEIEnabled );
+  m_cTEncTop.setSOPDescriptionSEIEnabled                          ( m_SOPDescriptionSEIEnabled );
+  m_cTEncTop.setScalableNestingSEIEnabled                         ( m_scalableNestingSEIEnabled );
+  m_cTEncTop.setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
+  m_cTEncTop.setTimeCodeSEIEnabled                                ( m_timeCodeSEIEnabled );
+  m_cTEncTop.setNumberOfTimeSets                                  ( m_timeCodeSEINumTs );
+  for(Int i = 0; i < m_timeCodeSEINumTs; i++) { m_cTEncTop.setTimeSet(m_timeSetArray[i], i); }
+  m_cTEncTop.setKneeSEIEnabled                                    ( m_kneeSEIEnabled );
+  m_cTEncTop.setKneeSEIId                                         ( m_kneeSEIId );
+  m_cTEncTop.setKneeSEICancelFlag                                 ( m_kneeSEICancelFlag );
+  m_cTEncTop.setKneeSEIPersistenceFlag                            ( m_kneeSEIPersistenceFlag );
+  m_cTEncTop.setKneeSEIInputDrange                                ( m_kneeSEIInputDrange );
+  m_cTEncTop.setKneeSEIInputDispLuminance                         ( m_kneeSEIInputDispLuminance );
+  m_cTEncTop.setKneeSEIOutputDrange                               ( m_kneeSEIOutputDrange );
+  m_cTEncTop.setKneeSEIOutputDispLuminance                        ( m_kneeSEIOutputDispLuminance );
+  m_cTEncTop.setKneeSEINumKneePointsMinus1                        ( m_kneeSEINumKneePointsMinus1 );
+  m_cTEncTop.setKneeSEIInputKneePoint                             ( m_kneeSEIInputKneePoint );
+  m_cTEncTop.setKneeSEIOutputKneePoint                            ( m_kneeSEIOutputKneePoint );
+  m_cTEncTop.setMasteringDisplaySEI                               ( m_masteringDisplay );
 #if Q0074_COLOUR_REMAPPING_SEI
-  m_cTEncTop.setCRISEIFile                       ( const_cast<Char*>(m_colourRemapSEIFile.c_str()) );
+  m_cTEncTop.setCRISEIFile                       ( m_colourRemapSEIFile );
   m_cTEncTop.setCRISEIId                         ( m_colourRemapSEIId );
   m_cTEncTop.setCRISEICancelFlag                 ( m_colourRemapSEICancelFlag );
   m_cTEncTop.setCRISEIPersistenceFlag            ( m_colourRemapSEIPersistenceFlag );
@@ -959,83 +1089,73 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setCRISEIPostLutCodedValue          ( m_colourRemapSEIPostLutCodedValue );
   m_cTEncTop.setCRISEIPostLutTargetValue         ( m_colourRemapSEIPostLutTargetValue );
 #endif
-  m_cTEncTop.setFramePackingArrangementSEIEnabled( m_framePackingSEIEnabled );
-  m_cTEncTop.setFramePackingArrangementSEIType( m_framePackingSEIType );
-  m_cTEncTop.setFramePackingArrangementSEIId( m_framePackingSEIId );
-  m_cTEncTop.setFramePackingArrangementSEIQuincunx( m_framePackingSEIQuincunx );
-  m_cTEncTop.setFramePackingArrangementSEIInterpretation( m_framePackingSEIInterpretation );
-  m_cTEncTop.setDisplayOrientationSEIAngle( m_displayOrientationSEIAngle );
-  m_cTEncTop.setTemporalLevel0IndexSEIEnabled( m_temporalLevel0IndexSEIEnabled );
-  m_cTEncTop.setGradualDecodingRefreshInfoEnabled( m_gradualDecodingRefreshInfoEnabled );
-  m_cTEncTop.setDecodingUnitInfoSEIEnabled( m_decodingUnitInfoSEIEnabled );
 #if LAYERS_NOT_PRESENT_SEI
   m_cTEncTop.setLayersNotPresentSEIEnabled( m_layersNotPresentSEIEnabled );
 #endif
-  m_cTEncTop.setSOPDescriptionSEIEnabled( m_SOPDescriptionSEIEnabled );
-  m_cTEncTop.setScalableNestingSEIEnabled( m_scalableNestingSEIEnabled );
-  m_cTEncTop.setTileUniformSpacingFlag     ( m_tileUniformSpacingFlag );
-  m_cTEncTop.setNumColumnsMinus1           ( m_numTileColumnsMinus1 );
-  m_cTEncTop.setNumRowsMinus1              ( m_numTileRowsMinus1 );
+  m_cTEncTop.setTileUniformSpacingFlag                            ( m_tileUniformSpacingFlag );
+  m_cTEncTop.setNumColumnsMinus1                                  ( m_numTileColumnsMinus1 );
+  m_cTEncTop.setNumRowsMinus1                                     ( m_numTileRowsMinus1 );
   if(!m_tileUniformSpacingFlag)
   {
-    m_cTEncTop.setColumnWidth              ( m_tileColumnWidth );
-    m_cTEncTop.setRowHeight                ( m_tileRowHeight );
+    m_cTEncTop.setColumnWidth                                     ( m_tileColumnWidth );
+    m_cTEncTop.setRowHeight                                       ( m_tileRowHeight );
   }
   m_cTEncTop.xCheckGSParameters();
-  Int uiTilesCount          = (m_numTileRowsMinus1+1) * (m_numTileColumnsMinus1+1);
+  Int uiTilesCount = (m_numTileRowsMinus1+1) * (m_numTileColumnsMinus1+1);
   if(uiTilesCount == 1)
   {
     m_bLFCrossTileBoundaryFlag = true;
   }
-  m_cTEncTop.setLFCrossTileBoundaryFlag( m_bLFCrossTileBoundaryFlag );
-  m_cTEncTop.setWaveFrontSynchro           ( m_iWaveFrontSynchro );
-  m_cTEncTop.setWaveFrontSubstreams        ( m_iWaveFrontSubstreams );
-  m_cTEncTop.setTMVPModeId ( m_TMVPModeId );
-  m_cTEncTop.setUseScalingListId           ( m_useScalingListId  );
-  m_cTEncTop.setScalingListFile            ( m_scalingListFile   );
-  m_cTEncTop.setSignHideFlag(m_signHideFlag);
-  m_cTEncTop.setUseRateCtrl         ( m_RCEnableRateControl );
-  m_cTEncTop.setTargetBitrate       ( m_RCTargetBitrate );
-  m_cTEncTop.setKeepHierBit         ( m_RCKeepHierarchicalBit );
-  m_cTEncTop.setLCULevelRC          ( m_RCLCULevelRC );
-  m_cTEncTop.setUseLCUSeparateModel ( m_RCUseLCUSeparateModel );
-  m_cTEncTop.setInitialQP           ( m_RCInitialQP );
-  m_cTEncTop.setForceIntraQP        ( m_RCForceIntraQP );
-  m_cTEncTop.setTransquantBypassEnableFlag(m_TransquantBypassEnableFlag);
-  m_cTEncTop.setCUTransquantBypassFlagForceValue(m_CUTransquantBypassFlagForce);
-  m_cTEncTop.setUseRecalculateQPAccordingToLambda( m_recalculateQPAccordingToLambda );
-  m_cTEncTop.setUseStrongIntraSmoothing( m_useStrongIntraSmoothing );
-  m_cTEncTop.setActiveParameterSetsSEIEnabled ( m_activeParameterSetsSEIEnabled );
-  m_cTEncTop.setVuiParametersPresentFlag( m_vuiParametersPresentFlag );
-  m_cTEncTop.setAspectRatioInfoPresentFlag( m_aspectRatioInfoPresentFlag);
-  m_cTEncTop.setAspectRatioIdc( m_aspectRatioIdc );
-  m_cTEncTop.setSarWidth( m_sarWidth );
-  m_cTEncTop.setSarHeight( m_sarHeight );
-  m_cTEncTop.setOverscanInfoPresentFlag( m_overscanInfoPresentFlag );
-  m_cTEncTop.setOverscanAppropriateFlag( m_overscanAppropriateFlag );
-  m_cTEncTop.setVideoSignalTypePresentFlag( m_videoSignalTypePresentFlag );
-  m_cTEncTop.setVideoFormat( m_videoFormat );
-  m_cTEncTop.setVideoFullRangeFlag( m_videoFullRangeFlag );
-  m_cTEncTop.setColourDescriptionPresentFlag( m_colourDescriptionPresentFlag );
-  m_cTEncTop.setColourPrimaries( m_colourPrimaries );
-  m_cTEncTop.setTransferCharacteristics( m_transferCharacteristics );
-  m_cTEncTop.setMatrixCoefficients( m_matrixCoefficients );
-  m_cTEncTop.setChromaLocInfoPresentFlag( m_chromaLocInfoPresentFlag );
-  m_cTEncTop.setChromaSampleLocTypeTopField( m_chromaSampleLocTypeTopField );
-  m_cTEncTop.setChromaSampleLocTypeBottomField( m_chromaSampleLocTypeBottomField );
-  m_cTEncTop.setNeutralChromaIndicationFlag( m_neutralChromaIndicationFlag );
-  m_cTEncTop.setDefaultDisplayWindow( m_defDispWinLeftOffset, m_defDispWinRightOffset, m_defDispWinTopOffset, m_defDispWinBottomOffset );
-  m_cTEncTop.setFrameFieldInfoPresentFlag( m_frameFieldInfoPresentFlag );
-  m_cTEncTop.setPocProportionalToTimingFlag( m_pocProportionalToTimingFlag );
-  m_cTEncTop.setNumTicksPocDiffOneMinus1   ( m_numTicksPocDiffOneMinus1    );
-  m_cTEncTop.setBitstreamRestrictionFlag( m_bitstreamRestrictionFlag );
-  m_cTEncTop.setTilesFixedStructureFlag( m_tilesFixedStructureFlag );
-  m_cTEncTop.setMotionVectorsOverPicBoundariesFlag( m_motionVectorsOverPicBoundariesFlag );
-  m_cTEncTop.setMinSpatialSegmentationIdc( m_minSpatialSegmentationIdc );
-  m_cTEncTop.setMaxBytesPerPicDenom( m_maxBytesPerPicDenom );
-  m_cTEncTop.setMaxBitsPerMinCuDenom( m_maxBitsPerMinCuDenom );
-  m_cTEncTop.setLog2MaxMvLengthHorizontal( m_log2MaxMvLengthHorizontal );
-  m_cTEncTop.setLog2MaxMvLengthVertical( m_log2MaxMvLengthVertical );
+  m_cTEncTop.setLFCrossTileBoundaryFlag                           ( m_bLFCrossTileBoundaryFlag );
+  m_cTEncTop.setWaveFrontSynchro                                  ( m_iWaveFrontSynchro );
+  m_cTEncTop.setWaveFrontSubstreams                               ( m_iWaveFrontSubstreams );
+  m_cTEncTop.setTMVPModeId                                        ( m_TMVPModeId );
+  m_cTEncTop.setUseScalingListId                                  ( m_useScalingListId  );
+  m_cTEncTop.setScalingListFile                                   ( m_scalingListFile   );
+  m_cTEncTop.setSignHideFlag                                      ( m_signHideFlag);
+  m_cTEncTop.setUseRateCtrl                                       ( m_RCEnableRateControl );
+  m_cTEncTop.setTargetBitrate                                     ( m_RCTargetBitrate );
+  m_cTEncTop.setKeepHierBit                                       ( m_RCKeepHierarchicalBit );
+  m_cTEncTop.setLCULevelRC                                        ( m_RCLCULevelRC );
+  m_cTEncTop.setUseLCUSeparateModel                               ( m_RCUseLCUSeparateModel );
+  m_cTEncTop.setInitialQP                                         ( m_RCInitialQP );
+  m_cTEncTop.setForceIntraQP                                      ( m_RCForceIntraQP );
+  m_cTEncTop.setTransquantBypassEnableFlag                        ( m_TransquantBypassEnableFlag );
+  m_cTEncTop.setCUTransquantBypassFlagForceValue                  ( m_CUTransquantBypassFlagForce );
+  m_cTEncTop.setCostMode                                          ( m_costMode );
+  m_cTEncTop.setUseRecalculateQPAccordingToLambda                 ( m_recalculateQPAccordingToLambda );
+  m_cTEncTop.setUseStrongIntraSmoothing                           ( m_useStrongIntraSmoothing );
+  m_cTEncTop.setActiveParameterSetsSEIEnabled                     ( m_activeParameterSetsSEIEnabled );
+  m_cTEncTop.setVuiParametersPresentFlag                          ( m_vuiParametersPresentFlag );
+  m_cTEncTop.setAspectRatioInfoPresentFlag                        ( m_aspectRatioInfoPresentFlag);
+  m_cTEncTop.setAspectRatioIdc                                    ( m_aspectRatioIdc );
+  m_cTEncTop.setSarWidth                                          ( m_sarWidth );
+  m_cTEncTop.setSarHeight                                         ( m_sarHeight );
+  m_cTEncTop.setOverscanInfoPresentFlag                           ( m_overscanInfoPresentFlag );
+  m_cTEncTop.setOverscanAppropriateFlag                           ( m_overscanAppropriateFlag );
+  m_cTEncTop.setVideoSignalTypePresentFlag                        ( m_videoSignalTypePresentFlag );
+  m_cTEncTop.setVideoFormat                                       ( m_videoFormat );
+  m_cTEncTop.setVideoFullRangeFlag                                ( m_videoFullRangeFlag );
+  m_cTEncTop.setColourDescriptionPresentFlag                      ( m_colourDescriptionPresentFlag );
+  m_cTEncTop.setColourPrimaries                                   ( m_colourPrimaries );
+  m_cTEncTop.setTransferCharacteristics                           ( m_transferCharacteristics );
+  m_cTEncTop.setMatrixCoefficients                                ( m_matrixCoefficients );
+  m_cTEncTop.setChromaLocInfoPresentFlag                          ( m_chromaLocInfoPresentFlag );
+  m_cTEncTop.setChromaSampleLocTypeTopField                       ( m_chromaSampleLocTypeTopField );
+  m_cTEncTop.setChromaSampleLocTypeBottomField                    ( m_chromaSampleLocTypeBottomField );
+  m_cTEncTop.setNeutralChromaIndicationFlag                       ( m_neutralChromaIndicationFlag );
+  m_cTEncTop.setDefaultDisplayWindow                              ( m_defDispWinLeftOffset, m_defDispWinRightOffset, m_defDispWinTopOffset, m_defDispWinBottomOffset );
+  m_cTEncTop.setFrameFieldInfoPresentFlag                         ( m_frameFieldInfoPresentFlag );
+  m_cTEncTop.setPocProportionalToTimingFlag                       ( m_pocProportionalToTimingFlag );
+  m_cTEncTop.setNumTicksPocDiffOneMinus1                          ( m_numTicksPocDiffOneMinus1    );
+  m_cTEncTop.setBitstreamRestrictionFlag                          ( m_bitstreamRestrictionFlag );
+  m_cTEncTop.setTilesFixedStructureFlag                           ( m_tilesFixedStructureFlag );
+  m_cTEncTop.setMotionVectorsOverPicBoundariesFlag                ( m_motionVectorsOverPicBoundariesFlag );
+  m_cTEncTop.setMinSpatialSegmentationIdc                         ( m_minSpatialSegmentationIdc );
+  m_cTEncTop.setMaxBytesPerPicDenom                               ( m_maxBytesPerPicDenom );
+  m_cTEncTop.setMaxBitsPerMinCuDenom                              ( m_maxBitsPerMinCuDenom );
+  m_cTEncTop.setLog2MaxMvLengthHorizontal                         ( m_log2MaxMvLengthHorizontal );
+  m_cTEncTop.setLog2MaxMvLengthVertical                           ( m_log2MaxMvLengthVertical );
 }
 #endif //SVC_EXTENSION
 
@@ -1050,11 +1170,11 @@ Void TAppEncTop::xCreateLib()
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //2
-    g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-    g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+    for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+    {
+      g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+      g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+    }
 #endif
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -1062,30 +1182,35 @@ Void TAppEncTop::xCreateLib()
     g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
     g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
 #endif
+    // Video I/O
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-    m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_acLayerCfg[layer].m_inputBitDepthY, m_acLayerCfg[layer].m_inputBitDepthC, m_acLayerCfg[layer].m_internalBitDepthY, m_acLayerCfg[layer].m_internalBitDepthC );  // read  mode
+    m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_acLayerCfg[layer].m_inputBitDepth, m_acLayerCfg[layer].m_MSBExtendedBitDepth, m_acLayerCfg[layer].m_internalBitDepth );  // read  mode
 #else
-    m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC );  // read  mode
+    m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // read  mode
 #endif
-    m_acTVideoIOYuvInputFile[layer].skipFrames(m_FrameSkip, m_acLayerCfg[layer].getSourceWidth() - m_acLayerCfg[layer].getPad()[0], m_acLayerCfg[layer].getSourceHeight() - m_acLayerCfg[layer].getPad()[1]);
+    m_acTVideoIOYuvInputFile[layer].skipFrames(m_FrameSkip, m_acLayerCfg[layer].getSourceWidth() - m_acLayerCfg[layer].getPad()[0], m_acLayerCfg[layer].getSourceHeight() - m_acLayerCfg[layer].getPad()[1], m_acLayerCfg[layer].m_InputChromaFormatIDC);
 
     if (!m_acLayerCfg[layer].getReconFile().empty())
     {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
-      m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_acLayerCfg[layer].m_outputBitDepthY, m_acLayerCfg[layer].m_outputBitDepthC, m_acLayerCfg[layer].m_internalBitDepthY, m_acLayerCfg[layer].m_internalBitDepthC );  // write mode
+      m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_acLayerCfg[layer].m_outputBitDepth, m_acLayerCfg[layer].m_MSBExtendedBitDepth, m_acLayerCfg[layer].m_internalBitDepth );  // write mode
 #else
-      m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_outputBitDepthY, m_outputBitDepthC, m_internalBitDepthY, m_internalBitDepthC );  // write mode
+      m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_outputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // write mode
 #endif
     }
 
+    // Neo Decoder
     m_acTEncTop[layer].create();
   }
 #else //SVC_EXTENSION
-  m_cTVideoIOYuvInputFile.open( m_pchInputFile,     false, m_inputBitDepthY, m_inputBitDepthC, m_internalBitDepthY, m_internalBitDepthC );  // read  mode
-  m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1]);
+  // Video I/O
+  m_cTVideoIOYuvInputFile.open( m_pchInputFile,     false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // read  mode
+  m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1], m_InputChromaFormatIDC);
 
   if (m_pchReconFile)
-    m_cTVideoIOYuvReconFile.open(m_pchReconFile, true, m_outputBitDepthY, m_outputBitDepthC, m_internalBitDepthY, m_internalBitDepthC);  // write mode
+  {
+    m_cTVideoIOYuvReconFile.open(m_pchReconFile, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
+  }
 
   // Neo Decoder
   m_cTEncTop.create();
@@ -1125,15 +1250,35 @@ Void TAppEncTop::xDestroyLib()
 Void TAppEncTop::xInitLib(Bool isFieldCoding)
 {
 #if SVC_EXTENSION
+  TComVPS* vps = m_acTEncTop[0].getVPS();
+  m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
+
+  UInt i = 0, dimIdLen = 0;
+
+  while((1 << dimIdLen) < m_numLayers)
+  {
+    dimIdLen++;
+  }
+  vps->setDimensionIdLen(0, dimIdLen);
+  vps->setNuhLayerIdPresentFlag(false);
+  vps->setLayerIdInNuh(0, 0);
+  vps->setLayerIdInVps(0, 0);
+  for(i = 1; i < vps->getMaxLayers(); i++)
+  {
+    vps->setLayerIdInNuh(i, i);
+    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
+    vps->setDimensionId(i, 0, i);
+  }
+
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //3
-    g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-    g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+    {
+      g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+      g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+    }
 #endif
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -1147,14 +1292,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
     m_acTEncTop[layer].init(isFieldCoding);
-#if P0182_VPS_VUI_PS_FLAG
-    m_acTEncTop[layer].getVPS()->setSPSId(layer, m_acTEncTop[layer].getSPS()->getSPSId());
-    m_acTEncTop[layer].getVPS()->setPPSId(layer, m_acTEncTop[layer].getPPS()->getPPSId());
-#endif
   }
-  m_acTEncTop[0].getVPS()->setMaxLayers( m_numLayers );
+
 #if VPS_EXTN_OP_LAYER_SETS
-  TComVPS* vps = m_acTEncTop[0].getVPS();
   vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
 
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
@@ -1179,21 +1319,21 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
 #if OUTPUT_LAYER_SETS_CONFIG
-      for (Int i = 0; i < m_numLayerInIdList[setId]; i++)
+      for( i = 0; i < m_numLayerInIdList[setId]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId][i];
 #else
-      for (Int i = 0; i < m_numLayerInIdList[setId-1]; i++)
+      for( i = 0; i < m_numLayerInIdList[setId-1]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId-1][i];
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
-        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
-        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
-        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 #endif
 
         vps->setLayerIdIncludedFlag(true, setId, layerId);
@@ -1211,11 +1351,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
-        g_bitDepthY = m_acLayerCfg[layerId].m_internalBitDepthY;
-        g_bitDepthC = m_acLayerCfg[layerId].m_internalBitDepthC;
+        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthY : m_acLayerCfg[layerId].m_internalBitDepthY;
-        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepthC : m_acLayerCfg[layerId].m_internalBitDepthC;
+        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 #endif
         if (layerId <= setId)
         {
@@ -1246,7 +1386,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
-  UInt i = 0, dimIdLen = 0;
 #if AVC_BASE
 #if VPS_AVC_BL_FLAG_REMOVAL
   vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
@@ -1284,25 +1423,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     vps->setNumScalabilityTypes(0);
   }
-  while((1 << dimIdLen) < m_numLayers)
-  {
-    dimIdLen++;
-  }
-  vps->setDimensionIdLen(0, dimIdLen);
-  vps->setNuhLayerIdPresentFlag(false);
-  vps->setLayerIdInNuh(0, 0);
-  vps->setLayerIdInVps(0, 0);
-  for(i = 1; i < vps->getMaxLayers(); i++)
-  {
-    vps->setLayerIdInNuh(i, i);
-    vps->setLayerIdInVps(vps->getLayerIdInNuh(i), i);
-    vps->setDimensionId(i, 0, i);
-  }
+  
 #if AUXILIARY_PICTURES
-  if (m_scalabilityMask[3])
+  if (m_scalabilityMask[AUX_ID])
   {
     UInt maxAuxId = 0;
     UInt auxDimIdLen = 1;
+    Int  auxId = vps->getNumScalabilityTypes() - 1;
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
       if (m_acLayerCfg[i].getAuxId() > maxAuxId)
@@ -1314,10 +1441,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       auxDimIdLen++;
     }
-    vps->setDimensionIdLen(1, auxDimIdLen);
+    vps->setDimensionIdLen(auxId, auxDimIdLen);
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
-      vps->setDimensionId(i, 1, m_acLayerCfg[i].getAuxId());
+      vps->setDimensionId(i, auxId, m_acLayerCfg[i].getAuxId());
     }
   }
 #endif
@@ -1361,7 +1488,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
     vps->setIlpSshSignalingEnabledFlag(false);
 #if VPS_EXTN_PROFILE_INFO
-
+#if !MULTIPLE_PTL_SUPPORT
 #if LIST_OF_PTL
   vps->getPTLForExtnPtr()->resize(1);   // Dummy object - unused.
   for(i = 0; i < vps->getMaxLayers(); i++)
@@ -1390,6 +1517,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // Note - may need to be changed for other layer structures.
     *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
   }
+#endif
 #endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
@@ -1457,10 +1585,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+#if FIX_LAYER_ID_INIT
+  // The Layer ID List variables should be derived here.
+#if DERIVE_LAYER_ID_LIST_VARIABLES
+  vps->deriveLayerIdListVariables();
+#endif
+#endif
 #if Q0078_ADD_LAYER_SETS
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
+#if FIX_LAYER_ID_INIT
+  vps->deriveLayerIdListVariablesForAddLayerSets();
+#else
   vps->setLayerIdIncludedFlagsForAddLayerSets();
+#endif
 #endif
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
@@ -1490,11 +1628,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
   // Target output layer
+#if !MULTIPLE_PTL_SUPPORT
 #if LIST_OF_PTL
   vps->setNumProfileTierLevel( vps->getPTLForExtnPtr()->size() ); // +1 for the base VPS PTL()
 #else
   vps->setNumOutputLayerSets(vps->getNumLayerSets());
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
+#endif
 #endif
 #if !OUTPUT_LAYER_SETS_CONFIG // Taken care by configuration file parameter
 #if P0295_DEFAULT_OUT_LAYER_IDC
@@ -1518,15 +1658,18 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
  #if VPS_DPB_SIZE_TABLE
+#if !FIX_LAYER_ID_INIT  // must be derived earlier to not delete additional layer sets
   // The Layer ID List variables can be derived here.  
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   vps->deriveLayerIdListVariables();
+#endif
 #endif
 #if RESOLUTION_BASED_DPB
   vps->assignSubDpbIndices();
 #else
   vps->deriveNumberOfSubDpbs();
 #endif
+  vps->setOutputLayerFlag( 0, 0, 1 );
 
   // derive OutputLayerFlag[i][j] 
 #if !OUTPUT_LAYER_SETS_CONFIG
@@ -1537,7 +1680,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
 
     // Include the highest layer as output layer for each layer set
-    for(Int lsIdx = 1; lsIdx < vps->getNumLayerSets(); lsIdx++)
+    for(Int lsIdx = 1; lsIdx <= vps->getVpsNumLayerSetsMinus1(); lsIdx++)
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
       {
@@ -1553,7 +1696,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
             case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
               break;
             case 2:
-            case 3: vps->setOutputLayerFlag( lsIdx, layer, std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), layer) != m_listOfOutputLayers[lsIdx].end() );
+            case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
+                                                                                                           : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
               break;
           }
 #else
@@ -1563,11 +1707,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
 #if OUTPUT_LAYER_SETS_CONFIG
-    for( Int olsIdx = vps->getNumLayerSets(); olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
+    for( Int olsIdx = vps->getVpsNumLayerSetsMinus1() + 1; olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
     {
       for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
       {
-        vps->setOutputLayerFlag( olsIdx, layer, std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), layer) != m_listOfOutputLayers[olsIdx].end());
+        vps->setOutputLayerFlag( olsIdx, layer, (layer != vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)) - 1) ? std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer)) != m_listOfOutputLayers[olsIdx].end()
+                                                                                                                            : m_listOfOutputLayers[olsIdx][m_listOfOutputLayers[olsIdx].size()-1] == vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer) );
       }
     }
 #endif
@@ -1583,6 +1728,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
 #endif
+#if !MULTIPLE_PTL_SUPPORT
 #if PER_LAYER_PTL
   vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0 ); // Default 0-th output layer set
@@ -1603,6 +1749,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
+#endif
 #endif
 #if SUB_LAYERS_IN_LAYER_SET
   vps->calculateMaxSLInLayerSets();
@@ -1929,58 +2076,43 @@ Void TAppEncTop::encode()
   Int   iNumEncoded = 0, iTotalNumEncoded = 0;
   Bool  bEos = false;
 
+  const InputColourSpaceConversion ipCSC  =  m_inputColourSpaceConvert;
+  const InputColourSpaceConversion snrCSC = (!m_snrInternalColourSpace) ? m_inputColourSpaceConvert : IPCOLOURSPACE_UNCHANGED;
+
   list<AccessUnit> outputAccessUnits; ///< list of access units to write out.  is populated by the encoding process
+
+  TComPicYuv acPicYuvTrueOrg[MAX_LAYERS];
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
     //5
-    g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-    g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
+    g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+    g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-    g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-    g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+    g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+    g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 #endif
     // allocate original YUV buffer
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
     {
-#if SVC_EXTENSION
 #if LAYER_CTB
-#if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
 #else
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
-#endif
-#else
-#if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#else
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#endif
-#endif
-#else
-      pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #endif
     }
     else
     {
-#if SVC_EXTENSION
 #if LAYER_CTB
-#if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
 #else
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
-#endif
-#else
-#if AUXILIARY_PICTURES
       pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#else
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#endif
-#endif
-#else
-      pcPicYuvOrg->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
 #endif
     }
   }
@@ -1996,11 +2128,11 @@ Void TAppEncTop::encode()
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //6
-        g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-        g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+        {
+          g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+          g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+        }
 #endif
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -2013,10 +2145,15 @@ Void TAppEncTop::encode()
         xGetBuffer(pcPicYuvRec, layer);
 
         // read input YUV file
-        m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], m_acLayerCfg[layer].getPad() );
+        m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_acLayerCfg[layer].getPad(), m_acLayerCfg[layer].getInputChromaFormat() );
 
 #if AUXILIARY_PICTURES
+#if R0062_AUX_PSEUDO_MONOCHROME
+        if ( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 ||
+             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
+#else
         if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
+#endif
         {
           pcPicYuvOrg[layer]->convertToMonochrome();
         }
@@ -2032,11 +2169,11 @@ Void TAppEncTop::encode()
 
         if ( m_isField )
         {
-          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer], m_isTopFieldFirst );
+          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], m_isTopFieldFirst );
         }
         else
         {
-          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer] );
+          m_acTEncTop[layer].encodePrep( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer] );
         }
       }
 
@@ -2085,11 +2222,11 @@ Void TAppEncTop::encode()
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //7
-        g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-        g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-        g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-        g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+        {
+          g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+          g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+        }
 #endif
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -2103,20 +2240,18 @@ Void TAppEncTop::encode()
         memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
         // call encoding function for one frame
-        if ( m_isField )
-        {
-          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP, m_isTopFieldFirst );
-        }
-        else
-        {
-          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
-        }
+        if ( m_isField ) m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP, m_isTopFieldFirst );
+        else             m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
       }
     }
 #if R0247_SEI_ACTIVE
     if(bFirstFrame)
     {
       list<AccessUnit>::iterator first_au = outputAccessUnits.begin();
+      if( m_nonHEVCBaseLayerFlag )
+      {
+        first_au++;
+      }
       AccessUnit::iterator it_sps;
       for (it_sps = first_au->begin(); it_sps != first_au->end(); it_sps++)
       {
@@ -2156,11 +2291,11 @@ Void TAppEncTop::encode()
     {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
       //8
-      g_bitDepthY = m_acLayerCfg[layer].m_internalBitDepthY;
-      g_bitDepthC = m_acLayerCfg[layer].m_internalBitDepthC;
-
-      g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthY : m_acLayerCfg[layer].m_internalBitDepthY;
-      g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepthC : m_acLayerCfg[layer].m_internalBitDepthC;
+      for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+      {
+        g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+        g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
+      }
 #endif
       // write bistream to file if necessary
       iNumEncoded = m_acTEncTop[layer].getNumPicRcvd();
@@ -2197,7 +2332,7 @@ Void TAppEncTop::encode()
     // print out summary
     if (bEos)
     {
-      printOutSummary(m_isTopFieldFirst);
+      printOutSummary(m_isTopFieldFirst, m_printMSEBasedSequencePSNR, m_printSequenceMSE);
     }
 
     bFirstFrame = false;
@@ -2211,6 +2346,7 @@ Void TAppEncTop::encode()
 
     // delete used buffers in encoder class
     m_acTEncTop[layer].deletePicBuffer();
+    acPicYuvTrueOrg[layer].destroy();
   }
 
   // delete buffers & classes
@@ -2222,7 +2358,7 @@ Void TAppEncTop::encode()
   return;
 }
 
-Void TAppEncTop::printOutSummary(Bool isField)
+Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE)
 {
   UInt layer;
 
@@ -2247,31 +2383,27 @@ Void TAppEncTop::printOutSummary(Bool isField)
 
   //-- all
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeAll[layer].printOut('a', layer);
+    m_gcAnalyzeAll[layer].printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeI[layer].printOut('i', layer);
+    m_gcAnalyzeI[layer].printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeP[layer].printOut('p', layer);
+    m_gcAnalyzeP[layer].printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
-  printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeB[layer].printOut('b', layer);
+    m_gcAnalyzeB[layer].printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
   }
 
   if(isField)
@@ -2280,17 +2412,35 @@ Void TAppEncTop::printOutSummary(Bool isField)
     {
       //-- interlaced summary
       m_gcAnalyzeAll_in.setFrmRate( m_acLayerCfg[layer].getFrameRate());
+      m_gcAnalyzeAll_in.setBits(m_gcAnalyzeB[layer].getBits());
+      // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
+
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-      m_gcAnalyzeAll_in.printOutInterlaced('a',  m_gcAnalyzeAll[layer].getBits());
+      m_gcAnalyzeAll_in.printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
 
 #if _SUMMARY_OUT_
       m_gcAnalyzeAll_in.printSummaryOutInterlaced();
 #endif
     }
   }
+
+  printf("\n");
+  //printf("\nRVM: %.3lf\n" , xCalculateRVM());
 }
 
 #else
+// ====================================================================================================================
+// Public member functions
+// ====================================================================================================================
+
+/**
+ - create internal class
+ - initialize internal variable
+ - until the end of input YUV file, call encoding function in TEncTop class
+ - delete allocated buffers
+ - destroy internal class
+ .
+ */
 Void TAppEncTop::encode()
 {
   fstream bitstreamFile(m_pchBitstreamFile, fstream::binary | fstream::out);
@@ -2308,20 +2458,29 @@ Void TAppEncTop::encode()
   xCreateLib();
   xInitLib(m_isField);
 
+  printChromaFormat();
+
   // main encoder loop
   Int   iNumEncoded = 0;
   Bool  bEos = false;
 
+  const InputColourSpaceConversion ipCSC  =  m_inputColourSpaceConvert;
+  const InputColourSpaceConversion snrCSC = (!m_snrInternalColourSpace) ? m_inputColourSpaceConvert : IPCOLOURSPACE_UNCHANGED;
+
   list<AccessUnit> outputAccessUnits; ///< list of access units to write out.  is populated by the encoding process
+
+  TComPicYuv cPicYuvTrueOrg;
 
   // allocate original YUV buffer
   if( m_isField )
   {
-    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeightOrg, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+  cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth);
   }
   else
   {
-    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+  cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth);
   }
 
   while ( !bEos )
@@ -2330,12 +2489,13 @@ Void TAppEncTop::encode()
     xGetBuffer(pcPicYuvRec);
 
     // read input YUV file
-    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, m_aiPad );
+    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_aiPad, m_InputChromaFormatIDC );
 
     // increase number of received frames
     m_iFrameRcvd++;
 
     bEos = (m_isField && (m_iFrameRcvd == (m_framesToBeEncoded >> 1) )) || ( !m_isField && (m_iFrameRcvd == m_framesToBeEncoded) );
+
     Bool flush = 0;
     // if end of file (which is only detected on a read failure) flush the encoder of any queued pictures
     if (m_cTVideoIOYuvInputFile.isEof())
@@ -2347,14 +2507,8 @@ Void TAppEncTop::encode()
     }
 
     // call encoding function for one frame
-    if ( m_isField )
-    {
-      m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, m_cListPicYuvRec, outputAccessUnits, iNumEncoded, m_isTopFieldFirst);
-    }
-    else
-    {
-    m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
-    }
+    if ( m_isField ) m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded, m_isTopFieldFirst );
+    else             m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
 
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )
@@ -2373,6 +2527,7 @@ Void TAppEncTop::encode()
 
   // delete used buffers in encoder class
   m_cTEncTop.deletePicBuffer();
+  cPicYuvTrueOrg.destroy();
 
   // delete buffers & classes
   xDeleteBuffer();
@@ -2400,7 +2555,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   assert( m_iGOPSize > 0 );
 
   // org. buffer
-  if ( m_acListPicYuvRec[layer].size() == (UInt)m_iGOPSize )
+  if ( m_acListPicYuvRec[layer].size() >= (UInt)m_iGOPSize ) // buffer will be 1 element longer when using field coding, to maintain first field whilst processing second.
   {
     rpcPicYuvRec = m_acListPicYuvRec[layer].popFront();
 
@@ -2410,17 +2565,9 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
     rpcPicYuvRec = new TComPicYuv;
 
 #if LAYER_CTB
-#if AUXILIARY_PICTURES
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
 #else
-    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, NULL );
-#endif
-#else
-#if AUXILIARY_PICTURES
     rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#else
-    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, NULL );
-#endif
 #endif
 
   }
@@ -2452,6 +2599,8 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
 
+  const InputColourSpaceConversion ipCSC = (!m_outputInternalColourSpace) ? m_inputColourSpaceConvert : IPCOLOURSPACE_UNCHANGED;
+
   if (m_isField)
   {
     //Reinterlace fields
@@ -2475,10 +2624,10 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 #endif
       {
 #if REPN_FORMAT_IN_VPS
-        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal, 
-          m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal, m_isTopFieldFirst );
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal, 
+          m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal, NUM_CHROMA_FORMAT, m_isTopFieldFirst );
 #else
-        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, m_acLayerCfg[layer].getConfWinLeft(), m_acLayerCfg[layer].getConfWinRight(), m_acLayerCfg[layer].getConfWinTop(), m_acLayerCfg[layer].getConfWinBottom(), m_isTopFieldFirst );
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_acLayerCfg[layer].getConfWinLeft(), m_acLayerCfg[layer].getConfWinRight(), m_acLayerCfg[layer].getConfWinTop(), m_acLayerCfg[layer].getConfWinBottom(), NUM_CHROMA_FORMAT, m_isTopFieldFirst );
 #endif
       }
     }
@@ -2504,10 +2653,10 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 #endif
       {
 #if REPN_FORMAT_IN_VPS
-        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal,
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal,
           m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal );
 #else
-        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, m_acLayerCfg[layer].getConfWinLeft(), m_acLayerCfg[layer].getConfWinRight(),
+        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft(), m_acLayerCfg[layer].getConfWinRight(),
           m_acLayerCfg[layer].getConfWinTop(), m_acLayerCfg[layer].getConfWinBottom() );
 #endif
       }
@@ -2563,7 +2712,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec)
   assert( m_iGOPSize > 0 );
 
   // org. buffer
-  if ( m_cListPicYuvRec.size() == (UInt)m_iGOPSize )
+  if ( m_cListPicYuvRec.size() >= (UInt)m_iGOPSize ) // buffer will be 1 element longer when using field coding, to maintain first field whilst processing second.
   {
     rpcPicYuvRec = m_cListPicYuvRec.popFront();
 
@@ -2572,7 +2721,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-    rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
+    rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
 
   }
   m_cListPicYuvRec.pushBack( rpcPicYuvRec );
@@ -2597,6 +2746,8 @@ Void TAppEncTop::xDeleteBuffer( )
  */
 Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits)
 {
+  const InputColourSpaceConversion ipCSC = (!m_outputInternalColourSpace) ? m_inputColourSpaceConvert : IPCOLOURSPACE_UNCHANGED;
+
   if (m_isField)
   {
     //Reinterlace fields
@@ -2616,7 +2767,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
 
       if (m_pchReconFile)
       {
-        m_cTVideoIOYuvReconFile.write( pcPicYuvRecTop, pcPicYuvRecBottom, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom, m_isTopFieldFirst );
+        m_cTVideoIOYuvReconFile.write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom, NUM_CHROMA_FORMAT, m_isTopFieldFirst );
       }
 
       const AccessUnit& auTop = *(iterBitstream++);
@@ -2631,6 +2782,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
   else
   {
     Int i;
+
     TComList<TComPicYuv*>::iterator iterPicYuvRec = m_cListPicYuvRec.end();
     list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
@@ -2644,7 +2796,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
       if (m_pchReconFile)
       {
-        m_cTVideoIOYuvReconFile.write( pcPicYuvRec, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
+        m_cTVideoIOYuvReconFile.write( pcPicYuvRec, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
       }
 
       const AccessUnit& au = *(iterBitstream++);
@@ -2658,7 +2810,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
 /**
  *
  */
-void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& annexBsizes)
+Void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& annexBsizes)
 {
   AccessUnit::const_iterator it_au = au.begin();
   vector<UInt>::const_iterator it_stats = annexBsizes.begin();
@@ -2696,7 +2848,7 @@ void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
   }
 }
 
-void TAppEncTop::printRateSummary()
+Void TAppEncTop::printRateSummary()
 {
 #if SVC_EXTENSION
   Double time = (Double) m_iFrameRcvd / m_acLayerCfg[m_numLayers-1].getFrameRate();
@@ -2708,5 +2860,36 @@ void TAppEncTop::printRateSummary()
   printf("Bytes for SPS/PPS/Slice (Incl. Annex B): %u (%.3f kbps)\n", m_essentialBytes, 0.008 * m_essentialBytes / time);
 #endif
 }
+
+#if !SVC_EXTENSION
+Void TAppEncTop::printChromaFormat()
+{
+  std::cout << std::setw(43) << "Input ChromaFormatIDC = ";
+  switch (m_InputChromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << "  4:0:0"; break;
+  case CHROMA_420:  std::cout << "  4:2:0"; break;
+  case CHROMA_422:  std::cout << "  4:2:2"; break;
+  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << std::endl;
+
+  std::cout << std::setw(43) << "Output (internal) ChromaFormatIDC = ";
+  switch (m_cTEncTop.getChromaFormatIdc())
+  {
+  case CHROMA_400:  std::cout << "  4:0:0"; break;
+  case CHROMA_420:  std::cout << "  4:2:0"; break;
+  case CHROMA_422:  std::cout << "  4:2:2"; break;
+  case CHROMA_444:  std::cout << "  4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << "\n" << std::endl;
+}
+#endif
 
 //! \}

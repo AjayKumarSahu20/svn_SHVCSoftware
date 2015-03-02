@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -44,15 +44,25 @@
 #include "TLibCommon/SEI.h"
 #if SVC_EXTENSION
 #include "TDecTop.h"
+#if CONFORMANCE_BITSTREAM_MODE
+#include <algorithm>
+#endif
 #endif
 
 #include <time.h>
 
 extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
 
+#if CONFORMANCE_BITSTREAM_MODE
+Bool pocCompareFunction( const TComPic &pic1, const TComPic &pic2 )
+{
+  return (const_cast<TComPic&>(pic1).getPOC() < const_cast<TComPic&>(pic2).getPOC());
+}
+#endif
+
 //! \ingroup TLibDecoder
 //! \{
-static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
 #if Q0074_COLOUR_REMAPPING_SEI
 static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* colourRemappingInfoSEI, UInt layerId=0 );
 static std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Remapping Information SEI
@@ -64,13 +74,11 @@ static std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Rema
 TDecGop::TDecGop()
 {
   m_dDecTime = 0;
-  m_pcSbacDecoders = NULL;
-  m_pcBinCABACs = NULL;
 }
 
 TDecGop::~TDecGop()
 {
-  
+
 }
 
 #if SVC_EXTENSION
@@ -81,23 +89,24 @@ Void TDecGop::create(UInt layerId)
 #else
 Void TDecGop::create()
 {
-  
+
 }
 #endif
 
 Void TDecGop::destroy()
 {
 }
+
 #if SVC_EXTENSION
-Void TDecGop::init(TDecTop**               ppcDecTop,
-                   TDecEntropy*            pcEntropyDecoder,
+Void TDecGop::init( TDecTop**               ppcDecTop,
+                   TDecEntropy*             pcEntropyDecoder,
 #else
-Void TDecGop::init( TDecEntropy*            pcEntropyDecoder, 
+Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
 #endif
-                   TDecSbac*               pcSbacDecoder, 
+                   TDecSbac*               pcSbacDecoder,
                    TDecBinCABAC*           pcBinCABAC,
-                   TDecCavlc*              pcCavlcDecoder, 
-                   TDecSlice*              pcSliceDecoder, 
+                   TDecCavlc*              pcCavlcDecoder,
+                   TDecSlice*              pcSliceDecoder,
                    TComLoopFilter*         pcLoopFilter,
                    TComSampleAdaptiveOffset* pcSAO
                    )
@@ -122,44 +131,29 @@ Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
 // Public member functions
 // ====================================================================================================================
 
-Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
+Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic* pcPic)
 {
-  TComSlice*  pcSlice = rpcPic->getSlice(rpcPic->getCurrSliceIdx());
+  TComSlice*  pcSlice = pcPic->getSlice(pcPic->getCurrSliceIdx());
   // Table of extracted substreams.
   // These must be deallocated AND their internal fifos, too.
   TComInputBitstream **ppcSubstreams = NULL;
 
   //-- For time output for each slice
-  long iBeforeTime = clock();
+  clock_t iBeforeTime = clock();
   m_pcSbacDecoder->init( (TDecBinIf*)m_pcBinCABAC );
   m_pcEntropyDecoder->setEntropyDecoder (m_pcSbacDecoder);
 
-  UInt uiNumSubstreams = pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag() ? pcSlice->getNumEntryPointOffsets()+1 : pcSlice->getPPS()->getNumSubstreams();
+  const UInt uiNumSubstreams = pcSlice->getNumberOfSubstreamSizes()+1;
+//  const UInt uiNumSubstreams = pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag() ? pcSlice->getNumberOfSubstreamSizes()+1 : pcSlice->getPPS()->getNumSubstreams();
 
   // init each couple {EntropyDecoder, Substream}
-  UInt *puiSubstreamSizes = pcSlice->getSubstreamSizes();
   ppcSubstreams    = new TComInputBitstream*[uiNumSubstreams];
-  m_pcSbacDecoders = new TDecSbac[uiNumSubstreams];
-  m_pcBinCABACs    = new TDecBinCABAC[uiNumSubstreams];
   for ( UInt ui = 0 ; ui < uiNumSubstreams ; ui++ )
   {
-    m_pcSbacDecoders[ui].init(&m_pcBinCABACs[ui]);
-    ppcSubstreams[ui] = pcBitstream->extractSubstream(ui+1 < uiNumSubstreams ? puiSubstreamSizes[ui] : pcBitstream->getNumBitsLeft());
+    ppcSubstreams[ui] = pcBitstream->extractSubstream(ui+1 < uiNumSubstreams ? (pcSlice->getSubstreamSize(ui)<<3) : pcBitstream->getNumBitsLeft());
   }
 
-  for ( UInt ui = 0 ; ui+1 < uiNumSubstreams; ui++ )
-  {
-    m_pcEntropyDecoder->setEntropyDecoder ( &m_pcSbacDecoders[uiNumSubstreams - 1 - ui] );
-    m_pcEntropyDecoder->setBitstream      (  ppcSubstreams   [uiNumSubstreams - 1 - ui] );
-    m_pcEntropyDecoder->resetEntropy      (pcSlice);
-  }
-
-  m_pcEntropyDecoder->setEntropyDecoder ( m_pcSbacDecoder  );
-  m_pcEntropyDecoder->setBitstream      ( ppcSubstreams[0] );
-  m_pcEntropyDecoder->resetEntropy      (pcSlice);
-  m_pcSbacDecoders[0].load(m_pcSbacDecoder);
-  m_pcSliceDecoder->decompressSlice( ppcSubstreams, rpcPic, m_pcSbacDecoder, m_pcSbacDecoders);
-  m_pcEntropyDecoder->setBitstream(  ppcSubstreams[uiNumSubstreams-1] );
+  m_pcSliceDecoder->decompressSlice( ppcSubstreams, pcPic, m_pcSbacDecoder);
   // deallocate all created substreams, including internal buffers.
   for (UInt ui = 0; ui < uiNumSubstreams; ui++)
   {
@@ -167,46 +161,47 @@ Void TDecGop::decompressSlice(TComInputBitstream* pcBitstream, TComPic*& rpcPic)
     delete ppcSubstreams[ui];
   }
   delete[] ppcSubstreams;
-  delete[] m_pcSbacDecoders; m_pcSbacDecoders = NULL;
-  delete[] m_pcBinCABACs; m_pcBinCABACs = NULL;
 
   m_dDecTime += (Double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
 }
 
-Void TDecGop::filterPicture(TComPic*& rpcPic)
+Void TDecGop::filterPicture(TComPic* pcPic)
 {
-  TComSlice*  pcSlice = rpcPic->getSlice(rpcPic->getCurrSliceIdx());
+  TComSlice*  pcSlice = pcPic->getSlice(pcPic->getCurrSliceIdx());
 
   //-- For time output for each slice
-  long iBeforeTime = clock();
+  clock_t iBeforeTime = clock();
 
   // deblocking filter
   Bool bLFCrossTileBoundary = pcSlice->getPPS()->getLoopFilterAcrossTilesEnabledFlag();
   m_pcLoopFilter->setCfg(bLFCrossTileBoundary);
-  m_pcLoopFilter->loopFilterPic( rpcPic );
+  m_pcLoopFilter->loopFilterPic( pcPic );
+
   if( pcSlice->getSPS()->getUseSAO() )
   {
-    m_pcSAO->reconstructBlkSAOParams(rpcPic, rpcPic->getPicSym()->getSAOBlkParam());
-    m_pcSAO->SAOProcess(rpcPic);
-    m_pcSAO->PCMLFDisableProcess(rpcPic);
+    m_pcSAO->reconstructBlkSAOParams(pcPic, pcPic->getPicSym()->getSAOBlkParam());
+    m_pcSAO->SAOProcess(pcPic);
+    m_pcSAO->PCMLFDisableProcess(pcPic);
   }
-  rpcPic->compressMotion(); 
+
+  pcPic->compressMotion();
   Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced()) c += 32;
 
   //-- For time output for each slice
 #if SVC_EXTENSION
-  printf("\nPOC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP%3d ) ", pcSlice->getPOC(),
-                                                    rpcPic->getLayerId(),
+  printf("POC %4d LId: %1d TId: %1d ( %c-SLICE %s, QP%3d ) ", pcSlice->getPOC(),
+                                                    pcPic->getLayerId(),
                                                     pcSlice->getTLayer(),
                                                     c,
                                                     NaluToStr( pcSlice->getNalUnitType() ).data(),
                                                     pcSlice->getSliceQp() );
 #else
-  printf("\nPOC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
-                                                    pcSlice->getTLayer(),
-                                                    c,
-                                                    pcSlice->getSliceQp() );
+  printf("POC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
+                                                  pcSlice->getTLayer(),
+                                                  c,
+                                                  pcSlice->getSliceQp() );
+
 #endif
   m_dDecTime += (Double)(clock()-iBeforeTime) / CLOCKS_PER_SEC;
   printf ("[DT %6.3f] ", m_dDecTime );
@@ -247,37 +242,44 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
   }
   if (m_decodedPictureHashSEIEnabled)
   {
-    SEIMessages pictureHashes = getSeisByType(rpcPic->getSEIs(), SEI::DECODED_PICTURE_HASH );
+    SEIMessages pictureHashes = getSeisByType(pcPic->getSEIs(), SEI::DECODED_PICTURE_HASH );
     const SEIDecodedPictureHash *hash = ( pictureHashes.size() > 0 ) ? (SEIDecodedPictureHash*) *(pictureHashes.begin()) : NULL;
     if (pictureHashes.size() > 1)
     {
       printf ("Warning: Got multiple decoded picture hash SEI messages. Using first.");
     }
-    calcAndPrintHashStatus(*rpcPic->getPicYuvRec(), hash);
+    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash);
   }
+#if CONFORMANCE_BITSTREAM_MODE
+  if( this->getLayerDec(pcPic->getLayerId())->getConfModeFlag() ) 
+  {
+    // Add this reconstructed picture to the parallel buffer.
+    std::vector<TComPic> *thisLayerBuffer = (this->getLayerDec(pcPic->getLayerId()))->getConfListPic();
+    thisLayerBuffer->push_back(*pcPic);
+    std::sort( thisLayerBuffer->begin(), thisLayerBuffer->end(), pocCompareFunction );
+  }
+#endif
 #if Q0074_COLOUR_REMAPPING_SEI
   if (m_colourRemapSEIEnabled)
   {
-    SEIMessages colourRemappingInfo = getSeisByType(rpcPic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
+    SEIMessages colourRemappingInfo = getSeisByType(pcPic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
     const SEIColourRemappingInfo *seiColourRemappingInfo = ( colourRemappingInfo.size() > 0 ) ? (SEIColourRemappingInfo*) *(colourRemappingInfo.begin()) : NULL;
     if (colourRemappingInfo.size() > 1)
     {
       printf ("Warning: Got multiple Colour Remapping Information SEI messages. Using first.");
     }
-    applyColourRemapping(*rpcPic->getPicYuvRec(), seiColourRemappingInfo
+    applyColourRemapping(*pcPic->getPicYuvRec(), seiColourRemappingInfo
 #if SVC_EXTENSION
-     , rpcPic->getLayerId()
+     , pcPic->getLayerId()
 #endif
      );
   }
 #endif
 
-#if SETTING_PIC_OUTPUT_MARK
-  rpcPic->setOutputMark(rpcPic->getSlice(0)->getPicOutputFlag() ? true : false);
-#else
-  rpcPic->setOutputMark(true);
-#endif
-  rpcPic->setReconMark(true);
+  printf("\n");
+
+  pcPic->setOutputMark(pcPic->getSlice(0)->getPicOutputFlag() ? true : false);
+  pcPic->setReconMark(true);
 }
 
 /**
@@ -291,10 +293,10 @@ Void TDecGop::filterPicture(TComPic*& rpcPic)
  *            ***ERROR*** - calculated hash does not match the SEI message
  *            unk         - no SEI message was available for comparison
  */
-static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI)
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI)
 {
   /* calculate MD5sum for entire reconstructed picture */
-  UChar recon_digest[3][16];
+  TComDigest recon_digest;
   Int numChar=0;
   const Char* hashType = "\0";
 
@@ -302,31 +304,29 @@ static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
   {
     switch (pictureHashSEI->method)
     {
-    case SEIDecodedPictureHash::MD5:
-      {
-        hashType = "MD5";
-        calcMD5(pic, recon_digest);
-        numChar = 16;
-        break;
-      }
-    case SEIDecodedPictureHash::CRC:
-      {
-        hashType = "CRC";
-        calcCRC(pic, recon_digest);
-        numChar = 2;
-        break;
-      }
-    case SEIDecodedPictureHash::CHECKSUM:
-      {
-        hashType = "Checksum";
-        calcChecksum(pic, recon_digest);
-        numChar = 4;
-        break;
-      }
-    default:
-      {
-        assert (!"unknown hash type");
-      }
+      case SEIDecodedPictureHash::MD5:
+        {
+          hashType = "MD5";
+          numChar = calcMD5(pic, recon_digest);
+          break;
+        }
+      case SEIDecodedPictureHash::CRC:
+        {
+          hashType = "CRC";
+          numChar = calcCRC(pic, recon_digest);
+          break;
+        }
+      case SEIDecodedPictureHash::CHECKSUM:
+        {
+          hashType = "Checksum";
+          numChar = calcChecksum(pic, recon_digest);
+          break;
+        }
+      default:
+        {
+          assert (!"unknown hash type");
+          break;
+        }
     }
   }
 
@@ -337,25 +337,19 @@ static void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
   if (pictureHashSEI)
   {
     ok = "(OK)";
-    for(Int yuvIdx = 0; yuvIdx < 3; yuvIdx++)
+    if (recon_digest != pictureHashSEI->m_digest)
     {
-      for (UInt i = 0; i < numChar; i++)
-      {
-        if (recon_digest[yuvIdx][i] != pictureHashSEI->digest[yuvIdx][i])
-        {
-          ok = "(***ERROR***)";
-          mismatch = true;
-        }
-      }
+      ok = "(***ERROR***)";
+      mismatch = true;
     }
   }
 
-  printf("[%s:%s,%s] ", hashType, digestToString(recon_digest, numChar), ok);
+  printf("[%s:%s,%s] ", hashType, digestToString(recon_digest, numChar).c_str(), ok);
 
   if (mismatch)
   {
     g_md5_mismatch = true;
-    printf("[rx%s:%s] ", hashType, digestToString(pictureHashSEI->digest, numChar));
+    printf("[rx%s:%s] ", hashType, digestToString(pictureHashSEI->m_digest, numChar).c_str());
   }
 }
 
@@ -417,7 +411,7 @@ Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vec
   }
 }
 
-static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId )
+static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId )
 {  
   if( !storeCriSEI.size() )
 #if SVC_EXTENSION
@@ -431,39 +425,35 @@ static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
 
   if( !storeCriSEI[layerId].m_colourRemapCancelFlag )
   {
-    Int iHeight  = pic.getHeight();
-    Int iWidth   = pic.getWidth();
-    Int iStride  = pic.getStride();
-    Int iCStride = pic.getCStride();
+    Int iHeight  = pic.getHeight(COMPONENT_Y);
+    Int iWidth   = pic.getWidth(COMPONENT_Y);
+    Int iStride  = pic.getStride(COMPONENT_Y);
+    Int iCStride = pic.getStride(COMPONENT_Cb);
 
     Pel *YUVIn[3], *YUVOut[3];
-    YUVIn[0] = pic.getLumaAddr();
-    YUVIn[1] = pic.getCbAddr();
-    YUVIn[2] = pic.getCrAddr();
+    YUVIn[0] = pic.getAddr(COMPONENT_Y);
+    YUVIn[1] = pic.getAddr(COMPONENT_Cb);
+    YUVIn[2] = pic.getAddr(COMPONENT_Cr);
     
     TComPicYuv picColourRemapped;
 #if SVC_EXTENSION
-#if AUXILIARY_PICTURES
-    picColourRemapped.create( pic.getWidth(), pic.getHeight(), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
 #else
-    picColourRemapped.create( pic.getWidth(), pic.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
-#endif
-#else
-    picColourRemapped.create( pic.getWidth(), pic.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
 #endif 
-    YUVOut[0] = picColourRemapped.getLumaAddr();
-    YUVOut[1] = picColourRemapped.getCbAddr();
-    YUVOut[2] = picColourRemapped.getCrAddr();
+    YUVOut[0] = picColourRemapped.getAddr(COMPONENT_Y);
+    YUVOut[1] = picColourRemapped.getAddr(COMPONENT_Cb);
+    YUVOut[2] = picColourRemapped.getAddr(COMPONENT_Cr);
 
 #if SVC_EXTENSION
-    Int bitDepthY = g_bitDepthYLayer[layerId];
-    Int bitDepthC = g_bitDepthCLayer[layerId];
+    Int bitDepthY = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerId];
+    Int bitDepthC = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerId];
 
-    assert( g_bitDepthY == bitDepthY );
-    assert( g_bitDepthC == bitDepthC );
+    assert( g_bitDepth[CHANNEL_TYPE_LUMA] == bitDepthY );
+    assert( g_bitDepth[CHANNEL_TYPE_CHROMA] == bitDepthC );
 #else
-    Int bitDepthY = g_bitDepthY;
-    Int bitDepthC = g_bitDepthC;
+    Int bitDepthY = g_bitDepth[CHANNEL_TYPE_LUMA];
+    Int bitDepthC = g_bitDepth[CHANNEL_TYPE_CHROMA];
 #endif
 
     std::vector<Int> preLut[3];

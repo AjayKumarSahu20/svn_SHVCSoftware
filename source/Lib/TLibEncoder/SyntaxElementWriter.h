@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -55,6 +55,9 @@
 #define WRITE_UVLC( value,         name)    xWriteUvlcTr ( value,         name )
 #define WRITE_SVLC( value,         name)    xWriteSvlcTr ( value,         name )
 #define WRITE_FLAG( value,         name)    xWriteFlagTr ( value,         name )
+#if Q0096_OVERLAY_SEI
+#define WRITE_STRING( value, length, name)   xWriteStringTr( value, length, name )
+#endif
 
 #else
 
@@ -62,6 +65,9 @@
 #define WRITE_UVLC( value,         name)     xWriteUvlc ( value )
 #define WRITE_SVLC( value,         name)     xWriteSvlc ( value )
 #define WRITE_FLAG( value,         name)     xWriteFlag ( value )
+#if Q0096_OVERLAY_SEI
+#define WRITE_STRING( value, length, name)   xWriteString( value, length )
+#endif
 
 #endif
 
@@ -81,11 +87,17 @@ protected:
   Void  xWriteUvlc            ( UInt uiCode );
   Void  xWriteSvlc            ( Int  iCode   );
   Void  xWriteFlag            ( UInt uiCode );
+#if Q0096_OVERLAY_SEI
+  Void  xWriteString          ( UChar* sCode, UInt uiLength);
+#endif
 #if ENC_DEC_TRACE
   Void  xWriteCodeTr          ( UInt value, UInt  length, const Char *pSymbolName);
   Void  xWriteUvlcTr          ( UInt value,               const Char *pSymbolName);
   Void  xWriteSvlcTr          ( Int  value,               const Char *pSymbolName);
   Void  xWriteFlagTr          ( UInt value,               const Char *pSymbolName);
+#if Q0096_OVERLAY_SEI
+  Void  xWriteStringTr        ( UChar* value, UInt length, const Char *pSymbolName);
+#endif
 #endif
 
   UInt  xConvertToUInt        ( Int iValue ) {  return ( iValue <= 0) ? -iValue<<1 : (iValue<<1)-1; }

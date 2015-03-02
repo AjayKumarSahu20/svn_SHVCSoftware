@@ -664,17 +664,17 @@ Double TEnc3DAsymLUT::xxDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid
 
 Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
 {
-  Pel * pSrcY = m_pDsOrigPic->getLumaAddr();
-  Pel * pSrcU = m_pDsOrigPic->getCbAddr();
-  Pel * pSrcV = m_pDsOrigPic->getCrAddr();
-  Int nStrideSrcY = m_pDsOrigPic->getStride();
-  Int nStrideSrcC = m_pDsOrigPic->getCStride();
+  Pel * pSrcY = m_pDsOrigPic->getAddr(COMPONENT_Y);
+  Pel * pSrcU = m_pDsOrigPic->getAddr(COMPONENT_Cb);
+  Pel * pSrcV = m_pDsOrigPic->getAddr(COMPONENT_Cr);
+  Int nStrideSrcY = m_pDsOrigPic->getStride(COMPONENT_Y);
+  Int nStrideSrcC = m_pDsOrigPic->getStride(COMPONENT_Cb);
   TComPicYuv *pRecPic = pCurPic->getSlice(pCurPic->getCurrSliceIdx())->getBaseColPic(refLayerIdc)->getPicYuvRec();
-  Pel * pIRLY = pRecPic->getLumaAddr();
-  Pel * pIRLU = pRecPic->getCbAddr();
-  Pel * pIRLV = pRecPic->getCrAddr();
-  Int nStrideILRY = pRecPic->getStride();
-  Int nStrideILRC = pRecPic->getCStride();
+  Pel * pIRLY = pRecPic->getAddr(COMPONENT_Y);
+  Pel * pIRLU = pRecPic->getAddr(COMPONENT_Cb);
+  Pel * pIRLV = pRecPic->getAddr(COMPONENT_Cr);
+  Int nStrideILRY = pRecPic->getStride(COMPONENT_Y);
+  Int nStrideILRC = pRecPic->getStride(COMPONENT_Cb);
 #if R0179_ENC_OPT_3DLUT_SIZE
   xReset3DArray( m_pColorInfo  , getMaxYSize() , getMaxCSize() , getMaxCSize() );
   xReset3DArray( m_pColorInfoC , getMaxYSize() , getMaxCSize() , getMaxCSize() );
@@ -697,14 +697,14 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
   TComPicYuv *pcRecPicBL = pSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
   // borders of down-sampled picture
   Int leftDS =  (scalEL.getWindowLeftOffset()*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16;
-  Int rightDS = pcRecPicBL->getWidth() - 1 + (((scalEL.getWindowRightOffset())*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16);
+  Int rightDS = pcRecPicBL->getWidth(COMPONENT_Y) - 1 + (((scalEL.getWindowRightOffset())*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16);
   Int topDS = (((scalEL.getWindowTopOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
-  Int bottomDS = pcRecPicBL->getHeight() - 1 + (((scalEL.getWindowBottomOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
+  Int bottomDS = pcRecPicBL->getHeight(COMPONENT_Y) - 1 + (((scalEL.getWindowBottomOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
   // overlapped region
   Int left = max( 0 , leftDS );
-  Int right = min( pcRecPicBL->getWidth() - 1 , rightDS );
+  Int right = min( pcRecPicBL->getWidth(COMPONENT_Y) - 1 , rightDS );
   Int top = max( 0 , topDS );
-  Int bottom = min( pcRecPicBL->getHeight() - 1 , bottomDS );
+  Int bottom = min( pcRecPicBL->getHeight(COMPONENT_Y) - 1 , bottomDS );
   // since we do data collection only for overlapped region, the border extension is good enough
 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
