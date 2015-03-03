@@ -117,7 +117,7 @@ Void  init      ( TDecTop**               ppcDecTop,
   Void setColourRemappingInfoSEIEnabled(Int enabled) { m_colourRemapSEIEnabled = enabled; }
 #endif
 #if SVC_EXTENSION
-  TDecTop*   getLayerDec(UInt layerIdx)  { return m_ppcTDecTop[layerIdx]; }
+  TDecTop*   getLayerDec(UInt layerId)  { return m_ppcTDecTop[layerId]; }
 #endif 
 
 };

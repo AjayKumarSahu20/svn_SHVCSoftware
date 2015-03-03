@@ -243,7 +243,7 @@ public:
 #if POC_RESET_IDC_DECODER
   Int       getParseIdc                     ()                              { return m_parseIdc;               }
   Void      setParseIdc                     (Int x)                         { m_parseIdc = x;                  }
-  Void      markAllPicsAsNoCurrAu();
+  Void      markAllPicsAsNoCurrAu           (TComVPS *vps);
 
   Int       getLastPocPeriodId              ()                              { return m_lastPocPeriodId;        }
   Void      setLastPocPeriodId              (Int x)                         { m_lastPocPeriodId = x;           }
@@ -257,7 +257,7 @@ public:
   Void      setNumLayer                     (UInt uiNum)                    { m_numLayer = uiNum;              }
   TComList<TComPic*>*  getListPic           ()                              { return &m_cListPic;              }
   Void      setLayerDec                     (TDecTop **p)                   { m_ppcTDecTop = p;                }
-  TDecTop*  getLayerDec                     (UInt layerIdx)                 { return m_ppcTDecTop[layerIdx];   }
+  TDecTop*  getLayerDec                     (UInt layerId)                  { return m_ppcTDecTop[layerId];    }
 #if R0235_SMALLEST_LAYER_ID
   Void      xDeriveSmallestLayerId(TComVPS* vps);
 #endif
