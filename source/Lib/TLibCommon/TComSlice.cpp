@@ -2124,10 +2124,10 @@ TComVPS::TComVPS()
   m_crossLayerAlignedIdrOnlyFlag = false;
 #endif
   m_maxTidRefPresentFlag = true;
-  for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1 - 1; i++)
+  for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1 - 1; i++)
   {
 #if O0225_MAX_TID_FOR_REF_LAYERS
-    for( Int j = 0; j < MAX_VPS_LAYER_ID_PLUS1; j++)
+    for( Int j = 0; j < MAX_VPS_LAYER_IDX_PLUS1; j++)
     {
       m_maxTidIlRefPicsPlus1[i][j] = m_uiMaxTLayers + 1;
     }
@@ -3527,7 +3527,7 @@ void TComVPS::setLayerIdIncludedFlagsForAddLayerSets()
     {
       Int layerNum = 0;
       Int lsIdx = m_vpsNumLayerSetsMinus1 + 1 + i;
-      for (Int layerId = 0; layerId < MAX_VPS_LAYER_ID_PLUS1; layerId++)
+      for (Int layerId = 0; layerId < MAX_VPS_LAYER_IDX_PLUS1; layerId++)
       {
         m_layerIdIncludedFlag[lsIdx][layerId] = false;
       }
