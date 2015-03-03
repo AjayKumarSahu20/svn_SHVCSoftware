@@ -1544,19 +1544,19 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
   {
     for( Int dpbLayerCtr = 0; dpbLayerCtr < dpbStatus.m_numLayers; dpbLayerCtr++)
     {
-      Int layerIdx  = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
+      Int layerId = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
       // Output all picutres "decoded" in that layer that have POC less than the current picture
-      std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(layerIdx))->getConfListPic();
+      std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(layerId))->getConfListPic();
       // Write all pictures to the file.
-      if( this->getDecodedYuvLayerRefresh(layerIdx) )
+      if( this->getDecodedYuvLayerRefresh(layerId) )
       {
-        m_outputBitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerIdx];
-        m_outputBitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerIdx];
+        m_outputBitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerId];
+        m_outputBitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerId];
 
         char tempFileName[256];
-        strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerIdx ).c_str());
-        m_confReconFile[layerIdx].open(tempFileName, true, m_outputBitDepth, m_outputBitDepth, g_bitDepth ); // write mode
-        this->setDecodedYuvLayerRefresh( layerIdx, false );
+        strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerId ).c_str());
+        m_confReconFile[layerId].open(tempFileName, true, m_outputBitDepth, m_outputBitDepth, g_bitDepth ); // write mode
+        this->setDecodedYuvLayerRefresh( layerId, false );
       }
 
       std::vector<TComPic>::iterator itPic;
@@ -1574,7 +1574,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         if( checkPic.getPOC() <= pocValue )
         {
           TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();
-          m_confReconFile[layerIdx].write( pPicCYuvRec, m_outputColourSpaceConvert,
+          m_confReconFile[layerId].write( pPicCYuvRec, m_outputColourSpaceConvert,
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),

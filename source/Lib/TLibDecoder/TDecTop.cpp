@@ -482,7 +482,7 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   m_cGopDecoder.filterPicture(pcPic);
 
 #if FIX_NON_OUTPUT_LAYER
-  if( this->getLayerDec(pcPic->getLayerIdx())->m_isOutputLayerFlag == false )
+  if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
   {
     pcPic->setOutputMark( false );
   }
@@ -1095,11 +1095,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       // New access unit; reset all variables related to POC reset restrictions
       resetPocRestrictionCheckParameters();
 #endif
-      markAllPicsAsNoCurrAu();
+      markAllPicsAsNoCurrAu(m_apcSlicePilot->getVPS());
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
       for (UInt i = 0; i < MAX_LAYERS; i++)
       {
-        m_ppcTDecTop[i]->m_pocDecrementedInDPBFlag = false;
+        m_ppcTDecTop[m_apcSlicePilot->getVPS()->getLayerIdInNuh(i)]->m_pocDecrementedInDPBFlag = false;
       }
 #endif
     }
@@ -2856,16 +2856,16 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdx )
     return (TDecTop *)getLayerDec( 0 );
   }
   
-  return (TDecTop *)getLayerDec( vps->getLayerIdxInVps( vps->getRefLayerId( m_layerId, refLayerIdx ) ) );
+  return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdx ) );
 }
 #endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
 Void TDecTop::setRefLayerParams( TComVPS* vps )
 {
-  for(UInt layer = 0; layer < m_numLayer; layer++)
+  for(UInt layerIdx = 0; layerIdx < m_numLayer; layerIdx++)
   {
-    TDecTop *decTop = (TDecTop *)getLayerDec(layer);
+    TDecTop *decTop = (TDecTop *)getLayerDec(vps->getLayerIdInNuh(layerIdx));
     decTop->setNumSamplePredRefLayers(0);
     decTop->setNumMotionPredRefLayers(0);
     decTop->setNumDirectRefLayers(0);
@@ -2876,18 +2876,18 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
       decTop->setSamplePredRefLayerId(i, 0);
       decTop->setMotionPredRefLayerId(i, 0);
     }
-    for(Int j = 0; j < layer; j++)
+    for(Int j = 0; j < layerIdx; j++)
     {
-      if (vps->getDirectDependencyFlag(layer, j))
+      if (vps->getDirectDependencyFlag(layerIdx, j))
       {
-        decTop->setRefLayerId(decTop->getNumDirectRefLayers(), vps->getLayerIdInNuh(layer));
+        decTop->setRefLayerId(decTop->getNumDirectRefLayers(), vps->getLayerIdInNuh(layerIdx));
         decTop->setNumDirectRefLayers(decTop->getNumDirectRefLayers() + 1);
 
-        Int samplePredEnabledFlag = (vps->getDirectDependencyType(layer, j) + 1) & 1;
+        Int samplePredEnabledFlag = (vps->getDirectDependencyType(layerIdx, j) + 1) & 1;
         decTop->setSamplePredEnabledFlag(j, samplePredEnabledFlag == 1 ? true : false);
         decTop->setNumSamplePredRefLayers(decTop->getNumSamplePredRefLayers() + samplePredEnabledFlag);
 
-        Int motionPredEnabledFlag = ((vps->getDirectDependencyType(layer, j) + 1) & 2) >> 1;
+        Int motionPredEnabledFlag = ((vps->getDirectDependencyType(layerIdx, j) + 1) & 2) >> 1;
         decTop->setMotionPredEnabledFlag(j, motionPredEnabledFlag == 1 ? true : false);
         decTop->setNumMotionPredRefLayers(decTop->getNumMotionPredRefLayers() + motionPredEnabledFlag);
       }
@@ -3107,7 +3107,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   {
     if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
     {
-      this->getLayerDec( vps->getLayerIdxInVps( vps->getLayerSetLayerIdList( targetLsIdx, i ) ) )->m_isOutputLayerFlag = true;
+      this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
     }
   }
 #endif
@@ -3129,11 +3129,11 @@ Void TDecTop::assignSubDpbs(TComVPS *vps)
 }
 #endif
 #if POC_RESET_IDC_DECODER
-Void TDecTop::markAllPicsAsNoCurrAu()
+Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)
 {
   for(Int i = 0; i < MAX_LAYERS; i++)
   {
-    TComList<TComPic*>* listPic = this->getLayerDec(i)->getListPic();
+    TComList<TComPic*>* listPic = this->getLayerDec(vps->getLayerIdInNuh(i))->getListPic();
     TComList<TComPic*>::iterator  iterPic = listPic->begin();
     while ( iterPic != listPic->end() )
     {

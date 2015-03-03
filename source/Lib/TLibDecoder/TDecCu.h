@@ -102,7 +102,7 @@ public:
   Void  decompressCtu           ( TComDataCU* pCtu );
  
 #if SVC_EXTENSION
-  TDecTop*   getLayerDec        ( UInt layerIdx )  { return m_ppcTDecTop[layerIdx]; }
+  TDecTop*   getLayerDec        ( UInt layerId )  { return m_ppcTDecTop[layerId]; }
 #endif
 protected:
 

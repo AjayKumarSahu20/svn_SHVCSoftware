@@ -1088,8 +1088,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getNuhLayerIdPresentFlag()                             { return m_nuhLayerIdPresentFlag;  }
   Void   setNuhLayerIdPresentFlag(Bool x)                       { m_nuhLayerIdPresentFlag = x;     }
 
-  UInt   getLayerIdInNuh(Int id)                                { return m_layerIdInNuh[id];       }
-  Void   setLayerIdInNuh(Int id, UInt x)                        { m_layerIdInNuh[id] = x;          }
+  UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[id];       }
+  Void   setLayerIdInNuh(Int layerIdx, UInt x)                  { m_layerIdInNuh[id] = x;          }
 
   UInt   getDimensionId(Int lyrId, Int id)                      { return m_dimensionId[lyrId][id]; }
   Void   setDimensionId(Int lyrId, Int id, UInt x)              { m_dimensionId[lyrId][id] = x;    }

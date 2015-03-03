@@ -251,10 +251,10 @@ Void TDecGop::filterPicture(TComPic* pcPic)
     calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash);
   }
 #if CONFORMANCE_BITSTREAM_MODE
-  if( this->getLayerDec(pcPic->getLayerIdx())->getConfModeFlag() )
+  if( this->getLayerDec(pcPic->getLayerId())->getConfModeFlag() )
   {
     // Add this reconstructed picture to the parallel buffer.
-    std::vector<TComPic> *thisLayerBuffer = (this->getLayerDec(pcPic->getLayerIdx()))->getConfListPic();
+    std::vector<TComPic> *thisLayerBuffer = (this->getLayerDec(pcPic->getLayerId()))->getConfListPic();
     thisLayerBuffer->push_back(*pcPic);
     std::sort( thisLayerBuffer->begin(), thisLayerBuffer->end(), pocCompareFunction );
   }
