@@ -387,16 +387,16 @@ protected:
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int       m_numDirectRefLayers;
-  Int       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
 
   Int       m_numActiveRefLayers;
-  Int       m_predLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_predLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numSamplePredRefLayers;
-  Int       m_samplePredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_samplePredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numMotionPredRefLayers;
-  Int       m_motionPredRefLayerId[MAX_VPS_LAYER_ID_PLUS1];
-  Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
-  Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_motionPredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
+  Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
+  Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
   Int       m_maxTidIlRefPicsPlus1;
 #if FAST_INTRA_SHVC

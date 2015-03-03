@@ -1299,7 +1299,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
-      Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_ID_PLUS1];
+      Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_IDX_PLUS1];
       Int activeNumILRRefIdxTmp = 0;
 
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
@@ -1307,9 +1307,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
 #if VPS_EXTN_DIRECT_REF_LAYERS
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(refLayerIdc)->getListPic();
+        TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getRefLayerEnc(refLayerIdc)->getListPic();
 #else
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId-1]->getListPic();
+        TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)-1]->getListPic();
 #endif
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
@@ -1411,7 +1411,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
-          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
+          if( m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getSamplePredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refLayerId)) )
           {
 #if P0312_VERT_PHASE_ADJ
             //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
@@ -1490,7 +1490,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         if(pcSlice->getVPS()->getCrossLayerIrapAlignFlag())
         {
-          TComList<TComPic*> *cListPic = m_ppcTEncTop[m_layerId]->getRefLayerEnc(0)->getListPic();
+          TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getRefLayerEnc(0)->getListPic();
           TComPic* picLayer0 = pcSlice->getRefPic(*cListPic, pcSlice->getPOC() );
           if(picLayer0)
           {
@@ -1532,7 +1532,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_R &&
 #if SVC_EXTENSION
-        ( m_iGopSize != 1 || m_ppcTEncTop[m_layerId]->getIntraPeriod() > 1 ) )
+        ( m_iGopSize != 1 || m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getIntraPeriod() > 1 ) )
 #else
           !(m_iGopSize == 1 && pcSlice->getSliceType() == I_SLICE))
 #endif
@@ -1837,7 +1837,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
         {
-          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, pcSlice->getInterLayerPredLayerIdc(i) ) ) )
+          if( m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getSamplePredEnabledFlag( pcSlice->getVPS()->getRefLayerId( m_layerId, pcSlice->getInterLayerPredLayerIdc(i) ) ) )
           {
             foundSamplePredPicture = true;
             break;
@@ -1871,7 +1871,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         for( Int i = 0; i < pcSlice->getLayerId(); i++)
         {
-          TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
+          TComList<TComPic *> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(i)]->getListPic();
           TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
           if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerId(), i) )
           {
@@ -1965,9 +1965,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
           // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
           // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-          if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
+          if( refPic->isILR(m_layerId) && m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getMotionPredEnabledFlag( refPic->getLayerId() )
 #if MFM_ENCCONSTRAINT
-            && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+            && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())]->getListPic() )->checkSameRefInfo() == true 
 #endif
             ) 
           { 
@@ -1987,9 +1987,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
             // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
             // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-            if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
+            if( refPic->isILR(m_layerId) && m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getMotionPredEnabledFlag( refPic->getLayerId() )
 #if MFM_ENCCONSTRAINT
-              && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
+              && pcSlice->getBaseColPic( *m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())]->getListPic() )->checkSameRefInfo() == true 
 #endif
               ) 
             { 
@@ -2106,7 +2106,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
         // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-        if( refPic->isILR(m_layerId) && !m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag(refPic->getLayerId()) )
+        if( refPic->isILR(m_layerId) && !m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getMotionPredEnabledFlag(refPic->getLayerId()) )
         {
           pcSlice->setEnableTMVPFlag(false);
           pcSlice->setMFMEnabledFlag(false);
@@ -2124,7 +2124,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
           {
             break;
           }
@@ -2148,7 +2148,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
           {
             break;
           }
@@ -4819,18 +4819,18 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
 
   for (UInt layerIdx = 0; layerIdx < numAffectedLayers; layerIdx++)
   {
-    if (!m_ppcTEncTop[affectedLayerList[layerIdx]]->getPocDecrementedInDPBFlag())
+    if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->getPocDecrementedInDPBFlag())
     {
-      m_ppcTEncTop[affectedLayerList[layerIdx]]->setPocDecrementedInDPBFlag(true);
+      m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->setPocDecrementedInDPBFlag(true);
 
       // Decrement value of associatedIrapPoc of the TEncGop object
-      m_ppcTEncTop[affectedLayerList[layerIdx]]->getGOPEncoder()->m_associatedIRAPPOC -= deltaPocVal;
+      m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->getGOPEncoder()->m_associatedIRAPPOC -= deltaPocVal;
 
       // Decrememnt the value of m_pocCRA
-      m_ppcTEncTop[affectedLayerList[layerIdx]]->getGOPEncoder()->m_pocCRA -= deltaPocVal;
+      m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->getGOPEncoder()->m_pocCRA -= deltaPocVal;
 
-      TComList<TComPic*>::iterator  iterPic = m_ppcTEncTop[affectedLayerList[layerIdx]]->getListPic()->begin();
-      while (iterPic != m_ppcTEncTop[affectedLayerList[layerIdx]]->getListPic()->end())
+      TComList<TComPic*>::iterator  iterPic = m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->getListPic()->begin();
+      while (iterPic != m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx])]->getListPic()->end())
 #else
   // Decrement value of associatedIrapPoc of the TEncGop object
   this->m_associatedIRAPPOC -= deltaPocVal;
@@ -5333,12 +5333,12 @@ Void TEncGOP::xCheckLayerReset(TComSlice *slice)
       for (Int i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
       {
         Int iLayerId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
-        m_ppcTEncTop[iLayerId]->setLayerInitializedFlag(false);
-        m_ppcTEncTop[iLayerId]->setFirstPicInLayerDecodedFlag(false);
+        m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(iLayerId)]->setLayerInitializedFlag(false);
+        m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(iLayerId)]->setFirstPicInLayerDecodedFlag(false);
       }
 
       // Each picture that is in the DPB and has nuh_layer_id equal to dolLayerId is marked as "unused for reference".
-      for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[dolLayerId]->getListPic()->begin(); pic != m_ppcTEncTop[dolLayerId]->getListPic()->end(); pic++)
+      for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(dolLayerId)]->getListPic()->begin(); pic != m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(dolLayerId)]->getListPic()->end(); pic++)
       {
         if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
         {
@@ -5351,7 +5351,7 @@ Void TEncGOP::xCheckLayerReset(TComSlice *slice)
       for (UInt i = 0; i < slice->getVPS()->getNumPredictedLayers(dolLayerId); i++)
       {
         UInt predLId = slice->getVPS()->getPredictedLayerId(dolLayerId, i);
-        for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[predLId]->getListPic()->begin(); pic != m_ppcTEncTop[predLId]->getListPic()->end(); pic++)
+        for (TComList<TComPic*>::iterator pic = m_ppcTEncTop[predLId]->getListPic()->begin(); pic != m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(predLId)]->getListPic()->end(); pic++)
         {
           if ((*pic)->getSlice(0)->getPOC() != slice->getPOC())
           {
@@ -5372,13 +5372,13 @@ Void TEncGOP::xSetNoRaslOutputFlag(TComSlice *slice)
     {
       m_noRaslOutputFlag = true;
     }
-    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    else if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->getLayerInitializedFlag())
     {
       Bool refLayersInitialized = true;
-      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
+      for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(slice->getVPS()->getLayerIdxInVps(m_layerId)); j++)
       {
         UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
-        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(refLayerId)]->getLayerInitializedFlag())
         {
           refLayersInitialized = false;
         }
@@ -5397,26 +5397,26 @@ Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
   {
     if (m_layerId == 0)
     {
-      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+      m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->setLayerInitializedFlag(true);
     }
-    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag() && slice->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
+    else if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->getLayerInitializedFlag() && slice->getVPS()->getNumDirectRefLayers(m_layerId) == 0)
     {
-      m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+      m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->setLayerInitializedFlag(true);
     }
-    else if (!m_ppcTEncTop[m_layerId]->getLayerInitializedFlag())
+    else if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->getLayerInitializedFlag())
     {
       Bool refLayersInitialized = true;
       for (UInt j = 0; j < slice->getVPS()->getNumDirectRefLayers(m_layerId); j++)
       {
         UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, j);
-        if (!m_ppcTEncTop[refLayerId]->getLayerInitializedFlag())
+        if (!m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(refLayerId)]->getLayerInitializedFlag())
         {
           refLayersInitialized = false;
         }
       }
       if (refLayersInitialized)
       {
-        m_ppcTEncTop[m_layerId]->setLayerInitializedFlag(true);
+        m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(m_layerId)]->setLayerInitializedFlag(true);
       }
     }
   }
