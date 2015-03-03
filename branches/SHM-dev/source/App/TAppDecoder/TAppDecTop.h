@@ -109,7 +109,7 @@ protected:
   Void flushAllPictures(Bool outputPictures); 
   Void flushAllPictures(Int layerId, Bool outputPictures);
 
-  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerID, Int &pocLastDisplay, DpbStatus &dpbStatus);
+  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus);
 #if POC_RESET_IDC_DECODER
   Void outputAllPictures(Int layerId, Bool notOutputCurrAu);
 #endif

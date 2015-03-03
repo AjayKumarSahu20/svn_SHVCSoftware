@@ -1228,7 +1228,7 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
 }
 #if ALIGNED_BUMPING
 // Function outputs a picture, and marks it as not needed for output.
-Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerIdx, Int &pocLastDisplay, DpbStatus &dpbStatus )
+Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus )
 {
   if ( reconFile )
   {
@@ -1241,7 +1241,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 #endif
     TComPicYuv* pPicCYuvRec = pic->getPicYuvRec();
-    m_acTVideoIOYuvReconFile[layerIdx].write( pPicCYuvRec, m_outputColourSpaceConvert,
+    m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec, m_outputColourSpaceConvert,
       conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
       conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
@@ -1265,7 +1265,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     dpbStatus.m_numPicsInLayer[layerIdx]--;
 #endif
 #if FIX_ALIGN_BUMPING
-    dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerIdx]]--;
+    dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerId]]--;
 #else
     dpbStatus.m_numPicsInSubDpb[layerIdx]--;
 #endif
@@ -1481,24 +1481,24 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
 #if FIX_ALIGN_BUMPING
   for( Int dpbLayerCtr = 0; dpbLayerCtr < dpbStatus.m_numLayers; dpbLayerCtr++)
   {
-    Int layerIdx  = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
+    Int layerId  = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
 #else
   for( Int layerIdx = 0; layerIdx < dpbStatus.m_numLayers; layerIdx++)
   {
 #endif
     // Check if picture with pocValue is present.
-    it = find( listOfPocsInEachLayer[layerIdx].begin(), listOfPocsInEachLayer[layerIdx].end(), pocValue );
-    if( it != listOfPocsInEachLayer[layerIdx].end() )  // picture found.
+    it = find( listOfPocsInEachLayer[layerId].begin(), listOfPocsInEachLayer[layerId].end(), pocValue );
+    if( it != listOfPocsInEachLayer[layerId].end() )  // picture found.
     {
-      Int picPosition = std::distance( listOfPocsInEachLayer[layerIdx].begin(), it );
+      Int picPosition = std::distance( listOfPocsInEachLayer[layerId].begin(), it );
       Int j;
-      for(j = 0, iterPic = m_acTDecTop[layerIdx].getListPic()->begin(); j < listOfPocsPositionInEachLayer[layerIdx][picPosition]; j++) // Picture to be output
+      for(j = 0, iterPic = m_acTDecTop[layerId].getListPic()->begin(); j < listOfPocsPositionInEachLayer[layerId][picPosition]; j++) // Picture to be output
       {
         iterPic++;
       }
       TComPic *pic = *iterPic;
 
-      xOutputAndMarkPic( pic, m_pchReconFile[layerIdx], layerIdx, m_aiPOCLastDisplay[layerIdx], dpbStatus );
+      xOutputAndMarkPic( pic, m_pchReconFile[layerId], layerId, m_aiPOCLastDisplay[layerId], dpbStatus );
 
 #if CONFORMANCE_BITSTREAM_MODE
       FILE *fptr;
@@ -1523,10 +1523,10 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       }
 #endif
 
-      listOfPocsInEachLayer[layerIdx].erase( it );
-      listOfPocsPositionInEachLayer[layerIdx].erase( listOfPocsPositionInEachLayer[layerIdx].begin() + picPosition );
+      listOfPocsInEachLayer[layerId].erase( it );
+      listOfPocsPositionInEachLayer[layerId].erase( listOfPocsPositionInEachLayer[layerId].begin() + picPosition );
 #if FIX_ALIGN_BUMPING
-      dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerIdx]]--;
+      dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerId]]--;
 #endif
     }
   }
