@@ -896,7 +896,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Bool    tmpIntraConstraintFlag;
   Bool    tmpLowerBitRateConstraintFlag;
   UInt    tmpBitDepthConstraint;
-  Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_ID_PLUS1];
+  Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
@@ -1136,17 +1136,17 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   ("NumLayerSets",                                  m_numLayerSets,                                          0, "Number of layer sets")
 #endif
-  ("NumLayerInIdList%d",                            cfg_numLayerInIdList,            0, MAX_VPS_LAYER_ID_PLUS1, "Number of layers in the set")
-  ("LayerSetLayerIdList%d",                         cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set")
+  ("NumLayerInIdList%d",                            cfg_numLayerInIdList,            0, MAX_VPS_LAYER_IDX_PLUS1, "Number of layers in the set")
+  ("LayerSetLayerIdList%d",                         cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set")
   ("NumAddLayerSets",                               m_numAddLayerSets,                                       0, "Number of additional layer sets")
-  ("NumHighestLayerIdx%d",                          cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_ID_PLUS1, "Number of highest layer idx")
-  ("HighestLayerIdx%d",                             cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_ID_PLUS1, "Highest layer idx for an additional layer set")
+  ("NumHighestLayerIdx%d",                          cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of highest layer idx")
+  ("HighestLayerIdx%d",                             cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Highest layer idx for an additional layer set")
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
   ("DefaultTargetOutputLayerIdc",                   m_defaultTargetOutputLayerIdc,                           1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
   ("NumOutputLayerSets",                            m_numOutputLayerSets,                                    1, "Number of output layer sets excluding the 0-th output layer set")
   ("NumOutputLayersInOutputLayerSet",               cfg_numOutputLayersInOutputLayerSet,         string(""), 1, "List containing number of output layers in the output layer sets")
-  ("ListOfOutputLayers%d",                          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_ID_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
+  ("ListOfOutputLayers%d",                          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
   ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                       string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #endif
 #if AUXILIARY_PICTURES
@@ -1314,7 +1314,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("NonPackedSource%d",                               m_nonPackedConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source does not contain frame packing")
   ("FrameOnly%d",                                     m_frameOnlyConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that the bitstream contains only frames")
   
-  ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_ID_PLUS1, "Index of PTL for each layer")
+  ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_IDX_PLUS1, "Index of PTL for each layer")
   ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
 #else
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
@@ -3224,9 +3224,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   // check validity of input parameters
 #if SVC_EXTENSION
-  for( UInt layerId = 0; layerId < m_numLayers; layerId++ )
+  for( UInt layerIdx = 0; layerIdx < m_numLayers; layerIdx++ )
   {
-    xCheckParameter(layerId);
+    xCheckParameter(layerIdx);
   }
 #else
   xCheckParameter();
@@ -3254,27 +3254,27 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 // ====================================================================================================================
 
 #if SVC_EXTENSION
-Void TAppEncCfg::xCheckParameter(UInt layerId)
+Void TAppEncCfg::xCheckParameter(UInt layerIdx)
 {
-  Bool m_useExtendedPrecision                = m_acLayerCfg[layerId].m_useExtendedPrecision;
-  Bool m_useHighPrecisionPredictionWeighting = m_acLayerCfg[layerId].m_useHighPrecisionPredictionWeighting;
-  ChromaFormat m_chromaFormatIDC             = m_acLayerCfg[layerId].m_chromaFormatIDC;
-  ChromaFormat m_chromaFormatConstraint      = m_acLayerCfg[layerId].m_chromaFormatConstraint;
-  ChromaFormat m_InputChromaFormatIDC        = m_acLayerCfg[layerId].m_InputChromaFormatIDC;
+  Bool m_useExtendedPrecision                = m_acLayerCfg[layerIdx].m_useExtendedPrecision;
+  Bool m_useHighPrecisionPredictionWeighting = m_acLayerCfg[layerIdx].m_useHighPrecisionPredictionWeighting;
+  ChromaFormat m_chromaFormatIDC             = m_acLayerCfg[layerIdx].m_chromaFormatIDC;
+  ChromaFormat m_chromaFormatConstraint      = m_acLayerCfg[layerIdx].m_chromaFormatConstraint;
+  ChromaFormat m_InputChromaFormatIDC        = m_acLayerCfg[layerIdx].m_InputChromaFormatIDC;
 
-  Int m_inputBitDepth[]       = {m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_internalBitDepth[]    = {m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};  
+  Int m_inputBitDepth[]       = {m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
+  Int m_internalBitDepth[]    = {m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
+  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};  
 
-  m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_saoOffsetBitShift[CHANNEL_TYPE_LUMA];
-  m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA];
+  m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_saoOffsetBitShift[CHANNEL_TYPE_LUMA];
+  m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA];
 
 #if MULTIPLE_PTL_SUPPORT
-  Int layerPTLIdx = m_acLayerCfg[layerId].m_layerPTLIdx;
+  Int layerPTLIdx = m_acLayerCfg[layerIdx].m_layerPTLIdx;
   Profile::Name m_profile           = m_profileList[layerPTLIdx];
-  UInt m_bitDepthConstraint         = m_acLayerCfg[layerId].m_bitDepthConstraint;
-  Bool m_intraConstraintFlag        = m_acLayerCfg[layerId].m_intraConstraintFlag;
-  Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerId].m_lowerBitRateConstraintFlag;
+  UInt m_bitDepthConstraint         = m_acLayerCfg[layerIdx].m_bitDepthConstraint;
+  Bool m_intraConstraintFlag        = m_acLayerCfg[layerIdx].m_intraConstraintFlag;
+  Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerIdx].m_lowerBitRateConstraintFlag;
 #endif
 #else
 Void TAppEncCfg::xCheckParameter()
@@ -3661,13 +3661,13 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_intraConstraintFlag, "IntraConstraintFlag cannot be 1 for inter sequences");
   }
 
-  if (m_acLayerCfg[layerId].m_iIntraPeriod == 1 && m_EhGOPList[layerId][0].m_POC == -1) {
-    m_EhGOPList[layerId][0] = GOPEntry();
-    m_EhGOPList[layerId][0].m_QPFactor = 1;
-    m_EhGOPList[layerId][0].m_betaOffsetDiv2 = 0;
-    m_EhGOPList[layerId][0].m_tcOffsetDiv2 = 0;
-    m_EhGOPList[layerId][0].m_POC = 1;
-    m_EhGOPList[layerId][0].m_numRefPicsActive = 4;
+  if (m_acLayerCfg[layerIdx].m_iIntraPeriod == 1 && m_EhGOPList[layerIdx][0].m_POC == -1) {
+    m_EhGOPList[layerIdx][0] = GOPEntry();
+    m_EhGOPList[layerIdx][0].m_QPFactor = 1;
+    m_EhGOPList[layerIdx][0].m_betaOffsetDiv2 = 0;
+    m_EhGOPList[layerIdx][0].m_tcOffsetDiv2 = 0;
+    m_EhGOPList[layerIdx][0].m_POC = 1;
+    m_EhGOPList[layerIdx][0].m_numRefPicsActive = 4;
   }
   else
   {
@@ -3752,14 +3752,14 @@ Void TAppEncCfg::xCheckParameter()
   }
 
   // verify layer configuration parameters
-  if(m_acLayerCfg[layerId].xCheckParameter(m_isField))
+  if(m_acLayerCfg[layerIdx].xCheckParameter(m_isField))
   {
-    printf("\nError: invalid configuration parameter found in layer %d \n", layerId);
+    printf("\nError: invalid configuration parameter found in layer %d \n", layerIdx);
     check_failed = true;
   }
 
   // verify layer configuration parameters
-  Int m_iIntraPeriod = m_acLayerCfg[layerId].m_iIntraPeriod;
+  Int m_iIntraPeriod = m_acLayerCfg[layerIdx].m_iIntraPeriod;
 #endif
   if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && m_DeblockingFilterControlPresent && (!m_bLoopFilterDisable) )
   {
@@ -4042,7 +4042,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara(errorGOP,"Invalid GOP structure given");
 
 #if SVC_EXTENSION && Q0108_TSA_STSA
-  if( layerId > 0 )
+  if( layerIdx > 0 )
   {
     verifiedGOP=false;
     errorGOP=false;
@@ -4060,9 +4060,9 @@ Void TAppEncCfg::xCheckParameter()
 
     for(Int i=0; i<m_iGOPSize; i++)
     {
-      if(m_EhGOPList[layerId][i].m_POC==m_iGOPSize)
+      if(m_EhGOPList[layerIdx][i].m_POC==m_iGOPSize)
       {
-        xConfirmPara( m_EhGOPList[layerId][i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
+        xConfirmPara( m_EhGOPList[layerIdx][i].m_temporalId!=0 , "The last frame in each GOP must have temporal ID = 0 " );
       }
     }
 
@@ -4076,8 +4076,8 @@ Void TAppEncCfg::xCheckParameter()
       {
         for(Int i=0; i<m_iGOPSize; i++)
         {
-          xConfirmPara( (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
-          xConfirmPara( (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_EhGOPList[layerId][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
+          xConfirmPara( (m_EhGOPList[layerIdx][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) < -6 || (m_EhGOPList[layerIdx][i].m_betaOffsetDiv2 + m_loopFilterBetaOffsetDiv2) > 6, "Loop Filter Beta Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
+          xConfirmPara( (m_EhGOPList[layerIdx][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) < -6 || (m_EhGOPList[layerIdx][i].m_tcOffsetDiv2 + m_loopFilterTcOffsetDiv2) > 6, "Loop Filter Tc Offset div. 2 for one of the GOP entries exceeds supported range (-6 to 6)" );
         }
       }
     }
@@ -4086,8 +4086,8 @@ Void TAppEncCfg::xCheckParameter()
     while(!verifiedGOP&&!errorGOP) 
     {
       Int curGOP = (checkGOP-1)%m_iGOPSize;
-      Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][curGOP].m_POC;    
-      if(m_EhGOPList[layerId][curGOP].m_POC<0) 
+      Int curPOC = ((checkGOP-1)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerIdx][curGOP].m_POC;    
+      if(m_EhGOPList[layerIdx][curGOP].m_POC<0) 
       {
         printf("\nError: found fewer Reference Picture Sets than GOPSize\n");
         errorGOP=true;
@@ -4096,9 +4096,9 @@ Void TAppEncCfg::xCheckParameter()
       {
         //check that all reference pictures are available, or have a POC < 0 meaning they might be available in the next GOP.
         Bool beforeI = false;
-        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+        for(Int i = 0; i< m_EhGOPList[layerIdx][curGOP].m_numRefPics; i++) 
         {
-          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          Int absPOC = curPOC+m_EhGOPList[layerIdx][curGOP].m_referencePics[i];
           if(absPOC < 0)
           {
             beforeI=true;
@@ -4113,20 +4113,20 @@ Void TAppEncCfg::xCheckParameter()
                 found=true;
                 for(Int k=0; k<m_iGOPSize; k++)
                 {
-                  if(absPOC%m_iGOPSize == m_EhGOPList[layerId][k].m_POC%m_iGOPSize)
+                  if(absPOC%m_iGOPSize == m_EhGOPList[layerIdx][k].m_POC%m_iGOPSize)
                   {
-                    if(m_EhGOPList[layerId][k].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                    if(m_EhGOPList[layerIdx][k].m_temporalId==m_EhGOPList[layerIdx][curGOP].m_temporalId)
                     {
-                      m_EhGOPList[layerId][k].m_refPic = true;
+                      m_EhGOPList[layerIdx][k].m_refPic = true;
                     }
-                    m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i]=m_EhGOPList[layerId][k].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                    m_EhGOPList[layerIdx][curGOP].m_usedByCurrPic[i]=m_EhGOPList[layerIdx][k].m_temporalId<=m_EhGOPList[layerIdx][curGOP].m_temporalId;
                   }
                 }
               }
             }
             if(!found)
             {
-              printf("\nError: ref pic %d is not available for GOP frame %d\n",m_EhGOPList[layerId][curGOP].m_referencePics[i],curGOP+1);
+              printf("\nError: ref pic %d is not available for GOP frame %d\n",m_EhGOPList[layerIdx][curGOP].m_referencePics[i],curGOP+1);
               errorGOP=true;
             }
           }
@@ -4148,26 +4148,26 @@ Void TAppEncCfg::xCheckParameter()
         {
           //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
 
-          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]]=m_EhGOPList[layerId][curGOP];
+          m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]]=m_EhGOPList[layerIdx][curGOP];
           Int newRefs=0;
-          for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+          for(Int i = 0; i< m_EhGOPList[layerIdx][curGOP].m_numRefPics; i++) 
           {
-            Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+            Int absPOC = curPOC+m_EhGOPList[layerIdx][curGOP].m_referencePics[i];
             if(absPOC>=0)
             {
-              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[newRefs]=m_EhGOPList[layerId][curGOP].m_referencePics[i];
-              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[newRefs]=m_EhGOPList[layerId][curGOP].m_usedByCurrPic[i];
+              m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[newRefs]=m_EhGOPList[layerIdx][curGOP].m_referencePics[i];
+              m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_usedByCurrPic[newRefs]=m_EhGOPList[layerIdx][curGOP].m_usedByCurrPic[i];
               newRefs++;
             }
           }
-          Int numPrefRefs = m_EhGOPList[layerId][curGOP].m_numRefPicsActive;
+          Int numPrefRefs = m_EhGOPList[layerIdx][curGOP].m_numRefPicsActive;
 
           for(Int offset = -1; offset>-checkGOP; offset--)
           {
             //step backwards in coding order and include any extra available pictures we might find useful to replace the ones with POC < 0.
             Int offGOP = (checkGOP-1+offset)%m_iGOPSize;
-            Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerId][offGOP].m_POC;
-            if(offPOC>=0&&m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId)
+            Int offPOC = ((checkGOP-1+offset)/m_iGOPSize)*m_iGOPSize + m_EhGOPList[layerIdx][offGOP].m_POC;
+            if(offPOC>=0&&m_EhGOPList[layerIdx][offGOP].m_temporalId<=m_EhGOPList[layerIdx][curGOP].m_temporalId)
             {
               Bool newRef=false;
               for(Int i=0; i<numRefs; i++)
@@ -4179,7 +4179,7 @@ Void TAppEncCfg::xCheckParameter()
               }
               for(Int i=0; i<newRefs; i++) 
               {
-                if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[i]==offPOC-curPOC)
+                if(m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[i]==offPOC-curPOC)
                 {
                   newRef=false;
                 }
@@ -4188,26 +4188,26 @@ Void TAppEncCfg::xCheckParameter()
               {
                 Int insertPoint=newRefs;
                 //this picture can be added, find appropriate place in list and insert it.
-                if(m_EhGOPList[layerId][offGOP].m_temporalId==m_EhGOPList[layerId][curGOP].m_temporalId)
+                if(m_EhGOPList[layerIdx][offGOP].m_temporalId==m_EhGOPList[layerIdx][curGOP].m_temporalId)
                 {
-                  m_EhGOPList[layerId][offGOP].m_refPic = true;
+                  m_EhGOPList[layerIdx][offGOP].m_refPic = true;
                 }
                 for(Int j=0; j<newRefs; j++)
                 {
-                  if(m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]<offPOC-curPOC||m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]>0)
+                  if(m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[j]<offPOC-curPOC||m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[j]>0)
                   {
                     insertPoint = j;
                     break;
                   }
                 }
                 Int prev = offPOC-curPOC;
-                Int prevUsed = m_EhGOPList[layerId][offGOP].m_temporalId<=m_EhGOPList[layerId][curGOP].m_temporalId;
+                Int prevUsed = m_EhGOPList[layerIdx][offGOP].m_temporalId<=m_EhGOPList[layerIdx][curGOP].m_temporalId;
                 for(Int j=insertPoint; j<newRefs+1; j++)
                 {
-                  Int newPrev = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j];
-                  Int newUsed = m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j];
-                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j]=prev;
-                  m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j]=prevUsed;
+                  Int newPrev = m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[j];
+                  Int newUsed = m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_usedByCurrPic[j];
+                  m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[j]=prev;
+                  m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_usedByCurrPic[j]=prevUsed;
                   prevUsed=newUsed;
                   prev=newPrev;
                 }
@@ -4219,29 +4219,29 @@ Void TAppEncCfg::xCheckParameter()
               break;
             }
           }
-          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics=newRefs;
-          m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC = curPOC;
-          if (m_extraRPSs[layerId] == 0)
+          m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_numRefPics=newRefs;
+          m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_POC = curPOC;
+          if (m_extraRPSs[layerIdx] == 0)
           {
-            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 0;
-            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = 0;
+            m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_interRPSPrediction = 0;
+            m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_numRefIdc = 0;
           }
           else
           {
-            Int rIdx =  m_iGOPSize + m_extraRPSs[layerId] - 1;
-            Int refPOC = m_EhGOPList[layerId][rIdx].m_POC;
-            Int refPics = m_EhGOPList[layerId][rIdx].m_numRefPics;
+            Int rIdx =  m_iGOPSize + m_extraRPSs[layerIdx] - 1;
+            Int refPOC = m_EhGOPList[layerIdx][rIdx].m_POC;
+            Int refPics = m_EhGOPList[layerIdx][rIdx].m_numRefPics;
             Int newIdc=0;
             for(Int i = 0; i<= refPics; i++) 
             {
-              Int deltaPOC = ((i != refPics)? m_EhGOPList[layerId][rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
+              Int deltaPOC = ((i != refPics)? m_EhGOPList[layerIdx][rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
               Int absPOCref = refPOC+deltaPOC;
               Int refIdc = 0;
-              for (Int j = 0; j < m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefPics; j++)
+              for (Int j = 0; j < m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_numRefPics; j++)
               {
-                if ( (absPOCref - curPOC) == m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_referencePics[j])
+                if ( (absPOCref - curPOC) == m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_referencePics[j])
                 {
-                  if (m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_usedByCurrPic[j])
+                  if (m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_usedByCurrPic[j])
                   {
                     refIdc = 1;
                   }
@@ -4251,20 +4251,20 @@ Void TAppEncCfg::xCheckParameter()
                   }
                 }
               }
-              m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_refIdc[newIdc]=refIdc;
+              m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_refIdc[newIdc]=refIdc;
               newIdc++;
             }
-            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_interRPSPrediction = 1;  
-            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_numRefIdc = newIdc;
-            m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_deltaRPS = refPOC - m_EhGOPList[layerId][m_iGOPSize+m_extraRPSs[layerId]].m_POC; 
+            m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_interRPSPrediction = 1;  
+            m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_numRefIdc = newIdc;
+            m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_deltaRPS = refPOC - m_EhGOPList[layerIdx][m_iGOPSize+m_extraRPSs[layerIdx]].m_POC; 
           }
-          curGOP=m_iGOPSize+m_extraRPSs[layerId];
-          m_extraRPSs[layerId]++;
+          curGOP=m_iGOPSize+m_extraRPSs[layerIdx];
+          m_extraRPSs[layerIdx]++;
         }
         numRefs=0;
-        for(Int i = 0; i< m_EhGOPList[layerId][curGOP].m_numRefPics; i++) 
+        for(Int i = 0; i< m_EhGOPList[layerIdx][curGOP].m_numRefPics; i++) 
         {
-          Int absPOC = curPOC+m_EhGOPList[layerId][curGOP].m_referencePics[i];
+          Int absPOC = curPOC+m_EhGOPList[layerIdx][curGOP].m_referencePics[i];
           if(absPOC >= 0) 
           {
             refList[numRefs]=absPOC;
@@ -4291,14 +4291,14 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if Q0108_TSA_STSA
-  if( layerId > 0 )
+  if( layerIdx > 0 )
   {
-    m_EhMaxTempLayer[layerId] = 1;
+    m_EhMaxTempLayer[layerIdx] = 1;
     for(Int i=0; i<m_iGOPSize; i++) 
     {
-      if(m_EhGOPList[layerId][i].m_temporalId >= m_EhMaxTempLayer[layerId] )
+      if(m_EhGOPList[layerIdx][i].m_temporalId >= m_EhMaxTempLayer[layerIdx] )
       {
-        m_EhMaxTempLayer[layerId] = m_EhGOPList[layerId][i].m_temporalId;
+        m_EhMaxTempLayer[layerIdx] = m_EhGOPList[layerIdx][i].m_temporalId;
       }
       xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
     }
@@ -4364,15 +4364,15 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
-  Int m_iSourceWidth = m_acLayerCfg[layerId].m_iSourceWidth;
-  Int m_iSourceHeight = m_acLayerCfg[layerId].m_iSourceHeight;
+  Int m_iSourceWidth = m_acLayerCfg[layerIdx].m_iSourceWidth;
+  Int m_iSourceHeight = m_acLayerCfg[layerIdx].m_iSourceHeight;
 #if LAYER_CTB
-  Int m_uiMaxCUWidth = m_acLayerCfg[layerId].m_uiMaxCUWidth;
-  Int m_uiMaxCUHeight = m_acLayerCfg[layerId].m_uiMaxCUHeight;
+  Int m_uiMaxCUWidth = m_acLayerCfg[layerIdx].m_uiMaxCUWidth;
+  Int m_uiMaxCUHeight = m_acLayerCfg[layerIdx].m_uiMaxCUHeight;
 #endif
 
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
-  Int m_iWaveFrontSynchro = m_acLayerCfg[layerId].m_waveFrontSynchro;
+  Int m_iWaveFrontSynchro = m_acLayerCfg[layerIdx].m_waveFrontSynchro;
   xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 #endif
 
@@ -4539,14 +4539,14 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 
 #if RC_SHVC_HARMONIZATION
-  if ( m_acLayerCfg[layerId].m_RCEnableRateControl )
+  if ( m_acLayerCfg[layerIdx].m_RCEnableRateControl )
   {
-    if ( m_acLayerCfg[layerId].m_RCForceIntraQP )
+    if ( m_acLayerCfg[layerIdx].m_RCForceIntraQP )
     {
-      if ( m_acLayerCfg[layerId].m_RCInitialQP == 0 )
+      if ( m_acLayerCfg[layerIdx].m_RCInitialQP == 0 )
       {
         printf( "\nInitial QP for rate control is not specified. Reset not to use force intra QP!" );
-        m_acLayerCfg[layerId].m_RCForceIntraQP = false;
+        m_acLayerCfg[layerIdx].m_RCForceIntraQP = false;
       }
     }
   }
@@ -4595,53 +4595,53 @@ Void TAppEncCfg::xCheckParameter()
 #if VPS_EXTN_DIRECT_REF_LAYERS
   xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
-  if( layerId > 0 )
+  if( layerIdx > 0 )
   {
-    xConfirmPara(m_acLayerCfg[layerId].m_numSamplePredRefLayers > layerId, "Cannot reference more layers than before current layer");
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numSamplePredRefLayers; i++)
+    xConfirmPara(m_acLayerCfg[layerIdx].m_numSamplePredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
+    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numSamplePredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerId].m_samplePredRefLayerIds[i] > layerId, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerId].m_samplePredRefLayerIds[i] == layerId, "Cannot reference the current layer itself");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] > layerIdx, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] == layerIdx, "Cannot reference the current layer itself");
     }
   }
   xConfirmPara( (m_acLayerCfg[0].m_numMotionPredRefLayers != 0) && (m_acLayerCfg[0].m_numMotionPredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numMotionPredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
-  if( layerId > 0 )
+  if( layerIdx > 0 )
   {
-    xConfirmPara(m_acLayerCfg[layerId].m_numMotionPredRefLayers > layerId, "Cannot reference more layers than before current layer");
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numMotionPredRefLayers; i++)
+    xConfirmPara(m_acLayerCfg[layerIdx].m_numMotionPredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
+    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numMotionPredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerId].m_motionPredRefLayerIds[i] > layerId, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerId].m_motionPredRefLayerIds[i] == layerId, "Cannot reference the current layer itself");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] > layerIdx, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] == layerIdx, "Cannot reference the current layer itself");
     }
   }
 
   xConfirmPara( (m_acLayerCfg[0].m_numActiveRefLayers != 0) && (m_acLayerCfg[0].m_numActiveRefLayers != -1), "Layer 0 cannot have any active reference layers" );
   // NOTE: m_numActiveRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
-  if( layerId > 0 )
+  if( layerIdx > 0 )
   {
     Bool predEnabledFlag[MAX_LAYERS];
-    for (Int refLayer = 0; refLayer < layerId; refLayer++)
+    for (Int refLayer = 0; refLayer < layerIdx; refLayer++)
     {
       predEnabledFlag[refLayer] = false;
     }
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numSamplePredRefLayers; i++)
+    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numSamplePredRefLayers; i++)
     {
-      predEnabledFlag[m_acLayerCfg[layerId].m_samplePredRefLayerIds[i]] = true;
+      predEnabledFlag[m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i]] = true;
     }
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numMotionPredRefLayers; i++)
+    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numMotionPredRefLayers; i++)
     {
-      predEnabledFlag[m_acLayerCfg[layerId].m_motionPredRefLayerIds[i]] = true;
+      predEnabledFlag[m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i]] = true;
     }
     Int numDirectRefLayers = 0;
-    for (Int refLayer = 0; refLayer < layerId; refLayer++)
+    for (Int refLayer = 0; refLayer < layerIdx; refLayer++)
     {
       if (predEnabledFlag[refLayer] == true) numDirectRefLayers++;
     }
-    xConfirmPara(m_acLayerCfg[layerId].m_numActiveRefLayers > numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
-    for(Int i = 0; i < m_acLayerCfg[layerId].m_numActiveRefLayers; i++)
+    xConfirmPara(m_acLayerCfg[layerIdx].m_numActiveRefLayers > numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
+    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numActiveRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerId].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
     }
   }
 #endif //VPS_EXTN_DIRECT_REF_LAYERS
@@ -4662,18 +4662,18 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
 #endif
-  if( layerId < MAX_LAYERS-1 )
+  if( layerIdx < MAX_LAYERS-1 )
   {
-    xConfirmPara(m_acLayerCfg[layerId].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layerId].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
+    xConfirmPara(m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
 #if AUXILIARY_PICTURES
-  if( layerId < MAX_LAYERS-1 )
+  if( layerIdx < MAX_LAYERS-1 )
   {
 #if R0062_AUX_PSEUDO_MONOCHROME
-    xConfirmPara(m_acLayerCfg[layerId].m_auxId < 0 || m_acLayerCfg[layerId].m_auxId > 2, "AuxId must be in range 0 to 2");
+    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId < 0 || m_acLayerCfg[layerIdx].m_auxId > 2, "AuxId must be in range 0 to 2");
 #else
-    xConfirmPara(m_acLayerCfg[layerId].m_auxId < 0 || m_acLayerCfg[layerId].m_auxId > 4, "AuxId must be in range 0 to 4");
-    xConfirmPara(m_acLayerCfg[layerId].m_auxId > 0 && m_acLayerCfg[layerId].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
+    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId < 0 || m_acLayerCfg[layerIdx].m_auxId > 4, "AuxId must be in range 0 to 4");
+    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId > 0 && m_acLayerCfg[layerIdx].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
 #endif
   }
 #endif 
@@ -4725,12 +4725,12 @@ Void TAppEncCfg::xSetGlobal(UInt layerId)
 Void TAppEncCfg::xSetGlobal()
 {
 #if SVC_EXTENSION
-  // Check for layerId equal to 0, it has to pe extended to other layers.
-  UInt layerId = 0;
-  Bool m_useExtendedPrecision = m_acLayerCfg[layerId].m_useExtendedPrecision;
-  Int m_internalBitDepth[]    = {m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerId].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};
-  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[layerId].m_chromaFormatIDC;
+  // Check for layerIdx equal to 0, it has to pe extended to other layers.
+  UInt layerIdx = 0;
+  Bool m_useExtendedPrecision = m_acLayerCfg[layerIdx].m_useExtendedPrecision;
+  Int m_internalBitDepth[]    = {m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
+  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};
+  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[layerIdx].m_chromaFormatIDC;
 #endif
 
   // set max CU width & height
