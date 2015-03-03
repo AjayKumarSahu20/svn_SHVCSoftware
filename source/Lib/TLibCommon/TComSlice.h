@@ -1069,8 +1069,8 @@ Void      deriveNumberOfSubDpbs();
   Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
 #if VPS_EXTN_MASK_AND_DIM_INFO
 #if VPS_AVC_BL_FLAG_REMOVAL
-  Bool   getNonHEVCBaseLayerFlag()                              { return m_nonHEVCBaseLayerFlag;       }
-  Void   setNonHEVCBaseLayerFlag(Bool x)                        { m_nonHEVCBaseLayerFlag = x;          }
+  Bool   getNonHEVCBaseLayerFlag()                              { return m_nonHEVCBaseLayerFlag;   }
+  Void   setNonHEVCBaseLayerFlag(Bool x)                        { m_nonHEVCBaseLayerFlag = x;      }
 #else
   Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
   Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
@@ -1088,8 +1088,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getNuhLayerIdPresentFlag()                             { return m_nuhLayerIdPresentFlag;  }
   Void   setNuhLayerIdPresentFlag(Bool x)                       { m_nuhLayerIdPresentFlag = x;     }
 
-  UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[id];       }
-  Void   setLayerIdInNuh(Int layerIdx, UInt x)                  { m_layerIdInNuh[id] = x;          }
+  UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[layerIdx]; }
+  Void   setLayerIdInNuh(Int layerIdx, UInt x)                  { m_layerIdInNuh[layerIdx] = x;    }
 
   UInt   getDimensionId(Int lyrId, Int id)                      { return m_dimensionId[lyrId][id]; }
   Void   setDimensionId(Int lyrId, Int id, UInt x)              { m_dimensionId[lyrId][id] = x;    }
@@ -2710,6 +2710,7 @@ public:
 
   Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
   UInt      getLayerId ()               { return m_layerId;    }
+  UInt      getLayerIdx()               { return m_pcVPS->getLayerIdxInVps(m_layerId); }
 
   Void        setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
   TComPicYuv* getFullPelBaseRec   (UInt refLayerIdc)               { return  m_pcFullPelBaseRec[refLayerIdc];  }

@@ -138,12 +138,14 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
 #endif
 {
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(slice->getLayerId())]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerId()]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
   {
     Int nCurLayerId = slice->getLayerId();
-    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)-1]->getQP() - m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)]->getQP() ,
-      1.0 * m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)]->getSourceWidth() * m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)]->getSourceHeight()
-      / m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)-1]->getSourceWidth() / m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(nCurLayerId)-1]->getSourceHeight() );
+    UInt prevLayerId = slice->getVPS()->getLayerIdInNuh(slice->getVPS()->getLayerIdxInVps(nCurLayerId)-1);
+
+    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[prevLayerId]->getQP() - m_ppcTEncTop[nCurLayerId]->getQP() ,
+      1.0 * m_ppcTEncTop[nCurLayerId]->getSourceWidth() * m_ppcTEncTop[nCurLayerId]->getSourceHeight()
+      / m_ppcTEncTop[prevLayerId]->getSourceWidth() / m_ppcTEncTop[prevLayerId]->getSourceHeight() );
     dLambda *= gamma;
   }
 #endif
@@ -162,7 +164,7 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
     Double tmpWeight = pow( 2.0, (iQP-qpc)/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
 
 #if JCTVC_M0259_LAMBDAREFINEMENT
-    if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getVPS()->getLayerIdxInVps(slice->getLayerId())]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
+    if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerId()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
     {
       dLambdas[0] = dLambda * 1.1;
       m_pcRdCost->setLambda( dLambdas[0] );
@@ -554,14 +556,14 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   {
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getNumActiveRefLayers() );
+      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getPredLayerId(i), i );
+        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[layerId]->getPredLayerId(i), i );
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
-    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getMFMEnabledFlag());
+    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
   }
 
 #endif
@@ -761,7 +763,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic )
     xCalcACDCParamSlice(pcSlice);
   }
 #if O0194_WEIGHTED_PREDICTION_CGS
-  else if( m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())]->getInterLayerWeightedPredFlag() )
+  else if( m_ppcTEncTop[pcSlice->getLayerId()]->getInterLayerWeightedPredFlag() )
   {
     // Calculate for the base layer to be used in EL as Inter layer reference
     estimateILWpParam( pcSlice );    
@@ -1134,7 +1136,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
         }
 
 #if SVC_EXTENSION
-        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
+        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerId()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #else
         m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #endif
