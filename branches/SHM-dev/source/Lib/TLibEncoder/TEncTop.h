@@ -116,7 +116,7 @@ private:
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
   TEncTop**               m_ppcTEncTop;
-  TEncTop*                getLayerEnc(UInt layer)   { return m_ppcTEncTop[layer]; }
+  TEncTop*                getLayerEnc(UInt layerIdx)   { return m_ppcTEncTop[layerIdx]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
@@ -274,7 +274,7 @@ public:
   Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, Bool isTff );
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  TEncTop*  getRefLayerEnc(UInt refLayerIdc);
+  TEncTop*  getRefLayerEnc(UInt refLayerIdx);
 #endif
 #if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
   Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}

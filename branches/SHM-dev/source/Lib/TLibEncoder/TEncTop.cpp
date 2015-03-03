@@ -1530,14 +1530,14 @@ Void  TEncCfg::xCheckGSParameters()
 
 #if SVC_EXTENSION
 #if VPS_EXTN_DIRECT_REF_LAYERS
-TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdc )
+TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
 {
-  if( m_ppcTEncTop[m_layerId]->getNumDirectRefLayers() <= 0 )
+  if( m_ppcTEncTop[m_cVPS.getLayerIdxInVps(m_layerId)]->getNumDirectRefLayers() <= 0 )
   {
     return (TEncTop *)getLayerEnc( 0 );
   }
 
-  return (TEncTop *)getLayerEnc( m_cVPS.getRefLayerId( m_layerId, refLayerIdc ) );
+  return (TEncTop *)getLayerEnc( m_cVPS.getLayerIdxInVps(m_cVPS.getRefLayerId( m_layerId, refLayerIdx )));
 }
 #endif
 

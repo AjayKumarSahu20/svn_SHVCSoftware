@@ -850,7 +850,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 
 #if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
-  assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_ID_PLUS1 );
+  assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_IDX_PLUS1 );
 #if !VPS_EXTN_OP_LAYER_SETS     // num layer sets set in TAppEncTop.cpp
   pcVPS->setNumLayerSets(1);
 #endif
