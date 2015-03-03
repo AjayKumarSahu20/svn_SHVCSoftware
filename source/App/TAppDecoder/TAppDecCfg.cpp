@@ -194,7 +194,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 
     // Decoded layer YUV files
 #if FIX_CONF_MODE
-    for(Int layer= 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++ )
+    for(Int layer= 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
 #else
     for(UInt layer=0; layer<= m_tgtLayerId; layer++)
 #endif
@@ -209,7 +209,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   m_commonDecoderParams.setTargetLayerId( m_tgtLayerId );
 #endif
 #if FIX_CONF_MODE
-  for(Int layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++ )
+  for(Int layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
   {
 #else
   for(UInt layer=0; layer<= m_tgtLayerId; layer++)

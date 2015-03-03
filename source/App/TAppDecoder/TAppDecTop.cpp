@@ -88,7 +88,7 @@ Void TAppDecTop::destroy()
   }
 #if SVC_EXTENSION
 #if FIX_CONF_MODE
-  for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++ )
+  for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
 #else
   for( Int i = 0; i <= m_tgtLayerId; i++ )
 #endif
@@ -162,7 +162,7 @@ Void TAppDecTop::decode()
   memset( loopFiltered, false, sizeof( loopFiltered ) );
 
 #if FIX_CONF_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
 #endif
@@ -405,7 +405,7 @@ Void TAppDecTop::decode()
   pcBLPic.destroy();
 
 #if FIX_CONF_MODE
-  for(UInt layer = layerIdmin; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = layerIdmin; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = layerIdmin; layer <= m_tgtLayerId; layer++)
 #endif
@@ -594,7 +594,7 @@ Void TAppDecTop::xCreateDecLib()
   initROM();
 
 #if FIX_CONF_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
@@ -620,7 +620,7 @@ Void TAppDecTop::xDestroyDecLib()
   destroyROM();
 
 #if FIX_CONF_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
@@ -649,7 +649,7 @@ Void TAppDecTop::xInitDecLib()
   // initialize decoder class
 #if SVC_EXTENSION
 #if FIX_CONF_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
@@ -670,7 +670,7 @@ Void TAppDecTop::xInitDecLib()
   }
 #if CONFORMANCE_BITSTREAM_MODE
 #if FIX_CONF_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_ID_PLUS1; layer++)
+  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer < MAX_LAYERS; layer++)
 #endif
@@ -1281,8 +1281,8 @@ Void TAppDecTop::flushAllPictures(Int layerId, Bool outputPictures)
   {
     std::vector<Int>  listOfPocs;
 #if FIX_ALIGN_BUMPING
-    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
-    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
 #else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1313,8 +1313,8 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
   {
     std::vector<Int>  listOfPocs;
 #if FIX_ALIGN_BUMPING
-    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
-    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
 #else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1341,7 +1341,7 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
 Void TAppDecTop::markAllPicturesAsErased()
 {
 #if FIX_ALIGN_BUMPING
-  for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+  for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
 #else
   for(Int i = 0; i < MAX_LAYERS; i++)
 #endif
@@ -1384,8 +1384,8 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
     
   std::vector<Int>  listOfPocs;
 #if FIX_ALIGN_BUMPING
-  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
-  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
+  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
 #else
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1441,8 +1441,8 @@ Void TAppDecTop::checkOutputAfterDecoding()
 {    
   std::vector<Int>  listOfPocs;
 #if FIX_ALIGN_BUMPING
-  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
-  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+  std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
+  std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
 #else
   std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
   std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
@@ -1632,7 +1632,7 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     // Find the VPS used for the pictures
     // -------------------------------------
 #if FIX_ALIGN_BUMPING
-    for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+    for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
 #else
     for(Int i = 0; i < MAX_LAYERS; i++)
 #endif
@@ -1684,7 +1684,7 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
 Void TAppDecTop::emptyUnusedPicturesNotNeededForOutput()
 {
 #if FIX_ALIGN_BUMPING
-  for(Int layerIdx = 0; layerIdx < MAX_VPS_LAYER_ID_PLUS1; layerIdx++)
+  for(Int layerIdx = 0; layerIdx < MAX_VPS_LAYER_IDX_PLUS1; layerIdx++)
 #else
   for(Int layerIdx = 0; layerIdx < MAX_LAYERS; layerIdx++)
 #endif
@@ -1743,7 +1743,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   TComVPS *vps = NULL;
   dpbStatus.init();
 #if FIX_ALIGN_BUMPING
-  for( Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++ )
+  for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
 #else
   for( Int i = 0; i < MAX_LAYERS; i++ )
 #endif
@@ -1817,7 +1817,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
 #endif
 
 #if FIX_ALIGN_BUMPING
-  for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+  for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
 #else
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
 #endif
@@ -1837,8 +1837,8 @@ Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
   { // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
     std::vector<Int>  listOfPocs;
 #if FIX_ALIGN_BUMPING
-    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
-    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_ID_PLUS1];
+    std::vector<Int>  listOfPocsInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
+    std::vector<Int>  listOfPocsPositionInEachLayer[MAX_VPS_LAYER_IDX_PLUS1];
 #else
     std::vector<Int>  listOfPocsInEachLayer[MAX_LAYERS];
     std::vector<Int>  listOfPocsPositionInEachLayer[MAX_LAYERS];
