@@ -353,7 +353,7 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
-      for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+      for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
       {
         m_acTEncTop[layer].setSamplePredEnabledFlag                       (i, false);
         m_acTEncTop[layer].setMotionPredEnabledFlag                       (i, false);
@@ -1322,6 +1322,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       for( i = 0; i < m_numLayerInIdList[setId]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId][i];
+        Int layerIdx = vps->getLayerIdxInVps(m_layerSetLayerIdList[setId][i]);
 #else
       for( i = 0; i < m_numLayerInIdList[setId-1]; i++ )
       {
@@ -1329,11 +1330,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
-        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
+        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
+        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 #endif
 
         vps->setLayerIdIncludedFlag(true, setId, layerId);
@@ -1347,15 +1348,16 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setNumLayerSets(m_numLayers);
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
-      for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
+      for (Int layerIdx = 0; layerIdx <= vps->getMaxLayers(); layerIdx++)
       {
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
-        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
+        UInt layerId = vps->getLayerIdInNuh(layerIdx);
+        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerId].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerId].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
+        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
+        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 #endif
         if (layerId <= setId)
         {
@@ -1786,9 +1788,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         oldValue += vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j ) + 1;
         vps->setMaxVpsDecPicBufferingMinus1( i, vps->getSubDpbAssigned( layerSetIdxForOutputLayerSet, k ), j, oldValue );
 #else
-        vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[layerId].getMaxDecPicBuffering(j) - 1 );
+        vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[vps->getLayerIdxInVps(layerId)].getMaxDecPicBuffering(j) - 1 );
 #endif
-        maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[layerId].getNumReorderPics(j));
+        maxNumReorderPics       = std::max( maxNumReorderPics, m_acTEncTop[vps->getLayerIdxInVps(layerId)].getNumReorderPics(j));
       }
 #if RESOLUTION_BASED_DPB
       for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
@@ -1898,15 +1900,15 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setCprmsAddPresentFlag( j, true );
       vps->setNumSubLayerHrdMinus1( j, vps->getMaxTLayers() - 1 );
 
-      UInt layerId = j;
-      TEncTop *pcCfgLayer = &m_acTEncTop[layerId];
+      UInt layerIdx = j;
+      TEncTop *pcCfgLayer = &m_acTEncTop[layerIdx];
 
       Int iPicWidth         = pcCfgLayer->getSourceWidth();
       Int iPicHeight        = pcCfgLayer->getSourceHeight();
 #if LAYER_CTB
-      UInt uiWidthInCU       = ( iPicWidth  % m_acLayerCfg[layerId].m_uiMaxCUWidth  ) ? iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth  + 1 : iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth;
-      UInt uiHeightInCU      = ( iPicHeight % m_acLayerCfg[layerId].m_uiMaxCUHeight ) ? iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight + 1 : iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight;
-      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_acLayerCfg[layerId].m_uiMaxCUDepth << 1);
+      UInt uiWidthInCU       = ( iPicWidth  % m_acLayerCfg[layerIdx].m_uiMaxCUWidth  ) ? iPicWidth  / m_acLayerCfg[layerIdx].m_uiMaxCUWidth  + 1 : iPicWidth  / m_acLayerCfg[layerIdx].m_uiMaxCUWidth;
+      UInt uiHeightInCU      = ( iPicHeight % m_acLayerCfg[layerIdx].m_uiMaxCUHeight ) ? iPicHeight / m_acLayerCfg[layerIdx].m_uiMaxCUHeight + 1 : iPicHeight / m_acLayerCfg[layerIdx].m_uiMaxCUHeight;
+      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_acLayerCfg[layerIdx].m_uiMaxCUDepth << 1);
 #else
       UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
       UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;

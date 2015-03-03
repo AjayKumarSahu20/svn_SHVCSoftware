@@ -78,10 +78,10 @@ protected:
 #if Q0078_ADD_LAYER_SETS
   Int       m_numLayerSets;
   Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
-  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numAddLayerSets;
   Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
-  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 #if OUTPUT_LAYER_SETS_CONFIG
   std::vector<Int>                m_outputLayerSetIdx;
@@ -489,7 +489,7 @@ protected:
   Void  xSetGlobal      ();                                   ///< set global variables
 #endif
 #if SVC_EXTENSION
-  Void  xCheckParameter (UInt layerId);                       ///< check validity of configuration values per layer
+  Void  xCheckParameter (UInt layerIdx);                       ///< check validity of configuration values per layer
 #else
   Void  xCheckParameter ();                                   ///< check validity of configuration values
 #endif
@@ -590,7 +590,7 @@ public:
   UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
 #endif
   Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
-  Int  getWaveFrontSynchro(Int layerId)        { return m_acLayerCfg[layerId].m_waveFrontSynchro; }
+  Int  getWaveFrontSynchro(Int layerIdx)        { return m_acLayerCfg[layerIdx].m_waveFrontSynchro; }
   Void getDirFilename(string& filename, string& dir, const string path);
 #if OUTPUT_LAYER_SETS_CONFIG
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
