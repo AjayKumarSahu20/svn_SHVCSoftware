@@ -1173,7 +1173,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if POC_RESET_IDC_DECODER
 
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  UInt affectedLayerList[MAX_NUM_LAYER_IDS];
+  UInt affectedLayerList[MAX_LAYERS];
   Int  numAffectedLayers;
 
   affectedLayerList[0] = m_apcSlicePilot->getLayerId();
@@ -2869,7 +2869,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
     decTop->setNumSamplePredRefLayers(0);
     decTop->setNumMotionPredRefLayers(0);
     decTop->setNumDirectRefLayers(0);
-    for(Int i = 0; i < MAX_VPS_LAYER_ID_PLUS1; i++)
+    for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
     {
       decTop->setSamplePredEnabledFlag(i, false);
       decTop->setMotionPredEnabledFlag(i, false);
@@ -3297,7 +3297,7 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
     smallestLayerId = targetDecLayerIdList[0];
   }
 
-  for (UInt layer = 0; layer <= MAX_VPS_LAYER_ID_PLUS1 - 1; layer++)
+  for (UInt layer = 0; layer <= MAX_VPS_LAYER_IDX_PLUS1 - 1; layer++)
   {
     m_ppcTDecTop[layer]->m_smallestLayerId = smallestLayerId;
   }

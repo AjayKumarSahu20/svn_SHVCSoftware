@@ -1069,7 +1069,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 
 #if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() < MAX_VPS_LAYER_SETS_PLUS1 );
-  assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_ID_PLUS1 );
+  assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_IDX_PLUS1 );
   READ_CODE( 6, uiCode, "vps_max_layer_id" );           pcVPS->setMaxLayerId( uiCode );
 #if Q0078_ADD_LAYER_SETS
   READ_UVLC(uiCode, "vps_num_layer_sets_minus1");  pcVPS->setVpsNumLayerSetsMinus1(uiCode);
@@ -1659,7 +1659,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 #if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
       Int   numRefLayerPics = 0;
       Int   i = 0;
-      Int   refLayerPicIdc  [MAX_VPS_LAYER_ID_PLUS1];
+      Int   refLayerPicIdc  [MAX_VPS_LAYER_IDX_PLUS1];
       for(i = 0, numRefLayerPics = 0;  i < pcSlice->getNumILRRefIdx(); i++ ) 
       {
 #if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
