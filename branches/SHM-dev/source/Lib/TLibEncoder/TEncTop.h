@@ -116,7 +116,7 @@ private:
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
   TEncTop**               m_ppcTEncTop;
-  TEncTop*                getLayerEnc(UInt layerIdx)   { return m_ppcTEncTop[layerIdx]; }
+  TEncTop*                getLayerEnc(UInt layerId)       { return m_ppcTEncTop[layerId]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
 #if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
