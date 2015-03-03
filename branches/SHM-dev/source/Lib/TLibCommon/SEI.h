@@ -918,7 +918,7 @@ public:
   UInt m_seiBspCombHrdIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
   UInt m_seiBspCombScheddx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
   UInt m_vpsMaxLayers;
-  Bool m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 
   TComHRD *hrd;
 };

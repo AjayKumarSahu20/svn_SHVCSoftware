@@ -635,11 +635,11 @@ private:
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
   std::vector<Int>                      m_numLayerInIdList;;
 #else
-  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
 #endif
 #else
-  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
 #endif
@@ -652,9 +652,9 @@ private:
   UInt        m_numLayerSets;
 #if Q0078_ADD_LAYER_SETS
   UInt        m_vpsNumLayerSetsMinus1;
-  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
 #else
-  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 
   // ------------------------------------------
@@ -670,12 +670,12 @@ private:
   Bool       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
   UInt       m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
   Bool       m_nuhLayerIdPresentFlag;
-  UInt       m_layerIdInNuh[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer ID in the VPS with layer_id_in_nuh
-  UInt       m_dimensionId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
+  UInt       m_layerIdInNuh[MAX_VPS_LAYER_IDX_PLUS1];            // Maps layer ID in the VPS with layer_id_in_nuh
+  UInt       m_dimensionId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
 
   // Below are derived variables
   UInt       m_numScalabilityTypes;
-  UInt       m_layerIdxInVps[MAX_VPS_LAYER_ID_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
+  UInt       m_layerIdxInVps[MAX_VPS_LAYER_IDX_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
 #if BITRATE_PICRATE_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
@@ -702,22 +702,22 @@ private:
   UInt       m_numOutputLayerSets;
 #if Q0078_ADD_LAYER_SETS
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
-  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
 #else
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
-  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  Bool       m_directDependencyFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  UInt       m_numDirectRefLayers[MAX_VPS_LAYER_ID_PLUS1];
-  UInt       m_refLayerId[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_directDependencyFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
+  UInt       m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
+  UInt       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_directDepTypeLen;
 #if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool       m_defaultDirectDependencyTypeFlag;
   UInt       m_defaultDirectDependencyType;
 #endif
-  UInt       m_directDependencyType[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  UInt       m_directDependencyType[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
   UInt       m_numProfileTierLevel;
 #if !VPS_EXTN_UEV_CODING
@@ -740,7 +740,7 @@ private:
 #endif
   Bool       m_maxOneActiveRefLayerFlag;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
-  Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool       m_crossLayerPictureTypeAlignFlag;
@@ -750,9 +750,9 @@ private:
   Bool       m_crossLayerAlignedIdrOnlyFlag;
 #endif
 #if O0225_MAX_TID_FOR_REF_LAYERS
-  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1][MAX_VPS_LAYER_ID_PLUS1];
+  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
 #else
-  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_ID_PLUS1 - 1];
+  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1];
 #endif
   Bool       m_maxTidRefPresentFlag;
 #if VPS_TSLAYERS
@@ -767,24 +767,24 @@ private:
 #endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   Bool       m_tilesNotInUseFlag;
-  Bool       m_tilesInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
-  Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_tilesInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
+  Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif 
-  Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
   Bool       m_wppNotInUseFlag;
-  Bool       m_wppInUseFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool       m_wppInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif 
 #if N0160_VUI_EXT_ILP_REF    
   Bool       m_ilpRestrictedRefLayersFlag;
-  Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  Bool       m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-  Int        m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_ID_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
+  Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
+  Bool       m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
+  Int        m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif 
 #if VPS_VUI_VIDEO_SIGNAL
   Bool       m_vidSigPresentVpsFlag;
   Int        m_vpsVidSigInfo;
-  Int        m_vpsVidSigIdx[MAX_VPS_LAYER_ID_PLUS1];
+  Int        m_vpsVidSigIdx[MAX_VPS_LAYER_IDX_PLUS1];
   Int        m_vpsVidFormat[16];
   Bool       m_vpsFullRangeFlag[16];
   Int        m_vpsColorPrimaries[16];
@@ -2408,9 +2408,9 @@ private:
 
   Bool        m_interLayerPredEnabledFlag;
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
-  Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_ID_PLUS1];
+  Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_IDX_PLUS1];
 #if P0312_VERT_PHASE_ADJ
-  Bool        m_vertPhasePositionFlag[MAX_VPS_LAYER_ID_PLUS1];
+  Bool        m_vertPhasePositionFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 #if POC_RESET_FLAG
   Bool        m_bPocResetFlag;

@@ -409,7 +409,7 @@ enum AuxType
 #define MAX_VPS_OP_LAYER_SETS_PLUS1          (MAX_LAYERS+1)
 #define MAX_VPS_LAYER_SETS_PLUS1                       1024
 #define MAX_VPS_OUTPUT_LAYER_SETS_PLUS1                1024
-#define MAX_VPS_LAYER_ID_PLUS1                   MAX_LAYERS
+#define MAX_VPS_LAYER_IDX_PLUS1                   MAX_LAYERS
 #else
 #define MAX_VPS_NUM_HRD_PARAMETERS                        1
 #define MAX_VPS_OP_SETS_PLUS1                          1024

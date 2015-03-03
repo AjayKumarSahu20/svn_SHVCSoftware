@@ -316,7 +316,7 @@ class CommonDecoderParams
 public:
   CommonDecoderParams():
 #if FIX_CONF_MODE
-    m_targetLayerId(MAX_VPS_LAYER_ID_PLUS1)
+    m_targetLayerId(MAX_VPS_LAYER_IDX_PLUS1)
 #else
     m_targetLayerId(0)
 #endif
