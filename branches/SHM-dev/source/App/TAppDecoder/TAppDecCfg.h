@@ -74,7 +74,6 @@ protected:
 #endif
 
 #if SVC_EXTENSION
-  Int           m_tgtLayerId;                        ///< target layer ID
 #if AVC_BASE
   Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
 #if !REPN_FORMAT_IN_VPS
@@ -117,7 +116,6 @@ public:
   , m_colourRemapSEIEnabled(0)
 #endif
 #if SVC_EXTENSION
-  , m_tgtLayerId(0)
 #if AVC_BASE && !REPN_FORMAT_IN_VPS
   , m_iBLSourceWidth(0)
   , m_iBLSourceHeight(0)

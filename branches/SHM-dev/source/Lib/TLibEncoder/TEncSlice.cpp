@@ -138,14 +138,14 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
 #endif
 {
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerId()]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerIdx()]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
   {
-    Int nCurLayerId = slice->getLayerId();
-    UInt prevLayerId = slice->getVPS()->getLayerIdInNuh(slice->getVPS()->getLayerIdxInVps(nCurLayerId)-1);
+    Int layerIdx = slice->getLayerId();
+    UInt prevLayerIdx = m_ppcTEncTop[layerIdx]->getPredLayerIdx( m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() - 1);
 
-    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[prevLayerId]->getQP() - m_ppcTEncTop[nCurLayerId]->getQP() ,
-      1.0 * m_ppcTEncTop[nCurLayerId]->getSourceWidth() * m_ppcTEncTop[nCurLayerId]->getSourceHeight()
-      / m_ppcTEncTop[prevLayerId]->getSourceWidth() / m_ppcTEncTop[prevLayerId]->getSourceHeight() );
+    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[prevLayerIdx]->getQP() - m_ppcTEncTop[layerIdx]->getQP() ,
+      1.0 * m_ppcTEncTop[layerIdx]->getSourceWidth() * m_ppcTEncTop[layerIdx]->getSourceHeight()
+      / m_ppcTEncTop[prevLayerIdx]->getSourceWidth() / m_ppcTEncTop[prevLayerIdx]->getSourceHeight() );
     dLambda *= gamma;
   }
 #endif
@@ -164,7 +164,7 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
     Double tmpWeight = pow( 2.0, (iQP-qpc)/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
 
 #if JCTVC_M0259_LAMBDAREFINEMENT
-    if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerId()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
+    if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerIdx()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
     {
       dLambdas[0] = dLambda * 1.1;
       m_pcRdCost->setLambda( dLambdas[0] );
@@ -556,14 +556,14 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   {
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
+      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getNumActiveRefLayers() );
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[layerId]->getPredLayerId(i), i );
+        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getPredLayerIdx(i), i );
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
-    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
+    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getMFMEnabledFlag());
   }
 
 #endif
@@ -763,7 +763,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic )
     xCalcACDCParamSlice(pcSlice);
   }
 #if O0194_WEIGHTED_PREDICTION_CGS
-  else if( m_ppcTEncTop[pcSlice->getLayerId()]->getInterLayerWeightedPredFlag() )
+  else if( m_ppcTEncTop[pcSlice->getLayerIdx()]->getInterLayerWeightedPredFlag() )
   {
     // Calculate for the base layer to be used in EL as Inter layer reference
     estimateILWpParam( pcSlice );    
@@ -1136,7 +1136,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
         }
 
 #if SVC_EXTENSION
-        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerId()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
+        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerIdx()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #else
         m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #endif

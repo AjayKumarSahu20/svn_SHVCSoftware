@@ -68,7 +68,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_BitstreamFile;
 #if SVC_EXTENSION
   string cfg_ReconFile [MAX_LAYERS];
-  Int nLayerNum;
+  Int layerNum, targetLayerId;
 #if OUTPUT_LAYER_SET_INDEX
   Int olsIdx;
 #endif
@@ -102,7 +102,8 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 #endif
 #if FIX_CONF_MODE
-  ("LayerNum,-ls", nLayerNum, MAX_NUM_LAYER_IDS, "Number of layers to be decoded.")
+  ("TargetLayerId,-lid", targetLayerId, -1, "Target layer id")
+  ("LayerNum,-ls", layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
 #else
   ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
 #endif
@@ -164,13 +165,17 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   /* convert std::string to c string for compatability */
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
 #if SVC_EXTENSION
-  m_tgtLayerId = nLayerNum - 1;
-  assert( m_tgtLayerId >= 0 );
+  if( targetLayerId < 0 )
+  {
+    targetLayerId = layerNum - 1;
+  }
+
+  assert( targetLayerId >= 0 );
 #if !FIX_CONF_MODE
   assert( m_tgtLayerId < MAX_LAYERS );  // If this is wrong, it should be caught by asserts in other locations.
 #endif
 #if O0137_MAX_LAYERID
-  assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
+  assert( targetLayerId < MAX_NUM_LAYER_IDS );
 #endif
 #if OUTPUT_LAYER_SET_INDEX
 #if CONFORMANCE_BITSTREAM_MODE
@@ -206,7 +211,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif
   m_commonDecoderParams.setTargetOutputLayerSetIdx( olsIdx );
-  m_commonDecoderParams.setTargetLayerId( m_tgtLayerId );
+  m_commonDecoderParams.setTargetLayerId( targetLayerId );
 #endif
 #if FIX_CONF_MODE
   for(Int layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )

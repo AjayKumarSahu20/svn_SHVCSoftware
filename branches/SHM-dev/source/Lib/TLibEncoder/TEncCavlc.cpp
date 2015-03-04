@@ -2169,12 +2169,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
     if( !vps->getSplittingFlag() )
     {
-    for(j = 0; j < vps->getNumScalabilityTypes(); j++)
-    {
-      UInt bits = vps->getDimensionIdLen(j);
-      WRITE_CODE( vps->getDimensionId(i, j),   bits,   "dimension_id[i][j]" );
+      for(j = 0; j < vps->getNumScalabilityTypes(); j++)
+      {
+        UInt bits = vps->getDimensionIdLen(j);
+        WRITE_CODE( vps->getDimensionId(i, j),   bits,   "dimension_id[i][j]" );
+      }
     }
-  }
   }
 #endif
 #if VIEW_ID_RELATED_SIGNALING
@@ -2207,7 +2207,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif // VIEW_ID_RELATED_SIGNALING
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
-  for( Int layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  for( Int layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
     {
@@ -2281,7 +2281,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #else
   assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
 #endif
-  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++)
 #else
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #endif

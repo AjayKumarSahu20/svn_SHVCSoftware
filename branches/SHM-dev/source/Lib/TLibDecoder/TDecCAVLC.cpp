@@ -3033,7 +3033,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
 #endif
 #if LIST_OF_PTL
-  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
+  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++)
 #else
   for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
 #endif

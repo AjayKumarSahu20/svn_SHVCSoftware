@@ -598,7 +598,7 @@ Void TComPrediction::xPredInterUni ( TComDataCU* pcCU, UInt uiPartAddr, Int iWid
     {
       // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
       // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
-      assert( pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerId(), refPic->getLayerId() ) );
+      assert( pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), refPic->getLayerIdx() ) );
 
 #if REF_IDX_ME_ZEROMV
       // It is a requirement of bitstream conformance that the variables mvLX[ 0 ] and mvLX[ 1 ] shall be equal to 0 if the value of refIdxLX corresponds to an inter-layer reference picture. 

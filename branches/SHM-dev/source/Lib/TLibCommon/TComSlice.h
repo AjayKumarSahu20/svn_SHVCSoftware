@@ -633,7 +633,7 @@ private:
 #if Q0078_ADD_LAYER_SETS
 #if NECESSARY_LAYER_FLAG
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
-  std::vector<Int>                      m_numLayerInIdList;;
+  std::vector<Int>                    m_numLayerInIdList;
 #else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
@@ -1051,8 +1051,8 @@ Void      deriveNumberOfSubDpbs();
   UInt    getHighestLayerIdxPlus1(UInt set, UInt idx)                            { return m_highestLayerIdxPlus1[set][idx]; }
   Void    setHighestLayerIdxPlus1(UInt set, UInt idx, UInt layerIdx)             { m_highestLayerIdxPlus1[set][idx] = layerIdx; }
   Void    setPredictedLayerIds();
-  UInt    getPredictedLayerId(UInt layerIdx, UInt predIdx)                       { return m_predictedLayerId[layerIdx][predIdx]; }
-  Void    setPredictedLayerId(UInt layerIdx, UInt predIdx, UInt x)               { m_predictedLayerId[layerIdx][predIdx] = x; }
+  UInt    getPredictedLayerId(UInt layerId, UInt predIdx)                        { return m_predictedLayerId[layerId][predIdx]; }
+  Void    setPredictedLayerId(UInt layerId, UInt predIdx, UInt x)                { m_predictedLayerId[layerId][predIdx] = x; }
   UInt    getNumPredictedLayers(UInt layerId)                                    { return m_numPredictedLayers[layerId]; }
   Void    setNumPredictedLayers(UInt layerId, UInt x)                            { m_numPredictedLayers[layerId] = x; }
   Void    setTreePartitionLayerIdList();
@@ -1088,17 +1088,17 @@ Void      deriveNumberOfSubDpbs();
   Bool   getNuhLayerIdPresentFlag()                             { return m_nuhLayerIdPresentFlag;  }
   Void   setNuhLayerIdPresentFlag(Bool x)                       { m_nuhLayerIdPresentFlag = x;     }
 
-  UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[layerIdx]; }
-  Void   setLayerIdInNuh(Int layerIdx, UInt x)                  { m_layerIdInNuh[layerIdx] = x;    }
+  UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[layerIdx];    }
+  Void   setLayerIdInNuh(Int layerIdx, UInt layerId)            { m_layerIdInNuh[layerIdx] = layerId; }
 
-  UInt   getDimensionId(Int layerIdx, Int id)                      { return m_dimensionId[layerIdx][id]; }
-  Void   setDimensionId(Int layerIdx, Int id, UInt x)              { m_dimensionId[layerIdx][id] = x;    }
+  UInt   getDimensionId(Int layerIdx, Int id)                   { return m_dimensionId[layerIdx][id]; }
+  Void   setDimensionId(Int layerIdx, Int id, UInt x)           { m_dimensionId[layerIdx][id] = x;    }
 
   UInt   getNumScalabilityTypes()                               { return m_numScalabilityTypes;    }
   Void   setNumScalabilityTypes(UInt x)                         { m_numScalabilityTypes = x;       }
 
-  UInt   getLayerIdxInVps(Int layerId)                          { return m_layerIdxInVps[layerId]; }
-  Void   setLayerIdxInVps(Int layerId, UInt x)                  { m_layerIdxInVps[layerId] = x;    }
+  UInt   getLayerIdxInVps(Int layerId)                          { return m_layerIdxInVps[layerId];     }
+  Void   setLayerIdxInVps(Int layerId, UInt layerIdx)           { m_layerIdxInVps[layerId] = layerIdx; }
 #endif
 #if BITRATE_PICRATE_SIGNALLING
   UInt   getMaxSLayersInLayerSetMinus1(Int ls)                  { return m_maxSLInLayerSetMinus1[ls]; }
@@ -1133,8 +1133,8 @@ Void      deriveNumberOfSubDpbs();
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct dependency of layers
-  Bool   getDirectDependencyFlag(Int currLayerIdc, Int refLayerIdc)               { return m_directDependencyFlag[currLayerIdc][refLayerIdc]; }
-  Void   setDirectDependencyFlag(Int currLayerIdc, Int refLayerIdc, Bool x)       { m_directDependencyFlag[currLayerIdc][refLayerIdc] = x;    }
+  Bool   getDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx)             { return m_directDependencyFlag[currLayerIdx][refLayerIdx]; }
+  Void   setDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx, Bool x)     { m_directDependencyFlag[currLayerIdx][refLayerIdx] = x;    }
   
   UInt   getNumDirectRefLayers(Int layerId)                                     { return m_numDirectRefLayers[layerId];                   }
   Void   setNumDirectRefLayers(Int layerId, UInt refLayerNum)                   { m_numDirectRefLayers[layerId] = refLayerNum;            }
@@ -1150,10 +1150,10 @@ Void      deriveNumberOfSubDpbs();
   UInt   getDefaultDirectDependencyType()                                       { return m_defaultDirectDependencyType;                   }
   Void   setDefaultDirectDependecyType(UInt x)                                  { m_defaultDirectDependencyType = x;                      }
 #endif
-  UInt   getDirectDependencyType(Int currLayerId, Int refLayerId)               { return m_directDependencyType[currLayerId][refLayerId]; }
-  Void   setDirectDependencyType(Int currLayerId, Int refLayerId, UInt x)       { m_directDependencyType[currLayerId][refLayerId] = x;    }
-  Bool   isSamplePredictionType(Int currLayerId, Int refLayerId)                { assert(currLayerId != refLayerId); return ( ( m_directDependencyType[currLayerId][refLayerId] + 1 ) & 1 ) ? true : false; }
-  Bool   isMotionPredictionType(Int currLayerId, Int refLayerId)                { assert(currLayerId != refLayerId); return ( ( ( m_directDependencyType[currLayerId][refLayerId] + 1 ) & 2 ) >> 1 ) ? true : false; }
+  UInt   getDirectDependencyType(Int currLayerIdx, Int refLayerIdx)             { return m_directDependencyType[currLayerIdx][refLayerIdx]; }
+  Void   setDirectDependencyType(Int currLayerIdx, Int refLayerIdx, UInt x)     { m_directDependencyType[currLayerIdx][refLayerIdx] = x;    }
+  Bool   isSamplePredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 1 ) ? true : false; }
+  Bool   isMotionPredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 2 ) >> 1 ) ? true : false; }
 #endif
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
