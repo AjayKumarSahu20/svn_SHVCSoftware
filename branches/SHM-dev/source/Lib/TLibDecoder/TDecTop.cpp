@@ -2079,7 +2079,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         if( m_pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
-          if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
+          if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refLayerId)))
           {
 #if O0215_PHASE_ALIGNMENT_REMOVAL
             m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, m_pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, m_pcPic->getPicYuvRec());
@@ -2228,7 +2228,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
       if( refPic->isILR(pcSlice->getLayerId()) )
       {
-        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag(refPic->getLayerId()) );
+        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())) );
       }
     }
 #endif //SVC_EXTENSION
