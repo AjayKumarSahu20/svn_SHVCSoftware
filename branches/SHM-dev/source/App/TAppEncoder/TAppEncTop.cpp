@@ -353,9 +353,13 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
-      UInt prevLayerIdx = m_acLayerCfg[layer].getPredLayerIdx(m_acLayerCfg[layer].getNumActiveRefLayers() - 1);
-      UInt prevLayerId  = m_acTEncTop[layer].getRefLayerId(prevLayerIdx);
-
+      UInt prevLayerIdx = 0;
+      UInt prevLayerId  = 0;
+      if (m_acLayerCfg[layer].getNumActiveRefLayers() > 0)
+      {
+        prevLayerIdx = m_acLayerCfg[layer].getPredLayerIdx(m_acLayerCfg[layer].getNumActiveRefLayers() - 1);
+        prevLayerId  = m_acTEncTop[layer].getRefLayerId(prevLayerIdx);
+      }
       for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
       {
         m_acTEncTop[layer].setSamplePredEnabledFlag                       (i, false);
