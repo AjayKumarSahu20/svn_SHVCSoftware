@@ -693,7 +693,7 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 #endif
 
 #if P0123_ALPHA_CHANNEL_SEI
-  if( m_pcCfg->getAlphaSEIEnabled() && m_pcEncTop->getVPS()->getScalabilityId(m_layerId, AUX_ID) && m_pcEncTop->getVPS()->getDimensionId(m_layerId, m_pcEncTop->getVPS()->getNumScalabilityTypes() - 1) == AUX_ALPHA )
+  if( m_pcCfg->getAlphaSEIEnabled() && m_pcEncTop->getVPS()->getScalabilityId(m_layerId, AUX_ID) && m_pcEncTop->getVPS()->getDimensionId(m_pcEncTop->getVPS()->getLayerIdxInVps(m_layerId), m_pcEncTop->getVPS()->getNumScalabilityTypes() - 1) == AUX_ALPHA )
   {
     SEIAlphaChannelInfo *sei = xCreateSEIAlphaChannelInfo();
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
@@ -1414,7 +1414,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
-          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag(refLayerId) )
+          if( m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refLayerId)))
           {
 #if P0312_VERT_PHASE_ADJ
             //when PhasePositionEnableFlag is equal to 1, set vertPhasePositionFlag to 0 if BL is top field and 1 if bottom
@@ -1874,7 +1874,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         for( Int i = 0; i < pcSlice->getLayerId(); i++)
         {
-          TComList<TComPic *> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdInNuh(i)]->getListPic();
+          TComList<TComPic *> *cListPic = m_ppcTEncTop[i]->getListPic();
           TComPic *lowerLayerPic = pcSlice->getRefPic(*cListPic, pcSlice->getPOC());
           if( lowerLayerPic && pcSlice->getVPS()->getDirectDependencyFlag(pcSlice->getLayerIdx(), i) )
           {
@@ -1968,7 +1968,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
           // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
           // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-          if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
+          if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId()) )
 #if MFM_ENCCONSTRAINT
             && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
@@ -1990,7 +1990,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
             // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
             // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-            if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerId() )
+            if( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps( refPic->getLayerId()))
 #if MFM_ENCCONSTRAINT
               && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerId()]->getListPic() )->checkSameRefInfo() == true 
 #endif
@@ -2109,7 +2109,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
         // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
         // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-        if( refPic->isILR(m_layerId) && !m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag(refPic->getLayerId()) )
+        if( refPic->isILR(m_layerId) && !m_ppcTEncTop[m_layerId]->getMotionPredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())))
         {
           pcSlice->setEnableTMVPFlag(false);
           pcSlice->setMFMEnabledFlag(false);
@@ -2127,7 +2127,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())) ) )
           {
             break;
           }
@@ -2151,7 +2151,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           TComPic* refPic = pcSlice->getRefPic(refList, refIdx);
 
-          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( refPic->getLayerId() ) ) )
+          if( !refPic->isILR(m_layerId) || ( refPic->isILR(m_layerId) && m_ppcTEncTop[m_layerId]->getSamplePredEnabledFlag( pcSlice->getVPS()->getLayerIdxInVps((refPic->getLayerId())))) )
           {
             break;
           }
