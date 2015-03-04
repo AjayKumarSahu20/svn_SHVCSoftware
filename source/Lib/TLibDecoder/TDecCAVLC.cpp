@@ -1069,7 +1069,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 
 #if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() < MAX_VPS_LAYER_SETS_PLUS1 );
-  assert( pcVPS->getMaxLayerId()       < MAX_VPS_LAYER_IDX_PLUS1 );
+  assert( pcVPS->getMaxLayerId()       < MAX_NUM_LAYER_IDS );
   READ_CODE( 6, uiCode, "vps_max_layer_id" );           pcVPS->setMaxLayerId( uiCode );
 #if Q0078_ADD_LAYER_SETS
   READ_UVLC(uiCode, "vps_num_layer_sets_minus1");  pcVPS->setVpsNumLayerSetsMinus1(uiCode);
