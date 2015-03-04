@@ -138,17 +138,20 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
 #endif
 {
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerIdx()]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  Int layerIdx = slice->getLayerIdx();
+
+  if( slice->getLayerId() > 0 && m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
   {
-    Int layerIdx = slice->getLayerId();
     UInt prevLayerIdx = 0; 
-    if (m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() > 0)
+    if( m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() > 0 )
     {
       prevLayerIdx = m_ppcTEncTop[layerIdx]->getPredLayerIdx( m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() - 1);
     }
+
     Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[prevLayerIdx]->getQP() - m_ppcTEncTop[layerIdx]->getQP() ,
-      1.0 * m_ppcTEncTop[layerIdx]->getSourceWidth() * m_ppcTEncTop[layerIdx]->getSourceHeight()
-      / m_ppcTEncTop[prevLayerIdx]->getSourceWidth() / m_ppcTEncTop[prevLayerIdx]->getSourceHeight() );
+                                        1.0 * m_ppcTEncTop[layerIdx]->getSourceWidth() * m_ppcTEncTop[layerIdx]->getSourceHeight()
+                                        / m_ppcTEncTop[prevLayerIdx]->getSourceWidth() / m_ppcTEncTop[prevLayerIdx]->getSourceHeight() );
+
     dLambda *= gamma;
   }
 #endif
