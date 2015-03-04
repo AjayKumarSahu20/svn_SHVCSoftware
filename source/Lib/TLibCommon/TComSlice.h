@@ -1224,8 +1224,8 @@ Void      deriveNumberOfSubDpbs();
 #if VPS_TSLAYERS
   Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
   Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
-  UInt   getMaxTSLayersMinus1(Int layerId)                            { return m_maxTSLayerMinus1[layerId];}
-  Void   setMaxTSLayersMinus1(Int layerId, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerId] = maxTSublayer;}
+  UInt   getMaxTSLayersMinus1(Int layerIdx)                            { return m_maxTSLayerMinus1[layerIdx];}
+  Void   setMaxTSLayersMinus1(Int layerIdx, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;}
 #endif
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
