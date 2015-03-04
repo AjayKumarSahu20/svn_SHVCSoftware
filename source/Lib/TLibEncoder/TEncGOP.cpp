@@ -3783,19 +3783,19 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 
   //===== add PSNR =====
 #if SVC_EXTENSION
-  m_gcAnalyzeAll[m_layerId].addResult (dPSNR, (Double)uibits, MSEyuvframe);
+  m_gcAnalyzeAll[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
   TComSlice*  pcSlice = pcPic->getSlice(0);
   if (pcSlice->isIntra())
   {
-    m_gcAnalyzeI[m_layerId].addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    m_gcAnalyzeI[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
   }
   if (pcSlice->isInterP())
   {
-    m_gcAnalyzeP[m_layerId].addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    m_gcAnalyzeP[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
   }
   if (pcSlice->isInterB())
   {
-    m_gcAnalyzeB[m_layerId].addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    m_gcAnalyzeB[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
   }
 #else
   m_gcAnalyzeAll.addResult (dPSNR, (Double)uibits, MSEyuvframe);
