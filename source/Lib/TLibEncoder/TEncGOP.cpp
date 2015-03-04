@@ -191,9 +191,14 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 #if Q0048_CGS_3D_ASYMLUT
   if( pcTEncTop->getLayerId() )
   {
-    UInt prevLayerIdx = pcTEncTop->getPredLayerIdx( pcTEncTop->getNumActiveRefLayers() - 1);
-    UInt prevLayerId  = pcTEncTop->getRefLayerId(prevLayerIdx);
+    UInt prevLayerIdx = 0;
+    UInt prevLayerId  = 0;
 
+    if (pcTEncTop->getNumActiveRefLayers() > 0)
+    {
+      prevLayerIdx = pcTEncTop->getPredLayerIdx( pcTEncTop->getNumActiveRefLayers() - 1);
+      prevLayerId  = pcTEncTop->getRefLayerId(prevLayerIdx);
+    }
     m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthLayer[CHANNEL_TYPE_LUMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcTEncTop->getLayerId()] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
     m_Enc3DAsymLUTPPS.create(   m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthLayer[CHANNEL_TYPE_LUMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcTEncTop->getLayerId()] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
     if(!m_pColorMappedPic)
