@@ -60,6 +60,7 @@ protected:
   // file I/O
 #if SVC_EXTENSION
   TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS];
+  Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
   Char*     m_pBitstreamFile;                                 ///< output bitstream file
@@ -576,7 +577,7 @@ public:
   
 #if SVC_EXTENSION
   Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
-  Int  getNumLayer()               {return m_numLayers;        }
+  Int  getNumLayer()               {return m_numLayers;         }
   Int  getGOPSize()                {return m_iGOPSize;          }
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   UInt getInternalBitDepth(Int iLayer, ChannelType type)      {return m_acLayerCfg[iLayer].m_internalBitDepth[type]; }

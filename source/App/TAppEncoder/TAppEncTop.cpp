@@ -300,9 +300,9 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 #endif
     // set layer ID
-    m_acTEncTop[layer].setLayerId ( layer );
-    m_acTEncTop[layer].setNumLayer ( m_numLayers );
-    m_acTEncTop[layer].setLayerEnc(m_apcTEncTop);
+    m_acTEncTop[layer].setLayerId                                         ( m_acLayerCfg[layer].m_layerId == -1 ? layer : m_acLayerCfg[layer].m_layerId );
+    m_acTEncTop[layer].setNumLayer                                        ( m_numLayers );
+    m_acTEncTop[layer].setLayerEnc                                        ( m_apcTEncTop );
 
     //====== Coding Structure ========
     m_acTEncTop[layer].setIntraPeriod                                     ( m_acLayerCfg[layer].m_iIntraPeriod );
@@ -353,6 +353,9 @@ Void TAppEncTop::xInitLibCfg()
 #if VPS_EXTN_DIRECT_REF_LAYERS
     if(layer)
     {
+      UInt prevLayerIdx = m_acLayerCfg[layer].getPredLayerIdx(m_acLayerCfg[layer].getNumActiveRefLayers() - 1);
+      UInt prevLayerId  = m_acTEncTop[layer].getRefLayerId(prevLayerIdx);
+
       for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
       {
         m_acTEncTop[layer].setSamplePredEnabledFlag                       (i, false);
@@ -362,8 +365,8 @@ Void TAppEncTop::xInitLibCfg()
       {
         // Not included in the configuration file; assume that each layer depends on previous layer
         m_acTEncTop[layer].setNumSamplePredRefLayers                      (1);      // One sample pred ref. layer
-        m_acTEncTop[layer].setSamplePredRefLayerId                        (0, layer - 1);   // Previous layer
-        m_acTEncTop[layer].setSamplePredEnabledFlag                       (layer - 1, true);
+        m_acTEncTop[layer].setSamplePredRefLayerId                        (prevLayerIdx, prevLayerId);   // Previous layer
+        m_acTEncTop[layer].setSamplePredEnabledFlag                       (prevLayerIdx, true);
       }
       else
       {
@@ -371,15 +374,14 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumSamplePredRefLayers(); i++)
         {
           m_acTEncTop[layer].setSamplePredRefLayerId                      ( i, m_acLayerCfg[layer].getSamplePredRefLayerId(i));
-          m_acTEncTop[layer].setSamplePredEnabledFlag                     (m_acLayerCfg[layer].getSamplePredRefLayerId(i), true);
         }
       }
       if(m_acLayerCfg[layer].getNumMotionPredRefLayers() == -1)
       {
         // Not included in the configuration file; assume that each layer depends on previous layer
         m_acTEncTop[layer].setNumMotionPredRefLayers                      (1);      // One motion pred ref. layer
-        m_acTEncTop[layer].setMotionPredRefLayerId                        (0, layer - 1);   // Previous layer
-        m_acTEncTop[layer].setMotionPredEnabledFlag                       (layer - 1, true);
+        m_acTEncTop[layer].setMotionPredRefLayerId                        (prevLayerIdx, prevLayerId);   // Previous layer
+        m_acTEncTop[layer].setMotionPredEnabledFlag                       (prevLayerIdx, true);
       }
       else
       {
@@ -387,29 +389,51 @@ Void TAppEncTop::xInitLibCfg()
         for(Int i = 0; i < m_acTEncTop[layer].getNumMotionPredRefLayers(); i++)
         {
           m_acTEncTop[layer].setMotionPredRefLayerId                      ( i, m_acLayerCfg[layer].getMotionPredRefLayerId(i));
-          m_acTEncTop[layer].setMotionPredEnabledFlag                     (m_acLayerCfg[layer].getMotionPredRefLayerId(i), true);
         }
       }
       Int numDirectRefLayers = 0;
 
       assert( layer < MAX_LAYERS );
 
-      for (Int i = 0; i < layer; i++)
+      for (Int i = 0; i < m_acLayerCfg[layer].m_layerId; i++)
       {
-        if (m_acTEncTop[layer].getSamplePredEnabledFlag(i) || m_acTEncTop[layer].getMotionPredEnabledFlag(i))
+        Int refLayerId = -1;
+
+        for( Int layerIdc = 0; layerIdc < m_acTEncTop[layer].getNumSamplePredRefLayers(); layerIdc++ )
         {
-          m_acTEncTop[layer].setRefLayerId                                (numDirectRefLayers, i);
+          if( m_acLayerCfg[layer].getSamplePredRefLayerId(layerIdc) == i )
+          {
+            refLayerId = i;
+            m_acTEncTop[layer].setSamplePredEnabledFlag( numDirectRefLayers, true );
+            break;
+          }
+        }
+
+        for( Int layerIdc = 0; layerIdc < m_acTEncTop[layer].getNumMotionPredRefLayers(); layerIdc++ )
+        {
+          if( m_acLayerCfg[layer].getMotionPredRefLayerId(layerIdc) == i )
+          {
+            refLayerId = i;
+            m_acTEncTop[layer].setMotionPredEnabledFlag( numDirectRefLayers, true );
+            break;
+          }
+        }
+
+        if( refLayerId >= 0 )
+        {
+          m_acTEncTop[layer].setRefLayerId                                ( numDirectRefLayers, refLayerId );
           numDirectRefLayers++;
         }
       }
-      m_acTEncTop[layer].setNumDirectRefLayers                            (numDirectRefLayers);
+
+      m_acTEncTop[layer].setNumDirectRefLayers                            ( numDirectRefLayers );
 
       if(m_acLayerCfg[layer].getNumActiveRefLayers() == -1)
       {
         m_acTEncTop[layer].setNumActiveRefLayers                          ( m_acTEncTop[layer].getNumDirectRefLayers() );
         for( Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++ )
         {
-          m_acTEncTop[layer].setPredLayerId(i, i);
+          m_acTEncTop[layer].setPredLayerIdx(i, i);
         }
       }
       else
@@ -417,7 +441,7 @@ Void TAppEncTop::xInitLibCfg()
         m_acTEncTop[layer].setNumActiveRefLayers                          ( m_acLayerCfg[layer].getNumActiveRefLayers() );
         for(Int i = 0; i < m_acTEncTop[layer].getNumActiveRefLayers(); i++)
         {
-          m_acTEncTop[layer].setPredLayerId                               ( i, m_acLayerCfg[layer].getPredLayerId(i));
+          m_acTEncTop[layer].setPredLayerIdx                              ( i, m_acLayerCfg[layer].getPredLayerIdx(i));
         }
       }
     }
@@ -1265,9 +1289,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setLayerIdxInVps(0, 0);
   for(i = 1; i < vps->getMaxLayers(); i++)
   {
-    vps->setLayerIdInNuh(i, i);
+    vps->setLayerIdInNuh(i, m_acLayerCfg[i].m_layerId);    
     vps->setLayerIdxInVps(vps->getLayerIdInNuh(i), i);
     vps->setDimensionId(i, 0, i);
+
+    if( m_acLayerCfg[i].m_layerId != i )
+    {
+      vps->setNuhLayerIdPresentFlag(true);
+    }
   }
 
   for(UInt layer=0; layer<m_numLayers; layer++)
@@ -1295,7 +1324,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 
 #if VPS_EXTN_OP_LAYER_SETS
-  vps->setMaxLayerId(m_numLayers - 1);    // Set max-layer ID
+  vps->setMaxLayerId( m_acLayerCfg[m_numLayers - 1].m_layerId );    // Set max-layer ID
 
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
@@ -1528,13 +1557,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool isDefaultDirectDependencyTypeSet = false;
 #endif
-  for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  for (UInt layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     UInt layerId = vps->getLayerIdInNuh(layerCtr);
     vps->setNumDirectRefLayers(layerId, m_acTEncTop[layerCtr].getNumDirectRefLayers());
-    maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerCtr));
+    maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerId));
 
-    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    for (i = 0; i < vps->getNumDirectRefLayers(layerId); i++)
     {
       vps->setRefLayerId(layerId, i, m_acTEncTop[layerCtr].getRefLayerId(i));
     }
@@ -1544,7 +1573,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       vps->setDirectDependencyFlag(layerCtr, refLayerCtr, false);
     }
-    for (i = 0; i < vps->getNumDirectRefLayers(layerCtr); i++)
+    for (i = 0; i < vps->getNumDirectRefLayers(layerId); i++)
     {
       vps->setDirectDependencyFlag(layerCtr, vps->getLayerIdxInVps(m_acTEncTop[layerCtr].getRefLayerId(i)), true);
     }

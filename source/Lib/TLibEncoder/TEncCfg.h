@@ -390,7 +390,7 @@ protected:
   Int       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
 
   Int       m_numActiveRefLayers;
-  Int       m_predLayerId[MAX_VPS_LAYER_IDX_PLUS1];
+  Int       m_predLayerIdx[MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numSamplePredRefLayers;
   Int       m_samplePredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numMotionPredRefLayers;
@@ -1118,26 +1118,26 @@ public:
   Int       getNumActiveRefLayers           ()                              { return m_numActiveRefLayers;      }
   Void      setNumActiveRefLayers           (Int num)                       { m_numActiveRefLayers = num;       }
 
-  Int       getPredLayerId                  (Int i)                         { return m_predLayerId[i];          }
-  Void      setPredLayerId                  (Int i, Int refLayerId)         { m_predLayerId[i] = refLayerId;    }
+  Int       getPredLayerIdx                 (Int lyaerIdc)                  { return m_predLayerIdx[lyaerIdc];          }
+  Void      setPredLayerIdx                 (Int lyaerIdc, Int refLayerIdx) { m_predLayerIdx[lyaerIdc] = refLayerIdx;   }
 
   Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
   Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
 
-  Int       getSamplePredRefLayerId         (Int i)                         { return m_samplePredRefLayerId[i];       }
-  Void      setSamplePredRefLayerId         (Int i, Int refLayerId)         { m_samplePredRefLayerId[i] = refLayerId; }
+  Int       getSamplePredRefLayerId         (Int layerIdc)                  { return m_samplePredRefLayerId[layerIdc];       }
+  Void      setSamplePredRefLayerId         (Int layerIdc, Int refLayerId)  { m_samplePredRefLayerId[layerIdc] = refLayerId; }
 
   Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
   Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
 
-  Int       getMotionPredRefLayerId         (Int i)                         { return m_motionPredRefLayerId[i];       }
-  Void      setMotionPredRefLayerId         (Int i, Int refLayerId)         { m_motionPredRefLayerId[i] = refLayerId; }
+  Int       getMotionPredRefLayerId         (Int layerIdc)                  { return m_motionPredRefLayerId[layerIdc];       }
+  Void      setMotionPredRefLayerId         (Int layerIdc, Int refLayerId)  { m_motionPredRefLayerId[layerIdc] = refLayerId; }
 
-  Bool      getSamplePredEnabledFlag        (Int i)                         { return m_samplePredEnabledFlag[i];  }
-  Void      setSamplePredEnabledFlag        (Int i,Bool flag)               { m_samplePredEnabledFlag[i] = flag;  }
+  Bool      getSamplePredEnabledFlag        (Int layerIdx)                  { return m_samplePredEnabledFlag[layerIdx];  }
+  Void      setSamplePredEnabledFlag        (Int layerIdx, Bool flag)       { m_samplePredEnabledFlag[layerIdx] = flag;  }
 
-  Bool      getMotionPredEnabledFlag        (Int i)                         { return m_motionPredEnabledFlag[i];  }
-  Void      setMotionPredEnabledFlag        (Int i,Bool flag)               { m_motionPredEnabledFlag[i] = flag;  }
+  Bool      getMotionPredEnabledFlag        (Int layerIdx)                  { return m_motionPredEnabledFlag[layerIdx];  }
+  Void      setMotionPredEnabledFlag        (Int layerIdx,Bool flag)        { m_motionPredEnabledFlag[layerIdx] = flag;  }
 #endif
   Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
   Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }

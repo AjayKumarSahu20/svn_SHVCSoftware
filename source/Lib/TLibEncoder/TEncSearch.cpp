@@ -3242,7 +3242,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
         TComPic* pcPic = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp );
         
         // motion search only for the ILRP with sample prediction type
-        if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerId(), pcPic->getLayerId() ) )
+        if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcPic->getLayerIdx() ) )
         {
           continue;
         }
@@ -3480,7 +3480,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
           pcPic = pcCU->getSlice()->getRefPic( RefPicList(iRefList) , iRefIdxTemp );
 
           // motion search only for the ILRP with sample prediction type
-          if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerId(), pcPic->getLayerId() ) )
+          if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcPic->getLayerIdx() ) )
           {
             continue;
           }
@@ -6073,7 +6073,7 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
       TComPic* refPic = pcCU->getSlice()->getRefPic(eRefPicList, refIdx);
 
       // ILRP has to be for the sample prediction type
-      if( refPic->isILR(pcCU->getLayerId()) && refPic->getLayerId() == refLayerId && pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerId(), refLayerId ) )
+      if( refPic->isILR(pcCU->getLayerId()) && refPic->getLayerId() == refLayerId && pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcCU->getSlice()->getVPS()->getLayerIdxInVps(refLayerId) ) )
       {
         iRefIdxTemp = refIdx;
         foundILR    = true;

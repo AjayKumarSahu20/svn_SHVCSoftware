@@ -486,6 +486,7 @@ public:
 #if SVC_EXTENSION
   Void          setLayerId (UInt layerId) { m_layerId = layerId; }
   UInt          getLayerId ()               { return m_layerId; }
+  UInt          getLayerIdx ()              { return m_pcSlice->getVPS()->getLayerIdxInVps(m_layerId); }
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
 #endif

@@ -181,7 +181,7 @@ protected:
   Void  xFillPCMBuffer     ( TComDataCU* pCU, TComYuv* pOrgYuv );
 
 #if SVC_EXTENSION
-  TEncTop*   getLayerEnc(UInt LayerId)  {return m_ppcTEncTop[LayerId]; }
+  TEncTop*   getLayerEnc(UInt layerIdx)  {return m_ppcTEncTop[layerIdx]; }
 #if ENCODER_FAST_MODE
   Void  xCheckRDCostILRUni  ( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt refLayerId);
 #endif

@@ -3598,7 +3598,7 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
 
       // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
       // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
-      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( getLayerIdx(), refPic->getLayerIdx() );
     }
   }
   if(uhInterDir&0x2)  //list1
@@ -3612,7 +3612,7 @@ Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0,
 
       // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
       // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
-      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_layerId, refPic->getLayerId() );
+      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( getLayerIdx(), refPic->getLayerIdx() );
     }
   }
 

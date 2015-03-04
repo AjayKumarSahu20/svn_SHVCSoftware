@@ -2228,7 +2228,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
       if( refPic->isILR(pcSlice->getLayerId()) )
       {
-        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refPic->getLayerId())) );
+        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerIdx() ) );
       }
     }
 #endif //SVC_EXTENSION
@@ -3007,22 +3007,16 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     // Check if any of the output layer sets match this description
     for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
     {
-      Bool layerSetMatchFlag = true;
+      Bool layerSetMatchFlag = false;
       Int layerSetIdx = vps->getOutputLayerSetIdx( i );
-      if( vps->getNumLayersInIdList( layerSetIdx ) == params->getTargetLayerId() + 1 )
+
+      for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
       {
-        for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+        if( vps->getLayerSetLayerIdList( layerSetIdx, j ) == params->getTargetLayerId() )
         {
-          if( vps->getLayerSetLayerIdList( layerSetIdx, j ) != j )
-          {
-            layerSetMatchFlag = false;
-            break;
-          }
+          layerSetMatchFlag = true;
+          break;
         }
-      }
-      else
-      {
-        layerSetMatchFlag = false;
       }
       
       if( layerSetMatchFlag ) // Potential output layer set candidate found

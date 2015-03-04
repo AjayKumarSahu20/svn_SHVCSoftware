@@ -771,6 +771,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_InputFile      [MAX_LAYERS];
   string* cfg_ReconFile      [MAX_LAYERS];
   Double* cfg_fQP            [MAX_LAYERS];
+  Int*    cfg_layerId        [MAX_LAYERS];
 #if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
 #endif
@@ -910,6 +911,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if REPN_FORMAT_IN_VPS
     cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
 #endif
+    cfg_layerId[layer]              = &m_acLayerCfg[layer].m_layerId;
     cfg_SourceWidth[layer]          = &m_acLayerCfg[layer].m_iSourceWidth;
     cfg_SourceHeight[layer]         = &m_acLayerCfg[layer].m_iSourceHeight;
     cfg_FrameRate[layer]            = &m_acLayerCfg[layer].m_iFrameRate; 
@@ -1121,6 +1123,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if REPN_FORMAT_IN_VPS
   ("RepFormatIdx%d",                                cfg_repFormatIdx,                           -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
 #endif
+  ("LayerId%d",                                     cfg_layerId,                                -1, MAX_LAYERS,  "Layer id")
 #if VPS_EXTN_DIRECT_REF_LAYERS
   ("NumSamplePredRefLayers%d",                      cfg_numSamplePredRefLayers,                 -1, MAX_LAYERS, "Number of sample prediction reference layers")
   ("SamplePredRefLayerIds%d",                       cfg_samplePredRefLayerIdsPtr,       string(""), MAX_LAYERS, "sample pred reference layer IDs")
@@ -1129,7 +1132,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("NumActiveRefLayers%d",                          cfg_numActiveRefLayers,                     -1, MAX_LAYERS, "Number of active reference layers")
   ("PredLayerIds%d",                                cfg_predLayerIdsPtr,                string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 #endif
-  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")
+  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")  
 #if Q0078_ADD_LAYER_SETS
 #if OUTPUT_LAYER_SETS_CONFIG
   ("NumLayerSets",                                  m_numLayerSets,                                          1, "Number of layer sets")
@@ -4600,8 +4603,8 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layerIdx].m_numSamplePredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
     for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numSamplePredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] > layerIdx, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] == layerIdx, "Cannot reference the current layer itself");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] > m_acLayerCfg[layerIdx].m_layerId, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] == m_acLayerCfg[layerIdx].m_layerId, "Cannot reference the current layer itself");
     }
   }
   xConfirmPara( (m_acLayerCfg[0].m_numMotionPredRefLayers != 0) && (m_acLayerCfg[0].m_numMotionPredRefLayers != -1), "Layer 0 cannot have any reference layers" );
@@ -4611,8 +4614,8 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[layerIdx].m_numMotionPredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
     for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numMotionPredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] > layerIdx, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] == layerIdx, "Cannot reference the current layer itself");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] > m_acLayerCfg[layerIdx].m_layerId, "Cannot reference higher layers");
+      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] == m_acLayerCfg[layerIdx].m_layerId, "Cannot reference the current layer itself");
     }
   }
 

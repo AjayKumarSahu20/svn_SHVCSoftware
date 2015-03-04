@@ -222,7 +222,7 @@ Void TAppDecTop::decode()
       read(nalu, nalUnit);
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
 #if FIX_CONF_MODE
-        (nalu.m_layerId > this->getCommonDecoderParams()->getTargetLayerId()) )
+        (nalu.m_layerId > m_commonDecoderParams.getTargetLayerId()) )
 #else
         (nalu.m_layerId > m_tgtLayerId) )
 #endif

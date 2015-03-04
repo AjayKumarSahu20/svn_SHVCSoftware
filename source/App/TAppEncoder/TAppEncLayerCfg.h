@@ -29,7 +29,7 @@ protected:
   // file I/O0
   string    m_cInputFile;                                     ///< source file name
   string    m_cReconFile;                                     ///< output reconstruction file
-
+  Int       m_layerId;                                        ///< layer Id
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
@@ -208,7 +208,7 @@ public:
 
   Int     getNumActiveRefLayers()     {return m_numActiveRefLayers;}
   Int*    getPredLayerIds()           {return m_predLayerIds;     }
-  Int     getPredLayerId(Int i)       {return m_predLayerIds[i];  }
+  Int     getPredLayerIdx(Int i)      {return m_predLayerIds[i];  }
 #endif
 #if RC_SHVC_HARMONIZATION
   Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }

@@ -3362,11 +3362,11 @@ Void TComVPS::deriveNumberOfSubDpbs()
   // Derive number of sub-DPBs
 #if CHANGE_NUMSUBDPB_IDX
   // For layer set 0
-  setNumSubDpbs(0, 1);
+  m_numSubDpbs[0] = 1;
   // For other layer sets
-  for( Int i = 1; i < getNumLayerSets(); i++)
+  for( Int i = 1; i < m_numLayerSets; i++)
   {
-    setNumSubDpbs( i, getNumLayersInIdList( i ) );
+    m_numSubDpbs[i] = m_numLayerInIdList[i];
   }
 #else
   // For output layer set 0
@@ -3795,27 +3795,27 @@ Void TComVPS::deriveNecessaryLayerFlag()
   m_necessaryLayerFlag.empty();
   m_numNecessaryLayers.empty();
   // Assumed that output layer sets and variables RecursiveRefLayer are already derived
-  for( Int olsIdx = 0; olsIdx < getNumOutputLayerSets(); olsIdx++)
+  for( Int olsIdx = 0; olsIdx < m_numOutputLayerSets; olsIdx++)
   {
     deriveNecessaryLayerFlag(olsIdx);
   }
 }
 Void TComVPS::deriveNecessaryLayerFlag(Int const olsIdx)
 {
-  Int lsIdx = this->getOutputLayerSetIdx( olsIdx );
-  Int numLayersInLs = this->getNumLayersInIdList( lsIdx );
+  Int lsIdx = m_outputLayerSetIdx[olsIdx];
+  Int numLayersInLs = m_numLayerInIdList[lsIdx];
   assert( m_necessaryLayerFlag.size() == olsIdx );   // Function should be called in the correct order.
   m_necessaryLayerFlag.push_back( std::vector<Bool>( numLayersInLs, false ) ); // Initialize to false
   for( Int lsLayerIdx = 0; lsLayerIdx < numLayersInLs; lsLayerIdx++ )
   {
-    if( this->m_outputLayerFlag[olsIdx][lsLayerIdx] )
+    if( m_outputLayerFlag[olsIdx][lsLayerIdx] )
     {
       m_necessaryLayerFlag[olsIdx][lsLayerIdx] = true;
-      Int currNuhLayerId = this->m_layerSetLayerIdList[lsIdx][lsLayerIdx];
+      Int currNuhLayerId = m_layerSetLayerIdList[lsIdx][lsLayerIdx];
       for( Int rLsLayerIdx = 0; rLsLayerIdx < lsLayerIdx; rLsLayerIdx++ )
       {
-        Int refNuhLayerId = this->m_layerSetLayerIdList[lsIdx][rLsLayerIdx];
-        if( this->m_recursiveRefLayerFlag[currNuhLayerId][refNuhLayerId] )
+        Int refNuhLayerId = m_layerSetLayerIdList[lsIdx][rLsLayerIdx];
+        if( m_recursiveRefLayerFlag[currNuhLayerId][refNuhLayerId] )
         {
           m_necessaryLayerFlag[olsIdx][rLsLayerIdx] = true;
         }
@@ -3830,13 +3830,13 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
   ( vps_base_layer_internal_flag ? 0 : 1 ) to MaxLayersMinus1, inclusive, there shall be at least one OLS with index olsIdx such that 
   NecessaryLayerFlag[ olsIdx ][ lsLayerIdx ] is equal to 1 for the value of lsLayerIdx 
   for which LayerSetLayerIdList[ OlsIdxToLsIdx[ olsIdx ] ][ lsLayerIdx ] is equal to layer_id_in_nuh[ layerIdx ]. */
-  for(Int layerIdx = this->getBaseLayerInternalFlag() ? 0 : 1; layerIdx < this->getMaxLayers(); layerIdx++)
+  for(Int layerIdx = m_baseLayerInternalFlag ? 0 : 1; layerIdx < m_uiMaxLayers; layerIdx++)
   {
     Bool layerFoundNecessaryLayerFlag = false;
-    for(Int olsIdx = 0; olsIdx < this->getNumOutputLayerSets(); olsIdx++)
+    for(Int olsIdx = 0; olsIdx < m_numOutputLayerSets; olsIdx++)
     {
-      Int lsIdx = this->getOutputLayerSetIdx( olsIdx );
-      Int currNuhLayerId = this->getLayerIdInNuh( layerIdx );
+      Int lsIdx = m_outputLayerSetIdx[olsIdx];
+      Int currNuhLayerId = m_layerIdInNuh[layerIdx];
       std::vector<Int>::iterator iter = std::find( m_layerSetLayerIdList[lsIdx].begin(), m_layerSetLayerIdList[lsIdx].end(), currNuhLayerId );
       if( iter != m_layerSetLayerIdList[lsIdx].end() ) // Layer present in layer set
       {
@@ -4298,8 +4298,11 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
       }
       pcIlpPic[refLayerIdc]->setIsLongTerm(1);
 
-      // assign PPS to IRLP to be used for reference location offsets
+      // assign PPS to ILRP to be used for reference location offsets
       pcIlpPic[refLayerIdc]->getSlice(0)->setPPS( m_pcPic->getSlice(0)->getPPS() );
+
+      // assing VPS to ILRP to be used for deriving layerIdx
+      pcIlpPic[refLayerIdc]->getSlice(0)->setVPS( m_pcPic->getSlice(0)->getVPS() );
 
 #if REF_IDX_MFM
       if( m_bMFMEnabledFlag && !(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) )
