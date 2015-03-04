@@ -652,7 +652,7 @@ private:
   UInt        m_numLayerSets;
 #if Q0078_ADD_LAYER_SETS
   UInt        m_vpsNumLayerSetsMinus1;
-  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
+  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
 #else
   Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
@@ -675,7 +675,7 @@ private:
 
   // Below are derived variables
   UInt       m_numScalabilityTypes;
-  UInt       m_layerIdxInVps[MAX_VPS_LAYER_IDX_PLUS1];            // Maps layer_id_in_nuh with the layer ID in the VPS
+  UInt       m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
 #if BITRATE_PICRATE_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
@@ -845,8 +845,8 @@ private:
   UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
   UInt       m_numPredictedLayers[MAX_NUM_LAYER_IDS];
   Int        m_numIndependentLayers;
-  Int        m_numLayersInTreePartition[MAX_NUM_LAYER_IDS];
-  UInt       m_treePartitionLayerIdList[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
+  Int        m_numLayersInTreePartition[MAX_LAYERS];
+  UInt       m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
 #endif
 #if SPS_DPB_PARAMS
   Int        m_TolsIdx;
@@ -1091,8 +1091,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getLayerIdInNuh(Int layerIdx)                          { return m_layerIdInNuh[layerIdx]; }
   Void   setLayerIdInNuh(Int layerIdx, UInt x)                  { m_layerIdInNuh[layerIdx] = x;    }
 
-  UInt   getDimensionId(Int lyrId, Int id)                      { return m_dimensionId[lyrId][id]; }
-  Void   setDimensionId(Int lyrId, Int id, UInt x)              { m_dimensionId[lyrId][id] = x;    }
+  UInt   getDimensionId(Int layerIdx, Int id)                      { return m_dimensionId[layerIdx][id]; }
+  Void   setDimensionId(Int layerIdx, Int id, UInt x)              { m_dimensionId[layerIdx][id] = x;    }
 
   UInt   getNumScalabilityTypes()                               { return m_numScalabilityTypes;    }
   Void   setNumScalabilityTypes(UInt x)                         { m_numScalabilityTypes = x;       }
@@ -1128,8 +1128,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getOutputLayerSetIdx(Int idx)                          { return m_outputLayerSetIdx[idx]; }
   Void   setOutputLayerSetIdx(Int idx, UInt x)                  { m_outputLayerSetIdx[idx] = x;    }
 
-  Bool   getOutputLayerFlag(Int layerSet, Int layerId)          { return m_outputLayerFlag[layerSet][layerId]; }
-  Void   setOutputLayerFlag(Int layerSet, Int layerId, Bool x)  { m_outputLayerFlag[layerSet][layerId] = x;    }
+  Bool   getOutputLayerFlag(Int layerSet, Int layerIdx)          { return m_outputLayerFlag[layerSet][layerIdx]; }
+  Void   setOutputLayerFlag(Int layerSet, Int layerIdx, Bool x)  { m_outputLayerFlag[layerSet][layerIdx] = x;    }
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct dependency of layers
