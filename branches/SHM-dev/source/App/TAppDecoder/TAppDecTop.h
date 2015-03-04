@@ -63,9 +63,9 @@ class TAppDecTop : public TAppDecCfg
 private:
   // class interface
 #if SVC_EXTENSION
-  TDecTop                         m_acTDecTop [MAX_LAYERS];                    ///< decoder class 
-  TDecTop*                        m_apcTDecTop [MAX_LAYERS];                   ///< decoder point class 
-  TVideoIOYuv                     m_acTVideoIOYuvReconFile [MAX_LAYERS];        ///< reconstruction YUV class
+  TDecTop                         m_acTDecTop [MAX_NUM_LAYER_IDS];                    ///< decoder class 
+  TDecTop*                        m_apcTDecTop [MAX_NUM_LAYER_IDS];                   ///< decoder point class 
+  TVideoIOYuv                     m_acTVideoIOYuvReconFile [MAX_NUM_LAYER_IDS];        ///< reconstruction YUV class
 #else
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
