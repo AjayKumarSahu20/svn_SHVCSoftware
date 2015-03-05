@@ -243,8 +243,8 @@ Void TAppEncTop::xInitLibCfg()
     g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
     // Set this to be used in Upsampling filter in function "TComUpsampleFilter::upsampleBasePic"
-    g_bitDepthLayer[CHANNEL_TYPE_LUMA][layer]   = g_bitDepth[CHANNEL_TYPE_LUMA];
-    g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layer] = g_bitDepth[CHANNEL_TYPE_CHROMA];
+    g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_acLayerCfg[layer].m_layerId]   = g_bitDepth[CHANNEL_TYPE_LUMA];
+    g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_acLayerCfg[layer].m_layerId] = g_bitDepth[CHANNEL_TYPE_CHROMA];
 
 #if O0194_WEIGHTED_PREDICTION_CGS
     m_acTEncTop[layer].setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
