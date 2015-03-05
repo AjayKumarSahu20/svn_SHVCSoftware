@@ -1947,6 +1947,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
+    if( m_acLayerCfg[layer].m_layerId < 0 )
+    {
+      m_acLayerCfg[layer].m_layerId = layer;
+    }
+
     m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
     m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
 
