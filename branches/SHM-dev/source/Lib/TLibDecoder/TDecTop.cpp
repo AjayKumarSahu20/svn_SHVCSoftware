@@ -2896,7 +2896,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
   for( Int i = 1; i < m_numLayer; i++ )
   {
     Int mIdx = 0, sIdx = 0;
-    TDecTop *decTop = (TDecTop *)getLayerDec(i);
+    TDecTop *decTop = (TDecTop *)getLayerDec(vps->getLayerIdInNuh(i));
     for ( Int j = 0; j < i; j++ )
     {
       if (decTop->getMotionPredEnabledFlag(j))
