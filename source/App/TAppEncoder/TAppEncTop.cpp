@@ -300,7 +300,7 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 #endif
     // set layer ID
-    m_acTEncTop[layer].setLayerId                                         ( m_acLayerCfg[layer].m_layerId == -1 ? layer : m_acLayerCfg[layer].m_layerId );
+    m_acTEncTop[layer].setLayerId                                         ( m_acLayerCfg[layer].m_layerId );
     m_acTEncTop[layer].setNumLayer                                        ( m_numLayers );
     m_acTEncTop[layer].setLayerEnc                                        ( m_apcTEncTop );
 
