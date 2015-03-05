@@ -544,7 +544,9 @@ class SEIScalableNesting : public SEI
 public:
   PayloadType payloadType() const { return SCALABLE_NESTING; }
 
-  SEIScalableNesting() {}
+  SEIScalableNesting()
+    : m_callerOwnsSEIs(false)
+  {}
   virtual ~SEIScalableNesting()
   {
     if (!m_callerOwnsSEIs)
@@ -644,7 +646,10 @@ class SEIOutputLayerSetNesting : public SEI
 public:
   PayloadType payloadType() const { return OUTPUT_LAYER_SET_NESTING; }
 
-  SEIOutputLayerSetNesting() {}
+  SEIOutputLayerSetNesting()
+    : m_callerOwnsSEIs(false)
+  {}
+
   virtual ~SEIOutputLayerSetNesting()
   {
     if (!m_callerOwnsSEIs)
@@ -865,13 +870,14 @@ public:
 #endif
 
 #if O0164_MULTI_LAYER_HRD
-
 class SEIBspNesting : public SEI
 {
 public:
   PayloadType payloadType() const { return BSP_NESTING; }
 
-  SEIBspNesting() {}
+  SEIBspNesting()
+    : m_callerOwnsSEIs(false)
+  {}
   virtual ~SEIBspNesting()
   {
     if (!m_callerOwnsSEIs)
