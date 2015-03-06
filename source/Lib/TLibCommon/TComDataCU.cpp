@@ -3411,15 +3411,15 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
 {
   TComPic* baseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
-  UInt uiPelX = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getWidth(COMPONENT_Y)  - 1, pelX);
-  UInt uiPelY = (UInt)Clip3<UInt>(0, m_pcPic->getPicYuvRec()->getHeight(COMPONENT_Y) - 1, pelY);
+  Int iPelX = Clip3<Int>(0, m_pcPic->getPicYuvRec()->getWidth(COMPONENT_Y)  - 1, pelX);
+  Int iPelY = Clip3<Int>(0, m_pcPic->getPicYuvRec()->getHeight(COMPONENT_Y) - 1, pelY);
 
 #if REF_IDX_MFM
   // centre of the collocated 16x16 block for motion mapping
   if( motionMapping )
   {
-    uiPelX = pelX + 8;
-    uiPelY = pelY + 8;
+    iPelX = pelX + 8;
+    iPelY = pelY + 8;
   }
 #endif
 
@@ -3447,16 +3447,16 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
 
 #if REF_REGION_OFFSET
   const Window &windowRL = m_pcSlice->getPPS()->getRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc));
-  Int iBX = (((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
-  Int iBY = (((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
+  Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
+  Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
 #else
 #if Q0200_CONFORMANCE_BL_SIZE
   Int chromaFormatIdc = baseColPic->getSlice(0)->getChromaFormatIdc();
-  Int iBX = (((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
-  Int iBY = (((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
+  Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
+  Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
 #else
-  Int iBX = ((uiPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
-  Int iBY = ((uiPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
+  Int iBX = ((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
+  Int iBY = ((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
 #endif
 #endif
 
@@ -3501,8 +3501,7 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   
   uiAbsPartIdxBase = g_auiLayerRasterToZscan[baseColPic->getLayerId()][uiRasterAddrBase];
 #else
-  UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*baseColPic->getNumPartInCtuWidth()
-    + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
+  UInt uiRasterAddrBase = (iBY - (iBY/g_uiMaxCUHeight)*g_uiMaxCUHeight)/uiMinUnitSize*baseColPic->getNumPartInCtuWidth() + (iBX - (iBX/g_uiMaxCUWidth)*g_uiMaxCUWidth)/uiMinUnitSize;
 
   uiAbsPartIdxBase = g_auiRasterToZscan[uiRasterAddrBase];
 #endif
