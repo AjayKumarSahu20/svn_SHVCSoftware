@@ -335,6 +335,7 @@ protected:
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
 #endif
+  Void      xSetSpatialEnhLayerFlag(TComSlice* slice, TComPic* pic);
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
 #endif

@@ -3582,6 +3582,22 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
 }
 #endif
 #if VPS_DPB_SIZE_TABLE
+Int TComVPS::getLayerIdcInOls( Int olsIdx, Int layerId )
+{
+  Int layerIdc = -1;
+
+  std::vector<Int>::iterator it = std::find( m_layerSetLayerIdList[olsIdx].begin(), m_layerSetLayerIdList[olsIdx].end(), layerId );
+
+  if( it != m_layerSetLayerIdList[olsIdx].end() )
+  {
+    layerIdc = std::distance( m_layerSetLayerIdList[olsIdx].begin(), it );
+  }
+
+  assert( layerIdc >= 0 );
+
+  return layerIdc;
+}
+
 Void TComVPS::determineSubDpbInfoFlags()
 {
   for(Int i = 1; i < getNumOutputLayerSets(); i++)

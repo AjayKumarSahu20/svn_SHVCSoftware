@@ -255,7 +255,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++)
   {
 #if USE_DPB_SIZE_TABLE
-    if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
+    if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
     {
       assert( this->getLayerId() == 0 );
       numReorderPics[temporalLayer] = pcSlice->getSPS()->getNumReorderPics(temporalLayer);
@@ -272,7 +272,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
 
 #if USE_DPB_SIZE_TABLE
-  if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
+  if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
   {
     assert( this->getLayerId() == 0 );
     m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
@@ -284,7 +284,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
     Int layerIdx = pcSlice->getVPS()->findLayerIdxInLayerSet( layerSetIdxForOutputLayerSet, pcSlice->getLayerId() );  assert( layerIdx != -1 );
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #else
-    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), pcSlice->getLayerId(), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
+    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), pcSlice->getVPS()->getLayerIdcInOls( pcSlice->getVPS()->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx()), pcSlice->getLayerId() ), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
   }
 #else
@@ -299,107 +299,10 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   {
     rpcPic = new TComPic();
 
-#if SVC_EXTENSION //Temporal solution, should be modified
+#if SVC_EXTENSION
     if(m_layerId > 0)
     {
-      for(UInt i = 0; i < pcSlice->getVPS()->getNumDirectRefLayers( m_layerId ); i++ )
-      {
-#if MOVE_SCALED_OFFSET_TO_PPS
-#if O0098_SCALED_REF_LAYER_ID
-        const Window scalEL = pcSlice->getPPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
-#else
-        const Window scalEL = pcSlice->getPPS()->getScaledRefLayerWindow(i);
-#endif
-#else
-#if O0098_SCALED_REF_LAYER_ID
-        const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
-#else
-        const Window scalEL = pcSlice->getSPS()->getScaledRefLayerWindow(i);
-#endif
-#endif
-#if REF_REGION_OFFSET
-        const Window refEL = pcSlice->getPPS()->getRefLayerWindowForLayer(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
-#if RESAMPLING_FIX
-        Bool equalOffsets = scalEL.hasEqualOffset(refEL);
-#if R0209_GENERIC_PHASE
-        Bool zeroPhase = pcSlice->getPPS()->hasZeroResamplingPhase(pcSlice->getVPS()->getRefLayerId(m_layerId, i));
-#endif
-#else
-        Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
-                             && refEL.getWindowLeftOffset() == 0 && refEL.getWindowRightOffset() == 0 && refEL.getWindowTopOffset() == 0 && refEL.getWindowBottomOffset() == 0 );
-#endif
-#else
-        Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
-#endif
-
-#if VPS_EXTN_DIRECT_REF_LAYERS
-        TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( i );
-#else
-        TDecTop *pcTDecTopBase = (TDecTop *)getLayerDec( m_layerId-1 );
-#endif
-        //TComPic*                      pcPic = *(pcTDecTopBase->getListPic()->begin()); 
-        TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec(); 
-#if REPN_FORMAT_IN_VPS
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-        UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, i);
-        Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
-
-#if REF_IDX_MFM
-        if( pcPicYuvRecBase->getWidth(COMPONENT_Y) == pcSlice->getPicWidthInLumaSamples() && pcPicYuvRecBase->getHeight(COMPONENT_Y) == pcSlice->getPicHeightInLumaSamples() && equalOffsets && zeroPhase )
-        {
-          rpcPic->setEqualPictureSizeAndOffsetFlag( i, true );
-        }
-
-        if( !rpcPic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
-#else
-        if( pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples() || !sameBitDepths
-#if REF_REGION_OFFSET && RESAMPLING_FIX
-          || !equalOffsets
-#if R0209_GENERIC_PHASE
-          || !zeroPhase
-#endif
-#else
-          || !zeroOffsets
-#endif
-#endif
-#if Q0048_CGS_3D_ASYMLUT
-          || pcSlice->getPPS()->getCGSFlag() > 0
-#endif
-#if LAYER_CTB
-          || pcTDecTopBase->getActiveSPS()->getMaxCUWidth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUWidth() || pcTDecTopBase->getActiveSPS()->getMaxCUHeight() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUHeight() || pcTDecTopBase->getActiveSPS()->getMaxCUDepth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUDepth()
-#endif
-          )
-#else
-        if(pcPicYuvRecBase->getWidth() != pcSlice->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getPicHeightInLumaSamples()
-#if REF_REGION_OFFSET && RESAMPLING_FIX
-          || !equalOffsets
-#if R0209_GENERIC_PHASE
-          || !zeroPhase
-#endif
-#else
-          || !zeroOffsets
-#endif
-        )
-#endif
-#else
-        if(pcPicYuvRecBase->getWidth() != pcSlice->getSPS()->getPicWidthInLumaSamples() || pcPicYuvRecBase->getHeight() != pcSlice->getSPS()->getPicHeightInLumaSamples()
-#if REF_REGION_OFFSET && RESAMPLING_FIX
-          || !equalOffsets
-#if R0209_GENERIC_PHASE
-          || !zeroPhase
-#endif
-#else
-          || !zeroOffsets
-#endif
-        )
-#endif
-        {
-          rpcPic->setSpatialEnhLayerFlag( i, true );
-
-          //only for scalable extension
-          assert( pcSlice->getVPS()->getScalabilityMask( SCALABILITY_ID ) == true );
-        }
-      }
+      xSetSpatialEnhLayerFlag( pcSlice, rpcPic );
     }
 
 #if REPN_FORMAT_IN_VPS
@@ -454,6 +357,11 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   rpcPic->destroy();
 
 #if SVC_EXTENSION
+  if( m_layerId > 0 )
+  {
+    xSetSpatialEnhLayerFlag( pcSlice, rpcPic );
+  }
+
 #if REPN_FORMAT_IN_VPS
   rpcPic->create ( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth,
                    conformanceWindow, defaultDisplayWindow, numReorderPics, pcSlice->getSPS(), true);
@@ -756,9 +664,9 @@ Void TDecTop::xActivateParameterSets()
       // to avoid compiler warning "array subscript is above array bounds"
       assert( i < MAX_TLAYER );
 #if LAYER_DECPICBUFF_PARAM && RESOLUTION_BASED_DPB
-      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
+      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsLayerDecPicBuffMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
 #else
-      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
+      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), activeVPS->getLayerIdcInOls( activeVPS->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx() ), sps->getLayerId() ), i) + 1, i);
 #endif
     }
 
@@ -3297,6 +3205,44 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
   }
 }
 #endif
+
+Void TDecTop::xSetSpatialEnhLayerFlag(TComSlice* slice, TComPic* pic)
+{
+  for(UInt i = 0; i < slice->getVPS()->getNumDirectRefLayers( m_layerId ); i++ )
+  {
+    const Window scalEL = slice->getPPS()->getScaledRefLayerWindowForLayer(slice->getVPS()->getRefLayerId(m_layerId, i));
+    const Window refEL = slice->getPPS()->getRefLayerWindowForLayer(slice->getVPS()->getRefLayerId(m_layerId, i));
+    Bool equalOffsets = scalEL.hasEqualOffset(refEL);
+    Bool zeroPhase = slice->getPPS()->hasZeroResamplingPhase(slice->getVPS()->getRefLayerId(m_layerId, i));
+
+    TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( i );
+    //TComPic*                      pcPic = *(pcTDecTopBase->getListPic()->begin()); 
+    TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec(); 
+
+    UInt refLayerId = slice->getVPS()->getRefLayerId(m_layerId, i);
+    Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
+
+    if( pcPicYuvRecBase->getWidth(COMPONENT_Y) == slice->getPicWidthInLumaSamples() && pcPicYuvRecBase->getHeight(COMPONENT_Y) == slice->getPicHeightInLumaSamples() && equalOffsets && zeroPhase )
+    {
+      pic->setEqualPictureSizeAndOffsetFlag( i, true );
+    }
+
+    if( !pic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
+#if Q0048_CGS_3D_ASYMLUT
+      || slice->getPPS()->getCGSFlag() > 0
+#endif
+#if LAYER_CTB
+      || pcTDecTopBase->getActiveSPS()->getMaxCUWidth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUWidth() || pcTDecTopBase->getActiveSPS()->getMaxCUHeight() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUHeight() || pcTDecTopBase->getActiveSPS()->getMaxCUDepth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUDepth()
+#endif
+      )
+    {
+      pic->setSpatialEnhLayerFlag( i, true );
+
+      //only for scalable extension
+      assert( slice->getVPS()->getScalabilityMask( SCALABILITY_ID ) == true );
+    }
+  }
+}
 
 #endif //SVC_EXTENSION
 
