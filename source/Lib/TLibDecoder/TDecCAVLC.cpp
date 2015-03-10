@@ -3708,6 +3708,17 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
     }
   }
 
+#if NECESSARY_LAYER_FLAG
+  // Default output layer set
+  // The value of NumLayersInIdList[ 0 ] is set equal to 1 and the value of LayerSetLayerIdList[ 0 ][ 0 ] is set equal to 0.
+  vps->setOutputLayerSetIdx(0, 0);
+
+  // The value of output_layer_flag[ 0 ][ 0 ] is inferred to be equal to 1.
+  vps->setOutputLayerFlag(0, 0, true);
+
+  vps->deriveNecessaryLayerFlag(0);
+#endif
+
   // The value of sub_layer_dpb_info_present_flag[ i ][ 0 ] for any possible value of i is inferred to be equal to 1
   // When not present, the value of sub_layer_dpb_info_present_flag[ i ][ j ] for j greater than 0 and any possible value of i, is inferred to be equal to be equal to 0.
   for( i = 1; i < vps->getNumOutputLayerSets(); i++ )

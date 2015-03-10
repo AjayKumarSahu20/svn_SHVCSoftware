@@ -2906,6 +2906,13 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   {
     return; // Already checked
   }
+
+  if( params->getTargetLayerId() > vps->getMaxLayerId() )
+  {
+    printf( "Warning: specified target layerId %d is greater than max layerId %d. Target layerId is set equal to max layerId %d.\n", params->getTargetLayerId(), vps->getMaxLayerId(), vps->getMaxLayerId() );
+    params->setTargetLayerId( vps->getMaxLayerId() );
+  }
+
   if( params->getTargetOutputLayerSetIdx() == -1 )  // Output layer set index not specified
   {
     Bool layerSetMatchFound = false;
@@ -3199,9 +3206,9 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
     smallestLayerId = targetDecLayerIdList[0];
   }
 
-  for (UInt layer = 0; layer <= MAX_VPS_LAYER_IDX_PLUS1 - 1; layer++)
+  for( UInt layerId = 0; layerId < MAX_VPS_LAYER_IDX_PLUS1; layerId++ )
   {
-    m_ppcTDecTop[layer]->m_smallestLayerId = smallestLayerId;
+    m_ppcTDecTop[layerId]->m_smallestLayerId = smallestLayerId;
   }
 }
 #endif
