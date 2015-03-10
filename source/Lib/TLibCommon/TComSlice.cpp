@@ -3328,7 +3328,7 @@ Void TComVPS::deriveLayerIdListVariables()
         m_layerSetLayerIdList[i].push_back(m);
       }
     }
-    m_numLayerInIdList.push_back(m_layerSetLayerIdList[i].size());
+    m_numLayerInIdList.push_back((Int)m_layerSetLayerIdList[i].size());
   }
 }
 #else
@@ -3590,7 +3590,7 @@ Int TComVPS::getLayerIdcInOls( Int olsIdx, Int layerId )
 
   if( it != m_layerSetLayerIdList[olsIdx].end() )
   {
-    layerIdc = std::distance( m_layerSetLayerIdList[olsIdx].begin(), it );
+    layerIdc = (Int)std::distance( m_layerSetLayerIdList[olsIdx].begin(), it );
   }
 
   assert( layerIdc >= 0 );

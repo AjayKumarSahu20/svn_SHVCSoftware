@@ -1490,7 +1490,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
     it = find( listOfPocsInEachLayer[layerId].begin(), listOfPocsInEachLayer[layerId].end(), pocValue );
     if( it != listOfPocsInEachLayer[layerId].end() )  // picture found.
     {
-      Int picPosition = std::distance( listOfPocsInEachLayer[layerId].begin(), it );
+      Int picPosition = (Int)std::distance( listOfPocsInEachLayer[layerId].begin(), it );
       Int j;
       for(j = 0, iterPic = m_acTDecTop[layerId].getListPic()->begin(); j < listOfPocsPositionInEachLayer[layerId][picPosition]; j++) // Picture to be output
       {
@@ -1647,7 +1647,7 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
       TComList<TComPic*>::iterator iterPic;
       if( it != listOfPocsInEachLayer[i].end() )
       {
-        Int picPosition = std::distance( listOfPocsInEachLayer[i].begin(), it );
+        Int picPosition = (Int)std::distance( listOfPocsInEachLayer[i].begin(), it );
         Int j;
         for(j = 0, iterPic = m_acTDecTop[i].getListPic()->begin(); j < listOfPocsPositionInEachLayer[i][picPosition]; j++) // Picture to be output
         {
@@ -1802,7 +1802,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   std::sort( listOfPocs.begin(), listOfPocs.end() );    // Sort in increasing order of POC
   Int targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
   // Update status
-  dpbStatus.m_numAUsNotDisplayed = listOfPocs.size();   // Number of AUs not displayed
+  dpbStatus.m_numAUsNotDisplayed = (Int)listOfPocs.size();   // Number of AUs not displayed
   dpbStatus.m_numLayers = vps->getNumLayersInIdList( targetLsIdx );
 #if FIX_ALIGN_BUMPING
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
@@ -1822,7 +1822,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   for(Int i = 0; i < dpbStatus.m_numLayers; i++)
 #endif
   {
-    dpbStatus.m_numPicsNotDisplayedInLayer[i] = listOfPocsInEachLayer[i].size();
+    dpbStatus.m_numPicsNotDisplayedInLayer[i] = (Int)listOfPocsInEachLayer[i].size();
 #if RESOLUTION_BASED_DPB
     dpbStatus.m_numPicsInSubDpb[vps->getSubDpbAssigned(targetLsIdx,i)] += dpbStatus.m_numPicsInLayer[i];
     dpbStatus.m_numPicsInSubDpb[i] += dpbStatus.m_numPicsInLayer[i];
