@@ -1731,6 +1731,7 @@ private:
   UInt        m_layerId;
   Bool        m_extensionFlag;
   UInt        m_numScaledRefLayerOffsets;
+  Bool        m_multiLayerExtSpsFlag;
 #if R0042_PROFILE_INDICATION  
   Int         m_NumDirectRefLayers;
 #endif
@@ -1909,10 +1910,12 @@ public:
   TComPTL* getPTL()     { return &m_pcPTL; }
 
 #if SVC_EXTENSION
-  Void     setLayerId(UInt layerId)            { m_layerId = layerId; }
-  UInt     getLayerId()                        { return m_layerId;    }
-  Int      getExtensionFlag()                  { return m_extensionFlag;  }
-  Void     setExtensionFlag(Int n)             { m_extensionFlag = n;     }
+  Void     setLayerId(UInt layerId)                 { m_layerId = layerId;           }
+  UInt     getLayerId()                             { return m_layerId;              }
+  Int      getExtensionFlag()                       { return m_extensionFlag;        }
+  Void     setExtensionFlag(Int n)                  { m_extensionFlag = n;           }
+  Bool     getMultiLayerExtSpsFlag()                { return m_multiLayerExtSpsFlag; }
+  Void     setMultiLayerExtSpsFlag(Bool flag)       { m_multiLayerExtSpsFlag = flag; }
 #if R0042_PROFILE_INDICATION
   Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }

@@ -663,11 +663,18 @@ Void TDecTop::xActivateParameterSets()
     {
       // to avoid compiler warning "array subscript is above array bounds"
       assert( i < MAX_TLAYER );
-#if LAYER_DECPICBUFF_PARAM && RESOLUTION_BASED_DPB
-      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsLayerDecPicBuffMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), sps->getLayerId(), i) + 1, i);
-#else
-      sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), activeVPS->getLayerIdcInOls( activeVPS->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx() ), sps->getLayerId() ), i) + 1, i);
-#endif
+
+      // When sps_max_dec_pic_buffering_minus1[ i ] is not present for i in the range of 0 to sps_max_sub_layers_minus1, inclusive, 
+      // due to MultiLayerExtSpsFlag being equal to 1, for a layer that refers to the SPS and has nuh_layer_id equal to currLayerId, 
+      // the value of sps_max_dec_pic_buffering_minus1[ i ] is inferred to be equal to max_vps_dec_pic_buffering_minus1[ TargetOlsIdx ][ layerIdx ][ i ] of the active VPS, 
+      // where layerIdx is equal to the value such that LayerSetLayerIdList[ TargetDecLayerSetIdx ][ layerIdx ] is equal to currLayerId.
+      if( sps->getMultiLayerExtSpsFlag() )
+      {
+        sps->setMaxDecPicBuffering( activeVPS->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), activeVPS->getLayerIdcInOls( activeVPS->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx() ), m_layerId ), i) + 1, i);
+      }
+
+      // The value of sps_max_dec_pic_buffering_minus1[ i ] shall be less than or equal to vps_max_dec_pic_buffering_minus1[ i ] for each value of i.
+      assert( sps->getMaxDecPicBuffering(i) <= activeVPS->getMaxDecPicBuffering(i) );      
     }
 
 #if P0182_VPS_VUI_PS_FLAG
