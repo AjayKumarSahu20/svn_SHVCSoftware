@@ -288,6 +288,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\Debug.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\libmd5\libmd5.c"
 				>
 			</File>
@@ -296,11 +300,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComBitStream.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComCABACTables.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComChromaFormat.cpp"
 				>
 			</File>
 			<File
@@ -368,6 +380,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComTU.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComUpsampleFilter.cpp"
 				>
 			</File>
@@ -406,6 +422,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\Debug.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\libmd5\libmd5.h"
 				>
 			</File>
@@ -422,6 +442,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TCom3DAsymLUT.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComBitCounter.h"
 				>
 			</File>
@@ -431,6 +455,14 @@
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComCABACTables.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComChromaFormat.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComCodingStatistics.h"
 				>
 			</File>
 			<File
@@ -486,6 +518,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComRectangle.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComRom.h"
 				>
 			</File>
@@ -499,6 +535,10 @@
 			</File>
 			<File
 				RelativePath="..\..\source\Lib\TLibCommon\TComTrQuant.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\source\Lib\TLibCommon\TComTU.h"
 				>
 			</File>
 			<File

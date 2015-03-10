@@ -3046,12 +3046,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           const Int64 numberOfAdditionalCabacZeroBytes=numberOfAdditionalCabacZeroWords*3;
           if (m_pcCfg->getCabacZeroWordPaddingEnabled())
           {
-            std::vector<Char> zeroBytesPadding(numberOfAdditionalCabacZeroBytes, Char(0));
-            for(Int64 i=0; i<numberOfAdditionalCabacZeroWords; i++)
+            std::vector<Char> zeroBytesPadding((size_t)numberOfAdditionalCabacZeroBytes, Char(0));
+            for(size_t i=0; i<numberOfAdditionalCabacZeroWords; i++)
             {
               zeroBytesPadding[i*3+2]=3;  // 00 00 03
             }
-            accessUnit.back()->m_nalUnitData.write(&(zeroBytesPadding[0]), numberOfAdditionalCabacZeroBytes);
+            accessUnit.back()->m_nalUnitData.write(&(zeroBytesPadding[0]), (size_t)numberOfAdditionalCabacZeroBytes);
             printf("Adding %lld bytes of padding\n", numberOfAdditionalCabacZeroWords*3);
           }
           else
@@ -4447,7 +4447,7 @@ SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
       if ( sei->m_languageOverlayPresentFlag[i] )
       {                
         strTmp = m_pcCfg->getOverlaySEILanguage()[i];
-        nBytes = m_pcCfg->getOverlaySEILanguage()[i].size();        
+        nBytes = (Int)m_pcCfg->getOverlaySEILanguage()[i].size();        
         assert( nBytes>0 );
         sei->m_overlayLanguage[i] = new UChar[nBytes];
         memcpy(sei->m_overlayLanguage[i], strTmp.c_str(), nBytes);        
@@ -4456,7 +4456,7 @@ SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
 
       //overlay name
       strTmp = m_pcCfg->getOverlaySEIName()[i];
-      nBytes = m_pcCfg->getOverlaySEIName()[i].size();        
+      nBytes = (Int)m_pcCfg->getOverlaySEIName()[i].size();        
       assert( nBytes>0 );
       sei->m_overlayName[i] = new UChar[nBytes];      
       memcpy(sei->m_overlayName[i], strTmp.c_str(), nBytes);        
@@ -4471,7 +4471,7 @@ SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
         for ( j=0 ; j<=sei->m_numOverlayElementsMinus1[i] ; j++)
         {
           strTmp = m_pcCfg->getOverlaySEIElementName()[i][j];
-          nBytes = m_pcCfg->getOverlaySEIElementName()[i][j].size();        
+          nBytes = (Int)m_pcCfg->getOverlaySEIElementName()[i][j].size();        
           assert( nBytes>0 );
           sei->m_overlayElementName[i][j] = new UChar[nBytes];
           memcpy(sei->m_overlayElementName[i][j], strTmp.c_str(), nBytes);        
