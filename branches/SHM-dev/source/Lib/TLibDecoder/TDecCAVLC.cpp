@@ -713,9 +713,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     }
   }
 
-  Bool V1CompatibleSPSFlag = !( pcSPS->getLayerId() != 0 && uiTmp == 7 );
+  pcSPS->setMultiLayerExtSpsFlag( pcSPS->getLayerId() != 0 && uiTmp == 7 );
 
-  if( V1CompatibleSPSFlag )
+  if( !pcSPS->getMultiLayerExtSpsFlag() )
   {
 #endif
   READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );           pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
@@ -734,7 +734,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   assert(uiCode <= 15);
 
 #if SVC_EXTENSION
-  if( !V1CompatibleSPSFlag )
+  if( pcSPS->getMultiLayerExtSpsFlag() )
   {
     READ_FLAG( uiCode, "update_rep_format_flag" );
     pcSPS->setUpdateRepFormatFlag( uiCode ? true : false );
@@ -819,7 +819,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   assert(uiCode <= 12);
 
 #if SVC_EXTENSION
-  if( V1CompatibleSPSFlag )  
+  if( !pcSPS->getMultiLayerExtSpsFlag() )  
   {
 #endif
   UInt subLayerOrderingInfoPresentFlag;
@@ -838,12 +838,27 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     {
       for (i++; i <= pcSPS->getMaxTLayers()-1; i++)
       {
+#if SVC_EXTENSION
+        // When sps_max_dec_pic_buffering_minus1[ i ] is not present for i in the range of 0 to sps_max_sub_layers_minus1 - 1, inclusive,
+        // due to sps_sub_layer_ordering_info_present_flag being equal to 0, it is inferred to be equal to sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ].
+        pcSPS->setMaxDecPicBuffering( pcSPS->getMaxDecPicBuffering(pcSPS->getMaxTLayers()-1), i );
+#else
         pcSPS->setMaxDecPicBuffering(pcSPS->getMaxDecPicBuffering(0), i);
+#endif
         pcSPS->setNumReorderPics(pcSPS->getNumReorderPics(0), i);
         pcSPS->setMaxLatencyIncrease(pcSPS->getMaxLatencyIncrease(0), i);
       }
       break;
     }
+
+#if SVC_EXTENSION
+    if( i > 0 )
+    {
+      // When i is greater than 0, sps_max_dec_pic_buffering_minus1[ i ] shall be greater than or equal to sps_max_dec_pic_buffering_minus1[ i - 1 ]. 
+      assert( pcSPS->getMaxDecPicBuffering(i) >= pcSPS->getMaxDecPicBuffering(i-1) );
+    }
+#endif
+
   }
 #if SVC_EXTENSION
   }
@@ -877,7 +892,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   if(pcSPS->getScalingListFlag())
   {
 #if SVC_EXTENSION
-    if( !V1CompatibleSPSFlag )
+    if( pcSPS->getMultiLayerExtSpsFlag() )
     {
       READ_FLAG( uiCode, "sps_infer_scaling_list_flag" ); pcSPS->setInferScalingListFlag( uiCode );
     }
