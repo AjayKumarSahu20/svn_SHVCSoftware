@@ -2907,14 +2907,14 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     return; // Already checked
   }
 
-  if( params->getTargetLayerId() > vps->getMaxLayerId() )
-  {
-    printf( "Warning: specified target layerId %d is greater than max layerId %d. Target layerId is set equal to max layerId %d.\n", params->getTargetLayerId(), vps->getMaxLayerId(), vps->getMaxLayerId() );
-    params->setTargetLayerId( vps->getMaxLayerId() );
-  }
-
   if( params->getTargetOutputLayerSetIdx() == -1 )  // Output layer set index not specified
   {
+    if( params->getTargetLayerId() > vps->getMaxLayerId() )
+    {
+      printf( "Warning: specified target layerId %d is greater than max layerId %d. Target layerId is set equal to max layerId %d.\n", params->getTargetLayerId(), vps->getMaxLayerId(), vps->getMaxLayerId() );
+      params->setTargetLayerId( vps->getMaxLayerId() );
+    }
+
     Bool layerSetMatchFound = false;
     // Output layer set index not assigned.
     // Based on the value of targetLayerId, check if any of the output layer matches
