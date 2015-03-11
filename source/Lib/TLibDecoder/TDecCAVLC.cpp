@@ -838,13 +838,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     {
       for (i++; i <= pcSPS->getMaxTLayers()-1; i++)
       {
-#if SVC_EXTENSION
-        // When sps_max_dec_pic_buffering_minus1[ i ] is not present for i in the range of 0 to sps_max_sub_layers_minus1 - 1, inclusive,
-        // due to sps_sub_layer_ordering_info_present_flag being equal to 0, it is inferred to be equal to sps_max_dec_pic_buffering_minus1[ sps_max_sub_layers_minus1 ].
-        pcSPS->setMaxDecPicBuffering( pcSPS->getMaxDecPicBuffering(pcSPS->getMaxTLayers()-1), i );
-#else
         pcSPS->setMaxDecPicBuffering(pcSPS->getMaxDecPicBuffering(0), i);
-#endif
         pcSPS->setNumReorderPics(pcSPS->getNumReorderPics(0), i);
         pcSPS->setMaxLatencyIncrease(pcSPS->getMaxLatencyIncrease(0), i);
       }
