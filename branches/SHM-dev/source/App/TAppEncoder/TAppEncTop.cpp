@@ -1564,6 +1564,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   for (UInt layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     UInt layerId = vps->getLayerIdInNuh(layerCtr);
+    Int numDirectRefLayers = 0;
+
     vps->setNumDirectRefLayers(layerId, m_acTEncTop[layerCtr].getNumDirectRefLayers());
     maxDirectRefLayers = max<UInt>(maxDirectRefLayers, vps->getNumDirectRefLayers(layerId));
 
@@ -1587,9 +1589,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       if (vps->getDirectDependencyFlag(layerCtr, refLayerCtr))
       {
-        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr));
-        vps->setDirectDependencyType(layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(refLayerCtr) ? 1 : 0) |
-          (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(refLayerCtr) ? 2 : 0)) - 1);
+        assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(numDirectRefLayers) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(numDirectRefLayers));
+        vps->setDirectDependencyType(layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(numDirectRefLayers) ? 1 : 0) |
+          (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(numDirectRefLayers) ? 2 : 0)) - 1);
 #if O0096_DEFAULT_DEPENDENCY_TYPE
         if (!isDefaultDirectDependencyTypeSet)
         {
@@ -1602,6 +1604,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
           vps->setDefaultDirectDependecyTypeFlag(0);
         }
 #endif
+        numDirectRefLayers ++;
       }
       else
       {
