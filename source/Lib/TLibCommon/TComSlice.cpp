@@ -4305,6 +4305,7 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
 
       //copy layer id from the reference layer 
       pcIlpPic[refLayerIdc]->setLayerId( pcRefPicBL->getLayerId() );
+      pcIlpPic[refLayerIdc]->getSlice(0)->setLayerId(pcRefPicBL->getLayerId());
 
       pcIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension( false );
       pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
