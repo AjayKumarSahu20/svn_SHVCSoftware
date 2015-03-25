@@ -1315,7 +1315,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
 #if VPS_EXTN_DIRECT_REF_LAYERS
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[refLayerIdc]->getRefLayerEnc(refLayerIdc)->getListPic();
+        TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getRefLayerEnc(refLayerIdc)->getListPic();
 #else
         TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)-1]->getListPic();
 #endif
