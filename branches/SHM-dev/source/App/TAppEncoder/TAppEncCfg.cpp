@@ -3035,7 +3035,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     FILE* fic;
     Int retval;
-    if((fic = fopen(m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
+    if((fic = fopen(m_colourRemapSEIFile,"r")) == (FILE*)NULL)
     {
       fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile);
       exit(EXIT_FAILURE);
