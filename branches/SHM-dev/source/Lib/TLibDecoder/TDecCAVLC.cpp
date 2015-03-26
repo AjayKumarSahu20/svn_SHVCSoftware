@@ -1544,7 +1544,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
           }
           if(chkAssert)
           {
-            UInt layerIdc = pcSlice->getVPS()->getLayerIdcInOls( ii, pcSlice->getLayerId() );
+            UInt layerIdc = pcSlice->getVPS()->getLayerIdcForOls( ii, pcSlice->getLayerId() );
             assert(rps->getNumberOfNegativePictures() <= pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii, layerIdc, pcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));
             assert(rps->getNumberOfPositivePictures() <= pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii, layerIdc, pcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)) - rps->getNumberOfNegativePictures());
             assert((rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures() + rps->getNumberOfLongtermPictures()) <= pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1(ii, layerIdc, pcSlice->getVPS()->getMaxSLayersInLayerSetMinus1(ii)));

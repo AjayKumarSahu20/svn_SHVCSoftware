@@ -3563,15 +3563,16 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
 }
 #endif
 #if VPS_DPB_SIZE_TABLE
-Int TComVPS::getLayerIdcInOls( Int olsIdx, Int layerId )
+Int TComVPS::getLayerIdcForOls( Int olsIdx, Int layerId )
 {
   Int layerIdc = -1;
+  UInt lsIdx = m_outputLayerSetIdx[olsIdx];
 
-  std::vector<Int>::iterator it = std::find( m_layerSetLayerIdList[olsIdx].begin(), m_layerSetLayerIdList[olsIdx].end(), layerId );
+  std::vector<Int>::iterator it = std::find( m_layerSetLayerIdList[lsIdx].begin(), m_layerSetLayerIdList[lsIdx].end(), layerId );
 
-  if( it != m_layerSetLayerIdList[olsIdx].end() )
+  if( it != m_layerSetLayerIdList[lsIdx].end() )
   {
-    layerIdc = (Int)std::distance( m_layerSetLayerIdList[olsIdx].begin(), it );
+    layerIdc = (Int)std::distance( m_layerSetLayerIdList[lsIdx].begin(), it );
   }
 
   assert( layerIdc >= 0 );

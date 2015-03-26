@@ -1411,7 +1411,7 @@ Void      deriveNumberOfSubDpbs();
   // For the 0-th output layer set, use the date from the active SPS for base layer.
   Int    getMaxVpsDecPicBufferingMinus1(Int olsIdx, Int subDpbIdx, Int subLayerIdx)        { assert(olsIdx != 0); return m_maxVpsDecPicBufferingMinus1[olsIdx][subDpbIdx][subLayerIdx]; }
   Void   setMaxVpsDecPicBufferingMinus1(Int olsIdx, Int subDpbIdx, Int subLayerIdx, Int x) { m_maxVpsDecPicBufferingMinus1[olsIdx][subDpbIdx][subLayerIdx] = x;    }
-  Int    getLayerIdcInOls( Int olsIdx, Int layerId );
+  Int    getLayerIdcForOls( Int olsIdx, Int layerId );
 
 #if RESOLUTION_BASED_DPB
   Int    getMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j)        { assert(i != 0); return m_maxVpsLayerDecPicBuffMinus1[i][k][j]; }
