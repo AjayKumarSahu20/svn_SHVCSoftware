@@ -1994,7 +1994,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         if( m_pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
-          if( m_ppcTDecTop[m_layerId]->getSamplePredEnabledFlag(pcSlice->getVPS()->getLayerIdxInVps(refLayerId)))
+          if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )
           {
 #if O0215_PHASE_ALIGNMENT_REMOVAL
             m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, m_pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, m_pcPic->getPicYuvRec());
@@ -2143,7 +2143,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
       if( refPic->isILR(pcSlice->getLayerId()) )
       {
-        assert( m_ppcTDecTop[m_layerId]->getMotionPredEnabledFlag( refPic->getLayerIdx() ) );
+        assert( pcSlice->getVPS()->isMotionPredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), refPic->getLayerIdx() ) );
       }
     }
 #endif //SVC_EXTENSION
@@ -2784,13 +2784,7 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
     decTop->setNumSamplePredRefLayers(0);
     decTop->setNumMotionPredRefLayers(0);
     decTop->setNumDirectRefLayers(0);
-    for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
-    {
-      decTop->setSamplePredEnabledFlag(i, false);
-      decTop->setMotionPredEnabledFlag(i, false);
-      decTop->setSamplePredRefLayerId(i, 0);
-      decTop->setMotionPredRefLayerId(i, 0);
-    }
+
     for(Int j = 0; j < layerIdx; j++)
     {
       if (vps->getDirectDependencyFlag(layerIdx, j))
@@ -2799,28 +2793,10 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
         decTop->setNumDirectRefLayers(decTop->getNumDirectRefLayers() + 1);
 
         Int samplePredEnabledFlag = (vps->getDirectDependencyType(layerIdx, j) + 1) & 1;
-        decTop->setSamplePredEnabledFlag(j, samplePredEnabledFlag == 1 ? true : false);
         decTop->setNumSamplePredRefLayers(decTop->getNumSamplePredRefLayers() + samplePredEnabledFlag);
 
         Int motionPredEnabledFlag = ((vps->getDirectDependencyType(layerIdx, j) + 1) & 2) >> 1;
-        decTop->setMotionPredEnabledFlag(j, motionPredEnabledFlag == 1 ? true : false);
         decTop->setNumMotionPredRefLayers(decTop->getNumMotionPredRefLayers() + motionPredEnabledFlag);
-      }
-    }
-  }
-  for( Int i = 1; i < m_numLayer; i++ )
-  {
-    Int mIdx = 0, sIdx = 0;
-    TDecTop *decTop = (TDecTop *)getLayerDec(vps->getLayerIdInNuh(i));
-    for ( Int j = 0; j < i; j++ )
-    {
-      if (decTop->getMotionPredEnabledFlag(j))
-      {
-        decTop->setMotionPredRefLayerId(mIdx++, vps->getLayerIdInNuh(j));
-      }
-      if (decTop->getSamplePredEnabledFlag(j))
-      {
-        decTop->setSamplePredRefLayerId(sIdx++, vps->getLayerIdInNuh(j));
       }
     }
   }

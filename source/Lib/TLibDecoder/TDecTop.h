@@ -150,11 +150,7 @@ private:
   Int                     m_numDirectRefLayers;
   Int                     m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int                     m_numSamplePredRefLayers;
-  Int                     m_samplePredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int                     m_numMotionPredRefLayers;
-  Int                     m_motionPredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
-  Bool                    m_samplePredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
-  Bool                    m_motionPredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #endif 
@@ -272,20 +268,8 @@ public:
   Int       getNumSamplePredRefLayers       ()                              { return m_numSamplePredRefLayers;  }
   Void      setNumSamplePredRefLayers       (Int num)                       { m_numSamplePredRefLayers = num;   }
 
-  Int       getSamplePredRefLayerId         (Int layerIdc)                  { return m_samplePredRefLayerId[layerIdc];       }
-  Void      setSamplePredRefLayerId         (Int layerIdc, Int refLayerId)  { m_samplePredRefLayerId[layerIdc] = refLayerId; }
-
   Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
   Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
-
-  Int       getMotionPredRefLayerId         (Int layerIdc)                  { return m_motionPredRefLayerId[layerIdc];       }
-  Void      setMotionPredRefLayerId         (Int layerIdc, Int refLayerId)  { m_motionPredRefLayerId[layerIdc] = refLayerId; }
-
-  Bool      getSamplePredEnabledFlag        (Int layerIdx)                  { return m_samplePredEnabledFlag[layerIdx];  }
-  Void      setSamplePredEnabledFlag        (Int layerIdx, Bool flag)       { m_samplePredEnabledFlag[layerIdx] = flag;  }
-
-  Bool      getMotionPredEnabledFlag        (Int layerIdx)                  { return m_motionPredEnabledFlag[layerIdx];  }
-  Void      setMotionPredEnabledFlag        (Int layerIdx, Bool flag)       { m_motionPredEnabledFlag[layerIdx] = flag;  }
 
   Void      setRefLayerParams( TComVPS* vps );
 #endif
