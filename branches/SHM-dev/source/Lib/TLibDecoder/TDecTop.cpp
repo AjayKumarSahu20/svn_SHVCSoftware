@@ -2847,18 +2847,11 @@ Void TDecTop::earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecL
   }
 
   Int remainingInterLayerReferencesFlag = 0;
-#if O0225_MAX_TID_FOR_REF_LAYERS
   for ( Int j = latestDecIdx + 1; j < numTargetDecLayers; j++ )
   {
     Int jLidx = pcSlice->getVPS()->getLayerIdxInVps(targetDecLayerIdList[j]);
-    if ( currTid <= pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(latestDecLayerId,jLidx) - 1 )
+    if ( currTid <= pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(latestDecLayerId),jLidx) - 1 )
     {
-#else
-  if ( currTid <= pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(latestDecLayerId) - 1 )
-  {
-    for ( Int j = latestDecIdx + 1; j < numTargetDecLayers; j++ )
-    {
-#endif 
       for ( Int k = 0; k < m_ppcTDecTop[targetDecLayerIdList[j]]->getNumDirectRefLayers(); k++ )
       {
         if ( latestDecIdx == m_ppcTDecTop[targetDecLayerIdList[j]]->getRefLayerId(k) )
