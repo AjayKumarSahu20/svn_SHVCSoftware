@@ -749,11 +749,7 @@ private:
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool       m_crossLayerAlignedIdrOnlyFlag;
 #endif
-#if O0225_MAX_TID_FOR_REF_LAYERS
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
-#else
-  UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1];
-#endif
   Bool       m_maxTidRefPresentFlag;
 #if VPS_TSLAYERS
   Bool       m_maxTSLayersPresentFlag;
@@ -1139,8 +1135,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getNumDirectRefLayers(Int layerId)                                     { return m_numDirectRefLayers[layerId];                   }
   Void   setNumDirectRefLayers(Int layerId, UInt refLayerNum)                   { m_numDirectRefLayers[layerId] = refLayerNum;            }
 
-  UInt   getRefLayerId(Int layerId, Int refLayerIdx)                            { return m_refLayerId[layerId][refLayerIdx];              }
-  Void   setRefLayerId(Int layerId, Int refLayerIdx, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdx] = refLayerId;        }
+  UInt   getRefLayerId(Int layerId, Int refLayerIdc)                            { return m_refLayerId[layerId][refLayerIdc];              }
+  Void   setRefLayerId(Int layerId, Int refLayerIdc, UInt refLayerId)           { m_refLayerId[layerId][refLayerIdc] = refLayerId;        }
 
   UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
   Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
@@ -1212,13 +1208,8 @@ Void      deriveNumberOfSubDpbs();
 #endif 
   Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
-#if O0225_MAX_TID_FOR_REF_LAYERS
-  UInt   getMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId)                     { return m_maxTidIlRefPicsPlus1[layerId][refLayerId];           }
-  Void   setMaxTidIlRefPicsPlus1(Int layerId, Int refLayerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId][refLayerId] = maxSublayer;    }
-#else
-  UInt   getMaxTidIlRefPicsPlus1(Int layerId)                     { return m_maxTidIlRefPicsPlus1[layerId];                   }
-  Void   setMaxTidIlRefPicsPlus1(Int layerId, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[layerId] = maxSublayer;            }
-#endif
+  UInt   getMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx)                     { return m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx];           }
+  Void   setMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx] = maxSublayer;    }
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
   Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
 #if VPS_TSLAYERS
@@ -2725,8 +2716,8 @@ public:
   Int       getActiveNumILRRefIdx     ( )               { return  m_activeNumILRRefIdx; }
   Void      setActiveNumILRRefIdx     ( Int i )         { m_activeNumILRRefIdx = i;     }  
 
-  Int       getInterLayerPredLayerIdc (UInt layerIdx)                        { return  m_interLayerPredLayerIdc[layerIdx];}
-  Void      setInterLayerPredLayerIdc (UInt refLayerIdc, UInt layerIdx)      { m_interLayerPredLayerIdc[layerIdx] = refLayerIdc;  }
+  Int       getInterLayerPredLayerIdc (UInt layerIdc)                        { return  m_interLayerPredLayerIdc[layerIdc];}
+  Void      setInterLayerPredLayerIdc (UInt refLayerIdc, UInt layerIdc)      { m_interLayerPredLayerIdc[layerIdc] = refLayerIdc;  }
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}

@@ -1609,10 +1609,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
             for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ ) 
             {
 #if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-              if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i),pcSlice->getLayerId()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
+              if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
                 (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
 #else 
-              if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i),pcSlice->getLayerId()) >  pcSlice->getTLayer() &&
+              if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() &&
                 (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
 #endif 
               {          
@@ -1637,24 +1637,26 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
             for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
             {
               READ_CODE( numBits,uiCode,"inter_layer_pred_layer_idc[i]" );
-              pcSlice->setInterLayerPredLayerIdc(uiCode,i);
+              pcSlice->setInterLayerPredLayerIdc(uiCode, i);
             }
           }
         }
         else
         {
 #if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
+          Int refLayerId = pcSlice->getVPS()->getRefLayerId(pcSlice->getLayerId(), 0);
+          Int refLayerIdx = pcSlice->getVPS()->getLayerIdxInVps(refLayerId);
 #if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-          if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(0,pcSlice->getLayerId()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
-            (pcSlice->getVPS()->getMaxTSLayersMinus1(0) >=  pcSlice->getTLayer()) )
+          if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(refLayerIdx, pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
+            (pcSlice->getVPS()->getMaxTSLayersMinus1(refLayerIdx) >=  pcSlice->getTLayer()) )
 #else
-          if( (pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(0,pcSlice->getLayerId()) >  pcSlice->getTLayer()) &&
-            (pcSlice->getVPS()->getMaxTSLayersMinus1(0) >=  pcSlice->getTLayer()) )
+          if( (pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(refLayerIdx,pcSlice->getLayerIdx()) >  pcSlice->getTLayer()) &&
+            (pcSlice->getVPS()->getMaxTSLayersMinus1(refLayerIdx) >=  pcSlice->getTLayer()) )
 #endif 
           {
 #endif
             pcSlice->setActiveNumILRRefIdx(1);
-            pcSlice->setInterLayerPredLayerIdc(0,0);
+            pcSlice->setInterLayerPredLayerIdc(0, 0);
 #if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
           }
 #endif
@@ -1672,10 +1674,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       for(i = 0, numRefLayerPics = 0;  i < pcSlice->getNumILRRefIdx(); i++ ) 
       {
 #if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-        if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i),pcSlice->getLayerId()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
+        if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
           (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
 #else 
-        if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i),pcSlice->getLayerId()) >  pcSlice->getTLayer() &&
+        if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() &&
           (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
 #endif 
         {          
@@ -1685,8 +1687,8 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       pcSlice->setActiveNumILRRefIdx(numRefLayerPics);
       for( i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        pcSlice->setInterLayerPredLayerIdc(refLayerPicIdc[i],i);
-      }      
+        pcSlice->setInterLayerPredLayerIdc(refLayerPicIdc[i], i);
+      }
 #else
       pcSlice->setActiveNumILRRefIdx(pcSlice->getNumILRRefIdx());
       for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
@@ -2998,7 +3000,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   {
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {
-#if O0225_MAX_TID_FOR_REF_LAYERS
       for( j = i+1; j < vps->getMaxLayers(); j++)
       {
         if(vps->getDirectDependencyFlag(j, i))
@@ -3006,24 +3007,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
           READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i][j]" ); vps->setMaxTidIlRefPicsPlus1(i, j, uiCode);          
         }
       }
-#else
-      READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i]" ); vps->setMaxTidIlRefPicsPlus1(i, uiCode);
-      assert( uiCode <= vps->getMaxTLayers());
-#endif 
     }
   }
   else
   {
     for(i = 0; i < vps->getMaxLayers() - 1; i++)
     {
-#if O0225_MAX_TID_FOR_REF_LAYERS
       for( j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, 7);
       }
-#else
-      vps->setMaxTidIlRefPicsPlus1(i, 7);
-#endif
     }
   }
   READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
@@ -3690,14 +3683,10 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
   // When not present, max_tid_il_ref_pics_plus1[ i ][ j ] is inferred to be equal to 7.
   for( i = 0; i < vps->getMaxLayers() - 1; i++ )
   {
-#if O0225_MAX_TID_FOR_REF_LAYERS
     for( j = i + 1; j < vps->getMaxLayers(); j++ )
     {
       vps->setMaxTidIlRefPicsPlus1(i, j, 7);
     }
-#else
-    vps->setMaxTidIlRefPicsPlus1(i, 7);
-#endif
   }
 
   // When not present, the value of num_add_olss is inferred to be equal to 0.

@@ -1497,28 +1497,20 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
-#if O0225_MAX_TID_FOR_REF_LAYERS
       for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
       }
-#else
-      vps->setMaxTidIlRefPicsPlus1(i, m_acTEncTop[i].getMaxTidIlRefPicsPlus1());
-#endif 
     }
   }
   else
   {
     for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
-#if O0225_MAX_TID_FOR_REF_LAYERS
       for( Int j = i+1; j < vps->getMaxLayers(); j++)
       {
         vps->setMaxTidIlRefPicsPlus1(i, j, 7);
       }
-#else
-      vps->setMaxTidIlRefPicsPlus1(i, 7);
-#endif 
     }
   }
     vps->setIlpSshSignalingEnabledFlag(false);

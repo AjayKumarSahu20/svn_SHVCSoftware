@@ -202,7 +202,6 @@
 #define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
 #define EARLY_REF_PIC_MARKING            0      ///< Valencia meeting - remove early marking of inter-layer reference pictures
                                                 ///< Decoded picture marking of sub-layer non-reference pictures
-#define O0225_MAX_TID_FOR_REF_LAYERS     1
 #define O0225_TID_BASED_IL_RPS_DERIV     1
 #define VPS_TSLAYERS                     1      ///< JCTVC-O0120 signal max temporal sub-layers for each layer
 #define TSLAYERS_IL_RPS                  1      ///< JCTVC-O0120 IL RPS based on max temporal sub-layers
