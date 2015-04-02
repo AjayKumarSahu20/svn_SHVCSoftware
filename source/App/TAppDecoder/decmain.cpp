@@ -43,7 +43,7 @@
 //! \ingroup TAppDecoder
 //! \{
 
-bool g_md5_mismatch = false; ///< top level flag that indicates if there has been a decoding mismatch
+Bool g_md5_mismatch = false; ///< top level flag that indicates if there has been a decoding mismatch
 
 // ====================================================================================================================
 // Main function
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 #if SVC_EXTENSION
   fprintf( stdout, "SHM software: Decoder Version [%s]", NV_VERSION );
 #else
-  fprintf( stdout, "HM software: Decoder Version [%s]", NV_VERSION );
+  fprintf( stdout, "HM software: Decoder Version [%s] (including RExt)", NV_VERSION );
 #endif
   fprintf( stdout, NVM_ONOS );
   fprintf( stdout, NVM_COMPILEDBY );
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
   }
 
   // starting time
-  double dResult;
-  long lBefore = clock();
+  Double dResult;
+  clock_t lBefore = clock();
 
   // call decoding function
   cTAppDecTop.decode();
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
   }
 
   // ending time
-  dResult = (double)(clock()-lBefore) / CLOCKS_PER_SEC;
+  dResult = (Double)(clock()-lBefore) / CLOCKS_PER_SEC;
   printf("\n Total Time: %12.3f sec.\n", dResult);
 
   // destroy application decoder class

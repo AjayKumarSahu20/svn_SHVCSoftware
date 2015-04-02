@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -63,9 +63,9 @@ class TAppDecTop : public TAppDecCfg
 private:
   // class interface
 #if SVC_EXTENSION
-  TDecTop                         m_acTDecTop [MAX_LAYERS];                    ///< decoder class 
-  TDecTop*                        m_apcTDecTop [MAX_LAYERS];                   ///< decoder point class 
-  TVideoIOYuv                     m_acTVideoIOYuvReconFile [MAX_LAYERS];        ///< reconstruction YUV class
+  TDecTop                         m_acTDecTop [MAX_LAYERS];                             ///< decoder class [WARNING] suppose to use MAX_NUM_LAYER_IDS but decoder crashes, pending for further investigation
+  TDecTop*                        m_apcTDecTop [MAX_NUM_LAYER_IDS];                     ///< decoder point class 
+  TVideoIOYuv                     m_acTVideoIOYuvReconFile [MAX_NUM_LAYER_IDS];         ///< reconstruction YUV class
 #else
   TDecTop                         m_cTDecTop;                     ///< decoder class
   TVideoIOYuv                     m_cTVideoIOYuvReconFile;        ///< reconstruction YUV class
@@ -73,19 +73,23 @@ private:
   
   // for output control  
 #if SVC_EXTENSION
+#if CONFORMANCE_BITSTREAM_MODE
+  TVideoIOYuv                      m_confReconFile[63];        ///< decode YUV files
+#endif 
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
 #else
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
 #endif
-  
+  std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.  
+
 public:
   TAppDecTop();
   virtual ~TAppDecTop() {}
-  
+
   Void  create            (); ///< create internal members
   Void  destroy           (); ///< destroy internal members
   Void  decode            (); ///< main decoding function
-  
+
 protected:
   Void  xCreateDecLib     (); ///< create internal classes
   Void  xDestroyDecLib    (); ///< destroy internal classes
@@ -105,7 +109,7 @@ protected:
   Void flushAllPictures(Bool outputPictures); 
   Void flushAllPictures(Int layerId, Bool outputPictures);
 
-  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerID, Int &pocLastDisplay, DpbStatus &dpbStatus);
+  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus);
 #if POC_RESET_IDC_DECODER
   Void outputAllPictures(Int layerId, Bool notOutputCurrAu);
 #endif
@@ -138,6 +142,10 @@ struct DpbStatus
   Int m_numPicsInLayer[MAX_LAYERS];   // Pictures marked as used_for_reference or needed for output in the layer
 #endif
   Int m_numPicsInSubDpb[MAX_LAYERS];  // Pictures marked as used_for_reference or needed for output in the sub-DPB
+#if FIX_ALIGN_BUMPING
+  Int m_layerIdToSubDpbIdMap[MAX_VPS_LAYER_IDX_PLUS1];
+  Int m_targetDecLayerIdList[MAX_LAYERS];
+#endif
   Bool m_maxLatencyIncrease;
   Int m_maxLatencyPictures;
   
@@ -160,6 +168,13 @@ struct DpbStatus
     ::memset(m_numPicsNotDisplayedInLayer, 0, sizeof(m_numPicsNotDisplayedInLayer) );
     m_numSubDpbs = -1;
     m_numLayers = -1;
+#if FIX_ALIGN_BUMPING
+    ::memset( m_targetDecLayerIdList, 0, sizeof(m_targetDecLayerIdList) );
+    for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++)
+    {
+      m_layerIdToSubDpbIdMap[i] = -1;
+    }
+#endif
   }
 };
 #endif

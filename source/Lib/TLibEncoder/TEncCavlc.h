@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -70,29 +70,22 @@ class TEncCavlc : public SyntaxElementWriter, public TEncEntropyIf
 public:
   TEncCavlc();
   virtual ~TEncCavlc();
-  
+
 protected:
   TComSlice*    m_pcSlice;
-  UInt          m_uiCoeffCost;
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if VPS_VUI_OFFSET
-  Int m_vpsVuiCounter;
-#endif
-#endif
+
   Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
   Bool findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag );
-  
+
 public:
-  
+
   Void  resetEntropy          ();
   Void  determineCabacInitIdx  () {};
 
   Void  setBitstream          ( TComBitIf* p )  { m_pcBitIf = p;  }
   Void  setSlice              ( TComSlice* p )  { m_pcSlice = p;  }
   Void  resetBits             ()                { m_pcBitIf->resetBits(); }
-  Void  resetCoeffCost        ()                { m_uiCoeffCost = 0;  }
   UInt  getNumberOfWrittenBits()                { return  m_pcBitIf->getNumberOfWrittenBits();  }
-  UInt  getCoeffCost          ()                { return  m_uiCoeffCost;  }
   Void  codeVPS                 ( TComVPS* pcVPS );
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
@@ -106,12 +99,9 @@ public:
   Void  codeProfileTier         ( ProfileTierLevel* ptl );
   Void  codeHrdParameters       ( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
-#if POC_RESET_IDC_SIGNALLING
-  Void  codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow );
-#endif
   Void  codeTerminatingBit      ( UInt uilsLast );
   Void  codeSliceFinish         ();
-  
+
   Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
 #if SVC_EXTENSION
   Void codeSAOBlkParam(SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false){printf("only supported in CABAC"); assert(0); exit(-1);}
@@ -122,43 +112,50 @@ public:
   Void codeSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeMergeFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeMergeIndex    ( TComDataCU* pcCU, UInt uiAbsPartIdx );
- 
+
+  Void codeAlfCtrlFlag   ( ComponentID component, UInt code ) {printf("Not supported\n"); assert(0);}
   Void codeInterModeFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, UInt uiEncMode );
   Void codeSplitFlag     ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
-  
+
   Void codePartSize      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
   Void codePredMode      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-  
+
   Void codeIPCMInfo      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
 
   Void codeTransformSubdivFlag( UInt uiSymbol, UInt uiCtx );
-  Void codeQtCbf         ( TComDataCU* pcCU, UInt uiAbsPartIdx, TextType eType, UInt uiTrDepth );
+  Void codeQtCbf         ( TComTU &rTu, const ComponentID compID, const Bool lowestLevel );
   Void codeQtRootCbf     ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-  Void codeQtCbfZero     ( TComDataCU* pcCU, TextType eType, UInt uiTrDepth );
+  Void codeQtCbfZero     ( TComTU &rTu, const ChannelType chType );
   Void codeQtRootCbfZero ( TComDataCU* pcCU );
   Void codeIntraDirLumaAng( TComDataCU* pcCU, UInt absPartIdx, Bool isMultiple);
   Void codeIntraDirChroma( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeInterDir      ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void codeRefFrmIdx     ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
   Void codeMvd           ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList );
-  
-  Void codeDeltaQP       ( TComDataCU* pcCU, UInt uiAbsPartIdx );
-  
-  Void codeCoeffNxN      ( TComDataCU* pcCU, TCoeff* pcCoef, UInt uiAbsPartIdx, UInt uiWidth, UInt uiHeight, UInt uiDepth, TextType eTType );
-  Void codeTransformSkipFlags ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt width, UInt height, TextType eTType );
 
-  Void estBit               (estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, TextType eTType);
-  
+  Void codeCrossComponentPrediction( TComTU &rTu, ComponentID compID );
+
+  Void codeDeltaQP       ( TComDataCU* pcCU, UInt uiAbsPartIdx );
+  Void codeChromaQpAdjustment( TComDataCU* pcCU, UInt uiAbsPartIdx );
+
+  Void codeCoeffNxN      ( TComTU &rTu, TCoeff* pcCoef, const ComponentID compID );
+  Void codeTransformSkipFlags ( TComTU &rTu, ComponentID component );
+
+  Void estBit            ( estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, ChannelType chType );
+
   Void xCodePredWeightTable          ( TComSlice* pcSlice );
-  Void updateContextTables           ( SliceType eSliceType, Int iQp, Bool bExecuteFinish=true ) { return;   }
-  Void updateContextTables           ( SliceType eSliceType, Int iQp  )                          { return;   }
 
   Void codeScalingList  ( TComScalingList* scalingList );
   Void xCodeScalingList ( TComScalingList* scalingList, UInt sizeId, UInt listId);
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
 
+  Void codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID );
+
 #if SVC_EXTENSION
+#if POC_RESET_IDC_SIGNALLING
+  Void  codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow );
+#endif
   Void codeSPSExtension        ( TComSPS* pcSPS );
   Void codeVPSExtension        ( TComVPS* pcVPS );
   Void codeVPSVUI              ( TComVPS *vps   );

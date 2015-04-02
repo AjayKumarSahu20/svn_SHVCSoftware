@@ -54,31 +54,12 @@ TEncSlice::TEncSlice()
   m_pdRdPicLambda = NULL;
   m_pdRdPicQp     = NULL;
   m_piRdPicQp     = NULL;
-  m_pcBufferSbacCoders    = NULL;
-  m_pcBufferBinCoderCABACs  = NULL;
-  m_pcBufferLowLatSbacCoders    = NULL;
-  m_pcBufferLowLatBinCoderCABACs  = NULL;
 }
 
 TEncSlice::~TEncSlice()
 {
-  for (std::vector<TEncSbac*>::iterator i = CTXMem.begin(); i != CTXMem.end(); i++)
-  {
-    delete (*i);
-  }
 }
 
-Void TEncSlice::initCtxMem(  UInt i )
-{
-  for (std::vector<TEncSbac*>::iterator j = CTXMem.begin(); j != CTXMem.end(); j++)
-  {
-    delete (*j);
-  }
-  CTXMem.clear();
-  CTXMem.resize(i);
-}
-
-#if AUXILIARY_PICTURES
 Void TEncSlice::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth )
 {
   // create prediction picture
@@ -95,24 +76,6 @@ Void TEncSlice::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt
     m_apcPicYuvResi->create( iWidth, iHeight, chromaFormat, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
   }
 }
-#else
-Void TEncSlice::create( Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth )
-{
-  // create prediction picture
-  if ( m_apcPicYuvPred == NULL )
-  {
-    m_apcPicYuvPred  = new TComPicYuv;
-    m_apcPicYuvPred->create( iWidth, iHeight, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
-  }
-
-  // create residual picture
-  if( m_apcPicYuvResi == NULL )
-  {
-    m_apcPicYuvResi  = new TComPicYuv;
-    m_apcPicYuvResi->create( iWidth, iHeight, iMaxCUWidth, iMaxCUHeight, uhTotalDepth );
-  }
-}
-#endif
 
 Void TEncSlice::destroy()
 {
@@ -136,19 +99,6 @@ Void TEncSlice::destroy()
   if ( m_pdRdPicLambda ) { xFree( m_pdRdPicLambda ); m_pdRdPicLambda = NULL; }
   if ( m_pdRdPicQp     ) { xFree( m_pdRdPicQp     ); m_pdRdPicQp     = NULL; }
   if ( m_piRdPicQp     ) { xFree( m_piRdPicQp     ); m_piRdPicQp     = NULL; }
-
-  if ( m_pcBufferSbacCoders )
-  {
-    delete[] m_pcBufferSbacCoders;
-  }
-  if ( m_pcBufferBinCoderCABACs )
-  {
-    delete[] m_pcBufferBinCoderCABACs;
-  }
-  if ( m_pcBufferLowLatSbacCoders )
-    delete[] m_pcBufferLowLatSbacCoders;
-  if ( m_pcBufferLowLatBinCoderCABACs )
-    delete[] m_pcBufferLowLatBinCoderCABACs;
 }
 
 Void TEncSlice::init( TEncTop* pcEncTop )
@@ -163,12 +113,10 @@ Void TEncSlice::init( TEncTop* pcEncTop )
   m_pcPredSearch      = pcEncTop->getPredSearch();
 
   m_pcEntropyCoder    = pcEncTop->getEntropyCoder();
-  m_pcCavlcCoder      = pcEncTop->getCavlcCoder();
   m_pcSbacCoder       = pcEncTop->getSbacCoder();
   m_pcBinCABAC        = pcEncTop->getBinCABAC();
   m_pcTrQuant         = pcEncTop->getTrQuant();
 
-  m_pcBitCounter      = pcEncTop->getBitCounter();
   m_pcRdCost          = pcEncTop->getRdCost();
   m_pppcRDSbacCoder   = pcEncTop->getRDSbacCoder();
   m_pcRDGoOnSbacCoder = pcEncTop->getRDGoOnSbacCoder();
@@ -180,6 +128,79 @@ Void TEncSlice::init( TEncTop* pcEncTop )
   m_pcRateCtrl        = pcEncTop->getRateCtrl();
 }
 
+
+
+Void
+#if JCTVC_M0259_LAMBDAREFINEMENT
+TEncSlice::setUpLambda(TComSlice* slice, Double dLambda, Int iQP, Int depth)
+#else
+TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
+#endif
+{
+#if JCTVC_M0259_LAMBDAREFINEMENT
+  Int layerIdx = slice->getLayerIdx();
+
+  if( slice->getLayerId() > 0 && m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
+  {
+    UInt prevLayerIdx = 0; 
+    if( m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() > 0 )
+    {
+      prevLayerIdx = m_ppcTEncTop[layerIdx]->getPredLayerIdx( m_ppcTEncTop[layerIdx]->getNumActiveRefLayers() - 1);
+    }
+
+    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[prevLayerIdx]->getQP() - m_ppcTEncTop[layerIdx]->getQP() ,
+                                        1.0 * m_ppcTEncTop[layerIdx]->getSourceWidth() * m_ppcTEncTop[layerIdx]->getSourceHeight()
+                                        / m_ppcTEncTop[prevLayerIdx]->getSourceWidth() / m_ppcTEncTop[prevLayerIdx]->getSourceHeight() );
+
+    dLambda *= gamma;
+  }
+#endif
+
+  // store lambda
+  m_pcRdCost ->setLambda( dLambda );
+
+  // for RDO
+  // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
+  Double dLambdas[MAX_NUM_COMPONENT] = { dLambda };
+  for(UInt compIdx=1; compIdx<MAX_NUM_COMPONENT; compIdx++)
+  {
+    const ComponentID compID=ComponentID(compIdx);
+    Int chromaQPOffset = slice->getPPS()->getQpOffset(compID) + slice->getSliceChromaQpDelta(compID);
+    Int qpc=(iQP + chromaQPOffset < 0) ? iQP : getScaledChromaQP(iQP + chromaQPOffset, m_pcCfg->getChromaFormatIdc());
+    Double tmpWeight = pow( 2.0, (iQP-qpc)/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
+
+#if JCTVC_M0259_LAMBDAREFINEMENT
+    if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerIdx()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
+    {
+      dLambdas[0] = dLambda * 1.1;
+      m_pcRdCost->setLambda( dLambdas[0] );
+
+      m_pcRdCost->setDistortionWeight(compID, tmpWeight * 1.15);
+      dLambdas[compIdx] = dLambdas[0] / tmpWeight / 1.15;
+    }
+    else
+    {
+#endif
+    m_pcRdCost->setDistortionWeight(compID, tmpWeight);
+    dLambdas[compIdx]=dLambda/tmpWeight;
+#if JCTVC_M0259_LAMBDAREFINEMENT
+    }
+#endif
+  }
+
+#if RDOQ_CHROMA_LAMBDA
+// for RDOQ
+  m_pcTrQuant->setLambdas( dLambdas );
+#else
+  m_pcTrQuant->setLambda( dLambda );
+#endif
+
+// For SAO
+  slice   ->setLambdas( dLambdas );
+}
+
+
+
 /**
  - non-referenced frame marking
  - QP computation based on temporal structure
@@ -187,8 +208,8 @@ Void TEncSlice::init( TEncTop* pcEncTop )
  - set temporal layer ID and the parameter sets
  .
  \param pcPic         picture class
- \param pocLast       POC of last picture
- \param pocCurr       current POC
+ \param pocLast      POC of last picture
+ \param pocCurr     current POC
  \param iNumPicRcvd   number of received pictures
  \param iTimeOffset   POC offset for hierarchical structure
  \param iDepth        temporal layer depth
@@ -224,19 +245,16 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   // depth computation based on GOP size
   Int depth;
   {
-#if FIX_FIELD_DEPTH    
     Int poc = rpcSlice->getPOC();
     if(isField)
     {
-      poc = (poc/2)%(m_pcCfg->getGOPSize()/2);
+      poc = (poc/2) % (m_pcCfg->getGOPSize()/2);
     }
     else
     {
-      poc = poc%m_pcCfg->getGOPSize();   
+      poc = poc % m_pcCfg->getGOPSize();   
     }
-#else
-    Int poc = rpcSlice->getPOC()%m_pcCfg->getGOPSize();
-#endif
+
     if ( poc == 0 )
     {
       depth = 0;
@@ -259,18 +277,17 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
         depth++;
       }
     }
-#if FIX_FIELD_DEPTH  
+
 #if HARMONIZE_GOP_FIRST_FIELD_COUPLE
     if(poc != 0)
     {
 #endif
-    if(isField && rpcSlice->getPOC()%2 == 1)
-    {
-      depth ++;
-    }
+      if (isField && ((rpcSlice->getPOC() % 2) == 1))
+      {
+        depth ++;
+      }
 #if HARMONIZE_GOP_FIRST_FIELD_COUPLE
-  }
-#endif
+    }
 #endif
   }
 
@@ -283,16 +300,16 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   {
 #endif // EFFICIENT_FIELD_IRAP
 #if ALLOW_RECOVERY_POINT_AS_RAP
-  if(m_pcCfg->getDecodingRefreshType() == 3)
-  {
-    eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0             || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
-  }
-  else
-  {
-  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
-  }
-#else
-  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    if(m_pcCfg->getDecodingRefreshType() == 3)
+    {
+      eSliceType = (pocLast == 0 || pocCurr % m_pcCfg->getIntraPeriod() == 0             || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    }
+    else
+    {
+#endif
+      eSliceType = (pocLast == 0 || (pocCurr - (isField ? 1 : 0)) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+#if ALLOW_RECOVERY_POINT_AS_RAP
+    }
 #endif
 #if EFFICIENT_FIELD_IRAP
   }
@@ -324,7 +341,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if REPN_FORMAT_IN_VPS
     if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getQpBDOffsetY() ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
 #else
-    if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getSPS()->getQpBDOffsetY() ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
+    if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA) ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
 #endif
     {
       dQP += m_pcCfg->getGOPEntry(iGOPid).m_QPOffset;
@@ -337,6 +354,13 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   {
     dQP += pdQPs[ rpcSlice->getPOC() ];
   }
+
+  if (m_pcCfg->getCostMode()==COST_LOSSLESS_CODING)
+  {
+    dQP=LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP;
+    m_pcCfg->setDeltaQpRD(0);
+  }
+
   // ------------------------------------------------------------------------------------------------------------------
   // Lambda computation
   // ------------------------------------------------------------------------------------------------------------------
@@ -357,7 +381,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     Double dLambda_scale = 1.0 - Clip3( 0.0, 0.5, 0.05*(Double)(isField ? NumberBFrames/2 : NumberBFrames) );
 
 #if FULL_NBIT
-    Int    bitdepth_luma_qp_scale = 6 * (g_bitDepth - 8);
+    Int    bitdepth_luma_qp_scale = 6 * (g_bitDepth[CHANNEL_TYPE_LUMA] - 8);
 #else
     Int    bitdepth_luma_qp_scale = 0;
 #endif
@@ -391,7 +415,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if REPN_FORMAT_IN_VPS
     iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #else
-    iQP = max( -pSPS->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
+    iQP = max( -pSPS->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #endif
 
     m_pdRdPicLambda[iDQpIdx] = dLambda;
@@ -410,78 +434,28 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   }
 
 #if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && depth >= 3 && m_pcCfg->getGOPSize() == ( 1 << depth ) )
-  {
-    Int nCurLayer = rpcSlice->getLayerId();
-    Double gamma = xCalEnhLambdaFactor( m_ppcTEncTop[nCurLayer-1]->getQP() - m_ppcTEncTop[nCurLayer]->getQP() ,
-      1.0 * m_ppcTEncTop[nCurLayer]->getSourceWidth() * m_ppcTEncTop[nCurLayer]->getSourceHeight()
-      / m_ppcTEncTop[nCurLayer-1]->getSourceWidth() / m_ppcTEncTop[nCurLayer-1]->getSourceHeight() );
-    dLambda *= gamma;
-  }
-#endif
-
-  // store lambda
-  m_pcRdCost ->setLambda( dLambda );
-// for RDO
-  // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
-  Double weight[2] = { 1.0, 1.0 };
-  Int qpc;
-  Int chromaQPOffset;
-
-  chromaQPOffset = rpcSlice->getPPS()->getChromaCbQpOffset() + rpcSlice->getSliceQpDeltaCb();
-  qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-  weight[0] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCbDistortionWeight(weight[0]);
-
-  chromaQPOffset = rpcSlice->getPPS()->getChromaCrQpOffset() + rpcSlice->getSliceQpDeltaCr();
-  qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-  weight[1] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCrDistortionWeight(weight[1]);
-
-#if JCTVC_M0259_LAMBDAREFINEMENT
-  if( rpcSlice->getLayerId() > 0 && m_ppcTEncTop[layerId]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && rpcSlice->isIntra() == false && depth == 0 )
-  {
-    dLambda *= 1.1;
-    weight[1] *= 1.15;
-    weight[0] *= 1.15;
-
-    m_pcRdCost ->setLambda( dLambda );
-    m_pcRdCost->setCbDistortionWeight(weight[0]);
-    m_pcRdCost->setCrDistortionWeight(weight[1]);
-  }
-#endif
-
-  const Double lambdaArray[3] = {dLambda, (dLambda / weight[0]), (dLambda / weight[1])};
- 
-#if RDOQ_CHROMA_LAMBDA
-// for RDOQ
-  m_pcTrQuant->setLambdas( lambdaArray );
+  setUpLambda(rpcSlice, dLambda, iQP, depth);
 #else
-  m_pcTrQuant->setLambda( dLambda );
+  setUpLambda(rpcSlice, dLambda, iQP);
 #endif
-
-// For SAO
-  rpcSlice->setLambdas( lambdaArray );
-
 #if HB_LAMBDA_FOR_LDC
   // restore original slice type
-  
+
 #if EFFICIENT_FIELD_IRAP
   if(!(isField && pocLast == 1))
   {
 #endif // EFFICIENT_FIELD_IRAP
 #if ALLOW_RECOVERY_POINT_AS_RAP
-  if(m_pcCfg->getDecodingRefreshType() == 3)
-  {
-    eSliceType = (pocLast == 0 || (pocCurr)           % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
-
-  }
-  else
-  {
-  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
-  }
-#else
-  eSliceType = (pocLast == 0 || (pocCurr - isField) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    if(m_pcCfg->getDecodingRefreshType() == 3)
+    {
+      eSliceType = (pocLast == 0 || (pocCurr)                     % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+    }
+    else
+    {
+#endif
+      eSliceType = (pocLast == 0 || (pocCurr - (isField ? 1 : 0)) % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
+#if ALLOW_RECOVERY_POINT_AS_RAP
+    }
 #endif
 #if EFFICIENT_FIELD_IRAP
   }
@@ -502,17 +476,18 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
 #if REPN_FORMAT_IN_VPS
     iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #else
-    iQP = max( -pSPS->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
+    iQP = max( -pSPS->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #endif
   }
 
-  rpcSlice->setSliceQp          ( iQP );
+  rpcSlice->setSliceQp           ( iQP );
 #if ADAPTIVE_QP_SELECTION
-  rpcSlice->setSliceQpBase      ( iQP );
+  rpcSlice->setSliceQpBase       ( iQP );
 #endif
-  rpcSlice->setSliceQpDelta     ( 0 );
-  rpcSlice->setSliceQpDeltaCb   ( 0 );
-  rpcSlice->setSliceQpDeltaCr   ( 0 );
+  rpcSlice->setSliceQpDelta      ( 0 );
+  rpcSlice->setSliceChromaQpDelta( COMPONENT_Cb, 0 );
+  rpcSlice->setSliceChromaQpDelta( COMPONENT_Cr, 0 );
+  rpcSlice->setUseChromaQpAdj( pPPS->getChromaQpAdjTableSize() > 0 );
   rpcSlice->setNumRefIdx(REF_PIC_LIST_0,m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
   rpcSlice->setNumRefIdx(REF_PIC_LIST_1,m_pcCfg->getGOPEntry(iGOPid).m_numRefPicsActive);
 
@@ -522,8 +497,8 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
     rpcSlice->setDeblockingFilterDisable(false);
     rpcSlice->setDeblockingFilterBetaOffsetDiv2( 0 );
     rpcSlice->setDeblockingFilterTcOffsetDiv2( 0 );
-  } else
-  if (rpcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
+  }
+  else if (rpcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
   {
     rpcSlice->getPPS()->setDeblockingFilterOverrideEnabledFlag( !m_pcCfg->getLoopFilterOffsetInPPS() );
     rpcSlice->setDeblockingFilterOverrideFlag( !m_pcCfg->getLoopFilterOffsetInPPS() );
@@ -540,10 +515,10 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
       }
       else
       {
-      rpcSlice->getPPS()->setDeblockingFilterBetaOffsetDiv2( m_pcCfg->getLoopFilterBetaOffset() );
-      rpcSlice->getPPS()->setDeblockingFilterTcOffsetDiv2( m_pcCfg->getLoopFilterTcOffset() );
-      rpcSlice->setDeblockingFilterBetaOffsetDiv2( m_pcCfg->getLoopFilterBetaOffset() );
-      rpcSlice->setDeblockingFilterTcOffsetDiv2( m_pcCfg->getLoopFilterTcOffset() );
+        rpcSlice->getPPS()->setDeblockingFilterBetaOffsetDiv2( m_pcCfg->getLoopFilterBetaOffset() );
+        rpcSlice->getPPS()->setDeblockingFilterTcOffsetDiv2( m_pcCfg->getLoopFilterTcOffset() );
+        rpcSlice->setDeblockingFilterBetaOffsetDiv2( m_pcCfg->getLoopFilterBetaOffset() );
+        rpcSlice->setDeblockingFilterTcOffsetDiv2( m_pcCfg->getLoopFilterTcOffset() );
       }
     }
   }
@@ -587,14 +562,14 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   {
     if( rpcSlice->getNumILRRefIdx() > 0 )
     {
-      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[layerId]->getNumActiveRefLayers() );
+      rpcSlice->setActiveNumILRRefIdx( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getNumActiveRefLayers() );
       for( Int i = 0; i < rpcSlice->getActiveNumILRRefIdx(); i++ )
       {
-        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[layerId]->getPredLayerId(i), i );
+        rpcSlice->setInterLayerPredLayerIdc( m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getPredLayerIdx(i), i );
       }
       rpcSlice->setInterLayerPredEnabledFlag(1);
     }
-    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[layerId]->getMFMEnabledFlag());
+    rpcSlice->setMFMEnabledFlag(m_ppcTEncTop[rpcSlice->getVPS()->getLayerIdxInVps(layerId)]->getMFMEnabledFlag());
   }
 
 #endif
@@ -609,35 +584,9 @@ Void TEncSlice::resetQP( TComPic* pic, Int sliceQP, Double lambda )
 #if ADAPTIVE_QP_SELECTION
   slice->setSliceQpBase ( sliceQP );
 #endif
-  m_pcRdCost ->setLambda( lambda );
-  // for RDO
-  // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
-  Double weight[2] = { 1.0, 1.0 };
-  Int qpc;
-  Int chromaQPOffset;
-
-  chromaQPOffset = slice->getPPS()->getChromaCbQpOffset() + slice->getSliceQpDeltaCb();
-  qpc = Clip3( 0, 57, sliceQP + chromaQPOffset);
-  weight[0] = pow( 2.0, (sliceQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCbDistortionWeight(weight[0]);
-
-  chromaQPOffset = slice->getPPS()->getChromaCrQpOffset() + slice->getSliceQpDeltaCr();
-  qpc = Clip3( 0, 57, sliceQP + chromaQPOffset);
-  weight[1] = pow( 2.0, (sliceQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCrDistortionWeight(weight[1]);
-
-  const Double lambdaArray[3] = {lambda, (lambda / weight[0]), (lambda / weight[1])};
-
-#if RDOQ_CHROMA_LAMBDA
-  // for RDOQ
-  m_pcTrQuant->setLambdas( lambdaArray );
-#else
-  m_pcTrQuant->setLambda( lambda );
-#endif
-
-  // For SAO
-  slice->setLambdas( lambdaArray );
+  setUpLambda(slice, lambda, sliceQP);
 }
+
 // ====================================================================================================================
 // Public member functions
 // ====================================================================================================================
@@ -669,7 +618,7 @@ Void TEncSlice::setSearchRange( TComSlice* pcSlice )
  .
  \param rpcPic    picture class
  */
-Void TEncSlice::precompressSlice( TComPic*& rpcPic )
+Void TEncSlice::precompressSlice( TComPic* pcPic )
 {
   // if deltaQP RD is not used, simply return
   if ( m_pcCfg->getDeltaQpRD() == 0 )
@@ -683,13 +632,13 @@ Void TEncSlice::precompressSlice( TComPic*& rpcPic )
     assert(0);
   }
 
-  TComSlice* pcSlice        = rpcPic->getSlice(getSliceIdx());
+  TComSlice* pcSlice        = pcPic->getSlice(getSliceIdx());
   Double     dPicRdCostBest = MAX_DOUBLE;
   UInt       uiQpIdxBest = 0;
 
   Double dFrameLambda;
 #if FULL_NBIT
-  Int    SHIFT_QP = 12 + 6 * (g_bitDepth - 8);
+  Int    SHIFT_QP = 12 + 6 * (g_bitDepth[CHANNEL_TYPE_LUMA] - 8);
 #else
   Int    SHIFT_QP = 12;
 #endif
@@ -705,6 +654,7 @@ Void TEncSlice::precompressSlice( TComPic*& rpcPic )
   }
   m_pcRdCost      ->setFrameLambda(dFrameLambda);
 
+  const UInt initialSliceQp=pcSlice->getSliceQp();
   // for each QP candidate
   for ( UInt uiQpIdx = 0; uiQpIdx < 2 * m_pcCfg->getDeltaQpRD() + 1; uiQpIdx++ )
   {
@@ -712,45 +662,20 @@ Void TEncSlice::precompressSlice( TComPic*& rpcPic )
 #if ADAPTIVE_QP_SELECTION
     pcSlice       ->setSliceQpBase         ( m_piRdPicQp    [uiQpIdx] );
 #endif
-    m_pcRdCost    ->setLambda              ( m_pdRdPicLambda[uiQpIdx] );
-    // for RDO
-    // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
-    Int iQP = m_piRdPicQp    [uiQpIdx];
-    Double weight[2] = { 1.0, 1.0 };
-    Int qpc;
-    Int chromaQPOffset;
-
-    chromaQPOffset = pcSlice->getPPS()->getChromaCbQpOffset() + pcSlice->getSliceQpDeltaCb();
-    qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-    weight[0] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCbDistortionWeight(weight[0]);
-
-    chromaQPOffset = pcSlice->getPPS()->getChromaCrQpOffset() + pcSlice->getSliceQpDeltaCr();
-    qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-    weight[1] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-    m_pcRdCost->setCrDistortionWeight(weight[1]);
-
-    const Double lambdaArray[3] = {m_pdRdPicLambda[uiQpIdx], (m_pdRdPicLambda[uiQpIdx] / weight[0]), (m_pdRdPicLambda[uiQpIdx] / weight[1])};
-#if RDOQ_CHROMA_LAMBDA
-    // for RDOQ
-    m_pcTrQuant->setLambdas( lambdaArray );
-#else
-    m_pcTrQuant   ->setLambda              ( m_pdRdPicLambda[uiQpIdx] );
-#endif
-    // For SAO
-    pcSlice->setLambdas( lambdaArray );
+    setUpLambda(pcSlice, m_pdRdPicLambda[uiQpIdx], m_piRdPicQp    [uiQpIdx]);
 
     // try compress
-    compressSlice   ( rpcPic );
+    compressSlice   ( pcPic );
 
     Double dPicRdCost;
     UInt64 uiPicDist        = m_uiPicDist;
-    UInt64 uiALFBits        = 0;
-
-    m_pcGOPEncoder->preLoopFilterPicAll( rpcPic, uiPicDist, uiALFBits );
+    // TODO: will this work if multiple slices are being used? There may not be any reconstruction data yet.
+    //       Will this also be ideal if a byte-restriction is placed on the slice?
+    //         - what if the last CTU was sometimes included, sometimes not, and that had all the distortion?
+    m_pcGOPEncoder->preLoopFilterPicAll( pcPic, uiPicDist );
 
     // compute RD cost and choose the best
-    dPicRdCost = m_pcRdCost->calcRdCost64( m_uiPicTotalBits + uiALFBits, uiPicDist, true, DF_SSE_FRAME);
+    dPicRdCost = m_pcRdCost->calcRdCost64( m_uiPicTotalBits, uiPicDist, true, DF_SSE_FRAME);
 
     if ( dPicRdCost < dPicRdCostBest )
     {
@@ -759,106 +684,82 @@ Void TEncSlice::precompressSlice( TComPic*& rpcPic )
     }
   }
 
+  if (pcSlice->getDependentSliceSegmentFlag() && initialSliceQp!=m_piRdPicQp[uiQpIdxBest] )
+  {
+    // TODO: this won't work with dependent slices: they do not have their own QP.
+    fprintf(stderr,"ERROR - attempt to change QP for a dependent slice-segment, having already coded the slice\n");
+    assert(pcSlice->getDependentSliceSegmentFlag()==false || initialSliceQp==m_piRdPicQp[uiQpIdxBest]);
+  }
   // set best values
   pcSlice       ->setSliceQp             ( m_piRdPicQp    [uiQpIdxBest] );
 #if ADAPTIVE_QP_SELECTION
   pcSlice       ->setSliceQpBase         ( m_piRdPicQp    [uiQpIdxBest] );
 #endif
-  m_pcRdCost    ->setLambda              ( m_pdRdPicLambda[uiQpIdxBest] );
-  // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
-  Int iQP = m_piRdPicQp    [uiQpIdxBest];
-  Double weight[2] = { 1.0, 1.0 };
-  Int qpc;
-  Int chromaQPOffset;
-
-  chromaQPOffset = pcSlice->getPPS()->getChromaCbQpOffset() + pcSlice->getSliceQpDeltaCb();
-  qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-  weight[0] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCbDistortionWeight(weight[0]);
-
-  chromaQPOffset = pcSlice->getPPS()->getChromaCrQpOffset() + pcSlice->getSliceQpDeltaCr();
-  qpc = Clip3( 0, 57, iQP + chromaQPOffset);
-  weight[1] = pow( 2.0, (iQP-g_aucChromaScale[qpc])/3.0 );  // takes into account of the chroma qp mapping and chroma qp Offset
-  m_pcRdCost->setCrDistortionWeight(weight[1]);
-
-  const Double lambdaArray[3] = {m_pdRdPicLambda[uiQpIdxBest], (m_pdRdPicLambda[uiQpIdxBest] / weight[0]), (m_pdRdPicLambda[uiQpIdxBest] / weight[1])};
-#if RDOQ_CHROMA_LAMBDA
-  // for RDOQ
-  m_pcTrQuant->setLambdas( lambdaArray );
-#else
-  m_pcTrQuant   ->setLambda              ( m_pdRdPicLambda[uiQpIdxBest] );
-#endif
-  // For SAO
-  pcSlice->setLambdas( lambdaArray );
+  setUpLambda(pcSlice, m_pdRdPicLambda[uiQpIdxBest], m_piRdPicQp    [uiQpIdxBest]);
 }
 
-/** \param rpcPic   picture class
- */
-Void TEncSlice::calCostSliceI(TComPic*& rpcPic)
+Void TEncSlice::calCostSliceI(TComPic* pcPic)
 {
-  UInt    uiCUAddr;
-  UInt    uiStartCUAddr;
-  UInt    uiBoundingCUAddr;
-  Int     iSumHad, shift = g_bitDepthY-8, offset = (shift>0)?(1<<(shift-1)):0;;
+  UInt    ctuRsAddr;
+  UInt    startCtuTsAddr;
+  UInt    boundingCtuTsAddr;
+  Int     iSumHad, shift = g_bitDepth[CHANNEL_TYPE_LUMA]-8, offset = (shift>0)?(1<<(shift-1)):0;;
   Double  iSumHadSlice = 0;
 
-  rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-  TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
-  xDetermineStartAndBoundingCUAddr ( uiStartCUAddr, uiBoundingCUAddr, rpcPic, false );
+  pcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
+  TComSlice* pcSlice            = pcPic->getSlice(getSliceIdx());
+  xDetermineStartAndBoundingCtuTsAddr ( startCtuTsAddr, boundingCtuTsAddr, pcPic, false );
 
-  UInt uiEncCUOrder;
-  uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
-  for( uiEncCUOrder = uiStartCUAddr/rpcPic->getNumPartInCU();
-       uiEncCUOrder < (uiBoundingCUAddr+(rpcPic->getNumPartInCU()-1))/rpcPic->getNumPartInCU();
-       uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder) )
+  UInt ctuTsAddr;
+  ctuRsAddr = pcPic->getPicSym()->getCtuTsToRsAddrMap( startCtuTsAddr);
+  for( ctuTsAddr = startCtuTsAddr; ctuTsAddr < boundingCtuTsAddr; ctuRsAddr = pcPic->getPicSym()->getCtuTsToRsAddrMap(++ctuTsAddr) )
   {
     // initialize CU encoder
-    TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
-    pcCU->initCU( rpcPic, uiCUAddr );
+    TComDataCU* pCtu = pcPic->getCtu( ctuRsAddr );
+    pCtu->initCtu( pcPic, ctuRsAddr );
 
 #if REPN_FORMAT_IN_VPS
-    Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
-    Int width   = min( pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+    Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - ctuRsAddr / pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUHeight() );
+    Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getPicWidthInLumaSamples() - ctuRsAddr % pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUWidth() );
 #else
-    Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getSPS()->getPicHeightInLumaSamples() - uiCUAddr / rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUHeight() );
-    Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getSPS()->getPicWidthInLumaSamples() - uiCUAddr % rpcPic->getFrameWidthInCU() * pcSlice->getSPS()->getMaxCUWidth() );
+    Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getSPS()->getPicHeightInLumaSamples() - ctuRsAddr / pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUHeight() );
+    Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getSPS()->getPicWidthInLumaSamples() - ctuRsAddr % pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUWidth() );
 #endif
 
-    iSumHad = m_pcCuEncoder->updateLCUDataISlice(pcCU, uiCUAddr, width, height);
+    iSumHad = m_pcCuEncoder->updateCtuDataISlice(pCtu, width, height);
 
-    (m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr)).m_costIntra=(iSumHad+offset)>>shift;
-    iSumHadSlice += (m_pcRateCtrl->getRCPic()->getLCU(uiCUAddr)).m_costIntra;
+    (m_pcRateCtrl->getRCPic()->getLCU(ctuRsAddr)).m_costIntra=(iSumHad+offset)>>shift;
+    iSumHadSlice += (m_pcRateCtrl->getRCPic()->getLCU(ctuRsAddr)).m_costIntra;
 
   }
   m_pcRateCtrl->getRCPic()->setTotalIntraCost(iSumHadSlice);
 }
 
-Void TEncSlice::compressSlice( TComPic*& rpcPic )
+/** \param rpcPic   picture class
+ */
+Void TEncSlice::compressSlice( TComPic* pcPic )
 {
-#if !WPP_FIX
-  UInt  uiCUAddr;
-#endif
-  UInt   uiStartCUAddr;
-  UInt   uiBoundingCUAddr;
-  rpcPic->getSlice(getSliceIdx())->setSliceSegmentBits(0);
-  TEncBinCABAC* pppcRDSbacCoder = NULL;
-  TComSlice* pcSlice            = rpcPic->getSlice(getSliceIdx());
-  xDetermineStartAndBoundingCUAddr ( uiStartCUAddr, uiBoundingCUAddr, rpcPic, false );
+  UInt   startCtuTsAddr;
+  UInt   boundingCtuTsAddr;
+  TComSlice* pcSlice            = pcPic->getSlice(getSliceIdx());
+  pcSlice->setSliceSegmentBits(0);
+  xDetermineStartAndBoundingCtuTsAddr ( startCtuTsAddr, boundingCtuTsAddr, pcPic, false );
 
-  // initialize cost values
+  // initialize cost values - these are used by precompressSlice (they should be parameters).
   m_uiPicTotalBits  = 0;
-  m_dPicRdCost      = 0;
+  m_dPicRdCost      = 0; // NOTE: This is a write-only variable!
   m_uiPicDist       = 0;
 
-  // set entropy coder
-  m_pcSbacCoder->init( m_pcBinCABAC );
-  m_pcEntropyCoder->setEntropyCoder   ( m_pcSbacCoder, pcSlice );
+  m_pcEntropyCoder->setEntropyCoder   ( m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice );
   m_pcEntropyCoder->resetEntropy      ();
-  m_pppcRDSbacCoder[0][CI_CURR_BEST]->load(m_pcSbacCoder);
-  pppcRDSbacCoder = (TEncBinCABAC *) m_pppcRDSbacCoder[0][CI_CURR_BEST]->getEncBinIf();
-  pppcRDSbacCoder->setBinCountingEnableFlag( false );
-  pppcRDSbacCoder->setBinsCoded( 0 );
-  
+
+  TEncBinCABAC* pRDSbacCoder = (TEncBinCABAC *) m_pppcRDSbacCoder[0][CI_CURR_BEST]->getEncBinIf();
+  pRDSbacCoder->setBinCountingEnableFlag( false );
+  pRDSbacCoder->setBinsCoded( 0 );
+
+  TComBitCounter  tempBitCounter;
+  const UInt      frameWidthInCtus = pcPic->getPicSym()->getFrameWidthInCtus();
+
   //------------------------------------------------------------------------------
   //  Weighted Prediction parameters estimation.
   //------------------------------------------------------------------------------
@@ -868,21 +769,21 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     xCalcACDCParamSlice(pcSlice);
   }
 #if O0194_WEIGHTED_PREDICTION_CGS
-  else if( m_ppcTEncTop[pcSlice->getLayerId()]->getInterLayerWeightedPredFlag() )
+  else if( m_ppcTEncTop[pcSlice->getLayerIdx()]->getInterLayerWeightedPredFlag() )
   {
     // Calculate for the base layer to be used in EL as Inter layer reference
     estimateILWpParam( pcSlice );    
   }
 #endif
 
-  Bool bWp_explicit = (pcSlice->getSliceType()==P_SLICE && pcSlice->getPPS()->getUseWP()) || (pcSlice->getSliceType()==B_SLICE && pcSlice->getPPS()->getWPBiPred());
+  const Bool bWp_explicit = (pcSlice->getSliceType()==P_SLICE && pcSlice->getPPS()->getUseWP()) || (pcSlice->getSliceType()==B_SLICE && pcSlice->getPPS()->getWPBiPred());
 
   if ( bWp_explicit )
   {
     //------------------------------------------------------------------------------
     //  Weighted Prediction implemented at Slice level. SliceMode=2 is not supported yet.
     //------------------------------------------------------------------------------
-    if ( pcSlice->getSliceMode()==2 || pcSlice->getSliceSegmentMode()==2 )
+    if ( pcSlice->getSliceMode()==FIXED_NUMBER_OF_BYTES || pcSlice->getSliceSegmentMode()==FIXED_NUMBER_OF_BYTES )
     {
       printf("Weighted Prediction is not supported with slice mode determined by max number of bins.\n"); exit(0);
     }
@@ -895,8 +796,9 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
   }
 
 #if ADAPTIVE_QP_SELECTION
-  if( m_pcCfg->getUseAdaptQpSelect() )
+  if( m_pcCfg->getUseAdaptQpSelect() && !(pcSlice->getDependentSliceSegmentFlag()))
   {
+    // TODO: this won't work with dependent slices: they do not have their own QP. Check fix to mask clause execution with && !(pcSlice->getDependentSliceSegmentFlag())
     m_pcTrQuant->clearSliceARLCnt();
     if(pcSlice->getSliceType()!=I_SLICE)
     {
@@ -905,200 +807,66 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
     }
   }
 #endif
-  TEncTop* pcEncTop = (TEncTop*) m_pcCfg;
-  TEncSbac**** ppppcRDSbacCoders    = pcEncTop->getRDSbacCoders();
-  TComBitCounter* pcBitCounters     = pcEncTop->getBitCounters();
-#if WPP_FIX
-  const Int  iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-  const UInt uiTilesAcross  = rpcPic->getPicSym()->getNumColumnsMinus1()+1;
-#else
-  Int  iNumSubstreams = 1;
-  UInt uiTilesAcross  = 0;
 
-  iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-  uiTilesAcross = rpcPic->getPicSym()->getNumColumnsMinus1()+1;
-#endif
-  delete[] m_pcBufferSbacCoders;
-  delete[] m_pcBufferBinCoderCABACs;
-  m_pcBufferSbacCoders     = new TEncSbac    [uiTilesAcross];
-  m_pcBufferBinCoderCABACs = new TEncBinCABAC[uiTilesAcross];
-  for (Int ui = 0; ui < uiTilesAcross; ui++)
-  {
-    m_pcBufferSbacCoders[ui].init( &m_pcBufferBinCoderCABACs[ui] );
-  }
-  for (UInt ui = 0; ui < uiTilesAcross; ui++)
-  {
-    m_pcBufferSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);  //init. state
-  }
 
-  for ( UInt ui = 0 ; ui < iNumSubstreams ; ui++ ) //init all sbac coders for RD optimization
-  {
-    ppppcRDSbacCoders[ui][0][CI_CURR_BEST]->load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
-  }
 
-  delete[] m_pcBufferLowLatSbacCoders;
-  delete[] m_pcBufferLowLatBinCoderCABACs;
-  m_pcBufferLowLatSbacCoders     = new TEncSbac    [uiTilesAcross];
-  m_pcBufferLowLatBinCoderCABACs = new TEncBinCABAC[uiTilesAcross];
-  for (Int ui = 0; ui < uiTilesAcross; ui++)
+  // Adjust initial state if this is the start of a dependent slice.
   {
-    m_pcBufferLowLatSbacCoders[ui].init( &m_pcBufferLowLatBinCoderCABACs[ui] );
-  }
-  for (UInt ui = 0; ui < uiTilesAcross; ui++)
-    m_pcBufferLowLatSbacCoders[ui].load(m_pppcRDSbacCoder[0][CI_CURR_BEST]);  //init. state
-
-  UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
-  //UInt uiHeightInLCUs = rpcPic->getPicSym()->getFrameHeightInCU();
-#if WPP_FIX
-  UInt      uiTileCol               = 0; 
-  Bool      depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag(); 
-  UInt      uiCUAddr                = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU()); 
-  UInt      currentTileIdx          = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr); 
-  TComTile *pCurrentTile            = rpcPic->getPicSym()->getTComTile(currentTileIdx); 
-  UInt      uiTileStartLCU          = pCurrentTile->getFirstCUAddr();
-#else
-  UInt uiCol=0, uiLin=0, uiSubStrm=0;
-  UInt uiTileCol      = 0;
-  UInt uiTileStartLCU = 0;
-  UInt uiTileLCUX     = 0;
-  Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
-  uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
-  uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
-#endif
-  if( depSliceSegmentsEnabled )
-  {
-    if((pcSlice->getSliceSegmentCurStartCUAddr()!= pcSlice->getSliceCurStartCUAddr())&&(uiCUAddr != uiTileStartLCU))
+    const UInt      ctuRsAddr               = pcPic->getPicSym()->getCtuTsToRsAddrMap( startCtuTsAddr);
+    const UInt      currentTileIdx          = pcPic->getPicSym()->getTileIdxMap(ctuRsAddr);
+    const TComTile *pCurrentTile            = pcPic->getPicSym()->getTComTile(currentTileIdx);
+    const UInt      firstCtuRsAddrOfTile    = pCurrentTile->getFirstCtuRsAddr();
+    if( pcSlice->getDependentSliceSegmentFlag() && ctuRsAddr != firstCtuRsAddrOfTile )
     {
-#if WPP_FIX
-      UInt uiSubStrm=0;
-#endif
-      if( m_pcCfg->getWaveFrontsynchro() )
+      // This will only occur if dependent slice-segments (m_entropyCodingSyncContextState=true) are being used.
+      if( pCurrentTile->getTileWidthInCtus() >= 2 || !m_pcCfg->getWaveFrontsynchro() )
       {
-#if WPP_FIX
-        uiTileCol = currentTileIdx % (rpcPic->getPicSym()->getNumColumnsMinus1()+1); 
-         m_pcBufferSbacCoders[uiTileCol].loadContexts( CTXMem[1] ); 
-         //uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU()); 
-         uiSubStrm=rpcPic->getSubstreamForLCUAddr(uiCUAddr, true, pcSlice); 
-         if ( pCurrentTile->getTileWidth() < 2) 
-         { 
-           CTXMem[0]->loadContexts(m_pcSbacCoder); 
-         } 
-#else
-        uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1);
-        m_pcBufferSbacCoders[uiTileCol].loadContexts( CTXMem[1] );
-        Int iNumSubstreamsPerTile = iNumSubstreams/rpcPic->getPicSym()->getNumTiles();
-        uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());
-        uiLin     = uiCUAddr / uiWidthInLCUs;
-        uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(rpcPic->getPicSym()->getCUOrderMap(uiCUAddr))*iNumSubstreamsPerTile
-          + uiLin%iNumSubstreamsPerTile;
-        if ( (uiCUAddr%uiWidthInLCUs+1) >= uiWidthInLCUs  )
+        m_pppcRDSbacCoder[0][CI_CURR_BEST]->loadContexts( &m_lastSliceSegmentEndContextState );
+      }
+    }
+  }
+
+  // for every CTU in the slice segment (may terminate sooner if there is a byte limit on the slice-segment)
+
+  for( UInt ctuTsAddr = startCtuTsAddr; ctuTsAddr < boundingCtuTsAddr; ++ctuTsAddr )
+  {
+    const UInt ctuRsAddr = pcPic->getPicSym()->getCtuTsToRsAddrMap(ctuTsAddr);
+    // initialize CTU encoder
+    TComDataCU* pCtu = pcPic->getCtu( ctuRsAddr );
+    pCtu->initCtu( pcPic, ctuRsAddr );
+
+    // update CABAC state
+    const UInt firstCtuRsAddrOfTile = pcPic->getPicSym()->getTComTile(pcPic->getPicSym()->getTileIdxMap(ctuRsAddr))->getFirstCtuRsAddr();
+    const UInt tileXPosInCtus = firstCtuRsAddrOfTile % frameWidthInCtus;
+    const UInt ctuXPosInCtus  = ctuRsAddr % frameWidthInCtus;
+    
+    if (ctuRsAddr == firstCtuRsAddrOfTile)
+    {
+      m_pppcRDSbacCoder[0][CI_CURR_BEST]->resetEntropy();
+    }
+    else if ( ctuXPosInCtus == tileXPosInCtus && m_pcCfg->getWaveFrontsynchro())
+    {
+      // reset and then update contexts to the state at the end of the top-right CTU (if within current slice and tile).
+      m_pppcRDSbacCoder[0][CI_CURR_BEST]->resetEntropy();
+      // Sync if the Top-Right is available.
+      TComDataCU *pCtuUp = pCtu->getCtuAbove();
+      if ( pCtuUp && ((ctuRsAddr%frameWidthInCtus+1) < frameWidthInCtus)  )
+      {
+        TComDataCU *pCtuTR = pcPic->getCtu( ctuRsAddr - frameWidthInCtus + 1 );
+        if ( pCtu->CUIsFromSameSliceAndTile(pCtuTR) )
         {
-          uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-          uiCol     = uiCUAddr % uiWidthInLCUs;
-          if(uiCol==uiTileStartLCU)
-          {
-            CTXMem[0]->loadContexts(m_pcSbacCoder);
-          }
+          // Top-Right is available, we use it.
+          m_pppcRDSbacCoder[0][CI_CURR_BEST]->loadContexts( &m_entropyCodingSyncContextState );
         }
-#endif
       }
-      m_pppcRDSbacCoder[0][CI_CURR_BEST]->loadContexts( CTXMem[0] );
-      ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts( CTXMem[0] );
-    }
-    else
-    {
-      if(m_pcCfg->getWaveFrontsynchro())
-      {
-        CTXMem[1]->loadContexts(m_pcSbacCoder);
-      }
-      CTXMem[0]->loadContexts(m_pcSbacCoder);
-    }
-  }
-  // for every CU in slice
-  UInt uiEncCUOrder;
-  for( uiEncCUOrder = uiStartCUAddr/rpcPic->getNumPartInCU();
-       uiEncCUOrder < (uiBoundingCUAddr+(rpcPic->getNumPartInCU()-1))/rpcPic->getNumPartInCU();
-       uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder) )
-  {
-    // initialize CU encoder
-    TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
-    pcCU->initCU( rpcPic, uiCUAddr );
-
-    // inherit from TR if necessary, select substream to use.
-    uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1); // what column of tiles are we in?
-    uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
-#if WPP_FIX
-    UInt uiTileLCUX = uiTileStartLCU % uiWidthInLCUs; 
-    //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr(); 
-    UInt uiCol     = uiCUAddr % uiWidthInLCUs; 
-    UInt uiSubStrm=rpcPic->getSubstreamForLCUAddr(uiCUAddr, true, pcSlice); 
-
-    if ( ((iNumSubstreams > 1) || depSliceSegmentsEnabled ) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
-#else 
-    uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-    //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
-    uiCol     = uiCUAddr % uiWidthInLCUs;
-    uiLin     = uiCUAddr / uiWidthInLCUs;
-    if (pcSlice->getPPS()->getNumSubstreams() > 1)
-    {
-      // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
-      Int iNumSubstreamsPerTile = iNumSubstreams/rpcPic->getPicSym()->getNumTiles();
-      uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr)*iNumSubstreamsPerTile
-          + uiLin%iNumSubstreamsPerTile;
-    }
-    else
-    {
-      // dependent tiles => substreams are "per frame".
-      uiSubStrm = uiLin % iNumSubstreams;
-    }
-    if ( ((pcSlice->getPPS()->getNumSubstreams() > 1) || depSliceSegmentsEnabled ) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
-#endif
-    {
-      // We'll sync if the TR is available.
-      TComDataCU *pcCUUp = pcCU->getCUAbove();
-      UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
-      UInt uiMaxParts = 1<<(pcSlice->getSPS()->getMaxCUDepth()<<1);
-      TComDataCU *pcCUTR = NULL;
-      if ( pcCUUp && ((uiCUAddr%uiWidthInCU+1) < uiWidthInCU)  )
-      {
-        pcCUTR = rpcPic->getCU( uiCUAddr - uiWidthInCU + 1 );
-      }
-      if ( ((pcCUTR==NULL) || (pcCUTR->getSlice()==NULL) ||
-          (pcCUTR->getSCUAddr()+uiMaxParts-1 < pcSlice->getSliceCurStartCUAddr()) ||
-          ((rpcPic->getPicSym()->getTileIdxMap( pcCUTR->getAddr() ) != rpcPic->getPicSym()->getTileIdxMap(uiCUAddr)))
-      )
-      )
-      {
-        // TR not available.
-      }
-      else
-      {
-        // TR is available, we use it.
-        ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->loadContexts( &m_pcBufferSbacCoders[uiTileCol] );
-      }
-    }
-    m_pppcRDSbacCoder[0][CI_CURR_BEST]->load( ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST] ); //this load is used to simplify the code
-
-    // reset the entropy coder
-    if( uiCUAddr == rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr() &&                                   // must be first CU of tile
-        uiCUAddr!=0 &&                                                                                                                                    // cannot be first CU of picture
-        uiCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr())/rpcPic->getNumPartInCU() &&
-        uiCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr())/rpcPic->getNumPartInCU())     // cannot be first CU of slice
-    {
-      SliceType sliceType = pcSlice->getSliceType();
-      if (!pcSlice->isIntra() && pcSlice->getPPS()->getCabacInitPresentFlag() && pcSlice->getPPS()->getEncCABACTableIdx()!=I_SLICE)
-      {
-        sliceType = (SliceType) pcSlice->getPPS()->getEncCABACTableIdx();
-      }
-      m_pcEntropyCoder->updateContextTables ( sliceType, pcSlice->getSliceQp(), false );
-      m_pcEntropyCoder->setEntropyCoder     ( m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice );
-      m_pcEntropyCoder->updateContextTables ( sliceType, pcSlice->getSliceQp() );
-      m_pcEntropyCoder->setEntropyCoder     ( m_pcSbacCoder, pcSlice );
     }
 
-    // set go-on entropy coder
+    // set go-on entropy coder (used for all trial encodings - the cu encoder and encoder search also have a copy of the same pointer)
     m_pcEntropyCoder->setEntropyCoder ( m_pcRDGoOnSbacCoder, pcSlice );
-    m_pcEntropyCoder->setBitstream( &pcBitCounters[uiSubStrm] );
+    m_pcEntropyCoder->setBitstream( &tempBitCounter );
+    tempBitCounter.resetBits();
+    m_pcRDGoOnSbacCoder->load( m_pppcRDSbacCoder[0][CI_CURR_BEST] ); // this copy is not strictly necessary here, but indicates that the GoOnSbacCoder
+                                                                     // is reset to a known state before every decision process.
 
     ((TEncBinCABAC*)m_pcRDGoOnSbacCoder->getEncBinIf())->setBinCountingEnableFlag(true);
 
@@ -1109,14 +877,14 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       Double estLambda = -1.0;
       Double bpp       = -1.0;
 
-      if ( ( rpcPic->getSlice( 0 )->getSliceType() == I_SLICE && m_pcCfg->getForceIntraQP() ) || !m_pcCfg->getLCULevelRC() )
+      if ( ( pcPic->getSlice( 0 )->getSliceType() == I_SLICE && m_pcCfg->getForceIntraQP() ) || !m_pcCfg->getLCULevelRC() )
       {
         estQP = pcSlice->getSliceQp();
       }
       else
       {
         bpp = m_pcRateCtrl->getRCPic()->getLCUTargetBpp(pcSlice->getSliceType());
-        if ( rpcPic->getSlice( 0 )->getSliceType() == I_SLICE)
+        if ( pcPic->getSlice( 0 )->getSliceType() == I_SLICE)
         {
           estLambda = m_pcRateCtrl->getRCPic()->getLCUEstLambdaAndQP(bpp, pcSlice->getSliceQp(), &estQP);
         }
@@ -1127,74 +895,89 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
         }
 
 #if REPN_FORMAT_IN_VPS
-          estQP     = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, estQP );
+        estQP     = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, estQP );
 #else
-          estQP     = Clip3( -pcSlice->getSPS()->getQpBDOffsetY(), MAX_QP, estQP );
+        estQP     = Clip3( -pcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, estQP );
 #endif
 
-          m_pcRdCost->setLambda(estLambda);
+        m_pcRdCost->setLambda(estLambda);
+
 #if RDOQ_CHROMA_LAMBDA
-          // set lambda for RDOQ
-          Double weight=m_pcRdCost->getChromaWeight();
-          const Double lambdaArray[3] = { estLambda, (estLambda / weight), (estLambda / weight) };
-          m_pcTrQuant->setLambdas( lambdaArray );
+        // set lambda for RDOQ
+        const Double chromaLambda = estLambda / m_pcRdCost->getChromaWeight();
+        const Double lambdaArray[MAX_NUM_COMPONENT] = { estLambda, chromaLambda, chromaLambda };
+        m_pcTrQuant->setLambdas( lambdaArray );
 #else
-          m_pcTrQuant->setLambda( estLambda );
+        m_pcTrQuant->setLambda( estLambda );
 #endif
       }
 
       m_pcRateCtrl->setRCQP( estQP );
 #if ADAPTIVE_QP_SELECTION
-      pcCU->getSlice()->setSliceQpBase( estQP );
+      pCtu->getSlice()->setSliceQpBase( estQP );
 #endif
     }
 
-    // run CU encoder
-    m_pcCuEncoder->compressCU( pcCU );
+    // run CTU trial encoder
+    m_pcCuEncoder->compressCtu( pCtu );
 
-    // restore entropy coder to an initial stage
+
+    // All CTU decisions have now been made. Restore entropy coder to an initial stage, ready to make a true encode,
+    // which will result in the state of the contexts being correct. It will also count up the number of bits coded,
+    // which is used if there is a limit of the number of bytes per slice-segment.
+
     m_pcEntropyCoder->setEntropyCoder ( m_pppcRDSbacCoder[0][CI_CURR_BEST], pcSlice );
-    m_pcEntropyCoder->setBitstream( &pcBitCounters[uiSubStrm] );
-    m_pcCuEncoder->setBitCounter( &pcBitCounters[uiSubStrm] );
-    m_pcBitCounter = &pcBitCounters[uiSubStrm];
-    pppcRDSbacCoder->setBinCountingEnableFlag( true );
-    m_pcBitCounter->resetBits();
-    pppcRDSbacCoder->setBinsCoded( 0 );
-    m_pcCuEncoder->encodeCU( pcCU );
+    m_pcEntropyCoder->setBitstream( &tempBitCounter );
+    pRDSbacCoder->setBinCountingEnableFlag( true );
+    m_pppcRDSbacCoder[0][CI_CURR_BEST]->resetBits();
+    pRDSbacCoder->setBinsCoded( 0 );
 
-    pppcRDSbacCoder->setBinCountingEnableFlag( false );
-    if (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_BYTES && ( ( pcSlice->getSliceBits() + m_pcEntropyCoder->getNumberOfWrittenBits() ) ) > m_pcCfg->getSliceArgument()<<3)
+    // encode CTU and calculate the true bit counters.
+    m_pcCuEncoder->encodeCtu( pCtu );
+
+
+    pRDSbacCoder->setBinCountingEnableFlag( false );
+
+    const Int numberOfWrittenBits = m_pcEntropyCoder->getNumberOfWrittenBits();
+
+    // Calculate if this CTU puts us over slice bit size.
+    // cannot terminate if current slice/slice-segment would be 0 Ctu in size,
+    const UInt validEndOfSliceCtuTsAddr = ctuTsAddr + (ctuTsAddr == startCtuTsAddr ? 1 : 0);
+    // Set slice end parameter
+    if(pcSlice->getSliceMode()==FIXED_NUMBER_OF_BYTES && pcSlice->getSliceBits()+numberOfWrittenBits > (pcSlice->getSliceArgument()<<3))
     {
-      pcSlice->setNextSlice( true );
-      break;
+      pcSlice->setSliceSegmentCurEndCtuTsAddr(validEndOfSliceCtuTsAddr);
+      pcSlice->setSliceCurEndCtuTsAddr(validEndOfSliceCtuTsAddr);
+      boundingCtuTsAddr=validEndOfSliceCtuTsAddr;
     }
-    if (m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_BYTES && pcSlice->getSliceSegmentBits()+m_pcEntropyCoder->getNumberOfWrittenBits() > (m_pcCfg->getSliceSegmentArgument() << 3) &&pcSlice->getSliceCurEndCUAddr()!=pcSlice->getSliceSegmentCurEndCUAddr())
+    else if(pcSlice->getSliceSegmentMode()==FIXED_NUMBER_OF_BYTES && pcSlice->getSliceSegmentBits()+numberOfWrittenBits > (pcSlice->getSliceSegmentArgument()<<3))
     {
-      pcSlice->setNextSliceSegment( true );
-      break;
+      pcSlice->setSliceSegmentCurEndCtuTsAddr(validEndOfSliceCtuTsAddr);
+      boundingCtuTsAddr=validEndOfSliceCtuTsAddr;
     }
 
-    ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]->load( m_pppcRDSbacCoder[0][CI_CURR_BEST] );
-    //Store probabilties of second LCU in line into buffer
-#if WPP_FIX
-    if ( ( uiCol == uiTileLCUX+1) && (depSliceSegmentsEnabled || (iNumSubstreams > 1)) && m_pcCfg->getWaveFrontsynchro()) 
-#else
-    if ( ( uiCol == uiTileLCUX+1) && (depSliceSegmentsEnabled || (pcSlice->getPPS()->getNumSubstreams() > 1)) && m_pcCfg->getWaveFrontsynchro())
-#endif
+    if (boundingCtuTsAddr <= ctuTsAddr)
+      break;
+
+    pcSlice->setSliceBits( (UInt)(pcSlice->getSliceBits() + numberOfWrittenBits) );
+    pcSlice->setSliceSegmentBits(pcSlice->getSliceSegmentBits()+numberOfWrittenBits);
+
+    // Store probabilities of second CTU in line into buffer - used only if wavefront-parallel-processing is enabled.
+    if ( ctuXPosInCtus == tileXPosInCtus+1 && m_pcCfg->getWaveFrontsynchro())
     {
-      m_pcBufferSbacCoders[uiTileCol].loadContexts(ppppcRDSbacCoders[uiSubStrm][0][CI_CURR_BEST]);
+      m_entropyCodingSyncContextState.loadContexts(m_pppcRDSbacCoder[0][CI_CURR_BEST]);
     }
+
 
     if ( m_pcCfg->getUseRateCtrl() )
     {
-
       Int actualQP        = g_RCInvalidQPValue;
       Double actualLambda = m_pcRdCost->getLambda();
-      Int actualBits      = pcCU->getTotalBits();
+      Int actualBits      = pCtu->getTotalBits();
       Int numberOfEffectivePixels    = 0;
-      for ( Int idx = 0; idx < rpcPic->getNumPartInCU(); idx++ )
+      for ( Int idx = 0; idx < pcPic->getNumPartitionsInCtu(); idx++ )
       {
-        if ( pcCU->getPredictionMode( idx ) != MODE_NONE && ( !pcCU->isSkipped( idx ) ) )
+        if ( pCtu->getPredictionMode( idx ) != NUMBER_OF_PREDICTION_MODES && ( !pCtu->isSkipped( idx ) ) )
         {
           numberOfEffectivePixels = numberOfEffectivePixels + 16;
           break;
@@ -1207,315 +990,161 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       }
       else
       {
-        actualQP = pcCU->getQP( 0 );
+        actualQP = pCtu->getQP( 0 );
       }
       m_pcRdCost->setLambda(oldLambda);
-
-      m_pcRateCtrl->getRCPic()->updateAfterLCU( m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda,
-        pcCU->getSlice()->getSliceType() == I_SLICE ? 0 : m_pcCfg->getLCULevelRC() );
+      m_pcRateCtrl->getRCPic()->updateAfterCTU( m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda,
+                                                pCtu->getSlice()->getSliceType() == I_SLICE ? 0 : m_pcCfg->getLCULevelRC() );
     }
 
-    m_uiPicTotalBits += pcCU->getTotalBits();
-    m_dPicRdCost     += pcCU->getTotalCost();
-    m_uiPicDist      += pcCU->getTotalDistortion();
+    m_uiPicTotalBits += pCtu->getTotalBits();
+    m_dPicRdCost     += pCtu->getTotalCost();
+    m_uiPicDist      += pCtu->getTotalDistortion();
   }
-#if WPP_FIX
-  if ((iNumSubstreams > 1) && !depSliceSegmentsEnabled)
-#else
-  if ((pcSlice->getPPS()->getNumSubstreams() > 1) && !depSliceSegmentsEnabled)
-#endif
+
+  // store context state at the end of this slice-segment, in case the next slice is a dependent slice and continues using the CABAC contexts.
+  if( pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag() )
   {
-    pcSlice->setNextSlice( true );
-  }
-  if(m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_BYTES || m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_BYTES)
-  {
-    if(pcSlice->getSliceCurEndCUAddr()<=pcSlice->getSliceSegmentCurEndCUAddr())
-    {
-       pcSlice->setNextSlice( true );
-    }
-    else
-    {
-       pcSlice->setNextSliceSegment( true );
-    }
-  }
-  if( depSliceSegmentsEnabled )
-  {
-    if (m_pcCfg->getWaveFrontsynchro())
-    {
-      CTXMem[1]->loadContexts( &m_pcBufferSbacCoders[uiTileCol] );//ctx 2.LCU
-    }
-     CTXMem[0]->loadContexts( m_pppcRDSbacCoder[0][CI_CURR_BEST] );//ctx end of dep.slice
+    m_lastSliceSegmentEndContextState.loadContexts( m_pppcRDSbacCoder[0][CI_CURR_BEST] );//ctx end of dep.slice
   }
   xRestoreWPparam( pcSlice );
+
+  // stop use of temporary bit counter object.
+  m_pppcRDSbacCoder[0][CI_CURR_BEST]->setBitstream(NULL);
+  m_pcRDGoOnSbacCoder->setBitstream(NULL); // stop use of tempBitCounter.
 }
 
 /**
  \param  rpcPic        picture class
  \retval rpcBitstream  bitstream class
  */
-Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstreams )
+Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstreams, UInt &numBinsCoded )
 {
-  UInt       uiCUAddr;
-  UInt       uiStartCUAddr;
-  UInt       uiBoundingCUAddr;
-  TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
+  TComSlice* pcSlice                 = pcPic->getSlice(getSliceIdx());
 
-  uiStartCUAddr=pcSlice->getSliceSegmentCurStartCUAddr();
-  uiBoundingCUAddr=pcSlice->getSliceSegmentCurEndCUAddr();
-  // choose entropy coder
-  {
-    m_pcSbacCoder->init( (TEncBinIf*)m_pcBinCABAC );
-    m_pcEntropyCoder->setEntropyCoder ( m_pcSbacCoder, pcSlice );
-  }
+  const UInt startCtuTsAddr          = pcSlice->getSliceSegmentCurStartCtuTsAddr();
+  const UInt boundingCtuTsAddr       = pcSlice->getSliceSegmentCurEndCtuTsAddr();
 
-  m_pcCuEncoder->setBitCounter( NULL );
-  m_pcBitCounter = NULL;
-  // Appropriate substream bitstream is switched later.
-  // for every CU
+  const UInt frameWidthInCtus        = pcPic->getPicSym()->getFrameWidthInCtus();
+  const Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
+  const Bool wavefrontsEnabled       = pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag();
+
+  // initialise entropy coder for the slice
+  m_pcSbacCoder->init( (TEncBinIf*)m_pcBinCABAC );
+  m_pcEntropyCoder->setEntropyCoder ( m_pcSbacCoder, pcSlice );
+  m_pcEntropyCoder->resetEntropy      ();
+
+  numBinsCoded = 0;
+  m_pcBinCABAC->setBinCountingEnableFlag( true );
+  m_pcBinCABAC->setBinsCoded(0);
+
 #if ENC_DEC_TRACE
   g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
   DTRACE_CABAC_VL( g_nSymbolCounter++ );
   DTRACE_CABAC_T( "\tPOC: " );
-  DTRACE_CABAC_V( rpcPic->getPOC() );
+  DTRACE_CABAC_V( pcPic->getPOC() );
   DTRACE_CABAC_T( "\n" );
 #if ENC_DEC_TRACE
   g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
 
-  TEncTop* pcEncTop = (TEncTop*) m_pcCfg;
-  TEncSbac* pcSbacCoders = pcEncTop->getSbacCoders(); //coder for each substream
-#if WPP_FIX
-  const Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams(); 
-#else
-  Int iNumSubstreams = pcSlice->getPPS()->getNumSubstreams();
-#endif
-  UInt uiBitsOriginallyInSubstreams = 0;
+
+  if (depSliceSegmentsEnabled)
   {
-    UInt uiTilesAcross = rpcPic->getPicSym()->getNumColumnsMinus1()+1;
-    for (UInt ui = 0; ui < uiTilesAcross; ui++)
-    {
-      m_pcBufferSbacCoders[ui].load(m_pcSbacCoder); //init. state
-    }
+    // modify initial contexts with previous slice segment if this is a dependent slice.
+    const UInt ctuRsAddr        = pcPic->getPicSym()->getCtuTsToRsAddrMap( startCtuTsAddr );
+    const UInt currentTileIdx=pcPic->getPicSym()->getTileIdxMap(ctuRsAddr);
+    const TComTile *pCurrentTile=pcPic->getPicSym()->getTComTile(currentTileIdx);
+    const UInt firstCtuRsAddrOfTile = pCurrentTile->getFirstCtuRsAddr();
 
-    for (Int iSubstrmIdx=0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
+    if( pcSlice->getDependentSliceSegmentFlag() && ctuRsAddr != firstCtuRsAddrOfTile )
     {
-      uiBitsOriginallyInSubstreams += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
-    }
-
-    for (UInt ui = 0; ui < uiTilesAcross; ui++)
-    {
-      m_pcBufferLowLatSbacCoders[ui].load(m_pcSbacCoder);  //init. state
+      if( pCurrentTile->getTileWidthInCtus() >= 2 || !wavefrontsEnabled )
+      {
+        m_pcSbacCoder->loadContexts(&m_lastSliceSegmentEndContextState);
+      }
     }
   }
 
-  UInt uiWidthInLCUs  = rpcPic->getPicSym()->getFrameWidthInCU();
-#if WPP_FIX
-  UInt uiCol=0, uiSubStrm=0;
-#else
-  UInt uiCol=0, uiLin=0, uiSubStrm=0;
-#endif
-  UInt uiTileCol      = 0;
-  UInt uiTileStartLCU = 0;
-  UInt uiTileLCUX     = 0;
-  Bool depSliceSegmentsEnabled = pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag();
-  uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU());  /* for tiles, uiStartCUAddr is NOT the real raster scan address, it is actually
-                                                                                               an encoding order index, so we need to convert the index (uiStartCUAddr)
-                                                                                               into the real raster scan address (uiCUAddr) via the CUOrderMap */
-#if WPP_FIX
-  UInt currentTileIdx=rpcPic->getPicSym()->getTileIdxMap(uiCUAddr); 
-  TComTile *pCurrentTile=rpcPic->getPicSym()->getTComTile(currentTileIdx); 
-  uiTileStartLCU = pCurrentTile->getFirstCUAddr(); 
-#else
-  uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
-#endif
-  if( depSliceSegmentsEnabled )
-  {
-#if WPP_FIX
-    if( pcSlice->isNextSlice()|| uiCUAddr == uiTileStartLCU)
-#else
-    if( pcSlice->isNextSlice()||
-        uiCUAddr == rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr())
-#endif
-    {
-      if(m_pcCfg->getWaveFrontsynchro())
-      {
-        CTXMem[1]->loadContexts(m_pcSbacCoder);
-      }
-      CTXMem[0]->loadContexts(m_pcSbacCoder);
-    }
-    else
-    {
-      if(m_pcCfg->getWaveFrontsynchro())
-      {
-#if WPP_FIX
-        uiTileCol = currentTileIdx % (rpcPic->getPicSym()->getNumColumnsMinus1()+1);
-#else
-        uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1);
-#endif
-        m_pcBufferSbacCoders[uiTileCol].loadContexts( CTXMem[1] );
-#if WPP_FIX
-        uiCUAddr = rpcPic->getPicSym()->getCUOrderMap( uiStartCUAddr /rpcPic->getNumPartInCU()); 
-        uiSubStrm=rpcPic->getSubstreamForLCUAddr(uiCUAddr, true, pcSlice); 
-        if ( pCurrentTile->getTileWidth() < 2) 
-        { 
-          CTXMem[0]->loadContexts(m_pcSbacCoder); 
-        } 
-#else
-        Int iNumSubstreamsPerTile = iNumSubstreams/rpcPic->getPicSym()->getNumTiles();
-        uiLin     = uiCUAddr / uiWidthInLCUs;
-        uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(rpcPic->getPicSym()->getCUOrderMap( uiCUAddr))*iNumSubstreamsPerTile
-          + uiLin%iNumSubstreamsPerTile;
-        if ( (uiCUAddr%uiWidthInLCUs+1) >= uiWidthInLCUs  )
-        {
-          uiCol     = uiCUAddr % uiWidthInLCUs;
-          uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-          if(uiCol==uiTileLCUX)
-          {
-            CTXMem[0]->loadContexts(m_pcSbacCoder);
-          }
-        }
-#endif
-      }
-      pcSbacCoders[uiSubStrm].loadContexts( CTXMem[0] );
-    }
-  }
+  // for every CTU in the slice segment...
 
-  UInt uiEncCUOrder;
-  for( uiEncCUOrder = uiStartCUAddr /rpcPic->getNumPartInCU();
-       uiEncCUOrder < (uiBoundingCUAddr+rpcPic->getNumPartInCU()-1)/rpcPic->getNumPartInCU();
-       uiCUAddr = rpcPic->getPicSym()->getCUOrderMap(++uiEncCUOrder) )
+  for( UInt ctuTsAddr = startCtuTsAddr; ctuTsAddr < boundingCtuTsAddr; ++ctuTsAddr )
   {
-    uiTileCol = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr) % (rpcPic->getPicSym()->getNumColumnsMinus1()+1); // what column of tiles are we in?
-    uiTileStartLCU = rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr();
-    uiTileLCUX = uiTileStartLCU % uiWidthInLCUs;
-    //UInt uiSliceStartLCU = pcSlice->getSliceCurStartCUAddr();
-    uiCol     = uiCUAddr % uiWidthInLCUs;
-#if WPP_FIX
-    uiSubStrm=rpcPic->getSubstreamForLCUAddr(uiCUAddr, true, pcSlice);
-#else
-    uiLin     = uiCUAddr / uiWidthInLCUs;
-    if (pcSlice->getPPS()->getNumSubstreams() > 1)
-    {
-      // independent tiles => substreams are "per tile".  iNumSubstreams has already been multiplied.
-      Int iNumSubstreamsPerTile = iNumSubstreams/rpcPic->getPicSym()->getNumTiles();
-      uiSubStrm = rpcPic->getPicSym()->getTileIdxMap(uiCUAddr)*iNumSubstreamsPerTile
-          + uiLin%iNumSubstreamsPerTile;
-    }
-    else
-    {
-      // dependent tiles => substreams are "per frame".
-      uiSubStrm = uiLin % iNumSubstreams;
-    }
-#endif
+    const UInt ctuRsAddr = pcPic->getPicSym()->getCtuTsToRsAddrMap(ctuTsAddr);
+    const TComTile &currentTile = *(pcPic->getPicSym()->getTComTile(pcPic->getPicSym()->getTileIdxMap(ctuRsAddr)));
+    const UInt firstCtuRsAddrOfTile = currentTile.getFirstCtuRsAddr();
+    const UInt tileXPosInCtus       = firstCtuRsAddrOfTile % frameWidthInCtus;
+    const UInt tileYPosInCtus       = firstCtuRsAddrOfTile / frameWidthInCtus;
+    const UInt ctuXPosInCtus        = ctuRsAddr % frameWidthInCtus;
+    const UInt ctuYPosInCtus        = ctuRsAddr / frameWidthInCtus;
+    const UInt uiSubStrm=pcPic->getSubstreamForCtuAddr(ctuRsAddr, true, pcSlice);
+    TComDataCU* pCtu = pcPic->getCtu( ctuRsAddr );
 
     m_pcEntropyCoder->setBitstream( &pcSubstreams[uiSubStrm] );
-    // Synchronize cabac probabilities with upper-right LCU if it's available and we're at the start of a line.
-#if WPP_FIX
-    if (((iNumSubstreams > 1) || depSliceSegmentsEnabled) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
-#else
-    if (((pcSlice->getPPS()->getNumSubstreams() > 1) || depSliceSegmentsEnabled) && (uiCol == uiTileLCUX) && m_pcCfg->getWaveFrontsynchro())
-#endif
+
+    // set up CABAC contexts' state for this CTU
+    if (ctuRsAddr == firstCtuRsAddrOfTile)
     {
-      // We'll sync if the TR is available.
-      TComDataCU *pcCUUp = rpcPic->getCU( uiCUAddr )->getCUAbove();
-      UInt uiWidthInCU = rpcPic->getFrameWidthInCU();
-      UInt uiMaxParts = 1<<(pcSlice->getSPS()->getMaxCUDepth()<<1);
-      TComDataCU *pcCUTR = NULL;
-      if ( pcCUUp && ((uiCUAddr%uiWidthInCU+1) < uiWidthInCU)  )
+      if (ctuTsAddr != startCtuTsAddr) // if it is the first CTU, then the entropy coder has already been reset
       {
-        pcCUTR = rpcPic->getCU( uiCUAddr - uiWidthInCU + 1 );
-      }
-      if ( (true/*bEnforceSliceRestriction*/ &&
-          ((pcCUTR==NULL) || (pcCUTR->getSlice()==NULL) ||
-              (pcCUTR->getSCUAddr()+uiMaxParts-1 < pcSlice->getSliceCurStartCUAddr()) ||
-              ((rpcPic->getPicSym()->getTileIdxMap( pcCUTR->getAddr() ) != rpcPic->getPicSym()->getTileIdxMap(uiCUAddr)))
-          ))
-      )
-      {
-        // TR not available.
-      }
-      else
-      {
-        // TR is available, we use it.
-        pcSbacCoders[uiSubStrm].loadContexts( &m_pcBufferSbacCoders[uiTileCol] );
+        m_pcEntropyCoder->resetEntropy();
       }
     }
-    m_pcSbacCoder->load(&pcSbacCoders[uiSubStrm]);  //this load is used to simplify the code (avoid to change all the call to m_pcSbacCoder)
-
-    // reset the entropy coder
-    if( uiCUAddr == rpcPic->getPicSym()->getTComTile(rpcPic->getPicSym()->getTileIdxMap(uiCUAddr))->getFirstCUAddr() &&                                   // must be first CU of tile
-        uiCUAddr!=0 &&                                                                                                                                    // cannot be first CU of picture
-        uiCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceSegmentCurStartCUAddr())/rpcPic->getNumPartInCU() &&
-        uiCUAddr!=rpcPic->getPicSym()->getPicSCUAddr(rpcPic->getSlice(rpcPic->getCurrSliceIdx())->getSliceCurStartCUAddr())/rpcPic->getNumPartInCU())     // cannot be first CU of slice
+    else if (ctuXPosInCtus == tileXPosInCtus && wavefrontsEnabled)
     {
+      // Synchronize cabac probabilities with upper-right CTU if it's available and at the start of a line.
+      if (ctuTsAddr != startCtuTsAddr) // if it is the first CTU, then the entropy coder has already been reset
       {
-        // We're crossing into another tile, tiles are independent.
-        // When tiles are independent, we have "substreams per tile".  Each substream has already been terminated, and we no longer
-        // have to perform it here.
-#if WPP_FIX
-        if (iNumSubstreams <= 1)
-#else
-        if (pcSlice->getPPS()->getNumSubstreams() > 1)
-        {
-          ; // do nothing.
-        }
-        else
-#endif
-        {
-          SliceType sliceType  = pcSlice->getSliceType();
-          if (!pcSlice->isIntra() && pcSlice->getPPS()->getCabacInitPresentFlag() && pcSlice->getPPS()->getEncCABACTableIdx()!=I_SLICE)
-          {
-            sliceType = (SliceType) pcSlice->getPPS()->getEncCABACTableIdx();
-          }
-          m_pcEntropyCoder->updateContextTables( sliceType, pcSlice->getSliceQp() );
-          // Byte-alignment in slice_data() when new tile
-          pcSubstreams[uiSubStrm].writeByteAlignment();
-        }
+        m_pcEntropyCoder->resetEntropy();
       }
+      TComDataCU *pCtuUp = pCtu->getCtuAbove();
+      if ( pCtuUp && ((ctuRsAddr%frameWidthInCtus+1) < frameWidthInCtus)  )
       {
-        UInt numStartCodeEmulations = pcSubstreams[uiSubStrm].countStartCodeEmulations();
-        UInt uiAccumulatedSubstreamLength = 0;
-        for (Int iSubstrmIdx=0; iSubstrmIdx < iNumSubstreams; iSubstrmIdx++)
+        TComDataCU *pCtuTR = pcPic->getCtu( ctuRsAddr - frameWidthInCtus + 1 );
+        if ( pCtu->CUIsFromSameSliceAndTile(pCtuTR) )
         {
-          uiAccumulatedSubstreamLength += pcSubstreams[iSubstrmIdx].getNumberOfWrittenBits();
+          // Top-right is available, so use it.
+          m_pcSbacCoder->loadContexts( &m_entropyCodingSyncContextState );
         }
-        // add bits coded in previous dependent slices + bits coded so far
-        // add number of emulation prevention byte count in the tile
-        pcSlice->addTileLocation( ((pcSlice->getTileOffstForMultES() + uiAccumulatedSubstreamLength - uiBitsOriginallyInSubstreams) >> 3) + numStartCodeEmulations );
       }
     }
 
-    TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
+
     if ( pcSlice->getSPS()->getUseSAO() )
     {
-      if (pcSlice->getSaoEnabledFlag()||pcSlice->getSaoEnabledFlagChroma())
+      Bool bIsSAOSliceEnabled = false;
+      Bool sliceEnabled[MAX_NUM_COMPONENT];
+      for(Int comp=0; comp < MAX_NUM_COMPONENT; comp++)
       {
-        SAOBlkParam& saoblkParam = (rpcPic->getPicSym()->getSAOBlkParam())[uiCUAddr];
-        Bool sliceEnabled[NUM_SAO_COMPONENTS];
-        sliceEnabled[SAO_Y] = pcSlice->getSaoEnabledFlag();
-        sliceEnabled[SAO_Cb]= sliceEnabled[SAO_Cr]= pcSlice->getSaoEnabledFlagChroma();
+        ComponentID compId=ComponentID(comp);
+        sliceEnabled[compId] = pcSlice->getSaoEnabledFlag(toChannelType(compId)) && (comp < pcPic->getNumberValidComponents());
+        if (sliceEnabled[compId]) bIsSAOSliceEnabled=true;
+      }
+      if (bIsSAOSliceEnabled)
+      {
+        SAOBlkParam& saoblkParam = (pcPic->getPicSym()->getSAOBlkParam())[ctuRsAddr];
 
         Bool leftMergeAvail = false;
         Bool aboveMergeAvail= false;
         //merge left condition
-        Int rx = (uiCUAddr % uiWidthInLCUs);
+        Int rx = (ctuRsAddr % frameWidthInCtus);
         if(rx > 0)
         {
-          leftMergeAvail = rpcPic->getSAOMergeAvailability(uiCUAddr, uiCUAddr-1);
+          leftMergeAvail = pcPic->getSAOMergeAvailability(ctuRsAddr, ctuRsAddr-1);
         }
 
         //merge up condition
-        Int ry = (uiCUAddr / uiWidthInLCUs);
+        Int ry = (ctuRsAddr / frameWidthInCtus);
         if(ry > 0)
         {
-          aboveMergeAvail = rpcPic->getSAOMergeAvailability(uiCUAddr, uiCUAddr-uiWidthInLCUs);
+          aboveMergeAvail = pcPic->getSAOMergeAvailability(ctuRsAddr, ctuRsAddr-frameWidthInCtus);
         }
 
 #if SVC_EXTENSION
-        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerId()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
+        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, m_ppcTEncTop[pcSlice->getLayerIdx()]->getSAO()->getSaoMaxOffsetQVal(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #else
-        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam,sliceEnabled, leftMergeAvail, aboveMergeAvail);
+        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail);
 #endif
       }
     }
@@ -1523,46 +1152,52 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstre
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-    if ( (m_pcCfg->getSliceMode()!=0 || m_pcCfg->getSliceSegmentMode()!=0) &&
-      uiCUAddr == rpcPic->getPicSym()->getCUOrderMap((uiBoundingCUAddr+rpcPic->getNumPartInCU()-1)/rpcPic->getNumPartInCU()-1) )
-    {
-      m_pcCuEncoder->encodeCU( pcCU );
-    }
-    else
-    {
-      m_pcCuEncoder->encodeCU( pcCU );
-    }
+      m_pcCuEncoder->encodeCtu( pCtu );
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
-    pcSbacCoders[uiSubStrm].load(m_pcSbacCoder);   //load back status of the entropy coder after encoding the LCU into relevant bitstream entropy coder
-    //Store probabilties of second LCU in line into buffer
-#if WPP_FIX
-    if ( (depSliceSegmentsEnabled || (iNumSubstreams > 1)) && (uiCol == uiTileLCUX+1) && m_pcCfg->getWaveFrontsynchro())
-#else
-    if ( (depSliceSegmentsEnabled || (pcSlice->getPPS()->getNumSubstreams() > 1)) && (uiCol == uiTileLCUX+1) && m_pcCfg->getWaveFrontsynchro())
-#endif
+
+    //Store probabilities of second CTU in line into buffer
+    if ( ctuXPosInCtus == tileXPosInCtus+1 && wavefrontsEnabled)
     {
-      m_pcBufferSbacCoders[uiTileCol].loadContexts( &pcSbacCoders[uiSubStrm] );
+      m_entropyCodingSyncContextState.loadContexts( m_pcSbacCoder );
     }
-  }
+
+    // terminate the sub-stream, if required (end of slice-segment, end of tile, end of wavefront-CTU-row):
+    if (ctuTsAddr+1 == boundingCtuTsAddr ||
+         (  ctuXPosInCtus + 1 == tileXPosInCtus + currentTile.getTileWidthInCtus() &&
+          ( ctuYPosInCtus + 1 == tileYPosInCtus + currentTile.getTileHeightInCtus() || wavefrontsEnabled)
+         )
+       )
+    {
+      m_pcEntropyCoder->encodeTerminatingBit(1);
+      m_pcEntropyCoder->encodeSliceFinish();
+      // Byte-alignment in slice_data() when new tile
+      pcSubstreams[uiSubStrm].writeByteAlignment();
+
+      // write sub-stream size
+      if (ctuTsAddr+1 != boundingCtuTsAddr)
+      {
+        pcSlice->addSubstreamSize( (pcSubstreams[uiSubStrm].getNumberOfWrittenBits() >> 3) + pcSubstreams[uiSubStrm].countStartCodeEmulations() );
+      }
+    }
+  } // CTU-loop
+
   if( depSliceSegmentsEnabled )
   {
-    if (m_pcCfg->getWaveFrontsynchro())
-    {
-      CTXMem[1]->loadContexts( &m_pcBufferSbacCoders[uiTileCol] );//ctx 2.LCU
-    }
-    CTXMem[0]->loadContexts( m_pcSbacCoder );//ctx end of dep.slice
+    m_lastSliceSegmentEndContextState.loadContexts( m_pcSbacCoder );//ctx end of dep.slice
   }
+
 #if ADAPTIVE_QP_SELECTION
   if( m_pcCfg->getUseAdaptQpSelect() )
   {
     m_pcTrQuant->storeSliceQpNext(pcSlice);
   }
 #endif
+
   if (pcSlice->getPPS()->getCabacInitPresentFlag())
   {
-    if  (pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag())
+    if (pcSlice->getPPS()->getDependentSliceSegmentsEnabledFlag())
     {
       pcSlice->getPPS()->setEncCABACTableIdx( pcSlice->getSliceType() );
     }
@@ -1571,527 +1206,130 @@ Void TEncSlice::encodeSlice   ( TComPic*& rpcPic, TComOutputBitstream* pcSubstre
       m_pcEntropyCoder->determineCabacInitIdx();
     }
   }
+  numBinsCoded = m_pcBinCABAC->getBinsCoded();
 }
 
-#if WPP_FIX 
-Void TEncSlice::calculateBoundingCUAddrForSlice(UInt &uiStartCUAddrSlice, UInt &uiBoundingCUAddrSlice, Bool &bReachedTileBoundary, TComPic*& rpcPic, Bool bEncodeSlice, Int sliceMode, Int sliceArgument, UInt uiSliceCurEndCUAddr) 
-{ 
-  TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx()); 
-  UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame(); 
-  const UInt scaleCUAddr = rpcPic->getNumPartInCU(); // due to fine granularity slices all addresses are scaled. 
-  uiBoundingCUAddrSlice=0; 
-  bReachedTileBoundary=false; 
-
-  switch (sliceMode) 
-  { 
-  case FIXED_NUMBER_OF_LCU: 
-    { 
-      UInt uiCUAddrIncrement    = sliceArgument; 
-      uiBoundingCUAddrSlice     = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*scaleCUAddr) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*scaleCUAddr; 
-    } 
-    break; 
-  case FIXED_NUMBER_OF_BYTES: 
-    if (bEncodeSlice) 
-      uiBoundingCUAddrSlice     = uiSliceCurEndCUAddr; 
-    else 
-      uiBoundingCUAddrSlice     = uiNumberOfCUsInFrame*scaleCUAddr; 
-    break; 
-  case FIXED_NUMBER_OF_TILES: 
-    { 
-      UInt tileIdx              = rpcPic->getPicSym()->getTileIdxMap( rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddrSlice/scaleCUAddr) ); 
-      UInt uiCUAddrIncrement    = 0; 
-      UInt tileTotalCount       = (rpcPic->getPicSym()->getNumColumnsMinus1()+1) * (rpcPic->getPicSym()->getNumRowsMinus1()+1); 
-
-      for(UInt tileIdxIncrement = 0; tileIdxIncrement < sliceArgument; tileIdxIncrement++) 
-      { 
-        if((tileIdx + tileIdxIncrement) < tileTotalCount) 
-        { 
-          UInt tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth(); 
-          UInt tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight(); 
-          uiCUAddrIncrement    += (tileWidthInLcu * tileHeightInLcu * scaleCUAddr); 
-        } 
-      } 
-
-      uiBoundingCUAddrSlice     = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*scaleCUAddr) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*scaleCUAddr; 
-    } 
-    break; 
-  default: 
-    uiBoundingCUAddrSlice       = uiNumberOfCUsInFrame*scaleCUAddr; 
-    break; 
-  } 
-
-  // Adjust for tiles and wavefronts. 
-  if ((sliceMode == FIXED_NUMBER_OF_LCU || sliceMode == FIXED_NUMBER_OF_BYTES) && 
-    (m_pcCfg->getNumRowsMinus1() > 0 || m_pcCfg->getNumColumnsMinus1() > 0)) 
-  { 
-    const UInt lcuEncAddrStart = (uiStartCUAddrSlice+scaleCUAddr-1)/scaleCUAddr; 
-    const UInt lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddrStart); 
-    const UInt startTileIdx = rpcPic->getPicSym()->getTileIdxMap(lcuAddr); 
-    const Bool bWavefrontsEnabled = m_pcCfg->getWaveFrontsynchro(); 
-
-    TComTile *pStartingTile = rpcPic->getPicSym()->getTComTile(startTileIdx); 
-    const UInt uiTileStartLCUEncAddr      = rpcPic->getPicSym()->getInverseCUOrderMap(pStartingTile->getFirstCUAddr()); 
-    const UInt uiTileStartWidth           = pStartingTile->getTileWidth(); 
-    const UInt uiTileStartHeight          = pStartingTile->getTileHeight(); 
-    const UInt uiTileLastLCUEncAddr_excl  = uiTileStartLCUEncAddr + uiTileStartWidth*uiTileStartHeight; 
-    const UInt tileBoundingCUAddrSlice    = uiTileLastLCUEncAddr_excl * scaleCUAddr; 
-
-    const UInt lcuColumnOfStartingTile=((lcuEncAddrStart-uiTileStartLCUEncAddr)%uiTileStartWidth); 
-    if (bWavefrontsEnabled && lcuColumnOfStartingTile!=0) 
-    { 
-      // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row 
-      const UInt numberOfLCUsToEndOfRow=uiTileStartWidth-lcuColumnOfStartingTile; 
-      const UInt wavefrontTileBoundingCUAddrSlice = (lcuEncAddrStart+numberOfLCUsToEndOfRow)*scaleCUAddr; 
-      if (wavefrontTileBoundingCUAddrSlice < uiBoundingCUAddrSlice) 
-      { 
-        uiBoundingCUAddrSlice = wavefrontTileBoundingCUAddrSlice; 
-      } 
-    } 
-
-    if (tileBoundingCUAddrSlice < uiBoundingCUAddrSlice) 
-    { 
-      uiBoundingCUAddrSlice = tileBoundingCUAddrSlice; 
-      bReachedTileBoundary = true; 
-    } 
-  } 
-  else if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*scaleCUAddr) != 0)) 
-  { 
-    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row 
-    uiBoundingCUAddrSlice = min(uiBoundingCUAddrSlice, uiStartCUAddrSlice - (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*scaleCUAddr)) + (rpcPic->getFrameWidthInCU()*scaleCUAddr)); 
-  } 
-
-  //calculate real slice start address (fine granularity slices) 
-  { 
-    UInt uiInternalAddress = rpcPic->getPicSym()->getPicSCUAddr(uiStartCUAddrSlice) % scaleCUAddr; 
-    UInt uiExternalAddress = rpcPic->getPicSym()->getPicSCUAddr(uiStartCUAddrSlice) / scaleCUAddr; 
-    UInt uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ]; 
-    UInt uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ]; 
-#if REPN_FORMAT_IN_VPS
-    UInt uiWidth = pcSlice->getPicWidthInLumaSamples();
-    UInt uiHeight = pcSlice->getPicHeightInLumaSamples();
-#else
-    UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples(); 
-    UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples(); 
-#endif
-    while((uiPosX>=uiWidth||uiPosY>=uiHeight)&&!(uiPosX>=uiWidth&&uiPosY>=uiHeight)) 
-    { 
-      uiInternalAddress++; 
-      if(uiInternalAddress>=scaleCUAddr) 
-      { 
-        uiInternalAddress=0; 
-        uiExternalAddress = rpcPic->getPicSym()->getCUOrderMap(rpcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress)+1); 
-      } 
-      uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ]; 
-      uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ]; 
-    } 
-    UInt uiRealStartAddress = rpcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress*scaleCUAddr+uiInternalAddress); 
-
-    uiStartCUAddrSlice=uiRealStartAddress; 
-  } 
-} 
-
-/** Determines the starting and bounding LCU address of current slice / dependent slice 
-* \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true] 
-* \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address 
-*/ 
-Void TEncSlice::xDetermineStartAndBoundingCUAddr  ( UInt& startCUAddr, UInt& boundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice ) 
-{ 
-  TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx()); 
-
-  // Non-dependent slice 
-  UInt uiStartCUAddrSlice   = pcSlice->getSliceCurStartCUAddr(); 
-  Bool bTileBoundarySlice   = false; 
-  UInt uiBoundingCUAddrSlice; 
-  calculateBoundingCUAddrForSlice(uiStartCUAddrSlice, uiBoundingCUAddrSlice, bTileBoundarySlice, rpcPic, bEncodeSlice, m_pcCfg->getSliceMode(), m_pcCfg->getSliceArgument(), pcSlice->getSliceCurEndCUAddr()); 
-  pcSlice->setSliceCurEndCUAddr( uiBoundingCUAddrSlice ); 
-  pcSlice->setSliceCurStartCUAddr(uiStartCUAddrSlice); 
-
-  // Dependent slice 
-  UInt startCUAddrSliceSegment    = pcSlice->getSliceSegmentCurStartCUAddr(); 
-  Bool bTileBoundarySliceSegment  = false; 
-  UInt boundingCUAddrSliceSegment; 
-  calculateBoundingCUAddrForSlice(startCUAddrSliceSegment, boundingCUAddrSliceSegment, bTileBoundarySliceSegment, rpcPic, bEncodeSlice, m_pcCfg->getSliceSegmentMode(), m_pcCfg->getSliceSegmentArgument(), pcSlice->getSliceSegmentCurEndCUAddr()); 
-  pcSlice->setSliceSegmentCurEndCUAddr( boundingCUAddrSliceSegment ); 
-  pcSlice->setSliceSegmentCurStartCUAddr(startCUAddrSliceSegment); 
-
-  // Make a joint decision based on reconstruction and dependent slice bounds 
-  startCUAddr    = max(uiStartCUAddrSlice   , startCUAddrSliceSegment   ); 
-  boundingCUAddr = min(uiBoundingCUAddrSlice, boundingCUAddrSliceSegment); 
-
-
-  if (!bEncodeSlice) 
-  { 
-    // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice 
-    // first. Set the flags accordingly. 
-    if ( (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU) 
-      || (m_pcCfg->getSliceMode()==0 && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU) 
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode()==0) 
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU) 
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode()==0) 
-      || (m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceMode()==0) 
-      || bTileBoundarySlice || bTileBoundarySliceSegment ) 
-    { 
-      if (uiBoundingCUAddrSlice < boundingCUAddrSliceSegment) 
-      { 
-        pcSlice->setNextSlice       ( true ); 
-        pcSlice->setNextSliceSegment( false ); 
-      } 
-      else if (uiBoundingCUAddrSlice > boundingCUAddrSliceSegment) 
-      { 
-        pcSlice->setNextSlice       ( false ); 
-        pcSlice->setNextSliceSegment( true ); 
-      } 
-      else 
-      { 
-        pcSlice->setNextSlice       ( true ); 
-        pcSlice->setNextSliceSegment( true ); 
-      } 
-    } 
-    else 
-    { 
-      pcSlice->setNextSlice       ( false ); 
-      pcSlice->setNextSliceSegment( false ); 
-    } 
-  } 
-} 
-#else 
-/** Determines the starting and bounding LCU address of current slice / dependent slice
- * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
- * \returns Updates uiStartCUAddr, uiBoundingCUAddr with appropriate LCU address
- */
-Void TEncSlice::xDetermineStartAndBoundingCUAddr  ( UInt& startCUAddr, UInt& boundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice )
+Void TEncSlice::calculateBoundingCtuTsAddrForSlice(UInt &startCtuTSAddrSlice, UInt &boundingCtuTSAddrSlice, Bool &haveReachedTileBoundary,
+                                                   TComPic* pcPic, const Bool encodingSlice, const Int sliceMode, const Int sliceArgument, const UInt sliceCurEndCtuTSAddr)
 {
-  TComSlice* pcSlice = rpcPic->getSlice(getSliceIdx());
-  UInt uiStartCUAddrSlice, uiBoundingCUAddrSlice;
-  UInt tileIdxIncrement;
-  UInt tileIdx;
-  UInt tileWidthInLcu;
-  UInt tileHeightInLcu;
-  UInt tileTotalCount;
+  TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
+  const UInt numberOfCtusInFrame = pcPic->getNumberOfCtusInFrame();
+  boundingCtuTSAddrSlice=0;
+  haveReachedTileBoundary=false;
 
-  uiStartCUAddrSlice        = pcSlice->getSliceCurStartCUAddr();
-  UInt uiNumberOfCUsInFrame = rpcPic->getNumCUsInFrame();
-  uiBoundingCUAddrSlice     = uiNumberOfCUsInFrame;
-  if (bEncodeSlice)
+  switch (sliceMode)
   {
-    UInt uiCUAddrIncrement;
-    switch (m_pcCfg->getSliceMode())
-    {
-    case FIXED_NUMBER_OF_LCU:
-      uiCUAddrIncrement        = m_pcCfg->getSliceArgument();
-      uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
+    case FIXED_NUMBER_OF_CTU:
+      {
+        UInt ctuAddrIncrement    = sliceArgument;
+        boundingCtuTSAddrSlice  = ((startCtuTSAddrSlice + ctuAddrIncrement) < numberOfCtusInFrame) ? (startCtuTSAddrSlice + ctuAddrIncrement) : numberOfCtusInFrame;
+      }
       break;
     case FIXED_NUMBER_OF_BYTES:
-      uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-      uiBoundingCUAddrSlice    = pcSlice->getSliceCurEndCUAddr();
+      if (encodingSlice)
+        boundingCtuTSAddrSlice  = sliceCurEndCtuTSAddr;
+      else
+        boundingCtuTSAddrSlice  = numberOfCtusInFrame;
       break;
     case FIXED_NUMBER_OF_TILES:
-      tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-        rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddrSlice/rpcPic->getNumPartInCU())
-        );
-      uiCUAddrIncrement        = 0;
-      tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1()+1) * (rpcPic->getPicSym()->getNumRowsMinus1()+1);
-
-      for(tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceArgument(); tileIdxIncrement++)
       {
-        if((tileIdx + tileIdxIncrement) < tileTotalCount)
-        {
-          tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-          tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-          uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-        }
-      }
+        const UInt tileIdx        = pcPic->getPicSym()->getTileIdxMap( pcPic->getPicSym()->getCtuTsToRsAddrMap(startCtuTSAddrSlice) );
+        const UInt tileTotalCount = (pcPic->getPicSym()->getNumTileColumnsMinus1()+1) * (pcPic->getPicSym()->getNumTileRowsMinus1()+1);
+        UInt ctuAddrIncrement   = 0;
 
-      uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
+        for(UInt tileIdxIncrement = 0; tileIdxIncrement < sliceArgument; tileIdxIncrement++)
+        {
+          if((tileIdx + tileIdxIncrement) < tileTotalCount)
+          {
+            UInt tileWidthInCtus   = pcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidthInCtus();
+            UInt tileHeightInCtus  = pcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeightInCtus();
+            ctuAddrIncrement    += (tileWidthInCtus * tileHeightInCtus);
+          }
+        }
+
+        boundingCtuTSAddrSlice  = ((startCtuTSAddrSlice + ctuAddrIncrement) < numberOfCtusInFrame) ? (startCtuTSAddrSlice + ctuAddrIncrement) : numberOfCtusInFrame;
+      }
       break;
     default:
-      uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-      uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
+      boundingCtuTSAddrSlice    = numberOfCtusInFrame;
       break;
-    }
-    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()) != 0))
-    {
-      uiBoundingCUAddrSlice = min(uiBoundingCUAddrSlice, uiStartCUAddrSlice - (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU())) + (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()));
-    }
-    pcSlice->setSliceCurEndCUAddr( uiBoundingCUAddrSlice );
-  }
-  else
-  {
-    UInt uiCUAddrIncrement     ;
-    switch (m_pcCfg->getSliceMode())
-    {
-    case FIXED_NUMBER_OF_LCU:
-      uiCUAddrIncrement        = m_pcCfg->getSliceArgument();
-      uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    case FIXED_NUMBER_OF_TILES:
-      tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-        rpcPic->getPicSym()->getCUOrderMap(uiStartCUAddrSlice/rpcPic->getNumPartInCU())
-        );
-      uiCUAddrIncrement        = 0;
-      tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1()+1) * (rpcPic->getPicSym()->getNumRowsMinus1()+1);
-
-      for(tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceArgument(); tileIdxIncrement++)
-      {
-        if((tileIdx + tileIdxIncrement) < tileTotalCount)
-        {
-          tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-          tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-          uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-        }
-      }
-
-      uiBoundingCUAddrSlice    = ((uiStartCUAddrSlice + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU()) ? (uiStartCUAddrSlice + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    default:
-      uiCUAddrIncrement        = rpcPic->getNumCUsInFrame();
-      uiBoundingCUAddrSlice    = uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    }
-    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
-    if (pcSlice->getPPS()->getNumSubstreams() > 1 && (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()) != 0))
-    {
-      uiBoundingCUAddrSlice = min(uiBoundingCUAddrSlice, uiStartCUAddrSlice - (uiStartCUAddrSlice % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU())) + (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()));
-    }
-    pcSlice->setSliceCurEndCUAddr( uiBoundingCUAddrSlice );
   }
 
-  Bool tileBoundary = false;
-  if ((m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_LCU || m_pcCfg->getSliceMode() == FIXED_NUMBER_OF_BYTES) &&
+  // Adjust for tiles and wavefronts.
+  if ((sliceMode == FIXED_NUMBER_OF_CTU || sliceMode == FIXED_NUMBER_OF_BYTES) &&
       (m_pcCfg->getNumRowsMinus1() > 0 || m_pcCfg->getNumColumnsMinus1() > 0))
   {
-    UInt lcuEncAddr = (uiStartCUAddrSlice+rpcPic->getNumPartInCU()-1)/rpcPic->getNumPartInCU();
-    UInt lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-    UInt startTileIdx = rpcPic->getPicSym()->getTileIdxMap(lcuAddr);
-    UInt tileBoundingCUAddrSlice = 0;
-    while (lcuEncAddr < uiNumberOfCUsInFrame && rpcPic->getPicSym()->getTileIdxMap(lcuAddr) == startTileIdx)
-    {
-      lcuEncAddr++;
-      lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-    }
-    tileBoundingCUAddrSlice = lcuEncAddr*rpcPic->getNumPartInCU();
+    const UInt ctuRSAddr                  = pcPic->getPicSym()->getCtuTsToRsAddrMap(startCtuTSAddrSlice);
+    const UInt startTileIdx               = pcPic->getPicSym()->getTileIdxMap(ctuRSAddr);
+    const Bool wavefrontsAreEnabled       = m_pcCfg->getWaveFrontsynchro();
 
-    if (tileBoundingCUAddrSlice < uiBoundingCUAddrSlice)
-    {
-      uiBoundingCUAddrSlice = tileBoundingCUAddrSlice;
-      pcSlice->setSliceCurEndCUAddr( uiBoundingCUAddrSlice );
-      tileBoundary = true;
-    }
-  }
+    const TComTile *pStartingTile         = pcPic->getPicSym()->getTComTile(startTileIdx);
+    const UInt tileStartTsAddr            = pcPic->getPicSym()->getCtuRsToTsAddrMap(pStartingTile->getFirstCtuRsAddr());
+    const UInt tileStartWidth             = pStartingTile->getTileWidthInCtus();
+    const UInt tileStartHeight            = pStartingTile->getTileHeightInCtus();
+    const UInt tileLastTsAddr_excl        = tileStartTsAddr + tileStartWidth*tileStartHeight;
+    const UInt tileBoundingCtuTsAddrSlice = tileLastTsAddr_excl;
 
-  // Dependent slice
-  UInt startCUAddrSliceSegment, boundingCUAddrSliceSegment;
-  startCUAddrSliceSegment    = pcSlice->getSliceSegmentCurStartCUAddr();
-  boundingCUAddrSliceSegment = uiNumberOfCUsInFrame;
-  if (bEncodeSlice)
-  {
-    UInt uiCUAddrIncrement;
-    switch (m_pcCfg->getSliceSegmentMode())
+    const UInt ctuColumnOfStartingTile    = ((startCtuTSAddrSlice-tileStartTsAddr)%tileStartWidth);
+    if (wavefrontsAreEnabled && ctuColumnOfStartingTile!=0)
     {
-    case FIXED_NUMBER_OF_LCU:
-      uiCUAddrIncrement               = m_pcCfg->getSliceSegmentArgument();
-      boundingCUAddrSliceSegment    = ((startCUAddrSliceSegment + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU() ) ? (startCUAddrSliceSegment + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    case FIXED_NUMBER_OF_BYTES:
-      uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
-      boundingCUAddrSliceSegment    = pcSlice->getSliceSegmentCurEndCUAddr();
-      break;
-    case FIXED_NUMBER_OF_TILES:
-      tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-        rpcPic->getPicSym()->getCUOrderMap(pcSlice->getSliceSegmentCurStartCUAddr()/rpcPic->getNumPartInCU())
-        );
-      uiCUAddrIncrement        = 0;
-      tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1()+1) * (rpcPic->getPicSym()->getNumRowsMinus1()+1);
-
-      for(tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceSegmentArgument(); tileIdxIncrement++)
+      // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
+      const UInt numberOfCTUsToEndOfRow            = tileStartWidth - ctuColumnOfStartingTile;
+      const UInt wavefrontTileBoundingCtuAddrSlice = startCtuTSAddrSlice + numberOfCTUsToEndOfRow;
+      if (wavefrontTileBoundingCtuAddrSlice < boundingCtuTSAddrSlice)
       {
-        if((tileIdx + tileIdxIncrement) < tileTotalCount)
-        {
-          tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-          tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-          uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-        }
-      }
-      boundingCUAddrSliceSegment    = ((startCUAddrSliceSegment + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU() ) ? (startCUAddrSliceSegment + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    default:
-      uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
-      boundingCUAddrSliceSegment    = uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    }
-    // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
-    if (pcSlice->getPPS()->getNumSubstreams() > 1 && (startCUAddrSliceSegment % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()) != 0))
-    {
-      boundingCUAddrSliceSegment = min(boundingCUAddrSliceSegment, startCUAddrSliceSegment - (startCUAddrSliceSegment % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU())) + (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()));
-    }
-    pcSlice->setSliceSegmentCurEndCUAddr( boundingCUAddrSliceSegment );
-  }
-  else
-  {
-    UInt uiCUAddrIncrement;
-    switch (m_pcCfg->getSliceSegmentMode())
-    {
-    case FIXED_NUMBER_OF_LCU:
-      uiCUAddrIncrement               = m_pcCfg->getSliceSegmentArgument();
-      boundingCUAddrSliceSegment    = ((startCUAddrSliceSegment + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU() ) ? (startCUAddrSliceSegment + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    case FIXED_NUMBER_OF_TILES:
-      tileIdx                = rpcPic->getPicSym()->getTileIdxMap(
-        rpcPic->getPicSym()->getCUOrderMap(pcSlice->getSliceSegmentCurStartCUAddr()/rpcPic->getNumPartInCU())
-        );
-      uiCUAddrIncrement        = 0;
-      tileTotalCount         = (rpcPic->getPicSym()->getNumColumnsMinus1()+1) * (rpcPic->getPicSym()->getNumRowsMinus1()+1);
-
-      for(tileIdxIncrement = 0; tileIdxIncrement < m_pcCfg->getSliceSegmentArgument(); tileIdxIncrement++)
-      {
-        if((tileIdx + tileIdxIncrement) < tileTotalCount)
-        {
-          tileWidthInLcu   = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileWidth();
-          tileHeightInLcu  = rpcPic->getPicSym()->getTComTile(tileIdx + tileIdxIncrement)->getTileHeight();
-          uiCUAddrIncrement += (tileWidthInLcu * tileHeightInLcu * rpcPic->getNumPartInCU());
-        }
-      }
-      boundingCUAddrSliceSegment    = ((startCUAddrSliceSegment + uiCUAddrIncrement) < uiNumberOfCUsInFrame*rpcPic->getNumPartInCU() ) ? (startCUAddrSliceSegment + uiCUAddrIncrement) : uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    default:
-      uiCUAddrIncrement               = rpcPic->getNumCUsInFrame();
-      boundingCUAddrSliceSegment    = uiNumberOfCUsInFrame*rpcPic->getNumPartInCU();
-      break;
-    }
-    // WPP: if a slice segment does not start at the beginning of a CTB row, it must end within the same CTB row
-    if (pcSlice->getPPS()->getNumSubstreams() > 1 && (startCUAddrSliceSegment % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()) != 0))
-    {
-      boundingCUAddrSliceSegment = min(boundingCUAddrSliceSegment, startCUAddrSliceSegment - (startCUAddrSliceSegment % (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU())) + (rpcPic->getFrameWidthInCU()*rpcPic->getNumPartInCU()));
-    }
-    pcSlice->setSliceSegmentCurEndCUAddr( boundingCUAddrSliceSegment );
-  }
-  if ((m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_LCU || m_pcCfg->getSliceSegmentMode() == FIXED_NUMBER_OF_BYTES) &&
-    (m_pcCfg->getNumRowsMinus1() > 0 || m_pcCfg->getNumColumnsMinus1() > 0))
-  {
-    UInt lcuEncAddr = (startCUAddrSliceSegment+rpcPic->getNumPartInCU()-1)/rpcPic->getNumPartInCU();
-    UInt lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-    UInt startTileIdx = rpcPic->getPicSym()->getTileIdxMap(lcuAddr);
-    UInt tileBoundingCUAddrSlice = 0;
-    while (lcuEncAddr < uiNumberOfCUsInFrame && rpcPic->getPicSym()->getTileIdxMap(lcuAddr) == startTileIdx)
-    {
-      lcuEncAddr++;
-      lcuAddr = rpcPic->getPicSym()->getCUOrderMap(lcuEncAddr);
-    }
-    tileBoundingCUAddrSlice = lcuEncAddr*rpcPic->getNumPartInCU();
-
-    if (tileBoundingCUAddrSlice < boundingCUAddrSliceSegment)
-    {
-      boundingCUAddrSliceSegment = tileBoundingCUAddrSlice;
-      pcSlice->setSliceSegmentCurEndCUAddr( boundingCUAddrSliceSegment );
-      tileBoundary = true;
-    }
-  }
-
-  if(boundingCUAddrSliceSegment>uiBoundingCUAddrSlice)
-  {
-    boundingCUAddrSliceSegment = uiBoundingCUAddrSlice;
-    pcSlice->setSliceSegmentCurEndCUAddr(uiBoundingCUAddrSlice);
-  }
-
-  //calculate real dependent slice start address
-  UInt uiInternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurStartCUAddr()) % rpcPic->getNumPartInCU();
-  UInt uiExternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceSegmentCurStartCUAddr()) / rpcPic->getNumPartInCU();
-  UInt uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
-  UInt uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
-#if REPN_FORMAT_IN_VPS
-  UInt uiWidth = pcSlice->getPicWidthInLumaSamples();
-  UInt uiHeight = pcSlice->getPicHeightInLumaSamples();
-#else
-  UInt uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
-  UInt uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
-#endif
-  while((uiPosX>=uiWidth||uiPosY>=uiHeight)&&!(uiPosX>=uiWidth&&uiPosY>=uiHeight))
-  {
-    uiInternalAddress++;
-    if(uiInternalAddress>=rpcPic->getNumPartInCU())
-    {
-      uiInternalAddress=0;
-      uiExternalAddress = rpcPic->getPicSym()->getCUOrderMap(rpcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress)+1);
-    }
-    uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
-    uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
-  }
-  UInt uiRealStartAddress = rpcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress*rpcPic->getNumPartInCU()+uiInternalAddress);
-
-  pcSlice->setSliceSegmentCurStartCUAddr(uiRealStartAddress);
-  startCUAddrSliceSegment=uiRealStartAddress;
-
-  //calculate real slice start address
-  uiInternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceCurStartCUAddr()) % rpcPic->getNumPartInCU();
-  uiExternalAddress = rpcPic->getPicSym()->getPicSCUAddr(pcSlice->getSliceCurStartCUAddr()) / rpcPic->getNumPartInCU();
-  uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
-  uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
-#if REPN_FORMAT_IN_VPS
-  uiWidth = pcSlice->getPicWidthInLumaSamples();
-  uiHeight = pcSlice->getPicHeightInLumaSamples();
-#else
-  uiWidth = pcSlice->getSPS()->getPicWidthInLumaSamples();
-  uiHeight = pcSlice->getSPS()->getPicHeightInLumaSamples();
-#endif
-  while((uiPosX>=uiWidth||uiPosY>=uiHeight)&&!(uiPosX>=uiWidth&&uiPosY>=uiHeight))
-  {
-    uiInternalAddress++;
-    if(uiInternalAddress>=rpcPic->getNumPartInCU())
-    {
-      uiInternalAddress=0;
-      uiExternalAddress = rpcPic->getPicSym()->getCUOrderMap(rpcPic->getPicSym()->getInverseCUOrderMap(uiExternalAddress)+1);
-    }
-    uiPosX = ( uiExternalAddress % rpcPic->getFrameWidthInCU() ) * g_uiMaxCUWidth+ g_auiRasterToPelX[ g_auiZscanToRaster[uiInternalAddress] ];
-    uiPosY = ( uiExternalAddress / rpcPic->getFrameWidthInCU() ) * g_uiMaxCUHeight+ g_auiRasterToPelY[ g_auiZscanToRaster[uiInternalAddress] ];
-  }
-  uiRealStartAddress = rpcPic->getPicSym()->getPicSCUEncOrder(uiExternalAddress*rpcPic->getNumPartInCU()+uiInternalAddress);
-
-  pcSlice->setSliceCurStartCUAddr(uiRealStartAddress);
-  uiStartCUAddrSlice=uiRealStartAddress;
-
-  // Make a joint decision based on reconstruction and dependent slice bounds
-  startCUAddr    = max(uiStartCUAddrSlice   , startCUAddrSliceSegment   );
-  boundingCUAddr = min(uiBoundingCUAddrSlice, boundingCUAddrSliceSegment);
-
-
-  if (!bEncodeSlice)
-  {
-    // For fixed number of LCU within an entropy and reconstruction slice we already know whether we will encounter end of entropy and/or reconstruction slice
-    // first. Set the flags accordingly.
-    if ( (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU)
-      || (m_pcCfg->getSliceMode()==0 && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU)
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_LCU && m_pcCfg->getSliceSegmentMode()==0)
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_LCU)
-      || (m_pcCfg->getSliceMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceSegmentMode()==0)
-      || (m_pcCfg->getSliceSegmentMode()==FIXED_NUMBER_OF_TILES && m_pcCfg->getSliceMode()==0)
-      || tileBoundary
-)
-    {
-      if (uiBoundingCUAddrSlice < boundingCUAddrSliceSegment)
-      {
-        pcSlice->setNextSlice       ( true );
-        pcSlice->setNextSliceSegment( false );
-      }
-      else if (uiBoundingCUAddrSlice > boundingCUAddrSliceSegment)
-      {
-        pcSlice->setNextSlice       ( false );
-        pcSlice->setNextSliceSegment( true );
-      }
-      else
-      {
-        pcSlice->setNextSlice       ( true );
-        pcSlice->setNextSliceSegment( true );
+        boundingCtuTSAddrSlice = wavefrontTileBoundingCtuAddrSlice;
       }
     }
-    else
+
+    if (tileBoundingCtuTsAddrSlice < boundingCtuTSAddrSlice)
     {
-      pcSlice->setNextSlice       ( false );
-      pcSlice->setNextSliceSegment( false );
+      boundingCtuTSAddrSlice = tileBoundingCtuTsAddrSlice;
+      haveReachedTileBoundary = true;
     }
+  }
+  else if ((sliceMode == FIXED_NUMBER_OF_CTU || sliceMode == FIXED_NUMBER_OF_BYTES) && pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag() && ((startCtuTSAddrSlice % pcPic->getFrameWidthInCtus()) != 0))
+  {
+    // Adjust for wavefronts (no tiles).
+    // WPP: if a slice does not start at the beginning of a CTB row, it must end within the same CTB row
+    boundingCtuTSAddrSlice = min(boundingCtuTSAddrSlice, startCtuTSAddrSlice - (startCtuTSAddrSlice % pcPic->getFrameWidthInCtus()) + (pcPic->getFrameWidthInCtus()));
   }
 }
-#endif
+
+/** Determines the starting and bounding CTU address of current slice / dependent slice
+ * \param bEncodeSlice Identifies if the calling function is compressSlice() [false] or encodeSlice() [true]
+ * \returns Updates startCtuTsAddr, boundingCtuTsAddr with appropriate CTU address
+ */
+Void TEncSlice::xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UInt& boundingCtuTsAddr, TComPic* pcPic, const Bool encodingSlice )
+{
+  TComSlice* pcSlice                 = pcPic->getSlice(getSliceIdx());
+
+  // Non-dependent slice
+  UInt startCtuTsAddrSlice           = pcSlice->getSliceCurStartCtuTsAddr();
+  Bool haveReachedTileBoundarySlice  = false;
+  UInt boundingCtuTsAddrSlice;
+  calculateBoundingCtuTsAddrForSlice(startCtuTsAddrSlice, boundingCtuTsAddrSlice, haveReachedTileBoundarySlice, pcPic,
+                                     encodingSlice, m_pcCfg->getSliceMode(), m_pcCfg->getSliceArgument(), pcSlice->getSliceCurEndCtuTsAddr());
+  pcSlice->setSliceCurEndCtuTsAddr(   boundingCtuTsAddrSlice );
+  pcSlice->setSliceCurStartCtuTsAddr( startCtuTsAddrSlice    );
+
+  // Dependent slice
+  UInt startCtuTsAddrSliceSegment          = pcSlice->getSliceSegmentCurStartCtuTsAddr();
+  Bool haveReachedTileBoundarySliceSegment = false;
+  UInt boundingCtuTsAddrSliceSegment;
+  calculateBoundingCtuTsAddrForSlice(startCtuTsAddrSliceSegment, boundingCtuTsAddrSliceSegment, haveReachedTileBoundarySliceSegment, pcPic,
+                                     encodingSlice, m_pcCfg->getSliceSegmentMode(), m_pcCfg->getSliceSegmentArgument(), pcSlice->getSliceSegmentCurEndCtuTsAddr());
+  if (boundingCtuTsAddrSliceSegment>boundingCtuTsAddrSlice)
+  {
+    boundingCtuTsAddrSliceSegment = boundingCtuTsAddrSlice;
+  }
+  pcSlice->setSliceSegmentCurEndCtuTsAddr( boundingCtuTsAddrSliceSegment );
+  pcSlice->setSliceSegmentCurStartCtuTsAddr(startCtuTsAddrSliceSegment);
+
+  // Make a joint decision based on reconstruction and dependent slice bounds
+  startCtuTsAddr    = max(startCtuTsAddrSlice   , startCtuTsAddrSliceSegment   );
+  boundingCtuTsAddr = boundingCtuTsAddrSliceSegment;
+}
 
 Double TEncSlice::xGetQPValueAccordingToLambda ( Double lambda )
 {
@@ -2111,7 +1349,7 @@ Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP , Double beta )
 Void TEncSlice::estimateILWpParam( TComSlice* pcSlice )
 {
   xCalcACDCParamSlice(pcSlice);
-  wpACDCParam * temp_weightACDCParam;
+  WPACDCParam * temp_weightACDCParam;
 
   pcSlice->getWpAcDcParam(temp_weightACDCParam);
   g_refWeightACDCParam = (void *) temp_weightACDCParam;

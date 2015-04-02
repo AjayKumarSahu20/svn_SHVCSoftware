@@ -33,6 +33,9 @@
 
 #pragma once
 
+#ifndef __SEIWRITE__
+#define __SEIWRITE__
+
 #include "SyntaxElementWriter.h"
 #include "TLibCommon/SEI.h"
 
@@ -47,9 +50,9 @@ public:
   virtual ~SEIWriter() {};
 
 #if O0164_MULTI_LAYER_HRD
-  void writeSEImessage(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void writeSEImessage(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
 #else
-  void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
+  Void writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 #endif
 
 protected:
@@ -77,23 +80,28 @@ protected:
   TComSPS *m_pSPS;
   Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
   Void xWriteSEIFramePacking(const SEIFramePacking& sei);
+  Void xWriteSEISegmentedRectFramePacking(const SEISegmentedRectFramePacking& sei);
   Void xWriteSEIDisplayOrientation(const SEIDisplayOrientation &sei);
   Void xWriteSEITemporalLevel0Index(const SEITemporalLevel0Index &sei);
   Void xWriteSEIGradualDecodingRefreshInfo(const SEIGradualDecodingRefreshInfo &sei);
+  Void xWriteSEINoDisplay(const SEINoDisplay &sei);
   Void xWriteSEIToneMappingInfo(const SEIToneMappingInfo& sei);
-#if P0050_KNEE_FUNCTION_SEI
-  Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
-#endif
-#if Q0074_COLOUR_REMAPPING_SEI
-  Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
-#endif
   Void xWriteSEISOPDescription(const SEISOPDescription& sei);
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComVPS *vps, TComSPS *sps);
 #else
   Void xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps);
 #endif
+  Void xWriteSEITempMotionConstrainedTileSets(TComBitIf& bs, const SEITempMotionConstrainedTileSets& sei);
+  Void xWriteSEITimeCode(const SEITimeCode& sei);
+  Void xWriteSEIChromaSamplingFilterHint(const SEIChromaSamplingFilterHint& sei/*, TComSPS *sps*/);
+  Void writeUserDefinedCoefficients(const SEIChromaSamplingFilterHint& sei);
+  Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
+  Void xWriteSEIMasteringDisplayColourVolume( const SEIMasteringDisplayColourVolume& sei);
   Void xWriteByteAlign();
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
+#endif
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   Void xWriteSEILayersNotPresent(const SEILayersNotPresent& sei);
@@ -122,7 +130,15 @@ Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
   Void xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps);
   Void xWriteSEIVPSRewriting(const SEIVPSRewriting &sei);
 #endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Void xWriteSEIAlphaChannelInfo(const SEIAlphaChannelInfo &sei);
+#endif
+#if Q0096_OVERLAY_SEI
+  Void xWriteSEIOverlayInfo(const SEIOverlayInfo &sei);
+#endif
 #endif //SVC_EXTENSION
 };
 
 //! \}
+
+#endif
