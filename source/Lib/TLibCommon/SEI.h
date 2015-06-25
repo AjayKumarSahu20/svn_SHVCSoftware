@@ -765,6 +765,8 @@ public:
   PayloadType payloadType() const { return COLOUR_REMAPPING_INFO; }
   SEIColourRemappingInfo() {}
   ~SEIColourRemappingInfo() {}
+
+  Void  copyFrom( SEIColourRemappingInfo const * SeiCriInput);
  
   Int   m_colourRemapId;
   Bool  m_colourRemapCancelFlag;

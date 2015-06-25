@@ -79,9 +79,7 @@ private:
   TComSampleAdaptiveOffset*     m_pcSAO;
   Double                m_dDecTime;
   Int                   m_decodedPictureHashSEIEnabled;  ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
-#if Q0074_COLOUR_REMAPPING_SEI
-  Bool                  m_colourRemapSEIEnabled;         ///< Enable/disable Colour Remapping Information SEI message acting on decoded pictures
-#endif
+
 #if SVC_EXTENSION
   UInt                  m_layerId;
   TDecTop**             m_ppcTDecTop;
@@ -113,9 +111,6 @@ Void  init      ( TDecTop**               ppcDecTop,
   Void  filterPicture  (TComPic* pcPic );
 
   Void setDecodedPictureHashSEIEnabled(Int enabled) { m_decodedPictureHashSEIEnabled = enabled; }
-#if Q0074_COLOUR_REMAPPING_SEI
-  Void setColourRemappingInfoSEIEnabled(Int enabled) { m_colourRemapSEIEnabled = enabled; }
-#endif
 #if SVC_EXTENSION
   TDecTop*   getLayerDec(UInt layerId)  { return m_ppcTDecTop[layerId]; }
 #endif 

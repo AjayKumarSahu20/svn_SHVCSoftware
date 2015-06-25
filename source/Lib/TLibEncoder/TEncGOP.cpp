@@ -126,6 +126,16 @@ TEncGOP::TEncGOP()
   m_prevPicHasEos    = false;
 #endif
 #endif //SVC_EXTENSION
+
+#if Q0074_COLOUR_REMAPPING_SEI
+  for( Int c=0 ; c<3 ; c++)
+  {
+    m_colourRemapSEIPreLutCodedValue[c]   = NULL;
+    m_colourRemapSEIPreLutTargetValue[c]  = NULL;
+    m_colourRemapSEIPostLutCodedValue[c]  = NULL;
+    m_colourRemapSEIPostLutTargetValue[c] = NULL;
+  }
+#endif
   return;
 }
 
@@ -641,28 +651,6 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
       
   }
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  if(m_pcCfg->getCRISEIFile() && strlen(m_pcCfg->getCRISEIFile()))
-  {
-    SEIColourRemappingInfo *sei = xCreateSEIColourRemappingInfo ();
-      
-#if SVC_EXTENSION
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, sps->getLayerId());  // SEI-CRI is applied per layer
-#else
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-#endif
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
-  }
-#endif
-
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   if(m_pcCfg->getLayersNotPresentSEIEnabled())
@@ -731,6 +719,156 @@ Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit
 #endif
 #endif //SVC_EXTENSION
 }
+
+#if Q0074_COLOUR_REMAPPING_SEI
+Void TEncGOP::freeColourCRI()
+{
+  for( Int c=0 ; c<3 ; c++)
+  {
+    if ( m_colourRemapSEIPreLutCodedValue[c] != NULL)
+    {
+      delete[] m_colourRemapSEIPreLutCodedValue[c];
+      m_colourRemapSEIPreLutCodedValue[c] = NULL;
+    }
+    if ( m_colourRemapSEIPreLutTargetValue[c] != NULL)
+    {
+      delete[] m_colourRemapSEIPreLutTargetValue[c];
+      m_colourRemapSEIPreLutTargetValue[c] = NULL;
+    }
+    if ( m_colourRemapSEIPostLutCodedValue[c] != NULL)
+    {
+      delete[] m_colourRemapSEIPostLutCodedValue[c];
+      m_colourRemapSEIPostLutCodedValue[c] = NULL;
+    }
+    if ( m_colourRemapSEIPostLutTargetValue[c] != NULL)
+    {
+      delete[] m_colourRemapSEIPostLutTargetValue[c];
+      m_colourRemapSEIPostLutTargetValue[c] = NULL;
+    }
+  }
+}
+
+Int TEncGOP::readingCRIparameters(){
+
+  // reading external Colour Remapping Information SEI message parameters from file
+  if( m_colourRemapSEIFile.c_str() )
+  {
+    FILE* fic;
+    Int retval;
+    if((fic = fopen(m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
+    {
+      //fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile.c_str());
+      //exit(EXIT_FAILURE);
+      return (-1);
+    }
+    Int tempCode;
+    retval = fscanf( fic, "%d", &m_colourRemapSEIId );
+    retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
+    if( !m_colourRemapSEICancelFlag )
+    {
+      retval = fscanf( fic, "%d", &tempCode ); m_colourRemapSEIPersistenceFlag= tempCode ? 1 : 0;
+      retval = fscanf( fic, "%d", &tempCode); m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
+      if( m_colourRemapSEIVideoSignalInfoPresentFlag )
+      {
+        retval = fscanf( fic, "%d", &tempCode  ); m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
+        retval = fscanf( fic, "%d", &m_colourRemapSEITransferFunction );
+        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoefficients );
+      }
+
+      retval = fscanf( fic, "%d", &m_colourRemapSEIInputBitDepth );
+      retval = fscanf( fic, "%d", &m_colourRemapSEIBitDepth );
+  
+      for( Int c=0 ; c<3 ; c++ )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutNumValMinus1[c] );
+        if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        {
+          m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          m_colourRemapSEIPreLutTargetValue[c] = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
+          {
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutTargetValue[c][i] );
+          }
+        }
+      }
+
+      retval = fscanf( fic, "%d", &tempCode ); m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
+      if( m_colourRemapSEIMatrixPresentFlag )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEILog2MatrixDenom );
+        for( Int c=0 ; c<3 ; c++ )
+          for( Int i=0 ; i<3 ; i++ )
+            retval = fscanf( fic, "%d", &m_colourRemapSEICoeffs[c][i] );
+      }
+
+      for( Int c=0 ; c<3 ; c++ )
+      {
+        retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutNumValMinus1[c] );
+        if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        {
+          m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          m_colourRemapSEIPostLutTargetValue[c] = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
+          {
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutTargetValue[c][i] );
+          }
+        }
+      }
+    }
+
+    fclose( fic );
+    if( retval != 1 )
+    {
+      fprintf(stderr, "Error while reading Colour Remapping Information SEI parameters file\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+  return 1;
+}
+Bool confirmParameter(Bool bflag, const Char* message);
+// ====================================================================================================================
+// Private member functions
+// ====================================================================================================================
+
+Void TEncGOP::xCheckParameter()
+{
+  Bool check_failed = false; /* abort if there is a fatal configuration problem */
+#define xConfirmParameter(a,b) check_failed |= confirmParameter(a,b)
+
+  if ( m_colourRemapSEIFile.c_str() && !m_colourRemapSEICancelFlag )
+  {
+    xConfirmParameter( m_colourRemapSEIInputBitDepth < 8 || m_colourRemapSEIInputBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmParameter( m_colourRemapSEIBitDepth < 8 || (m_colourRemapSEIBitDepth > 16 && m_colourRemapSEIBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
+    for( Int c=0 ; c<3 ; c++)
+    {
+      xConfirmParameter( m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
+        {
+          xConfirmParameter( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_coded_data_bit_depth)-1, inclusive");
+          xConfirmParameter( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+        }
+      xConfirmParameter( m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
+        {
+          xConfirmParameter( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmParameter( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+        }
+    }
+    if ( m_colourRemapSEIMatrixPresentFlag )
+    {
+      xConfirmParameter( m_colourRemapSEILog2MatrixDenom < 0 || m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
+      for( Int c=0 ; c<3 ; c++)
+        for( Int i=0 ; i<3 ; i++)
+          xConfirmParameter( m_colourRemapSEICoeffs[c][i] < -32768 || m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
+    }
+  }
+}
+#endif
 
 // ====================================================================================================================
 // Public member functions
@@ -2833,6 +2971,43 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 
+    // insert one CRI by picture (if the file exist) 
+#if Q0074_COLOUR_REMAPPING_SEI
+  
+    freeColourCRI();
+
+    // building the CRI file name with poc num in suffix "_poc.txt"
+    char suffix[10];
+    sprintf(suffix, "_%d.txt",  pcSlice->getPOC());
+    string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
+    colourRemapSEIFileWithPoc.append(suffix);
+    setCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
+  
+    Int ret = readingCRIparameters();
+
+    if(ret != -1 && m_pcCfg->getCRISEIFileRoot())
+    {
+      // check validity of input parameters
+      xCheckParameter();
+
+      SEIColourRemappingInfo *sei = xCreateSEIColourRemappingInfo ();
+#if SVC_EXTENSION
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, 0, pcSlice->getSPS()->getLayerId());  // SEI-CRI is applied per layer
+#else
+      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
+#endif
+      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if SVC_EXTENSION
+      m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), pcSlice->getSPS() ); 
+#else
+      m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, pcSlice->getSPS() ); 
+#endif
+      writeRBSPTrailingBits(nalu.m_Bitstream);
+      accessUnit.push_back(new NALUnitEBSP(nalu));
+      delete sei;
+    }
+#endif
+
     /* use the main bitstream buffer for storing the marshalled picture */
     m_pcEntropyCoder->setBitstream(NULL);
 
@@ -4485,54 +4660,56 @@ SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
 SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
 {
   SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo();
-  seiColourRemappingInfo->m_colourRemapId         = m_pcCfg->getCRISEIId();
-  seiColourRemappingInfo->m_colourRemapCancelFlag = m_pcCfg->getCRISEICancelFlag();
+  seiColourRemappingInfo->m_colourRemapId         = m_colourRemapSEIId;
+  seiColourRemappingInfo->m_colourRemapCancelFlag = m_colourRemapSEICancelFlag;
+  printf("xCreateSEIColourRemappingInfo - m_colourRemapId = %d m_colourRemapCancelFlag = %d \n",seiColourRemappingInfo->m_colourRemapId, seiColourRemappingInfo->m_colourRemapCancelFlag); 
+
   if( !seiColourRemappingInfo->m_colourRemapCancelFlag )
   {
-    seiColourRemappingInfo->m_colourRemapPersistenceFlag            = m_pcCfg->getCRISEIPersistenceFlag();
-    seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag = m_pcCfg->getCRISEIVideoSignalInfoPresentFlag();
+    seiColourRemappingInfo->m_colourRemapPersistenceFlag            = m_colourRemapSEIPersistenceFlag;
+    seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag = m_colourRemapSEIVideoSignalInfoPresentFlag;
     if( seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag )
     {
-      seiColourRemappingInfo->m_colourRemapFullRangeFlag           = m_pcCfg->getCRISEIFullRangeFlag();
-      seiColourRemappingInfo->m_colourRemapPrimaries               = m_pcCfg->getCRISEIPrimaries();
-      seiColourRemappingInfo->m_colourRemapTransferFunction        = m_pcCfg->getCRISEITransferFunction();
-      seiColourRemappingInfo->m_colourRemapMatrixCoefficients      = m_pcCfg->getCRISEIMatrixCoefficients();
+      seiColourRemappingInfo->m_colourRemapFullRangeFlag           = m_colourRemapSEIFullRangeFlag;
+      seiColourRemappingInfo->m_colourRemapPrimaries               = m_colourRemapSEIPrimaries;
+      seiColourRemappingInfo->m_colourRemapTransferFunction        = m_colourRemapSEITransferFunction;
+      seiColourRemappingInfo->m_colourRemapMatrixCoefficients      = m_colourRemapSEIMatrixCoefficients;
     }
-    seiColourRemappingInfo->m_colourRemapInputBitDepth             = m_pcCfg->getCRISEIInputBitDepth();
-    seiColourRemappingInfo->m_colourRemapBitDepth                  = m_pcCfg->getCRISEIBitDepth();
+    seiColourRemappingInfo->m_colourRemapInputBitDepth             = m_colourRemapSEIInputBitDepth;
+    seiColourRemappingInfo->m_colourRemapBitDepth                  = m_colourRemapSEIBitDepth;
     for( Int c=0 ; c<3 ; c++ )
     {
-      seiColourRemappingInfo->m_preLutNumValMinus1[c] = m_pcCfg->getCRISEIPreLutNumValMinus1(c);
+      seiColourRemappingInfo->m_preLutNumValMinus1[c] = m_colourRemapSEIPreLutNumValMinus1[c];
       if( seiColourRemappingInfo->m_preLutNumValMinus1[c]>0 )
       {
         seiColourRemappingInfo->m_preLutCodedValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
         seiColourRemappingInfo->m_preLutTargetValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
         for( Int i=0 ; i<=seiColourRemappingInfo->m_preLutNumValMinus1[c] ; i++)
         {
-          seiColourRemappingInfo->m_preLutCodedValue[c][i]  = (m_pcCfg->getCRISEIPreLutCodedValue(c))[i];
-          seiColourRemappingInfo->m_preLutTargetValue[c][i] = (m_pcCfg->getCRISEIPreLutTargetValue(c))[i];
+          seiColourRemappingInfo->m_preLutCodedValue[c][i]  = m_colourRemapSEIPreLutCodedValue[c][i];
+          seiColourRemappingInfo->m_preLutTargetValue[c][i] = m_colourRemapSEIPreLutTargetValue[c][i];
         }
       }
     }
-    seiColourRemappingInfo->m_colourRemapMatrixPresentFlag = m_pcCfg->getCRISEIMatrixPresentFlag();
+    seiColourRemappingInfo->m_colourRemapMatrixPresentFlag = m_colourRemapSEIMatrixPresentFlag;
     if( seiColourRemappingInfo->m_colourRemapMatrixPresentFlag )
     {
-      seiColourRemappingInfo->m_log2MatrixDenom = m_pcCfg->getCRISEILog2MatrixDenom();
+      seiColourRemappingInfo->m_log2MatrixDenom = m_colourRemapSEILog2MatrixDenom;
       for( Int c=0 ; c<3 ; c++ )
         for( Int i=0 ; i<3 ; i++ )
-          seiColourRemappingInfo->m_colourRemapCoeffs[c][i] = (m_pcCfg->getCRISEICoeffs(c))[i];
+          seiColourRemappingInfo->m_colourRemapCoeffs[c][i] = m_colourRemapSEICoeffs[c][i];
     }
     for( Int c=0 ; c<3 ; c++ )
     {
-      seiColourRemappingInfo->m_postLutNumValMinus1[c] = m_pcCfg->getCRISEIPostLutNumValMinus1(c);
+      seiColourRemappingInfo->m_postLutNumValMinus1[c] = m_colourRemapSEIPostLutNumValMinus1[c];
       if( seiColourRemappingInfo->m_postLutNumValMinus1[c]>0 )
       {
         seiColourRemappingInfo->m_postLutCodedValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
         seiColourRemappingInfo->m_postLutTargetValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
         for( Int i=0 ; i<=seiColourRemappingInfo->m_postLutNumValMinus1[c] ; i++)
         {
-          seiColourRemappingInfo->m_postLutCodedValue[c][i]  = (m_pcCfg->getCRISEIPostLutCodedValue(c))[i];
-          seiColourRemappingInfo->m_postLutTargetValue[c][i] = (m_pcCfg->getCRISEIPostLutTargetValue(c))[i];
+          seiColourRemappingInfo->m_postLutCodedValue[c][i]  = m_colourRemapSEIPostLutCodedValue[c][i];
+          seiColourRemappingInfo->m_postLutTargetValue[c][i] = m_colourRemapSEIPostLutTargetValue[c][i];
         }
       }
     }
@@ -5431,5 +5608,16 @@ Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
 #endif // R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
 
 #endif //SVC_EXTENSION
+
+#if Q0074_COLOUR_REMAPPING_SEI
+Bool confirmParameter(Bool bflag, const Char* message)
+{
+  if (!bflag)
+    return false;
+
+  printf("Error: %s\n",message);
+  return true;
+}
+#endif
 
 //! \}

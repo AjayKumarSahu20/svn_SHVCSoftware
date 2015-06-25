@@ -87,6 +87,28 @@ private:
   Int                     m_iLastRecoveryPicPOC;
 #endif
 
+#if Q0074_COLOUR_REMAPPING_SEI
+  string                  m_colourRemapSEIFile;
+  Int                     m_colourRemapSEIId;
+  Bool                    m_colourRemapSEICancelFlag;
+  Bool                    m_colourRemapSEIPersistenceFlag;
+  Bool                    m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool                    m_colourRemapSEIFullRangeFlag;
+  Int                     m_colourRemapSEIPrimaries;
+  Int                     m_colourRemapSEITransferFunction;
+  Int                     m_colourRemapSEIMatrixCoefficients;
+  Int                     m_colourRemapSEIInputBitDepth;
+  Int                     m_colourRemapSEIBitDepth;
+  Int                     m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*                    m_colourRemapSEIPreLutCodedValue[3];
+  Int*                    m_colourRemapSEIPreLutTargetValue[3];
+  Bool                    m_colourRemapSEIMatrixPresentFlag;
+  Int                     m_colourRemapSEILog2MatrixDenom;
+  Int                     m_colourRemapSEICoeffs[3][3];
+  Int                     m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*                    m_colourRemapSEIPostLutCodedValue[3];
+  Int*                    m_colourRemapSEIPostLutTargetValue[3];
+#endif
   //  Access channel
   TEncTop*                m_pcEncTop;
   TEncCfg*                m_pcCfg;
@@ -244,6 +266,12 @@ protected:
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
 
 #if Q0074_COLOUR_REMAPPING_SEI
+  Void  setCRISEIFile( Char* pch )       { m_colourRemapSEIFile = pch; }
+
+  Void freeColourCRI();
+  Int  readingCRIparameters();
+  Void xCheckParameter();
+
   SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
 #endif
 #if SVC_EXTENSION
