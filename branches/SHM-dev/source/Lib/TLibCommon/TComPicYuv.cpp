@@ -312,7 +312,7 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
     {
       for (Int x = 0; x < width; x++ )
       {
-        Pel pix  = Clip3<Pel>(0, (1 << bitDepth)-1, (pi[x]+offset)>>shift);
+        Pel pix = pi[x];
 
         UChar uc = pix & 0xff;      
         fwrite( &uc, sizeof(UChar), 1, pFile );

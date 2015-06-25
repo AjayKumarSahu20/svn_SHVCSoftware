@@ -464,26 +464,7 @@ protected:
 #endif
 #endif //SVC_EXTENSION
 #if Q0074_COLOUR_REMAPPING_SEI
-  Char*     m_colourRemapSEIFile;          ///< SEI Colour Remapping File (initialized from external file)
-  Int       m_colourRemapSEIId;
-  Bool      m_colourRemapSEICancelFlag;
-  Bool      m_colourRemapSEIPersistenceFlag;
-  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
-  Bool      m_colourRemapSEIFullRangeFlag;
-  Int       m_colourRemapSEIPrimaries;
-  Int       m_colourRemapSEITransferFunction;
-  Int       m_colourRemapSEIMatrixCoefficients;
-  Int       m_colourRemapSEIInputBitDepth;
-  Int       m_colourRemapSEIBitDepth;
-  Int       m_colourRemapSEIPreLutNumValMinus1[3];
-  Int*      m_colourRemapSEIPreLutCodedValue[3];
-  Int*      m_colourRemapSEIPreLutTargetValue[3];
-  Bool      m_colourRemapSEIMatrixPresentFlag;
-  Int       m_colourRemapSEILog2MatrixDenom;
-  Int       m_colourRemapSEICoeffs[3][3];
-  Int       m_colourRemapSEIPostLutNumValMinus1[3];
-  Int*      m_colourRemapSEIPostLutCodedValue[3];
-  Int*      m_colourRemapSEIPostLutTargetValue[3];
+  Char*                               m_colourRemapSEIFileRoot;          ///< SEI Colour Remapping File (initialized from external file)
 #endif
 
 public:
@@ -491,7 +472,7 @@ public:
   : m_tileColumnWidth()
   , m_tileRowHeight()
 #if Q0074_COLOUR_REMAPPING_SEI
-  , m_colourRemapSEIFile(NULL)
+  , m_colourRemapSEIFileRoot(NULL)
 #endif
   {}
 
@@ -1029,46 +1010,8 @@ public:
   Bool  getAlphaClipTypeFlag()                               { return m_alphaClipTypeFlag; }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  Void  setCRISEIFile( Char* pch )                           { m_colourRemapSEIFile = pch; }
-  Char* getCRISEIFile()                                      { return m_colourRemapSEIFile; }
-  Void  setCRISEIId(Int i)                                   { m_colourRemapSEIId = i; }
-  Int   getCRISEIId()                                        { return m_colourRemapSEIId; }
-  Void  setCRISEICancelFlag(Bool b)                          { m_colourRemapSEICancelFlag = b; }
-  Bool  getCRISEICancelFlag()                                { return m_colourRemapSEICancelFlag; }
-  Void  setCRISEIPersistenceFlag(Bool b)                     { m_colourRemapSEIPersistenceFlag = b; }
-  Bool  getCRISEIPersistenceFlag()                           { return m_colourRemapSEIPersistenceFlag; }
-  Void  setCRISEIVideoSignalInfoPresentFlag(Bool b)          { m_colourRemapSEIVideoSignalInfoPresentFlag = b; }
-  Bool  getCRISEIVideoSignalInfoPresentFlag()                { return m_colourRemapSEIVideoSignalInfoPresentFlag; }
-  Void  setCRISEIFullRangeFlag(Bool b)                       { m_colourRemapSEIFullRangeFlag = b; }
-  Bool  getCRISEIFullRangeFlag()                             { return m_colourRemapSEIFullRangeFlag; }
-  Void  setCRISEIPrimaries(Int i)                            { m_colourRemapSEIPrimaries = i; }
-  Int   getCRISEIPrimaries()                                 { return m_colourRemapSEIPrimaries; }  
-  Void  setCRISEITransferFunction(Int i)                     { m_colourRemapSEITransferFunction = i; }
-  Int   getCRISEITransferFunction()                          { return m_colourRemapSEITransferFunction; }  
-  Void  setCRISEIMatrixCoefficients(Int i)                   { m_colourRemapSEIMatrixCoefficients = i; }
-  Int   getCRISEIMatrixCoefficients()                        { return m_colourRemapSEIMatrixCoefficients; }
-  Void  setCRISEIInputBitDepth(Int i)                        { m_colourRemapSEIInputBitDepth = i; }
-  Int   getCRISEIInputBitDepth()                             { return m_colourRemapSEIInputBitDepth; } 
-  Void  setCRISEIBitDepth(Int i)                             { m_colourRemapSEIBitDepth = i; }
-  Int   getCRISEIBitDepth()                                  { return m_colourRemapSEIBitDepth; } 
-  Void  setCRISEIPreLutNumValMinus1(Int *i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutNumValMinus1[c] = i[c]; }
-  Int   getCRISEIPreLutNumValMinus1(Int i)                   { return m_colourRemapSEIPreLutNumValMinus1[i]; }
-  Void  setCRISEIPreLutCodedValue(Int **i)                   { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutCodedValue[c] = i[c]; }
-  Int*  getCRISEIPreLutCodedValue(Int i)                     { return m_colourRemapSEIPreLutCodedValue[i]; }
-  Void  setCRISEIPreLutTargetValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPreLutTargetValue[c] = i[c]; }
-  Int*  getCRISEIPreLutTargetValue(Int i)                    { return m_colourRemapSEIPreLutTargetValue[i]; }
-  Void  setCRISEIMatrixPresentFlag(Bool b)                   { m_colourRemapSEIMatrixPresentFlag = b; }
-  Bool  getCRISEIMatrixPresentFlag()                         { return m_colourRemapSEIMatrixPresentFlag; }
-  Void  setCRISEILog2MatrixDenom(Int i)                      { m_colourRemapSEILog2MatrixDenom = i; }
-  Int   getCRISEILog2MatrixDenom()                           { return m_colourRemapSEILog2MatrixDenom; } 
-  Void  setCRISEICoeffs(Int i[3][3])                         { for(Int c=0 ; c<3 ; c++) for(Int j=0 ; j<3 ; j++) m_colourRemapSEICoeffs[c][j] = i[c][j]; }
-  Int*  getCRISEICoeffs(Int i)                               { return m_colourRemapSEICoeffs[i]; }
-  Void  setCRISEIPostLutNumValMinus1(Int *i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutNumValMinus1[c] = i[c]; }
-  Int   getCRISEIPostLutNumValMinus1(Int i)                  { return m_colourRemapSEIPostLutNumValMinus1[i]; }
-  Void  setCRISEIPostLutCodedValue(Int **i)                  { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutCodedValue[c] = i[c]; }
-  Int*  getCRISEIPostLutCodedValue(Int i)                    { return m_colourRemapSEIPostLutCodedValue[i]; }
-  Void  setCRISEIPostLutTargetValue(Int **i)                 { for(Int c=0 ; c<3 ; c++) m_colourRemapSEIPostLutTargetValue[c] = i[c]; }
-  Int*  getCRISEIPostLutTargetValue(Int i)                   { return m_colourRemapSEIPostLutTargetValue[i]; }
+  Void  setCRISEIFileRoot( Char* pch )                       { m_colourRemapSEIFileRoot = pch; }
+  Char* getCRISEIFileRoot()                                  { return m_colourRemapSEIFileRoot; }
 #endif
 #if SVC_EXTENSION
   UInt      getLayerId            () { return m_layerId;              }

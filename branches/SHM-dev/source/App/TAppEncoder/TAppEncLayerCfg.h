@@ -131,7 +131,7 @@ protected:
   Int       m_repFormatIdx;
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  string    m_colourRemapSEIFile;                           ///< Colour Remapping Information SEI message parameters file
+  string    m_colourRemapSEIFileRoot;                           ///< Colour Remapping Information SEI message parameters file
   Int       m_colourRemapSEIId;
   Bool      m_colourRemapSEICancelFlag;
   Bool      m_colourRemapSEIPersistenceFlag;

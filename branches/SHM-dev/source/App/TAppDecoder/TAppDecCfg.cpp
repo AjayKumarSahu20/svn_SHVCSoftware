@@ -135,7 +135,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("ForceDecodeBitDepth",       m_forceDecodeBitDepth,                 0U,         "Force the decoder to operate at a particular bit-depth (best effort decoding)")
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfo", m_colourRemapSEIEnabled, false, "Control handling of Colour Remapping Information SEI messages\n"
+  ("SEIColourRemappingInfo,-cri", m_colourRemapSEIEnabled, false, "Control handling of Colour Remapping Information SEI messages\n"
                                               "\t1: apply colour remapping on decoded pictures if available in the bitstream\n"
                                               "\t0: ignore SEI message")
 #endif

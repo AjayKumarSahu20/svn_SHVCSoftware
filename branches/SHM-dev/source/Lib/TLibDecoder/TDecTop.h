@@ -202,9 +202,6 @@ public:
   Void  destroy ();
 
   Void setDecodedPictureHashSEIEnabled(Int enabled) { m_cGopDecoder.setDecodedPictureHashSEIEnabled(enabled); }
-#if Q0074_COLOUR_REMAPPING_SEI
-  void setColourRemappingInfoSEIEnabled(Bool enabled)  { m_cGopDecoder.setColourRemappingInfoSEIEnabled(enabled); }
-#endif
 
   Void  init();
 #if SVC_EXTENSION
