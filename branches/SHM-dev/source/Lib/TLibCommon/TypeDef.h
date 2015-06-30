@@ -44,7 +44,6 @@
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
-#define O0215_PHASE_ALIGNMENT_REMOVAL    1
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 #define FIX_CONF_MODE                    1
 #define FIX_NON_OUTPUT_LAYER             1
@@ -216,9 +215,6 @@
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define N0065_LAYER_POC_ALIGNMENT        1
-#if !O0215_PHASE_ALIGNMENT_REMOVAL
-#define O0215_PHASE_ALIGNMENT            1      ///< JCTVC_O0215: signal a flag to specify phase alignment case, 0: zero-position-aligned, 1: central-position-aligned,
-#endif
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define R0062_AUX_PSEUDO_MONOCHROME      1      ///> JCVVC-R0063: pseudo monochrome for auxiliary pictures
 
@@ -276,21 +272,6 @@
 #define ISLICE_TYPE_NUMDIR               1      ///< JCTVC-R0155: Proposal 1 I slice_type
 #define OLS_IDX_CHK                      1      ///< JCTVC-R0155: Proposal 2 valid range for output_layer_set_idx_to_vps[i]
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
-#if R0340_RESAMPLING_MODIFICATION
-#define MOVE_SCALED_OFFSET_TO_PPS        1      ///< JCTVC-R0013: move scaled reference layer offset from SPS to PPS
-#if MOVE_SCALED_OFFSET_TO_PPS
-#define REF_REGION_OFFSET                1      ///< JCTVC-Q0159/R0220: reference region offset
-#define R0209_GENERIC_PHASE              1      ///< JCTVC-R0209: resampling with generic phase
-#define R0220_REMOVE_EL_CLIP             1      ///< JCTVC-R0220: remove clip to scaled ref window in resampling process
-#define RESAMPLING_FIX                   1      ///< Resampling fix -- equal offset check and conformance check
-#endif
-#else
-#define Q0200_CONFORMANCE_BL_SIZE        1      ///< JCTVC-Q0200; use conformance picture size in re-sampling processs
-#define P0312_VERT_PHASE_ADJ             1      ///< JCTVC-P0312: vertical phase adjustment in re-sampling process (BoG report)
-#if P0312_VERT_PHASE_ADJ
-#define Q0120_PHASE_CALCULATION          1      ///< JCTVC-Q0120 phase offset derivation for combination of spatial scalibility and field coding.
-#endif
-#endif
 #define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
 
 #define VPS_FIX_TO_MATCH_SPEC            1

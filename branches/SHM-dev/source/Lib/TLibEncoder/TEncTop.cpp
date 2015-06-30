@@ -618,33 +618,14 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-#if MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
 #else
           const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
 #endif
-#else
-#if O0098_SCALED_REF_LAYER_ID
-          const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#else
-          const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
-#endif
-#endif
-#if REF_REGION_OFFSET
           const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#if RESAMPLING_FIX
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
-#if R0209_GENERIC_PHASE
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
-#endif
-#else
-          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
-                               && altRL.getWindowLeftOffset() == 0 && altRL.getWindowRightOffset() == 0 && altRL.getWindowTopOffset() == 0 && altRL.getWindowBottomOffset() == 0);
-#endif
-#else
-          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
-#endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
@@ -664,14 +645,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           if( !pcEPic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
 #else
           if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !sameBitDepths 
-#if REF_REGION_OFFSET && RESAMPLING_FIX
             || !equalOffsets
-#if R0209_GENERIC_PHASE
             || !zeroPhase
-#endif
-#else
-            || !zeroOffsets
-#endif
 #endif
 #if Q0048_CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
@@ -682,14 +657,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             )
 #else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight()
-#if REF_REGION_OFFSET && RESAMPLING_FIX
             || !equalOffsets
-#if R0209_GENERIC_PHASE
             || !zeroPhase
-#endif
-#else
-            || !zeroOffsets
-#endif
           )
 #endif
           {
@@ -719,33 +688,14 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-#if MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
 #else
           const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
 #endif
-#else
-#if O0098_SCALED_REF_LAYER_ID
-          const Window scalEL = getSPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#else
-          const Window scalEL = getSPS()->getScaledRefLayerWindow(i);
-#endif
-#endif
-#if REF_REGION_OFFSET
           const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#if RESAMPLING_FIX
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
-#if R0209_GENERIC_PHASE
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
-#endif
-#else
-          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0
-                               && altRL.getWindowLeftOffset() == 0 && altRL.getWindowRightOffset() == 0 && altRL.getWindowTopOffset() == 0 && altRL.getWindowBottomOffset() == 0);
-#endif
-#else
-          Bool zeroOffsets = ( scalEL.getWindowLeftOffset() == 0 && scalEL.getWindowRightOffset() == 0 && scalEL.getWindowTopOffset() == 0 && scalEL.getWindowBottomOffset() == 0 );
-#endif
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
@@ -757,14 +707,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
           if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !sameBitDepths 
-#if REF_REGION_OFFSET && RESAMPLING_FIX
             || !equalOffsets 
-#if R0209_GENERIC_PHASE
             || !zeroPhase
-#endif
-#else
-            || !zeroOffsets 
-#endif
 #if Q0048_CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
@@ -774,14 +718,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 )
 #else
           if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight()
-#if REF_REGION_OFFSET && RESAMPLING_FIX
             || !equalOffsets 
-#if R0209_GENERIC_PHASE
             || !zeroPhase
-#endif
-#else
-            || !zeroOffsets 
-#endif
           )
 #endif
           {
@@ -831,19 +769,6 @@ Void TEncTop::xInitSPS()
   }
 #else
   m_cSPS.setLayerId(m_layerId);
-#endif
-#if !MOVE_SCALED_OFFSET_TO_PPS
-  m_cSPS.setNumScaledRefLayerOffsets(m_numScaledRefLayerOffsets);
-  for(Int i = 0; i < m_cSPS.getNumScaledRefLayerOffsets(); i++)
-  {
-#if O0098_SCALED_REF_LAYER_ID
-    m_cSPS.setScaledRefLayerId(i, m_scaledRefLayerId[i]);
-#endif
-    m_cSPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
-#if P0312_VERT_PHASE_ADJ
-    m_cSPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
-#endif
-  }
 #endif
 #endif //SVC_EXTENSION
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
@@ -1148,7 +1073,6 @@ Void TEncTop::xInitPPS()
     m_cPPS.setNumExtraSliceHeaderBits( 3 );
   }
 #endif
-#if MOVE_SCALED_OFFSET_TO_PPS
   m_cPPS.setNumRefLayerLocationOffsets(m_numRefLayerLocationOffsets);
   for(Int i = 0; i < m_cPPS.getNumRefLayerLocationOffsets(); i++)
   {
@@ -1156,23 +1080,15 @@ Void TEncTop::xInitPPS()
     m_cPPS.setRefLocationOffsetLayerId(i, m_refLocationOffsetLayerId[i]);
 #endif
     m_cPPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
-#if REF_REGION_OFFSET
     m_cPPS.getRefLayerWindow(i) = m_refLayerWindow[i];
     m_cPPS.setScaledRefLayerOffsetPresentFlag( i, m_scaledRefLayerOffsetPresentFlag[i] );
     m_cPPS.setRefRegionOffsetPresentFlag( i, m_refRegionOffsetPresentFlag[i] );
-#endif
-#if R0209_GENERIC_PHASE
     m_cPPS.setResamplePhaseSetPresentFlag( i, m_resamplePhaseSetPresentFlag[i] );
     m_cPPS.setPhaseHorLuma( m_refLocationOffsetLayerId[i], m_phaseHorLuma[i] );
     m_cPPS.setPhaseVerLuma( m_refLocationOffsetLayerId[i], m_phaseVerLuma[i] );
     m_cPPS.setPhaseHorChroma( m_refLocationOffsetLayerId[i], m_phaseHorChroma[i] );
     m_cPPS.setPhaseVerChroma( m_refLocationOffsetLayerId[i], m_phaseVerChroma[i] );
-#endif
-#if P0312_VERT_PHASE_ADJ
-    m_cPPS.setVertPhasePositionEnableFlag( m_scaledRefLayerId[i], m_scaledRefLayerWindow[i].getVertPhasePositionEnableFlag() );
-#endif
   }
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   m_cPPS.setCGSFlag( m_nCGSFlag );
 #endif
@@ -1687,7 +1603,7 @@ Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
   return win;
 }
-#if REF_REGION_OFFSET
+
 Window& TEncTop::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
@@ -1703,7 +1619,6 @@ Window& TEncTop::getRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // reference offsets are inferred to be zero when not present
   return win;
 }
-#endif
 #endif
 #endif //SVC_EXTENSION
 //! \}

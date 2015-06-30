@@ -768,7 +768,6 @@ Void TAppEncTop::xInitLibCfg()
 
     if( layer > 0 )
     {
-#if REF_REGION_OFFSET
 #if AUXILIARY_PICTURES
       Int subWidthC  = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
       Int subHeightC = ( m_acLayerCfg[layer].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
@@ -776,40 +775,27 @@ Void TAppEncTop::xInitLibCfg()
       Int subWidthC  = 2;
       Int subHeightC = 2;
 #endif
-#endif
       m_acTEncTop[layer].setNumRefLayerLocationOffsets          ( m_acLayerCfg[layer].m_numRefLayerLocationOffsets );
       for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
       {
 #if O0098_SCALED_REF_LAYER_ID
         m_acTEncTop[layer].setRefLocationOffsetLayerId          (i, m_acLayerCfg[layer].m_refLocationOffsetLayerId[i]);
 #endif
-#if REF_REGION_OFFSET
         m_acTEncTop[layer].setScaledRefLayerOffsetPresentFlag   ( i, m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] );
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                                   subHeightC * m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i],  subHeightC * m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
-#else
-#if P0312_VERT_PHASE_ADJ
-        m_acTEncTop[layer].setVertPhasePositionEnableFlag       ( i, m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
-        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i], m_acLayerCfg[layer].m_vertPhasePositionEnableFlag[i] );
-#else
-        m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( 2*m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
-          2*m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i], 2*m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);
-#endif
-#endif
+
         Int rlSubWidthC  = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 || m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_422 ) ? 2 : 1;
         Int rlSubHeightC = ( m_acLayerCfg[i].m_chromaFormatIDC == CHROMA_420 ) ? 2 : 1;
 
         m_acTEncTop[layer].setRefRegionOffsetPresentFlag        ( i, m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] );
         m_acTEncTop[layer].getRefLayerWindow(i).setWindow       ( rlSubWidthC  * m_acLayerCfg[layer].m_refRegionLeftOffset[i], rlSubWidthC  * m_acLayerCfg[layer].m_refRegionRightOffset[i],
                                                                   rlSubHeightC * m_acLayerCfg[layer].m_refRegionTopOffset[i],  rlSubHeightC * m_acLayerCfg[layer].m_refRegionBottomOffset[i]);
-#if R0209_GENERIC_PHASE
         m_acTEncTop[layer].setResamplePhaseSetPresentFlag       ( i, m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] );
         m_acTEncTop[layer].setPhaseHorLuma                      ( i, m_acLayerCfg[layer].m_phaseHorLuma[i] );
         m_acTEncTop[layer].setPhaseVerLuma                      ( i, m_acLayerCfg[layer].m_phaseVerLuma[i] );
         m_acTEncTop[layer].setPhaseHorChroma                    ( i, m_acLayerCfg[layer].m_phaseHorChroma[i] );
         m_acTEncTop[layer].setPhaseVerChroma                    ( i, m_acLayerCfg[layer].m_phaseVerChroma[i] );
-#endif
       }
     }
 
@@ -1845,10 +1831,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 
-#if O0215_PHASE_ALIGNMENT
-  vps->setPhaseAlignFlag( m_phaseAlignFlag );
-#endif
-
 #if P0300_ALT_OUTPUT_LAYER_FLAG
   for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
   {
@@ -1858,22 +1840,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if O0153_ALT_OUTPUT_LAYER_FLAG
   vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
 #endif
-#endif
-
-#if P0312_VERT_PHASE_ADJ
-  Bool vpsVuiVertPhaseInUseFlag = false;
-  for( UInt layerId = 1; layerId < m_numLayers; layerId++ )
-  {
-    for( i = 0; i < m_acLayerCfg[layerId].m_numScaledRefLayerOffsets; i++ )
-    {
-      if( m_acTEncTop[layerId].getVertPhasePositionEnableFlag(i) )
-      {
-        vpsVuiVertPhaseInUseFlag = true;
-        break;
-      }
-    }
-  }
-  vps->setVpsVuiVertPhaseInUseFlag( vpsVuiVertPhaseInUseFlag );
 #endif
 
 #if VPS_VUI_BSP_HRD_PARAMS

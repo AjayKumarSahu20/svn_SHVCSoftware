@@ -859,44 +859,9 @@ Bool TComPrediction::UseDPCMForFirstPassIntraEstimation(TComTU &rTu, const UInt 
 }
 
 #if SVC_EXTENSION
-#if O0215_PHASE_ALIGNMENT_REMOVAL
 Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
 {
   m_cUsf.upsampleBasePic( currSlice, refLayerIdc, pcUsPic, pcBasePic, pcTempPic );
 }
-#else
-#if O0215_PHASE_ALIGNMENT
-#if O0194_JOINT_US_BITSHIFT
-Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag )
-{
-  m_cUsf.upsampleBasePic( currSlice, refLayerIdc, pcUsPic, pcBasePic, pcTempPic, phaseAlignFlag );
-}
-#else
-Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag )
-{
-  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window, phaseAlignFlag );
-}
-#endif
-#else
-#if O0194_JOINT_US_BITSHIFT
-#if REF_REGION_OFFSET
-Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, const Window altRefWindow )
-{
-  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window, altRefWindow );
-}
-#else
-Void TComPrediction::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
-{
-  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
-}
-#endif
-#else
-Void TComPrediction::upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window)
-{
-  m_cUsf.upsampleBasePic( refLayerIdc, pcUsPic, pcBasePic, pcTempPic, window);
-}
-#endif
-#endif
-#endif
 #endif //SVC_EXTENSION
 //! \}
