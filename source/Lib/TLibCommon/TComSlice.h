@@ -466,9 +466,7 @@ private:
   Int           m_winRightOffset;
   Int           m_winTopOffset;
   Int           m_winBottomOffset;
-#if P0312_VERT_PHASE_ADJ
-  Bool          m_vertPhasePositionEnableFlag;
-#endif
+
 public:
   Window()
   : m_enabledFlag (false)
@@ -476,17 +474,10 @@ public:
   , m_winRightOffset    (0)
   , m_winTopOffset      (0)
   , m_winBottomOffset   (0)
-#if P0312_VERT_PHASE_ADJ
-  , m_vertPhasePositionEnableFlag(false)  
-#endif
   { }
 
   Bool          getWindowEnabledFlag() const      { return m_enabledFlag; }
-#if P0312_VERT_PHASE_ADJ
-  Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; m_vertPhasePositionEnableFlag = false; } 
-#else
   Void          resetWindow()                     { m_enabledFlag = false; m_winLeftOffset = m_winRightOffset = m_winTopOffset = m_winBottomOffset = 0; }
-#endif
   Int           getWindowLeftOffset() const       { return m_enabledFlag ? m_winLeftOffset : 0; }
   Void          setWindowLeftOffset(Int val)      { m_winLeftOffset = val; m_enabledFlag = true; }
   Int           getWindowRightOffset() const      { return m_enabledFlag ? m_winRightOffset : 0; }
@@ -496,11 +487,7 @@ public:
   Int           getWindowBottomOffset() const     { return m_enabledFlag ? m_winBottomOffset: 0; }
   Void          setWindowBottomOffset(Int val)    { m_winBottomOffset = val; m_enabledFlag = true; }
 
-#if P0312_VERT_PHASE_ADJ
-  Bool          getVertPhasePositionEnableFlag() const     { return m_vertPhasePositionEnableFlag;  }
-  Void          setVertPhasePositionEnableFlag(Bool val)    { m_vertPhasePositionEnableFlag = val;  }
-#endif
-#if REF_REGION_OFFSET && RESAMPLING_FIX
+#if SVC_EXTENSION
   Bool          hasEqualOffset(const Window& ref) const
   {
     return (    this->getWindowLeftOffset()   == ref.getWindowLeftOffset()
@@ -510,21 +497,13 @@ public:
   }
 #endif
 
-#if P0312_VERT_PHASE_ADJ
-  Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom, Bool vertPhasePositionEnableFlag = 0)
-#else
   Void          setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
-#endif
   {
     m_enabledFlag       = true;
     m_winLeftOffset     = offsetLeft;
     m_winRightOffset    = offsetLRight;
     m_winTopOffset      = offsetLTop;
     m_winBottomOffset   = offsetLBottom;
-
-#if P0312_VERT_PHASE_ADJ
-    m_vertPhasePositionEnableFlag = vertPhasePositionEnableFlag;    
-#endif
   }
 };
 
@@ -796,10 +775,6 @@ private:
   Int        m_maxBitRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
-  
-#if P0312_VERT_PHASE_ADJ
-  Bool       m_vpsVuiVertPhaseInUseFlag;
-#endif
 
 #if P0300_ALT_OUTPUT_LAYER_FLAG
 #if Q0078_ADD_LAYER_SETS
@@ -825,10 +800,6 @@ private:
   Int        m_viewIdLenMinus1;
 #endif
   Int        m_viewIdVal                [MAX_LAYERS];
-#endif
-
-#if O0215_PHASE_ALIGNMENT
-  Bool       m_phaseAlignFlag;
 #endif
 
 #if O0092_0094_DEPENDENCY_CONSTRAINT
@@ -1347,11 +1318,6 @@ Void      deriveNumberOfSubDpbs();
   Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
 
-#if P0312_VERT_PHASE_ADJ
-  Bool   getVpsVuiVertPhaseInUseFlag()       { return m_vpsVuiVertPhaseInUseFlag; }
-  Void   setVpsVuiVertPhaseInUseFlag(Bool x) { m_vpsVuiVertPhaseInUseFlag = x;    }
-#endif
-
 #if P0300_ALT_OUTPUT_LAYER_FLAG
   Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
   Void   setAltOuputLayerFlag(Int idx, Bool x) { m_altOutputLayerFlag[idx] = x;    }
@@ -1396,10 +1362,6 @@ Void      deriveNumberOfSubDpbs();
   Int    getExtensionOffset()                 { return m_extensionOffset;   }
   Void   setExtensionOffset( UInt offset )    { m_extensionOffset = offset; }
 #endif
-#endif
-#if O0215_PHASE_ALIGNMENT
-  Bool   getPhaseAlignFlag()                             { return m_phaseAlignFlag; }
-  Void   setPhaseAlignFlag(Bool x)                       { m_phaseAlignFlag = x;    }
 #endif
 #if VPS_DPB_SIZE_TABLE
   Bool   getSubLayerFlagInfoPresentFlag(Int olsIdx)         { return m_subLayerFlagInfoPresentFlag[olsIdx]; }
@@ -1726,15 +1688,6 @@ private:
 #if R0042_PROFILE_INDICATION  
   Int         m_NumDirectRefLayers;
 #endif
-#if P0312_VERT_PHASE_ADJ
- Bool         m_vertPhasePositionEnableFlag[MAX_LAYERS];
-#endif
-#if !MOVE_SCALED_OFFSET_TO_PPS
-#if O0098_SCALED_REF_LAYER_ID
-  UInt        m_scaledRefLayerId[MAX_LAYERS];
-#endif
-  Window      m_scaledRefLayerWindow[MAX_LAYERS];
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool m_updateRepFormatFlag;
 #if O0096_REP_FORMAT_INDEX
@@ -1911,20 +1864,6 @@ public:
   Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
 #endif
-#if !MOVE_SCALED_OFFSET_TO_PPS
-  UInt     getNumScaledRefLayerOffsets()       { return m_numScaledRefLayerOffsets; }
-  Void     setNumScaledRefLayerOffsets(Int x)  { m_numScaledRefLayerOffsets = x;    }
-#if P0312_VERT_PHASE_ADJ
-  Bool     getVertPhasePositionEnableFlag(Int x)          { return m_vertPhasePositionEnableFlag[x]; }
-  Void     setVertPhasePositionEnableFlag(Int x, Bool b)  { m_vertPhasePositionEnableFlag[x] = b;    } 
-#endif
-#if O0098_SCALED_REF_LAYER_ID
-  UInt     getScaledRefLayerId(Int x)          { return m_scaledRefLayerId[x]; }
-  Void     setScaledRefLayerId(Int x, UInt id) { m_scaledRefLayerId[x] = id;   }
-  Window&  getScaledRefLayerWindowForLayer( Int layerId );
-#endif
-  Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
   Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
@@ -2046,25 +1985,19 @@ private:
 #if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
 #endif
-#if MOVE_SCALED_OFFSET_TO_PPS
   UInt     m_numRefLayerLocationOffsets;
 #if O0098_SCALED_REF_LAYER_ID
   UInt     m_refLocationOffsetLayerId[MAX_LAYERS];
 #endif
   Window   m_scaledRefLayerWindow[MAX_LAYERS];
-#if REF_REGION_OFFSET
   Window   m_refLayerWindow[MAX_LAYERS];
   Bool     m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
   Bool     m_refRegionOffsetPresentFlag[MAX_LAYERS];
-#endif
-#if R0209_GENERIC_PHASE
   Int      m_phaseHorLuma[MAX_LAYERS];
   Int      m_phaseVerLuma[MAX_LAYERS];
   Int      m_phaseHorChroma[MAX_LAYERS];
   Int      m_phaseVerChroma[MAX_LAYERS];
   Bool     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
-#endif
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int      m_nCGSFlag;
   Int      m_nCGSOutputBitDepthY; // not for syntax
@@ -2214,7 +2147,6 @@ public:
   Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
   Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
 #endif
-#if MOVE_SCALED_OFFSET_TO_PPS
   UInt     getNumRefLayerLocationOffsets()       { return m_numRefLayerLocationOffsets; }
   Void     setNumRefLayerLocationOffsets(Int x)  { m_numRefLayerLocationOffsets = x;    }
 #if O0098_SCALED_REF_LAYER_ID
@@ -2223,15 +2155,12 @@ public:
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
 #endif
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
-#if REF_REGION_OFFSET
   Window&  getRefLayerWindowForLayer( Int layerId );
   Window&  getRefLayerWindow( Int x )   { return m_refLayerWindow[x]; }
   Bool getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
   Void setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
   Bool getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
   Void setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
-#endif
-#if R0209_GENERIC_PHASE
   Int getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
   Int getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
   Int getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
@@ -2242,12 +2171,8 @@ public:
   Void setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
   Bool getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
   Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
-#if RESAMPLING_FIX
   Bool hasZeroResamplingPhase(Int refLayerId);
   Void getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int& phaseHorLuma, Int& phaseVerLuma, Int& phaseHorChroma, Int& phaseVerChroma);
-#endif
-#endif
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int     getCGSFlag()                { return m_nCGSFlag;  }
   Void    setCGSFlag(Int n)           { m_nCGSFlag = n;     }
@@ -2404,9 +2329,6 @@ private:
   Bool        m_interLayerPredEnabledFlag;
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_IDX_PLUS1];
-#if P0312_VERT_PHASE_ADJ
-  Bool        m_vertPhasePositionFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 #if POC_RESET_FLAG
   Bool        m_bPocResetFlag;
   Int         m_pocValueBeforeReset;
@@ -2721,11 +2643,6 @@ public:
 
   Void      setInterLayerPredEnabledFlag     ( Bool   val )    { m_interLayerPredEnabledFlag = val; }
   Bool      getInterLayerPredEnabledFlag     ()                { return m_interLayerPredEnabledFlag;}
-
-#if P0312_VERT_PHASE_ADJ
-  Int       getVertPhasePositionFlag (UInt layerIdx)              { return   m_vertPhasePositionFlag[layerIdx];}
-  Void      setVertPhasePositionFlag (Bool b, UInt layerIdx)      {  m_vertPhasePositionFlag[layerIdx] = b;  }
-#endif
 
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
   Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }

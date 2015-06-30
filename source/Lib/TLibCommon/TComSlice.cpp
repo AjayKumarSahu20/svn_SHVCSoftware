@@ -158,9 +158,6 @@ TComSlice::TComSlice()
   m_activeNumILRRefIdx        = 0; 
   m_interLayerPredEnabledFlag = 0;
   ::memset( m_interLayerPredLayerIdc, 0, sizeof(m_interLayerPredLayerIdc) );
-#if P0312_VERT_PHASE_ADJ
-  ::memset( m_vertPhasePositionFlag, 0, sizeof(m_vertPhasePositionFlag) );
-#endif
 #endif //SVC_EXTENSION
 
   for (UInt component = 0; component < MAX_NUM_COMPONENT; component++)
@@ -534,18 +531,10 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
         UInt refLayerId = m_pcVPS->getRefLayerId( m_layerId, refLayerIdc );
 #if RESAMPLING_CONSTRAINT_BUG_FIX
-#if MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
         const Window &scalEL = getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
 #else
         const Window &scalEL = getPPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
-#endif
-#else
-#if O0098_SCALED_REF_LAYER_ID
-        const Window &scalEL = getSPS()->getScaledRefLayerWindowForLayer(refLayerId);
-#else
-        const Window &scalEL = getSPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
-#endif
 #endif
         Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
                              (scalEL.getWindowRightOffset()  == 0 ) && 
@@ -1098,9 +1087,6 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
-#if P0312_VERT_PHASE_ADJ
-  memcpy( m_vertPhasePositionFlag, pSrc->m_vertPhasePositionFlag, sizeof( m_vertPhasePositionFlag ) );
-#endif
 #endif
   m_pcSPS                = pSrc->m_pcSPS;
   m_pcPPS                = pSrc->m_pcPPS;
@@ -2259,9 +2245,6 @@ TComSPS::TComSPS()
 #if SVC_EXTENSION
 , m_layerId                   ( 0 )
 , m_extensionFlag             ( false )
-#if !MOVE_SCALED_OFFSET_TO_PPS
-, m_numScaledRefLayerOffsets  ( 0 )
-#endif
 #if REPN_FORMAT_IN_VPS
 , m_updateRepFormatFlag       (false)
 #if O0096_REP_FORMAT_INDEX
@@ -2296,12 +2279,6 @@ TComSPS::TComSPS()
   m_scalingList = new TComScalingList;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_usedByCurrPicLtSPSFlag, 0, sizeof(m_usedByCurrPicLtSPSFlag));
-
-#if !MOVE_SCALED_OFFSET_TO_PPS
-#if P0312_VERT_PHASE_ADJ 
-  ::memset(m_vertPhasePositionEnableFlag, 0, sizeof(m_vertPhasePositionEnableFlag));
-#endif
-#endif
 }
 
 TComSPS::~TComSPS()
@@ -2434,43 +2411,6 @@ Void TComSPS::setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool r
 const Int TComSPS::m_winUnitX[]={1,2,2,1};
 const Int TComSPS::m_winUnitY[]={1,2,1,1};
 
-#if !MOVE_SCALED_OFFSET_TO_PPS
-#if O0098_SCALED_REF_LAYER_ID
-Window& TComSPS::getScaledRefLayerWindowForLayer(Int layerId)
-{
-  static Window win;
-
-  for (Int i = 0; i < m_numScaledRefLayerOffsets; i++)
-  {
-    if (layerId == m_scaledRefLayerId[i])
-    {
-      return m_scaledRefLayerWindow[i];
-    }
-  }
-
-  win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
-  return win;
-}
-#endif
-#if REF_REGION_OFFSET
-Window& TComSPS::getRefLayerWindowForLayer(Int layerId)
-{
-  static Window win;
-
-  for (Int i = 0; i < m_numRefLayerOffsets; i++)
-  {
-    if (layerId == m_refLayerId[i])
-    {
-      return m_refLayerWindow[i];
-    }
-  }
-
-  win.resetWindow();  // reference region offsets are inferred to be zero when not present
-  return win;
-}
-#endif
-#endif
-
 TComPPS::TComPPS()
 : m_PPSId                            (0)
 , m_SPSId                            (0)
@@ -2518,9 +2458,7 @@ TComPPS::TComPPS()
 #if POC_RESET_IDC
 , m_pocResetInfoPresentFlag   (false)
 #endif
-#if MOVE_SCALED_OFFSET_TO_PPS
 , m_numRefLayerLocationOffsets  ( 0 )
-#endif
 #if Q0048_CGS_3D_ASYMLUT
 , m_nCGSFlag(0)
 , m_nCGSOutputBitDepthY(0)
@@ -2537,17 +2475,13 @@ TComPPS::TComPPS()
   m_ChromaQpAdjTable[0].u.comp.CrOffset = 0;
 
 #if SVC_EXTENSION
-#if REF_REGION_OFFSET
   ::memset(m_scaledRefLayerOffsetPresentFlag,   0, sizeof(m_scaledRefLayerOffsetPresentFlag));
   ::memset(m_refRegionOffsetPresentFlag,   0, sizeof(m_refRegionOffsetPresentFlag));
-#endif
-#if R0209_GENERIC_PHASE
   ::memset(m_resamplePhaseSetPresentFlag,   0, sizeof(m_resamplePhaseSetPresentFlag));
   ::memset(m_phaseHorLuma,   0, sizeof(m_phaseHorLuma));
   ::memset(m_phaseVerLuma,   0, sizeof(m_phaseVerLuma));
   ::memset(m_phaseHorChroma, 0, sizeof(m_phaseHorChroma));
   ::memset(m_phaseVerChroma, 0, sizeof(m_phaseVerChroma));
-#endif
 #endif //SVC_EXTENSION
 }
 
@@ -3209,7 +3143,6 @@ Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
 }
 #endif
 
-#if MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
 Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
@@ -3227,7 +3160,8 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
   return win;
 }
 #endif
-#if REF_REGION_OFFSET
+
+#if SVC_EXTENSION
 Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
@@ -3243,10 +3177,7 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // reference region offsets are inferred to be zero when not present
   return win;
 }
-#endif
 
-#if RESAMPLING_FIX
-#if R0209_GENERIC_PHASE
 Bool TComPPS::hasZeroResamplingPhase(Int refLayerId)
 {
   Bool phaseSetPresentFlag;
@@ -3277,10 +3208,6 @@ Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int&
   }
 }
 #endif
-#endif
-
-#endif
-
 
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if NECESSARY_LAYER_FLAG

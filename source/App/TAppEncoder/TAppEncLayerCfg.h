@@ -100,24 +100,17 @@ protected:
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#if REF_REGION_OFFSET
   Bool      m_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
   Bool      m_refRegionOffsetPresentFlag      [MAX_LAYERS];
   Int       m_refRegionLeftOffset  [MAX_LAYERS];
   Int       m_refRegionTopOffset   [MAX_LAYERS];
   Int       m_refRegionRightOffset [MAX_LAYERS];
   Int       m_refRegionBottomOffset[MAX_LAYERS];
-#endif
-#if P0312_VERT_PHASE_ADJ
-  Bool      m_vertPhasePositionEnableFlag[MAX_LAYERS];
-#endif
-#if R0209_GENERIC_PHASE
   Int       m_phaseHorLuma  [MAX_LAYERS];
   Int       m_phaseVerLuma  [MAX_LAYERS];
   Int       m_phaseHorChroma[MAX_LAYERS];
   Int       m_phaseVerChroma[MAX_LAYERS];
   Bool      m_resamplePhaseSetPresentFlag [MAX_LAYERS];
-#endif
 
   Int       m_inputBitDepth   [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of input file
   Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file

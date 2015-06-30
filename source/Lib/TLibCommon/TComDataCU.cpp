@@ -3427,7 +3427,6 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
 #endif
 
-#if MOVE_SCALED_OFFSET_TO_PPS
 #if O0098_SCALED_REF_LAYER_ID
   Int leftStartL = m_pcSlice->getPPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
   Int topStartL  = m_pcSlice->getPPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
@@ -3435,30 +3434,10 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   Int leftStartL = baseColPic->getSlice(0)->getPPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
   Int topStartL  = baseColPic->getSlice(0)->getPPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
 #endif
-#else
-#if O0098_SCALED_REF_LAYER_ID
-  Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
-  Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
-#else
-  Int leftStartL = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowLeftOffset();
-  Int topStartL  = baseColPic->getSlice(0)->getSPS()->getScaledRefLayerWindow(refLayerIdc).getWindowTopOffset();
-#endif
-#endif
 
-#if REF_REGION_OFFSET
   const Window &windowRL = m_pcSlice->getPPS()->getRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc));
   Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
   Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
-#else
-#if Q0200_CONFORMANCE_BL_SIZE
-  Int chromaFormatIdc = baseColPic->getSlice(0)->getChromaFormatIdc();
-  Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowLeftOffset() * TComSPS::getWinUnitX( chromaFormatIdc );
-  Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + baseColPic->getConformanceWindow().getWindowTopOffset() * TComSPS::getWinUnitY( chromaFormatIdc );
-#else
-  Int iBX = ((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16;
-  Int iBY = ((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16;
-#endif
-#endif
 
 #if REF_IDX_MFM
   // offset for collocated block in the motion mapping

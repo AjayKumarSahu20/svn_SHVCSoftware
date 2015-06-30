@@ -315,7 +315,6 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
             }
 #endif
 
-#if REF_REGION_OFFSET
             WRITE_UVLC( pcPPS->getNumRefLayerLocationOffsets(),      "num_ref_loc_offsets" );
             for(Int k = 0; k < pcPPS->getNumRefLayerLocationOffsets(); k++)
             {
@@ -338,7 +337,6 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
                 WRITE_SVLC( refWindow.getWindowRightOffset()  >> 1, "ref_region_right_offset" );
                 WRITE_SVLC( refWindow.getWindowBottomOffset() >> 1, "ref_region_bottom_offset" );
               }
-#if R0209_GENERIC_PHASE
               WRITE_FLAG( pcPPS->getResamplePhaseSetPresentFlag(k) ? 1 : 0, "resample_phase_set_present_flag" );
               if (pcPPS->getResamplePhaseSetPresentFlag(k))
               {
@@ -347,24 +345,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
                 WRITE_UVLC( pcPPS->getPhaseHorChroma(k) + 8, "phase_hor_chroma_plus8" );
                 WRITE_UVLC( pcPPS->getPhaseVerChroma(k) + 8, "phase_ver_chroma_plus8" );
               }
-#endif
             }
-#else
-#if MOVE_SCALED_OFFSET_TO_PPS
-            WRITE_UVLC( pcPPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
-            for(Int k = 0; k < pcPPS->getNumScaledRefLayerOffsets(); k++)
-            {
-              Window scaledWindow = pcPPS->getScaledRefLayerWindow(k);
-#if O0098_SCALED_REF_LAYER_ID
-              WRITE_CODE( pcPPS->getScaledRefLayerId(k), 6,          "scaled_ref_layer_id" );
-#endif
-              WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
-              WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
-              WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
-              WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
-            }
-#endif
-#endif
 #if Q0048_CGS_3D_ASYMLUT
             bits = getNumberOfWrittenBits();
             WRITE_FLAG( pcPPS->getCGSFlag() , "colour_mapping_enabled_flag" );
@@ -1267,16 +1248,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         }
       }
     }     
-#if P0312_VERT_PHASE_ADJ
-    for(Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
-    {
-      UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
-      if( pcSlice->getSPS()->getVertPhasePositionEnableFlag(refLayerIdc) )
-      {
-        WRITE_FLAG( pcSlice->getVertPhasePositionFlag(refLayerIdc), "vert_phase_position_flag" );
-      }
-    }
-#endif
 #endif //SVC_EXTENSION
 
     if(pcSlice->getSPS()->getUseSAO())
@@ -2548,9 +2519,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
-#if O0215_PHASE_ALIGNMENT
-  WRITE_FLAG(vps->getPhaseAlignFlag(), "cross_layer_phase_alignment_flag" );
-#endif
 #if !IRAP_ALIGN_FLAG_IN_VPS_VUI
   WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
 #endif 
@@ -2993,9 +2961,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
 #endif
 #endif
-#if P0312_VERT_PHASE_ADJ
-  WRITE_FLAG( vps->getVpsVuiVertPhaseInUseFlag(), "vps_vui_vert_phase_in_use_flag" );
-#endif
 #if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getIlpRestrictedRefLayersFlag() ? 1 : 0 , "ilp_restricted_ref_layers_flag" );    
   if( vps->getIlpRestrictedRefLayersFlag())
@@ -3121,27 +3086,6 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
 
   // Vertical MV component restriction is not used in SHVC CTC
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
-
-#if !MOVE_SCALED_OFFSET_TO_PPS
-  if( pcSPS->getLayerId() > 0 )
-  {
-    WRITE_UVLC( pcSPS->getNumScaledRefLayerOffsets(),      "num_scaled_ref_layer_offsets" );
-    for(Int i = 0; i < pcSPS->getNumScaledRefLayerOffsets(); i++)
-    {
-      Window scaledWindow = pcSPS->getScaledRefLayerWindow(i);
-#if O0098_SCALED_REF_LAYER_ID
-      WRITE_CODE( pcSPS->getScaledRefLayerId(i), 6,          "scaled_ref_layer_id" );
-#endif
-      WRITE_SVLC( scaledWindow.getWindowLeftOffset()   >> 1, "scaled_ref_layer_left_offset" );
-      WRITE_SVLC( scaledWindow.getWindowTopOffset()    >> 1, "scaled_ref_layer_top_offset" );
-      WRITE_SVLC( scaledWindow.getWindowRightOffset()  >> 1, "scaled_ref_layer_right_offset" );
-      WRITE_SVLC( scaledWindow.getWindowBottomOffset() >> 1, "scaled_ref_layer_bottom_offset" );
-#if P0312_VERT_PHASE_ADJ
-      WRITE_FLAG( scaledWindow.getVertPhasePositionEnableFlag(), "vert_phase_position_enable_flag" ); 
-#endif
-    }
-  }
-#endif
 }
 #endif //SVC_EXTENSION
 
