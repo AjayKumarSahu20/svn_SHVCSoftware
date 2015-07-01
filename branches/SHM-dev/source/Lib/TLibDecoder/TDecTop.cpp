@@ -888,7 +888,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
   // exit when a new picture is found
 #if SVC_EXTENSION
-  bNewPOC = (m_apcSlicePilot->getPOC()!= m_prevPOC);
+  bNewPOC = m_apcSlicePilot->getPOC() != m_prevPOC || ( m_apcSlicePilot->getFirstSliceInPic() && m_parseIdc == -1 );
 
 #if NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG

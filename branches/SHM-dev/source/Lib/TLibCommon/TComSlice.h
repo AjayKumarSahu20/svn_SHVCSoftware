@@ -2268,7 +2268,7 @@ private:
   TComTrQuant* m_pcTrQuant;
 #endif
   UInt        m_colFromL0Flag;  // collocated picture from List0 flag
-  
+
   Bool        m_noOutputPriorPicsFlag;
   Bool        m_noRaslOutputFlag;
   Bool        m_handleCraAsBlaFlag;
@@ -2312,8 +2312,9 @@ private:
   Bool       m_enableTMVPFlag;
 
 #if SVC_EXTENSION
+  Bool        m_firstSliceInPic;
 #if R0226_SLICE_TMVP
-  Bool       m_availableForTMVPRefFlag;
+  Bool        m_availableForTMVPRefFlag;
 #endif
   UInt        m_layerId;
   TComPic*    m_pcBaseColPic[MAX_LAYERS];
@@ -2613,6 +2614,8 @@ public:
   Bool      getEnableTMVPFlag     ()              { return m_enableTMVPFlag;}
 
 #if SVC_EXTENSION
+  Void      setFirstSliceInPic               ( Bool val )        { m_firstSliceInPic = val;                    }
+  Bool      getFirstSliceInPic               ()                  { return m_firstSliceInPic;                   }
 #if R0226_SLICE_TMVP
   Void      setAvailableForTMVPRefFlag     ( Bool   b )    { m_availableForTMVPRefFlag = b; }
   Bool      getAvailableForTMVPRefFlag     ()              { return m_availableForTMVPRefFlag;}
