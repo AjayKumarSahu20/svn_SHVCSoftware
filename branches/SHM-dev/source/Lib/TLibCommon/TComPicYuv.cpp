@@ -301,8 +301,6 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
   for(Int chan = 0; chan < getNumberValidComponents(); chan++)
   {
     const ComponentID  ch     = ComponentID(chan);
-    const Int          shift  = g_bitDepth[toChannelType(ch)] - 8;
-    const Int          offset = (shift>0)?(1<<(shift-1)):0;
     const Pel         *pi     = getAddr(ch);
     const Int          stride = getStride(ch);
     const Int          height = getHeight(ch);
