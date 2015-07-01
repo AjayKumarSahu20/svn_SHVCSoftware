@@ -117,6 +117,7 @@ TComSlice::TComSlice()
 , m_LFCrossSliceBoundaryFlag      ( false )
 , m_enableTMVPFlag                ( true )
 #if SVC_EXTENSION
+, m_firstSliceInPic               ( false )
 #if R0226_SLICE_TMVP
 , m_availableForTMVPRefFlag       ( true )
 #endif
