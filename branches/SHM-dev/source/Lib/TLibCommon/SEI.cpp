@@ -157,6 +157,12 @@ const Char *SEI::getSEIMessageString(SEI::PayloadType payloadType)
 #if P0123_ALPHA_CHANNEL_SEI
     case SEI::ALPHA_CHANNEL_INFO:                   return "Alpha Channel Information";
 #endif
+#if Q0189_TMVP_CONSTRAINTS
+    case SEI::TMVP_CONSTRAINTS:                     return "TMVP constraints";
+#endif
+#if Q0247_FRAME_FIELD_INFO
+    case SEI::FRAME_FIELD_INFO:                     return "Frame field info";
+#endif
 #endif
     default:                                        return "Unknown";
   }
