@@ -349,12 +349,6 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      sei = new SEIBspInitialArrivalTime;
      xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei, pDecodedMessageOutputStream);
      break;
-#if !REMOVE_BSP_HRD_SEI
-   case SEI::BSP_HRD:
-     sei = new SEIBspHrd;
-     xParseSEIBspHrd((SEIBspHrd&) *sei, sps, *nestingSei, pDecodedMessageOutputStream);
-     break;
-#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
    case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -1662,94 +1656,6 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
   }
 #endif
 }
-
-#if !REMOVE_BSP_HRD_SEI
-Void SEIReader::xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream)
-{
-  UInt uiCode;
-  sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "sei_num_bsp_hrd_parameters_minus1" ); sei.m_seiNumBspHrdParametersMinus1 = uiCode;
-  for (UInt i = 0; i <= sei.m_seiNumBspHrdParametersMinus1; i++)
-  {
-    if (i > 0)
-    {
-      sei_read_flag( pDecodedMessageOutputStream, uiCode, "sei_bsp_cprms_present_flag" ); sei.m_seiBspCprmsPresentFlag[i] = uiCode;
-    }
-    xParseHrdParameters(sei.hrd, i==0 ? 1 : sei.m_seiBspCprmsPresentFlag[i], nestingSei.m_nestingMaxTemporalIdPlus1[0]-1);
-  }
-  for (UInt h = 0; h <= nestingSei.m_nestingNumOpsMinus1; h++)
-  {
-    UInt lsIdx = nestingSei.m_nestingOpIdx[h];
-    sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "num_sei_bitstream_partitions_minus1[i]"); sei.m_seiNumBitstreamPartitionsMinus1[lsIdx] = uiCode;
-#if HRD_BPB
-    Int chkPart=0;
-#endif
-    UInt i;
-    for(i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
-    {
-#if HRD_BPB
-      UInt nl=0; UInt j;
-      for(j = 0; j < sei.m_vpsMaxLayers; j++)
-      {
-        if (sei.m_layerIdIncludedFlag[lsIdx][j])
-        {
-          nl++;
-        }
-      }
-      for (j = 0; j < nl; j++)
-      {
-#else
-      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-      {
-        if (sei.m_layerIdIncludedFlag[lsIdx][j])
-        {
-#endif
-          sei_read_flag( pDecodedMessageOutputStream, uiCode, "sei_layer_in_bsp_flag[lsIdx][i][j]" ); sei.m_seiLayerInBspFlag[lsIdx][i][j] = uiCode;
-        }
-#if !HRD_BPB
-      }
-#endif
-#if HRD_BPB
-      chkPart+=sei.m_seiLayerInBspFlag[lsIdx][i][j];
-#endif
-    }
-#if HRD_BPB
-    assert(chkPart<=1);
-#endif
-#if HRD_BPB
-    if(sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]==0)
-    {
-      Int chkPartition1=0; Int chkPartition2=0;
-      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-      {
-        if( sei.m_layerIdIncludedFlag[lsIdx][j] )
-        {
-          chkPartition1+=sei.m_seiLayerInBspFlag[lsIdx][0][j];
-          chkPartition2++;
-        }
-      }
-      assert(chkPartition1!=chkPartition2);
-    }
-#endif
-      
-    sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "sei_num_bsp_sched_combinations_minus1[i]"); sei.m_seiNumBspSchedCombinationsMinus1[lsIdx] = uiCode;
-    for (i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
-    {
-      for (UInt j = 0; j <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; j++)
-      {
-        sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "sei_bsp_comb_hrd_idx[lsIdx][i][j]"); sei.m_seiBspCombHrdIdx[lsIdx][i][j] = uiCode;
-#if HRD_BPB
-        assert(uiCode <= sei.m_seiNumBspHrdParametersMinus1);
-#endif
-        sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "sei_bsp_comb_sched_idx[lsIdx][i][j]"); sei.m_seiBspCombScheddx[lsIdx][i][j] = uiCode;
-#if HRD_BPB
-        assert(uiCode <= sei.hrd->getCpbCntMinus1( sps->getMaxTLayers()-1 ));
-#endif
-
-      }
-    }
-  }
-}
-#endif
 
 Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1, std::ostream *pDecodedMessageOutputStream)
 {

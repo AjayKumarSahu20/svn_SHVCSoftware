@@ -184,11 +184,6 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
    case SEI::BSP_INITIAL_ARRIVAL_TIME:
      xWriteSEIBspInitialArrivalTime(*static_cast<const SEIBspInitialArrivalTime*>(&sei), vps, sps, nestingSei, bspNestingSei);
      break;
-#if !REMOVE_BSP_HRD_SEI
-   case SEI::BSP_HRD:
-     xWriteSEIBspHrd(*static_cast<const SEIBspHrd*>(&sei), sps, nestingSei);
-     break;
-#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
    case SEI::OUTPUT_LAYER_SET_NESTING:
@@ -1260,60 +1255,6 @@ Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &s
   }
 #endif
 }
-
-#if !REMOVE_BSP_HRD_SEI
-Void SEIWriter::xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei)
-{
-  WRITE_UVLC( sei.m_seiNumBspHrdParametersMinus1, "sei_num_bsp_hrd_parameters_minus1" );
-  for (UInt i = 0; i <= sei.m_seiNumBspHrdParametersMinus1; i++)
-  {
-    if (i > 0)
-    {
-      WRITE_FLAG( sei.m_seiBspCprmsPresentFlag[i], "sei_bsp_cprms_present_flag" );
-    }
-    xCodeHrdParameters(sei.hrd, i==0 ? 1 : sei.m_seiBspCprmsPresentFlag[i], nestingSei.m_nestingMaxTemporalIdPlus1[0]-1);
-  }
-  for (UInt h = 0; h <= nestingSei.m_nestingNumOpsMinus1; h++)
-  {
-    UInt lsIdx = nestingSei.m_nestingOpIdx[h];
-    WRITE_UVLC( sei.m_seiNumBitstreamPartitionsMinus1[lsIdx], "num_sei_bitstream_partitions_minus1[i]");
-    for (UInt i = 0; i <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; i++)
-    {
-#if HRD_BPB
-      UInt nl=0;
-      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-      {
-        if (sei.m_layerIdIncludedFlag[lsIdx][j])
-        {
-          nl++;
-        }
-      }
-      for (UInt j = 0; j < nl; j++)
-      {
-#else
-      for (UInt j = 0; j < sei.m_vpsMaxLayers; j++)
-      {
-        if (sei.m_layerIdIncludedFlag[lsIdx][j])
-        {
-#endif
-          WRITE_FLAG( sei.m_seiLayerInBspFlag[lsIdx][i][j], "sei_layer_in_bsp_flag[lsIdx][i][j]" );
-        }
-#if !HRD_BPB
-      }
-#endif
-    }
-    WRITE_UVLC( sei.m_seiNumBspSchedCombinationsMinus1[lsIdx], "sei_num_bsp_sched_combinations_minus1[i]");
-    for (UInt i = 0; i <= sei.m_seiNumBspSchedCombinationsMinus1[lsIdx]; i++)
-    {
-      for (UInt j = 0; j <= sei.m_seiNumBitstreamPartitionsMinus1[lsIdx]; j++)
-      {
-        WRITE_UVLC( sei.m_seiBspCombHrdIdx[lsIdx][i][j], "sei_bsp_comb_hrd_idx[lsIdx][i][j]");
-        WRITE_UVLC( sei.m_seiBspCombScheddx[lsIdx][i][j], "sei_bsp_comb_sched_idx[lsIdx][i][j]");
-      }
-    }
-  }
-}
-#endif
 
 Void SEIWriter::xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 )
 {

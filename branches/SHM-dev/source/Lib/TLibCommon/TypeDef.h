@@ -55,7 +55,6 @@
 #define VPS_RESERVED_FLAGS               1      ///< vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_VUI_VST_PARAMS               1      ///< JCTVC-R0227: Related to signalling of VST parameters of the base layer.
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
-#define REMOVE_BSP_HRD_SEI               1      ///< R0010: Remove bitstream partition HRD SEI message.
 #define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag

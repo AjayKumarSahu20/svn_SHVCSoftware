@@ -133,9 +133,6 @@ Void   xParseSEISubBitstreamProperty          (SEISubBitstreamProperty &sei, std
   Void xParseSEIBspNesting                    (SEIBspNesting &sei, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting &nestingSei ,std::ostream *pDecodedMessageOutputStream);
 #endif
   Void xParseSEIBspInitialArrivalTime         (SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei, std::ostream *pDecodedMessageOutputStream);
-#if !REMOVE_BSP_HRD_SEI
-  Void xParseSEIBspHrd(SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream);
-#endif
   Void xParseHrdParameters                    (TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1, std::ostream *pDecodedMessageOutputStream);
 #endif
 #if Q0078_ADD_LAYER_SETS

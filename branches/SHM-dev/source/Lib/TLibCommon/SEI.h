@@ -102,9 +102,6 @@ public:
 #if O0164_MULTI_LAYER_HRD
     BSP_NESTING                          = 145,
     BSP_INITIAL_ARRIVAL_TIME             = 146,
-#if !REMOVE_BSP_HRD_SEI
-    BSP_HRD                              = 147,
-#endif
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
     COLOUR_REMAPPING_INFO                = 148,
@@ -908,30 +905,6 @@ public:
   UInt m_nalInitialArrivalDelay[256];
   UInt m_vclInitialArrivalDelay[256];
 };
-
-#if !REMOVE_BSP_HRD_SEI
-class SEIBspHrd : public SEI
-{
-public:
-  PayloadType payloadType() const { return BSP_HRD; }
-
-  SEIBspHrd () {}
-  virtual ~SEIBspHrd () {}
-
-  UInt m_seiNumBspHrdParametersMinus1;
-  Bool m_seiBspCprmsPresentFlag[MAX_VPS_LAYER_SETS_PLUS1];
-  UInt m_seiNumBitstreamPartitionsMinus1[MAX_VPS_LAYER_SETS_PLUS1];
-  Bool m_seiLayerInBspFlag[MAX_VPS_LAYER_SETS_PLUS1][8][MAX_LAYERS];
-  UInt m_seiNumBspSchedCombinationsMinus1[MAX_VPS_LAYER_SETS_PLUS1];
-  UInt m_seiBspCombHrdIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
-  UInt m_seiBspCombScheddx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
-  UInt m_vpsMaxLayers;
-  Bool m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-
-  TComHRD *hrd;
-};
-#endif
-
 #endif
 
 #endif
