@@ -150,9 +150,6 @@ const Char *SEI::getSEIMessageString(SEI::PayloadType payloadType)
 #if O0164_MULTI_LAYER_HRD
     case SEI::BSP_NESTING:                          return "Bitstream parition nesting";
     case SEI::BSP_INITIAL_ARRIVAL_TIME:             return "Bitstream parition initial arrival time";
-#if !REMOVE_BSP_HRD_SEI
-    case SEI::BSP_HRD:                              return "Bitstream parition HRD parameters";
-#endif
 #endif
 #if Q0078_ADD_LAYER_SETS
     case SEI::OUTPUT_LAYER_SET_NESTING:             return "Output layer set nesting";

@@ -121,9 +121,6 @@ Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei);
   Void xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
-#if !REMOVE_BSP_HRD_SEI
-  Void xWriteSEIBspHrd(const SEIBspHrd &sei, TComSPS *sps, const SEIScalableNesting &nestingSei);
-#endif
   Void xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
 #endif
 #if Q0078_ADD_LAYER_SETS
