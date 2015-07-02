@@ -2330,10 +2330,6 @@ private:
   Bool        m_interLayerPredEnabledFlag;
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_IDX_PLUS1];
-#if POC_RESET_FLAG
-  Bool        m_bPocResetFlag;
-  Int         m_pocValueBeforeReset;
-#endif  
   Bool        m_bDiscardableFlag;
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool        m_bCrossLayerBLAFlag;
@@ -2477,9 +2473,6 @@ public:
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
 
 #if SVC_EXTENSION
-#if PREVTID0_POC_RESET
-  Void      adjustPrevTid0POC      (Int adj)             { m_prevTid0POC=m_prevTid0POC-adj; }
-#endif
 #if POC_RESET_IDC_DECODER
   Void      setPrevTid0POC( Int x ) { m_prevTid0POC = x; }
 #endif
@@ -2674,12 +2667,6 @@ public:
                                   || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N10
                                   || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N12
                                   || m_eNalUnitType == NAL_UNIT_RESERVED_VCL_N14 ); }
-#endif
-#if POC_RESET_FLAG
-  Bool      getPocResetFlag  ()                              { return m_bPocResetFlag;       }
-  Void      setPocResetFlag  (Bool b)                        { m_bPocResetFlag = b;          }
-  Int       getPocValueBeforeReset ()                        { return m_pocValueBeforeReset; }
-  Void      setPocValueBeforeReset (Int x)                   { m_pocValueBeforeReset = x ;   }
 #endif
   Bool      getDiscardableFlag  ()                           { return m_bDiscardableFlag;    }
   Void      setDiscardableFlag  (Bool b)                     { m_bDiscardableFlag = b;       }

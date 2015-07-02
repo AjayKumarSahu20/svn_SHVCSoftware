@@ -84,7 +84,7 @@ TEncTop::TEncTop()
   m_bMFMEnabledFlag = false;
 #endif
   m_numRefLayerLocationOffsets = 0;
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
   m_pocAdjustmentValue     = 0;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
@@ -1064,9 +1064,6 @@ Void TEncTop::xInitPPS()
 
   m_cPPS.setPPSId( m_iPPSIdCnt );
   m_cPPS.setSPSId( m_iSPSIdCnt );
-#if POC_RESET_FLAG
-  m_cPPS.setNumExtraSliceHeaderBits( 2 );
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   if (m_crossLayerBLAFlag)
   {

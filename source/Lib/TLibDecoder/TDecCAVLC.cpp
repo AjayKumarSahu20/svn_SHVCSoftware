@@ -1241,34 +1241,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
   if(!pcSlice->getDependentSliceSegmentFlag())
   {
 #if SVC_EXTENSION
-#if POC_RESET_FLAG
-    Int iBits = 0;
-    if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
-    {
-      READ_FLAG(uiCode, "poc_reset_flag");      pcSlice->setPocResetFlag( uiCode ? true : false );
-      iBits++;
-    }
-    if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
-    {
-#if DISCARDABLE_PIC_RPS
-      READ_FLAG(uiCode, "discardable_flag"); pcSlice->setDiscardableFlag( uiCode ? true : false );
-#else
-      READ_FLAG(uiCode, "discardable_flag"); // ignored
-#endif
-      iBits++;
-    }
-#if O0149_CROSS_LAYER_BLA_FLAG
-    if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
-    {
-      READ_FLAG(uiCode, "cross_layer_bla_flag");  pcSlice->setCrossLayerBLAFlag( uiCode ? true : false );
-      iBits++;
-    }
-#endif
-    for (; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
-    {
-      READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
-    }
-#else
 #if CROSS_LAYER_BLA_FLAG_FIX
     Int iBits = 0;
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
@@ -1305,7 +1277,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
-#endif
 #else //SVC_EXTENSION
     for (Int i = 0; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {

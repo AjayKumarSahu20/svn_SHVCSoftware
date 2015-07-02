@@ -1143,70 +1143,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcSlice->getPic()->setField(isField);
 
 #if SVC_EXTENSION
-#if POC_RESET_FLAG
-    if( !pcSlice->getPocResetFlag() ) // For picture that are not reset, we should adjust the value of POC calculated from the configuration files.
-    {
-      // Subtract POC adjustment value until now.
-      pcSlice->setPOC( pcSlice->getPOC() - m_pcEncTop->getPocAdjustmentValue() );
-    }
-    else
-    {
-      // Check if this is the first slice in the picture
-      // In the encoder, the POC values are copied along with copySliceInfo, so we only need
-      // to do this for the first slice.
-      Int pocAdjustValue = pcSlice->getPOC() - m_pcEncTop->getPocAdjustmentValue();
-      if( pcSlice->getSliceIdx() == 0 )
-      {
-        TComList<TComPic*>::iterator  iterPic = rcListPic.begin();  
-
-        // Iterate through all picture in DPB
-        while( iterPic != rcListPic.end() )
-        {              
-          TComPic *dpbPic = *iterPic;
-          if( dpbPic->getPOC() == pocCurr )
-          {
-            if( dpbPic->getReconMark() )
-            {
-              assert( !( dpbPic->getSlice(0)->isReferenced() ) && !( dpbPic->getOutputMark() ) );
-            }
-          }
-          // Check if the picture pointed to by iterPic is either used for reference or
-          // needed for output, are in the same layer, and not the current picture.
-          if( /* ( ( dpbPic->getSlice(0)->isReferenced() ) || ( dpbPic->getOutputMark() ) )
-              && */ ( dpbPic->getLayerId() == pcSlice->getLayerId() )
-              && ( dpbPic->getReconMark() ) 
-            )
-          {
-            for(Int i = dpbPic->getNumAllocatedSlice()-1; i >= 0; i--)
-            {
-              TComSlice *slice = dpbPic->getSlice(i);
-              TComReferencePictureSet *rps = slice->getRPS();
-              slice->setPOC( dpbPic->getSlice(i)->getPOC() - pocAdjustValue );
-
-              // Also adjust the POC value stored in the RPS of each such slice
-              for(Int j = rps->getNumberOfPictures(); j >= 0; j--)
-              {
-                rps->setPOC( j, rps->getPOC(j) - pocAdjustValue );
-              }
-              // Also adjust the value of refPOC
-              for(Int k = 0; k < 2; k++)  // For List 0 and List 1
-              {
-                RefPicList list = (k == 1) ? REF_PIC_LIST_1 : REF_PIC_LIST_0;
-                for(Int j = 0; j < slice->getNumRefIdx(list); j++)
-                {
-                  slice->setRefPOC( slice->getRefPOC(list, j) - pocAdjustValue, list, j);
-                }
-              }
-            }
-          }
-          iterPic++;
-        }
-        m_pcEncTop->setPocAdjustmentValue( m_pcEncTop->getPocAdjustmentValue() + pocAdjustValue );
-      }
-      pcSlice->setPocValueBeforeReset( pcSlice->getPOC() - m_pcEncTop->getPocAdjustmentValue() + pocAdjustValue );
-      pcSlice->setPOC( 0 );
-    }
-#endif
 #if POC_RESET_IDC_ENCODER
     pcSlice->setPocValueBeforeReset( pocCurr );
     // Check if the current picture is to be assigned as a reset picture
@@ -1892,7 +1828,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
       if ( pocCurr > 0 && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
 #else
       if (pcSlice->getPOC()>0  && pcSlice->isRADL() && pcPic->getSlice(0)->getBaseColPic(pcPic->getSlice(0)->getInterLayerPredLayerIdc(0))->getSlice(0)->isRASL())
@@ -2301,7 +2237,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       estimatedBits = m_pcRateCtrl->getRCPic()->getTargetBits();
 
       Int sliceQP = m_pcCfg->getInitialQP();
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
       if ( ( pocCurr == 0 && m_pcCfg->getInitialQP() > 0 ) || ( frameLevel == 0 && m_pcCfg->getForceIntraQP() ) ) // QP is specified
 #else
       if ( ( pcSlice->getPOC() == 0 && m_pcCfg->getInitialQP() > 0 ) || ( frameLevel == 0 && m_pcCfg->getForceIntraQP() ) ) // QP is specified
@@ -2719,7 +2655,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }
       pictureTimingSEI.m_auCpbRemovalDelay = std::min<Int>(std::max<Int>(1, m_totalCoded - m_lastBPSEI), static_cast<Int>(pow(2, static_cast<Double>(pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getCpbRemovalDelayLengthMinus1()+1)))); // Syntax element signalled as minus, hence the .
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
       pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pocCurr - m_totalCoded;
 #else
       pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pcSlice->getPOC() - m_totalCoded;
@@ -2867,7 +2803,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       SEIRecoveryPoint sei_recovery_point;
       sei_recovery_point.m_recoveryPocCnt    = 0;
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
       sei_recovery_point.m_exactMatchingFlag = ( pocCurr == 0 ) ? (true) : (false);
 #else
       sei_recovery_point.m_exactMatchingFlag = ( pcSlice->getPOC() == 0 ) ? (true) : (false);

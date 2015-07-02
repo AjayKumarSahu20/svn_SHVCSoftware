@@ -974,33 +974,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   if ( !pcSlice->getDependentSliceSegmentFlag() )
   {
 #if SVC_EXTENSION
-#if POC_RESET_FLAG
-    Int iBits = 0;
-    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
-    {
-      WRITE_FLAG( pcSlice->getPocResetFlag(), "poc_reset_flag" );
-      iBits++;
-    }
-    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
-    {
-      assert(!!"discardable_flag");
-      WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
-      iBits++;
-    }
-#if O0149_CROSS_LAYER_BLA_FLAG
-    if( pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits )
-    {
-      assert(!!"cross_layer_bla_flag");
-      WRITE_FLAG(pcSlice->getCrossLayerBLAFlag(), "cross_layer_bla_flag");
-      iBits++;
-    }
-#endif
-    for ( ; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
-    {
-      assert(!!"slice_reserved_undetermined_flag[]");
-      WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
-    }
-#else
 #if CROSS_LAYER_BLA_FLAG_FIX
     Int iBits = 0;
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
@@ -1039,7 +1012,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       assert(!!"slice_reserved_undetermined_flag[]");
       WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
     }
-#endif
 #else //SVC_EXTENSION
     for (Int i = 0; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
@@ -1065,17 +1037,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if( !pcSlice->getIdrPicFlag() )
 #endif
     {
-#if POC_RESET_FLAG
-      Int picOrderCntLSB;
-      if( !pcSlice->getPocResetFlag() )
-      {
-        picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
-      }
-      else
-      {
-        picOrderCntLSB = (pcSlice->getPocValueBeforeReset()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
-      }
-#else
 #if POC_RESET_IDC_ENCODER
       Int picOrderCntLSB;
       if( pcSlice->getPocResetIdc() == 2 )  // i.e. the LSB is reset
@@ -1088,7 +1049,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       }
 #else
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
-#endif
 #endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
 
