@@ -123,10 +123,6 @@ Void xWriteSEITMVPConstraints (const SEITMVPConstrains &sei);
   Void xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei);
   Void xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
 #endif
-#if Q0078_ADD_LAYER_SETS
-  Void xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps);
-  Void xWriteSEIVPSRewriting(const SEIVPSRewriting &sei);
-#endif
 #if P0123_ALPHA_CHANNEL_SEI
   Void xWriteSEIAlphaChannelInfo(const SEIAlphaChannelInfo &sei);
 #endif

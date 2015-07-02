@@ -185,14 +185,6 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
      xWriteSEIBspInitialArrivalTime(*static_cast<const SEIBspInitialArrivalTime*>(&sei), vps, sps, nestingSei, bspNestingSei);
      break;
 #endif
-#if Q0078_ADD_LAYER_SETS
-   case SEI::OUTPUT_LAYER_SET_NESTING:
-     xWriteSEIOutputLayerSetNesting(bs, *static_cast<const SEIOutputLayerSetNesting*>(&sei), vps, sps);
-     break;
-   case SEI::VPS_REWRITING:
-     xWriteSEIVPSRewriting(*static_cast<const SEIVPSRewriting*>(&sei));
-     break;
-#endif
 #if Q0189_TMVP_CONSTRAINTS
    case SEI::TMVP_CONSTRAINTS:
      xWriteSEITMVPConstraints(*static_cast<const SEITMVPConstrains*>(&sei));
@@ -1327,37 +1319,6 @@ Void SEIWriter::xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UIn
       }
     }
   }
-}
-
-#endif
-
-#if Q0078_ADD_LAYER_SETS
-
-Void SEIWriter::xWriteSEIOutputLayerSetNesting(TComBitIf& bs, const SEIOutputLayerSetNesting &sei, TComVPS *vps, TComSPS *sps)
-{
-  WRITE_FLAG(sei.m_olsFlag, "ols_flag");
-  WRITE_UVLC(sei.m_numOlsIndicesMinus1, "num_ols_indices_minus1");
-
-  for (Int i = 0; i <= sei.m_numOlsIndicesMinus1; i++)
-  {
-    WRITE_UVLC(sei.m_olsIdx[i], "ols_idx[i]");
-  }
-
-  while (m_pcBitIf->getNumberOfWrittenBits() % 8 != 0)
-  {
-    WRITE_FLAG(0, "ols_nesting_zero_bit");
-  }
-
-  // write nested SEI messages
-  for (SEIMessages::const_iterator it = sei.m_nestedSEIs.begin(); it != sei.m_nestedSEIs.end(); it++)
-  {
-    writeSEImessage(bs, *(*it), vps, sps);
-  }
-}
-
-Void SEIWriter::xWriteSEIVPSRewriting(const SEIVPSRewriting &sei)
-{
-  //sei.nalu->
 }
 
 #endif

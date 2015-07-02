@@ -135,15 +135,6 @@ Void   xParseSEISubBitstreamProperty          (SEISubBitstreamProperty &sei, std
   Void xParseSEIBspInitialArrivalTime         (SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei, std::ostream *pDecodedMessageOutputStream);
   Void xParseHrdParameters                    (TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1, std::ostream *pDecodedMessageOutputStream);
 #endif
-#if Q0078_ADD_LAYER_SETS
-#if LAYERS_NOT_PRESENT_SEI
-  Void xParseSEIOutputLayerSetNesting         (SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream);
-#else
-  Void xParseSEIOutputLayerSetNesting         (SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps, std::ostream *pDecodedMessageOutputStream);
-#endif
-  Void xParseSEIVPSRewriting                  (SEIVPSRewriting &sei, std::ostream *pDecodedMessageOutputStream);
-#endif
-
 #if Q0189_TMVP_CONSTRAINTS 
   Void xParseSEITMVPConstraints               (SEITMVPConstrains& sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream);
 #endif

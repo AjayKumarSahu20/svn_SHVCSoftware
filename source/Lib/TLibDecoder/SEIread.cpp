@@ -350,20 +350,6 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
      xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei, pDecodedMessageOutputStream);
      break;
 #endif
-#if Q0078_ADD_LAYER_SETS
-   case SEI::OUTPUT_LAYER_SET_NESTING:
-     sei = new SEIOutputLayerSetNesting;
-#if LAYERS_NOT_PRESENT_SEI
-     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, vps, sps, pDecodedMessageOutputStream);
-#else
-     xParseSEIOutputLayerSetNesting((SEIOutputLayerSetNesting&)*sei, nalUnitType, sps, pDecodedMessageOutputStream);
-#endif
-     break;
-   case SEI::VPS_REWRITING:
-     sei = new SEIVPSRewriting;
-     xParseSEIVPSRewriting((SEIVPSRewriting&)*sei, pDecodedMessageOutputStream);
-     break;
-#endif
 #if Q0189_TMVP_CONSTRAINTS
    case SEI::TMVP_CONSTRAINTS:
      sei =  new SEITMVPConstrains;
@@ -1731,59 +1717,6 @@ Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UIn
     }
   }
 }
-#endif
-
-#if Q0078_ADD_LAYER_SETS
-
-#if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
-#else
-Void SEIReader::xParseSEIOutputLayerSetNesting(SEIOutputLayerSetNesting& sei, const NalUnitType nalUnitType, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
-#endif
-{
-  UInt uiCode;
-  SEIMessages seis;
-
-  sei_read_flag( pDecodedMessageOutputStream, uiCode, "ols_flag"); sei.m_olsFlag = uiCode;
-  sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "num_ols_indices_minus1"); sei.m_numOlsIndicesMinus1 = uiCode;
-
-  for (Int i = 0; i <= sei.m_numOlsIndicesMinus1; i++)
-  {
-    sei_read_uvlc( pDecodedMessageOutputStream, uiCode, "ols_idx[i]"); sei.m_olsIdx[i] = uiCode;
-  }
-
-  // byte alignment
-  while (m_pcBitstream->getNumBitsRead() % 8 != 0)
-  {
-    UInt code;
-    sei_read_flag( pDecodedMessageOutputStream, code, "ols_nesting_zero_bit");
-  }
-
-  sei.m_callerOwnsSEIs = false;
-
-  // read nested SEI messages
-  do {
-#if O0164_MULTI_LAYER_HRD
-#if LAYERS_NOT_PRESENT_SEI
-    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, pDecodedMessageOutputStream);
-#else
-    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, pDecodedMessageOutputStream);
-#endif
-#else
-#if LAYERS_NOT_PRESENT_SEI
-    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, vps, sps, pDecodedMessageOutputStream);
-#else
-    xReadSEImessage(sei.m_nestedSEIs, nalUnitType, sps, pDecodedMessageOutputStream);
-#endif
-#endif
-  } while (m_pcBitstream->getNumBitsLeft() > 8);
-
-}
-
-Void SEIReader::xParseSEIVPSRewriting(SEIVPSRewriting &sei, std::ostream *pDecodedMessageOutputStream )
-{
-}
-
 #endif
 
 #if P0123_ALPHA_CHANNEL_SEI

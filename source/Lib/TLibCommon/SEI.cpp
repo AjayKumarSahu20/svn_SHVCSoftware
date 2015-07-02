@@ -151,10 +151,6 @@ const Char *SEI::getSEIMessageString(SEI::PayloadType payloadType)
     case SEI::BSP_NESTING:                          return "Bitstream parition nesting";
     case SEI::BSP_INITIAL_ARRIVAL_TIME:             return "Bitstream parition initial arrival time";
 #endif
-#if Q0078_ADD_LAYER_SETS
-    case SEI::OUTPUT_LAYER_SET_NESTING:             return "Output layer set nesting";
-    case SEI::VPS_REWRITING:                        return "VPS rewriting";
-#endif
 #if Q0096_OVERLAY_SEI
     case SEI::OVERLAY_INFO:                         return "Overlay Information";
 #endif
