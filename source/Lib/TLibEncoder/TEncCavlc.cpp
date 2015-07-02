@@ -780,11 +780,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
-#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
-#if VPS_EXTN_OFFSET_CALC
-  UInt numBytesInVps = this->m_pcBitIf->getNumberOfWrittenBits();
-#endif
-#endif
 #if !P0307_REMOVE_VPS_VUI_OFFSET
 #if VPS_VUI_OFFSET
    m_vpsVuiCounter = this->m_pcBitIf->getNumberOfWrittenBits();
@@ -806,15 +801,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   WRITE_CODE( pcVPS->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1" );
   WRITE_FLAG( pcVPS->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag" );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
-#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
-#if VPS_EXTN_OFFSET
-  WRITE_CODE( pcVPS->getExtensionOffset(),         16,        "vps_extension_offset" );
-#else
   WRITE_CODE( 0xffff,                              16,        "vps_reserved_ffff_16bits" );
-#endif
-#else
-  WRITE_CODE( 0xffff,                              16,        "vps_reserved_ffff_16bits" );
-#endif
   codePTL( pcVPS->getPTL(), true, pcVPS->getMaxTLayers() - 1 );
   const Bool subLayerOrderingInfoPresentFlag = 1;
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
@@ -917,13 +904,6 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
     {
       WRITE_FLAG(1,                  "vps_extension_alignment_bit_equal_to_one");
     }
-#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
-#if VPS_EXTN_OFFSET_CALC
-    Int vpsExntOffsetValueInBits = this->m_pcBitIf->getNumberOfWrittenBits() - numBytesInVps + 16; // 2 bytes for NUH
-    assert( vpsExntOffsetValueInBits % 8 == 0 );
-    pcVPS->setExtensionOffset( vpsExntOffsetValueInBits >> 3 );
-#endif
-#endif
     codeVPSExtension(pcVPS);
     WRITE_FLAG( 0,                     "vps_extension2_flag" );   // Flag value of 1 reserved
   }

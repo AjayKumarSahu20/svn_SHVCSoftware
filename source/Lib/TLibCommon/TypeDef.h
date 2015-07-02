@@ -181,9 +181,6 @@
 #endif 
 #define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
 
-#define P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED        1   ///< JCTVC-P0125 -- Keep it as a reserved FFFF value --- The following two macros (VPS_EXTN_OFFSET & VPS_EXTN_OFFSET_CALC) will have no effect when this macro is set to 1.
-#define VPS_EXTN_OFFSET                  1      ///< implementation of vps_extension_offset syntax element
-#define VPS_EXTN_OFFSET_CALC             1      ///< Calculation of VPS extension offset
 #define SPS_PTL_FIX                      1      ///< remove profile_tier_level from enhancement layer SPS
 
 #define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
