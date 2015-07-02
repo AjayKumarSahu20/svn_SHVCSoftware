@@ -1822,14 +1822,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 #endif
-#if !P0125_REVERT_VPS_EXTN_OFFSET_TO_RESERVED
-#if !VPS_EXTN_OFFSET_CALC
-#if VPS_EXTN_OFFSET
-  // to be updated according to the current semantics
-  vps->setExtensionOffset( 0xffff );
-#endif
-#endif
-#endif
 
 #if P0300_ALT_OUTPUT_LAYER_FLAG
   for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
