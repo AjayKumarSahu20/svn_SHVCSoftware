@@ -90,37 +90,37 @@ public:
     TEMP_MOTION_CONSTRAINED_TILE_SETS    = 139,
     CHROMA_SAMPLING_FILTER_HINT          = 140,
     KNEE_FUNCTION_INFO                   = 141,
+#if Q0074_COLOUR_REMAPPING_SEI
+    COLOUR_REMAPPING_INFO                = 142,
+#endif
 #if LAYERS_NOT_PRESENT_SEI
-    LAYERS_NOT_PRESENT                   = 142,
+    LAYERS_NOT_PRESENT                   = 160,
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-    INTER_LAYER_CONSTRAINED_TILE_SETS    = 143,
-#endif
-#if SUB_BITSTREAM_PROPERTY_SEI
-    SUB_BITSTREAM_PROPERTY               = 144,    // Final PayloadType to be defined after finalization
+    INTER_LAYER_CONSTRAINED_TILE_SETS    = 161,
 #endif
 #if O0164_MULTI_LAYER_HRD
-    BSP_NESTING                          = 145,
-    BSP_INITIAL_ARRIVAL_TIME             = 146,
+    BSP_NESTING                          = 162,
+    BSP_INITIAL_ARRIVAL_TIME             = 163,
 #endif
-#if Q0074_COLOUR_REMAPPING_SEI
-    COLOUR_REMAPPING_INFO                = 148,
+#if SUB_BITSTREAM_PROPERTY_SEI
+    SUB_BITSTREAM_PROPERTY               = 164,
+#endif
+#if P0123_ALPHA_CHANNEL_SEI
+    ALPHA_CHANNEL_INFO                   = 165,
+#endif
+#if Q0096_OVERLAY_SEI
+    OVERLAY_INFO                         = 166,
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+    TMVP_CONSTRAINTS                     = 167,
+#endif
+#if Q0247_FRAME_FIELD_INFO
+    FRAME_FIELD_INFO                     = 168,
 #endif
 #if Q0078_ADD_LAYER_SETS
     OUTPUT_LAYER_SET_NESTING             = 149,
     VPS_REWRITING                        = 150,
-#endif
-#if Q0189_TMVP_CONSTRAINTS
-    TMVP_CONSTRAINTS                     = 151,
-#endif
-#if Q0247_FRAME_FIELD_INFO
-    FRAME_FIELD_INFO                     = 152,
-#endif
-#if Q0096_OVERLAY_SEI
-    OVERLAY_INFO                         = 153,
-#endif
-#if P0123_ALPHA_CHANNEL_SEI
-    ALPHA_CHANNEL_INFO                   = 165,
 #endif
   };
   
