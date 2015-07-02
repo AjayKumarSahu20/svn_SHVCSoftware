@@ -118,10 +118,6 @@ public:
 #if Q0247_FRAME_FIELD_INFO
     FRAME_FIELD_INFO                     = 168,
 #endif
-#if Q0078_ADD_LAYER_SETS
-    OUTPUT_LAYER_SET_NESTING             = 149,
-    VPS_REWRITING                        = 150,
-#endif
   };
   
   SEI() {}
@@ -636,43 +632,6 @@ public:
   const TileSetData &tileSetData (const Int index) const { return m_tile_set_data[index]; }
 
 };
-
-#if Q0078_ADD_LAYER_SETS
-class SEIOutputLayerSetNesting : public SEI
-{
-public:
-  PayloadType payloadType() const { return OUTPUT_LAYER_SET_NESTING; }
-
-  SEIOutputLayerSetNesting()
-    : m_callerOwnsSEIs(false)
-  {}
-
-  virtual ~SEIOutputLayerSetNesting()
-  {
-    if (!m_callerOwnsSEIs)
-    {
-      deleteSEIs(m_nestedSEIs);
-    }
-  }
-
-  Bool m_olsFlag;
-  UInt m_numOlsIndicesMinus1;
-  UInt m_olsIdx[1024];
-  Bool  m_callerOwnsSEIs;
-  SEIMessages m_nestedSEIs;
-};
-
-class SEIVPSRewriting : public SEI
-{
-public:
-  PayloadType payloadType() const { return VPS_REWRITING; }
-
-  SEIVPSRewriting() {}
-  virtual ~SEIVPSRewriting() {}
-
-  NALUnit* nalu;
-};
-#endif
 
 #if P0123_ALPHA_CHANNEL_SEI
 class SEIAlphaChannelInfo : public SEI
