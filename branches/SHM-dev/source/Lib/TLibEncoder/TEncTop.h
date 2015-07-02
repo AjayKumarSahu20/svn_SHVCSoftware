@@ -136,7 +136,7 @@ private:
   Int                     m_phaseHorChroma[MAX_LAYERS];
   Int                     m_phaseVerChroma[MAX_LAYERS];
   Int                     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
   Int                     m_pocAdjustmentValue;
 #endif
 #if NO_CLRAS_OUTPUT_FLAG
@@ -261,7 +261,7 @@ public:
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TEncTop*  getRefLayerEnc(UInt refLayerIdx);
 #endif
-#if POC_RESET_FLAG || POC_RESET_IDC_ENCODER
+#if POC_RESET_IDC_ENCODER
   Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
 #endif

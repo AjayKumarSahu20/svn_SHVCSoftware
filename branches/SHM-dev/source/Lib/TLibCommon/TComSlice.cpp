@@ -125,9 +125,6 @@ TComSlice::TComSlice()
 #if REF_IDX_MFM
 , m_bMFMEnabledFlag               ( false )
 #endif
-#if POC_RESET_FLAG
-, m_bPocResetFlag                 ( false )
-#endif
 , m_bDiscardableFlag              ( false )
 #if O0149_CROSS_LAYER_BLA_FLAG
 , m_bCrossLayerBLAFlag            ( false )
@@ -319,7 +316,7 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic, Int poc)
 #endif
     pcPic = *(iterPic);
   }
-#if POC_RESET_FLAG || POC_RESET_IDC_DECODER
+#if POC_RESET_IDC_DECODER
   assert( pcPic->getSlice(0)->isReferenced() );
 #endif
   return  pcPic;
@@ -349,11 +346,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
         picPoc = picPoc & (pocCycle - 1);
       }
       
-#if POC_RESET_RPS
-      if( ((!pocHasMsb) && ((poc & (pocCycle-1)) == picPoc)) || ( pocHasMsb && (poc == picPoc)) )
-#else
       if (poc == picPoc)
-#endif      
       {
         if(pcPic->getIsLongTerm())
         {
@@ -4157,12 +4150,8 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
     memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
     return false;
   }        
-#if POC_RESET_FLAG || POC_RESET_IDC_DECODER
 #if POC_RESET_IDC_DECODER
   TComPic* pic = xGetRefPic( rcListPic, getPOC() );
-#else
-  TComPic* pic = xGetRefPic( rcListPic, m_bPocResetFlag ? 0 : m_iPOC );
-#endif
 
   if( pic )
   {
@@ -4183,11 +4172,7 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
 #if MFM_ENCCONSTRAINT
 TComPic* TComSlice::getBaseColPic(  TComList<TComPic*>& rcListPic )
 {
-#if POC_RESET_FLAG
-  return xGetRefPic( rcListPic, m_bPocResetFlag ? 0 : m_iPOC );
-#else
   return xGetRefPic( rcListPic, m_iPOC );
-#endif
 }
 #endif
 
