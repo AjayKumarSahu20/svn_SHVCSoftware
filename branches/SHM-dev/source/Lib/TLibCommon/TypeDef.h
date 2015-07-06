@@ -254,8 +254,6 @@
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
 #define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
 
-#define VPS_FIX_TO_MATCH_SPEC            1
-
 /// scalability types
 enum ScalabilityType
 {
