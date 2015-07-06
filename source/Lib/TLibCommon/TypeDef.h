@@ -124,9 +124,6 @@
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
 #define NO_OUTPUT_OF_PRIOR_PICS          1      ///< Use no_output_of_prior_pics_flag
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
-#if REPN_FORMAT_IN_VPS
-#define REPN_FORMAT_CONTROL_FLAG         1      ///< JCTVC-O0179: Add control flag in representation format to control sending of chroma and bitdepth parameters
-#endif 
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
