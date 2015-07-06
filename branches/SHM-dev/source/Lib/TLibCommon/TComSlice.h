@@ -1617,10 +1617,8 @@ private:
   Int         m_NumDirectRefLayers;
 #endif
 #if REPN_FORMAT_IN_VPS
-  Bool m_updateRepFormatFlag;
-#if O0096_REP_FORMAT_INDEX
+  Bool        m_updateRepFormatFlag;
   UInt        m_updateRepFormatIndex;
-#endif
 #endif
 #if SCALINGLIST_INFERRING
   Bool        m_inferScalingListFlag;
@@ -1793,16 +1791,14 @@ public:
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
 #endif
 #if REPN_FORMAT_IN_VPS
-  Bool     getUpdateRepFormatFlag()       { return m_updateRepFormatFlag; }
-  Void     setUpdateRepFormatFlag(Bool x) { m_updateRepFormatFlag = x;    }
-#if O0096_REP_FORMAT_INDEX
-  Int      getUpdateRepFormatIndex()      { return m_updateRepFormatIndex; }
-  Void     setUpdateRepFormatIndex(UInt index)  { m_updateRepFormatIndex = index; }
-#endif
+  Bool     getUpdateRepFormatFlag()                 { return m_updateRepFormatFlag;   }
+  Void     setUpdateRepFormatFlag(Bool x)           { m_updateRepFormatFlag = x;      }
+  Int      getUpdateRepFormatIndex()                { return m_updateRepFormatIndex;  }
+  Void     setUpdateRepFormatIndex(UInt index)      { m_updateRepFormatIndex = index; }
 #endif
 #if SCALINGLIST_INFERRING
-  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
-  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
+  Bool     getInferScalingListFlag()                { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId()               { return m_scalingListRefLayerId; }
   Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
   Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
 #endif

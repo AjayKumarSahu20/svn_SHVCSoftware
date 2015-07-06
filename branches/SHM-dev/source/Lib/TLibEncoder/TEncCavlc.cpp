@@ -2320,15 +2320,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
     assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
 
-#if O0096_REP_FORMAT_INDEX
 #if !VPS_EXTN_UEV_CODING
     WRITE_CODE( vps->getVpsNumRepFormats() - 1, 8, "vps_num_rep_formats_minus1" );
 #else
     WRITE_UVLC( vps->getVpsNumRepFormats() - 1, "vps_num_rep_formats_minus1" );
 #endif
-#else
-    WRITE_CODE( vps->getVpsNumRepFormats() - 1, 4, "vps_num_rep_formats_minus1" );
-#endif
+
   }
   for(i = 0; i < vps->getVpsNumRepFormats(); i++)
   {
@@ -2342,7 +2339,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
-#if O0096_REP_FORMAT_INDEX
 #if !VPS_EXTN_UEV_CODING
         WRITE_CODE( vps->getVpsRepFormatIdx(i), 8, "vps_rep_format_idx[i]" );
 #else
@@ -2353,14 +2349,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         }
         WRITE_CODE( vps->getVpsRepFormatIdx(i), numBits, "vps_rep_format_idx[i]" );
 #endif
-#else
-        WRITE_CODE( vps->getVpsRepFormatIdx(i), 4, "vps_rep_format_idx[i]" );
-#endif
+
       }
     }
   }
 #endif
-#endif
+#endif //REPN_FORMAT_IN_VPS
 
   WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
