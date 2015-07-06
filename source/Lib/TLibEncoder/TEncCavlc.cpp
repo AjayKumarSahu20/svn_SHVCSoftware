@@ -2487,7 +2487,6 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
   WRITE_CODE( repFormat->getBitDepthVpsChroma() - 8, 4, "bit_depth_chroma_minus8" );
 #endif
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   Window conf = repFormat->getConformanceWindowVps();
 
   WRITE_FLAG( conf.getWindowEnabledFlag(),    "conformance_window_vps_flag" );
@@ -2498,7 +2497,6 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
     WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_vps_top_offset"    );
     WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_vps_bottom_offset" );
   }
-#endif
 }
 #endif
 #if VPS_DPB_SIZE_TABLE

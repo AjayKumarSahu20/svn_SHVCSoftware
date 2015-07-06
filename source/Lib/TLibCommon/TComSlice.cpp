@@ -3909,7 +3909,6 @@ Int TComSlice::getQpBDOffsetC()
   return (getBitDepthC() - 8) * 6;
 }
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
 Window& TComSlice::getConformanceWindow()
 {
   TComSPS *sps = getSPS();
@@ -3948,7 +3947,6 @@ Window& TComSlice::getConformanceWindow()
   }
 #endif
 }
-#endif
 
 RepFormat::RepFormat()
 #if AUXILIARY_PICTURES
@@ -3962,7 +3960,7 @@ RepFormat::RepFormat()
 , m_bitDepthVpsLuma             (0)
 , m_bitDepthVpsChroma           (0)
 {}
-#endif
+#endif //REPN_FORMAT_IN_VPS
 
 #if VPS_EXTN_PROFILE_INFO
 Void TComPTL::copyProfileInfo(TComPTL *ptl)

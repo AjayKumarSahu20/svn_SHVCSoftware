@@ -76,11 +76,7 @@ TComPicYuv::~TComPicYuv()
 }
 
 #if SVC_EXTENSION
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
 Void TComPicYuv::create( const Int iPicWidth, const Int iPicHeight, const ChromaFormat chromaFormatIDC, const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth, Window* conformanceWindow )
-#else
-Void TComPicYuv::create( const Int iPicWidth, const Int iPicHeight, const ChromaFormat chromaFormatIDC, const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth, TComSPS* pcSps )
-#endif
 #else
 Void TComPicYuv::create( const Int  iPicWidth,    const  Int iPicHeight,    const ChromaFormat chromaFormatIDC,
                          const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth )
@@ -91,17 +87,10 @@ Void TComPicYuv::create( const Int  iPicWidth,    const  Int iPicHeight,    cons
   m_chromaFormatIDC   = chromaFormatIDC;
   
 #if SVC_EXTENSION
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   if(conformanceWindow != NULL)
   {
     m_conformanceWindow = *conformanceWindow;
   }
-#else
-  if(pcSps != NULL)
-  {
-    m_conformanceWindow = pcSps->getConformanceWindow();
-  }
-#endif
 #endif
   
 #if LAYER_CTB
