@@ -132,9 +132,7 @@ private:
   UInt                    m_layerId;      
   UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
-#if R0235_SMALLEST_LAYER_ID
   UInt                    m_smallestLayerId;
-#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool                    m_pocResettingFlag;
   Bool                    m_pocDecrementedInDPBFlag;
@@ -244,9 +242,7 @@ public:
   TComList<TComPic*>*  getListPic           ()                              { return &m_cListPic;              }
   Void      setLayerDec                     (TDecTop **p)                   { m_ppcTDecTop = p;                }
   TDecTop*  getLayerDec                     (UInt layerId)                  { return m_ppcTDecTop[layerId];    }
-#if R0235_SMALLEST_LAYER_ID
   Void      xDeriveSmallestLayerId(TComVPS* vps);
-#endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   TDecTop*  getRefLayerDec                  (UInt refLayerIdx);
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
@@ -287,7 +283,6 @@ public:
 #endif
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
-  // std::string const getDecodedYuvLayerFileName(Int layerId) { return m_decodedYuvLayerFileName[layerId]; }
   Bool const getConfModeFlag() { return m_confModeFlag; }
   Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
 #endif

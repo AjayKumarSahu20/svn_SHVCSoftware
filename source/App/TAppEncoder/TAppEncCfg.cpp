@@ -2610,7 +2610,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 #if MULTIPLE_PTL_SUPPORT
     Int olsToLsIndex = (olsCtr >= (m_numLayerSets + m_numAddLayerSets)) ? m_outputLayerSetIdx[olsCtr - (m_numLayerSets + m_numAddLayerSets)] : olsCtr;
-#if R0235_SMALLEST_LAYER_ID
+
     // This is a fix to allow setting of PTL for additional layer sets
     if (olsCtr >= m_numLayerSets && olsCtr < (m_numLayerSets + m_numAddLayerSets))
     {
@@ -2620,31 +2620,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       scanStringToArray(cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr]);
     }
-#else
-    scanStringToArray( cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr] );
-#endif
+
     //For conformance checking
     //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main profile is indicated as follows:
     //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
     //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
     //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
     //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
-#if R0235_SMALLEST_LAYER_ID
     if (m_numAddLayerSets == 0)
     {
-#endif
-    for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
-    {
-      if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+      for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
       {
-        assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
-                (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
-                (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+        if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+        {
+          assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
+            (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
+            (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+        }
       }
     }
-#if R0235_SMALLEST_LAYER_ID
-    }
-#endif
 #endif
   }
 #if MULTIPLE_PTL_SUPPORT
@@ -4853,7 +4847,6 @@ Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries,
 }
 #endif
 
-#if R0235_SMALLEST_LAYER_ID
 #if OUTPUT_LAYER_SETS_CONFIG
 Void TAppEncCfg::cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString)
 {
@@ -4923,6 +4916,5 @@ Bool TAppEncCfg::scanStringToArrayNumEntries(string const cfgString, Int &numEnt
   return false;
 }
 #endif
-#endif // R0235
 #endif //SVC_EXTENSION
 //! \}

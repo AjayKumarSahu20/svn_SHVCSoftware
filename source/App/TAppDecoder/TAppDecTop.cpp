@@ -1283,7 +1283,7 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   {
     return true;
   }
-#if R0235_SMALLEST_LAYER_ID
+#if SVC_EXTENSION
   if (nalu->m_layerId == 0 && (nalu->m_nalUnitType == NAL_UNIT_VPS || nalu->m_nalUnitType == NAL_UNIT_SPS || nalu->m_nalUnitType == NAL_UNIT_PPS || nalu->m_nalUnitType == NAL_UNIT_EOS))
   {
     return true;
@@ -1298,6 +1298,7 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   }
   return false;
 }
+
 #if ALIGNED_BUMPING
 // Function outputs a picture, and marks it as not needed for output.
 Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus )
