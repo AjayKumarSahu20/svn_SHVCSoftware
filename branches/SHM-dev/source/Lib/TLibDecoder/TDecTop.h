@@ -151,7 +151,6 @@ private:
   Int                     m_numMotionPredRefLayers;
 #endif
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
-#endif 
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    m_commonDecoderParams;
 #endif
@@ -169,10 +168,11 @@ private:
   Bool m_confModeFlag;
   std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
 #endif
-#if FIX_NON_OUTPUT_LAYER
   Bool m_isOutputLayerFlag;
-#endif
+#endif //SVC_EXTENSION
+
 public:
+#if SVC_EXTENSION
 #if POC_RESET_RESTRICTIONS
   static Bool                    m_checkPocRestrictionsForCurrAu;
   static Int                     m_pocResetIdcOrCurrAu;
@@ -188,6 +188,7 @@ public:
   static Int                     m_crossLayerPocResetPeriodId;
   static Int                     m_crossLayerPocResetIdc;
 #endif
+#endif //SVC_EXTENSION
 
   TDecTop();
   virtual ~TDecTop();

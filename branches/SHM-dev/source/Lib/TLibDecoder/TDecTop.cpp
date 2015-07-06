@@ -88,6 +88,13 @@ TDecTop::TDecTop()
 #if !SVC_EXTENSION
   m_bFirstSliceInSequence   = true;
 #endif
+  m_prevSliceSkipped = false;
+  m_skippedPOC = 0;
+  m_bFirstSliceInBitstream  = true;
+  m_lastPOCNoOutputPriorPics = -1;
+  m_craNoRaslOutputFlag = false;
+  m_isNoOutputPriorPics = false;
+
 #if SVC_EXTENSION 
   m_layerId = 0;
   m_smallestLayerId = 0;
@@ -95,13 +102,6 @@ TDecTop::TDecTop()
   m_pBLReconFile = NULL;
 #endif
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
-#endif
-  m_prevSliceSkipped = false;
-  m_skippedPOC = 0;
-  m_bFirstSliceInBitstream  = true;
-  m_lastPOCNoOutputPriorPics = -1;
-  m_craNoRaslOutputFlag = false;
-  m_isNoOutputPriorPics = false;
 #if Q0177_EOS_CHECKS
   m_isLastNALWasEos = false;
 #endif
@@ -132,9 +132,8 @@ TDecTop::TDecTop()
 #if CONFORMANCE_BITSTREAM_MODE
   m_confModeFlag = false;
 #endif
-#if FIX_NON_OUTPUT_LAYER
   m_isOutputLayerFlag = false;
-#endif
+#endif //SVC_EXTENSION 
 }
 
 TDecTop::~TDecTop()
@@ -378,7 +377,7 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
 
   m_cGopDecoder.filterPicture(pcPic);
 
-#if FIX_NON_OUTPUT_LAYER
+#if SVC_EXTENSION
   if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
   {
     pcPic->setOutputMark( false );
@@ -2710,7 +2709,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   Int targetLsIdx = vps->getOutputLayerSetIdx( targetOlsIdx );
   params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
 
-#if FIX_NON_OUTPUT_LAYER
   // Check if the current layer is an output layer
   for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
   {
@@ -2719,7 +2717,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
       this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
     }
   }
-#endif
 }
 #endif
 
