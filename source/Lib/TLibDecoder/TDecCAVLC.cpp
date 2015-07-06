@@ -3457,12 +3457,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
 
-#if O0109_MOVE_VPS_VUI_FLAG
   if ( vps->getVpsVuiPresentFlag() )
-#else
-  READ_FLAG( uiCode,  "vps_vui_present_flag" );
-  if (uiCode)
-#endif
   {
     while ( m_pcBitstream->getNumBitsRead() % 8 != 0 )
     {
