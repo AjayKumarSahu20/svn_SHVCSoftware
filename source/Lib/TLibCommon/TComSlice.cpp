@@ -2051,9 +2051,6 @@ TComVPS::TComVPS()
 #endif
 #if VPS_EXTN_PROFILE_INFO
   ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
-#if !P0048_REMOVE_PROFILE_REF
-  ::memset(m_profileLayerSetRef, 0, sizeof(m_profileLayerSetRef));
-#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   ::memset(m_layerIdIncludedFlag, 0, sizeof(m_layerIdIncludedFlag));
