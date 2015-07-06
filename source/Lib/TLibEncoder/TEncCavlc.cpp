@@ -1033,11 +1033,9 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
 
 #if N0065_LAYER_POC_ALIGNMENT
-#if SHM_FIX7
     }
-#endif
-      if( !pcSlice->getIdrPicFlag() )
-      {
+    if( !pcSlice->getIdrPicFlag() )
+    {
 #endif
       TComReferencePictureSet* rps = pcSlice->getRPS();
 
@@ -1155,9 +1153,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
 #endif
       }
-#if N0065_LAYER_POC_ALIGNMENT && !SHM_FIX7
-      }
-#endif
     }
 
 #if SVC_EXTENSION

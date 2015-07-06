@@ -207,7 +207,6 @@
 #define R0062_AUX_PSEUDO_MONOCHROME      1      ///> JCVVC-R0063: pseudo monochrome for auxiliary pictures
 
 #define O0062_POC_LSB_NOT_PRESENT_FLAG   1      ///< JCTVC-O0062: signal poc_lsb_not_present_flag for each layer in VPS extension
-#define SHM_FIX7                         1      ///< fix for SHVC WD ticket #7
 
 #define O0092_0094_DEPENDENCY_CONSTRAINT 1      ///< JCTVC-O0092: constraint on the layer_id of SPS/PPS
 #if O0092_0094_DEPENDENCY_CONSTRAINT
