@@ -510,9 +510,7 @@ public:
 #if REPN_FORMAT_IN_VPS
 class RepFormat
 {
-#if REPN_FORMAT_CONTROL_FLAG
   Bool m_chromaAndBitDepthVpsPresentFlag;
-#endif 
 #if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatVpsIdc;
 #else
@@ -528,10 +526,8 @@ class RepFormat
 
 public:
   RepFormat();
-#if REPN_FORMAT_CONTROL_FLAG
   Bool getChromaAndBitDepthVpsPresentFlag() { return m_chromaAndBitDepthVpsPresentFlag; }
   void setChromaAndBitDepthVpsPresentFlag(Bool x) { m_chromaAndBitDepthVpsPresentFlag = x; }
-#endif 
 
 #if AUXILIARY_PICTURES
   ChromaFormat getChromaFormatVpsIdc()        { return m_chromaFormatVpsIdc; }
