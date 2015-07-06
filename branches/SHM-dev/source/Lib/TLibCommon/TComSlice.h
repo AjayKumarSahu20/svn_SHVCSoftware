@@ -524,9 +524,7 @@ class RepFormat
   Int  m_bitDepthVpsLuma;               // coded as minus8
   Int  m_bitDepthVpsChroma;             // coded as minus8
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   Window m_conformanceWindowVps;
-#endif
 
 public:
   RepFormat();
@@ -560,12 +558,10 @@ public:
 
   Int  getBitDepthVps(ChannelType type)           { return isLuma(type) ? m_bitDepthVpsLuma : m_bitDepthVpsChroma;   }
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   Window& getConformanceWindowVps()                           { return  m_conformanceWindowVps;             }
   Void    setConformanceWindowVps(Window& conformanceWindow ) { m_conformanceWindowVps = conformanceWindow; }
-#endif
 };
-#endif
+#endif //REPN_FORMAT_IN_VPS
 
 class TComVPS
 {
@@ -2624,9 +2620,7 @@ public:
   Int  getQpBDOffsetY();
   Int  getQpBDOffsetC();
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   Window& getConformanceWindow();
-#endif
 #endif
 
   Void setILRPic(TComPic **pcIlpPic);

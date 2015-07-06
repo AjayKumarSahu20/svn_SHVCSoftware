@@ -97,11 +97,7 @@ public:
   //  Memory management
   // ------------------------------------------------------------------------------------------------
 #if SVC_EXTENSION
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow = NULL);
-#else
-  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, TComSPS* pcSps = NULL);
-#endif
 #else
   Void          create            (const Int iPicWidth,
                                    const Int iPicHeight,

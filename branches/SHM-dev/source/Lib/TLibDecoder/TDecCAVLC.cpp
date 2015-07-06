@@ -3628,7 +3628,6 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
   READ_CODE( 4, uiCode, "bit_depth_chroma_minus8" );         repFormat->setBitDepthVpsChroma( uiCode + 8 );
 #endif 
 
-#if R0156_CONF_WINDOW_IN_REP_FORMAT
   READ_FLAG( uiCode, "conformance_window_vps_flag" );
   if( uiCode != 0) 
   {
@@ -3638,9 +3637,8 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
     READ_UVLC( uiCode, "conf_win_vps_top_offset" );          conf.setWindowTopOffset   ( uiCode );
     READ_UVLC( uiCode, "conf_win_vps_bottom_offset" );       conf.setWindowBottomOffset( uiCode );
   }
-#endif
 }
-#endif
+#endif //REPN_FORMAT_IN_VPS
 #if VPS_DPB_SIZE_TABLE
 Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 {
