@@ -101,12 +101,8 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
 #endif
 #endif
-#if FIX_CONF_MODE
   ("TargetLayerId,-lid", targetLayerId, -1, "Target layer id")
   ("LayerNum,-ls", layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
-#else
-  ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
-#endif
 #if OUTPUT_LAYER_SET_INDEX
   ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
 #endif
@@ -171,9 +167,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   assert( targetLayerId >= 0 );
-#if !FIX_CONF_MODE
-  assert( m_tgtLayerId < MAX_LAYERS );  // If this is wrong, it should be caught by asserts in other locations.
-#endif
 #if O0137_MAX_LAYERID
   assert( targetLayerId < MAX_NUM_LAYER_IDS );
 #endif
@@ -198,11 +191,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     m_metadataFileRefresh = true;
 
     // Decoded layer YUV files
-#if FIX_CONF_MODE
     for(Int layer= 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
-#else
-    for(UInt layer=0; layer<= m_tgtLayerId; layer++)
-#endif
     {
       sprintf(fileNameSuffix, "%s-L%d.yuv", m_confPrefix.c_str(), layer);  // olsIdx is the target output layer set index.
       m_decodedYuvLayerFileName[layer] = std::string( fileNameSuffix );
@@ -213,7 +202,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   m_commonDecoderParams.setTargetOutputLayerSetIdx( olsIdx );
   m_commonDecoderParams.setTargetLayerId( targetLayerId );
 #endif
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(Int layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
   {
 #else

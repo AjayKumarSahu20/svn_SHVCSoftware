@@ -93,7 +93,7 @@ Void TAppDecTop::destroy()
     m_pchBitstreamFile = NULL;
   }
 #if SVC_EXTENSION
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
 #else
   for( Int i = 0; i <= m_tgtLayerId; i++ )
@@ -173,7 +173,7 @@ Void TAppDecTop::decode()
   Bool loopFiltered[MAX_LAYERS];
   memset( loopFiltered, false, sizeof( loopFiltered ) );
 
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer=0; layer<=m_tgtLayerId; layer++)
@@ -233,7 +233,7 @@ Void TAppDecTop::decode()
     {
       read(nalu, nalUnit);
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
         (nalu.m_layerId > m_commonDecoderParams.getTargetLayerId()) )
 #else
         (nalu.m_layerId > m_tgtLayerId) )
@@ -414,7 +414,7 @@ Void TAppDecTop::decode()
   }
   pcBLPic.destroy();
 
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = layerIdxmin; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = layerIdxmin; layer <= m_tgtLayerId; layer++)
@@ -603,7 +603,7 @@ Void TAppDecTop::xCreateDecLib()
   // initialize global variables
   initROM();
 
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
@@ -629,7 +629,7 @@ Void TAppDecTop::xDestroyDecLib()
   // destroy ROM
   destroyROM();
 
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
@@ -658,7 +658,7 @@ Void TAppDecTop::xInitDecLib()
 {
   // initialize decoder class
 #if SVC_EXTENSION
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
@@ -666,7 +666,7 @@ Void TAppDecTop::xInitDecLib()
   {
     m_acTDecTop[layer].init();
     m_acTDecTop[layer].setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
     m_acTDecTop[layer].setNumLayer( MAX_LAYERS );
 #else
     m_acTDecTop[layer].setNumLayer( m_tgtLayerId + 1 );
@@ -676,11 +676,7 @@ Void TAppDecTop::xInitDecLib()
 #endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
-#if FIX_CONF_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
-#else
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-#endif
   {
     m_acTDecTop[layer].setConfModeFlag( m_confModeFlag );
   }
