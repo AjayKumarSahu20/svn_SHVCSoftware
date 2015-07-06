@@ -226,9 +226,6 @@ public:
   Void  setDecodedSEIMessageOutputStream(std::ostream *pOpStream) { m_pDecodedSEIOutputStream = pOpStream; }
 
 #if SVC_EXTENSION
-#if EARLY_REF_PIC_MARKING
-  Void earlyPicMarking(Int maxTemporalLayer, std::vector<Int>& targetDecLayerIdList);
-#endif
 #if POC_RESET_IDC_DECODER
   Int       getParseIdc                     ()                              { return m_parseIdc;               }
   Void      setParseIdc                     (Int x)                         { m_parseIdc = x;                  }

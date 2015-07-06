@@ -298,9 +298,7 @@ Void TAppDecTop::decode()
         m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
       }
       loopFiltered[curLayerId] = (nalu.m_nalUnitType == NAL_UNIT_EOS);
-#if EARLY_REF_PIC_MARKING
-      m_acTDecTop[curLayerId].earlyPicMarking(m_iMaxTemporalLayer, m_targetDecLayerIdSet);
-#endif
+
       if (nalu.m_nalUnitType == NAL_UNIT_EOS)
       {
         m_acTDecTop[nalu.m_layerId].setFirstSliceInSequence(true);
