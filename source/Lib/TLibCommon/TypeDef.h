@@ -45,7 +45,6 @@
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
-#define FIX_NON_OUTPUT_LAYER             1
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
 #define NON_REF_NAL_TYPE_DISCARDABLE     1      ///< JCTVC-P0041 -- If discardable picture is a non-IRAP, it must be a non-referenced sub-layer picture
 #define VPS_AVC_BL_FLAG_REMOVAL          1      ///< remove avc_base_layer_flag and direct the function its offer to vps_base_layer_internal_flag and vps_base_layer_available_flag
