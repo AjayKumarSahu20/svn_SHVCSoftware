@@ -82,7 +82,6 @@
 #define Q0146_SSH_EXT_DATA_BIT           1      ///< JCTVC-Q0146; Bug-fix -- the SSH_EXT_DATA_BIT can have any value -- not required to be 1
 
 #define P0130_EOB                        1      ///< JCTVC-P0130, set layer Id of EOB NALU to be fixed to 0
-#define T_ID_EOB_BUG_FIX                 1      ///< Bug fix for the value of temporal id of EOB NALU. It must be set to 0
 #define P0307_REMOVE_VPS_VUI_OFFSET      1      ///< JCTVC-P0307, remove implementation related to VPS VUI offset signalling
 #define P0307_VPS_NON_VUI_EXTENSION      1      ///< JCTVC-P0307, implementation related to NON VUI VPS Extension signalling
 #define P0307_VPS_NON_VUI_EXT_UPDATE     1      ///< JCTVC-P0307, implementation related to NON VUI VPS Extension signalling

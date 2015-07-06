@@ -2243,11 +2243,7 @@ Void TAppEncTop::encode()
         nalu.m_layerId = 0;
 
         AccessUnit& accessUnit = outputAccessUnits.back();
-#if T_ID_EOB_BUG_FIX
         nalu.m_temporalId = 0;
-#else
-        nalu.m_temporalId = accessUnit.front()->m_temporalId;
-#endif
         accessUnit.push_back(new NALUnitEBSP(nalu));
       }
 #endif
