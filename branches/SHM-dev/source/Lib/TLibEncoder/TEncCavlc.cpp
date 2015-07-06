@@ -2419,15 +2419,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif
 
-#if !O0109_O0199_FLAGS_TO_VUI
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
-#endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
-  WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
-#endif
-#endif
-
 #if P0307_VPS_NON_VUI_EXTENSION
   // The value of vps_non_vui_extension_length shall be in the range of 0 to 4096, inclusive.
   assert( vps->getVpsNonVuiExtLength() >= 0 && vps->getVpsNonVuiExtLength() <= 4096 );
@@ -2742,7 +2733,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 #endif
 
-#if O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
@@ -2754,7 +2744,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
-#endif
 #endif
 #if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getIlpRestrictedRefLayersFlag() ? 1 : 0 , "ilp_restricted_ref_layers_flag" );    

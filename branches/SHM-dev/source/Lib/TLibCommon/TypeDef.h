@@ -88,7 +88,6 @@
 #define CHANGE_NUMSUBDPB_IDX             1      ///< Change index of NumSubDpb from output layer set to layer set, to be more aligned with the Spec
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define FIX_ALIGN_BUMPING                1
-#define O0109_O0199_FLAGS_TO_VUI         1      ///< JCTVC-O0109, O0199: move single_layer_for_non_irap_flag and higher_layer_flag to vps_vui
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
 #define P0295_DEFAULT_OUT_LAYER_IDC      1      ///< JCTVC-P0295: modifify default_one_target_output_layer_idc to default_output_layer_idc
