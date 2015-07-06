@@ -1981,11 +1981,7 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
     }
     for (Int i = 0; i < shExtnAdditionalBits; i++)
     {
-#if Q0146_SSH_EXT_DATA_BIT 
       WRITE_FLAG( 1, "slice_segment_header_extension_data_bit");
-#else
-      WRITE_FLAG( 1, "slice_segment_header_extension_reserved_bit");
-#endif
     }
   }
   shBitsWrittenTillNow += ( getNumberOfWrittenBits() - tmpBitsBeforeWriting );
