@@ -2725,19 +2725,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
 #endif
 
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if O0109_MOVE_VPS_VUI_FLAG
-  READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
-  if ( uiCode )
-  {
-#endif
-#if VPS_VUI_OFFSET
-    READ_CODE( 16, uiCode, "vps_vui_offset" );  vps->setVpsVuiOffset( uiCode );
-#endif
-#if O0109_MOVE_VPS_VUI_FLAG
-  }
-#endif
-#endif
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
@@ -3468,9 +3455,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #endif
 
-#if P0307_REMOVE_VPS_VUI_OFFSET
   READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
-#endif
 
 #if O0109_MOVE_VPS_VUI_FLAG
   if ( vps->getVpsVuiPresentFlag() )

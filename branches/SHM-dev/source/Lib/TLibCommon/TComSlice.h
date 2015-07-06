@@ -856,11 +856,6 @@ private:
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
 #endif
 
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if VPS_VUI_OFFSET
-  Int        m_vpsVuiOffset;
-#endif
-#endif
 #if P0307_VPS_NON_VUI_EXTENSION
   Int        m_vpsNonVuiExtLength;
 #endif
@@ -1363,12 +1358,6 @@ Void      deriveNumberOfSubDpbs();
   Bool   getVpsExtensionFlag()                         { return m_vpsExtensionFlag;  }
   Void   setVpsExtensionFlag(Bool x)                   { m_vpsExtensionFlag = x;     }
 
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if VPS_VUI_OFFSET
-  Int    getVpsVuiOffset()         { return m_vpsVuiOffset; }
-  Void   setVpsVuiOffset(Int x)    { m_vpsVuiOffset = x; }
-#endif
-#endif
 #if P0307_VPS_NON_VUI_EXTENSION
   Int    getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
   Void   setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
