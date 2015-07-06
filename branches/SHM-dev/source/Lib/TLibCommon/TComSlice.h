@@ -822,9 +822,7 @@ private:
 #endif
 #endif
 
-#if O0109_MOVE_VPS_VUI_FLAG
   Bool       m_vpsVuiPresentFlag;
-#endif
   Bool       m_vpsExtensionFlag;
 
 #if O0164_MULTI_LAYER_HRD
@@ -1351,10 +1349,8 @@ Void      deriveNumberOfSubDpbs();
   Void   determineSubDpbInfoFlags();
 #endif
 
-#if O0109_MOVE_VPS_VUI_FLAG
   Bool   getVpsVuiPresentFlag()                        { return m_vpsVuiPresentFlag; }
   Void   setVpsVuiPresentFlag(Bool x)                  { m_vpsVuiPresentFlag = x;    }
-#endif
   Bool   getVpsExtensionFlag()                         { return m_vpsExtensionFlag;  }
   Void   setVpsExtensionFlag(Bool x)                   { m_vpsExtensionFlag = x;     }
 

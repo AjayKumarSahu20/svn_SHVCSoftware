@@ -2446,23 +2446,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif
 
-#if !O0109_MOVE_VPS_VUI_FLAG
-  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
-  if(1)   // Should be conditioned on the value of vps_vui_present_flag
-  {
-    while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
-    {
-      WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
-    }
-#if VPS_VUI_OFFSET
-    Int vpsVuiOffsetValeInBits = this->m_pcBitIf->getNumberOfWrittenBits() - m_vpsVuiCounter + 16; // 2 bytes for NUH
-    assert( vpsVuiOffsetValeInBits % 8 == 0 );
-    vps->setVpsVuiOffset( vpsVuiOffsetValeInBits >> 3 );
-#endif
-    codeVPSVUI(vps);  
-  }
-#else
-
   vps->setVpsVuiPresentFlag(true);
   WRITE_FLAG( vps->getVpsVuiPresentFlag() ? 1 : 0,                     "vps_vui_present_flag" );
 
@@ -2475,7 +2458,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
     codeVPSVUI(vps);  
   }
-#endif // 0109_MOVE_VPS_FLAG
 }
 
 #if REPN_FORMAT_IN_VPS
