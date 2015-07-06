@@ -90,9 +90,7 @@ TDecTop::TDecTop()
 #endif
 #if SVC_EXTENSION 
   m_layerId = 0;
-#if R0235_SMALLEST_LAYER_ID
   m_smallestLayerId = 0;
-#endif
 #if AVC_BASE
   m_pBLReconFile = NULL;
 #endif
@@ -735,7 +733,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
 #if OUTPUT_LAYER_SET_INDEX
   // Following check should go wherever the VPS is activated
-#if R0235_SMALLEST_LAYER_ID
   if (!m_apcSlicePilot->getVPS()->getBaseLayerAvailableFlag())
   {
     assert(nalu.m_layerId != 0);
@@ -746,9 +743,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       assert(layerIdx > m_apcSlicePilot->getVPS()->getVpsNumLayerSetsMinus1());
     }
   }  
-#else
-  checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
-#endif
 #endif
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else //SVC_EXTENSION
@@ -875,11 +869,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
-#if R0235_SMALLEST_LAYER_ID
   if (m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag())
-#else
-  if (m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() )
-#endif
   {
     if (m_bFirstSliceInSequence)
     {
@@ -911,11 +901,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     setNoClrasOutputFlag(false);
   }
 
-#if R0235_SMALLEST_LAYER_ID
   m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag, m_smallestLayerId );
-#else
-  m_apcSlicePilot->decodingRefreshMarking( m_cListPic, m_noClrasOutputFlag );
-#endif
 #endif
 
   // Derive the value of NoOutputOfPriorPicsFlag
@@ -2066,7 +2052,7 @@ Void TDecTop::xDecodeVPS()
 
   m_cEntropyDecoder.decodeVPS( vps );
   m_parameterSetManagerDecoder.storePrefetchedVPS(vps);
-#if R0235_SMALLEST_LAYER_ID
+#if SVC_EXTENSION
   checkValueOfTargetOutputLayerSetIdx(vps);
 #endif
 }
@@ -2242,6 +2228,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
       TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS,nalu.m_Bitstream->readByteAlignment(),0);
 #endif
+#if SVC_EXTENSION
 #if Q0177_EOS_CHECKS
       m_isLastNALWasEos = false;
 #endif
@@ -2264,7 +2251,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         cListPic->clear();
       }
 #endif
-#if R0235_SMALLEST_LAYER_ID
       xDeriveSmallestLayerId(m_parameterSetManagerDecoder.getPrefetchedVPS(0));
 #endif
       return false;
@@ -2695,29 +2681,13 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   else // Output layer set index is assigned - check if the values match
   {
     // Check if the target decoded layer is the highest layer in the list
-#if R0235_SMALLEST_LAYER_ID
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumOutputLayerSets() );
-#endif
 #if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
 #endif
     Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
 #if !CONFORMANCE_BITSTREAM_MODE
     assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
-#endif
-    
-#if !R0235_SMALLEST_LAYER_ID
-    Bool layerSetMatchFlag = true;
-    for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
-    {
-      if( vps->getLayerSetLayerIdList( layerSetIdx, j ) != j )
-      {
-        layerSetMatchFlag = false;
-        break;
-      }
-    }
-
-    assert(layerSetMatchFlag);    // Signaled output layer set index does not match targetOutputLayerId.
 #endif
     
     // Check if the targetdeclayerIdlist matches the output layer set
@@ -2802,11 +2772,7 @@ Void TDecTop::resetPocRestrictionCheckParameters()
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
 Void TDecTop::xCheckLayerReset()
 {
-#if R0235_SMALLEST_LAYER_ID
   if (m_apcSlicePilot->isIRAP() && m_layerId > m_smallestLayerId)
-#else
-  if (m_apcSlicePilot->isIRAP() && m_layerId > 0)
-#endif
   {
     Bool layerResetFlag;
     UInt dolLayerId;
@@ -2890,7 +2856,7 @@ Void TDecTop::xSetLayerInitializedFlag()
 }
 #endif
 
-#if R0235_SMALLEST_LAYER_ID
+#if SVC_EXTENSION
 Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
 {
   UInt smallestLayerId;
