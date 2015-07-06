@@ -3446,15 +3446,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #endif
 
-#if !O0109_O0199_FLAGS_TO_VUI
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
-#endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
-  READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
-#endif
-#endif
-
   READ_FLAG( uiCode, "vps_vui_present_flag"); vps->setVpsVuiPresentFlag(uiCode ? true : false);
 
   if ( vps->getVpsVuiPresentFlag() )
@@ -3971,7 +3962,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif
 
-#if O0109_O0199_FLAGS_TO_VUI
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 #endif
@@ -3983,7 +3973,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     assert( !vps->getHigherLayerIrapSkipFlag() );
   }
-#endif
 #endif
 #if N0160_VUI_EXT_ILP_REF
   READ_FLAG( uiCode, "ilp_restricted_ref_layers_flag" ); vps->setIlpRestrictedRefLayersFlag( uiCode == 1 );
