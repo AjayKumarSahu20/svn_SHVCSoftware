@@ -115,9 +115,6 @@ TDecTop::TDecTop()
   m_layerInitializedFlag       = false;
   m_firstPicInLayerDecodedFlag = false;  
 #endif
-#if RESOLUTION_BASED_DPB
-  m_subDpbIdx = -1;
-#endif
 #if POC_RESET_IDC_DECODER
   m_parseIdc = -1;
   m_lastPocPeriodId = -1;
@@ -279,13 +276,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   }
   else
   {
-#if RESOLUTION_BASED_DPB
-    Int layerSetIdxForOutputLayerSet = pcSlice->getVPS()->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
-    Int layerIdx = pcSlice->getVPS()->findLayerIdxInLayerSet( layerSetIdxForOutputLayerSet, pcSlice->getLayerId() );  assert( layerIdx != -1 );
-    m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsLayerDecPicBuffMinus1( getCommonDecoderParams()->getTargetOutputLayerSetIdx(), layerIdx, pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
-#else
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), pcSlice->getVPS()->getLayerIdcForOls( pcSlice->getVPS()->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx()), pcSlice->getLayerId() ), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
-#endif
   }
 #else
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
@@ -758,10 +749,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #else
   checkValueOfTargetOutputLayerSetIdx( m_apcSlicePilot->getVPS());
 #endif
-#endif
-#if RESOLUTION_BASED_DPB
-  // Following assignment should go wherever a new VPS is activated
-  assignSubDpbs(m_apcSlicePilot->getVPS());
 #endif
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else //SVC_EXTENSION
@@ -2835,21 +2822,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 #endif
 }
 #endif
-#if RESOLUTION_BASED_DPB
-Void TDecTop::assignSubDpbs(TComVPS *vps)
-{
-  if( m_subDpbIdx == -1 ) // Sub-DPB index is not already assigned
-  {
-    Int lsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
 
-    Int layerIdx = vps->findLayerIdxInLayerSet( lsIdx, getLayerId() );
-    assert( layerIdx != -1 ); // Current layer should be found in the layer set.
-
-    // Copy from the active VPS based on the layer ID.
-    m_subDpbIdx = vps->getSubDpbAssigned( lsIdx, layerIdx );
-  }
-}
-#endif
 #if POC_RESET_IDC_DECODER
 Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)
 {

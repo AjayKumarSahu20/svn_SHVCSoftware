@@ -530,11 +530,6 @@ class RepFormat
 
 public:
   RepFormat();
-#if RESOLUTION_BASED_DPB
-  Void init();
-  RepFormat& operator= (const RepFormat &);
-  static Bool checkSameSubDpb(const RepFormat &x, const RepFormat &y);
-#endif
 #if REPN_FORMAT_CONTROL_FLAG
   Bool getChromaAndBitDepthVpsPresentFlag() { return m_chromaAndBitDepthVpsPresentFlag; }
   void setChromaAndBitDepthVpsPresentFlag(Bool x) { m_chromaAndBitDepthVpsPresentFlag = x; }
@@ -817,9 +812,6 @@ private:
   Bool       m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool       m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
-#if RESOLUTION_BASED_DPB
-  Int        m_maxVpsLayerDecPicBuffMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];  
-#endif
   Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
 #if CHANGE_NUMSUBDPB_IDX
@@ -877,9 +869,6 @@ private:
 #endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool       m_vpsPocLsbAlignedFlag;
-#endif
-#if RESOLUTION_BASED_DPB
-  Int        m_subDpbAssigned            [MAX_VPS_LAYER_SETS_PLUS1][MAX_LAYERS];
 #endif
 #if NECESSARY_LAYER_FLAG
   std::vector< std::vector<Bool> > m_necessaryLayerFlag;
@@ -1364,11 +1353,6 @@ Void      deriveNumberOfSubDpbs();
   Void   setMaxVpsDecPicBufferingMinus1(Int olsIdx, Int subDpbIdx, Int subLayerIdx, Int x) { m_maxVpsDecPicBufferingMinus1[olsIdx][subDpbIdx][subLayerIdx] = x;    }
   Int    getLayerIdcForOls( Int olsIdx, Int layerId );
 
-#if RESOLUTION_BASED_DPB
-  Int    getMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j)        { assert(i != 0); return m_maxVpsLayerDecPicBuffMinus1[i][k][j]; }
-  Void   setMaxVpsLayerDecPicBuffMinus1(Int i, Int k, Int j, Int x) { m_maxVpsLayerDecPicBuffMinus1[i][k][j] = x;    }
-#endif
-
   Int    getMaxVpsNumReorderPics(Int olsIdx, Int subLayerIdx)        { assert(olsIdx != 0); return m_maxVpsNumReorderPics[olsIdx][subLayerIdx]; }
   Void   setMaxVpsNumReorderPics(Int olsIdx, Int subLayerIdx, Int x) { m_maxVpsNumReorderPics[olsIdx][subLayerIdx] = x;    }
 
@@ -1396,11 +1380,6 @@ Void      deriveNumberOfSubDpbs();
 #if P0307_VPS_NON_VUI_EXTENSION
   Int    getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
   Void   setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
-#endif
-#if RESOLUTION_BASED_DPB
-  Void   assignSubDpbIndices();
-  Int    getSubDpbAssigned  (Int lsIdx, Int layerIdx) { return m_subDpbAssigned[lsIdx][layerIdx]; }
-  Int    findLayerIdxInLayerSet ( Int lsIdx, Int nuhLayerId );
 #endif
 #if O0164_MULTI_LAYER_HRD
   Void setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );

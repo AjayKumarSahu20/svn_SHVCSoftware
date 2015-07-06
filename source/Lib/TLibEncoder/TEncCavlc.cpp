@@ -2664,11 +2664,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
 #if CHANGE_NUMSUBDPB_IDX
-#if RESOLUTION_BASED_DPB
-        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
-#else
         for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-#endif
 #else
         for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
 #endif
@@ -2683,15 +2679,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
           WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j ), "max_vps_dec_pic_buffering_minus1[i][k][j]" );
         }
         WRITE_UVLC( vps->getMaxVpsNumReorderPics( i, j), "max_vps_num_reorder_pics[i][j]" );              
-#if RESOLUTION_BASED_DPB
-        if( vps->getNumSubDpbs(layerSetIdxForOutputLayerSet) != vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ) )  // NumSubDpbs
-        {
-          for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-          {
-            WRITE_UVLC( vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j), "max_vps_layer_dec_pic_buff_minus1[i][k][j]" );
-          }
-        }
-#endif
+
         WRITE_UVLC( vps->getMaxVpsLatencyIncreasePlus1( i, j), "max_vps_latency_increase_plus1[i][j]" );        
       }
     }

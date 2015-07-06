@@ -3423,9 +3423,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #endif
-#if RESOLUTION_BASED_DPB
-  vps->assignSubDpbIndices();
-#endif
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
@@ -3784,9 +3781,8 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 #endif
 #endif
 
-#if !RESOLUTION_BASED_DPB
   vps->deriveNumberOfSubDpbs();
-#endif
+
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
 #if CHANGE_NUMSUBDPB_IDX
@@ -3842,22 +3838,7 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
           READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
         }
         READ_UVLC( uiCode, "max_vps_num_reorder_pics[i][j]" );              vps->setMaxVpsNumReorderPics( i, j, uiCode);
-#if RESOLUTION_BASED_DPB
-        if( vps->getNumSubDpbs(layerSetIdxForOutputLayerSet) != vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ) )  
-        {
-          for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-          {
-            READ_UVLC( uiCode, "max_vps_layer_dec_pic_buff_minus1[i][k][j]" ); vps->setMaxVpsLayerDecPicBuffMinus1( i, k, j, uiCode);
-          }
-        }
-        else  // vps->getNumSubDpbs(layerSetIdxForOutputLayerSet) == vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet )
-        {          
-          for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-          {
-            vps->setMaxVpsLayerDecPicBuffMinus1( i, k, j, vps->getMaxVpsDecPicBufferingMinus1( i, k, j));
-          }
-        }
-#endif
+
         READ_UVLC( uiCode, "max_vps_latency_increase_plus1[i][j]" );        vps->setMaxVpsLatencyIncreasePlus1( i, j, uiCode);
       }
     }
@@ -3884,21 +3865,11 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
     {
       if( !vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is NOT present
       {
-#if RESOLUTION_BASED_DPB
-        for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
-#else
         for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-#endif
         {
           vps->setMaxVpsDecPicBufferingMinus1( i, k, j, vps->getMaxVpsDecPicBufferingMinus1( i, k, j - 1 ) );
         }
         vps->setMaxVpsNumReorderPics( i, j, vps->getMaxVpsNumReorderPics( i, j - 1) );
-#if RESOLUTION_BASED_DPB
-        for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-        {
-          vps->setMaxVpsLayerDecPicBuffMinus1( i, k, j, vps->getMaxVpsLayerDecPicBuffMinus1( i, k, j - 1));
-        }
-#endif
         vps->setMaxVpsLatencyIncreasePlus1( i, j, vps->getMaxVpsLatencyIncreasePlus1( i, j - 1 ) );
       }
     }
