@@ -2632,10 +2632,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
 
-#if !FIX_CONF_MODE
-  assert( params->getTargetLayerId() < vps->getMaxLayers() );
-#endif
-
   if( params->getValueCheckedFlag() )
   {
     return; // Already checked
@@ -2738,12 +2734,12 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     params->setValueCheckedFlag( true );
 
   }
-#if FIX_CONF_MODE
+
   // Set correct value of targetLayerId
   Int targetOlsIdx = params->getTargetOutputLayerSetIdx();
   Int targetLsIdx = vps->getOutputLayerSetIdx( targetOlsIdx );
   params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
-#endif
+
 #if FIX_NON_OUTPUT_LAYER
   // Check if the current layer is an output layer
   for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)

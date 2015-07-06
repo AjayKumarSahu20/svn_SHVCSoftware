@@ -315,7 +315,7 @@ class CommonDecoderParams
   Int m_highestTId;
 public:
   CommonDecoderParams():
-#if FIX_CONF_MODE
+#if CONFORMANCE_BITSTREAM_MODE
     m_targetLayerId(MAX_VPS_LAYER_IDX_PLUS1)
 #else
     m_targetLayerId(0)
