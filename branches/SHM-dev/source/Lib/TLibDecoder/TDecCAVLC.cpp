@@ -2960,22 +2960,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     READ_FLAG( uiCode, "vps_profile_present_flag[i]" ); vps->setProfilePresentFlag(idx, uiCode ? true : false);
     if( !vps->getProfilePresentFlag(idx) )
     {
-#if P0048_REMOVE_PROFILE_REF
       // Copy profile information from previous one
 #if MULTIPLE_PTL_SUPPORT
       vps->getPTL(idx)->copyProfileInfo( vps->getPTL( idx - 1 ) );
 #else
       vps->getPTLForExtn(idx)->copyProfileInfo( (idx==1) ? vps->getPTL() : vps->getPTLForExtn( idx - 1 ) );
-#endif
-#else
-      READ_CODE( 6, uiCode, "profile_ref_minus1[i]" ); vps->setProfileLayerSetRef(idx, uiCode + 1);
-#if O0109_PROF_REF_MINUS1
-      assert( vps->getProfileLayerSetRef(idx) <= idx );
-#else
-      assert( vps->getProfileLayerSetRef(idx) < idx );
-#endif
-      // Copy profile information as indicated
-      vps->getPTLForExtn(idx)->copyProfileInfo( vps->getPTLForExtn( vps->getProfileLayerSetRef(idx) ) );
 #endif
     }
 #if MULTIPLE_PTL_SUPPORT

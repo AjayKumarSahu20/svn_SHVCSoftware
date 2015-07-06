@@ -2190,12 +2190,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     vps->setProfilePresentFlag(idx, true);
 #endif
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
-#if !P0048_REMOVE_PROFILE_REF
-    if( !vps->getProfilePresentFlag(idx) )
-    {
-      WRITE_CODE( vps->getProfileLayerSetRef(idx) - 1, 6, "profile_ref_minus1[i]" );
-    }
-#endif
 #if MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTL(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
 #else
