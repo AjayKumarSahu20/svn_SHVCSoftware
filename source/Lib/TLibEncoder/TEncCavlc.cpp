@@ -780,11 +780,6 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 
 Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 {
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if VPS_VUI_OFFSET
-   m_vpsVuiCounter = this->m_pcBitIf->getNumberOfWrittenBits();
-#endif
-#endif
   WRITE_CODE( pcVPS->getVPSId(),                    4,        "vps_video_parameter_set_id" );
 #if VPS_RESERVED_FLAGS
   WRITE_FLAG( pcVPS->getBaseLayerInternalFlag(),              "vps_base_layer_internal_flag");
@@ -2012,24 +2007,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if !VPS_AVC_BL_FLAG_REMOVAL
   WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
 #endif
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if O0109_MOVE_VPS_VUI_FLAG
-  WRITE_FLAG( 1,                     "vps_vui_present_flag" );
-  vps->setVpsVuiPresentFlag(true);
-  if ( vps->getVpsVuiPresentFlag() ) 
-  {
-#if VPS_VUI_OFFSET
-    WRITE_CODE( vps->getVpsVuiOffset(  ), 16,             "vps_vui_offset" );
-#endif
-    WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
-  }
-#else
-#if VPS_VUI_OFFSET
-  WRITE_CODE( vps->getVpsVuiOffset(  ), 16,             "vps_vui_offset" );  
-#endif
-  WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
-#endif // O0109_MOVE_VPS_VUI_FLAG
-#endif
+
   WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
@@ -2484,23 +2462,17 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     codeVPSVUI(vps);  
   }
 #else
-#if P0307_REMOVE_VPS_VUI_OFFSET
+
   vps->setVpsVuiPresentFlag(true);
   WRITE_FLAG( vps->getVpsVuiPresentFlag() ? 1 : 0,                     "vps_vui_present_flag" );
-#endif
+
   if(vps->getVpsVuiPresentFlag())   // Should be conditioned on the value of vps_vui_present_flag
   {
     while ( m_pcBitIf->getNumberOfWrittenBits() % 8 != 0 )
     {
       WRITE_FLAG(1,                  "vps_vui_alignment_bit_equal_to_one");
     }
-#if !P0307_REMOVE_VPS_VUI_OFFSET
-#if VPS_VUI_OFFSET
-    Int vpsVuiOffsetValeInBits = this->m_pcBitIf->getNumberOfWrittenBits() - m_vpsVuiCounter + 16; // 2 bytes for NUH
-    assert( vpsVuiOffsetValeInBits % 8 == 0 );
-    vps->setVpsVuiOffset( vpsVuiOffsetValeInBits >> 3 );
-#endif
-#endif
+
     codeVPSVUI(vps);  
   }
 #endif // 0109_MOVE_VPS_FLAG
