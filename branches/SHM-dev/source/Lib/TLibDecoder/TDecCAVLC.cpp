@@ -1231,12 +1231,8 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
   if(!pcSlice->getDependentSliceSegmentFlag())
   {
 #if SVC_EXTENSION
-#if CROSS_LAYER_BLA_FLAG_FIX
     Int iBits = 0;
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
-#else
-    if(pcSlice->getPPS()->getNumExtraSliceHeaderBits()>0)
-#endif
     {
       READ_FLAG(uiCode, "discardable_flag"); // ignored
 #if NON_REF_NAL_TYPE_DISCARDABLE
@@ -1250,20 +1246,16 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RASL_R);
       }
 #endif
-#if CROSS_LAYER_BLA_FLAG_FIX
       iBits++;
-#endif
     }
-#if CROSS_LAYER_BLA_FLAG_FIX
+
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
       READ_FLAG(uiCode, "cross_layer_bla_flag");  pcSlice->setCrossLayerBLAFlag( uiCode ? true : false );
       iBits++;
     }
+
     for ( ; iBits < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); iBits++)
-#else
-    for (Int i = 1; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
-#endif
     {
       READ_FLAG(uiCode, "slice_reserved_undetermined_flag[]"); // ignored
     }
