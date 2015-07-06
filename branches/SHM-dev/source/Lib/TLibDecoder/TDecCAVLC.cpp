@@ -1225,9 +1225,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
   }
 
 #if Q0142_POC_LSB_NOT_PRESENT
-#if SHM_FIX7
   Int iPOClsb = 0;
-#endif
 #endif
 
   if(!pcSlice->getDependentSliceSegmentFlag())
