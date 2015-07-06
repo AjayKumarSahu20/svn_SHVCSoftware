@@ -2050,15 +2050,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     }
     else
     {
-#if POC_MSB_VAL_PRESENT_FLAG_SEM
-      if( sliceHeaderExtensionLength == 0 )
-      {
-        pcSlice->setPocMsbValPresentFlag( false );
-      }
-      else if( pcSlice->getPocMsbValRequiredFlag() )
-#else
       if( pcSlice->getPocMsbValRequiredFlag() )
-#endif
       {
         pcSlice->setPocMsbValPresentFlag( true );
       }

@@ -137,11 +137,6 @@
 #define ALIGN_IRAP_BUGFIX                1
 #define UNAVAILABLE_PIC_BUGFIX           1
 #endif
-#if INFERENCE_POC_MSB_VAL_PRESENT
-#define POC_MSB_VAL_PRESENT_FLAG_SEM     0      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
-#else
-#define POC_MSB_VAL_PRESENT_FLAG_SEM     1      ///< JCTVC-Q0146: Inference of poc_msb_val_present_flag
-#endif
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
 #define NO_OUTPUT_OF_PRIOR_PICS          1      ///< Use no_output_of_prior_pics_flag
 #define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
