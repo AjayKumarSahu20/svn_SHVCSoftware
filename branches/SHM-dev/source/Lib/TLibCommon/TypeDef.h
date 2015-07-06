@@ -47,7 +47,6 @@
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
 #define NON_REF_NAL_TYPE_DISCARDABLE     1      ///< JCTVC-P0041 -- If discardable picture is a non-IRAP, it must be a non-referenced sub-layer picture
-#define VPS_AVC_BL_FLAG_REMOVAL          1      ///< remove avc_base_layer_flag and direct the function its offer to vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_RESERVED_FLAGS               1      ///< vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_VUI_VST_PARAMS               1      ///< JCTVC-R0227: Related to signalling of VST parameters of the base layer.
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 

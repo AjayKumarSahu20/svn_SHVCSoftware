@@ -2004,9 +2004,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt i = 0, j = 0;
-#if !VPS_AVC_BL_FLAG_REMOVAL
-  WRITE_FLAG( vps->getAvcBaseLayerFlag(),              "avc_base_layer_flag" );
-#endif
 
   WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
 

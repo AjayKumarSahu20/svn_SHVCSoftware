@@ -630,11 +630,7 @@ private:
   // Variables related to VPS extensions
   // ------------------------------------------
 #if VPS_EXTN_MASK_AND_DIM_INFO
-#if VPS_AVC_BL_FLAG_REMOVAL
   Bool       m_nonHEVCBaseLayerFlag; 
-#else
-  Bool       m_avcBaseLayerFlag;                                // For now, always set to true.
-#endif
   Bool       m_splittingFlag;
   Bool       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
   UInt       m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
@@ -1009,13 +1005,8 @@ Void      deriveNumberOfSubDpbs();
   UInt    getNumLayerSets()                                     { return m_numLayerSets; }
   Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
 #if VPS_EXTN_MASK_AND_DIM_INFO
-#if VPS_AVC_BL_FLAG_REMOVAL
   Bool   getNonHEVCBaseLayerFlag()                              { return m_nonHEVCBaseLayerFlag;   }
   Void   setNonHEVCBaseLayerFlag(Bool x)                        { m_nonHEVCBaseLayerFlag = x;      }
-#else
-  Bool   getAvcBaseLayerFlag()                                  { return m_avcBaseLayerFlag;       }
-  Void   setAvcBaseLayerFlag(Bool x)                            { m_avcBaseLayerFlag = x;          }
-#endif
 
   Bool   getSplittingFlag()                                     { return m_splittingFlag;          }
   Void   setSplittingFlag(Bool x)                               { m_splittingFlag = x;             }

@@ -1002,9 +1002,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
 #if VPS_RESERVED_FLAGS
   READ_FLAG( uiCode, "vps_base_layer_internal_flag");             pcVPS->setBaseLayerInternalFlag( uiCode ? true : false );
   READ_FLAG( uiCode, "vps_base_layer_available_flag");            pcVPS->setBaseLayerAvailableFlag( uiCode ? true : false );
-#if VPS_AVC_BL_FLAG_REMOVAL
   pcVPS->setNonHEVCBaseLayerFlag( (pcVPS->getBaseLayerAvailableFlag() && !pcVPS->getBaseLayerInternalFlag()) ? true : false);
-#endif
 #else
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
 #endif
@@ -2720,10 +2718,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if VPS_EXTN_MASK_AND_DIM_INFO
   UInt numScalabilityTypes = 0, i = 0, j = 0;
-
-#if !VPS_AVC_BL_FLAG_REMOVAL
-  READ_FLAG( uiCode, "avc_base_layer_flag" ); vps->setAvcBaseLayerFlag(uiCode ? true : false);
-#endif
 
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
 
