@@ -3040,11 +3040,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
   for(i = 1; i < numOutputLayerSets; i++)
   {
-#if VPS_FIX_TO_MATCH_SPEC
     if( vps->getNumLayerSets() > 2 && i >= vps->getNumLayerSets() )
-#else
-    if( i > (vps->getNumLayerSets() - 1) )
-#endif
     {
       Int numBits = 1;
       while ((1 << numBits) < (vps->getNumLayerSets() - 1))
@@ -3059,17 +3055,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
 #if Q0078_ADD_LAYER_SETS
-#if VPS_FIX_TO_MATCH_SPEC
     if( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() == 2 )
 #else
-    if( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 )
-#endif
-#else
-#if VPS_FIX_TO_MATCH_SPEC
     if( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() == 2 )
-#else
-    if( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 )
-#endif
 #endif
     {
 #if NUM_OL_FLAGS
@@ -3112,11 +3100,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->getProfileLevelTierIdx(i)->assign(vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet), -1);
     for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
     {
-#if VPS_FIX_TO_MATCH_SPEC
       if( vps->getNecessaryLayerFlag(i, j) && (vps->getNumProfileTierLevel()-1) > 0 )
-#else
-      if( vps->getNecessaryLayerFlag(i, j) )
-#endif
       {
         READ_CODE( numBitsForPtlIdx, uiCode, "profile_tier_level_idx[i]" ); 
         vps->setProfileLevelTierIdx(i, j, uiCode );
@@ -3316,11 +3300,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   if( vps->getRepFormatIdxPresentFlag() )
   {
-#if VPS_FIX_TO_MATCH_SPEC
     for( i = vps->getBaseLayerInternalFlag() ? 1 : 0; i < vps->getMaxLayers(); i++ )
-#else
-    for (i = 1; i < vps->getMaxLayers(); i++)
-#endif
     {
       Int numBits = 1;
       while ((1 << numBits) < (vps->getVpsNumRepFormats()))
@@ -3451,17 +3431,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
-#if VPS_FIX_TO_MATCH_SPEC
   for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
-#else
-  for(i = 1; i < vps->getMaxLayers(); i++)
-#endif
   {
-#if VPS_FIX_TO_MATCH_SPEC
     for( j = vps->getBaseLayerInternalFlag() ? 0 : 1; j < i; j++ )
-#else
-    for(j = 0; j < i; j++)
-#endif
     {
       if (vps->getDirectDependencyFlag(i, j))
       {
@@ -3819,11 +3791,7 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 #if DPB_INTERNAL_BL_SIG
             uiCode=0;
 
-#if VPS_FIX_TO_MATCH_SPEC
         if( vps->getNecessaryLayerFlag(i, k) && ( vps->getBaseLayerInternalFlag() || vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) ) )
-#else
-        if(vps->getBaseLayerInternalFlag() || ( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) !=  0 ) )
-#endif
 #endif
           READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
         }
@@ -4069,11 +4037,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   READ_FLAG( uiCode, "tiles_not_in_use_flag" ); vps->setTilesNotInUseFlag(uiCode == 1);
   if (!uiCode)
   {
-#if VPS_FIX_TO_MATCH_SPEC
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
-#else
-    for (i = 0; i < vps->getMaxLayers(); i++)
-#endif
     {
       READ_FLAG( uiCode, "tiles_in_use_flag[ i ]" ); vps->setTilesInUseFlag(i, (uiCode == 1));
       if (uiCode)
@@ -4087,11 +4051,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
 #endif
 
-#if VPS_FIX_TO_MATCH_SPEC
       for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
-#else
-      for (i = 1; i < vps->getMaxLayers(); i++)
-#endif
     {
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
       {
@@ -4112,11 +4072,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   READ_FLAG( uiCode, "wpp_not_in_use_flag" ); vps->setWppNotInUseFlag(uiCode == 1);
   if (!uiCode)
   {
-#if VPS_FIX_TO_MATCH_SPEC
       for (i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++)
-#else
-      for (i = 0; i < vps->getMaxLayers(); i++)
-#endif
     {
       READ_FLAG( uiCode, "wpp_in_use_flag[ i ]" ); vps->setWppInUseFlag(i, (uiCode == 1));
     }
@@ -4145,10 +4101,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     {
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
       {
-#if VPS_FIX_TO_MATCH_SPEC
         if( vps->getBaseLayerInternalFlag() || vps->getRefLayerId(vps->getLayerIdInNuh(i), j) )
         {
-#endif
           READ_UVLC( uiCode, "min_spatial_segment_offset_plus1[i][j]" ); vps->setMinSpatialSegmentOffsetPlus1( i, j, uiCode );
           if( vps->getMinSpatialSegmentOffsetPlus1(i,j ) > 0 )
           {
@@ -4158,9 +4112,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
               READ_UVLC( uiCode, "min_horizontal_ctu_offset_plus1[i][j]"); vps->setMinHorizontalCtuOffsetPlus1( i,j, uiCode );
             }
           }
-#if VPS_FIX_TO_MATCH_SPEC
         }
-#endif
       }
     }
   }
@@ -4574,19 +4526,13 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
       }
     }
   }
-#if VPS_FIX_TO_MATCH_SPEC
   if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 0 )
   {
-#endif
     for (Int h = 1; h < vps->getNumOutputLayerSets(); h++)
     {
       Int lsIdx = vps->getOutputLayerSetIdx(h);
       READ_UVLC(uiCode, "num_signalled_partitioning_schemes[h]"); vps->setNumSignalledPartitioningSchemes(h, uiCode);
-#if VPS_FIX_TO_MATCH_SPEC
       for (Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h) + 1; j++)
-#else
-      for (Int j = 0; j < vps->getNumSignalledPartitioningSchemes(h); j++)
-#endif
       {
         READ_UVLC(uiCode, "num_partitions_in_scheme_minus1[h][j]"); vps->setNumPartitionsInSchemeMinus1(h, j, uiCode);
         for (Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++)
@@ -4604,13 +4550,8 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
           READ_UVLC(uiCode, "num_bsp_schedules_minus1[h][i][t]");              vps->setNumBspSchedulesMinus1(h, i, t, uiCode);
           for (Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++)
           {
-#if VPS_FIX_TO_MATCH_SPEC
             for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
-#else
-            for (Int k = 0; k < vps->getNumPartitionsInSchemeMinus1(h, i); k++)
-#endif
             {
-#if VPS_FIX_TO_MATCH_SPEC
               if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 1 )
               {
                 Int numBits = 1;
@@ -4620,9 +4561,6 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
                 }
                 READ_CODE(numBits, uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
               }
-#else
-              READ_UVLC(uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
-#endif
               READ_UVLC(uiCode, "bsp_comb_sched_idx[h][i][t][j][k]");    vps->setBspSchedIdx(h, i, t, j, k, uiCode);
             }
           }
@@ -4633,9 +4571,7 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
       // and other related checks associated with layers in bitstream partitions.
 
     }
-#if VPS_FIX_TO_MATCH_SPEC
   }
-#endif
 }
 #endif
 #endif
