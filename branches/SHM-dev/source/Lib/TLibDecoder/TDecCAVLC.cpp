@@ -2080,11 +2080,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 
     while( counter )
     {
-#if Q0146_SSH_EXT_DATA_BIT 
       READ_FLAG( uiCode, "slice_segment_header_extension_data_bit" );
-#else
-      READ_FLAG( uiCode, "slice_segment_header_extension_reserved_bit" ); assert( uiCode == 1 );
-#endif
       counter--;
     }
   }
