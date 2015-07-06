@@ -1386,9 +1386,6 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     // mark it should be extended later
     pic->getPicYuvRec()->setBorderExtension( false );
 
-#if RESOLUTION_BASED_DPB
-    dpbStatus.m_numPicsInLayer[layerIdx]--;
-#endif
 #if FIX_ALIGN_BUMPING
     dpbStatus.m_numPicsInSubDpb[dpbStatus.m_layerIdToSubDpbIdMap[layerId]]--;
 #else
@@ -1531,21 +1528,6 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
 
   // Find DPB-information from the VPS
   DpbStatus maxDpbLimit;
-#if RESOLUTION_BASED_DPB
-  Int targetLsIdx, subDpbIdx;
-  TComVPS *vps = findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
-
-  if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
-  {
-    targetLsIdx = 0;
-    subDpbIdx   = 0; 
-  }
-  else
-  {
-    targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
-    subDpbIdx   = vps->getSubDpbAssigned( targetLsIdx, layerIdx );
-  }
-#else
 #if FIX_ALIGN_BUMPING
   Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 
                   ? dpbStatus.m_layerIdToSubDpbIdMap[0] 
@@ -1554,7 +1536,6 @@ Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
   Int subDpbIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 ? 0 : layerIdx;
 #endif
   findDpbParametersFromVps(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, maxDpbLimit);
-#endif
   // Assume that listOfPocs is sorted in increasing order - if not have to sort it.
   while( ifInvokeBumpingBeforeDecoding(dpbStatus, maxDpbLimit, layerIdx, subDpbIdx) )
   {
@@ -1746,9 +1727,6 @@ TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs
     {
       maxDpbLimit.m_maxLatencyPictures = sps->getMaxLatencyIncrease( highestTId ) + sps->getNumReorderPics( highestTId ) - 1;
     }
-#if RESOLUTION_BASED_DPB
-    maxDpbLimit.m_numPicsInLayer[0] = sps->getMaxDecPicBuffering( highestTId );
-#endif
     maxDpbLimit.m_numPicsInSubDpb[0] = sps->getMaxDecPicBuffering( highestTId );
   }
   else
@@ -1837,11 +1815,6 @@ Bool TAppDecTop::ifInvokeBumpingBeforeDecoding( const DpbStatus &dpbStatus, cons
 
   // Number of pictures in each sub-DPB
   retVal |= ( dpbStatus.m_numPicsInSubDpb[subDpbIdx] >= dpbLimit.m_numPicsInSubDpb[subDpbIdx] );
-  
-#if RESOLUTION_BASED_DPB
-  // Number of pictures in each layer
-  retVal |= ( dpbStatus.m_numPicsInLayer[layerIdx] >= dpbLimit.m_numPicsInLayer[layerIdx]);
-#endif
 
   return retVal;
 }
@@ -1908,11 +1881,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
           }
           if( pic->getSlice(0)->isReferenced() || pic->getOutputMark() )
           {
-#if RESOLUTION_BASED_DPB
-            dpbStatus.m_numPicsInLayer[i]++;  // Count pictures that are "used for reference" or "needed for output"
-#else
             dpbStatus.m_numPicsInSubDpb[i]++;  // Count pictures that are "used for reference" or "needed for output"
-#endif
           }
 #if POC_RESET_IDC_DECODER
         }
@@ -1948,10 +1917,6 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
 #endif
   {
     dpbStatus.m_numPicsNotDisplayedInLayer[i] = (Int)listOfPocsInEachLayer[i].size();
-#if RESOLUTION_BASED_DPB
-    dpbStatus.m_numPicsInSubDpb[vps->getSubDpbAssigned(targetLsIdx,i)] += dpbStatus.m_numPicsInLayer[i];
-    dpbStatus.m_numPicsInSubDpb[i] += dpbStatus.m_numPicsInLayer[i];
-#endif
   }
   assert( dpbStatus.m_numAUsNotDisplayed != -1 );
 }  

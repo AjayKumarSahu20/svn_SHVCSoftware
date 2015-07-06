@@ -167,10 +167,6 @@ private:
   Int                     m_lastPocPeriodId;
   Int                     m_prevPicOrderCnt;
 #endif
-#if RESOLUTION_BASED_DPB
-  Int                     m_subDpbIdx;     // Index to the sub-DPB that the layer belongs to.
-                                           // When new VPS is activated, this should be re-initialized to -1
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   Bool m_confModeFlag;
   std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
@@ -291,11 +287,6 @@ public:
 #endif
 #if SCALINGLIST_INFERRING
   ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
-#endif
-#if RESOLUTION_BASED_DPB
-  Void setSubDpbIdx(Int idx)    { m_subDpbIdx = idx; }
-  Int  getSubDpbIdx()           { return m_subDpbIdx; }
-  Void assignSubDpbs(TComVPS *vps);
 #endif
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
