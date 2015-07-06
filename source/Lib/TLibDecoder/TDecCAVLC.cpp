@@ -3276,15 +3276,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   if( vps->getRepFormatIdxPresentFlag() )
   {
-#if O0096_REP_FORMAT_INDEX
 #if !VPS_EXTN_UEV_CODING
     READ_CODE( 8, uiCode, "vps_num_rep_formats_minus1" );
 #else
     READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
 #endif
-#else
-    READ_CODE( 4, uiCode, "vps_num_rep_formats_minus1" );
-#endif
+
     vps->setVpsNumRepFormats( uiCode + 1 );
   }
   else
@@ -3311,7 +3308,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       if( vps->getVpsNumRepFormats() > 1 )
       {
-#if O0096_REP_FORMAT_INDEX
 #if !VPS_EXTN_UEV_CODING
         READ_CODE( 8, uiCode, "vps_rep_format_idx[i]" );
 #else
@@ -3322,9 +3318,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         }
         READ_CODE( numBits, uiCode, "vps_rep_format_idx[i]" );
 #endif
-#else
-        READ_CODE( 4, uiCode, "vps_rep_format_idx[i]" );
-#endif
+
         vps->setVpsRepFormatIdx( i, uiCode );
       }
       else

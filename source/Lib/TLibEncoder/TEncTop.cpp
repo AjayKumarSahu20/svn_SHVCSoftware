@@ -1490,34 +1490,13 @@ Void TEncTop::xInitILRP()
 #else
 Void TEncTop::xInitILRP()
 {
-#if O0096_REP_FORMAT_INDEX
   RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
-#else
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
-#endif
   Int bitDepthY,bitDepthC,picWidth,picHeight;
 
-#if O0096_REP_FORMAT_INDEX
   bitDepthY   = repFormat->getBitDepthVpsLuma();
   bitDepthC   = repFormat->getBitDepthVpsChroma();
   picWidth    = repFormat->getPicWidthVpsInLumaSamples();
   picHeight   = repFormat->getPicHeightVpsInLumaSamples();
-#else
-  if( m_cSPS.getUpdateRepFormatFlag() )
-  {
-    bitDepthY   = m_cSPS.getBitDepthY();
-    bitDepthC   = m_cSPS.getBitDepthC();
-    picWidth    = m_cSPS.getPicWidthInLumaSamples();
-    picHeight   = m_cSPS.getPicHeightInLumaSamples();
-  }
-  else
-  {
-    bitDepthY   = repFormat->getBitDepthVpsLuma();
-    bitDepthC   = repFormat->getBitDepthVpsChroma();
-    picWidth    = repFormat->getPicWidthVpsInLumaSamples();
-    picHeight   = repFormat->getPicHeightVpsInLumaSamples();
-  }
-#endif
   
   if(m_layerId > 0)
   {
