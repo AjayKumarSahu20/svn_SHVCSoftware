@@ -121,10 +121,8 @@ TEncGOP::TEncGOP()
 #if POC_RESET_IDC_ENCODER
   m_lastPocPeriodId = -1;
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   m_noRaslOutputFlag = false;
   m_prevPicHasEos    = false;
-#endif
 #endif //SVC_EXTENSION
 
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -1110,8 +1108,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       continue;
     }
-#endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+
     if (pocCurr > m_pcEncTop->getLayerSwitchOffBegin() && pocCurr < m_pcEncTop->getLayerSwitchOffEnd())
     {
       continue;
@@ -1207,10 +1204,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setCrossLayerBLAFlag(false);
     }
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
-#endif
+
 #if NO_CLRAS_OUTPUT_FLAG
     if (m_layerId == 0 &&
         (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -1224,12 +1221,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
       else if (m_prevPicHasEos)
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
-#endif
       else if (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
             || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP)
@@ -1257,11 +1252,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
     xCheckLayerReset(pcSlice);
     xSetNoRaslOutputFlag(pcSlice);
     xSetLayerInitializedFlag(pcSlice);
-#endif
+
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId > 0 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
     {
       pcSlice->setActiveNumILRRefIdx(0);
@@ -1364,10 +1358,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setSliceType(I_SLICE);
     }
     
-#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-    // Set the nal unit type
-    pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
-#endif
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
@@ -1534,6 +1524,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
       }      
     }
+#else
+    // Set the nal unit type
+    pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
 #endif //#if SVC_EXTENSION
 
     if(pcSlice->getTemporalLayerNonReferenceFlag())
@@ -2925,8 +2918,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-      if (pcSlice->isIRAP())
+#if SVC_EXTENSION
+      if( pcSlice->isIRAP() )
       {
         //the inference for NoOutputPriorPicsFlag
         // KJS: This cannot happen at the encoder
@@ -3450,7 +3443,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+#if SVC_EXTENSION
     m_prevPicHasEos = false;
     if (m_pcCfg->getLayerSwitchOffBegin() < m_pcCfg->getLayerSwitchOffEnd())
     {
@@ -5340,7 +5333,6 @@ Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
 }
 #endif
 
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
 Void TEncGOP::xCheckLayerReset(TComSlice *slice)
 {
   Bool layerResetFlag;
@@ -5456,8 +5448,6 @@ Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
     }
   }
 }
-#endif // R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-
 #endif //SVC_EXTENSION
 
 #if Q0074_COLOUR_REMAPPING_SEI

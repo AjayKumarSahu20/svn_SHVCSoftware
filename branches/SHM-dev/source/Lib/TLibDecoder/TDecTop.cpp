@@ -105,9 +105,7 @@ TDecTop::TDecTop()
 #if Q0177_EOS_CHECKS
   m_isLastNALWasEos = false;
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   m_lastPicHasEos = false;
-#endif
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
@@ -851,12 +849,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       setNoClrasOutputFlag(true);
     }
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
     else if( m_lastPicHasEos )
     {
       setNoClrasOutputFlag(true);
     }
-#endif
     else if ( m_apcSlicePilot->getBlaPicFlag() )
     {
       setNoClrasOutputFlag(true);
@@ -1482,10 +1478,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+
+#if SVC_EXTENSION
     xCheckLayerReset();
     xSetLayerInitializedFlag();
 #endif
+
     // Buffer initialize for prediction.
     m_cPrediction.initTempBuff(m_apcSlicePilot->getSPS()->getChromaFormatIdc());
 #if ALIGNED_BUMPING
@@ -1992,7 +1990,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   setFirstPicInLayerDecodedFlag(true);
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+#if SVC_EXTENSION
   m_lastPicHasEos = false;
 #endif
 
@@ -2247,18 +2245,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_EOS:
 #if Q0177_EOS_CHECKS
       assert( m_isLastNALWasEos == false );
-#if !R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-      //Check layer id of the nalu. if it is not 0, give a warning message and just return without doing anything.
-      if (nalu.m_layerId > 0)
-      {
-        printf( "\nThis bitstream has EOS with non-zero layer id.\n" );
-        return false;
-      }
-#endif
+
       m_isLastNALWasEos = true;
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
       m_lastPicHasEos = true;
-#endif
 #endif
       m_associatedIRAPType = NAL_UNIT_INVALID;
       m_pocCRA = 0;
@@ -2686,7 +2675,6 @@ Void TDecTop::resetPocRestrictionCheckParameters()
 }
 #endif
 
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
 Void TDecTop::xCheckLayerReset()
 {
   if (m_apcSlicePilot->isIRAP() && m_layerId > m_smallestLayerId)
@@ -2771,9 +2759,7 @@ Void TDecTop::xSetLayerInitializedFlag()
     }
   }
 }
-#endif
 
-#if SVC_EXTENSION
 Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
 {
   UInt smallestLayerId;
@@ -2810,7 +2796,6 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
     m_ppcTDecTop[layerId]->m_smallestLayerId = smallestLayerId;
   }
 }
-#endif
 
 Void TDecTop::xSetSpatialEnhLayerFlag(TComSlice* slice, TComPic* pic)
 {
