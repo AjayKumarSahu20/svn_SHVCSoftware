@@ -67,7 +67,6 @@
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
-#define R0279_REP_FORMAT_INBL            1      ///< JCTVC-R0279, For any independent non-base layer the used representation format is the one that is signalled in the active SPS for the layer
 #define R0227_VUI_BSP_HRD_FLAG           1      ///< JCTVC-R0227, Conformance checking such that VPS VUI HRD only present if VPS timing info is signalled
 #define R0227_REP_FORMAT_CONSTRAINT      1      ///< JCTVC-R0227, Conformance checking such that representation format of a particular layer shall not be greater than the one defined in VPS for that layer
 #define R0227_BR_PR_ADD_LAYER_SET        1      ///< JCTVC-R0227, Signalling of bit-rate and picture rate for additional layer set

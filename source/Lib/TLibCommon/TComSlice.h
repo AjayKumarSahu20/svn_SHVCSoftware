@@ -1531,10 +1531,6 @@ private:
 
   UInt        m_uiMaxTLayers;           // maximum number of temporal layers
 
-#if R0279_REP_FORMAT_INBL
-  Bool        m_bV1CompatibleSPSFlag;
-#endif
-
   // Structure
   UInt        m_picWidthInLumaSamples;
   UInt        m_picHeightInLumaSamples;
@@ -1611,6 +1607,7 @@ private:
 #if SVC_EXTENSION
   UInt        m_layerId;
   Bool        m_extensionFlag;
+  Bool        m_bV1CompatibleSPSFlag;
   UInt        m_numScaledRefLayerOffsets;
   Bool        m_multiLayerExtSpsFlag;
 #if R0042_PROFILE_INDICATION  
@@ -1643,11 +1640,6 @@ public:
 
   static Int getWinUnitX (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitX[chromaFormatIdc];      }
   static Int getWinUnitY (Int chromaFormatIdc) { assert (chromaFormatIdc >= 0 && chromaFormatIdc <= MAX_CHROMA_FORMAT_IDC); return m_winUnitY[chromaFormatIdc];      }
-
-#if R0279_REP_FORMAT_INBL //These two functions shall be used / called when the syntax element sps_ext_or_max_sub_layers_minus1 and V1CompatibleSPSFlag are implemented
-  Bool getV1CompatibleSPSFlag()        {return m_bV1CompatibleSPSFlag;}
-  Void setV1CompatibleSPSFlag(Bool x)       { m_bV1CompatibleSPSFlag = x;}
-#endif
 
   // structure
   Void setPicWidthInLumaSamples       ( UInt u ) { m_picWidthInLumaSamples = u;        }
@@ -1786,6 +1778,11 @@ public:
   Void     setExtensionFlag(Int n)                  { m_extensionFlag = n;           }
   Bool     getMultiLayerExtSpsFlag()                { return m_multiLayerExtSpsFlag; }
   Void     setMultiLayerExtSpsFlag(Bool flag)       { m_multiLayerExtSpsFlag = flag; }
+
+  //These two functions shall be used / called when the syntax element sps_ext_or_max_sub_layers_minus1 and V1CompatibleSPSFlag are implemented
+  Bool getV1CompatibleSPSFlag()                     { return m_bV1CompatibleSPSFlag; }
+  Void setV1CompatibleSPSFlag(Bool x)               { m_bV1CompatibleSPSFlag = x;    }
+
 #if R0042_PROFILE_INDICATION
   Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
