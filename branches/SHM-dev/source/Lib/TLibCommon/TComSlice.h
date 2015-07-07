@@ -1458,9 +1458,7 @@ private:
   Bool        m_bV1CompatibleSPSFlag;
   UInt        m_numScaledRefLayerOffsets;
   Bool        m_multiLayerExtSpsFlag;
-#if R0042_PROFILE_INDICATION  
   Int         m_NumDirectRefLayers;
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool        m_updateRepFormatFlag;
   UInt        m_updateRepFormatIndex;
@@ -1628,13 +1626,11 @@ public:
   Void     setMultiLayerExtSpsFlag(Bool flag)       { m_multiLayerExtSpsFlag = flag; }
 
   //These two functions shall be used / called when the syntax element sps_ext_or_max_sub_layers_minus1 and V1CompatibleSPSFlag are implemented
-  Bool getV1CompatibleSPSFlag()                     { return m_bV1CompatibleSPSFlag; }
-  Void setV1CompatibleSPSFlag(Bool x)               { m_bV1CompatibleSPSFlag = x;    }
+  Bool     getV1CompatibleSPSFlag()                 { return m_bV1CompatibleSPSFlag; }
+  Void     setV1CompatibleSPSFlag(Bool x)           { m_bV1CompatibleSPSFlag = x;    }
 
-#if R0042_PROFILE_INDICATION
   Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
-#endif
 #if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()                 { return m_updateRepFormatFlag;   }
   Void     setUpdateRepFormatFlag(Bool x)           { m_updateRepFormatFlag = x;      }
