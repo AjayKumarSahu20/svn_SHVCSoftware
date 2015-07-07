@@ -2038,12 +2038,11 @@ TComVPS::TComVPS()
   m_wppNotInUseFlag = true;
   ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
 #endif
-#if N0160_VUI_EXT_ILP_REF
+
   m_ilpRestrictedRefLayersFlag = false;
   ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
   ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
   ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
-#endif
 
   m_vidSigPresentVpsFlag=true;
   m_vpsVidSigInfo=1;

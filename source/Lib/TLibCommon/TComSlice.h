@@ -686,13 +686,12 @@ private:
 #if VPS_VUI_WPP_NOT_IN_USE__FLAG
   Bool       m_wppNotInUseFlag;
   Bool       m_wppInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif 
-#if N0160_VUI_EXT_ILP_REF    
+#endif
+
   Bool       m_ilpRestrictedRefLayersFlag;
   Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Bool       m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int        m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 
   Bool       m_vidSigPresentVpsFlag;
   Int        m_vpsVidSigInfo;
@@ -1069,19 +1068,15 @@ Void      deriveNumberOfSubDpbs();
   Bool   getWppInUseFlag(Int currLayerId)    { return m_wppInUseFlag[currLayerId]; }
   Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
 #endif 
-#if N0160_VUI_EXT_ILP_REF  
-  Bool   getIlpRestrictedRefLayersFlag   ( )                                        { return m_ilpRestrictedRefLayersFlag        ;}
-  Void   setIlpRestrictedRefLayersFlag   ( Int val )                                { m_ilpRestrictedRefLayersFlag         = val;}
-  
-  Int    getMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId )          { return m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId];}
-  Void   setMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId, Int val ) { m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId] = val;}
-  
+
+  Bool   getIlpRestrictedRefLayersFlag  ( )                                            { return m_ilpRestrictedRefLayersFlag;}
+  Void   setIlpRestrictedRefLayersFlag  ( Int val )                                    { m_ilpRestrictedRefLayersFlag = val; }  
+  Int    getMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId )            { return m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId];}
+  Void   setMinSpatialSegmentOffsetPlus1( Int currLayerId, Int refLayerId, Int val )   { m_minSpatialSegmentOffsetPlus1[currLayerId][refLayerId] = val; }  
   Bool   getCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId )            { return m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId];}
-  Void   setCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId, Bool flag ) { m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId] = flag;}
-  
+  Void   setCtuBasedOffsetEnabledFlag   ( Int currLayerId, Int refLayerId, Bool flag ) { m_ctuBasedOffsetEnabledFlag[currLayerId][refLayerId] = flag;}  
   Int    getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
-  Void   setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
-#endif
+  Void   setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val; }  
 
   Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
   Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
