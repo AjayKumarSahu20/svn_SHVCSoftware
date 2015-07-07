@@ -2822,7 +2822,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setNumAddLayerSets(0);
   }
 #endif
-#if VPS_TSLAYERS
+
   READ_FLAG( uiCode, "vps_sub_layers_max_minus1_present_flag"); vps->setMaxTSLayersPresentFlag(uiCode ? true : false);
 
   if (vps->getMaxTSLayersPresentFlag())
@@ -2839,15 +2839,15 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
     }
   }
-#endif
+
   READ_FLAG( uiCode, "max_tid_ref_present_flag"); vps->setMaxTidRefPresentFlag(uiCode ? true : false);
-  if (vps->getMaxTidRefPresentFlag())
+  if( vps->getMaxTidRefPresentFlag() )
   {
-    for(i = 0; i < vps->getMaxLayers() - 1; i++)
+    for( i = 0; i < vps->getMaxLayers() - 1; i++ )
     {
-      for( j = i+1; j < vps->getMaxLayers(); j++)
+      for( j = i+1; j < vps->getMaxLayers(); j++ )
       {
-        if(vps->getDirectDependencyFlag(j, i))
+        if( vps->getDirectDependencyFlag(j, i) )
         {
           READ_CODE( 3, uiCode, "max_tid_il_ref_pics_plus1[i][j]" ); vps->setMaxTidIlRefPicsPlus1(i, j, uiCode);          
         }

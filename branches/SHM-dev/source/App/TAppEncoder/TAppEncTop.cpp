@@ -1404,14 +1404,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
-#if VPS_TSLAYERS
+
   vps->setMaxTSLayersPresentFlag(true);
 
   for( i = 0; i < vps->getMaxLayers(); i++ )
   {
     vps->setMaxTSLayersMinus1(i, vps->getMaxTLayers()-1);
   }
-#endif
+
   vps->setMaxTidRefPresentFlag(m_maxTidRefPresentFlag);
   if (vps->getMaxTidRefPresentFlag())
   {
