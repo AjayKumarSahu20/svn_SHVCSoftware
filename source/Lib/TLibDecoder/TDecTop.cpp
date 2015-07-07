@@ -837,7 +837,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_EXTENSION
   bNewPOC = m_apcSlicePilot->getPOC() != m_prevPOC || ( m_apcSlicePilot->getFirstSliceInPic() && m_parseIdc == -1 );
 
-#if NO_OUTPUT_OF_PRIOR_PICS
 #if NO_CLRAS_OUTPUT_FLAG
   if (m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag())
   {
@@ -891,7 +890,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
   }
-#endif
 
 #if POC_RESET_IDC_DECODER
   if( m_parseIdc != -1 ) // Second pass for a POC resetting picture
@@ -1356,6 +1354,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   }
   if (m_bFirstSliceInPicture)
   {
+#if SVC_EXTENSION
 #if AVC_BASE
     if( m_layerId > 0 && m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
     {
@@ -1464,7 +1463,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 #endif
 
-#if NO_OUTPUT_OF_PRIOR_PICS
     if ( m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() && getNoClrasOutputFlag() )
     {
       for (UInt i = 0; i < m_apcSlicePilot->getVPS()->getMaxLayers(); i++)
@@ -1473,9 +1471,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         m_ppcTDecTop[i]->setFirstPicInLayerDecodedFlag(false);
       }
     }
-#endif
 
-#if SVC_EXTENSION
     xCheckLayerReset();
     xSetLayerInitializedFlag();
 #endif
