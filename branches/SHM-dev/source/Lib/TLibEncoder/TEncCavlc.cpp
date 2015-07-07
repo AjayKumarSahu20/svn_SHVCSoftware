@@ -2152,30 +2152,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   // The value of num_add_olss shall be in the range of 0 to 1023, inclusive.
   assert( numAddOutputLayerSets >= 0 && numAddOutputLayerSets < 1024 );
 
-#if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( vps->getNumLayerSets() > 1 )
   {
     WRITE_UVLC( numAddOutputLayerSets, "num_add_olss" );
     WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_output_layer_idc" );
   }
-#else
-  WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
-#endif
-
-#if !Q0165_NUM_ADD_OUTPUT_LAYER_SETS
-  if( numOutputLayerSets > 1 )
-  {
-#if P0295_DEFAULT_OUT_LAYER_IDC
-    WRITE_CODE( vps->getDefaultTargetOutputLayerIdc(), 2, "default_target_output_layer_idc" );   
-#else
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-    WRITE_CODE( vps->getDefaultOneTargetOutputLayerIdc(), 2, "default_one_target_output_layer_idc" );   
-#else
-    WRITE_FLAG( vps->getDefaultOneTargetOutputLayerFlag(), "default_one_target_output_layer_flag" );   
-#endif
-#endif
-  }
-#endif
 
   for(i = 1; i < numOutputLayerSets; i++)
   {

@@ -157,7 +157,6 @@
 #define MAX_REF_LAYERS                   7
 #endif
 #define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
-#define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_olss and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
 
 #define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
 #if Q0078_ADD_LAYER_SETS
