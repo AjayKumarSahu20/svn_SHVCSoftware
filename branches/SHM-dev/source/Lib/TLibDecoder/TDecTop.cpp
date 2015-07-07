@@ -584,11 +584,7 @@ Void TDecTop::xActivateParameterSets()
     sps->setMaxTLayers( activeVPS->getMaxTLayers() );
 
     // When not present sps_temporal_id_nesting_flag is inferred to be equal to vps_temporal_id_nesting_flag
-#if Q0177_SPS_TEMP_NESTING_FIX
     sps->setTemporalIdNestingFlag( (sps->getMaxTLayers() > 1) ? activeVPS->getTemporalNestingFlag() : true );
-#else
-    sps->setTemporalIdNestingFlag( activeVPS->getTemporalNestingFlag() );
-#endif
 
     // When sps_max_dec_pic_buffering_minus1[ i ] is not present for i in the range of 0 to sps_max_sub_layers_minus1, inclusive, due to nuh_layer_id being greater than 0, 
     // it is inferred to be equal to max_vps_dec_pic_buffering_minus1[ TargetOptLayerSetIdx ][ currLayerId ][ i ] of the active VPS, where currLayerId is the nuh_layer_id of the layer that refers to the SPS.

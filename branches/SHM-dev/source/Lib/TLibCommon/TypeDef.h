@@ -73,7 +73,6 @@
 #define R0042_PROFILE_INDICATION         1      ///< JCTVC-R0042, Profile indication for additional layer sets
 
 #define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
-#define Q0177_SPS_TEMP_NESTING_FIX       1      ///< JCTVC-Q0177; Fix the inference value of sps_temporal_id_nesting_flag when it is not present
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val
 
@@ -126,7 +125,6 @@
 #define RPL_INIT_N0316_N0082             1      ///< JCTVC-N0316, JCTVC-N0082: initial reference picture list construction 
 
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
-#define O0142_CONDITIONAL_SPS_EXTENSION  1      ///< JCTVC-O0142: Conditional SPS extension
 
 #define P0297_VPS_POC_LSB_ALIGNED_FLAG   1      ///< JCTVC-P0297: vps_poc_lsb_aligned_flag for cross-layer POC anchor picture derivation
 
