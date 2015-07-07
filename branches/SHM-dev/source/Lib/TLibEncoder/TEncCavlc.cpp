@@ -2124,9 +2124,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
 #else
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
-#if PER_LAYER_PTL
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
-#endif
 #endif
 #if LIST_OF_PTL
 #if MULTIPLE_PTL_SUPPORT
@@ -2220,22 +2218,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
     }
-#if PER_LAYER_PTL
-    for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
+
+    for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
     {
       if( vps->getNecessaryLayerFlag(i, j) && (vps->getNumProfileTierLevel() - 1) > 0 )
       {
         WRITE_CODE( vps->getProfileLevelTierIdx(i, j), numBitsForPtlIdx, "profile_level_tier_idx[i]" );
       }
     }
-#else
-    Int numBits = 1;
-    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
-    {
-      numBits++;
-    }
-    WRITE_CODE( vps->getProfileLevelTierIdx(i), numBits, "profile_level_tier_idx[i]" );     
-#endif
 
     NumOutputLayersInOutputLayerSet[i] = 0;
     for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)

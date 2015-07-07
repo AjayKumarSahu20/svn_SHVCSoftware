@@ -2027,9 +2027,6 @@ TComVPS::TComVPS()
   m_directDepTypeLen = 2;
   ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
 
-#if !PER_LAYER_PTL
-  ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
-#endif
   m_maxOneActiveRefLayerFlag = true;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
@@ -3562,7 +3559,6 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
   }
 }
 
-#if PER_LAYER_PTL
 Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
 {
   Int numBits = 1;
@@ -3572,7 +3568,6 @@ Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
   }
   return numBits;
 }
-#endif
 
 Void TComVPS::calculateMaxSLInLayerSets()
 {

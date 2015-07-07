@@ -2873,9 +2873,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #else
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
 #endif
-#if PER_LAYER_PTL
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
-#endif
 #if !MULTIPLE_PTL_SUPPORT
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
 #endif
@@ -2950,10 +2948,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->setOutputLayerSetIdx(0, 0);
   vps->setOutputLayerFlag(0, 0, true);
   vps->deriveNecessaryLayerFlag(0);
-#if PER_LAYER_PTL
   vps->getProfileLevelTierIdx()->resize(numOutputLayerSets);
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0);
-#endif
 
   for(i = 1; i < numOutputLayerSets; i++)
   {
@@ -3013,7 +3009,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
     vps->deriveNecessaryLayerFlag(i);  
 
-#if PER_LAYER_PTL
     vps->getProfileLevelTierIdx(i)->assign(vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet), -1);
     for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
     {
@@ -3043,14 +3038,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
       }
     }
-#else
-    Int numBits = 1;
-    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
-    {
-      numBits++;
-    }
-    READ_CODE( numBits, uiCode, "profile_tier_level_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
-#endif
 
     NumOutputLayersInOutputLayerSet[i] = 0;
     for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
