@@ -1448,7 +1448,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pBaseColRec = m_pColorMappedPic;
         }
 #endif
-#if SVC_EXTENSION
+
         if( pcPic->isSpatialEnhLayer(refLayerIdc) )
         {
           // check for the sample prediction picture type
@@ -1466,7 +1466,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         }
         pcSlice->setFullPelBaseRec ( refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc) );
-#endif //SVC_EXTENSION
       }
 
       // Update the list of active inter-layer pictures
@@ -1475,9 +1474,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setInterLayerPredLayerIdc( interLayerPredLayerIdcTmp[i], i );
       }
 
-#if !O0225_TID_BASED_IL_RPS_DERIV || Q0060_MAX_TID_REF_EQUAL_TO_ZERO
       pcSlice->setActiveNumILRRefIdx( activeNumILRRefIdxTmp );
-#endif 
+
       if ( pcSlice->getActiveNumILRRefIdx() == 0 )
       {
         // No valid inter-layer pictures -> disable inter-layer prediction
