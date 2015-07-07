@@ -2027,12 +2027,6 @@ TComVPS::TComVPS()
   m_directDepTypeLen = 2;
   ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
 
-#if !NECESSARY_LAYER_FLAG
-#if DERIVE_LAYER_ID_LIST_VARIABLES
-  ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));
-  ::memset(m_numLayerInIdList,     0, sizeof(m_numLayerInIdList   )); 
-#endif
-#endif
 #if !PER_LAYER_PTL
   ::memset(m_profileLevelTierIdx,  0, sizeof(m_profileLevelTierIdx));
 #endif
@@ -3150,7 +3144,6 @@ Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int&
 }
 
 #if DERIVE_LAYER_ID_LIST_VARIABLES
-#if NECESSARY_LAYER_FLAG
 Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
@@ -3171,29 +3164,6 @@ Void TComVPS::deriveLayerIdListVariables()
     m_numLayerInIdList.push_back((Int)m_layerSetLayerIdList[i].size());
   }
 }
-#else
-Void TComVPS::deriveLayerIdListVariables()
-{
-  // For layer 0
-  m_numLayerInIdList[0] = 1;
-  m_layerSetLayerIdList[0][0] = 0;
-  
-  // For other layers
-  Int i, m, n;
-  for( i = 1; i < m_numLayerSets; i++ )
-  {
-    n = 0;
-    for( m = 0; m <= m_maxLayerId; m++)
-    {
-      if( m_layerIdIncludedFlag[i][m] )
-      {
-        m_layerSetLayerIdList[i][n++] = m;
-      }
-    }
-    m_numLayerInIdList[i] = n;
-  }
-}
-#endif
 #endif
 #if VPS_DPB_SIZE_TABLE
 Void TComVPS::deriveNumberOfSubDpbs()
@@ -3527,7 +3497,7 @@ Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt
   }
 }
 #endif
-#if NECESSARY_LAYER_FLAG
+
 Void TComVPS::deriveNecessaryLayerFlag()
 {
   m_necessaryLayerFlag.empty();
@@ -3538,6 +3508,7 @@ Void TComVPS::deriveNecessaryLayerFlag()
     deriveNecessaryLayerFlag(olsIdx);
   }
 }
+
 Void TComVPS::deriveNecessaryLayerFlag(Int const olsIdx)
 {
   Int lsIdx = m_outputLayerSetIdx[olsIdx];
@@ -3562,6 +3533,7 @@ Void TComVPS::deriveNecessaryLayerFlag(Int const olsIdx)
   }
   m_numNecessaryLayers.push_back(std::accumulate(m_necessaryLayerFlag[olsIdx].begin(), m_necessaryLayerFlag[olsIdx].end(), 0));
 }
+
 Void TComVPS::checkNecessaryLayerFlagCondition()
 {
   /* It is a requirement of bitstream conformance that for each layer index layerIdx in the range of 
@@ -3589,7 +3561,7 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
     assert( layerFoundNecessaryLayerFlag );
   }
 }
-#endif
+
 #if PER_LAYER_PTL
 Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
 {

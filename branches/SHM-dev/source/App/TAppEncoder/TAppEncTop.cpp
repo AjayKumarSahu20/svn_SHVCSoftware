@@ -1657,10 +1657,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     assert(!"default_output_layer_idc not equal to 1 is not yet supported");
   }
 #endif
-#if NECESSARY_LAYER_FLAG
+
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
-#endif
+
 #if !MULTIPLE_PTL_SUPPORT
 #if PER_LAYER_PTL
   vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
