@@ -483,6 +483,7 @@ Void TDecTop::xActivateParameterSets()
     assert (0);
   }
 
+#if SVC_EXTENSION
 #if SCALINGLIST_INFERRING
   // scaling list settings and checks
   TComVPS *activeVPS = m_parameterSetManagerDecoder.getActiveVPS();
@@ -577,7 +578,6 @@ Void TDecTop::xActivateParameterSets()
   }
 #endif
 
-#if SPS_DPB_PARAMS
   if( m_layerId > 0 )
   {
     // When not present sps_max_sub_layers_minus1 is inferred to be equal to vps_max_sub_layers_minus1.
@@ -628,7 +628,6 @@ Void TDecTop::xActivateParameterSets()
     }    
 #endif
   }
-#endif
 
 #if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
   UInt layerIdx = activeVPS->getLayerIdxInVps(m_apcSlicePilot->getLayerId());
@@ -650,6 +649,7 @@ Void TDecTop::xActivateParameterSets()
     assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma()         <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma());
   }
 #endif
+#endif //SVC_EXTENSION
 
   m_apcSlicePilot->setPPS(pps);
   m_apcSlicePilot->setSPS(sps);
@@ -2003,65 +2003,37 @@ Void TDecTop::xDecodeVPS()
 #endif
 }
 
-#if SVC_EXTENSION
 Void TDecTop::xDecodeSPS()
 {
   TComSPS* sps = new TComSPS();
 #if O0043_BEST_EFFORT_DECODING
   sps->setForceDecodeBitDepth(m_forceDecodeBitDepth);
 #endif
+#if SVC_EXTENSION
   sps->setLayerId(m_layerId);
-#if SPS_DPB_PARAMS
-  m_cEntropyDecoder.decodeSPS( sps ); // it should be removed after macro clean up
-#else
-  m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManagerDecoder );
 #endif
+  m_cEntropyDecoder.decodeSPS( sps );
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
-#if !REPN_FORMAT_IN_VPS   // ILRP can only be initialized at activation  
-  if(m_numLayer>0)
-  {
-    xInitILRP(sps);
-  }
-#endif
 }
 
-Void TDecTop::xDecodePPS(
 #if Q0048_CGS_3D_ASYMLUT
-  TCom3DAsymLUT * pc3DAsymLUT
+Void TDecTop::xDecodePPS( TCom3DAsymLUT * pc3DAsymLUT )
+#else
+Void TDecTop::xDecodePPS()
 #endif
-  )
 {
   TComPPS* pps = new TComPPS();
 
 #if SCALINGLIST_INFERRING
   pps->setLayerId( m_layerId );
 #endif
-
-  m_cEntropyDecoder.decodePPS( pps 
 #if Q0048_CGS_3D_ASYMLUT
-    , pc3DAsymLUT , m_layerId 
-#endif
-    );
-  m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
-}
+  m_cEntropyDecoder.decodePPS( pps, pc3DAsymLUT, m_layerId );
 #else
-Void TDecTop::xDecodeSPS()
-{
-  TComSPS* sps = new TComSPS();
-#if O0043_BEST_EFFORT_DECODING
-  sps->setForceDecodeBitDepth(m_forceDecodeBitDepth);
-#endif
-  m_cEntropyDecoder.decodeSPS( sps );
-  m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
-}
-
-Void TDecTop::xDecodePPS()
-{
-  TComPPS* pps = new TComPPS();
   m_cEntropyDecoder.decodePPS( pps );
+#endif
   m_parameterSetManagerDecoder.storePrefetchedPPS( pps );
 }
-#endif //SVC_EXTENSION
 
 Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType )
 {

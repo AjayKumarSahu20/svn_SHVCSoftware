@@ -75,8 +75,8 @@ public:
   Void  parseQtCbf          ( class TComTU &rTu, const ComponentID compID, const Bool lowestLevel );
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
-#if !SVC_EXTENSION
   Void  parseSPS            ( TComSPS* pcSPS );
+#if !SVC_EXTENSION
   Void  parsePPS            ( TComPPS* pcPPS );
 #endif
   Void  parseVUI            ( TComVUI* pcVUI, TComSPS* pcSPS );
@@ -139,11 +139,6 @@ public:
 #endif
 #if VPS_VUI_BSP_HRD_PARAMS
   Void  parseVpsVuiBspHrdParams( TComVPS *vps );
-#endif
-#if SPS_DPB_PARAMS
-  Void  parseSPS            ( TComSPS* pcSPS ); // it should be removed after macro clean up
-#else
-  Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManagerDecoder *parameterSetManager );
 #endif
   Void  parseSPSExtension    ( TComSPS* pcSPS );
 #if Q0048_CGS_3D_ASYMLUT
