@@ -742,7 +742,7 @@ Void TEncTop::xInitSPS()
 #if R0042_PROFILE_INDICATION
   m_cSPS.setNumDirectRefLayers(m_numDirectRefLayers);
 #endif
-#if Q0078_ADD_LAYER_SETS
+
   if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
     m_cSPS.setLayerId(0); // layer ID 0 for independent layers
@@ -751,10 +751,8 @@ Void TEncTop::xInitSPS()
   {
     m_cSPS.setLayerId(m_layerId);
   }
-#else
-  m_cSPS.setLayerId(m_layerId);
-#endif
 #endif //SVC_EXTENSION
+
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();
   profileTierLevel.setLevelIdc(m_level);
   profileTierLevel.setTierFlag(m_levelTier);
@@ -1028,12 +1026,10 @@ Void TEncTop::xInitPPS()
   m_cPPS.setLayerId( m_layerId );
 #endif
 
-#if Q0078_ADD_LAYER_SETS
   if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
     m_cPPS.setLayerId(0); // layer ID 0 for independent layers
   }
-#endif
 
   if( m_layerId > 0 )
   {

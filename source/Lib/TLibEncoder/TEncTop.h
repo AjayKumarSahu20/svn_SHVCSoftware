@@ -146,9 +146,7 @@ private:
 #if O0194_WEIGHTED_PREDICTION_CGS
   Bool                    m_interLayerWeightedPredFlag;
 #endif
-#if Q0078_ADD_LAYER_SETS
-  int                     m_numAddLayerSets;
-#endif
+  Int                     m_numAddLayerSets;
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool                    m_pocDecrementedInDPBFlag;
   Int                     m_currPocMsb;
@@ -269,10 +267,8 @@ public:
   Int       getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
   Void      setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
 #endif
-#if Q0078_ADD_LAYER_SETS
   Void      setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
   Int       getNumAddLayerSets()                  { return m_numAddLayerSets; }
-#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Void      setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
   Bool      getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
