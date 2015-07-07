@@ -300,11 +300,11 @@ protected:
 #endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
-  Void      xDecodePPS(
 #if Q0048_CGS_3D_ASYMLUT
-    TCom3DAsymLUT * pc3DAsymLUT
+  Void      xDecodePPS( TCom3DAsymLUT * pc3DAsymLUT );
+#else
+  Void      xDecodePPS();
 #endif
-    );
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if SVC_EXTENSION

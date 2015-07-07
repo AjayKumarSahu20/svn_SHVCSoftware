@@ -774,9 +774,7 @@ private:
   Int        m_numLayersInTreePartition[MAX_LAYERS];
   UInt       m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
 #endif
-#if SPS_DPB_PARAMS
   Int        m_TolsIdx;
-#endif
 #if VPS_DPB_SIZE_TABLE
   Bool       m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool       m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
