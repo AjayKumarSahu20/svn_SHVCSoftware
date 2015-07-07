@@ -2176,9 +2176,6 @@ TComSPS::TComSPS()
 , m_VPSId                     (  0)
 , m_chromaFormatIdc           (CHROMA_420)
 , m_uiMaxTLayers              (  1)
-#if R0279_REP_FORMAT_INBL
-, m_bV1CompatibleSPSFlag      (  0)
-#endif
 // Structure
 , m_picWidthInLumaSamples     (352)
 , m_picHeightInLumaSamples    (288)
@@ -2216,6 +2213,7 @@ TComSPS::TComSPS()
 #if SVC_EXTENSION
 , m_layerId                   ( 0 )
 , m_extensionFlag             ( false )
+, m_bV1CompatibleSPSFlag      (  0)
 #if REPN_FORMAT_IN_VPS
 , m_updateRepFormatFlag       (false)
 , m_updateRepFormatIndex      (0)
@@ -3702,15 +3700,9 @@ UInt TComSlice::getPicWidthInLumaSamples()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
-#else
-  if ( layerId == 0 )
-  {
-    if( vps->getAvcBaseLayerFlag() )
-#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
     }
@@ -3733,15 +3725,9 @@ UInt TComSlice::getPicHeightInLumaSamples()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
-#else
-  if ( layerId == 0 )
-  {
-    if( vps->getAvcBaseLayerFlag() )
-#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
     }
@@ -3773,15 +3759,9 @@ UInt TComSlice::getChromaFormatIdc()
   UInt retVal, layerId = getLayerId();
 #endif
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
-#else
-  if ( layerId == 0 )
-  {
-    if( vps->getAvcBaseLayerFlag() )
-#endif
     {
       retVal = vps->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
     }
@@ -3804,13 +3784,8 @@ UInt TComSlice::getBitDepthY()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-#else
-  if ( layerId == 0 )
-  {
-#endif
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
       retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
@@ -3834,13 +3809,8 @@ UInt TComSlice::getBitDepthC()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-#else
-  if ( layerId == 0 )
-  {
-#endif
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
       retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
@@ -3874,15 +3844,9 @@ Window& TComSlice::getConformanceWindow()
   TComVPS *vps = getVPS();
   UInt layerId = getLayerId();
 
-#if R0279_REP_FORMAT_INBL
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
-#else
-  if ( layerId == 0 )
-  {
-    if( vps->getAvcBaseLayerFlag() )
-#endif
     {
       return vps->getVpsRepFormat(layerId)->getConformanceWindowVps();
     }
