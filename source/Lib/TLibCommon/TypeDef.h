@@ -171,7 +171,6 @@
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
-#define DEF_OPT_LAYER_IDC                1      ///< JCTVC-R0154: proposal2 - default_output_layer_idc and output_layer_flag[i][j]
 #define OLS_IDX_CHK                      1      ///< JCTVC-R0155: Proposal 2 valid range for output_layer_set_idx_to_vps[i]
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
 #define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0

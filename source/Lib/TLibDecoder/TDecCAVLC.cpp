@@ -2956,19 +2956,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       // Assign OutputLayerFlag depending on default_one_target_output_layer_flag
       if( vps->getDefaultTargetOutputLayerIdc() == 1 )
       {
-        for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+        for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
         {
-#if DEF_OPT_LAYER_IDC
           vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet)-1))  );
-
-#else
-          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet)-1)) && (vps->getDimensionId(j,1) == 0) );
-#endif
         }
       }
-      else if ( vps->getDefaultTargetOutputLayerIdc() == 0 )
+      else if( vps->getDefaultTargetOutputLayerIdc() == 0 )
       {
-        for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+        for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
         {
           vps->setOutputLayerFlag(i, j, 1);
         }
