@@ -1590,15 +1590,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 #endif
-#if !PER_LAYER_PTL
-  for(i = 1; i < vps->getNumLayerSets(); i++)
-  {
-    vps->setProfileLevelTierIdx(i, i);
-#if !OUTPUT_LAYER_SETS_CONFIG
-    vps->setOutputLayerSetIdx(i, i);
-#endif
-  }  
-#endif
 #endif
 #if VPS_DPB_SIZE_TABLE
   vps->deriveNumberOfSubDpbs();
@@ -1662,7 +1653,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->checkNecessaryLayerFlagCondition();
 
 #if !MULTIPLE_PTL_SUPPORT
-#if PER_LAYER_PTL
   vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0 ); // Default 0-th output layer set
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
@@ -1682,7 +1672,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
-#endif
 #endif
 
   vps->calculateMaxSLInLayerSets();

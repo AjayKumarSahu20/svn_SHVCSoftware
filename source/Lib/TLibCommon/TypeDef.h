@@ -56,7 +56,6 @@
 #define PTL_SIGNALLING                   1      ///< Overall macro for all PTL-related signalling
 #if PTL_SIGNALLING
 #define LIST_OF_PTL                      1      ///< JCTVC-R0272: Signalling the PTL for the 0-th OLS
-#define PER_LAYER_PTL                    1      ///< Signal profile-tier-level information for each layer.
 #endif
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
 #define VPS_VUI_BSP_HRD_PARAMS           1      ///< JCTVC-R0231: Define the VPS VUI BSP hrd_params() as a separate function, and apply changes adopted.
