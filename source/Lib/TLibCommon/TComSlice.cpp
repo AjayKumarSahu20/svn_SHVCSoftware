@@ -1997,9 +1997,7 @@ TComVPS::TComVPS()
   m_numScalabilityTypes = 0;
   ::memset(m_layerIdxInVps, 0, sizeof(m_layerIdxInVps));
 
-#if VPS_EXTN_PROFILE_INFO
   ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
-#endif
 #if VPS_EXTN_OP_LAYER_SETS
   ::memset(m_layerIdIncludedFlag, 0, sizeof(m_layerIdIncludedFlag));
   // Consider dynamic allocation for outputLayerSetIdx and outputLayerFlag
@@ -3045,8 +3043,6 @@ TComPTL::TComPTL()
 }
 
 #if SVC_EXTENSION
-
-#if VPS_EXTN_PROFILE_INFO
 Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
 {
   this->setProfileSpace          ( ptl->getProfileSpace()      );
@@ -3061,7 +3057,6 @@ Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
   this->setNonPackedConstraintFlag( ptl->getNonPackedConstraintFlag());
   this->setFrameOnlyConstraintFlag( ptl->getFrameOnlyConstraintFlag());  
 }
-#endif
 
 Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
@@ -3748,14 +3743,11 @@ RepFormat::RepFormat()
 {}
 #endif //REPN_FORMAT_IN_VPS
 
-#if VPS_EXTN_PROFILE_INFO
 Void TComPTL::copyProfileInfo(TComPTL *ptl)
 {
   // Copy all information related to general profile
   this->getGeneralPTL()->copyProfileInfo(ptl->getGeneralPTL());
 }
-#endif
-
 
 Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc )
 {  
