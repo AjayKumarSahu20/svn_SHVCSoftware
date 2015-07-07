@@ -187,9 +187,7 @@ Void TAppEncTop::xInitLibCfg()
                                                                             m_acLayerCfg[mapIdxToLayer[idx]].m_confWinTop,
                                                                             m_acLayerCfg[mapIdxToLayer[idx]].m_confWinBottom );
 
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
     m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch             ( m_skipPictureAtArcSwitch );
-#endif
   }
   delete [] mapIdxToLayer;
 #endif
@@ -1754,9 +1752,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
 #endif
     vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
     vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
-#endif
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
     for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
     {
@@ -1775,9 +1771,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
 #endif 
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
-#endif
 
   for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
   {

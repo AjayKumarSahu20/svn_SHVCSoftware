@@ -1168,9 +1168,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  7, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
   ("CrossLayerIrapAlignFlag",                        m_crossLayerIrapAlignFlag,                          true, "align IRAP across layers" )  
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   ("CrossLayerAlignedIdrOnlyFlag",                   m_crossLayerAlignedIdrOnlyFlag,                     true, "only idr for IRAP across layers" )  
-#endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   ("InterLayerWeightedPred",                          m_useInterLayerWeightedPred,                       false, "enable IL WP parameters estimation at encoder" )  
 #endif
@@ -1693,9 +1691,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
   ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
   ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
@@ -4359,7 +4355,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
+
   if (m_adaptiveResolutionChange > 0)
   {
     xConfirmPara(m_crossLayerIrapAlignFlag != 0, "Cross layer IRAP alignment must be disabled when using adaptive resolution change.");
@@ -4368,7 +4364,7 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
-#endif
+
   if( layerIdx < MAX_LAYERS-1 )
   {
     xConfirmPara(m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
@@ -4503,14 +4499,10 @@ Void TAppEncCfg::xPrintParameter()
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change        : %d\n", m_adaptiveResolutionChange );
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   printf("Skip picture at ARC switch        : %d\n", m_skipPictureAtArcSwitch );
-#endif
   printf("Align picture type                : %d\n", m_crossLayerPictureTypeAlignFlag );
   printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   printf("IDR only for IRAP                 : %d\n", m_crossLayerAlignedIdrOnlyFlag );
-#endif
 #if O0194_WEIGHTED_PREDICTION_CGS
   printf("InterLayerWeightedPred            : %d\n", m_useInterLayerWeightedPred );
 #endif

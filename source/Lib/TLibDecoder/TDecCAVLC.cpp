@@ -3467,10 +3467,8 @@ Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
   vps->setSingleLayerForNonIrapFlag( false );
 #endif
 
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   // When higher_layer_irap_skip_flag is not present it is inferred to be equal to 0
   vps->setHigherLayerIrapSkipFlag( false );
-#endif
 }
 
 #if REPN_FORMAT_IN_VPS
@@ -3661,7 +3659,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   UInt uiCode;
   READ_FLAG(uiCode, "cross_layer_pic_type_aligned_flag" );
   vps->setCrossLayerPictureTypeAlignFlag(uiCode);
-  if (!uiCode) 
+
+  if( !uiCode ) 
   {
     READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
     vps->setCrossLayerIrapAlignFlag(uiCode);
@@ -3671,13 +3670,11 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     vps->setCrossLayerIrapAlignFlag(true);
   }
 
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-  if( uiCode )
+  if( vps->getCrossLayerIrapAlignFlag() )
   {
     READ_FLAG( uiCode, "all_layers_idr_aligned_flag" );
     vps->setCrossLayerAlignedIdrOnlyFlag(uiCode);
   }
-#endif
 
   READ_FLAG( uiCode,        "bit_rate_present_vps_flag" );  vps->setBitRatePresentVpsFlag( uiCode ? true : false );
   READ_FLAG( uiCode,        "pic_rate_present_vps_flag" );  vps->setPicRatePresentVpsFlag( uiCode ? true : false );
@@ -3839,7 +3836,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
 
   // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
@@ -3847,7 +3843,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     assert( !vps->getHigherLayerIrapSkipFlag() );
   }
-#endif
 #if N0160_VUI_EXT_ILP_REF
   READ_FLAG( uiCode, "ilp_restricted_ref_layers_flag" ); vps->setIlpRestrictedRefLayersFlag( uiCode == 1 );
   if( vps->getIlpRestrictedRefLayersFlag())

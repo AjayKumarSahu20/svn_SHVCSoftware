@@ -301,8 +301,9 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool 
     m_pcEntropyDecoder->decodeSkipFlag( pcCU, uiAbsPartIdx, uiDepth );
   }
  
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
-  if (pcCU->getSlice()->getVPS()->getHigherLayerIrapSkipFlag() && pcCU->getSlice()->getVPS()->getSingleLayerForNonIrapFlag() && pcCU->getLayerId() > 0)
+#if SVC_EXTENSION
+  // Check CU skip for higher layer IRAP skip flag
+  if( pcCU->getSlice()->getVPS()->getHigherLayerIrapSkipFlag() && pcCU->getSlice()->getVPS()->getSingleLayerForNonIrapFlag() && pcCU->getLayerId() > 0 )
   {
     Bool lowerLayerExist = false;
     for(int i=0;i<pcCU->getLayerId();i++)
@@ -312,9 +313,10 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool 
         lowerLayerExist = true;
       }
     }
-    if(lowerLayerExist)
+
+    if( lowerLayerExist && !pcCU->isSkipped(uiAbsPartIdx) )
     {
-      assert(pcCU->isSkipped(uiAbsPartIdx));
+      printf( "Warning: CU is not skipped with enabled higher layer IRAP skip flag\n" );
     }
   }
 #endif

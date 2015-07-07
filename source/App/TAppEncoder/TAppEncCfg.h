@@ -475,9 +475,7 @@ protected:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
-#endif
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
 #endif
@@ -514,9 +512,7 @@ protected:
   std::vector< std::vector<string> >  m_overlayElementName;  
   Bool                                m_overlayInfoPersistenceFlag;
 #endif
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
 #endif

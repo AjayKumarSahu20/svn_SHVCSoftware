@@ -377,9 +377,7 @@ protected:
   int       m_layerSwitchOffEnd;
 #endif
   Bool      m_altOutputLayerFlag;
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Int       m_skipPictureAtArcSwitch;
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
 #endif
@@ -1025,10 +1023,8 @@ public:
   Void      setLayerSwitchOffEnd(Int x)      { m_layerSwitchOffEnd = x;      }
   Int       getLayerSwitchOffEnd()           { return m_layerSwitchOffEnd;   }
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Void      setSkipPictureAtArcSwitch(Int x) { m_skipPictureAtArcSwitch = x;    }
   Int       getSkipPictureAtArcSwitch()      { return m_skipPictureAtArcSwitch; }
-#endif
 #if AUXILIARY_PICTURES
   Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
   ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
