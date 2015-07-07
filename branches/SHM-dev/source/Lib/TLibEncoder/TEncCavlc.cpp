@@ -2312,9 +2312,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 #endif
-#if !IRAP_ALIGN_FLAG_IN_VPS_VUI
-  WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
-#endif 
+ 
 #if VPS_DPB_SIZE_TABLE
   codeVpsDpbSizeTable(vps);
 #endif
@@ -2517,9 +2515,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   if (!vps->getCrossLayerPictureTypeAlignFlag())
   {
 #endif 
-#if IRAP_ALIGN_FLAG_IN_VPS_VUI
     WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
-#endif 
 #if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
   else
