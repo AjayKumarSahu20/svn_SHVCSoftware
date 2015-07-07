@@ -698,9 +698,7 @@ private:
 #endif
   Bool       m_crossLayerPictureTypeAlignFlag;
   Bool       m_crossLayerIrapAlignFlag;
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool       m_crossLayerAlignedIdrOnlyFlag;
-#endif
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
   Bool       m_maxTidRefPresentFlag;
 #if VPS_TSLAYERS
@@ -710,9 +708,7 @@ private:
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Bool       m_higherLayerIrapSkipFlag;
-#endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   Bool       m_tilesNotInUseFlag;
   Bool       m_tilesInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
@@ -1105,24 +1101,22 @@ Void      deriveNumberOfSubDpbs();
   Int    getProfileLevelTierIdx(Int i)                        { return m_profileLevelTierIdx[i]; }
   Void   setProfileLevelTierIdx(Int i, Int x)                 { m_profileLevelTierIdx[i] = x   ; }
 #endif
-  Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;                      }
-  Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                         }
+  Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;             }
+  Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                }
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
-  UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i]; }
-  Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;    }
+  UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i];              }
+  Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;                 }
 #endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag; }
-  Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x; }
+  Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag;                 }
+  Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x;                    }
 #endif
-  Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
-  Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;                         }
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-  Bool   getCrossLayerAlignedIdrOnlyFlag()                                    { return m_crossLayerAlignedIdrOnlyFlag;                      }
-  Void   setCrossLayerAlignedIdrOnlyFlag(Bool x)                              { m_crossLayerAlignedIdrOnlyFlag = x;                         }
-#endif 
-  Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;                      }
-  Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                         }
+  Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;       }
+  Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;          }
+  Bool   getCrossLayerAlignedIdrOnlyFlag()                                      { return m_crossLayerAlignedIdrOnlyFlag;         }
+  Void   setCrossLayerAlignedIdrOnlyFlag(Bool x)                                { m_crossLayerAlignedIdrOnlyFlag = x;            }
+  Bool   getCrossLayerIrapAlignFlag()                                           { return m_crossLayerIrapAlignFlag;              }
+  Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                 }
   UInt   getMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx)                     { return m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx];           }
   Void   setMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx] = maxSublayer;    }
   Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
@@ -1137,10 +1131,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
   Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
-#endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG  
   Bool   getTilesNotInUseFlag()         { return m_tilesNotInUseFlag; }
   Void   setTilesNotInUseFlag(Bool x); 

@@ -2517,15 +2517,15 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
   else
   {
-    vps->setCrossLayerIrapAlignFlag(vps->getVpsVuiPresentFlag()); // When not present, the value of cross_layer_irap_aligned_flag is inferred to be equal to vps_vui_present_flag
+    // When not present, the value of cross_layer_irap_aligned_flag is inferred to be equal to vps_vui_present_flag,
+    // i.e. it is true in this function
+    vps->setCrossLayerIrapAlignFlag( true ); 
   }
 
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
-  if(vps->getCrossLayerIrapAlignFlag())
+  if( vps->getCrossLayerIrapAlignFlag() )
   {
     WRITE_FLAG(vps->getCrossLayerAlignedIdrOnlyFlag(), "all_layers_idr_aligned_flag");
   }
-#endif
 
   WRITE_FLAG( vps->getBitRatePresentVpsFlag(),        "bit_rate_present_vps_flag" );
   WRITE_FLAG( vps->getPicRatePresentVpsFlag(),        "pic_rate_present_vps_flag" );
@@ -2644,7 +2644,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 #if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 #endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
+
   // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
   if( !vps->getSingleLayerForNonIrapFlag() )
   {
@@ -2652,7 +2652,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
-#endif
+
 #if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getIlpRestrictedRefLayersFlag() ? 1 : 0 , "ilp_restricted_ref_layers_flag" );    
   if( vps->getIlpRestrictedRefLayersFlag())

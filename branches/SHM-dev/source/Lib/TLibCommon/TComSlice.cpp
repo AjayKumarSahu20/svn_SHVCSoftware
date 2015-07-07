@@ -2051,9 +2051,7 @@ TComVPS::TComVPS()
 #endif
   m_crossLayerPictureTypeAlignFlag = true;
   m_crossLayerIrapAlignFlag = true;
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   m_crossLayerAlignedIdrOnlyFlag = false;
-#endif
   m_maxTidRefPresentFlag = true;
   for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1 - 1; i++)
   {
