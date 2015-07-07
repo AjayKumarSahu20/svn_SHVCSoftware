@@ -513,11 +513,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         UInt refLayerIdc = m_interLayerPredLayerIdc[i];
         UInt refLayerId = m_pcVPS->getRefLayerId( m_layerId, refLayerIdc );
 
-#if O0098_SCALED_REF_LAYER_ID
         const Window &scalEL = getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
-#else
-        const Window &scalEL = getPPS()->getScaledRefLayerWindow(m_interLayerPredLayerIdc[i]);
-#endif
+
         Int scalingOffset = ((scalEL.getWindowLeftOffset()   == 0 ) && 
                              (scalEL.getWindowRightOffset()  == 0 ) && 
                              (scalEL.getWindowTopOffset()    == 0 ) && 
@@ -3073,6 +3070,8 @@ TComPTL::TComPTL()
   ::memset(m_subLayerLevelPresentFlag,   0, sizeof(m_subLayerLevelPresentFlag  ));
 }
 
+#if SVC_EXTENSION
+
 #if VPS_EXTN_PROFILE_INFO
 Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
 {
@@ -3090,7 +3089,6 @@ Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
 }
 #endif
 
-#if O0098_SCALED_REF_LAYER_ID
 Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
@@ -3106,9 +3104,7 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
   return win;
 }
-#endif
 
-#if SVC_EXTENSION
 Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
 {
   static Window win;

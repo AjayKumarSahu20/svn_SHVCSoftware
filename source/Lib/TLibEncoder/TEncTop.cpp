@@ -618,12 +618,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-#if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#else
-          const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
-#endif
-          const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+          const Window altRL = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
@@ -688,12 +684,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       {
         for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
-#if O0098_SCALED_REF_LAYER_ID
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
-#else
-          const Window scalEL = getPPS()->getScaledRefLayerWindow(i);
-#endif
-          const Window altRL  = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
+          const Window altRL = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
@@ -1073,9 +1065,7 @@ Void TEncTop::xInitPPS()
   m_cPPS.setNumRefLayerLocationOffsets(m_numRefLayerLocationOffsets);
   for(Int i = 0; i < m_cPPS.getNumRefLayerLocationOffsets(); i++)
   {
-#if O0098_SCALED_REF_LAYER_ID
     m_cPPS.setRefLocationOffsetLayerId(i, m_refLocationOffsetLayerId[i]);
-#endif
     m_cPPS.getScaledRefLayerWindow(i) = m_scaledRefLayerWindow[i];
     m_cPPS.getRefLayerWindow(i) = m_refLayerWindow[i];
     m_cPPS.setScaledRefLayerOffsetPresentFlag( i, m_scaledRefLayerOffsetPresentFlag[i] );
@@ -1559,7 +1549,6 @@ Void TEncTop::xInitILRP()
 }
 #endif
 
-#if O0098_SCALED_REF_LAYER_ID
 Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
 {
   static Window win;
@@ -1591,6 +1580,5 @@ Window& TEncTop::getRefLayerWindowForLayer(Int layerId)
   win.resetWindow();  // reference offsets are inferred to be zero when not present
   return win;
 }
-#endif
 #endif //SVC_EXTENSION
 //! \}

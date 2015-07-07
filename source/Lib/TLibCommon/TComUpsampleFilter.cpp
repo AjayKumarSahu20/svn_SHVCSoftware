@@ -62,11 +62,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
 #endif
 
-#if O0098_SCALED_REF_LAYER_ID
   const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
-#else
-  const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindow(refLayerIdc);
-#endif
   const Window &windowRL = currSlice->getPPS()->getRefLayerWindowForLayer(refLayerId);
 
   //========== Y component upsampling ===========

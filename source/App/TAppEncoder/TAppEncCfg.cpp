@@ -780,9 +780,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
 #endif
-#if O0098_SCALED_REF_LAYER_ID
   string    cfg_refLocationOffsetLayerId [MAX_LAYERS];
-#endif
   string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
   string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
@@ -799,10 +797,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string    cfg_phaseVerLuma   [MAX_LAYERS];
   string    cfg_phaseHorChroma [MAX_LAYERS];
   string    cfg_phaseVerChroma [MAX_LAYERS];
-
-#if O0098_SCALED_REF_LAYER_ID
   string*    cfg_refLocationOffsetLayerIdPtr   [MAX_LAYERS];
-#endif
   string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
   string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
   string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
@@ -897,9 +892,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
     for(Int i = 0; i < MAX_LAYERS; i++)
     {
-#if O0098_SCALED_REF_LAYER_ID
       cfg_refLocationOffsetLayerIdPtr  [layer] = &cfg_refLocationOffsetLayerId[layer];
-#endif
       cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer];
       cfg_scaledRefLayerTopOffsetPtr   [layer] = &cfg_scaledRefLayerTopOffset[layer];
       cfg_scaledRefLayerRightOffsetPtr [layer] = &cfg_scaledRefLayerRightOffset[layer];
@@ -1119,9 +1112,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InternalBitDepthC",                             m_internalBitDepthC,                                     0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
 #endif
   ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,              0, MAX_LAYERS,  "Number of reference layer offset sets ")
-#if O0098_SCALED_REF_LAYER_ID
   ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,    string(""), MAX_LAYERS, "Layer ID of reference location offset")
-#endif                                             
   ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,    string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerTopOffset%d",                     cfg_scaledRefLayerTopOffsetPtr,     string(""), MAX_LAYERS, "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
@@ -1130,7 +1121,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
   ("ScaledRefLayerBottomOffset%d",                  cfg_scaledRefLayerBottomOffsetPtr,  string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                                                                 "  bottom-right luma sample of the EL picture, in units of two luma samples")
-#if SVC_EXTENSION
   ("ScaledRefLayerOffsetPresentFlag%d",         cfg_scaledRefLayerOffsetPresentFlagPtr, string(""), MAX_LAYERS, "presense flag of scaled reference layer offsets")
   ("RefRegionOffsetPresentFlag%d",                  cfg_refRegionOffsetPresentFlagPtr,  string(""), MAX_LAYERS, "presense flag of reference region offsets")
   ("RefRegionLeftOffset%d",                         cfg_refRegionLeftOffsetPtr,         string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of ref region with respect to"
@@ -1146,7 +1136,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PhaseVerLuma%d",                                cfg_phaseVerLumaPtr,                string(""), MAX_LAYERS, "luma shift in the vertical   direction used in resampling proces")
   ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,              string(""), MAX_LAYERS, "chroma shift in the horizontal direction used in resampling proces")
   ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,              string(""), MAX_LAYERS, "chroma shift in the vertical   direction used in resampling proces")
-#endif
 #if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileRoot,           string(""), MAX_LAYERS, "Colour Remapping Information SEI parameters file name for layer %d")
 #endif
@@ -2095,9 +2084,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
     if(m_acLayerCfg[layer].m_numRefLayerLocationOffsets)
     {
-#if O0098_SCALED_REF_LAYER_ID
       assert( strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""));
-#endif
+
       Bool srloFlag =
         strcmp(cfg_scaledRefLayerLeftOffset   [layer].c_str(), "") ||
         strcmp(cfg_scaledRefLayerRightOffset  [layer].c_str(), "") ||
@@ -2120,7 +2108,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     Int *tempArray = NULL;   // Contain the value 
 
-#if O0098_SCALED_REF_LAYER_ID
     // ID //
     if(strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""))
     {
@@ -2134,7 +2121,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         delete [] tempArray; tempArray = NULL;
       }
     }
-#endif
 
     // Presense Flag //
     if(strcmp(cfg_scaledRefLayerOffsetPresentFlag[layer].c_str(),  ""))

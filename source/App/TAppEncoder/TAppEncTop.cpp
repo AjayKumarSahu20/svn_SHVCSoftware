@@ -765,9 +765,7 @@ Void TAppEncTop::xInitLibCfg()
       m_acTEncTop[layer].setNumRefLayerLocationOffsets          ( m_acLayerCfg[layer].m_numRefLayerLocationOffsets );
       for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
       {
-#if O0098_SCALED_REF_LAYER_ID
         m_acTEncTop[layer].setRefLocationOffsetLayerId          (i, m_acLayerCfg[layer].m_refLocationOffsetLayerId[i]);
-#endif
         m_acTEncTop[layer].setScaledRefLayerOffsetPresentFlag   ( i, m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] );
         m_acTEncTop[layer].getScaledRefLayerWindow(i).setWindow ( subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i], subWidthC  * m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i],
                                                                   subHeightC * m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i],  subHeightC * m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i]);

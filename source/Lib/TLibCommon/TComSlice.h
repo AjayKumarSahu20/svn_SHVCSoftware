@@ -1860,9 +1860,7 @@ private:
   Bool     m_pocResetInfoPresentFlag;
 #endif
   UInt     m_numRefLayerLocationOffsets;
-#if O0098_SCALED_REF_LAYER_ID
   UInt     m_refLocationOffsetLayerId[MAX_LAYERS];
-#endif
   Window   m_scaledRefLayerWindow[MAX_LAYERS];
   Window   m_refLayerWindow[MAX_LAYERS];
   Bool     m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
@@ -2023,11 +2021,11 @@ public:
 #endif
   UInt     getNumRefLayerLocationOffsets()       { return m_numRefLayerLocationOffsets; }
   Void     setNumRefLayerLocationOffsets(Int x)  { m_numRefLayerLocationOffsets = x;    }
-#if O0098_SCALED_REF_LAYER_ID
+
   UInt     getRefLocationOffsetLayerId(Int x)          { return m_refLocationOffsetLayerId[x]; }
   Void     setRefLocationOffsetLayerId(Int x, UInt id) { m_refLocationOffsetLayerId[x] = id;   }
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
-#endif
+
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
   Window&  getRefLayerWindowForLayer( Int layerId );
   Window&  getRefLayerWindow( Int x )   { return m_refLayerWindow[x]; }
