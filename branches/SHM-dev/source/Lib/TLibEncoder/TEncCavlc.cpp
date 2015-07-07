@@ -2510,19 +2510,16 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {
   Int i,j;
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   WRITE_FLAG(vps->getCrossLayerPictureTypeAlignFlag(), "cross_layer_pic_type_aligned_flag");
   if (!vps->getCrossLayerPictureTypeAlignFlag())
   {
-#endif 
     WRITE_FLAG(vps->getCrossLayerIrapAlignFlag(), "cross_layer_irap_aligned_flag");
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
   else
   {
     vps->setCrossLayerIrapAlignFlag(vps->getVpsVuiPresentFlag()); // When not present, the value of cross_layer_irap_aligned_flag is inferred to be equal to vps_vui_present_flag
   }
-#endif
+
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   if(vps->getCrossLayerIrapAlignFlag())
   {

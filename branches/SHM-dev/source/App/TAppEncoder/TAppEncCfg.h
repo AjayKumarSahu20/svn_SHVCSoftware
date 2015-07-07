@@ -489,9 +489,7 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool      m_crossLayerPictureTypeAlignFlag;
-#endif
   Bool      m_crossLayerIrapAlignFlag;
 #if Q0096_OVERLAY_SEI
   Bool                                m_overlaySEIEnabled;

@@ -1166,9 +1166,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                            false, "max_tid_ref_present_flag (0: not present, 1: present) " )
   ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  7, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
-#endif
   ("CrossLayerIrapAlignFlag",                        m_crossLayerIrapAlignFlag,                          true, "align IRAP across layers" )  
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   ("CrossLayerAlignedIdrOnlyFlag",                   m_crossLayerAlignedIdrOnlyFlag,                     true, "only idr for IRAP across layers" )  
@@ -4508,9 +4506,7 @@ Void TAppEncCfg::xPrintParameter()
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   printf("Skip picture at ARC switch        : %d\n", m_skipPictureAtArcSwitch );
 #endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   printf("Align picture type                : %d\n", m_crossLayerPictureTypeAlignFlag );
-#endif
   printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   printf("IDR only for IRAP                 : %d\n", m_crossLayerAlignedIdrOnlyFlag );
