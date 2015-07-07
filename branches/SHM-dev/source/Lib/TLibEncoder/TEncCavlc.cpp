@@ -2119,13 +2119,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
    WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
-#if !VPS_EXTN_UEV_CODING
-  WRITE_CODE( vps->getNumLayerSets() - 1   , 10, "vps_number_layer_sets_minus1" );     
-  WRITE_CODE( vps->getNumProfileTierLevel() - 1,  6, "vps_num_profile_tier_level_minus1"); 
-#else
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
+
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
-#endif
+
 #if LIST_OF_PTL
 #if MULTIPLE_PTL_SUPPORT
   //Do something here to make sure the loop is correct to consider base layer internal stuff
@@ -2149,14 +2146,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #endif
 
-#if !VPS_EXTN_UEV_CODING
-  Int numOutputLayerSets = vps->getNumOutputLayerSets() ;
-  WRITE_FLAG(  (numOutputLayerSets > vps->getNumLayerSets()), "more_output_layer_sets_than_default_flag" ); 
-  if(numOutputLayerSets > vps->getNumLayerSets())
-  {
-    WRITE_CODE( numOutputLayerSets - vps->getNumLayerSets(), 10, "num_add_output_layer_sets" );
-  }
-#else
   Int numOutputLayerSets = vps->getNumOutputLayerSets();
   Int numAddOutputLayerSets = numOutputLayerSets - (Int)vps->getNumLayerSets();
 
@@ -2171,7 +2160,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 #else
   WRITE_UVLC( numOutputLayerSets - vps->getNumLayerSets(), "num_add_output_layer_sets" );
-#endif
 #endif
 
 #if !Q0165_NUM_ADD_OUTPUT_LAYER_SETS
