@@ -115,10 +115,6 @@
 
 #define P0297_VPS_POC_LSB_ALIGNED_FLAG   1      ///< JCTVC-P0297: vps_poc_lsb_aligned_flag for cross-layer POC anchor picture derivation
 
-#define VPS_EXTN_MASK_AND_DIM_INFO       1      ///< Include avc_base_layer_flag, splitting_flag, scalability mask and dimension related info
-#if VPS_EXTN_MASK_AND_DIM_INFO
-#define MAX_VPS_NUM_SCALABILITY_TYPES    16
-#endif
 #define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
 #define VPS_EXTN_PROFILE_INFO            1      ///< Include profile information for layer sets in VPS extension
 
@@ -131,8 +127,6 @@
 #define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
 #endif 
 #define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
-
-#define DERIVE_LAYER_ID_LIST_VARIABLES   1      ///< Derived variables based on the variables in VPS - for use in syntax table parsing
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 
@@ -225,6 +219,7 @@ enum AuxType
 /// constants
 #define MAX_NUM_ADD_LAYER_SETS           1023
 #define MAX_SEIS_IN_BSP_NESTING          64
+#define MAX_VPS_NUM_SCALABILITY_TYPES    16
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information

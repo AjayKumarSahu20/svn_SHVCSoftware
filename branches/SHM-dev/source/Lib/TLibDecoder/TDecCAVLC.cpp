@@ -1070,9 +1070,11 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       READ_FLAG( uiCode, "layer_id_included_flag[opsIdx][i]" );   pcVPS->setLayerIdIncludedFlag( uiCode == 1 ? true : false, opsIdx, i );
     }
   }
-#if DERIVE_LAYER_ID_LIST_VARIABLES
+
+#if SVC_EXTENSION
   pcVPS->deriveLayerIdListVariables();
 #endif
+
   TimingInfo *timingInfo = pcVPS->getTimingInfo();
   READ_FLAG(       uiCode, "vps_timing_info_present_flag");         timingInfo->setTimingInfoPresentFlag      (uiCode ? true : false);
   if(timingInfo->getTimingInfoPresentFlag())
@@ -2683,7 +2685,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
   }
 #endif
-#if VPS_EXTN_MASK_AND_DIM_INFO
+
   UInt numScalabilityTypes = 0, i = 0, j = 0;
 
   READ_FLAG( uiCode, "splitting_flag" ); vps->setSplittingFlag(uiCode ? true : false);
@@ -2740,7 +2742,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
   }
-#endif
+
 #if VIEW_ID_RELATED_SIGNALING
 #if O0109_VIEW_ID_LEN
   READ_CODE( 4, uiCode, "view_id_len" ); vps->setViewIdLen( uiCode );

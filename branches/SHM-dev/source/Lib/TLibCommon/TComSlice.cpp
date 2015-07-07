@@ -1988,18 +1988,17 @@ TComVPS::TComVPS()
     m_uiMaxLatencyIncrease[i] = 0;
   }
 
-#if VPS_EXTN_MASK_AND_DIM_INFO
   m_nonHEVCBaseLayerFlag = false;
   m_splittingFlag = false;
+  m_nuhLayerIdPresentFlag = false;
   ::memset(m_scalabilityMask, 0, sizeof(m_scalabilityMask));
   ::memset(m_dimensionIdLen, 0, sizeof(m_dimensionIdLen));
-  m_nuhLayerIdPresentFlag = false;
   ::memset(m_layerIdInNuh, 0, sizeof(m_layerIdInNuh));
   ::memset(m_dimensionId, 0, sizeof(m_dimensionId));
 
   m_numScalabilityTypes = 0;
   ::memset(m_layerIdxInVps, 0, sizeof(m_layerIdxInVps));
-#endif
+
 #if VPS_EXTN_PROFILE_INFO
   ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
 #endif
@@ -3129,7 +3128,6 @@ Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int&
   }
 }
 
-#if DERIVE_LAYER_ID_LIST_VARIABLES
 Void TComVPS::deriveLayerIdListVariables()
 {
   // For layer 0
@@ -3150,7 +3148,7 @@ Void TComVPS::deriveLayerIdListVariables()
     m_numLayerInIdList.push_back((Int)m_layerSetLayerIdList[i].size());
   }
 }
-#endif
+
 #if VPS_DPB_SIZE_TABLE
 Void TComVPS::deriveNumberOfSubDpbs()
 {

@@ -1344,7 +1344,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
-#if VPS_EXTN_MASK_AND_DIM_INFO
+
 #if AVC_BASE
   vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
   if ( m_nonHEVCBaseLayerFlag )
@@ -1354,7 +1354,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #else
   vps->setAvcBaseLayerFlag(false);
 #endif
+
   vps->setSplittingFlag(false);
+
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
   {
     vps->setScalabilityMask(i, false);
@@ -1402,7 +1404,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setDimensionId(i, auxId, m_acLayerCfg[i].getAuxId());
     }
   }
-#endif
 #endif
 
   vps->setMaxTSLayersPresentFlag(true);
@@ -1535,9 +1536,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
   // The Layer ID List variables should be derived here.
-#if DERIVE_LAYER_ID_LIST_VARIABLES
   vps->deriveLayerIdListVariables();
-#endif
 #if Q0078_ADD_LAYER_SETS
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();

@@ -1993,7 +1993,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
   }
 #endif
-#if VPS_EXTN_MASK_AND_DIM_INFO
+
   UInt i = 0, j = 0;
 
   WRITE_FLAG( vps->getSplittingFlag(),                 "splitting_flag" );
@@ -2036,7 +2036,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
-#endif
+
 #if VIEW_ID_RELATED_SIGNALING
   // if ( pcVPS->getNumViews() > 1 )  
   //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val. 

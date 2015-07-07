@@ -595,14 +595,12 @@ private:
 #if MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTLList[MAX_NUM_LAYER_IDS + 1];
 #endif
-#if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
   std::vector<Int>                    m_numLayerInIdList;
 #else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
-#endif
 #endif
   UInt        m_maxLayerId;
   UInt        m_numLayerSets;
@@ -616,7 +614,6 @@ private:
   // ------------------------------------------
   // Variables related to VPS extensions
   // ------------------------------------------
-#if VPS_EXTN_MASK_AND_DIM_INFO
   Bool       m_nonHEVCBaseLayerFlag; 
   Bool       m_splittingFlag;
   Bool       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
@@ -628,7 +625,7 @@ private:
   // Below are derived variables
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
-#endif
+
 #if Q0078_ADD_LAYER_SETS
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
 #else
@@ -900,15 +897,13 @@ public:
   TComPTL* getPTL() { return &m_pcPTLList[0]; }
   TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
 #endif
-#if DERIVE_LAYER_ID_LIST_VARIABLES
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
 
-  Int     getNumLayersInIdList(Int set)                          { return m_numLayerInIdList[set]; }
-  Void    setNumLayersInIdList(Int set, Int x)                   { m_numLayerInIdList[set] = x;    }
+  Int     getNumLayersInIdList(Int set)                         { return m_numLayerInIdList[set]; }
+  Void    setNumLayersInIdList(Int set, Int x)                  { m_numLayerInIdList[set] = x;    }
 
   Void    deriveLayerIdListVariables();
-#endif
 #if VPS_DPB_SIZE_TABLE
 Void      deriveNumberOfSubDpbs();
 #endif
@@ -945,7 +940,7 @@ Void      deriveNumberOfSubDpbs();
   Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;      }
   UInt    getNumLayerSets()                                     { return m_numLayerSets; }
   Void    setNumLayerSets(UInt v)                               { m_numLayerSets = v;    }
-#if VPS_EXTN_MASK_AND_DIM_INFO
+
   Bool   getNonHEVCBaseLayerFlag()                              { return m_nonHEVCBaseLayerFlag;   }
   Void   setNonHEVCBaseLayerFlag(Bool x)                        { m_nonHEVCBaseLayerFlag = x;      }
 
@@ -972,7 +967,7 @@ Void      deriveNumberOfSubDpbs();
 
   UInt   getLayerIdxInVps(Int layerId)                          { return m_layerIdxInVps[layerId];     }
   Void   setLayerIdxInVps(Int layerId, UInt layerIdx)           { m_layerIdxInVps[layerId] = layerIdx; }
-#endif
+
   UInt   getMaxSLayersInLayerSetMinus1(Int ls)                  { return m_maxSLInLayerSetMinus1[ls]; }
   Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)           { m_maxSLInLayerSetMinus1[ls] = x;    }
   Bool   getIlpSshSignalingEnabledFlag()                        { return m_ilpSshSignalingEnabledFlag;}
