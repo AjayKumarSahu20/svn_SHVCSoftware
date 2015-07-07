@@ -68,9 +68,6 @@
     <ClCompile Include="..\..\source\Lib\TLibEncoder\WeightPredAnalysis.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\Lib\TLibEncoder\AnnexBwrite.h">
@@ -137,9 +134,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibEncoder\WeightPredAnalysis.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
