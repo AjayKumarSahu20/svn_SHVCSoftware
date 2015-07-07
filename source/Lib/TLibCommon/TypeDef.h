@@ -168,8 +168,6 @@
 #define P0079_DERIVE_NUMACTIVE_REF_PICS  1      ///< JCTVC-P0079 Modification of derivation of variable NumActiveRefLayerPics
 #define Q0060_MAX_TID_REF_EQUAL_TO_ZERO  1      ///< JCTVC-Q0060 handling the case max_tid_il_ref_pics_plus1 is equal to 0.
 
-#define O0223_PICTURE_TYPES_ALIGN_FLAG   1      ///< a flag to indicatate whether picture types are aligned across layers.
-
 #define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val

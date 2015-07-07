@@ -3659,21 +3659,18 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
   UInt i,j;
   UInt uiCode;
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   READ_FLAG(uiCode, "cross_layer_pic_type_aligned_flag" );
   vps->setCrossLayerPictureTypeAlignFlag(uiCode);
   if (!uiCode) 
   {
-#endif
     READ_FLAG(uiCode, "cross_layer_irap_aligned_flag" );
     vps->setCrossLayerIrapAlignFlag(uiCode);
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   }
   else
   {
     vps->setCrossLayerIrapAlignFlag(true);
   }
-#endif
+
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   if( uiCode )
   {

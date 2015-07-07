@@ -696,9 +696,7 @@ private:
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_IDX_PLUS1];
 #endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool       m_crossLayerPictureTypeAlignFlag;
-#endif
   Bool       m_crossLayerIrapAlignFlag;
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool       m_crossLayerAlignedIdrOnlyFlag;
@@ -848,6 +846,7 @@ private:
   std::vector<Int>               m_numNecessaryLayers;
 #endif
 #endif //SVC_EXTENSION
+
 public:
   TComVPS();
   virtual ~TComVPS();
@@ -1116,10 +1115,8 @@ Void      deriveNumberOfSubDpbs();
   Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag; }
   Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x; }
 #endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;                      }
   Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;                         }
-#endif 
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool   getCrossLayerAlignedIdrOnlyFlag()                                    { return m_crossLayerAlignedIdrOnlyFlag;                      }
   Void   setCrossLayerAlignedIdrOnlyFlag(Bool x)                              { m_crossLayerAlignedIdrOnlyFlag = x;                         }

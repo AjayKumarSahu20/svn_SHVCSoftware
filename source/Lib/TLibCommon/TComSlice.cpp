@@ -2049,9 +2049,7 @@ TComVPS::TComVPS()
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
 #endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   m_crossLayerPictureTypeAlignFlag = true;
-#endif 
   m_crossLayerIrapAlignFlag = true;
 #if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   m_crossLayerAlignedIdrOnlyFlag = false;
