@@ -156,7 +156,6 @@
 #if O0092_0094_DEPENDENCY_CONSTRAINT
 #define MAX_REF_LAYERS                   7
 #endif
-#define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
 
 #define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
 #if Q0078_ADD_LAYER_SETS

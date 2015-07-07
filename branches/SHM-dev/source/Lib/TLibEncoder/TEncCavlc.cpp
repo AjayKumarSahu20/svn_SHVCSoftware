@@ -2197,22 +2197,21 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
 
     NumOutputLayersInOutputLayerSet[i] = 0;
-    for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+
+    for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
     {
       NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);
-      if (vps->getOutputLayerFlag(i, j))
+      if( vps->getOutputLayerFlag(i, j) )
       {
         OlsHighestOutputLayerId[i] = vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j);
       }
     }
-    if (NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0)
+    if( NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0 )
     {
       WRITE_FLAG(vps->getAltOuputLayerFlag(i), "alt_output_layer_flag[i]");
     }
 
-#if Q0165_OUTPUT_LAYER_SET
-    assert( NumOutputLayersInOutputLayerSet[i]>0 );
-#endif
+    assert( NumOutputLayersInOutputLayerSet[i] > 0 );
   }
 
 #if REPN_FORMAT_IN_VPS
