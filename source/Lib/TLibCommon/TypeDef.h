@@ -80,10 +80,6 @@
 #define FIX_ALIGN_BUMPING                1
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
-#define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
-
-#define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
-
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 #define Q0182_MULTI_LAYER_HRD_UPDATE     1      ///< JCTVC-Q0182: On bitstream partition buffering
 
@@ -179,7 +175,6 @@
 #define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
-#define ALT_OPT_LAYER_FLAG               1      ///< JCTVC-R0154: proposal1 - alt_output_layer_flag[i] inference
 #define DEF_OPT_LAYER_IDC                1      ///< JCTVC-R0154: proposal2 - default_output_layer_idc and output_layer_flag[i][j]
 #define OLS_IDX_CHK                      1      ///< JCTVC-R0155: Proposal 2 valid range for output_layer_set_idx_to_vps[i]
 #define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
