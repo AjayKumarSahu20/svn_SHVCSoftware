@@ -789,9 +789,7 @@ private:
 #endif
 #endif
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
-#if P0307_VPS_NON_VUI_EXTENSION
   Int        m_vpsNonVuiExtLength;
-#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool       m_vpsPocLsbAlignedFlag;
 #endif
@@ -1234,11 +1232,8 @@ Void      deriveNumberOfSubDpbs();
   Void   setVpsVuiPresentFlag(Bool x)                  { m_vpsVuiPresentFlag = x;    }
   Bool   getVpsExtensionFlag()                         { return m_vpsExtensionFlag;  }
   Void   setVpsExtensionFlag(Bool x)                   { m_vpsExtensionFlag = x;     }
-
-#if P0307_VPS_NON_VUI_EXTENSION
-  Int    getVpsNonVuiExtLength()         { return m_vpsNonVuiExtLength; }
-  Void   setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
-#endif
+  Int    getVpsNonVuiExtLength()                       { return m_vpsNonVuiExtLength; }
+  Void   setVpsNonVuiExtLength(Int x)                  { m_vpsNonVuiExtLength = x; }
 #if O0164_MULTI_LAYER_HRD
   Void   setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
 #endif

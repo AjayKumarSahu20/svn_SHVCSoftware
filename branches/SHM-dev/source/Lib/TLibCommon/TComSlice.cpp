@@ -1974,9 +1974,7 @@ TComVPS::TComVPS()
 , m_viewIdLenMinus1           (0)
 #endif
 #endif
-#if P0307_VPS_NON_VUI_EXTENSION
 , m_vpsNonVuiExtLength (0)
-#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
 , m_vpsPocLsbAlignedFlag(false)
 #endif
