@@ -1691,9 +1691,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 #endif
 #endif
-#if SUB_LAYERS_IN_LAYER_SET
+
   vps->calculateMaxSLInLayerSets();
-#endif
+
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {

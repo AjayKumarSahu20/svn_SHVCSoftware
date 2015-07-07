@@ -60,7 +60,6 @@
 #define PER_LAYER_PTL                    1      ///< Signal profile-tier-level information for each layer.
 #endif
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
-#define SUB_LAYERS_IN_LAYER_SET          1      ///< Move calculation of MaxSubLayerInLayerSets to a separate function
 #define VPS_VUI_BSP_HRD_PARAMS           1      ///< JCTVC-R0231: Define the VPS VUI BSP hrd_params() as a separate function, and apply changes adopted.
 #define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 

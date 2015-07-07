@@ -3522,35 +3522,8 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
 Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 {
   UInt uiCode;
-#if SUB_LAYERS_IN_LAYER_SET
-  vps->calculateMaxSLInLayerSets();
-#else
-#if DPB_PARAMS_MAXTLAYERS
-#if BITRATE_PICRATE_SIGNALLING
-  Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumLayerSets()];
-  for(Int i = 0; i < vps->getNumLayerSets(); i++)
-#else
-  Int * MaxSubLayersInLayerSetMinus1 = new Int[vps->getNumOutputLayerSets()];
-  for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
-#endif
-  {
-    UInt maxSLMinus1 = 0;
-    Int optLsIdx = vps->getOutputLayerSetIdx( i );
-#if BITRATE_PICRATE_SIGNALLING
-    optLsIdx = i;
-#endif
-    for(Int k = 0; k < vps->getNumLayersInIdList(optLsIdx); k++ ) {
-      Int  lId = vps->getLayerSetLayerIdList(optLsIdx, k);
-      maxSLMinus1 = max(maxSLMinus1, vps->getMaxTSLayersMinus1(vps->getLayerIdxInVps(lId)));
-    }
-    MaxSubLayersInLayerSetMinus1[ i ] = maxSLMinus1;
-#if BITRATE_PICRATE_SIGNALLING
-    vps->setMaxSLayersInLayerSetMinus1(i,MaxSubLayersInLayerSetMinus1[ i ]);
-#endif
-  }
-#endif
-#endif
 
+  vps->calculateMaxSLInLayerSets();
   vps->deriveNumberOfSubDpbs();
 
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
@@ -3558,19 +3531,8 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
 
     READ_FLAG( uiCode, "sub_layer_flag_info_present_flag[i]");  vps->setSubLayerFlagInfoPresentFlag( i, uiCode ? true : false );
-#if SUB_LAYERS_IN_LAYER_SET
+
     for(Int j = 0; j <= vps->getMaxSLayersInLayerSetMinus1( layerSetIdxForOutputLayerSet ); j++)
-#else
-#if DPB_PARAMS_MAXTLAYERS
-#if BITRATE_PICRATE_SIGNALLING
-    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ vps->getOutputLayerSetIdx( i ) ]; j++)
-#else
-    for(Int j = 0; j <= MaxSubLayersInLayerSetMinus1[ i ]; j++)
-#endif
-#else
-    for(Int j = 0; j <= vps->getMaxTLayers(); j++)
-#endif
-#endif
     {
       if( j > 0 && vps->getSubLayerFlagInfoPresentFlag(i) )
       {
@@ -3608,15 +3570,6 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
       vps->setSubLayerDpbInfoPresentFlag( i, j, false );
     }
   }
-
-#if !SUB_LAYERS_IN_LAYER_SET
-#if BITRATE_PICRATE_SIGNALLING
-  if( MaxSubLayersInLayerSetMinus1 )
-  {
-    delete [] MaxSubLayersInLayerSetMinus1;
-  }
-#endif
-#endif
 
   // Infer values when not signalled
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
