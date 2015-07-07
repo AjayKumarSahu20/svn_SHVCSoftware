@@ -480,11 +480,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
 #if SVC_EXTENSION
   Int numInterLayerRPSPics = 0;
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
-#else
-  if( m_layerId > 0 )
-#endif
   {
     for( i=0; i < m_pcVPS->getNumDirectRefLayers( m_layerId ); i++ )
     {

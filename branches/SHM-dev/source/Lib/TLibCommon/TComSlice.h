@@ -705,9 +705,7 @@ private:
   Bool       m_maxTSLayersPresentFlag;
   UInt       m_maxTSLayerMinus1[MAX_LAYERS];
 #endif
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool       m_singleLayerForNonIrapFlag;
-#endif
   Bool       m_higherLayerIrapSkipFlag;
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   Bool       m_tilesNotInUseFlag;
@@ -1127,10 +1125,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getMaxTSLayersMinus1(Int layerIdx)                            { return m_maxTSLayerMinus1[layerIdx];}
   Void   setMaxTSLayersMinus1(Int layerIdx, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;}
 #endif
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
   Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
-#endif
   Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
   Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG  

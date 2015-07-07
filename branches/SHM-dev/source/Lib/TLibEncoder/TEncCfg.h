@@ -369,9 +369,7 @@ protected:
   UInt      m_layerId;   
   UInt      m_numLayer;
   Int       m_elRapSliceBEnabled;
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;
-#endif
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   int       m_layerSwitchOffBegin;
   int       m_layerSwitchOffEnd;
@@ -1006,17 +1004,15 @@ public:
   Char* getCRISEIFileRoot()                                  { return m_colourRemapSEIFileRoot; }
 #endif
 #if SVC_EXTENSION
-  UInt      getLayerId            () { return m_layerId;              }
-  Void      setLayerId            (UInt layer) { m_layerId = layer; }
-  UInt      getNumLayer           () { return m_numLayer;             }  
-  Void      setNumLayer           (UInt uiNum)   { m_numLayer = uiNum;  }
+  UInt      getLayerId()                                     { return m_layerId;    }
+  Void      setLayerId( UInt layer )                         { m_layerId = layer;   }
+  UInt      getNumLayer()                                    { return m_numLayer;   }  
+  Void      setNumLayer( UInt uiNum )                        { m_numLayer = uiNum;  }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-  Void      setElRapSliceTypeB(Int bEnabled) {m_elRapSliceBEnabled = bEnabled;}
-  Int       getElRapSliceTypeB()              {return m_elRapSliceBEnabled;}
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  Void      setAdaptiveResolutionChange(Int x) { m_adaptiveResolutionChange = x;    }
-  Int       getAdaptiveResolutionChange()      { return m_adaptiveResolutionChange; }
-#endif
+  Void      setElRapSliceTypeB(Int bEnabled)                 { m_elRapSliceBEnabled = bEnabled;   }
+  Int       getElRapSliceTypeB()                             { return m_elRapSliceBEnabled;       }
+  Void      setAdaptiveResolutionChange(Int x)               { m_adaptiveResolutionChange = x;    }
+  Int       getAdaptiveResolutionChange()                    { return m_adaptiveResolutionChange; }
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Void      setLayerSwitchOffBegin(Int x)    { m_layerSwitchOffBegin = x;    }
   Int       getLayerSwitchOffBegin()         { return m_layerSwitchOffBegin; }

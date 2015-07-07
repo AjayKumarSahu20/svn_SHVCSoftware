@@ -786,9 +786,7 @@ Void TAppEncTop::xInitLibCfg()
       }
     }
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
     m_acTEncTop[layer].setAdaptiveResolutionChange               ( m_adaptiveResolutionChange );
-#endif
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
     m_acTEncTop[layer].setLayerSwitchOffBegin                    (m_acLayerCfg[layer].m_layerSwitchOffBegin);
     m_acTEncTop[layer].setLayerSwitchOffEnd                      (m_acLayerCfg[layer].m_layerSwitchOffEnd);
@@ -1768,9 +1766,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         }
       }
     }
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
-#endif 
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 
   for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
@@ -2094,8 +2090,7 @@ Void TAppEncTop::encode()
     }
 #endif
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    if (m_adaptiveResolutionChange)
+    if( m_adaptiveResolutionChange )
     {
       for(UInt layer = 0; layer < m_numLayers; layer++)
       {
@@ -2107,7 +2102,6 @@ Void TAppEncTop::encode()
         }
       }
     }
-#endif
 
     // loop through frames in one GOP
     for ( UInt iPicIdInGOP=0; iPicIdInGOP < (bFirstFrame? 1:m_iGOPSize); iPicIdInGOP++ )
@@ -2508,11 +2502,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       TComPicYuv*  pcPicYuvRecTop  = *(iterPicYuvRec++);
       TComPicYuv*  pcPicYuvRecBottom  = *(iterPicYuvRec++);
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-      if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed())
-#else
-      if (!m_acLayerCfg[layer].getReconFile().empty())
-#endif
+      if( !m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed() )
       {
 #if REPN_FORMAT_IN_VPS
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal, 
@@ -2537,11 +2527,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
     for ( i = 0; i < iNumEncoded; i++ )
     {
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-      if (!m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed())
-#else
-      if (!m_acLayerCfg[layer].getReconFile().empty())
-#endif
+      if( !m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed() )
       {
 #if REPN_FORMAT_IN_VPS
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal,
@@ -2563,11 +2549,7 @@ Void TAppEncTop::xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, cons
     Int i;
     list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    for ( i = 0; i < iNumEncoded/2 && iterBitstream != accessUnits.end(); i++ )
-#else
-    for ( i = 0; i < iNumEncoded/2; i++ )
-#endif
+    for( i = 0; i < iNumEncoded/2 && iterBitstream != accessUnits.end(); i++ )
     {
       const AccessUnit& auTop = *(iterBitstream++);
       const vector<UInt>& statsTop = writeAnnexB(bitstreamFile, auTop);
@@ -2584,11 +2566,7 @@ Void TAppEncTop::xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, cons
 
     list<AccessUnit>::const_iterator iterBitstream = accessUnits.begin();
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-    for ( i = 0; i < iNumEncoded && iterBitstream != accessUnits.end(); i++ )
-#else
-    for ( i = 0; i < iNumEncoded; i++ )
-#endif
+    for( i = 0; i < iNumEncoded && iterBitstream != accessUnits.end(); i++ )
     {
       const AccessUnit& au = *(iterBitstream++);
       const vector<UInt>& stats = writeAnnexB(bitstreamFile, au);

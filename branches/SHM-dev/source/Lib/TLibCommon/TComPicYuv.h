@@ -84,10 +84,8 @@ private:
 
 #if SVC_EXTENSION
   Window  m_conformanceWindow;
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Bool    m_isReconstructed;
 #endif
-#endif //SVC_EXTENSION
  
 public:
                TComPicYuv         ();
@@ -105,7 +103,7 @@ public:
                                    const UInt uiMaxCUWidth,
                                    const UInt uiMaxCUHeight,
                                    const UInt uiMaxCUDepth );
-#endif //SVC_EXTENSION
+#endif
   
   Void          destroy           ();
 
@@ -167,17 +165,16 @@ public:
   Void          setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
   
 #if SVC_EXTENSION
-  Void          setHeight   ( Int iPicHeight )     { m_iPicHeight = iPicHeight; }
+  Void          setHeight   ( Int iPicHeight )                   { m_iPicHeight = iPicHeight;               }
   Window&       getConformanceWindow()                           { return  m_conformanceWindow;             }
   Void          setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  Void          setReconstructed(Bool x) { m_isReconstructed = x;    }
-  Bool          isReconstructed()        { return m_isReconstructed; }
-#endif
+  Void          setReconstructed(Bool x)                         { m_isReconstructed = x;                   }
+  Bool          isReconstructed()                                { return m_isReconstructed;                }
 #if AUXILIARY_PICTURES  
   Void          convertToMonochrome();
 #endif
-#endif //SVC_EXTENSION
+#endif
+
   Void          dump( Char* pFileName, Bool bAdd, Int bitDepth );
 
 };// END CLASS DEFINITION TComPicYuv

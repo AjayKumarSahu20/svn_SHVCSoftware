@@ -1104,7 +1104,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       continue;
     }
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+#if SVC_EXTENSION
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && ((m_layerId > 0 && pocCurr < m_pcEncTop->getAdaptiveResolutionChange()) ||
                                                           (m_layerId == 0 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())) )
     {
@@ -1262,14 +1262,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     xSetNoRaslOutputFlag(pcSlice);
     xSetLayerInitializedFlag(pcSlice);
 #endif
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
     if (m_pcEncTop->getAdaptiveResolutionChange() > 0 && m_layerId > 0 && pocCurr > m_pcEncTop->getAdaptiveResolutionChange())
     {
       pcSlice->setActiveNumILRRefIdx(0);
       pcSlice->setInterLayerPredEnabledFlag(false);
       pcSlice->setMFMEnabledFlag(false);
     }
-#endif
 #endif //SVC_EXTENSION
 
     pcSlice->setLastIDR(m_iLastIDR);
@@ -3481,7 +3479,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     pcPic->getPicYuvRec()->copyToPic(pcPicYuvRecOut);
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
+#if SVC_EXTENSION
     pcPicYuvRecOut->setReconstructed(true);
 #endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
