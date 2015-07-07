@@ -1697,20 +1697,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
   for(i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
-#if CHANGE_NUMSUBDPB_IDX
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
-#endif
     Int layerSetId = vps->getOutputLayerSetIdx(i);
 
     for(Int j = 0; j < vps->getMaxTLayers(); j++)
     {
 
       Int maxNumReorderPics = -1;
-#if CHANGE_NUMSUBDPB_IDX
       for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
-#else
-      for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
-#endif
       {
         Int layerId = vps->getLayerSetLayerIdList(layerSetId, k); // k-th layer in the output layer set
         vps->setMaxVpsDecPicBufferingMinus1( i, k, j,  m_acTEncTop[vps->getLayerIdxInVps(layerId)].getMaxDecPicBuffering(j) - 1 );

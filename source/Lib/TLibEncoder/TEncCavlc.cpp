@@ -2425,11 +2425,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 #endif
     {
         UInt maxSLMinus1 = 0;
-#if CHANGE_NUMSUBDPB_IDX
         Int optLsIdx = vps->getOutputLayerSetIdx( i );
-#else
-        Int optLsIdx = i;
-#endif
 #if BITRATE_PICRATE_SIGNALLING
         optLsIdx = i;
 #endif
@@ -2448,9 +2444,8 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
     
   for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
   {
-#if CHANGE_NUMSUBDPB_IDX
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
-#endif
+
     WRITE_FLAG( vps->getSubLayerFlagInfoPresentFlag( i ), "sub_layer_flag_info_present_flag[i]");
 #if SUB_LAYERS_IN_LAYER_SET
     for(Int j = 0; j <= vps->getMaxSLayersInLayerSetMinus1( layerSetIdxForOutputLayerSet ); j++)
@@ -2472,11 +2467,7 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       }
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
-#if CHANGE_NUMSUBDPB_IDX
         for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
-#else
-        for(Int k = 0; k < vps->getNumSubDpbs(i); k++)
-#endif
         {
 #if DPB_INTERNAL_BL_SIG
         if( vps->getNecessaryLayerFlag(i, k) && (vps->getBaseLayerInternalFlag() || (vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) != 0)) )
