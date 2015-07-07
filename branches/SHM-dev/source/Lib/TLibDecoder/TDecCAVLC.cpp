@@ -2936,18 +2936,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     {
       vps->setOutputLayerSetIdx( i, i );
     }
+
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
+
 #if Q0078_ADD_LAYER_SETS
     if( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() == 2 )
 #else
     if( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() == 2 )
 #endif
     {
-#if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
-#else
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
-#endif
+      for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
       {
         READ_FLAG( uiCode, "output_layer_flag[i][j]"); vps->setOutputLayerFlag(i, j, uiCode);
       }

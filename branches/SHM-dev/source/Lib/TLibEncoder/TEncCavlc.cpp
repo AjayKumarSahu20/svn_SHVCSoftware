@@ -2176,11 +2176,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
 #endif
     {
-#if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
-#else
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
-#endif
+      for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++ )
       {
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
