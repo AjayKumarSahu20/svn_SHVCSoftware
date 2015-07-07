@@ -64,9 +64,7 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
   m_numRefLayerLocationOffsets = 0;
-#if O0098_SCALED_REF_LAYER_ID
   ::memset(m_refLocationOffsetLayerId,   0, sizeof(m_refLocationOffsetLayerId));
-#endif
   ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));

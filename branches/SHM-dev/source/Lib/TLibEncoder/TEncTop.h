@@ -122,9 +122,7 @@ private:
   Bool                    m_bMFMEnabledFlag;
 #endif
   UInt                    m_numRefLayerLocationOffsets;
-#if O0098_SCALED_REF_LAYER_ID
   UInt                    m_refLocationOffsetLayerId[MAX_LAYERS];
-#endif
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
   UInt                    m_numRefLayerOffsets;
   UInt                    m_refLayerId[MAX_LAYERS];
@@ -209,48 +207,46 @@ public:
 
   /// encode several number of pictures until end-of-sequence
 #if SVC_EXTENSION
-  Void      setLayerEnc(TEncTop** p)            { m_ppcTEncTop = p;                  }
-  TEncTop** getLayerEnc()                       { return m_ppcTEncTop;               }
-  Int       getPOCLast            ()            { return m_iPOCLast;                 }
-  Int       getNumPicRcvd         ()            { return m_iNumPicRcvd;              }
-  Void      setNumPicRcvd         ( Int num )   { m_iNumPicRcvd = num;               }
-  Void      setNumRefLayerLocationOffsets(Int x)  { m_numRefLayerLocationOffsets = x;    }
-  UInt      getNumRefLayerLocationOffsets()       { return m_numRefLayerLocationOffsets; }
-#if O0098_SCALED_REF_LAYER_ID
-  Void      setRefLocationOffsetLayerId(Int x, UInt id) { m_refLocationOffsetLayerId[x] = id;   }
-  UInt      getRefLocationOffsetLayerId(Int x)          { return m_refLocationOffsetLayerId[x]; }
+  Void      setLayerEnc(TEncTop** p)                          { m_ppcTEncTop = p;                  }
+  TEncTop** getLayerEnc()                                     { return m_ppcTEncTop;               }
+  Int       getPOCLast()                                      { return m_iPOCLast;                 }
+  Int       getNumPicRcvd()                                   { return m_iNumPicRcvd;              }
+  Void      setNumPicRcvd( Int num )                          { m_iNumPicRcvd = num;               }
+  Void      setNumRefLayerLocationOffsets(Int x)              { m_numRefLayerLocationOffsets = x;    }
+  UInt      getNumRefLayerLocationOffsets()                   { return m_numRefLayerLocationOffsets; }
+  Void      setRefLocationOffsetLayerId(Int x, UInt id)       { m_refLocationOffsetLayerId[x] = id;   }
+  UInt      getRefLocationOffsetLayerId(Int x)                { return m_refLocationOffsetLayerId[x]; }
   Window&   getScaledRefLayerWindowForLayer(Int layerId);
-#endif
-  Window&   getScaledRefLayerWindow(Int x)                 { return m_scaledRefLayerWindow[x];        }
-  Void      setNumRefLayerOffsets(Int x) { m_numRefLayerOffsets = x; }
-  UInt      getNumRefLayerOffsets() { return m_numRefLayerOffsets; }
-  Void      setRefLayerId(Int layerIdx, UInt layerId)     { m_refLayerId[layerIdx] = layerId;  }
-  UInt      getRefLayerId(Int layerIdx)                   { return m_refLayerId[layerIdx];     }
+  Window&   getScaledRefLayerWindow(Int x)                    { return m_scaledRefLayerWindow[x];  }
+  Void      setNumRefLayerOffsets(Int x)                      { m_numRefLayerOffsets = x;          }
+  UInt      getNumRefLayerOffsets()                           { return m_numRefLayerOffsets;       }
+  Void      setRefLayerId(Int layerIdx, UInt layerId)         { m_refLayerId[layerIdx] = layerId;  }
+  UInt      getRefLayerId(Int layerIdx)                       { return m_refLayerId[layerIdx];     }
   Window&   getRefLayerWindowForLayer(Int layerId);
-  Window&   getRefLayerWindow(Int x)            { return m_refLayerWindow[x]; }
-  Bool      getScaledRefLayerOffsetPresentFlag(Int x) { return m_scaledRefLayerOffsetPresentFlag[x]; }
+  Window&   getRefLayerWindow(Int x)                          { return m_refLayerWindow[x]; }
+  Bool      getScaledRefLayerOffsetPresentFlag(Int x)         { return m_scaledRefLayerOffsetPresentFlag[x]; }
   Void      setScaledRefLayerOffsetPresentFlag(Int x, Bool b) { m_scaledRefLayerOffsetPresentFlag[x] = b; }
-  Bool      getRefRegionOffsetPresentFlag(Int x) { return m_refRegionOffsetPresentFlag[x]; }
-  Void      setRefRegionOffsetPresentFlag(Int x, Bool b) { m_refRegionOffsetPresentFlag[x] = b; }
-  Int       getPhaseHorLuma(Int x) { return m_phaseHorLuma[x]; }
-  Int       getPhaseVerLuma(Int x) { return m_phaseVerLuma[x]; }
-  Int       getPhaseHorChroma(Int x) { return m_phaseHorChroma[x]; }
-  Int       getPhaseVerChroma(Int x) { return m_phaseVerChroma[x]; }
-  Void      setPhaseHorLuma(Int x, Int val) { m_phaseHorLuma[x] = val; }
-  Void      setPhaseVerLuma(Int x, Int val) { m_phaseVerLuma[x] = val; }
-  Void      setPhaseHorChroma(Int x, Int val) { m_phaseHorChroma[x] = val; }
-  Void      setPhaseVerChroma(Int x, Int val) { m_phaseVerChroma[x] = val; }
-  Bool      getResamplePhaseSetPresentFlag(Int x) { return m_resamplePhaseSetPresentFlag[x]; }
-  Void      setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
+  Bool      getRefRegionOffsetPresentFlag(Int x)              { return m_refRegionOffsetPresentFlag[x]; }
+  Void      setRefRegionOffsetPresentFlag(Int x, Bool b)      { m_refRegionOffsetPresentFlag[x] = b; }
+  Int       getPhaseHorLuma(Int x)                            { return m_phaseHorLuma[x]; }
+  Int       getPhaseVerLuma(Int x)                            { return m_phaseVerLuma[x]; }
+  Int       getPhaseHorChroma(Int x)                          { return m_phaseHorChroma[x]; }
+  Int       getPhaseVerChroma(Int x)                          { return m_phaseVerChroma[x]; }
+  Void      setPhaseHorLuma(Int x, Int val)                   { m_phaseHorLuma[x] = val; }
+  Void      setPhaseVerLuma(Int x, Int val)                   { m_phaseVerLuma[x] = val; }
+  Void      setPhaseHorChroma(Int x, Int val)                 { m_phaseHorChroma[x] = val; }
+  Void      setPhaseVerChroma(Int x, Int val)                 { m_phaseVerChroma[x] = val; }
+  Bool      getResamplePhaseSetPresentFlag(Int x)             { return m_resamplePhaseSetPresentFlag[x]; }
+  Void      setResamplePhaseSetPresentFlag(Int x, Bool b)     { m_resamplePhaseSetPresentFlag[x] = b; }
 
-  TComPic** getIlpList() { return m_cIlpPic; }
+  TComPic** getIlpList()                                      { return m_cIlpPic; }
 #if REF_IDX_MFM
-  Void      setMFMEnabledFlag       (Bool flag)   { m_bMFMEnabledFlag = flag; }
-  Bool      getMFMEnabledFlag()                   { return m_bMFMEnabledFlag; }    
+  Void      setMFMEnabledFlag(Bool flag)                      { m_bMFMEnabledFlag = flag; }
+  Bool      getMFMEnabledFlag()                               { return m_bMFMEnabledFlag; }    
 #endif
 #if O0194_WEIGHTED_PREDICTION_CGS
-  Void      setInterLayerWeightedPredFlag(Bool flag)   { m_interLayerWeightedPredFlag = flag; }
-  Bool      getInterLayerWeightedPredFlag()            { return m_interLayerWeightedPredFlag; }
+  Void      setInterLayerWeightedPredFlag(Bool flag)          { m_interLayerWeightedPredFlag = flag; }
+  Bool      getInterLayerWeightedPredFlag()                   { return m_interLayerWeightedPredFlag; }
 #endif
   Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg );
