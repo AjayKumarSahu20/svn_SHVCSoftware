@@ -790,9 +790,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setChromaFormatIDC                        ( m_acLayerCfg[layer].m_chromaFormatIDC );
 #endif
     m_acTEncTop[layer].setAltOuputLayerFlag                      ( m_altOutputLayerFlag );
-#if O0149_CROSS_LAYER_BLA_FLAG
     m_acTEncTop[layer].setCrossLayerBLAFlag                      ( m_crossLayerBLAFlag );
-#endif
 #if Q0048_CGS_3D_ASYMLUT
     m_acTEncTop[layer].setCGSFlag                                ( layer == 0 ? 0 : m_nCGSFlag );
     m_acTEncTop[layer].setCGSMaxOctantDepth                      ( m_nCGSMaxOctantDepth );

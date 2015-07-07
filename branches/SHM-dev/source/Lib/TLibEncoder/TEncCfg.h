@@ -370,13 +370,11 @@ protected:
   UInt      m_numLayer;
   Int       m_elRapSliceBEnabled;
   Int       m_adaptiveResolutionChange;
-  int       m_layerSwitchOffBegin;
-  int       m_layerSwitchOffEnd;
+  Int       m_layerSwitchOffBegin;
+  Int       m_layerSwitchOffEnd;
   Bool      m_altOutputLayerFlag;
   Int       m_skipPictureAtArcSwitch;
-#if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
-#endif
 
   Int       m_numDirectRefLayers;
   Int       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
@@ -1023,10 +1021,8 @@ public:
 #endif
   Bool      getAltOuputLayerFlag() const                     { return m_altOutputLayerFlag; }
   Void      setAltOuputLayerFlag(Bool b)                     { m_altOutputLayerFlag = b;    }
-#if O0149_CROSS_LAYER_BLA_FLAG
   Bool      getCrossLayerBLAFlag() const                     { return m_crossLayerBLAFlag; }
   Void      setCrossLayerBLAFlag(Bool b)                     { m_crossLayerBLAFlag = b;    }
-#endif
 #if FAST_INTRA_SHVC
   Bool      getUseFastIntraScalable         ()               { return m_useFastIntraScalable; }
   Void      setUseFastIntraScalable         ( Bool  b )      { m_useFastIntraScalable = b; }

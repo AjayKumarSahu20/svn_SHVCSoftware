@@ -2203,9 +2203,7 @@ private:
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_IDX_PLUS1];
   Bool        m_bDiscardableFlag;
-#if O0149_CROSS_LAYER_BLA_FLAG
   Bool        m_bCrossLayerBLAFlag;
-#endif
 #if POC_RESET_IDC_SIGNALLING
   Int         m_pocResetIdc;
   Int         m_pocResetPeriodId;
@@ -2538,10 +2536,8 @@ public:
 #endif
   Bool      getDiscardableFlag  ()                           { return m_bDiscardableFlag;    }
   Void      setDiscardableFlag  (Bool b)                     { m_bDiscardableFlag = b;       }
-#if O0149_CROSS_LAYER_BLA_FLAG
   Bool      getCrossLayerBLAFlag  ()                         { return m_bCrossLayerBLAFlag;  }
   Void      setCrossLayerBLAFlag  (Bool b)                   { m_bCrossLayerBLAFlag = b;     }
-#endif
 
 #if RPL_INIT_N0316_N0082
   Int       getNumNegativeRpsCurrTempList();

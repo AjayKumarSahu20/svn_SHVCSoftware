@@ -1194,7 +1194,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #endif
 
-#if O0149_CROSS_LAYER_BLA_FLAG
     if( m_layerId == 0 && (getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_W_RADL || getNalUnitType(pocCurr, m_iLastIDR, isField) == NAL_UNIT_CODED_SLICE_IDR_N_LP) )
     {
       pcSlice->setCrossLayerBLAFlag(m_pcEncTop->getCrossLayerBLAFlag());
@@ -1203,7 +1202,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       pcSlice->setCrossLayerBLAFlag(false);
     }
-#endif
 
     // Set the nal unit type
     pcSlice->setNalUnitType(getNalUnitType(pocCurr, m_iLastIDR, isField));
@@ -1231,18 +1229,16 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
-#if O0149_CROSS_LAYER_BLA_FLAG
-      else if ((pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP) &&
-               pcSlice->getCrossLayerBLAFlag())
+      else if( pcSlice->getCrossLayerBLAFlag() && ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP ) )
       {
         m_pcEncTop->setNoClrasOutputFlag(true);
       }
-#endif
       else
       {
         m_pcEncTop->setNoClrasOutputFlag(false);
       }
-      if (m_pcEncTop->getNoClrasOutputFlag())
+
+      if( m_pcEncTop->getNoClrasOutputFlag() )
       {
         for (UInt i = 0; i < m_pcCfg->getNumLayer(); i++)
         {
