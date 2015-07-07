@@ -186,7 +186,6 @@ public:
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
-#endif
 
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
   Int*    getSamplePredRefLayerIds()     {return m_samplePredRefLayerIds;    }
