@@ -370,10 +370,8 @@ protected:
   UInt      m_numLayer;
   Int       m_elRapSliceBEnabled;
   Int       m_adaptiveResolutionChange;
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   int       m_layerSwitchOffBegin;
   int       m_layerSwitchOffEnd;
-#endif
   Bool      m_altOutputLayerFlag;
   Int       m_skipPictureAtArcSwitch;
 #if O0149_CROSS_LAYER_BLA_FLAG
@@ -1013,27 +1011,25 @@ public:
   Int       getElRapSliceTypeB()                             { return m_elRapSliceBEnabled;       }
   Void      setAdaptiveResolutionChange(Int x)               { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()                    { return m_adaptiveResolutionChange; }
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-  Void      setLayerSwitchOffBegin(Int x)    { m_layerSwitchOffBegin = x;    }
-  Int       getLayerSwitchOffBegin()         { return m_layerSwitchOffBegin; }
-  Void      setLayerSwitchOffEnd(Int x)      { m_layerSwitchOffEnd = x;      }
-  Int       getLayerSwitchOffEnd()           { return m_layerSwitchOffEnd;   }
-#endif
-  Void      setSkipPictureAtArcSwitch(Int x) { m_skipPictureAtArcSwitch = x;    }
-  Int       getSkipPictureAtArcSwitch()      { return m_skipPictureAtArcSwitch; }
+  Void      setLayerSwitchOffBegin(Int x)                    { m_layerSwitchOffBegin = x;    }
+  Int       getLayerSwitchOffBegin()                         { return m_layerSwitchOffBegin; }
+  Void      setLayerSwitchOffEnd(Int x)                      { m_layerSwitchOffEnd = x;      }
+  Int       getLayerSwitchOffEnd()                           { return m_layerSwitchOffEnd;   }
+  Void      setSkipPictureAtArcSwitch(Int x)                 { m_skipPictureAtArcSwitch = x;    }
+  Int       getSkipPictureAtArcSwitch()                      { return m_skipPictureAtArcSwitch; }
 #if AUXILIARY_PICTURES
-  Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
-  ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
+  Void         setChromaFormatIDC(ChromaFormat x)            { m_chromaFormatIDC = x;    }
+  ChromaFormat getChromaFormatIDC()                          { return m_chromaFormatIDC; }
 #endif
-  Bool      getAltOuputLayerFlag() const { return m_altOutputLayerFlag; }
-  Void      setAltOuputLayerFlag(Bool b) { m_altOutputLayerFlag = b;    }
+  Bool      getAltOuputLayerFlag() const                     { return m_altOutputLayerFlag; }
+  Void      setAltOuputLayerFlag(Bool b)                     { m_altOutputLayerFlag = b;    }
 #if O0149_CROSS_LAYER_BLA_FLAG
-  Bool      getCrossLayerBLAFlag() const { return m_crossLayerBLAFlag; }
-  Void      setCrossLayerBLAFlag(Bool b) { m_crossLayerBLAFlag = b;    }
+  Bool      getCrossLayerBLAFlag() const                     { return m_crossLayerBLAFlag; }
+  Void      setCrossLayerBLAFlag(Bool b)                     { m_crossLayerBLAFlag = b;    }
 #endif
 #if FAST_INTRA_SHVC
-  Bool      getUseFastIntraScalable         ()      { return m_useFastIntraScalable; }
-  Void      setUseFastIntraScalable         ( Bool  b )     { m_useFastIntraScalable = b; }
+  Bool      getUseFastIntraScalable         ()               { return m_useFastIntraScalable; }
+  Void      setUseFastIntraScalable         ( Bool  b )      { m_useFastIntraScalable = b; }
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }

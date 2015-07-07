@@ -838,11 +838,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_colourRemapSEIFileRoot[MAX_LAYERS];
 #endif
   Int*    cfg_waveFrontSynchro[MAX_LAYERS];
-
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
-#endif
 
 #if MULTIPLE_PTL_SUPPORT
   Bool    tmpIntraConstraintFlag;
@@ -940,10 +937,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
-    cfg_layerSwitchOffBegin[layer] = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
-    cfg_layerSwitchOffEnd[layer]   = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
-#endif
+    cfg_layerSwitchOffBegin[layer]  = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
+    cfg_layerSwitchOffEnd[layer]    = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
 #if MULTIPLE_PTL_SUPPORT
     cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
 #endif
@@ -1685,10 +1680,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
 #endif
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
   ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
-#endif
   ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
@@ -1903,7 +1896,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+#if SVC_EXTENSION
   for (Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     if (m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd)

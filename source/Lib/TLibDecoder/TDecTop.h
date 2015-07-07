@@ -123,9 +123,7 @@ private:
 #if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Bool                    m_lastPicHasEos;
-#endif
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
   static Bool             m_bFirstSliceInSequence;
@@ -309,6 +307,7 @@ protected:
     );
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
+#if SVC_EXTENSION
 #if NO_CLRAS_OUTPUT_FLAG
   Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
   Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
@@ -323,7 +322,6 @@ protected:
 #if POC_RESET_RESTRICTIONS
   Void resetPocRestrictionCheckParameters();
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Void xCheckLayerReset();
   Void xSetNoRaslOutputFlag();
   Void xSetLayerInitializedFlag();

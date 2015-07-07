@@ -174,10 +174,8 @@ private:
 #if POC_RESET_IDC_ENCODER
   Int   m_lastPocPeriodId;
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Bool  m_noRaslOutputFlag;
   Bool  m_prevPicHasEos;
-#endif
 #endif
   
 public:
@@ -314,11 +312,9 @@ protected:
   Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
   Void free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX);
 #endif
-#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   Void xCheckLayerReset(TComSlice *slice);
   Void xSetNoRaslOutputFlag(TComSlice *slice);
   Void xSetLayerInitializedFlag(TComSlice *slice);
-#endif
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TEncGOP
 
