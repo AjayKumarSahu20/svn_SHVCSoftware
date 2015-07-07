@@ -1570,7 +1570,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
         }
         else
         {
-#if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
+#if O0225_TID_BASED_IL_RPS_DERIV
           Int refLayerId = pcSlice->getVPS()->getRefLayerId(pcSlice->getLayerId(), 0);
           Int refLayerIdx = pcSlice->getVPS()->getLayerIdxInVps(refLayerId);
 #if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
@@ -1584,7 +1584,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 #endif
             pcSlice->setActiveNumILRRefIdx(1);
             pcSlice->setInterLayerPredLayerIdc(0, 0);
-#if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
+#if O0225_TID_BASED_IL_RPS_DERIV
           }
 #endif
         }
@@ -1594,7 +1594,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     {
       pcSlice->setInterLayerPredEnabledFlag(true);
 
-#if O0225_TID_BASED_IL_RPS_DERIV && TSLAYERS_IL_RPS
+#if O0225_TID_BASED_IL_RPS_DERIV
       Int   numRefLayerPics = 0;
       Int   i = 0;
       Int   refLayerPicIdc  [MAX_VPS_LAYER_IDX_PLUS1];
