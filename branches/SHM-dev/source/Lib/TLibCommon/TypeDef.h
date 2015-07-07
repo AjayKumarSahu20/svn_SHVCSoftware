@@ -52,7 +52,6 @@
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
-#define OUTPUT_LAYER_SETS_CONFIG         1
 #define PTL_SIGNALLING                   1      ///< Overall macro for all PTL-related signalling
 #if PTL_SIGNALLING
 #define LIST_OF_PTL                      1      ///< JCTVC-R0272: Signalling the PTL for the 0-th OLS

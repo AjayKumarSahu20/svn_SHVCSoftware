@@ -1257,15 +1257,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
 #if Q0078_ADD_LAYER_SETS
-#if OUTPUT_LAYER_SETS_CONFIG
   if (m_numLayerSets > 1)
   {
     vps->setNumLayerSets(m_numLayerSets);
-#else
-  if (m_numLayerSets > 0)
-  {
-    vps->setNumLayerSets(m_numLayerSets+1);
-#endif
+
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
       for (Int layerId = 0; layerId <= vps->getMaxLayerId(); layerId++)
@@ -1275,16 +1270,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
-#if OUTPUT_LAYER_SETS_CONFIG
       for( i = 0; i < m_numLayerInIdList[setId]; i++ )
       {
         Int layerId = m_layerSetLayerIdList[setId][i];
         Int layerIdx = vps->getLayerIdxInVps(m_layerSetLayerIdList[setId][i]);
-#else
-      for( i = 0; i < m_numLayerInIdList[setId-1]; i++ )
-      {
-        Int layerId = m_layerSetLayerIdList[setId-1][i];
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
         g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
@@ -1543,8 +1532,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->deriveLayerIdListVariablesForAddLayerSets();
 #endif
 
-#if OUTPUT_LAYER_SETS_CONFIG
-
   vps->setDefaultTargetOutputLayerIdc( m_defaultTargetOutputLayerIdc ); // As per configuration file
 
   if( m_numOutputLayerSets == -1 )  // # of output layer sets not specified in the configuration file
@@ -1568,7 +1555,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setOutputLayerSetIdx(olsCtr, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
     }
   }
-#endif
+
   // Target output layer
 #if !MULTIPLE_PTL_SUPPORT
 #if LIST_OF_PTL
@@ -1584,58 +1571,41 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setOutputLayerFlag( 0, 0, 1 );
 
   // derive OutputLayerFlag[i][j] 
-#if !OUTPUT_LAYER_SETS_CONFIG
-  if( vps->getDefaultTargetOutputLayerIdc() == 1 )
-#endif
-  {
-    // default_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
-    // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
+  // default_output_layer_idc equal to 1 specifies that only the layer with the highest value of nuh_layer_id such that nuh_layer_id equal to nuhLayerIdA and 
+  // AuxId[ nuhLayerIdA ] equal to 0 in each of the output layer sets with index in the range of 1 to vps_num_layer_sets_minus1, inclusive, is an output layer of its output layer set.
 
-    // Include the highest layer as output layer for each layer set
-    for(Int lsIdx = 1; lsIdx <= vps->getVpsNumLayerSetsMinus1(); lsIdx++)
+  // Include the highest layer as output layer for each layer set
+  for(Int lsIdx = 1; lsIdx <= vps->getVpsNumLayerSetsMinus1(); lsIdx++)
+  {
+    for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
     {
-      for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
-      {
 #if !Q0078_ADD_LAYER_SETS  // the following condition is incorrect and is not needed anyway
-        if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
+      if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
 #endif
+      {
+        switch(vps->getDefaultTargetOutputLayerIdc())
         {
-#if OUTPUT_LAYER_SETS_CONFIG
-          switch(vps->getDefaultTargetOutputLayerIdc())
-          {
-            case 0: vps->setOutputLayerFlag( lsIdx, layer, 1 );
-              break;
-            case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
-              break;
-            case 2:
-            case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
-                                                                                                           : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
-              break;
-          }
-#else
-          vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
-#endif
+        case 0: vps->setOutputLayerFlag( lsIdx, layer, 1 );
+          break;
+        case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
+          break;
+        case 2:
+        case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
+                  : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
+          break;
         }
       }
     }
-#if OUTPUT_LAYER_SETS_CONFIG
-    for( Int olsIdx = vps->getVpsNumLayerSetsMinus1() + 1; olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
-    {
-      for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
-      {
-        vps->setOutputLayerFlag( olsIdx, layer, (layer != vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)) - 1) ? std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer)) != m_listOfOutputLayers[olsIdx].end()
-                                                                                                                            : m_listOfOutputLayers[olsIdx][m_listOfOutputLayers[olsIdx].size()-1] == vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer) );
-      }
-    }
-#endif
   }
-#if !OUTPUT_LAYER_SETS_CONFIG
-  else
+
+  for( Int olsIdx = vps->getVpsNumLayerSetsMinus1() + 1; olsIdx < vps->getNumOutputLayerSets(); olsIdx++ )
   {
-    // cases when default_output_layer_idc is not equal to 1
-    assert(!"default_output_layer_idc not equal to 1 is not yet supported");
+    for( UInt layer = 0; layer < vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)); layer++ )
+    {
+      vps->setOutputLayerFlag( olsIdx, layer, (layer != vps->getNumLayersInIdList(vps->getOutputLayerSetIdx(olsIdx)) - 1) ? std::find( m_listOfOutputLayers[olsIdx].begin(), m_listOfOutputLayers[olsIdx].end(), vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer)) != m_listOfOutputLayers[olsIdx].end()
+        : m_listOfOutputLayers[olsIdx][m_listOfOutputLayers[olsIdx].size()-1] == vps->getLayerSetLayerIdList(vps->getOutputLayerSetIdx(olsIdx), layer) );
+    }
   }
-#endif
 
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
