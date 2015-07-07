@@ -3011,15 +3011,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
 
     NumOutputLayersInOutputLayerSet[i] = 0;
-    for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
+
+    for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
     {
       NumOutputLayersInOutputLayerSet[i] += vps->getOutputLayerFlag(i, j);
-      if (vps->getOutputLayerFlag(i, j))
+      if( vps->getOutputLayerFlag(i, j) )
       {
         OlsHighestOutputLayerId[i] = vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j);
       }
     }
-    if (NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0)
+    if( NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0 )
     {
       READ_FLAG(uiCode, "alt_output_layer_flag[i]");
       vps->setAltOuputLayerFlag(i, uiCode ? true : false);
@@ -3031,9 +3032,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
           vps->setAltOuputLayerFlag(i, uiCode ? true : false);
     }
 #endif
-#if Q0165_OUTPUT_LAYER_SET
-    assert( NumOutputLayersInOutputLayerSet[i]>0 );
-#endif
+
+    assert( NumOutputLayersInOutputLayerSet[i] > 0 );
   }
 
   vps->checkNecessaryLayerFlagCondition();  
