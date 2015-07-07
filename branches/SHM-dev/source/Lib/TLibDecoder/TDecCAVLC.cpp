@@ -1535,13 +1535,8 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 #if P0079_DERIVE_NUMACTIVE_REF_PICS
             for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ ) 
             {
-#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-              if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
-                (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
-#else 
-              if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() &&
-                (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
-#endif 
+              if( ( pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) > pcSlice->getTLayer() || pcSlice->getTLayer()==0 ) &&
+                    pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer() )
               {          
                 pcSlice->setActiveNumILRRefIdx(1);
                 break;
@@ -1572,13 +1567,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
         {
           Int refLayerId = pcSlice->getVPS()->getRefLayerId(pcSlice->getLayerId(), 0);
           Int refLayerIdx = pcSlice->getVPS()->getLayerIdxInVps(refLayerId);
-#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-          if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(refLayerIdx, pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
-            (pcSlice->getVPS()->getMaxTSLayersMinus1(refLayerIdx) >=  pcSlice->getTLayer()) )
-#else
-          if( (pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(refLayerIdx,pcSlice->getLayerIdx()) >  pcSlice->getTLayer()) &&
-            (pcSlice->getVPS()->getMaxTSLayersMinus1(refLayerIdx) >=  pcSlice->getTLayer()) )
-#endif 
+
+          if( ( pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(refLayerIdx, pcSlice->getLayerIdx()) > pcSlice->getTLayer() || pcSlice->getTLayer()==0 ) &&
+                pcSlice->getVPS()->getMaxTSLayersMinus1(refLayerIdx) >=  pcSlice->getTLayer() )
           {
             pcSlice->setActiveNumILRRefIdx(1);
             pcSlice->setInterLayerPredLayerIdc(0, 0);
@@ -1595,13 +1586,8 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       Int   refLayerPicIdc  [MAX_VPS_LAYER_IDX_PLUS1];
       for(i = 0, numRefLayerPics = 0;  i < pcSlice->getNumILRRefIdx(); i++ ) 
       {
-#if Q0060_MAX_TID_REF_EQUAL_TO_ZERO
-        if((pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() || pcSlice->getTLayer()==0) &&
-          (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
-#else 
-        if(pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) >  pcSlice->getTLayer() &&
-          (pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer()) )
-#endif 
+        if( ( pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) > pcSlice->getTLayer() || pcSlice->getTLayer()==0 ) &&
+              pcSlice->getVPS()->getMaxTSLayersMinus1(pcSlice->getVPS()->getLayerIdxInVps(i)) >=  pcSlice->getTLayer() )
         {          
           refLayerPicIdc[ numRefLayerPics++ ] = i;
         }
