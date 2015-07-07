@@ -187,7 +187,6 @@
 #endif
 #define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
-#define RESAMPLING_CONSTRAINT_BUG_FIX    1
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 
 #define O0153_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-O0153: alt output layer flag
