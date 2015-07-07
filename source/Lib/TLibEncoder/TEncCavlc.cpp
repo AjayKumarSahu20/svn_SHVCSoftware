@@ -2479,11 +2479,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     for( i = 0; i < vps->getNumLayerSets(); i++ )
 #endif
     {
-#if BITRATE_PICRATE_SIGNALLING
       for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
-#else
-      for( j = 0; j < vps->getMaxTLayers(); j++ )
-#endif
       {
         if( vps->getBitRatePresentVpsFlag() )
         {
