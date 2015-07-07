@@ -1579,17 +1579,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setNumProfileTierLevel(vps->getNumLayerSets());
 #endif
 #endif
-#if !OUTPUT_LAYER_SETS_CONFIG // Taken care by configuration file parameter
-#if P0295_DEFAULT_OUT_LAYER_IDC
-  vps->setDefaultTargetOutputLayerIdc(1);
-#else
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-  vps->setDefaultOneTargetOutputLayerIdc(1);
-#else
-  vps->setDefaultOneTargetOutputLayerFlag(true);
-#endif
-#endif
-#endif
 #endif
 #if VPS_DPB_SIZE_TABLE
   vps->deriveNumberOfSubDpbs();

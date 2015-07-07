@@ -2912,7 +2912,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
 
-#if P0295_DEFAULT_OUT_LAYER_IDC
   vps->setNumOutputLayerSets( numOutputLayerSets );
 
   // Default output layer set
@@ -3037,98 +3036,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 
   vps->checkNecessaryLayerFlagCondition();  
-
-#else
-  if( numOutputLayerSets > 1 )
-  {
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-    READ_CODE( 2, uiCode, "default_one_target_output_layer_idc" );   vps->setDefaultOneTargetOutputLayerIdc( uiCode );
-#else
-    READ_FLAG( uiCode, "default_one_target_output_layer_flag" );   vps->setDefaultOneTargetOutputLayerFlag( uiCode ? true : false );
-#endif
-  }
-  vps->setNumOutputLayerSets( numOutputLayerSets );
-
-  for(i = 1; i < numOutputLayerSets; i++)
-  {
-    if( i > (vps->getNumLayerSets() - 1) )
-    {
-      Int numBits = 1;
-      while ((1 << numBits) < (vps->getNumLayerSets() - 1))
-      {
-        numBits++;
-      }
-      READ_CODE( numBits, uiCode, "output_layer_set_idx_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
-      Int lsIdx = vps->getOutputLayerSetIdx(i);
-#if NUM_OL_FLAGS
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) ; j++)
-#else
-      for(j = 0; j < vps->getNumLayersInIdList(lsIdx) - 1; j++)
-#endif
-      {
-        READ_FLAG( uiCode, "output_layer_flag[i][j]"); vps->setOutputLayerFlag(i, j, uiCode);
-      }
-    }
-    else
-    {
-#if VPS_DPB_SIZE_TABLE 
-      vps->setOutputLayerSetIdx( i, i );
-#endif
-      // i <= (vps->getNumLayerSets() - 1)
-      // Assign OutputLayerFlag depending on default_one_target_output_layer_flag
-      Int lsIdx = i;
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-      if( vps->getDefaultOneTargetOutputLayerIdc() == 1 )
-      {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
-        {
-#if O0135_DEFAULT_ONE_OUT_SEMANTIC
-#if DEF_OPT_LAYER_IDC
-        vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) );
-#else
-          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)) && (vps->getDimensionId(j,1)==0) );
-#endif
-#else
-          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)));
-#endif
-        }
-      }
-      else if ( vps->getDefaultOneTargetOutputLayerIdc() == 0 )
-      {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
-        {
-          vps->setOutputLayerFlag(i, j, 1);
-        }
-      }
-      else
-      {
-        // Other values of default_one_target_output_layer_idc than 0 and 1 are reserved for future use.
-      }
-#else
-      if( vps->getDefaultOneTargetOutputLayerFlag() )
-      {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
-        {
-          vps->setOutputLayerFlag(i, j, (j == (vps->getNumLayersInIdList(lsIdx)-1)));
-        }
-      }
-      else
-      {
-        for(j = 0; j < vps->getNumLayersInIdList(lsIdx); j++)
-        {
-          vps->setOutputLayerFlag(i, j, 1);
-        }
-      }
-#endif
-    }
-    Int numBits = 1;
-    while ((1 << numBits) < (vps->getNumProfileTierLevel()))
-    {
-      numBits++;
-    }
-    READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
-  }
-#endif
 
 #if REPN_FORMAT_IN_VPS
   READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
