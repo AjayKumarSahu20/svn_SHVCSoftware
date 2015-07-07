@@ -1678,9 +1678,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
   ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
-#if O0149_CROSS_LAYER_BLA_FLAG
   ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   ("CGS",     m_nCGSFlag , 0, "whether CGS is enabled")
   ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")

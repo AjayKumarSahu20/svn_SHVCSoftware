@@ -836,9 +836,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   bNewPOC = m_apcSlicePilot->getPOC() != m_prevPOC || ( m_apcSlicePilot->getFirstSliceInPic() && m_parseIdc == -1 );
 
 #if NO_CLRAS_OUTPUT_FLAG
-  if (m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag())
+  if( m_layerId == m_smallestLayerId && m_apcSlicePilot->getRapPicFlag() )
   {
-    if (m_bFirstSliceInSequence)
+    if( m_bFirstSliceInSequence )
     {
       setNoClrasOutputFlag(true);
     }
@@ -846,16 +846,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       setNoClrasOutputFlag(true);
     }
-    else if ( m_apcSlicePilot->getBlaPicFlag() )
+    else if( m_apcSlicePilot->getBlaPicFlag() )
     {
       setNoClrasOutputFlag(true);
     }
-#if O0149_CROSS_LAYER_BLA_FLAG
-    else if (m_apcSlicePilot->getIdrPicFlag() && m_apcSlicePilot->getCrossLayerBLAFlag())
+    else if( m_apcSlicePilot->getIdrPicFlag() && m_apcSlicePilot->getCrossLayerBLAFlag() )
     {
       setNoClrasOutputFlag(true);
     }
-#endif
     else
     {
       setNoClrasOutputFlag(false);

@@ -179,7 +179,6 @@
 #define DPB_PARAMS_MAXTLAYERS            1      ///< JCTVC-P0156 DPB parameters up to maximum temporal sub-layers in the layer set
 #define NUM_OL_FLAGS                     1      ///< JCTVC-P0156 output_layer_flag[ i ][ j ] is signalled for j equal to 0 to NumLayersInIdList[ lsIdx ] inclusive
 #define NO_CLRAS_OUTPUT_FLAG             1
-#define O0149_CROSS_LAYER_BLA_FLAG       1      ///< JCTVC-O0149: signal cross_layer_bla_flag in slice header
 
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag

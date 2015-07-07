@@ -126,9 +126,7 @@ TComSlice::TComSlice()
 , m_bMFMEnabledFlag               ( false )
 #endif
 , m_bDiscardableFlag              ( false )
-#if O0149_CROSS_LAYER_BLA_FLAG
 , m_bCrossLayerBLAFlag            ( false )
-#endif
 #if POC_RESET_IDC_SIGNALLING
 , m_pocResetIdc                   ( 0 )
 , m_pocResetPeriodId              ( 0 )

@@ -1048,12 +1048,12 @@ Void TEncTop::xInitPPS()
 
   m_cPPS.setPPSId( m_iPPSIdCnt );
   m_cPPS.setSPSId( m_iSPSIdCnt );
-#if O0149_CROSS_LAYER_BLA_FLAG
-  if (m_crossLayerBLAFlag)
+
+  if( m_crossLayerBLAFlag )
   {
     m_cPPS.setNumExtraSliceHeaderBits( 3 );
   }
-#endif
+
   m_cPPS.setNumRefLayerLocationOffsets(m_numRefLayerLocationOffsets);
   for(Int i = 0; i < m_cPPS.getNumRefLayerLocationOffsets(); i++)
   {
