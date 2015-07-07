@@ -1983,7 +1983,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {
   Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
   Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
-#if LIST_OF_PTL
+
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
 #if MULTIPLE_PTL_SUPPORT
@@ -1992,7 +1992,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
 #endif
   }
-#endif
 
   UInt i = 0, j = 0;
 
@@ -2123,16 +2122,12 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
 
-#if LIST_OF_PTL
 #if MULTIPLE_PTL_SUPPORT
   //Do something here to make sure the loop is correct to consider base layer internal stuff
 #else
   assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
 #endif
   for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++)
-#else
-  for(Int idx = 1; idx <= vps->getNumProfileTierLevel() - 1; idx++)
-#endif
   {
 #if MULTIPLE_PTL_SUPPORT
     vps->setProfilePresentFlag(idx, true);

@@ -1423,40 +1423,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
-    vps->setIlpSshSignalingEnabledFlag(false);
-#if VPS_EXTN_PROFILE_INFO
-#if !MULTIPLE_PTL_SUPPORT
-#if LIST_OF_PTL
-  vps->getPTLForExtnPtr()->resize(1);   // Dummy object - unused.
-  for(i = 0; i < vps->getMaxLayers(); i++)
-  {
-    // TODO: The profile tier level have to be given support to be included in the configuration files
-    if(i == 0)
-    {
-      if( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 )
-      {
-        vps->setProfilePresentFlag(1, false);
-        vps->getPTLForExtnPtr()->push_back( *(m_acTEncTop[0].getSPS()->getPTL()) );
-      }
-    }
-    else  // i > 0
-    {
-      vps->setProfilePresentFlag(i, true);
-      // Note - may need to be changed for other layer structures.
-      vps->getPTLForExtnPtr()->push_back( *(m_acTEncTop[0].getSPS()->getPTL()) );
-    }
-  }
-#else
-  vps->getPTLForExtnPtr()->resize(vps->getNumLayerSets());
-  for(Int setId = 1; setId < vps->getNumLayerSets(); setId++)
-  {
-    vps->setProfilePresentFlag(setId, true);
-    // Note - may need to be changed for other layer structures.
-    *(vps->getPTLForExtn(setId)) = *(m_acTEncTop[setId].getSPS()->getPTL());
-  }
-#endif
-#endif
-#endif
+
+  vps->setIlpSshSignalingEnabledFlag(false);
 
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
@@ -1555,17 +1523,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setOutputLayerSetIdx(olsCtr, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
     }
   }
-
+#endif
   // Target output layer
-#if !MULTIPLE_PTL_SUPPORT
-#if LIST_OF_PTL
-  vps->setNumProfileTierLevel( vps->getPTLForExtnPtr()->size() ); // +1 for the base VPS PTL()
-#else
-  vps->setNumOutputLayerSets(vps->getNumLayerSets());
-  vps->setNumProfileTierLevel(vps->getNumLayerSets());
-#endif
-#endif
-#endif
 #if VPS_DPB_SIZE_TABLE
   vps->deriveNumberOfSubDpbs();
   vps->setOutputLayerFlag( 0, 0, 1 );
