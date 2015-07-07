@@ -110,10 +110,8 @@ TAppEncCfg::TAppEncCfg()
 , m_nonHEVCBaseLayerFlag(0)
 #endif
 , m_maxTidRefPresentFlag(1)
-#if OUTPUT_LAYER_SETS_CONFIG
 , m_defaultTargetOutputLayerIdc (-1)
 , m_numOutputLayerSets          (-1)
-#endif
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
@@ -951,11 +949,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
   }
 #endif
-#if OUTPUT_LAYER_SETS_CONFIG
   string* cfg_numOutputLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
-#endif
 #if MULTIPLE_PTL_SUPPORT
   string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
 #endif
@@ -1063,24 +1059,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")  
 #if Q0078_ADD_LAYER_SETS
-#if OUTPUT_LAYER_SETS_CONFIG
   ("NumLayerSets",                                  m_numLayerSets,                                          1, "Number of layer sets")
-#else
-  ("NumLayerSets",                                  m_numLayerSets,                                          0, "Number of layer sets")
-#endif
   ("NumLayerInIdList%d",                            cfg_numLayerInIdList,            0, MAX_VPS_LAYER_IDX_PLUS1, "Number of layers in the set")
   ("LayerSetLayerIdList%d",                         cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set")
   ("NumAddLayerSets",                               m_numAddLayerSets,                                       0, "Number of additional layer sets")
   ("NumHighestLayerIdx%d",                          cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of highest layer idx")
   ("HighestLayerIdx%d",                             cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Highest layer idx for an additional layer set")
 #endif
-#if OUTPUT_LAYER_SETS_CONFIG
   ("DefaultTargetOutputLayerIdc",                   m_defaultTargetOutputLayerIdc,                           1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
   ("NumOutputLayerSets",                            m_numOutputLayerSets,                                    1, "Number of output layer sets excluding the 0-th output layer set")
   ("NumOutputLayersInOutputLayerSet",               cfg_numOutputLayersInOutputLayerSet,         string(""), 1, "List containing number of output layers in the output layer sets")
   ("ListOfOutputLayers%d",                          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
   ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                       string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
-#endif
 #if AUXILIARY_PICTURES
   ("AuxId%d",                                       cfg_auxId,                                   0, MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
@@ -2439,72 +2429,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   } //for(Int layer = 0; layer < MAX_LAYERS; layer++)
 
 #if Q0078_ADD_LAYER_SETS
-#if OUTPUT_LAYER_SETS_CONFIG
   for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
   {
     // Simplifying the code in the #else section, and allowing 0-th layer set t
     assert( scanStringToArray( cfg_layerSetLayerIdList[layerSet], m_numLayerInIdList[layerSet], "NumLayerInIdList", m_layerSetLayerIdList[layerSet] ) );
-#else
-  for (Int layerSet = 0; layerSet < m_numLayerSets; layerSet++)
-  {
-    if (m_numLayerInIdList[layerSet] > 0)
-    {
-      Char* layerSetLayerIdListDup = cfg_layerSetLayerIdList[layerSet].empty() ? NULL : strdup(cfg_layerSetLayerIdList[layerSet].c_str());
-      Int  i = 0;
-      char *layerId = strtok(layerSetLayerIdListDup, " ,-");
-      while (layerId != NULL)
-      {
-        if (i >= m_numLayerInIdList[layerSet])
-        {
-          printf("NumLayerInIdList%d: The number of layers in the set is larger than the allowed number of layers.\n", layerSet);
-          exit(EXIT_FAILURE);
-        }
-        m_layerSetLayerIdList[layerSet][i] = atoi(layerId);
-        layerId = strtok(NULL, " ,-");
-        i++;
-      }
-
-      if( layerSetLayerIdListDup )
-      {
-        free( layerSetLayerIdListDup );
-        layerSetLayerIdListDup = NULL;
-      }
-    }
-#endif
   }
   for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
   {
-#if OUTPUT_LAYER_SETS_CONFIG
     // Simplifying the code in the #else section
     assert( scanStringToArray( cfg_highestLayerIdx[addLayerSet], m_numHighestLayerIdx[addLayerSet], "HighestLayerIdx", m_highestLayerIdx[addLayerSet] ) );
-#else
-    if (m_numHighestLayerIdx[addLayerSet] > 0)
-    {
-      Char* highestLayrIdxListDup = cfg_highestLayerIdx[addLayerSet].empty() ? NULL : strdup(cfg_highestLayerIdx[addLayerSet].c_str());
-      Int  i = 0;
-      char *layerIdx = strtok(highestLayrIdxListDup, " ,-");
-      while (layerIdx != NULL)
-      {
-        if (i >= m_numLayerInIdList[addLayerSet])
-        {
-          printf("NumLayerInIdList%d: The number of layer idx's in the highest layer idx list is larger than the allowed number of idx's.\n", addLayerSet);
-          exit(EXIT_FAILURE);
-        }
-        m_highestLayerIdx[addLayerSet][i] = atoi(layerIdx);
-        layerIdx = strtok(NULL, " ,-");
-        i++;
-      }
-
-      if( highestLayrIdxListDup )
-      {
-        free( highestLayrIdxListDup );
-        highestLayrIdxListDup = NULL;
-      }
-    }
-#endif
   }
 #endif
-#if OUTPUT_LAYER_SETS_CONFIG
+
   if( m_defaultTargetOutputLayerIdc != -1 )
   {
     assert( m_defaultTargetOutputLayerIdc >= 0 && m_defaultTargetOutputLayerIdc <= 3 );
@@ -2592,7 +2528,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   delete cfg_numOutputLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
-#endif
 #else //SVC_EXTENSION
   switch (m_conformanceWindowMode)
   {
@@ -4683,11 +4618,7 @@ Bool confirmPara(Bool bflag, const Char* message)
 }
 
 #if SVC_EXTENSION
-#if OUTPUT_LAYER_SETS_CONFIG
 Void TAppEncCfg::cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString)
-#else
-Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString)
-#endif
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
   if( numEntries > 0 )
@@ -4696,7 +4627,6 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     Int i = 0;
     *arr = new Int[numEntries];
 
-#if OUTPUT_LAYER_SETS_CONFIG
     if( tempChar == NULL )
     {
       arrayEntry = NULL;
@@ -4705,9 +4635,7 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
     {
       arrayEntry = strtok( tempChar, " ,");
     }
-#else
-    arrayEntry = strtok( tempChar, " ,");
-#endif
+
     while(arrayEntry != NULL)
     {
       if( i >= numEntries )
@@ -4737,7 +4665,6 @@ Void TAppEncCfg::cfgStringToArray(Int **arr, string cfgString, Int numEntries, c
   }
 }
 
-#if OUTPUT_LAYER_SETS_CONFIG
 Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray)
 {
   Int *tempArray = NULL;
@@ -4754,6 +4681,7 @@ Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries,
   }
   return false;
 }
+
 Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> & returnVector)
 {
   Int *tempArray = NULL;
@@ -4771,9 +4699,7 @@ Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries,
   }
   return false;
 }
-#endif
 
-#if OUTPUT_LAYER_SETS_CONFIG
 Void TAppEncCfg::cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString)
 {
   Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
@@ -4841,6 +4767,5 @@ Bool TAppEncCfg::scanStringToArrayNumEntries(string const cfgString, Int &numEnt
   }
   return false;
 }
-#endif
 #endif //SVC_EXTENSION
 //! \}
