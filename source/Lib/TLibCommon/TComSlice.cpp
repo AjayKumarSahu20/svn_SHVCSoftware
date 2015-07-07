@@ -2063,16 +2063,16 @@ TComVPS::TComVPS()
 #if VIEW_ID_RELATED_SIGNALING 
   ::memset(m_viewIdVal, 0, sizeof(m_viewIdVal));
 #endif
-#if O0092_0094_DEPENDENCY_CONSTRAINT
-  for (Int i = 0; i < MAX_NUM_LAYER_IDS; i++)
+
+  for( Int i = 0; i < MAX_NUM_LAYER_IDS; i++ )
   {
     m_numberRefLayers[i] = 0;
-    for (Int j = 0; j < MAX_NUM_LAYER_IDS; j++)
+    for( Int j = 0; j < MAX_NUM_LAYER_IDS; j++ )
     {
       m_recursiveRefLayerFlag[i][j] = 0;
     }
   }
-#endif
+
 #if VPS_DPB_SIZE_TABLE
   ::memset( m_subLayerFlagInfoPresentFlag,  0, sizeof(m_subLayerFlagInfoPresentFlag ) );
   ::memset( m_subLayerDpbInfoPresentFlag,   0, sizeof(m_subLayerDpbInfoPresentFlag )  );
@@ -3188,7 +3188,7 @@ Void TComVPS::setWppNotInUseFlag(Bool x)
   }
 }
 #endif
-#if O0092_0094_DEPENDENCY_CONSTRAINT
+
 Void TComVPS::setRefLayersFlags(Int currLayerId)
 {
   for (Int i = 0; i < m_numDirectRefLayers[currLayerId]; i++)
@@ -3216,7 +3216,6 @@ Void TComVPS::setNumRefLayers()
     }
   }
 }
-#endif
 
 Void TComVPS::setPredictedLayerIds()
 {

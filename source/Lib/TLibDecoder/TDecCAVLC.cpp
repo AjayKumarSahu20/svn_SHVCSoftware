@@ -2776,7 +2776,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     vps->setNumDirectRefLayers(layerId, numDirectRefLayers);
   }
 
-#if O0092_0094_DEPENDENCY_CONSTRAINT // Moved here
+  // dependency constraint
   vps->setNumRefLayers();
 
   if (vps->getMaxLayers() > MAX_REF_LAYERS)
@@ -2786,7 +2786,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       assert(vps->getNumRefLayers(vps->getLayerIdInNuh(i)) <= MAX_REF_LAYERS);
     }
   }
-#endif
+
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
 

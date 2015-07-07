@@ -2405,9 +2405,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         pcSlice->getSPS()->getVuiParameters()->setHrdParametersPresentFlag( true );
       }
-#if O0092_0094_DEPENDENCY_CONSTRAINT
+
+#if SVC_EXTENSION
+      // dependency constraint
       assert( pcSlice->getSPS()->getLayerId() == 0 || pcSlice->getSPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getSPS()->getLayerId()) );
 #endif
+
       m_pcEntropyCoder->encodeSPS(pcSlice->getSPS());
       writeRBSPTrailingBits(nalu.m_Bitstream);
       accessUnit.push_back(new NALUnitEBSP(nalu));
@@ -2426,10 +2429,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0092_0094_DEPENDENCY_CONSTRAINT
+
+#if SVC_EXTENSION
+      // dependency constraint
       assert( pcSlice->getPPS()->getLayerId() == 0 || pcSlice->getPPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getLayerId()) );
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if SVC_EXTENSION && Q0048_CGS_3D_ASYMLUT
       m_pcEntropyCoder->encodePPS(pcSlice->getPPS(), &m_Enc3DAsymLUTPPS);
 #else
       m_pcEntropyCoder->encodePPS(pcSlice->getPPS());
