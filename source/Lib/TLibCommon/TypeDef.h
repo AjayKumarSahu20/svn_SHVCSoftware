@@ -172,8 +172,6 @@
 
 #define P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG   1  ///< a flag to indicatate whether picture types for IRAP are IDR across layers.
 
-#define IRAP_ALIGN_FLAG_IN_VPS_VUI       1      ///< Move IRAP align flag to VPS VUI 
-
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
 #define N0065_LAYER_POC_ALIGNMENT        1
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
