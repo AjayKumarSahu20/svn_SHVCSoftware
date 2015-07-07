@@ -1504,23 +1504,18 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
         }
       }
-#if ISLICE_TYPE_NUMDIR
-      if( pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA && (m_pcEncTop->getNumDirectRefLayers() == 0) )
-#else
-      if( pcSlice->getActiveNumILRRefIdx() == 0 && pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
-#endif
+
+      if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
       {
-        pcSlice->setSliceType(I_SLICE);
-      }
-      else if( !m_pcEncTop->getElRapSliceTypeB() )
-      {
-        if( (pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) &&
-          (pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA) &&
-          pcSlice->getSliceType() == B_SLICE )
+        if( pcSlice->getActiveNumILRRefIdx() == 0 && m_pcEncTop->getNumDirectRefLayers() == 0 )
+        {
+          pcSlice->setSliceType(I_SLICE);
+        }
+        else if( !m_pcEncTop->getElRapSliceTypeB() && pcSlice->getSliceType() == B_SLICE )
         {
           pcSlice->setSliceType(P_SLICE);
         }
-      }      
+      }
     }
 #else
     // Set the nal unit type
