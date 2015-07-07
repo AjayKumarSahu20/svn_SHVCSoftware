@@ -692,8 +692,8 @@ private:
   Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Bool       m_ctuBasedOffsetEnabledFlag   [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int        m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif 
-#if VPS_VUI_VIDEO_SIGNAL
+#endif
+
   Bool       m_vidSigPresentVpsFlag;
   Int        m_vpsVidSigInfo;
   Int        m_vpsVidSigIdx[MAX_VPS_LAYER_IDX_PLUS1];
@@ -702,7 +702,6 @@ private:
   Int        m_vpsColorPrimaries[16];
   Int        m_vpsTransChar[16];
   Int        m_vpsMatCoeff[16];
-#endif
 
   Bool       m_bitRatePresentVpsFlag;
   Bool       m_picRatePresentVpsFlag;
@@ -1083,7 +1082,7 @@ Void      deriveNumberOfSubDpbs();
   Int    getMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId )            { return m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId];}
   Void   setMinHorizontalCtuOffsetPlus1 ( Int currLayerId, Int refLayerId, Int val )   { m_minHorizontalCtuOffsetPlus1[currLayerId][refLayerId] = val;}  
 #endif
-#if VPS_VUI_VIDEO_SIGNAL
+
   Bool   getVideoSigPresentVpsFlag()           { return m_vidSigPresentVpsFlag; }
   Void   setVideoSigPresentVpsFlag(Bool x)     { m_vidSigPresentVpsFlag = x;    }
   Int    getNumVideoSignalInfo()               { return m_vpsVidSigInfo;        }
@@ -1100,7 +1099,7 @@ Void      deriveNumberOfSubDpbs();
   Void   setTransCharacter(Int idx, Int x)     { m_vpsTransChar[idx] = x;       }
   Int    getMaxtrixCoeff(Int idx)              { return m_vpsMatCoeff[idx];     }
   Void   setMaxtrixCoeff(Int idx, Int x)       { m_vpsMatCoeff[idx] = x;        }
-#endif
+
   Bool   getBitRatePresentVpsFlag()       { return m_bitRatePresentVpsFlag; }
   Void   setBitRatePresentVpsFlag(Bool x) { m_bitRatePresentVpsFlag = x;    }
   Bool   getPicRatePresentVpsFlag()       { return m_picRatePresentVpsFlag; }

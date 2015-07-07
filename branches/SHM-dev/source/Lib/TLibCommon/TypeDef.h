@@ -118,11 +118,6 @@
 #define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define N0160_VUI_EXT_ILP_REF            1      ///< VUI extension inter-layer dependency offset signalling
 
-#define VPS_VUI_VIDEO_SIGNAL             1      ///< JCTVC-O0118 video signal information
-#if VPS_VUI_VIDEO_SIGNAL
-#define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
-#endif 
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture

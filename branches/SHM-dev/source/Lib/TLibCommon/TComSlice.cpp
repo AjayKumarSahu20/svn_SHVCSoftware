@@ -2044,7 +2044,7 @@ TComVPS::TComVPS()
   ::memset(m_ctuBasedOffsetEnabledFlag,     0, sizeof(m_ctuBasedOffsetEnabledFlag));
   ::memset(m_minHorizontalCtuOffsetPlus1,   0, sizeof(m_minHorizontalCtuOffsetPlus1));
 #endif
-#if VPS_VUI_VIDEO_SIGNAL
+
   m_vidSigPresentVpsFlag=true;
   m_vpsVidSigInfo=1;
   ::memset( m_vpsVidSigIdx, 0, sizeof(m_vpsVidSigIdx) );
@@ -2057,7 +2057,7 @@ TComVPS::TComVPS()
     m_vpsTransChar[i] = 2;
     m_vpsMatCoeff[i] = 2;
   }
-#endif
+
   ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));
   ::memset(m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag));
   ::memset(m_avgBitRate        , 0, sizeof(m_avgBitRate)        );
