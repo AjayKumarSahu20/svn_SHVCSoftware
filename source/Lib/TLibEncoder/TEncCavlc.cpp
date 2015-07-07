@@ -2641,9 +2641,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
   }
 #endif
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
-#endif
 
   // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
   if( !vps->getSingleLayerForNonIrapFlag() )

@@ -1710,11 +1710,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_EXTENSION
     // Create upsampling reference layer pictures for all possible dependent layers and do it only once for the first slice. 
     // Other slices might choose which reference pictures to be used for inter-layer prediction
-    if( m_layerId > 0 && m_uiSliceIdx == 0 )
-    {      
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-      if( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || ( pcSlice->getVPS()->getSingleLayerForNonIrapFlag() && pcSlice->isIRAP() ) )
-#endif
+    if( m_layerId > 0 && m_uiSliceIdx == 0 && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
+    {
       for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = i;
@@ -1864,12 +1861,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if REF_IDX_MFM
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
     else if ( m_layerId > 0 )
     {
       pcSlice->setRefPicList( m_cListPic, false, NULL);
     }
-#endif
 #if MFM_ENCCONSTRAINT
     if( pcSlice->getMFMEnabledFlag() )
     {
@@ -1888,11 +1883,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 #endif
     
-    if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() )
+    if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
     {
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-      if( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || ( pcSlice->getVPS()->getSingleLayerForNonIrapFlag() && pcSlice->isIRAP() ) )
-#endif
       for(Int dependentLayerIdx = 0; dependentLayerIdx < pcSlice->getVPS()->getNumDirectRefLayers(m_layerId); dependentLayerIdx++)
       {
         TComList<TComPic*> *cListPic = getRefLayerDec( dependentLayerIdx )->getListPic();

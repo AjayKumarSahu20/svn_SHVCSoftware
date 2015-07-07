@@ -472,9 +472,7 @@ protected:
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
 #if SVC_EXTENSION
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
-#endif
   Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
 #if REPN_FORMAT_IN_VPS
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures

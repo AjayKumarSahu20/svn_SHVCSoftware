@@ -1684,9 +1684,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0189_TMVP_CONSTRAINTS
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
 #endif
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
-#endif
 #if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
   ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
   ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
@@ -4348,19 +4346,19 @@ Void TAppEncCfg::xCheckParameter()
     }
   }
 #endif //VPS_EXTN_DIRECT_REF_LAYERS
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
-  if (m_adaptiveResolutionChange > 0)
+
+  if( m_adaptiveResolutionChange > 0 )
   {
     xConfirmPara(m_numLayers != 2, "Adaptive resolution change works with 2 layers only");
     xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
-#endif
 
-  if (m_adaptiveResolutionChange > 0)
+  if( m_adaptiveResolutionChange > 0 )
   {
     xConfirmPara(m_crossLayerIrapAlignFlag != 0, "Cross layer IRAP alignment must be disabled when using adaptive resolution change.");
   }
-  if (m_skipPictureAtArcSwitch)
+
+  if( m_skipPictureAtArcSwitch )
   {
     xConfirmPara(m_adaptiveResolutionChange <= 0, "Skip picture at ARC switching only works when Adaptive Resolution Change is active (AdaptiveResolutionChange > 0)");
   }
@@ -4496,9 +4494,7 @@ Void TAppEncCfg::xPrintParameter()
 #if AUXILIARY_PICTURES
   printf("Auxiliary pictures                : %d\n", m_scalabilityMask[AUX_ID] );
 #endif
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   printf("Adaptive Resolution Change        : %d\n", m_adaptiveResolutionChange );
-#endif
   printf("Skip picture at ARC switch        : %d\n", m_skipPictureAtArcSwitch );
   printf("Align picture type                : %d\n", m_crossLayerPictureTypeAlignFlag );
   printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );

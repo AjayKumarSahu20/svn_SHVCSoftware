@@ -3462,10 +3462,8 @@ Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
   // When not present, the value of all_layers_idr_aligned_flag is inferred to be equal to 0.
   vps->setCrossLayerIrapAlignFlag( false );
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   // When single_layer_for_non_irap_flag is not present, it is inferred to be equal to 0.
   vps->setSingleLayerForNonIrapFlag( false );
-#endif
 
   // When higher_layer_irap_skip_flag is not present it is inferred to be equal to 0
   vps->setHigherLayerIrapSkipFlag( false );
@@ -3833,9 +3831,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
 #endif
 
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
-#endif
+
   READ_FLAG(uiCode, "higher_layer_irap_skip_flag" ); vps->setHigherLayerIrapSkipFlag(uiCode == 1 ? true : false);
 
   // When single_layer_for_non_irap_flag is equal to 0, higher_layer_irap_skip_flag shall be equal to 0
