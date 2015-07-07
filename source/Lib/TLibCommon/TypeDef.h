@@ -125,7 +125,6 @@
 #if VPS_VUI_VIDEO_SIGNAL
 #define VPS_VUI_VIDEO_SIGNAL_MOVE        1      ///< JCTVC-P0076 Move video signal information syntax structure earlier in the VPS VUI
 #endif 
-#define P0182_VPS_VUI_PS_FLAG            1      ///< JCTVC-P0182, add base_layer_parameter_set_compatibility_flag
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 

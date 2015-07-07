@@ -1508,7 +1508,6 @@ Void TEncTop::xInitILRP()
       }
     }
 
-#if P0182_VPS_VUI_PS_FLAG
     if( m_cVPS.getNumRefLayers( m_layerId ) == 0 )
     {
       UInt layerIdx = m_cVPS.getLayerIdxInVps( m_layerId );
@@ -1534,7 +1533,6 @@ Void TEncTop::xInitILRP()
         m_cVPS.setBaseLayerPSCompatibilityFlag(layerIdx, 0);
       }
     }
-#endif
   }
 }
 #endif

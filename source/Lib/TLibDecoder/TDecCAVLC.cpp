@@ -3758,8 +3758,8 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 #endif
   }
 #endif
-#if P0182_VPS_VUI_PS_FLAG
-  for(i = 1; i < vps->getMaxLayers(); i++)
+
+  for( i = 1; i < vps->getMaxLayers(); i++ )
   {
     if (vps->getNumRefLayers(vps->getLayerIdInNuh(i)) == 0)
     {
@@ -3771,7 +3771,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       vps->setBaseLayerPSCompatibilityFlag( i, 0 );
     }
   }
-#endif
 }
 
 Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )

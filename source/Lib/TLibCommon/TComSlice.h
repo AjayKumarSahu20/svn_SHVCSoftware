@@ -788,11 +788,7 @@ private:
   UInt       m_bspCombSchedIdx[MAX_VPS_LAYER_SETS_PLUS1][16][16];
 #endif
 #endif
-
-#if P0182_VPS_VUI_PS_FLAG
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
-#endif
-
 #if P0307_VPS_NON_VUI_EXTENSION
   Int        m_vpsNonVuiExtLength;
 #endif
@@ -1176,13 +1172,10 @@ Void      deriveNumberOfSubDpbs();
   Void     setBspCombSchedIdx(UInt h, UInt i, UInt j, UInt val) { m_bspCombSchedIdx[h][i][j] = val;      }
 #endif
 #endif
-#if P0182_VPS_VUI_PS_FLAG
-  Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)        { m_baseLayerPSCompatibilityFlag[layer] = val; }
-  Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
-#endif
-
-  Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
-  Void   setAltOuputLayerFlag(Int idx, Bool x) { m_altOutputLayerFlag[idx] = x;    }
+  Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)   { m_baseLayerPSCompatibilityFlag[layer] = val; }
+  Int    getBaseLayerPSCompatibilityFlag (Int layer)            { return m_baseLayerPSCompatibilityFlag[layer];}
+  Bool   getAltOuputLayerFlag(Int idx)                          { return m_altOutputLayerFlag[idx]; }
+  Void   setAltOuputLayerFlag(Int idx, Bool x)                  { m_altOutputLayerFlag[idx] = x;    }
 
 #if REPN_FORMAT_IN_VPS
   Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
