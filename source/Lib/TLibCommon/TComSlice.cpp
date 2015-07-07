@@ -1960,15 +1960,7 @@ TComVPS::TComVPS()
 #endif
 , m_numProfileTierLevel       (0)
 , m_numAddOutputLayerSets     (0)
-#if P0295_DEFAULT_OUT_LAYER_IDC
-, m_defaultTargetOutputLayerIdc     (0)
-#else
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-, m_defaultOneTargetOutputLayerIdc     (0)
-#else
-, m_defaultOneTargetOutputLayerFlag    (false)
-#endif
-#endif
+, m_defaultTargetOutputLayerIdc(0)
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
 #if REPN_FORMAT_IN_VPS

@@ -665,15 +665,7 @@ private:
 
   UInt       m_numProfileTierLevel;
   Int        m_numAddOutputLayerSets;
-#if P0295_DEFAULT_OUT_LAYER_IDC
   UInt       m_defaultTargetOutputLayerIdc;
-#else
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-  UInt       m_defaultOneTargetOutputLayerIdc;
-#else
-  Bool       m_defaultOneTargetOutputLayerFlag;
-#endif
-#endif
   std::vector< std::vector<Int> >  m_profileLevelTierIdx;
   Bool       m_maxOneActiveRefLayerFlag;
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
@@ -1027,31 +1019,21 @@ Void      deriveNumberOfSubDpbs();
   Bool   isSamplePredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 1 ) ? true : false; }
   Bool   isMotionPredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 2 ) >> 1 ) ? true : false; }
 
-  UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
-  Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
-  Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
-  Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
+  UInt   getNumProfileTierLevel()                                               { return m_numProfileTierLevel;   }
+  Void   setNumProfileTierLevel(Int x)                                          { m_numProfileTierLevel = x;      }
+  Int    getNumAddOutputLayerSets()                                             { return m_numAddOutputLayerSets; }
+  Void   setNumAddOutputLayerSets(Int x)                                        { m_numAddOutputLayerSets = x   ; }
 
-#if P0295_DEFAULT_OUT_LAYER_IDC
-  UInt   getDefaultTargetOutputLayerIdc()                 { return m_defaultTargetOutputLayerIdc;}
-  Void   setDefaultTargetOutputLayerIdc(UInt x)           { m_defaultTargetOutputLayerIdc = x    ;}
-#else
-#if O0109_DEFAULT_ONE_OUT_LAYER_IDC
-  UInt   getDefaultOneTargetOutputLayerIdc()                 { return m_defaultOneTargetOutputLayerIdc;}
-  Void   setDefaultOneTargetOutputLayerIdc(UInt x)           { m_defaultOneTargetOutputLayerIdc= x    ;}
-#else
-  Bool   getDefaultOneTargetOutputLayerFlag()                 { return m_defaultOneTargetOutputLayerFlag;}
-  Void   setDefaultOneTargetOutputLayerFlag(Bool x)           { m_defaultOneTargetOutputLayerFlag= x    ;}
-#endif
-#endif
+  UInt   getDefaultTargetOutputLayerIdc()                                       { return m_defaultTargetOutputLayerIdc; }
+  Void   setDefaultTargetOutputLayerIdc(UInt x)                                 { m_defaultTargetOutputLayerIdc = x    ;}
 
-  Bool getNecessaryLayerFlag(Int const i, Int const j) { return m_necessaryLayerFlag[i][j]; }
-  std::vector< std::vector<Int> >* getProfileLevelTierIdx() { return &m_profileLevelTierIdx; }
-  std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx) { return &m_profileLevelTierIdx[olsIdx]; }
-  Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)     { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
-  Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
+  Bool getNecessaryLayerFlag(Int const i, Int const j)                          { return m_necessaryLayerFlag[i][j];     }
+  std::vector< std::vector<Int> >* getProfileLevelTierIdx()                     { return &m_profileLevelTierIdx;         }
+  std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx)                    { return &m_profileLevelTierIdx[olsIdx]; }
+  Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)                   { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
+  Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx) { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
 #if MULTIPLE_PTL_SUPPORT
-  Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)     { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
+  Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)             { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
 #endif
   Int    calculateLenOfSyntaxElement( Int const numVal );
 

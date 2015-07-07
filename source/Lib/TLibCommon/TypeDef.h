@@ -80,7 +80,6 @@
 #define FIX_ALIGN_BUMPING                1
 #define O0109_VIEW_ID_LEN                1      ///< JCTVC-O0109: view_id_len_minus1 to view_id_len, and add constraint (1<<view_id_len) is greater than or equal to NumViews
 
-#define P0295_DEFAULT_OUT_LAYER_IDC      1      ///< JCTVC-P0295: modifify default_one_target_output_layer_idc to default_output_layer_idc
 #define O0109_DEFAULT_ONE_OUT_LAYER_IDC  1      ///< JCTVC-O0109: default_one_target_output_layer_flag to default_one_target_output_layer_idc
 
 #define O0135_DEFAULT_ONE_OUT_SEMANTIC   1      ///< JCTVC-O0135: semantics change of default_one_target_output_layer_idc for auxiliary pictures
