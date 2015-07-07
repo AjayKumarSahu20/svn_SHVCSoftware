@@ -691,10 +691,8 @@ private:
   Bool       m_crossLayerAlignedIdrOnlyFlag;
   UInt       m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
   Bool       m_maxTidRefPresentFlag;
-#if VPS_TSLAYERS
   Bool       m_maxTSLayersPresentFlag;
   UInt       m_maxTSLayerMinus1[MAX_LAYERS];
-#endif
   Bool       m_singleLayerForNonIrapFlag;
   Bool       m_higherLayerIrapSkipFlag;
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
@@ -1091,18 +1089,16 @@ Void      deriveNumberOfSubDpbs();
   Void   setCrossLayerIrapAlignFlag(Bool x)                                     { m_crossLayerIrapAlignFlag = x;                 }
   UInt   getMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx)                     { return m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx];           }
   Void   setMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx] = maxSublayer;    }
-  Bool   getMaxTidRefPresentFlag()                                  { return m_maxTidRefPresentFlag ;}
-  Void   setMaxTidRefPresentFlag(Bool x)                            { m_maxTidRefPresentFlag = x;}
-#if VPS_TSLAYERS
-  Bool   getMaxTSLayersPresentFlag()                                  { return m_maxTSLayersPresentFlag ;}
-  Void   setMaxTSLayersPresentFlag(Bool x)                            { m_maxTSLayersPresentFlag = x;}
-  UInt   getMaxTSLayersMinus1(Int layerIdx)                            { return m_maxTSLayerMinus1[layerIdx];}
-  Void   setMaxTSLayersMinus1(Int layerIdx, UInt maxTSublayer)         { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;}
-#endif
-  Bool   getSingleLayerForNonIrapFlag()                             { return m_singleLayerForNonIrapFlag; }
-  Void   setSingleLayerForNonIrapFlag(Bool x)                       { m_singleLayerForNonIrapFlag = x;    }
-  Bool   getHigherLayerIrapSkipFlag()                             { return m_higherLayerIrapSkipFlag; }
-  Void   setHigherLayerIrapSkipFlag(Bool x)                       { m_higherLayerIrapSkipFlag = x;    }
+  Bool   getMaxTidRefPresentFlag()                                              { return m_maxTidRefPresentFlag;                 }
+  Void   setMaxTidRefPresentFlag(Bool x)                                        { m_maxTidRefPresentFlag = x;                    }
+  Bool   getMaxTSLayersPresentFlag()                                            { return m_maxTSLayersPresentFlag;               }
+  Void   setMaxTSLayersPresentFlag(Bool x)                                      { m_maxTSLayersPresentFlag = x;                  }
+  UInt   getMaxTSLayersMinus1(Int layerIdx)                                     { return m_maxTSLayerMinus1[layerIdx];           }
+  Void   setMaxTSLayersMinus1(Int layerIdx, UInt maxTSublayer)                  { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;   }
+  Bool   getSingleLayerForNonIrapFlag()                                         { return m_singleLayerForNonIrapFlag;            }
+  Void   setSingleLayerForNonIrapFlag(Bool x)                                   { m_singleLayerForNonIrapFlag = x;               }
+  Bool   getHigherLayerIrapSkipFlag()                                           { return m_higherLayerIrapSkipFlag;              }
+  Void   setHigherLayerIrapSkipFlag(Bool x)                                     { m_higherLayerIrapSkipFlag = x;                 }
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG  
   Bool   getTilesNotInUseFlag()         { return m_tilesNotInUseFlag; }
   Void   setTilesNotInUseFlag(Bool x); 
