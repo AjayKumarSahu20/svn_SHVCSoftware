@@ -2595,10 +2595,8 @@ public:
   Void      setPocMsbValRequiredFlag (Bool x)                     { m_pocMsbValRequiredFlag = x; }
 #endif
 
-#if NO_OUTPUT_OF_PRIOR_PICS
   Bool      getBlaPicFlag       ();
   Bool      getCraPicFlag       ();
-#endif
 #if POC_RESET_IDC_DECODER
   Bool      getRaslPicFlag      ();
   Bool      getRadlPicFlag      ();
@@ -2617,6 +2615,7 @@ public:
   Int       getReferenceLayerIdc( UInt refLayerId );
 
 #endif //SVC_EXTENSION
+
 protected:
   TComPic*  xGetRefPic        (TComList<TComPic*>& rcListPic, Int poc);
   TComPic*  xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, Bool pocHasMsb);
