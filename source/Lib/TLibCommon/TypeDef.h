@@ -153,9 +153,6 @@
 #endif
 
 #define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
-#if Q0078_ADD_LAYER_SETS
-#define MAX_NUM_ADD_LAYER_SETS           1023
-#endif
 #define MULTIPLE_PTL_SUPPORT             1      ///< Profile, tier and level signalling
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
@@ -166,7 +163,6 @@
 #endif
 #endif
 #define DPB_PARAMS_MAXTLAYERS            1      ///< JCTVC-P0156 DPB parameters up to maximum temporal sub-layers in the layer set
-#define NUM_OL_FLAGS                     1      ///< JCTVC-P0156 output_layer_flag[ i ][ j ] is signalled for j equal to 0 to NumLayersInIdList[ lsIdx ] inclusive
 #define NO_CLRAS_OUTPUT_FLAG             1
 
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
@@ -221,11 +217,14 @@ enum AuxType
 #define R0247_SEI_ACTIVE                 1      ///< JCTVC-R0247: active parameter sets SEI message
 #define Q0096_OVERLAY_SEI                1      ///< JCTVC-Q0096, JCTVC-Q0045: selectable overlays SEI message
 #if Q0096_OVERLAY_SEI 
-# define MAX_OVERLAYS                    16
-# define MAX_OVERLAY_ELEMENTS            256
-# define MAX_OVERLAY_STRING_BYTES        256
+#define MAX_OVERLAYS                     16
+#define MAX_OVERLAY_ELEMENTS             256
+#define MAX_OVERLAY_STRING_BYTES         256
 #endif
 #define P0123_ALPHA_CHANNEL_SEI          1      ///< JCTVC-P0123: SEI message for alpha channel information
+
+/// constants
+#define MAX_NUM_ADD_LAYER_SETS           1023
 #define MAX_SEIS_IN_BSP_NESTING          64
 
 #endif // SVC_EXTENSION
