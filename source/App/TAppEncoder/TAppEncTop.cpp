@@ -798,9 +798,7 @@ Void TAppEncTop::xInitLibCfg()
 #if AUXILIARY_PICTURES
     m_acTEncTop[layer].setChromaFormatIDC                        ( m_acLayerCfg[layer].m_chromaFormatIDC );
 #endif
-#if O0153_ALT_OUTPUT_LAYER_FLAG
     m_acTEncTop[layer].setAltOuputLayerFlag                      ( m_altOutputLayerFlag );
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
     m_acTEncTop[layer].setCrossLayerBLAFlag                      ( m_crossLayerBLAFlag );
 #endif
@@ -1783,16 +1781,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 #endif
 
-#if P0300_ALT_OUTPUT_LAYER_FLAG
   for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
   {
     vps->setAltOuputLayerFlag( k, m_altOutputLayerFlag );
   }
-#else
-#if O0153_ALT_OUTPUT_LAYER_FLAG
-  vps->setAltOuputLayerFlag( m_altOutputLayerFlag );
-#endif
-#endif
 
 #if VPS_VUI_BSP_HRD_PARAMS
   vps->setVpsVuiBspHrdPresentFlag(false);

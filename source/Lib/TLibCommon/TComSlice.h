@@ -751,17 +751,12 @@ private:
   Int        m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 
-#if P0300_ALT_OUTPUT_LAYER_FLAG
 #if Q0078_ADD_LAYER_SETS
   Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
 #else
   Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
-#else
-#if O0153_ALT_OUTPUT_LAYER_FLAG
-  Bool       m_altOutputLayerFlag;
-#endif
-#endif
+
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
   Int        m_vpsNumRepFormats;            // coded as minus1
@@ -1270,15 +1265,9 @@ Void      deriveNumberOfSubDpbs();
   Int    getBaseLayerPSCompatibilityFlag (Int layer)   { return m_baseLayerPSCompatibilityFlag[layer];}
 #endif
 
-#if P0300_ALT_OUTPUT_LAYER_FLAG
   Bool   getAltOuputLayerFlag(Int idx)         { return m_altOutputLayerFlag[idx]; }
   Void   setAltOuputLayerFlag(Int idx, Bool x) { m_altOutputLayerFlag[idx] = x;    }
-#else
-#if O0153_ALT_OUTPUT_LAYER_FLAG
-  Bool   getAltOuputLayerFlag()             { return m_altOutputLayerFlag; }
-  Void   setAltOuputLayerFlag(Bool x)       { m_altOutputLayerFlag = x;    }
-#endif
-#endif
+
 #if REPN_FORMAT_IN_VPS
   Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
   Void   setRepFormatIdxPresentFlag(Bool x) { m_repFormatIdxPresentFlag = x;    }

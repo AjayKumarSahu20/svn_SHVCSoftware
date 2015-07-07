@@ -450,9 +450,7 @@ protected:
 #if Q0189_TMVP_CONSTRAINTS
   Int       m_TMVPConstraintsSEIEnabled;
 #endif
-#if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
-#endif
   Int       m_elRapSliceBEnabled;
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI

@@ -1684,6 +1684,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIOverlayElementNames2",                 cfg_overlaySEIElementNames[2],       string(""), "Indicates the names of all overlay elements of overlay 2 in the format name1|name2|name3|...")                                                                                       
   ("SEIOverlayPersistenceFlag",               m_overlayInfoPersistenceFlag,              true, "Indicates if the SEI message applies to the current picture only (0) or also to following pictures (1)")
 #endif
+#if SVC_EXTENSION
 #if Q0189_TMVP_CONSTRAINTS
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
 #endif
@@ -1702,9 +1703,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
   ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
-#if O0153_ALT_OUTPUT_LAYER_FLAG
   ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
 #endif
@@ -1723,6 +1722,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0108_TSA_STSA
   ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
 #endif
+#endif //SVC_EXTENSION
   ;
 
   for(Int i=1; i<MAX_GOP+1; i++) {

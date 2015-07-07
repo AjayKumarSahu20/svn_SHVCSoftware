@@ -376,9 +376,7 @@ protected:
   int       m_layerSwitchOffBegin;
   int       m_layerSwitchOffEnd;
 #endif
-#if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      m_altOutputLayerFlag;
-#endif
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   Int       m_skipPictureAtArcSwitch;
 #endif
@@ -1035,10 +1033,8 @@ public:
   Void         setChromaFormatIDC(ChromaFormat x) { m_chromaFormatIDC = x;    }
   ChromaFormat getChromaFormatIDC()               { return m_chromaFormatIDC; }
 #endif
-#if O0153_ALT_OUTPUT_LAYER_FLAG
   Bool      getAltOuputLayerFlag() const { return m_altOutputLayerFlag; }
   Void      setAltOuputLayerFlag(Bool b) { m_altOutputLayerFlag = b;    }
-#endif
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      getCrossLayerBLAFlag() const { return m_crossLayerBLAFlag; }
   Void      setCrossLayerBLAFlag(Bool b) { m_crossLayerBLAFlag = b;    }
@@ -1178,7 +1174,7 @@ public:
   Int       getCGSLutSizeRDO()           { return m_nCGSLutSizeRDO; }
 #endif
 #endif
-#endif
+#endif //SVC_EXTENSION
 };
 
 #if SVC_EXTENSION
