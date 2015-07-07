@@ -3019,18 +3019,16 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         OlsHighestOutputLayerId[i] = vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j);
       }
     }
+
     if( NumOutputLayersInOutputLayerSet[i] == 1 && vps->getNumDirectRefLayers(OlsHighestOutputLayerId[i]) > 0 )
     {
       READ_FLAG(uiCode, "alt_output_layer_flag[i]");
       vps->setAltOuputLayerFlag(i, uiCode ? true : false);
     }
-#if ALT_OPT_LAYER_FLAG
     else
     {
-          uiCode=0;
-          vps->setAltOuputLayerFlag(i, uiCode ? true : false);
+      vps->setAltOuputLayerFlag(i, false);
     }
-#endif
 
     assert( NumOutputLayersInOutputLayerSet[i] > 0 );
   }
