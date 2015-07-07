@@ -597,13 +597,8 @@ private:
 #endif
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if Q0078_ADD_LAYER_SETS
-#if NECESSARY_LAYER_FLAG
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
   std::vector<Int>                    m_numLayerInIdList;
-#else
-  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
-  Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
-#endif
 #else
   Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -824,10 +819,8 @@ private:
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool       m_vpsPocLsbAlignedFlag;
 #endif
-#if NECESSARY_LAYER_FLAG
   std::vector< std::vector<Bool> > m_necessaryLayerFlag;
-  std::vector<Int>               m_numNecessaryLayers;
-#endif
+  std::vector<Int>                 m_numNecessaryLayers;
 #endif //SVC_EXTENSION
 
 public:
@@ -1297,14 +1290,12 @@ Void      deriveNumberOfSubDpbs();
   Void   setVpsNonVuiExtLength(Int x)    { m_vpsNonVuiExtLength = x; }
 #endif
 #if O0164_MULTI_LAYER_HRD
-  Void setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
+  Void   setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
 #endif
-#if NECESSARY_LAYER_FLAG
-  Void  deriveNecessaryLayerFlag();
-  Void  deriveNecessaryLayerFlag(Int const olsIdx);
-  Void  checkNecessaryLayerFlagCondition();
-#endif
-  Void  calculateMaxSLInLayerSets();
+  Void   deriveNecessaryLayerFlag();
+  Void   deriveNecessaryLayerFlag(Int const olsIdx);
+  Void   checkNecessaryLayerFlagCondition();
+  Void   calculateMaxSLInLayerSets();
 #endif //SVC_EXTENSION
 };
 

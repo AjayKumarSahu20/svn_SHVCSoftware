@@ -2945,7 +2945,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
   vps->setNumOutputLayerSets( numOutputLayerSets );
-#if NECESSARY_LAYER_FLAG
+
   // Default output layer set
   vps->setOutputLayerSetIdx(0, 0);
   vps->setOutputLayerFlag(0, 0, true);
@@ -2954,7 +2954,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->getProfileLevelTierIdx()->resize(numOutputLayerSets);
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0);
 #endif
-#endif
+
   for(i = 1; i < numOutputLayerSets; i++)
   {
     if( vps->getNumLayerSets() > 2 && i >= vps->getNumLayerSets() )
@@ -3010,9 +3010,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         }
       }
     }
-#if NECESSARY_LAYER_FLAG
+
     vps->deriveNecessaryLayerFlag(i);  
-#endif
+
 #if PER_LAYER_PTL
     vps->getProfileLevelTierIdx(i)->assign(vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet), -1);
     for(j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++)
@@ -3077,9 +3077,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     assert( NumOutputLayersInOutputLayerSet[i]>0 );
 #endif
   }
-#if NECESSARY_LAYER_FLAG
+
   vps->checkNecessaryLayerFlagCondition();  
-#endif
+
 #else
   if( numOutputLayerSets > 1 )
   {
@@ -3368,7 +3368,6 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
     }
   }
 
-#if NECESSARY_LAYER_FLAG
   // Default output layer set
   // The value of NumLayersInIdList[ 0 ] is set equal to 1 and the value of LayerSetLayerIdList[ 0 ][ 0 ] is set equal to 0.
   vps->setOutputLayerSetIdx(0, 0);
@@ -3377,7 +3376,6 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
   vps->setOutputLayerFlag(0, 0, true);
 
   vps->deriveNecessaryLayerFlag(0);
-#endif
 
   // The value of sub_layer_dpb_info_present_flag[ i ][ 0 ] for any possible value of i is inferred to be equal to 1
   // When not present, the value of sub_layer_dpb_info_present_flag[ i ][ j ] for j greater than 0 and any possible value of i, is inferred to be equal to be equal to 0.
