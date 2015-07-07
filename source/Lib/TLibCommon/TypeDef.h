@@ -161,7 +161,6 @@
 #if O0092_0094_DEPENDENCY_CONSTRAINT
 #define MAX_REF_LAYERS                   7
 #endif
-#define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 

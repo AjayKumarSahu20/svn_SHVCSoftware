@@ -2312,9 +2312,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
-#if O0096_DEFAULT_DEPENDENCY_TYPE
+
   WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "default_direct_dependency_flag");
-  if (vps->getDefaultDirectDependencyTypeFlag())
+
+  if( vps->getDefaultDirectDependencyTypeFlag() )
   {
     WRITE_CODE( vps->getDefaultDirectDependencyType(), vps->getDirectDepTypeLen(), "default_direct_dependency_type" );
   }
@@ -2331,18 +2332,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
-#else
-  for(i = 1; i < vps->getMaxLayers(); i++)
-  {
-    for(j = 0; j < i; j++)
-    {
-      if (vps->getDirectDependencyFlag(i, j))
-      {
-        WRITE_CODE( vps->getDirectDependencyType(i, j), vps->getDirectDepTypeLen(), "direct_dependency_type[i][j]" );
-      }
-    }
-  }
-#endif
 #endif
 
 #if P0307_VPS_NON_VUI_EXTENSION

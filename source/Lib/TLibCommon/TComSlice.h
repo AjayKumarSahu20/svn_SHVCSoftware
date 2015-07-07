@@ -664,10 +664,8 @@ private:
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_directDepTypeLen;
-#if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool       m_defaultDirectDependencyTypeFlag;
   UInt       m_defaultDirectDependencyType;
-#endif
   UInt       m_directDependencyType[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
   UInt       m_numProfileTierLevel;
@@ -1036,12 +1034,10 @@ Void      deriveNumberOfSubDpbs();
 
   UInt   getDirectDepTypeLen()                                                  { return m_directDepTypeLen;                              }
   Void   setDirectDepTypeLen(UInt x)                                            { m_directDepTypeLen = x;                                 }
-#if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool   getDefaultDirectDependencyTypeFlag()                                   { return m_defaultDirectDependencyTypeFlag;               }
   Void   setDefaultDirectDependecyTypeFlag(Bool x)                              { m_defaultDirectDependencyTypeFlag = x;                  }
   UInt   getDefaultDirectDependencyType()                                       { return m_defaultDirectDependencyType;                   }
   Void   setDefaultDirectDependecyType(UInt x)                                  { m_defaultDirectDependencyType = x;                      }
-#endif
   UInt   getDirectDependencyType(Int currLayerIdx, Int refLayerIdx)             { return m_directDependencyType[currLayerIdx][refLayerIdx]; }
   Void   setDirectDependencyType(Int currLayerIdx, Int refLayerIdx, UInt x)     { m_directDependencyType[currLayerIdx][refLayerIdx] = x;    }
   Bool   isSamplePredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 1 ) ? true : false; }
