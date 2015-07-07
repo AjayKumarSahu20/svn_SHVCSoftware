@@ -1992,11 +1992,7 @@ TComVPS::TComVPS()
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
 #if REPN_FORMAT_IN_VPS
-#if Q0195_REP_FORMAT_CLEANUP
 , m_repFormatIdxPresentFlag   (false)
-#else
-, m_repFormatIdxPresentFlag   (true)
-#endif
 , m_vpsNumRepFormats          (1)
 #endif
 #if VIEW_ID_RELATED_SIGNALING 

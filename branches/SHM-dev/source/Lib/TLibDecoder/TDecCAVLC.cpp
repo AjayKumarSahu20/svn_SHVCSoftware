@@ -1638,9 +1638,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       else
       {
         format = pcSlice->getVPS()->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : pcSlice->getVPS()->getVpsRepFormatIdx( pcSlice->getVPS()->getLayerIdxInVps(sps->getLayerId()) ) )->getChromaFormatVpsIdc();
-#if Q0195_REP_FORMAT_CLEANUP
-        assert( (sps->getUpdateRepFormatFlag()==false && pcSlice->getVPS()->getVpsNumRepFormats()==1) || pcSlice->getVPS()->getVpsNumRepFormats() > 1 ); //conformance check
-#endif
+
+        // conformance check
+        assert( (sps->getUpdateRepFormatFlag()==false && pcSlice->getVPS()->getVpsNumRepFormats()==1) || pcSlice->getVPS()->getVpsNumRepFormats() > 1 ); 
       }
       if (format != CHROMA_400)
 #else
@@ -3222,7 +3222,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 
 #if REPN_FORMAT_IN_VPS
-#if Q0195_REP_FORMAT_CLEANUP
   READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
   vps->setVpsNumRepFormats( uiCode + 1 );
 
@@ -3270,74 +3269,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->setVpsRepFormatIdx( i, min( (Int)i, vps->getVpsNumRepFormats()-1 ) );
     }
   }
-#else
-  READ_FLAG( uiCode, "rep_format_idx_present_flag");
-  vps->setRepFormatIdxPresentFlag( uiCode ? true : false );
-
-  if( vps->getRepFormatIdxPresentFlag() )
-  {
-#if !VPS_EXTN_UEV_CODING
-    READ_CODE( 8, uiCode, "vps_num_rep_formats_minus1" );
-#else
-    READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
 #endif
 
-    vps->setVpsNumRepFormats( uiCode + 1 );
-  }
-  else
-  {
-    // default assignment
-    assert (vps->getMaxLayers() <= 16);       // If max_layers_is more than 15, num_rep_formats has to be signaled
-    vps->setVpsNumRepFormats( vps->getMaxLayers() );
-  }
-
-  // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
-  assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
-
-  for(i = 0; i < vps->getVpsNumRepFormats(); i++)
-  {
-    // Read rep_format_structures
-    parseRepFormat( vps->getVpsRepFormat(i), i > 0 ? vps->getVpsRepFormat(i-1) : 0 );
-  }
-
-  // Default assignment for layer 0
-  vps->setVpsRepFormatIdx( 0, 0 );
-  if( vps->getRepFormatIdxPresentFlag() )
-  {
-    for(i = 1; i < vps->getMaxLayers(); i++)
-    {
-      if( vps->getVpsNumRepFormats() > 1 )
-      {
-#if !VPS_EXTN_UEV_CODING
-        READ_CODE( 8, uiCode, "vps_rep_format_idx[i]" );
-#else
-        Int numBits = 1;
-        while ((1 << numBits) < (vps->getVpsNumRepFormats()))
-        {
-          numBits++;
-        }
-        READ_CODE( numBits, uiCode, "vps_rep_format_idx[i]" );
-#endif
-
-        vps->setVpsRepFormatIdx( i, uiCode );
-      }
-      else
-      {
-        // default assignment - only one rep_format() structure
-        vps->setVpsRepFormatIdx( i, 0 );
-      }
-    }
-  }
-  else
-  {
-    // default assignment - each layer assigned each rep_format() structure in the order signaled
-    for(i = 1; i < vps->getMaxLayers(); i++)
-    {
-      vps->setVpsRepFormatIdx( i, i );
-    }
-  }
-#endif
-#endif
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
