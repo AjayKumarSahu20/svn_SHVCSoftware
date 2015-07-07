@@ -956,11 +956,7 @@ Void      deriveNumberOfSubDpbs();
   Void    setNumRefLayers();
 #endif
 #if Q0078_ADD_LAYER_SETS
-#if FIX_LAYER_ID_INIT
   void    deriveLayerIdListVariablesForAddLayerSets();
-#else
-  void    setLayerIdIncludedFlagsForAddLayerSets();
-#endif
   UInt    getVpsNumLayerSetsMinus1()                                             { return m_vpsNumLayerSetsMinus1; }
   Void    setVpsNumLayerSetsMinus1(UInt x)                                       { m_vpsNumLayerSetsMinus1 = x; }
   UInt    getNumAddLayerSets()                                                   { return m_numAddLayerSets; }
