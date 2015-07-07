@@ -252,9 +252,9 @@ public:
   Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg );
   Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, Bool isTff );
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   TEncTop*  getRefLayerEnc(UInt refLayerIdx);
-#endif
+
 #if POC_RESET_IDC_ENCODER
   Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
   Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }

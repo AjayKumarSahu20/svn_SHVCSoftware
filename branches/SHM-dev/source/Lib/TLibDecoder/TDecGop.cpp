@@ -209,7 +209,6 @@ Void TDecGop::filterPicture(TComPic* pcPic)
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
       {
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
@@ -223,7 +222,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
       {
         printf ("%d", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex));
       }
-#endif
+
       if( pcSlice->getEnableTMVPFlag() && iRefList == 1 - pcSlice->getColFromL0Flag() && iRefIndex == pcSlice->getColRefIdx() )
       {
         printf( "c" );

@@ -51,14 +51,13 @@ protected:
 #if AUXILIARY_PICTURES
   Int       m_auxId;
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int       *m_samplePredRefLayerIds;
   Int       m_numSamplePredRefLayers;
   Int       *m_motionPredRefLayerIds;
   Int       m_numMotionPredRefLayers;
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
-#endif
 
 #if LAYER_CTB
   // coding unit (CU) definition
@@ -187,7 +186,8 @@ public:
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
-#if VPS_EXTN_DIRECT_REF_LAYERS
+#endif
+
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
   Int*    getSamplePredRefLayerIds()     {return m_samplePredRefLayerIds;    }
   Int     getSamplePredRefLayerId(Int i) {return m_samplePredRefLayerIds[i]; }
@@ -198,7 +198,7 @@ public:
   Int     getNumActiveRefLayers()     {return m_numActiveRefLayers;}
   Int*    getPredLayerIds()           {return m_predLayerIds;     }
   Int     getPredLayerIdx(Int i)      {return m_predLayerIds[i];  }
-#endif
+
 #if RC_SHVC_HARMONIZATION
   Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }
   Int     getRCTargetBitrate()        {return m_RCTargetBitrate;       }

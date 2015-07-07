@@ -142,12 +142,12 @@ private:
   Int                     m_iBLSourceHeight;
 #endif
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int                     m_numDirectRefLayers;
   Int                     m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Int                     m_numSamplePredRefLayers;
   Int                     m_numMotionPredRefLayers;
-#endif
+
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
 #if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    m_commonDecoderParams;
@@ -242,7 +242,7 @@ public:
   Void      setLayerDec                     (TDecTop **p)                   { m_ppcTDecTop = p;                }
   TDecTop*  getLayerDec                     (UInt layerId)                  { return m_ppcTDecTop[layerId];    }
   Void      xDeriveSmallestLayerId(TComVPS* vps);
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   TDecTop*  getRefLayerDec                  (UInt refLayerIdx);
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
   Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
@@ -257,7 +257,7 @@ public:
   Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
 
   Void      setRefLayerParams( TComVPS* vps );
-#endif
+
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
   fstream*  getBLReconFile() { return m_pBLReconFile; }

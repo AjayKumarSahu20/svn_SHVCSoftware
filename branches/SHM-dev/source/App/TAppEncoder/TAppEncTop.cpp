@@ -337,8 +337,7 @@ Void TAppEncTop::xInitLibCfg()
        m_acTEncTop[layer].setMaxTidIlRefPicsPlus1                         ( m_acLayerCfg[layer].getMaxTidIlRefPicsPlus1());
     }
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
-    if(layer)
+    if( layer )
     {
       UInt prevLayerIdx = 0;
       UInt prevLayerId  = 0;
@@ -441,7 +440,7 @@ Void TAppEncTop::xInitLibCfg()
       assert( layer == 0 );
       m_acTEncTop[layer].setNumDirectRefLayers(0);
     }
-#endif //VPS_EXTN_DIRECT_REF_LAYERS
+
     //===== Slice ========
 
     //====== Loop/Deblock Filter ========
@@ -1470,7 +1469,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 #endif
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
   Bool isDefaultDirectDependencyTypeSet = false;
@@ -1546,7 +1545,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setTreePartitionLayerIdList();
   vps->deriveLayerIdListVariablesForAddLayerSets();
 #endif
-#endif
+
 #if OUTPUT_LAYER_SETS_CONFIG
 
   vps->setDefaultTargetOutputLayerIdc( m_defaultTargetOutputLayerIdc ); // As per configuration file

@@ -2022,13 +2022,13 @@ TComVPS::TComVPS()
   ::memset(m_outputLayerSetIdx, 0, sizeof(m_outputLayerSetIdx));
   ::memset(m_outputLayerFlag, 0, sizeof(m_outputLayerFlag));
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   ::memset(m_directDependencyFlag, 0, sizeof(m_directDependencyFlag));
   ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));
   ::memset(m_refLayerId,           0, sizeof(m_refLayerId          ));
   m_directDepTypeLen = 2;
   ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
-#endif
+
 #if !NECESSARY_LAYER_FLAG
 #if DERIVE_LAYER_ID_LIST_VARIABLES
   ::memset(m_layerSetLayerIdList,  0, sizeof(m_layerSetLayerIdList));

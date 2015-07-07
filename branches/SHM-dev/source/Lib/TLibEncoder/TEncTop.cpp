@@ -623,11 +623,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
-#else
-          TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
@@ -689,11 +685,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           Bool equalOffsets = scalEL.hasEqualOffset(altRL);
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
-#else
-          TEncTop *pcEncTopBase = (TEncTop *)getLayerEnc( m_layerId-1 );
-#endif
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
@@ -1431,7 +1423,6 @@ Void  TEncCfg::xCheckGSParameters()
 }
 
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS
 TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
 {
   if( m_ppcTEncTop[m_cVPS.getLayerIdxInVps(m_layerId)]->getNumDirectRefLayers() <= 0 )
@@ -1441,7 +1432,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
 
   return (TEncTop *)getLayerEnc( m_cVPS.getLayerIdxInVps(m_cVPS.getRefLayerId( m_layerId, refLayerIdx )) );
 }
-#endif
 
 #if !REPN_FORMAT_IN_VPS
 Void TEncTop::xInitILRP()

@@ -1368,11 +1368,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         UInt refLayerIdc = pcSlice->getInterLayerPredLayerIdc(i);
         UInt refLayerId = pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc);
-#if VPS_EXTN_DIRECT_REF_LAYERS
         TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)]->getRefLayerEnc(refLayerIdc)->getListPic();
-#else
-        TComList<TComPic*> *cListPic = m_ppcTEncTop[pcSlice->getVPS()->getLayerIdxInVps(m_layerId)-1]->getListPic();
-#endif
+
         pcSlice->setBaseColPic( *cListPic, refLayerIdc );
 
         // Apply temporal layer restriction to inter-layer prediction
@@ -3873,7 +3870,6 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS
       if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR(m_layerId) )
       {
 #if POC_RESET_IDC_ENCODER
@@ -3895,7 +3891,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
         printf ("%d", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR());
 #endif
       }
-#endif
+
       if( pcSlice->getEnableTMVPFlag() && iRefList == 1 - pcSlice->getColFromL0Flag() && iRefIndex == pcSlice->getColRefIdx() )
       {
         printf( "c" );
