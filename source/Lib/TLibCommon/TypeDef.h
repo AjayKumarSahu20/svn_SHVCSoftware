@@ -50,7 +50,6 @@
 #define VPS_RESERVED_FLAGS               1      ///< vps_base_layer_internal_flag and vps_base_layer_available_flag
 #define VPS_VUI_VST_PARAMS               1      ///< JCTVC-R0227: Related to signalling of VST parameters of the base layer.
 #define VPS_VUI_OFFSET                   1      ///< N0085: Signal VPS VUI offset in the VPS extension 
-#define NESTING_SEI_EXTENSIBILITY        1      ///< R0221: Signalling the number of SEI messages in bitstream partition nesting SEI message
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
 #define OUTPUT_LAYER_SETS_CONFIG         1
@@ -256,6 +255,7 @@ enum AuxType
 # define MAX_OVERLAY_STRING_BYTES        256
 #endif
 #define P0123_ALPHA_CHANNEL_SEI          1      ///< JCTVC-P0123: SEI message for alpha channel information
+#define MAX_SEIS_IN_BSP_NESTING          64
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
@@ -315,10 +315,6 @@ enum AuxType
 
 #define MAX_NESTING_NUM_OPS                            1024
 #define MAX_NESTING_NUM_LAYER                            64
-
-#if NESTING_SEI_EXTENSIBILITY
-#define MAX_SEIS_IN_BSP_NESTING                          64
-#endif
 
 #if SVC_EXTENSION
 #define MAX_VPS_OP_LAYER_SETS_PLUS1          (MAX_LAYERS+1)
