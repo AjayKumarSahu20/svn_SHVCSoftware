@@ -634,14 +634,11 @@ private:
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
 #endif
-#if BITRATE_PICRATE_SIGNALLING
 #if Q0078_ADD_LAYER_SETS
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
 #else
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
-#endif
-    
   Bool       m_ilpSshSignalingEnabledFlag;
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling related
@@ -1004,10 +1001,8 @@ Void      deriveNumberOfSubDpbs();
   UInt   getLayerIdxInVps(Int layerId)                          { return m_layerIdxInVps[layerId];     }
   Void   setLayerIdxInVps(Int layerId, UInt layerIdx)           { m_layerIdxInVps[layerId] = layerIdx; }
 #endif
-#if BITRATE_PICRATE_SIGNALLING
   UInt   getMaxSLayersInLayerSetMinus1(Int ls)                  { return m_maxSLInLayerSetMinus1[ls]; }
   Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)           { m_maxSLInLayerSetMinus1[ls] = x;    }
-#endif
   Bool   getIlpSshSignalingEnabledFlag()                        { return m_ilpSshSignalingEnabledFlag;}
   Void   setIlpSshSignalingEnabledFlag(Bool x)                  { m_ilpSshSignalingEnabledFlag = x;}
 #if VPS_EXTN_PROFILE_INFO
