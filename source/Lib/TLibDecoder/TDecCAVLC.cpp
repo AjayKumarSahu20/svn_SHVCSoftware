@@ -3474,11 +3474,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
   else
   {
-#if VPS_VUI_VST_PARAMS
     vps->setNumVideoSignalInfo(vps->getMaxLayers() - vps->getBaseLayerInternalFlag() ? 0 : 1);
-#else
-    vps->setNumVideoSignalInfo(vps->getMaxLayers());
-#endif
   }
 
   for(i = 0; i < vps->getNumVideoSignalInfo(); i++)
@@ -3489,7 +3485,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     READ_CODE(8, uiCode, "transfer_characteristics_vps" ); vps->setTransCharacter(i,uiCode);
     READ_CODE(8, uiCode, "matrix_coeffs_vps" );vps->setMaxtrixCoeff(i,uiCode);
   }
-#if VPS_VUI_VST_PARAMS
+
   if( vps->getVideoSigPresentVpsFlag() && vps->getNumVideoSignalInfo() > 1 )
   {
     for(i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++)
@@ -3511,29 +3507,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       vps->setVideoSignalInfoIdx( i, 0 );
     }
   }
-#else
-  if(!vps->getVideoSigPresentVpsFlag())
-  {
-    for (i=0; i < vps->getMaxLayers(); i++)
-    {
-      vps->setVideoSignalInfoIdx(i,i);
-    }
-  }
-  else {
-    vps->setVideoSignalInfoIdx(0,0);
-    if (vps->getNumVideoSignalInfo() > 1 )
-    {
-      for (i=1; i < vps->getMaxLayers(); i++)
-        READ_CODE(4, uiCode, "vps_video_signal_info_idx" ); vps->setVideoSignalInfoIdx(i, uiCode);
-    }
-    else {
-      for (i=1; i < vps->getMaxLayers(); i++)
-      {
-        vps->setVideoSignalInfoIdx(i,0);
-      }
-    }
-  }
-#endif
+
 #endif 
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
   UInt layerIdx;
