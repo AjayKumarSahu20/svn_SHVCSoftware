@@ -1955,9 +1955,7 @@ TComVPS::TComVPS()
 , m_cprmsPresentFlag          (NULL)
 , m_maxLayerId                (0)
 , m_numLayerSets              (0)
-#if VPS_EXTN_OP_LAYER_SETS
 , m_numOutputLayerSets        (0)  
-#endif
 , m_numProfileTierLevel       (0)
 , m_numAddOutputLayerSets     (0)
 , m_defaultTargetOutputLayerIdc(0)
@@ -1996,14 +1994,12 @@ TComVPS::TComVPS()
 
   m_numScalabilityTypes = 0;
   ::memset(m_layerIdxInVps, 0, sizeof(m_layerIdxInVps));
-
   ::memset(m_profilePresentFlag, 0, sizeof(m_profilePresentFlag));
-#if VPS_EXTN_OP_LAYER_SETS
+
   ::memset(m_layerIdIncludedFlag, 0, sizeof(m_layerIdIncludedFlag));
   // Consider dynamic allocation for outputLayerSetIdx and outputLayerFlag
   ::memset(m_outputLayerSetIdx, 0, sizeof(m_outputLayerSetIdx));
   ::memset(m_outputLayerFlag, 0, sizeof(m_outputLayerFlag));
-#endif
 
   ::memset(m_directDependencyFlag, 0, sizeof(m_directDependencyFlag));
   ::memset(m_numDirectRefLayers,   0, sizeof(m_numDirectRefLayers  ));

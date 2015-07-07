@@ -814,9 +814,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
 #if SVC_EXTENSION
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_LAYER_SETS_PLUS1 );
   assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_IDX_PLUS1 );
-#if !VPS_EXTN_OP_LAYER_SETS     // num layer sets set in TAppEncTop.cpp
-  pcVPS->setNumLayerSets(1);
-#endif
+
   WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
 #if Q0078_ADD_LAYER_SETS
   WRITE_UVLC(pcVPS->getVpsNumLayerSetsMinus1(),                "vps_num_layer_sets_minus1");
@@ -828,6 +826,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
+    {
 #else
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS );
   assert( pcVPS->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1 );
@@ -838,9 +837,7 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxNuhReservedZeroLayerId(); i ++ )
-#endif
     {
-#if !VPS_EXTN_OP_LAYER_SETS     // layer Id include flag set in TAppEncTop.cpp
       // Only applicable for version 1
       pcVPS->setLayerIdIncludedFlag( true, opsIdx, i );
 #endif
