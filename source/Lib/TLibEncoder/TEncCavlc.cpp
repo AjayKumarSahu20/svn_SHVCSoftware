@@ -2288,17 +2288,11 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   assert( vps->getVpsNonVuiExtLength() >= 0 && vps->getVpsNonVuiExtLength() <= 4096 );
 
   WRITE_UVLC( vps->getVpsNonVuiExtLength(), "vps_non_vui_extension_length" );
-#if P0307_VPS_NON_VUI_EXT_UPDATE
-  for (i = 1; i <= vps->getVpsNonVuiExtLength(); i++)
+
+  for( i = 1; i <= vps->getVpsNonVuiExtLength(); i++ )
   {
     WRITE_CODE(1, 8, "vps_non_vui_extension_data_byte");
   }
-#else
-  if ( vps->getVpsNonVuiExtLength() > 0 )
-  {
-    printf("\n\nUp to the current spec, the value of vps_non_vui_extension_length is supposed to be 0\n");
-  }
-#endif
 
   vps->setVpsVuiPresentFlag(true);
   WRITE_FLAG( vps->getVpsVuiPresentFlag() ? 1 : 0,                     "vps_vui_present_flag" );
