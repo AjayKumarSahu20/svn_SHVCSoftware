@@ -3245,23 +3245,22 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
 #if VPS_EXTN_DIRECT_REF_LAYERS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
-#if O0096_DEFAULT_DEPENDENCY_TYPE
+
   READ_FLAG(uiCode, "default_direct_dependency_type_flag"); 
   vps->setDefaultDirectDependecyTypeFlag(uiCode == 1? true : false);
-  if (vps->getDefaultDirectDependencyTypeFlag())
+
+  if( vps->getDefaultDirectDependencyTypeFlag() )
   {
     READ_CODE( vps->getDirectDepTypeLen(), uiCode, "default_direct_dependency_type" ); 
     vps->setDefaultDirectDependecyType(uiCode);
   }
-#endif
 
   for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
   {
     for( j = vps->getBaseLayerInternalFlag() ? 0 : 1; j < i; j++ )
     {
-      if (vps->getDirectDependencyFlag(i, j))
+      if( vps->getDirectDependencyFlag(i, j) )
       {
-#if O0096_DEFAULT_DEPENDENCY_TYPE
         if (vps->getDefaultDirectDependencyTypeFlag())
         {
           vps->setDirectDependencyType(i, j, vps->getDefaultDirectDependencyType());
@@ -3271,10 +3270,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
           READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); 
           vps->setDirectDependencyType(i, j, uiCode);
         }
-#else
-        READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_type[i][j]" ); 
-        vps->setDirectDependencyType(i, j, uiCode);
-#endif
       }
     }
   }

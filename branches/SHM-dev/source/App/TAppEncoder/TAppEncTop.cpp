@@ -1475,9 +1475,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if VPS_EXTN_DIRECT_REF_LAYERS
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
-#if O0096_DEFAULT_DEPENDENCY_TYPE
   Bool isDefaultDirectDependencyTypeSet = false;
-#endif
   for (UInt layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     UInt layerId = vps->getLayerIdInNuh(layerCtr);
@@ -1509,7 +1507,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         assert(m_acTEncTop[layerCtr].getSamplePredEnabledFlag(numDirectRefLayers) || m_acTEncTop[layerCtr].getMotionPredEnabledFlag(numDirectRefLayers));
         vps->setDirectDependencyType(layerCtr, refLayerCtr, ((m_acTEncTop[layerCtr].getSamplePredEnabledFlag(numDirectRefLayers) ? 1 : 0) |
           (m_acTEncTop[layerCtr].getMotionPredEnabledFlag(numDirectRefLayers) ? 2 : 0)) - 1);
-#if O0096_DEFAULT_DEPENDENCY_TYPE
+
         if (!isDefaultDirectDependencyTypeSet)
         {
           vps->setDefaultDirectDependecyTypeFlag(1);
@@ -1520,7 +1518,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         {
           vps->setDefaultDirectDependecyTypeFlag(0);
         }
-#endif
+
         numDirectRefLayers ++;
       }
       else
