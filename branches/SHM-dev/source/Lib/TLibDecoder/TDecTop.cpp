@@ -606,7 +606,6 @@ Void TDecTop::xActivateParameterSets()
       assert( sps->getMaxDecPicBuffering(i) <= activeVPS->getMaxDecPicBuffering(i) );      
     }
 
-#if P0182_VPS_VUI_PS_FLAG
     UInt layerIdx = activeVPS->getLayerIdxInVps( m_layerId );
 
     if( activeVPS->getBaseLayerPSCompatibilityFlag(layerIdx) )
@@ -626,7 +625,6 @@ Void TDecTop::xActivateParameterSets()
       assert( repFormat->getConformanceWindowVps().getWindowTopOffset()    == sps->getConformanceWindow().getWindowTopOffset() );
       assert( repFormat->getConformanceWindowVps().getWindowBottomOffset() == sps->getConformanceWindow().getWindowBottomOffset() );
     }    
-#endif
   }
 
 #if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
