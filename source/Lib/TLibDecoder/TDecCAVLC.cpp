@@ -2867,12 +2867,8 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
 #if VPS_EXTN_PROFILE_INFO
   // Profile-tier-level signalling
-#if !VPS_EXTN_UEV_CODING
-  READ_CODE( 10, uiCode, "vps_number_layer_sets_minus1" );     assert( uiCode == (vps->getNumLayerSets() - 1) );
-  READ_CODE(  6, uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
-#else
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
-#endif
+
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
 #if !MULTIPLE_PTL_SUPPORT
   vps->getPTLForExtnPtr()->resize(vps->getNumProfileTierLevel());
@@ -2901,20 +2897,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 
-#if !VPS_EXTN_UEV_CODING
-  READ_FLAG( uiCode, "more_output_layer_sets_than_default_flag" ); vps->setMoreOutputLayerSetsThanDefaultFlag( uiCode ? true : false );
-  Int numOutputLayerSets = 0;
-  if(! vps->getMoreOutputLayerSetsThanDefaultFlag() )
-  {
-    numOutputLayerSets = vps->getNumLayerSets();
-  }
-  else
-  {
-    READ_CODE( 10, uiCode, "num_add_output_layer_sets" );          vps->setNumAddOutputLayerSets( uiCode );
-    numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
-  }
-#else
-
 #if Q0165_NUM_ADD_OUTPUT_LAYER_SETS
   if( vps->getNumLayerSets() > 1 )
   {
@@ -2933,7 +2915,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   assert( vps->getNumAddOutputLayerSets() >= 0 && vps->getNumAddOutputLayerSets() < 1024 );
 
   Int numOutputLayerSets = vps->getNumLayerSets() + vps->getNumAddOutputLayerSets();
-#endif
 
 #if P0295_DEFAULT_OUT_LAYER_IDC
 #if !Q0165_NUM_ADD_OUTPUT_LAYER_SETS

@@ -664,9 +664,6 @@ private:
   UInt       m_directDependencyType[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 
   UInt       m_numProfileTierLevel;
-#if !VPS_EXTN_UEV_CODING
-  Bool       m_moreOutputLayerSetsThanDefaultFlag;
-#endif
   Int        m_numAddOutputLayerSets;
 #if P0295_DEFAULT_OUT_LAYER_IDC
   UInt       m_defaultTargetOutputLayerIdc;
@@ -1032,12 +1029,6 @@ Void      deriveNumberOfSubDpbs();
 
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
-
-#if !VPS_EXTN_UEV_CODING
-  Bool   getMoreOutputLayerSetsThanDefaultFlag()                 { return m_moreOutputLayerSetsThanDefaultFlag;}
-  Void   setMoreOutputLayerSetsThanDefaultFlag(Bool x)           { m_moreOutputLayerSetsThanDefaultFlag = x   ;}
-#endif
-
   Int    getNumAddOutputLayerSets()                              { return m_numAddOutputLayerSets; }
   Void   setNumAddOutputLayerSets(Int x)                         { m_numAddOutputLayerSets = x   ; }
 
