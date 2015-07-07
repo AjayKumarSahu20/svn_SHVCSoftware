@@ -1315,9 +1315,7 @@ Void      deriveNumberOfSubDpbs();
   Void  deriveNecessaryLayerFlag(Int const olsIdx);
   Void  checkNecessaryLayerFlagCondition();
 #endif
-#if SUB_LAYERS_IN_LAYER_SET
   Void  calculateMaxSLInLayerSets();
-#endif
 #endif //SVC_EXTENSION
 };
 

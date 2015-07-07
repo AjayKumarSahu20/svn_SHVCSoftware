@@ -3154,7 +3154,6 @@ Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int&
     }
   }
 }
-#endif
 
 #if DERIVE_LAYER_ID_LIST_VARIABLES
 #if NECESSARY_LAYER_FLAG
@@ -3608,7 +3607,7 @@ Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
   return numBits;
 }
 #endif
-#if SUB_LAYERS_IN_LAYER_SET
+
 Void TComVPS::calculateMaxSLInLayerSets()
 {
   for(Int lsIdx = 0; lsIdx < getNumLayerSets(); lsIdx++)
@@ -3621,7 +3620,6 @@ Void TComVPS::calculateMaxSLInLayerSets()
     setMaxSLayersInLayerSetMinus1(lsIdx,maxSLMinus1);
   }
 }
-#endif
 
 #if REPN_FORMAT_IN_VPS
 UInt TComSlice::getPicWidthInLumaSamples()
@@ -3813,7 +3811,7 @@ Void TComPTL::copyProfileInfo(TComPTL *ptl)
 }
 #endif
 
-#if SVC_EXTENSION
+
 Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc )
 {  
   if(m_layerId == 0)
