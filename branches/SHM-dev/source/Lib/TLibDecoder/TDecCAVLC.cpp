@@ -1532,7 +1532,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
           }
           else
           {
-#if P0079_DERIVE_NUMACTIVE_REF_PICS
             for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ ) 
             {
               if( ( pcSlice->getVPS()->getMaxTidIlRefPicsPlus1(pcSlice->getVPS()->getLayerIdxInVps(i), pcSlice->getLayerIdx()) > pcSlice->getTLayer() || pcSlice->getTLayer()==0 ) &&
@@ -1542,9 +1541,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
                 break;
               }
             }
-#else
-            pcSlice->setActiveNumILRRefIdx(1);
-#endif 
           }
 
           if( pcSlice->getActiveNumILRRefIdx() == pcSlice->getNumILRRefIdx() )
