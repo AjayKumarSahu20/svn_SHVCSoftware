@@ -3563,7 +3563,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     assert( !vps->getHigherLayerIrapSkipFlag() );
   }
-#if N0160_VUI_EXT_ILP_REF
+
   READ_FLAG( uiCode, "ilp_restricted_ref_layers_flag" ); vps->setIlpRestrictedRefLayersFlag( uiCode == 1 );
   if( vps->getIlpRestrictedRefLayersFlag())
   {
@@ -3586,7 +3586,6 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
       }
     }
   }
-#endif
 
 #if O0164_MULTI_LAYER_HRD
   READ_FLAG(uiCode, "vps_vui_bsp_hrd_present_flag" ); vps->setVpsVuiBspHrdPresentFlag(uiCode);

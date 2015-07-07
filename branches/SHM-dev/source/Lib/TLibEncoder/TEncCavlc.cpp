@@ -2506,7 +2506,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 
   WRITE_FLAG(vps->getHigherLayerIrapSkipFlag(), "higher_layer_irap_skip_flag" );
 
-#if N0160_VUI_EXT_ILP_REF
   WRITE_FLAG( vps->getIlpRestrictedRefLayersFlag() ? 1 : 0 , "ilp_restricted_ref_layers_flag" );    
   if( vps->getIlpRestrictedRefLayersFlag())
   {
@@ -2531,7 +2530,6 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
       }  
     }
   }
-#endif 
 
 #if O0164_MULTI_LAYER_HRD
     WRITE_FLAG(vps->getVpsVuiBspHrdPresentFlag(), "vps_vui_bsp_hrd_present_flag" );
