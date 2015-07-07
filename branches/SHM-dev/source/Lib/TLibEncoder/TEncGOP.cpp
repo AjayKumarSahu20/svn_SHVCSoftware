@@ -2369,15 +2369,16 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if SVC_EXTENSION
       nalu = NALUnit(NAL_UNIT_SPS, 0, m_layerId);
+
+      if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
+      {
+        // For independent base layer rewriting
+        nalu.m_layerId = 0; 
+      }
 #else
       nalu = NALUnit(NAL_UNIT_SPS);
 #endif
-#if Q0078_ADD_LAYER_SETS
-      if (m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0)
-      {
-        nalu.m_layerId = 0; // For independent base layer rewriting
-      }
-#endif
+
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
       if (m_bSeqFirst)
       {
@@ -2414,15 +2415,16 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if SVC_EXTENSION
       nalu = NALUnit(NAL_UNIT_PPS, 0, m_layerId);
+
+      if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
+      {
+        // For independent base layer rewriting
+        nalu.m_layerId = 0;
+      }
 #else
       nalu = NALUnit(NAL_UNIT_PPS);
 #endif
-#if Q0078_ADD_LAYER_SETS
-      if (m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0)
-      {
-        nalu.m_layerId = 0; // For independent base layer rewriting
-      }
-#endif
+
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
 #if O0092_0094_DEPENDENCY_CONSTRAINT
       assert( pcSlice->getPPS()->getLayerId() == 0 || pcSlice->getPPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getLayerId()) );

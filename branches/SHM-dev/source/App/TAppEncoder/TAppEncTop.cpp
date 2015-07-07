@@ -803,9 +803,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setCGSLutSizeRDO                          ( m_nCGSLutSizeRDO );
 #endif
 #endif
-#if Q0078_ADD_LAYER_SETS
     m_acTEncTop[layer].setNumAddLayerSets                        ( m_numAddLayerSets );
-#endif
   }
 }
 #else //SVC_EXTENSION
@@ -1255,8 +1253,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setMaxLayerId( m_acLayerCfg[m_numLayers - 1].m_layerId );
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
-#if Q0078_ADD_LAYER_SETS
-  if (m_numLayerSets > 1)
+  if( m_numLayerSets > 1 )
   {
     vps->setNumLayerSets(m_numLayerSets);
 
@@ -1289,7 +1286,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   else
   {
     // Default layer sets
-#endif
     vps->setNumLayerSets(m_numLayers);
     for (Int setId = 1; setId < vps->getNumLayerSets(); setId++)
     {
@@ -1314,14 +1310,13 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         }
       }
     }
-#if Q0078_ADD_LAYER_SETS
   }
-#endif
-#if Q0078_ADD_LAYER_SETS
+
   vps->setVpsNumLayerSetsMinus1(vps->getNumLayerSets() - 1);
   vps->setNumAddLayerSets(m_numAddLayerSets);
   vps->setNumLayerSets(vps->getNumLayerSets() + vps->getNumAddLayerSets());
-  if (m_numAddLayerSets > 0)
+
+  if( m_numAddLayerSets > 0 )
   {
     for (Int setId = 0; setId < m_numAddLayerSets; setId++)
     {
@@ -1331,7 +1326,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
-#endif
 
 #if AVC_BASE
   vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
@@ -1493,11 +1487,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
   // The Layer ID List variables should be derived here.
   vps->deriveLayerIdListVariables();
-#if Q0078_ADD_LAYER_SETS
   vps->setPredictedLayerIds();
   vps->setTreePartitionLayerIdList();
   vps->deriveLayerIdListVariablesForAddLayerSets();
-#endif
 
   vps->setDefaultTargetOutputLayerIdc( m_defaultTargetOutputLayerIdc ); // As per configuration file
 
@@ -1537,21 +1529,16 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     for( UInt layer = 0; layer < vps->getNumLayersInIdList(lsIdx); layer++ )
     {
-#if !Q0078_ADD_LAYER_SETS  // the following condition is incorrect and is not needed anyway
-      if( vps->getLayerIdIncludedFlag(lsIdx, layer) )      
-#endif
+      switch( vps->getDefaultTargetOutputLayerIdc() )
       {
-        switch(vps->getDefaultTargetOutputLayerIdc())
-        {
-        case 0: vps->setOutputLayerFlag( lsIdx, layer, 1 );
-          break;
-        case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
-          break;
-        case 2:
-        case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
-                  : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
-          break;
-        }
+      case 0: vps->setOutputLayerFlag( lsIdx, layer, 1 );
+        break;
+      case 1: vps->setOutputLayerFlag( lsIdx, layer, layer == vps->getNumLayersInIdList(lsIdx) - 1 );
+        break;
+      case 2:
+      case 3: vps->setOutputLayerFlag( lsIdx, layer, (layer != vps->getNumLayersInIdList(lsIdx) - 1) ? std::find( m_listOfOutputLayers[lsIdx].begin(), m_listOfOutputLayers[lsIdx].end(), m_layerSetLayerIdList[lsIdx][layer]) != m_listOfOutputLayers[lsIdx].end() 
+                : m_listOfOutputLayers[lsIdx][m_listOfOutputLayers[lsIdx].size()-1] == m_layerSetLayerIdList[lsIdx][layer] );
+        break;
       }
     }
   }
@@ -1615,15 +1602,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
-    for(i = 1; i< vps->getMaxLayers(); i++)
+    for( i = 1; i< vps->getMaxLayers(); i++ )
     {
       if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
       {
-#if Q0078_ADD_LAYER_SETS
-        vps->setPocLsbNotPresentFlag(i, true); // make independedent layers base-layer compliant
-#else
-        vps->setPocLsbNotPresentFlag(i, false);
-#endif
+        // make independedent layers base-layer compliant
+        vps->setPocLsbNotPresentFlag(i, true); 
       }
     }
 #endif
@@ -1738,11 +1722,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   if( pcCfg->getBufferingPeriodSEIEnabled() )
   {
     vps->setVpsVuiBspHrdPresentFlag(true);
-#if Q0078_ADD_LAYER_SETS
     vps->setVpsNumBspHrdParametersMinus1(vps->getVpsNumLayerSetsMinus1() - 1); 
-#else
-    vps->setVpsNumBspHrdParametersMinus1(vps->getNumLayerSets() - 2); 
-#endif
     vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
     for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
     {
@@ -1775,11 +1755,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->getBspHrd(i)->setNumDU( numDU );
       vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
     }
-#if Q0078_ADD_LAYER_SETS
     for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
-#else
-    for(UInt h = 1; h <= (vps->getNumLayerSets()-1); h++)
-#endif
     {
       vps->setNumBitstreamPartitions(h, 1);
       for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )

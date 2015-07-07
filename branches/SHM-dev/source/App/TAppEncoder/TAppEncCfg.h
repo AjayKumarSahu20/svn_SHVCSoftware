@@ -72,14 +72,14 @@ protected:
   Int       m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
 #endif
   Bool      m_maxTidRefPresentFlag; 
-#if Q0078_ADD_LAYER_SETS
+
   Int       m_numLayerSets;
+  Int       m_numAddLayerSets;
   Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
   Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-  Int       m_numAddLayerSets;
   Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
+
   Int       m_defaultTargetOutputLayerIdc;
   Int       m_numOutputLayerSets;
   std::vector<Int>                m_outputLayerSetIdx;

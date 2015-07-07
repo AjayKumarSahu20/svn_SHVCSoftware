@@ -934,13 +934,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
 #endif
   }
-#if Q0078_ADD_LAYER_SETS
+
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
   string cfg_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1];
   string* cfg_layerSetLayerIdListPtr[MAX_VPS_LAYER_SETS_PLUS1];
   Int* cfg_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
   string cfg_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
   string* cfg_highestLayerIdxPtr[MAX_VPS_LAYER_SETS_PLUS1];
+
   for (UInt i = 0; i < MAX_VPS_LAYER_SETS_PLUS1; i++)
   {
     cfg_numLayerInIdList[i] = &m_numLayerInIdList[i];
@@ -948,7 +949,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_highestLayerIdxPtr[i] = &cfg_highestLayerIdx[i];
     cfg_numHighestLayerIdx[i] = &m_numHighestLayerIdx[i];
   }
-#endif
+
   string* cfg_numOutputLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
@@ -1058,14 +1059,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PredLayerIds%d",                                cfg_predLayerIdsPtr,                string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
 
   ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")  
-#if Q0078_ADD_LAYER_SETS
+
   ("NumLayerSets",                                  m_numLayerSets,                                          1, "Number of layer sets")
   ("NumLayerInIdList%d",                            cfg_numLayerInIdList,            0, MAX_VPS_LAYER_IDX_PLUS1, "Number of layers in the set")
   ("LayerSetLayerIdList%d",                         cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set")
   ("NumAddLayerSets",                               m_numAddLayerSets,                                       0, "Number of additional layer sets")
   ("NumHighestLayerIdx%d",                          cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of highest layer idx")
   ("HighestLayerIdx%d",                             cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Highest layer idx for an additional layer set")
-#endif
+
   ("DefaultTargetOutputLayerIdc",                   m_defaultTargetOutputLayerIdc,                           1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
   ("NumOutputLayerSets",                            m_numOutputLayerSets,                                    1, "Number of output layer sets excluding the 0-th output layer set")
   ("NumOutputLayersInOutputLayerSet",               cfg_numOutputLayersInOutputLayerSet,         string(""), 1, "List containing number of output layers in the output layer sets")
@@ -2428,23 +2429,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   } //for(Int layer = 0; layer < MAX_LAYERS; layer++)
 
-#if Q0078_ADD_LAYER_SETS
   for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
   {
     // Simplifying the code in the #else section, and allowing 0-th layer set t
     assert( scanStringToArray( cfg_layerSetLayerIdList[layerSet], m_numLayerInIdList[layerSet], "NumLayerInIdList", m_layerSetLayerIdList[layerSet] ) );
   }
+
   for (Int addLayerSet = 0; addLayerSet < m_numAddLayerSets; addLayerSet++)
   {
     // Simplifying the code in the #else section
     assert( scanStringToArray( cfg_highestLayerIdx[addLayerSet], m_numHighestLayerIdx[addLayerSet], "HighestLayerIdx", m_highestLayerIdx[addLayerSet] ) );
   }
-#endif
 
   if( m_defaultTargetOutputLayerIdc != -1 )
   {
     assert( m_defaultTargetOutputLayerIdc >= 0 && m_defaultTargetOutputLayerIdc <= 3 );
   }
+
   assert( m_numOutputLayerSets != 0 );
   assert( m_numOutputLayerSets >= m_numLayerSets + m_numAddLayerSets ); // Number of output layer sets must be at least as many as layer sets.
 

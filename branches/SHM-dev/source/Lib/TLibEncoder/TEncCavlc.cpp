@@ -816,13 +816,9 @@ Void TEncCavlc::codeVPS( TComVPS* pcVPS )
   assert( pcVPS->getMaxLayerId() < MAX_VPS_LAYER_IDX_PLUS1 );
 
   WRITE_CODE( pcVPS->getMaxLayerId(), 6,                       "vps_max_layer_id" );
-#if Q0078_ADD_LAYER_SETS
   WRITE_UVLC(pcVPS->getVpsNumLayerSetsMinus1(),                "vps_num_layer_sets_minus1");
-  for (UInt opsIdx = 1; opsIdx <= pcVPS->getVpsNumLayerSetsMinus1(); opsIdx++)
-#else
-  WRITE_UVLC( pcVPS->getNumLayerSets() - 1,                 "vps_num_layer_sets_minus1" );
-  for (UInt opsIdx = 1; opsIdx <= (pcVPS->getNumLayerSets() - 1); opsIdx++)
-#endif
+
+  for( UInt opsIdx = 1; opsIdx <= pcVPS->getVpsNumLayerSetsMinus1(); opsIdx++ )
   {
     // Operation point set
     for( UInt i = 0; i <= pcVPS->getMaxLayerId(); i ++ )
@@ -2070,16 +2066,16 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 
-#if Q0078_ADD_LAYER_SETS
-  if (vps->getNumIndependentLayers() > 1)
+  if( vps->getNumIndependentLayers() > 1 )
   {
     WRITE_UVLC( vps->getNumAddLayerSets(), "num_add_layer_sets" );
-    for (i = 0; i < vps->getNumAddLayerSets(); i++)
+
+    for( i = 0; i < vps->getNumAddLayerSets(); i++ )
     {
-      for (j = 1; j < vps->getNumIndependentLayers(); j++)
+      for( j = 1; j < vps->getNumIndependentLayers(); j++ )
       {
-        int len = 1;
-        while ((1 << len) < (vps->getNumLayersInTreePartition(j) + 1))
+        Int len = 1;
+        while( (1 << len) < (vps->getNumLayersInTreePartition(j) + 1) )
         {
           len++;
         }
@@ -2087,7 +2083,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
-#endif
 
   WRITE_FLAG( vps->getMaxTSLayersPresentFlag(), "vps_sub_layers_max_minus1_present_flag");
   if( vps->getMaxTSLayersPresentFlag() )
@@ -2161,13 +2156,10 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
       WRITE_CODE( vps->getOutputLayerSetIdx(i) - 1, numBits, "layer_set_idx_for_ols_minus1"); 
     }
-#if Q0078_ADD_LAYER_SETS
-    if ( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
-#else
-    if ( i > (vps->getNumLayerSets() - 1) || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
-#endif
+
+    if( i > vps->getVpsNumLayerSetsMinus1() || vps->getDefaultTargetOutputLayerIdc() >= 2 ) //Instead of == 2, >= 2 is used to follow the agreement that value 3 should be interpreted as 2
     {
-      for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet) ; j++ )
+      for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
       {
         WRITE_FLAG( vps->getOutputLayerFlag(i,j), "output_layer_flag[i][j]");
       }
@@ -2391,11 +2383,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 
   if( vps->getBitRatePresentVpsFlag() || vps->getPicRatePresentVpsFlag() )
   {
-#if Q0078_ADD_LAYER_SETS
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getNumLayerSets(); i++ )
-#else
-    for( i = 0; i < vps->getNumLayerSets(); i++ )
-#endif
     {
       for( j = 0; j <= vps->getMaxSLayersInLayerSetMinus1(i); j++ )
       {
@@ -2403,15 +2391,18 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         {
           WRITE_FLAG( vps->getBitRatePresentFlag( i, j),        "bit_rate_present_flag[i][j]" );
         }
+
         if( vps->getPicRatePresentVpsFlag() )
         {
           WRITE_FLAG( vps->getPicRatePresentFlag( i, j),        "pic_rate_present_flag[i][j]" );
         }
+
         if( vps->getBitRatePresentFlag(i, j) )
         {
           WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "avg_bit_rate[i][j]" );
           WRITE_CODE( vps->getAvgBitRate( i, j ), 16, "max_bit_rate[i][j]" );
         }
+
         if( vps->getPicRatePresentFlag(i, j) )
         {
           WRITE_CODE( vps->getConstPicRateIdc( i, j), 2 , "constant_pic_rate_idc[i][j]" ); 
@@ -2538,11 +2529,7 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
         }
         codeHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
       }
-#if Q0078_ADD_LAYER_SETS
       for( UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++ )
-#else
-      for( UInt h = 1; h <= (vps->getNumLayerSets()-1); h++ )
-#endif
       {
         WRITE_UVLC( vps->getNumBitstreamPartitions(h), "num_bitstream_partitions[i]");
         for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )

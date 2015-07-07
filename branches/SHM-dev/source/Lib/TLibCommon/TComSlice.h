@@ -595,21 +595,15 @@ private:
 #if MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTLList[MAX_NUM_LAYER_IDS + 1];
 #endif
-#if Q0078_ADD_LAYER_SETS
+
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
   std::vector<Int>                    m_numLayerInIdList;
-#else
-  Int         m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-  Int         m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
-#endif
+
   UInt        m_maxLayerId;
   UInt        m_numLayerSets;
-#if Q0078_ADD_LAYER_SETS
+
   UInt        m_vpsNumLayerSetsMinus1;
   Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
-#else
-  Bool        m_layerIdIncludedFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 
   // ------------------------------------------
   // Variables related to VPS extensions
@@ -625,12 +619,7 @@ private:
   // Below are derived variables
   UInt       m_numScalabilityTypes;
   UInt       m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
-
-#if Q0078_ADD_LAYER_SETS
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
-#else
-  UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
-#endif
   Bool       m_ilpSshSignalingEnabledFlag;
 
   // Profile-tier-level signalling related
@@ -641,14 +630,8 @@ private:
 
   // Target output layer signalling related
   UInt       m_numOutputLayerSets;
-#if Q0078_ADD_LAYER_SETS
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
   Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
-#else
-  UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
-  Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
-
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
@@ -708,11 +691,7 @@ private:
   Int        m_constPicRateIdc     [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
   Int        m_avgPicRate          [MAX_VPS_LAYER_SETS_PLUS1][MAX_TLAYER];
 
-#if Q0078_ADD_LAYER_SETS
   Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
-#else
-  Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1];
-#endif
 
 #if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
@@ -733,7 +712,6 @@ private:
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 #endif
-#if Q0078_ADD_LAYER_SETS
   Int        m_numAddLayerSets;
   UInt       m_highestLayerIdxPlus1[MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
   UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
@@ -741,7 +719,7 @@ private:
   Int        m_numIndependentLayers;
   Int        m_numLayersInTreePartition[MAX_LAYERS];
   UInt       m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
-#endif
+
   Int        m_TolsIdx;
 #if VPS_DPB_SIZE_TABLE
   Bool       m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
@@ -749,11 +727,7 @@ private:
   Int        m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
   Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
-#if Q0078_ADD_LAYER_SETS
   Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
-#else
-  Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1];
-#endif
 #endif
 
   Bool       m_vpsVuiPresentFlag;
@@ -904,7 +878,7 @@ Void      deriveNumberOfSubDpbs();
   Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
   Void    setNumRefLayers();
 #endif
-#if Q0078_ADD_LAYER_SETS
+
   void    deriveLayerIdListVariablesForAddLayerSets();
   UInt    getVpsNumLayerSetsMinus1()                                             { return m_vpsNumLayerSetsMinus1; }
   Void    setVpsNumLayerSetsMinus1(UInt x)                                       { m_vpsNumLayerSetsMinus1 = x; }
@@ -924,7 +898,7 @@ Void      deriveNumberOfSubDpbs();
   Void    setNumLayersInTreePartition(Int idx, Int x)                            { m_numLayersInTreePartition[idx] = x; }
   UInt    getTreePartitionLayerId(Int idx, Int layerIdx)                         { return m_treePartitionLayerIdList[idx][layerIdx]; }
   Void    setTreePartitionLayerId(Int idx, Int layerIdx, UInt layerId)           { m_treePartitionLayerIdList[idx][layerIdx] = layerId; }
-#endif
+
   UInt    getMaxLayerId()                                       { return m_maxLayerId;   }
   Void    setMaxLayerId(UInt v)                                 { m_maxLayerId = v;      }
   UInt    getNumLayerSets()                                     { return m_numLayerSets; }

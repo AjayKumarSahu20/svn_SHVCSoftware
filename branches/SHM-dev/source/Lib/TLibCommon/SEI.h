@@ -41,7 +41,7 @@
 
 #include "TypeDef.h"
 #include "libmd5/MD5.h"
-#if Q0078_ADD_LAYER_SETS
+#if SVC_EXTENSION
 #include "TLibCommon/NAL.h"
 #endif
 

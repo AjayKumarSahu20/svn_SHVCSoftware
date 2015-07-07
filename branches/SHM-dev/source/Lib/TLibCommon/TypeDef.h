@@ -129,7 +129,6 @@
 #define MAX_REF_LAYERS                   7
 #endif
 
-#define Q0078_ADD_LAYER_SETS             1      ///< JCTVC-Q0078: additional layer sets and layer set config
 #define MULTIPLE_PTL_SUPPORT             1      ///< Profile, tier and level signalling
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters

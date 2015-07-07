@@ -3218,7 +3218,6 @@ Void TComVPS::setNumRefLayers()
 }
 #endif
 
-#if Q0078_ADD_LAYER_SETS
 Void TComVPS::setPredictedLayerIds()
 {
   for (UInt i = 0; i < m_uiMaxLayers - 1; i++)
@@ -3287,7 +3286,6 @@ Void TComVPS::deriveLayerIdListVariablesForAddLayerSets()
     m_numLayerInIdList.push_back(layerNum);
   }
 }
-#endif
 
 #if VIEW_ID_RELATED_SIGNALING 
 Int TComVPS::getNumViews()
