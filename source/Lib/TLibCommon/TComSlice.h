@@ -638,8 +638,7 @@ private:
 #if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>    m_pcPTLForExtn;  
 #endif
-#if VPS_EXTN_OP_LAYER_SETS
-  // .. More declarations here
+
   // Target output layer signalling related
   UInt       m_numOutputLayerSets;
 #if Q0078_ADD_LAYER_SETS
@@ -648,7 +647,6 @@ private:
 #else
   UInt       m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1];
   Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 #endif
 
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
@@ -971,7 +969,6 @@ Void      deriveNumberOfSubDpbs();
   std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
   TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
 #endif
-#if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling related
   UInt   getNumOutputLayerSets()                                { return m_numOutputLayerSets;     } 
   Void   setNumOutputLayerSets(Int x)                           { m_numOutputLayerSets = x;        }
@@ -981,7 +978,6 @@ Void      deriveNumberOfSubDpbs();
 
   Bool   getOutputLayerFlag(Int layerSet, Int layerIdx)          { return m_outputLayerFlag[layerSet][layerIdx]; }
   Void   setOutputLayerFlag(Int layerSet, Int layerIdx, Bool x)  { m_outputLayerFlag[layerSet][layerIdx] = x;    }
-#endif
 
   // Direct dependency of layers
   Bool   getDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx)             { return m_directDependencyFlag[currLayerIdx][refLayerIdx]; }

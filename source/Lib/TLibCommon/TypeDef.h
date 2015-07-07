@@ -108,8 +108,6 @@
 
 #define P0297_VPS_POC_LSB_ALIGNED_FLAG   1      ///< JCTVC-P0297: vps_poc_lsb_aligned_flag for cross-layer POC anchor picture derivation
 
-#define VPS_EXTN_OP_LAYER_SETS           1      ///< Include output layer sets in VPS extension
-
 #define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 #define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
 

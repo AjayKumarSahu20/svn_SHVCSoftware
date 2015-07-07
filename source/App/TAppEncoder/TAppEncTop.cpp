@@ -1251,9 +1251,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     m_acTEncTop[layer].init(isFieldCoding);
   }
 
-#if VPS_EXTN_OP_LAYER_SETS
-  vps->setMaxLayerId( m_acLayerCfg[m_numLayers - 1].m_layerId );    // Set max-layer ID
-
+  // Set max-layer ID
+  vps->setMaxLayerId( m_acLayerCfg[m_numLayers - 1].m_layerId );
   vps->setVpsExtensionFlag( m_numLayers > 1 ? true : false );
 
 #if Q0078_ADD_LAYER_SETS
@@ -1523,7 +1522,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setOutputLayerSetIdx(olsCtr, m_outputLayerSetIdx[olsCtr - vps->getNumLayerSets()]);
     }
   }
-#endif
+
   // Target output layer
 #if VPS_DPB_SIZE_TABLE
   vps->deriveNumberOfSubDpbs();
