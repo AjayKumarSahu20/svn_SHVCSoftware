@@ -1474,17 +1474,17 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 
-#if O0092_0094_DEPENDENCY_CONSTRAINT
+  // dependency constraint
   vps->setNumRefLayers();
 
-  if (vps->getMaxLayers() > MAX_REF_LAYERS)
+  if( vps->getMaxLayers() > MAX_REF_LAYERS )
   {
-    for (UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+    for( UInt layerCtr = 1; layerCtr <= vps->getMaxLayers() - 1; layerCtr++ )
     {
       assert(vps->getNumRefLayers(vps->getLayerIdInNuh(layerCtr)) <= MAX_REF_LAYERS);
     }
   }
-#endif
+
   // The Layer ID List variables should be derived here.
   vps->deriveLayerIdListVariables();
   vps->setPredictedLayerIds();

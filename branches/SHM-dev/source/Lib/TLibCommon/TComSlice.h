@@ -708,10 +708,9 @@ private:
   Int        m_viewIdVal                [MAX_LAYERS];
 #endif
 
-#if O0092_0094_DEPENDENCY_CONSTRAINT
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
-#endif
+
   Int        m_numAddLayerSets;
   UInt       m_highestLayerIdxPlus1[MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
   UInt       m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
@@ -871,13 +870,11 @@ public:
 Void      deriveNumberOfSubDpbs();
 #endif
 
-#if O0092_0094_DEPENDENCY_CONSTRAINT
   Void    setRefLayersFlags(Int currLayerId);
   Bool    getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId)              { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
   Void    setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)      { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
   Int     getNumRefLayers(Int currLayerId)                                       { return m_numberRefLayers[currLayerId];                  }
   Void    setNumRefLayers();
-#endif
 
   void    deriveLayerIdListVariablesForAddLayerSets();
   UInt    getVpsNumLayerSetsMinus1()                                             { return m_vpsNumLayerSetsMinus1; }

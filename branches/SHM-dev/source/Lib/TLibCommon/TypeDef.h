@@ -124,11 +124,6 @@
 
 #define O0062_POC_LSB_NOT_PRESENT_FLAG   1      ///< JCTVC-O0062: signal poc_lsb_not_present_flag for each layer in VPS extension
 
-#define O0092_0094_DEPENDENCY_CONSTRAINT 1      ///< JCTVC-O0092: constraint on the layer_id of SPS/PPS
-#if O0092_0094_DEPENDENCY_CONSTRAINT
-#define MAX_REF_LAYERS                   7
-#endif
-
 #define MULTIPLE_PTL_SUPPORT             1      ///< Profile, tier and level signalling
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
@@ -202,6 +197,7 @@ enum AuxType
 #define MAX_NUM_ADD_LAYER_SETS           1023
 #define MAX_SEIS_IN_BSP_NESTING          64
 #define MAX_VPS_NUM_SCALABILITY_TYPES    16
+#define MAX_REF_LAYERS                   7
 
 #endif // SVC_EXTENSION
 #define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
