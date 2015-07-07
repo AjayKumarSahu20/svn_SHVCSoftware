@@ -226,12 +226,8 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (TComSPS *sps)
   SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
   seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId();
   seiActiveParameterSets->m_selfContainedCvsFlag = false;
-  seiActiveParameterSets->m_noParameterSetUpdateFlag = false;
-#if !R0247_SEI_ACTIVE
-  seiActiveParameterSets->numSpsIdsMinus1 = 0;
-  seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-  seiActiveParameterSets->activeSeqParameterSetId[0] = sps->getSPSId();
-#else
+  seiActiveParameterSets->m_noParameterSetUpdateFlag = false;  
+#if R0247_SEI_ACTIVE
   seiActiveParameterSets->numSpsIdsMinus1 = m_pcCfg->getNumLayer()-1;
   seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
   seiActiveParameterSets->layerSpsIdx.resize(seiActiveParameterSets->numSpsIdsMinus1+ 1);  
@@ -243,6 +239,10 @@ SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (TComSPS *sps)
   {
      seiActiveParameterSets->layerSpsIdx[c] = c;
   }
+#else
+  seiActiveParameterSets->numSpsIdsMinus1 = 0;
+  seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
+  seiActiveParameterSets->activeSeqParameterSetId[0] = sps->getSPSId();
 #endif
   return seiActiveParameterSets;
 }

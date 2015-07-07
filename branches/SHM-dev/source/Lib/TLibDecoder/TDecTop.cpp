@@ -2083,17 +2083,18 @@ Void TDecTop::xDecodePPS()
 
 Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType )
 {
-#if SVC_EXTENSION
   if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
   {
+#if SVC_EXTENSION
     if (m_prevSliceSkipped) // No need to decode SEI messages of a skipped access unit
     {
       return;
     }
+#endif
 #if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
 #else
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
+    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream );
 #endif
   }
   else
@@ -2101,20 +2102,13 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
 #if LAYERS_NOT_PRESENT_SEI
     m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
 #else
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
+    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream );
 #endif
     SEIMessages activeParamSets = getSeisByType(m_SEIs, SEI::ACTIVE_PARAMETER_SETS);
     if (activeParamSets.size()>0)
     {
       SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
-#if !R0247_SEI_ACTIVE
-      m_parameterSetManagerDecoder.applyPrefetchedPS();
-      assert(seiAps->activeSeqParameterSetId.size()>0);
-      if( !m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
-      {
-        printf ("Warning SPS activation with Active parameter set SEI failed");
-      }
-#else
+#if R0247_SEI_ACTIVE
       getLayerDec(0)->m_parameterSetManagerDecoder.applyPrefetchedPS();
       assert(seiAps->activeSeqParameterSetId.size()>0);
       if( !getLayerDec(0)->m_parameterSetManagerDecoder.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
@@ -2130,39 +2124,16 @@ Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType 
           printf ("Warning SPS activation with Active parameter set SEI failed");
         }
       }
-#endif
-    }
-  }
 #else
-  if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
-  {
-#if LAYERS_NOT_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
-#else
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream );
-
-#endif
-  }
-  else
-  {
-#if LAYERS_NOT_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveVPS(), m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream  );
-#else
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManagerDecoder.getActiveSPS(), m_pDecodedSEIOutputStream );
-#endif
-    SEIMessages activeParamSets = getSeisByType(m_SEIs, SEI::ACTIVE_PARAMETER_SETS);
-    if (activeParamSets.size()>0)
-    {
-      SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
       m_parameterSetManagerDecoder.applyPrefetchedPS();
       assert(seiAps->activeSeqParameterSetId.size()>0);
       if (! m_parameterSetManagerDecoder.activateSPSWithSEI(seiAps->activeSeqParameterSetId[0] ))
       {
         printf ("Warning SPS activation with Active parameter set SEI failed");
       }
+#endif
     }
   }
-#endif
 }
 
 #if SVC_EXTENSION
