@@ -3206,7 +3206,6 @@ Void TComVPS::deriveLayerIdListVariables()
 Void TComVPS::deriveNumberOfSubDpbs()
 {
   // Derive number of sub-DPBs
-#if CHANGE_NUMSUBDPB_IDX
   // For layer set 0
   m_numSubDpbs[0] = 1;
   // For other layer sets
@@ -3214,15 +3213,6 @@ Void TComVPS::deriveNumberOfSubDpbs()
   {
     m_numSubDpbs[i] = m_numLayerInIdList[i];
   }
-#else
-  // For output layer set 0
-  setNumSubDpbs(0, 1);
-  // For other output layer sets
-  for( Int i = 1; i < getNumOutputLayerSets(); i++)
-  {
-    setNumSubDpbs( i, getNumLayersInIdList( getOutputLayerSetIdx(i)) );
-  }
-#endif
 }
 #endif
 #if VPS_VUI_TILES_NOT_IN_USE__FLAG
@@ -3438,11 +3428,8 @@ Void TComVPS::determineSubDpbInfoFlags()
         checkFlagInner[j] = false;    // Initialize to be false. If the values of the current sub-layers matches with the earlier sub-layer, 
                                       // then will be continue to be false - i.e. the j-th sub-layer DPB info is not signaled
         checkFlagInner[j] |= ( getMaxVpsNumReorderPics(i, j) != getMaxVpsNumReorderPics(i, j - 1) );
-#if CHANGE_NUMSUBDPB_IDX
+
         for(Int subDpbIdx = 0; subDpbIdx < getNumSubDpbs(layerSetIdxForOutputLayerSet) && !checkFlagInner[j]; subDpbIdx++)  // If checkFlagInner[j] is true, break and signal the values
-#else
-        for(Int k = 0; k < getNumSubDpbs(i) && !checkFlagInner[j]; k++)  // If checkFlagInner[j] is true, break and signal the values
-#endif
         {
           checkFlagInner[j] |= ( getMaxVpsDecPicBufferingMinus1(i, subDpbIdx, j - 1) != getMaxVpsDecPicBufferingMinus1(i, subDpbIdx, j) );
         }

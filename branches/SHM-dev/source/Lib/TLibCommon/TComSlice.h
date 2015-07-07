@@ -786,14 +786,10 @@ private:
   Int        m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
   Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
-#if CHANGE_NUMSUBDPB_IDX
 #if Q0078_ADD_LAYER_SETS
   Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
 #else
   Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1];
-#endif
-#else
-  Int        m_numSubDpbs                  [MAX_VPS_OP_LAYER_SETS_PLUS1];
 #endif
 #endif
 
