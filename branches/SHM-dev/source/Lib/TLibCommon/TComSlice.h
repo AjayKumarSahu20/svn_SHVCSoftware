@@ -243,7 +243,7 @@ public:
   Bool getLowerBitRateConstraintFlag() const       { return m_lowerBitRateConstraintFlag; }
   Void setLowerBitRateConstraintFlag(Bool b)       { m_lowerBitRateConstraintFlag = b; }
 
-#if VPS_EXTN_PROFILE_INFO
+#if SVC_EXTENSION
   Void copyProfileInfo(ProfileTierLevel *ptl);
 #endif
 };
@@ -267,7 +267,7 @@ public:
   ProfileTierLevel* getGeneralPTL()  { return &m_generalPTL; }
   ProfileTierLevel* getSubLayerPTL(Int i)  { return &m_subLayerPTL[i]; }
 
-#if VPS_EXTN_PROFILE_INFO
+#if SVC_EXTENSION
   Void copyProfileInfo(TComPTL *ptl);
 #endif
 };
@@ -632,12 +632,11 @@ private:
   UInt       m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1];
 #endif
   Bool       m_ilpSshSignalingEnabledFlag;
-#if VPS_EXTN_PROFILE_INFO
+
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
 #if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>    m_pcPTLForExtn;  
-#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // .. More declarations here
@@ -964,14 +963,13 @@ Void      deriveNumberOfSubDpbs();
   Void   setMaxSLayersInLayerSetMinus1(Int ls, Int x)           { m_maxSLInLayerSetMinus1[ls] = x;    }
   Bool   getIlpSshSignalingEnabledFlag()                        { return m_ilpSshSignalingEnabledFlag;}
   Void   setIlpSshSignalingEnabledFlag(Bool x)                  { m_ilpSshSignalingEnabledFlag = x;}
-#if VPS_EXTN_PROFILE_INFO
+
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }
 
 #if !MULTIPLE_PTL_SUPPORT
   std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
   TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
-#endif
 #endif
 #if VPS_EXTN_OP_LAYER_SETS
   // Target output layer signalling related

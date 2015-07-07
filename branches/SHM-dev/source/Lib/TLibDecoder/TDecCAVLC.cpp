@@ -2866,7 +2866,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
   READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
-#if VPS_EXTN_PROFILE_INFO
+
   // Profile-tier-level signalling
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );
 
@@ -2893,7 +2893,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     parsePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
 #endif
   }
-#endif
 
   if( vps->getNumLayerSets() > 1 )
   {

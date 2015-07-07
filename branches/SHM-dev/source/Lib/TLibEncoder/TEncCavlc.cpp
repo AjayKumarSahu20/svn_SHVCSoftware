@@ -2116,7 +2116,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
      }
    }
    WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
-#if VPS_EXTN_PROFILE_INFO
+
   // Profile-tier-level signalling
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
 
@@ -2139,7 +2139,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
 #endif
   }
-#endif
 
   Int numOutputLayerSets = vps->getNumOutputLayerSets();
   Int numAddOutputLayerSets = numOutputLayerSets - (Int)vps->getNumLayerSets();
