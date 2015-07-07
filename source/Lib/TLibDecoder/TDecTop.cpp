@@ -747,9 +747,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS
   setRefLayerParams(m_apcSlicePilot->getVPS());
-#endif
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
 #endif
   m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManagerDecoder);
@@ -1722,11 +1720,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
         else
         {
-#if VPS_EXTN_DIRECT_REF_LAYERS
           TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
-#else
-          TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
-#endif
           TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
           if( !pcSlice->setBaseColPic ( *cListPic, refLayerIdc ) )
           {
@@ -1734,11 +1728,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           }
         }
 #else
-#if VPS_EXTN_DIRECT_REF_LAYERS
         TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
-#else
-        TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
-#endif
         TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
         pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
 #endif
@@ -1820,20 +1810,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
         else
         {
-#if VPS_EXTN_DIRECT_REF_LAYERS
           TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
-#else
-          TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
-#endif
           TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
           pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
         }
 #else
-#if VPS_EXTN_DIRECT_REF_LAYERS
         TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
-#else
-        TDecTop *pcTDecTop = (TDecTop *)getLayerDec( m_layerId-1 );
-#endif
         TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
         pcSlice->setBaseColPic ( *cListPic, refLayerIdc );
 #endif
@@ -2439,7 +2421,6 @@ Void TDecTop::xInitILRP(TComSlice *slice)
   }
 }
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
 TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdx )
 {
   TComVPS* vps = m_parameterSetManagerDecoder.getActiveVPS();
@@ -2450,9 +2431,7 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdx )
   
   return (TDecTop *)getLayerDec( vps->getRefLayerId( m_layerId, refLayerIdx ) );
 }
-#endif
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
 Void TDecTop::setRefLayerParams( TComVPS* vps )
 {
   for(UInt layerIdx = 0; layerIdx < m_numLayer; layerIdx++)
@@ -2478,7 +2457,6 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
     }
   }
 }
-#endif
 
 #if OUTPUT_LAYER_SET_INDEX
 Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)

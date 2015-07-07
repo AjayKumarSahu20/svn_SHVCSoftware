@@ -189,7 +189,7 @@ Void TAppEncCfg::create()
 
 Void TAppEncCfg::destroy()
 {
-#if VPS_EXTN_DIRECT_REF_LAYERS
+#if SVC_EXTENSION
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
     if( m_acLayerCfg[layer].m_numSamplePredRefLayers > 0 )
@@ -767,9 +767,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   UInt*      cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
 #endif
 #if AUXILIARY_PICTURES
-  Int*     cfg_auxId               [MAX_LAYERS];
+  Int*    cfg_auxId[MAX_LAYERS];
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int*    cfg_numSamplePredRefLayers  [MAX_LAYERS];
   string  cfg_samplePredRefLayerIds   [MAX_LAYERS];
   string* cfg_samplePredRefLayerIdsPtr[MAX_LAYERS];
@@ -779,40 +779,40 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_numActiveRefLayers [MAX_LAYERS];
   string  cfg_predLayerIds       [MAX_LAYERS];
   string* cfg_predLayerIdsPtr    [MAX_LAYERS];
-#endif
-  string    cfg_refLocationOffsetLayerId [MAX_LAYERS];
-  string    cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
-  string    cfg_scaledRefLayerTopOffset [MAX_LAYERS];
-  string    cfg_scaledRefLayerRightOffset [MAX_LAYERS];
-  string    cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
-  Int*      cfg_numRefLayerLocationOffsets[MAX_LAYERS];
-  string    cfg_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
-  string    cfg_refRegionOffsetPresentFlag      [MAX_LAYERS];
-  string    cfg_refRegionLeftOffset   [MAX_LAYERS];
-  string    cfg_refRegionTopOffset    [MAX_LAYERS];
-  string    cfg_refRegionRightOffset  [MAX_LAYERS];
-  string    cfg_refRegionBottomOffset [MAX_LAYERS];
-  string    cfg_resamplePhaseSetPresentFlag [MAX_LAYERS];
-  string    cfg_phaseHorLuma   [MAX_LAYERS];
-  string    cfg_phaseVerLuma   [MAX_LAYERS];
-  string    cfg_phaseHorChroma [MAX_LAYERS];
-  string    cfg_phaseVerChroma [MAX_LAYERS];
-  string*    cfg_refLocationOffsetLayerIdPtr   [MAX_LAYERS];
-  string*    cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
-  string*    cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
-  string*    cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
-  string*    cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
-  string*    cfg_scaledRefLayerOffsetPresentFlagPtr [MAX_LAYERS];
-  string*    cfg_refRegionOffsetPresentFlagPtr      [MAX_LAYERS];
-  string*    cfg_refRegionLeftOffsetPtr   [MAX_LAYERS];
-  string*    cfg_refRegionTopOffsetPtr    [MAX_LAYERS];
-  string*    cfg_refRegionRightOffsetPtr  [MAX_LAYERS];
-  string*    cfg_refRegionBottomOffsetPtr [MAX_LAYERS];
-  string*    cfg_resamplePhaseSetPresentFlagPtr [MAX_LAYERS];
-  string*    cfg_phaseHorLumaPtr   [MAX_LAYERS];
-  string*    cfg_phaseVerLumaPtr   [MAX_LAYERS];
-  string*    cfg_phaseHorChromaPtr [MAX_LAYERS];
-  string*    cfg_phaseVerChromaPtr [MAX_LAYERS];
+
+  string  cfg_refLocationOffsetLayerId [MAX_LAYERS];
+  string  cfg_scaledRefLayerLeftOffset [MAX_LAYERS];
+  string  cfg_scaledRefLayerTopOffset [MAX_LAYERS];
+  string  cfg_scaledRefLayerRightOffset [MAX_LAYERS];
+  string  cfg_scaledRefLayerBottomOffset [MAX_LAYERS];
+  Int*    cfg_numRefLayerLocationOffsets[MAX_LAYERS];
+  string  cfg_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
+  string  cfg_refRegionOffsetPresentFlag      [MAX_LAYERS];
+  string  cfg_refRegionLeftOffset   [MAX_LAYERS];
+  string  cfg_refRegionTopOffset    [MAX_LAYERS];
+  string  cfg_refRegionRightOffset  [MAX_LAYERS];
+  string  cfg_refRegionBottomOffset [MAX_LAYERS];
+  string  cfg_resamplePhaseSetPresentFlag [MAX_LAYERS];
+  string  cfg_phaseHorLuma   [MAX_LAYERS];
+  string  cfg_phaseVerLuma   [MAX_LAYERS];
+  string  cfg_phaseHorChroma [MAX_LAYERS];
+  string  cfg_phaseVerChroma [MAX_LAYERS];
+  string* cfg_refLocationOffsetLayerIdPtr   [MAX_LAYERS];
+  string* cfg_scaledRefLayerLeftOffsetPtr   [MAX_LAYERS];
+  string* cfg_scaledRefLayerTopOffsetPtr    [MAX_LAYERS];
+  string* cfg_scaledRefLayerRightOffsetPtr  [MAX_LAYERS];
+  string* cfg_scaledRefLayerBottomOffsetPtr [MAX_LAYERS];
+  string* cfg_scaledRefLayerOffsetPresentFlagPtr [MAX_LAYERS];
+  string* cfg_refRegionOffsetPresentFlagPtr      [MAX_LAYERS];
+  string* cfg_refRegionLeftOffsetPtr   [MAX_LAYERS];
+  string* cfg_refRegionTopOffsetPtr    [MAX_LAYERS];
+  string* cfg_refRegionRightOffsetPtr  [MAX_LAYERS];
+  string* cfg_refRegionBottomOffsetPtr [MAX_LAYERS];
+  string* cfg_resamplePhaseSetPresentFlagPtr [MAX_LAYERS];
+  string* cfg_phaseHorLumaPtr   [MAX_LAYERS];
+  string* cfg_phaseVerLumaPtr   [MAX_LAYERS];
+  string* cfg_phaseHorChromaPtr [MAX_LAYERS];
+  string* cfg_phaseVerChromaPtr [MAX_LAYERS];
 
 #if RC_SHVC_HARMONIZATION
   Bool*   cfg_RCEnableRateControl  [MAX_LAYERS];
@@ -880,14 +880,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_uiQuadtreeTUMaxDepthInter[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter;
     cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra;
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
     cfg_numSamplePredRefLayers  [layer] = &m_acLayerCfg[layer].m_numSamplePredRefLayers;
     cfg_samplePredRefLayerIdsPtr[layer] = &cfg_samplePredRefLayerIds[layer];
     cfg_numMotionPredRefLayers  [layer] = &m_acLayerCfg[layer].m_numMotionPredRefLayers;
     cfg_motionPredRefLayerIdsPtr[layer] = &cfg_motionPredRefLayerIds[layer];
     cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
-    cfg_predLayerIdsPtr     [layer]  = &cfg_predLayerIds[layer];
-#endif
+    cfg_predLayerIdsPtr     [layer] = &cfg_predLayerIds[layer];
+
     cfg_numRefLayerLocationOffsets [layer] = &m_acLayerCfg[layer].m_numRefLayerLocationOffsets;
     cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
     for(Int i = 0; i < MAX_LAYERS; i++)
@@ -1053,14 +1053,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("RepFormatIdx%d",                                cfg_repFormatIdx,                           -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
 #endif
   ("LayerId%d",                                     cfg_layerId,                                -1, MAX_LAYERS,  "Layer id")
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   ("NumSamplePredRefLayers%d",                      cfg_numSamplePredRefLayers,                 -1, MAX_LAYERS, "Number of sample prediction reference layers")
   ("SamplePredRefLayerIds%d",                       cfg_samplePredRefLayerIdsPtr,       string(""), MAX_LAYERS, "sample pred reference layer IDs")
   ("NumMotionPredRefLayers%d",                      cfg_numMotionPredRefLayers,                 -1, MAX_LAYERS, "Number of motion prediction reference layers")
   ("MotionPredRefLayerIds%d",                       cfg_motionPredRefLayerIdsPtr,       string(""), MAX_LAYERS, "motion pred reference layer IDs")
   ("NumActiveRefLayers%d",                          cfg_numActiveRefLayers,                     -1, MAX_LAYERS, "Number of active reference layers")
   ("PredLayerIds%d",                                cfg_predLayerIdsPtr,                string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
-#endif
+
   ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")  
 #if Q0078_ADD_LAYER_SETS
 #if OUTPUT_LAYER_SETS_CONFIG
@@ -2333,11 +2333,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         delete [] tempArray; tempArray = NULL;
       }
     }
-  }
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
     Char* pSamplePredRefLayerIds = cfg_samplePredRefLayerIds[layer].empty() ? NULL: strdup(cfg_samplePredRefLayerIds[layer].c_str());
     if( m_acLayerCfg[layer].m_numSamplePredRefLayers > 0 )
     {
@@ -2372,9 +2368,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pSamplePredRefLayerIds );
       pSamplePredRefLayerIds = NULL;
     }
-  }
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
+
     Char* pMotionPredRefLayerIds = cfg_motionPredRefLayerIds[layer].empty() ? NULL: strdup(cfg_motionPredRefLayerIds[layer].c_str());
     if( m_acLayerCfg[layer].m_numMotionPredRefLayers > 0 )
     {
@@ -2409,10 +2403,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pMotionPredRefLayerIds );
       pMotionPredRefLayerIds = NULL;
     }
-  }
 
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
     Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
     if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
     {
@@ -2447,8 +2438,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pPredLayerIds );
       pPredLayerIds = NULL;
     }
-  }
-#endif
+  } //for(Int layer = 0; layer < MAX_LAYERS; layer++)
+
 #if Q0078_ADD_LAYER_SETS
 #if OUTPUT_LAYER_SETS_CONFIG
   for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
@@ -4268,7 +4259,6 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION
-#if VPS_EXTN_DIRECT_REF_LAYERS
   xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   if( layerIdx > 0 )
@@ -4320,7 +4310,6 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara(m_acLayerCfg[layerIdx].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
     }
   }
-#endif //VPS_EXTN_DIRECT_REF_LAYERS
 
   if( m_adaptiveResolutionChange > 0 )
   {

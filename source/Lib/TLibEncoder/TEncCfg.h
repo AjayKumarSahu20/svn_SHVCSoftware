@@ -377,7 +377,7 @@ protected:
 #if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int       m_numDirectRefLayers;
   Int       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1];
 
@@ -389,7 +389,7 @@ protected:
   Int       m_motionPredRefLayerId[MAX_VPS_LAYER_IDX_PLUS1];
   Bool      m_samplePredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
   Bool      m_motionPredEnabledFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif
+
   Int       m_maxTidIlRefPicsPlus1;
 #if FAST_INTRA_SHVC
   Bool      m_useFastIntraScalable;
@@ -1031,7 +1031,7 @@ public:
   Bool      getUseFastIntraScalable         ()               { return m_useFastIntraScalable; }
   Void      setUseFastIntraScalable         ( Bool  b )      { m_useFastIntraScalable = b; }
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int       getNumDirectRefLayers           ()                              { return m_numDirectRefLayers;      }
   Void      setNumDirectRefLayers           (Int num)                       { m_numDirectRefLayers = num;       }
 
@@ -1061,7 +1061,7 @@ public:
 
   Bool      getMotionPredEnabledFlag        (Int layerIdx)                  { return m_motionPredEnabledFlag[layerIdx];  }
   Void      setMotionPredEnabledFlag        (Int layerIdx,Bool flag)        { m_motionPredEnabledFlag[layerIdx] = flag;  }
-#endif
+
   Int       getMaxTidIlRefPicsPlus1         ()                              { return m_maxTidIlRefPicsPlus1; }
   Void      setMaxTidIlRefPicsPlus1         (Int num)                       { m_maxTidIlRefPicsPlus1 = num;  }
 #if LAYERS_NOT_PRESENT_SEI

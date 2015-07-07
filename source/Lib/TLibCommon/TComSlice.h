@@ -659,7 +659,7 @@ private:
   Bool       m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 #endif
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Bool       m_directDependencyFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
   UInt       m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
@@ -667,7 +667,7 @@ private:
   Bool       m_defaultDirectDependencyTypeFlag;
   UInt       m_defaultDirectDependencyType;
   UInt       m_directDependencyType[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#endif
+
   UInt       m_numProfileTierLevel;
 #if !VPS_EXTN_UEV_CODING
   Bool       m_moreOutputLayerSetsThanDefaultFlag;
@@ -1021,7 +1021,7 @@ Void      deriveNumberOfSubDpbs();
   Bool   getOutputLayerFlag(Int layerSet, Int layerIdx)          { return m_outputLayerFlag[layerSet][layerIdx]; }
   Void   setOutputLayerFlag(Int layerSet, Int layerIdx, Bool x)  { m_outputLayerFlag[layerSet][layerIdx] = x;    }
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   // Direct dependency of layers
   Bool   getDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx)             { return m_directDependencyFlag[currLayerIdx][refLayerIdx]; }
   Void   setDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx, Bool x)     { m_directDependencyFlag[currLayerIdx][refLayerIdx] = x;    }
@@ -1042,7 +1042,7 @@ Void      deriveNumberOfSubDpbs();
   Void   setDirectDependencyType(Int currLayerIdx, Int refLayerIdx, UInt x)     { m_directDependencyType[currLayerIdx][refLayerIdx] = x;    }
   Bool   isSamplePredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 1 ) ? true : false; }
   Bool   isMotionPredictionType(Int currLayerIdx, Int refLayerIdx)              { assert(currLayerIdx != refLayerIdx); return ( ( ( m_directDependencyType[currLayerIdx][refLayerIdx] + 1 ) & 2 ) >> 1 ) ? true : false; }
-#endif
+
   UInt   getNumProfileTierLevel()                                { return m_numProfileTierLevel; }
   Void   setNumProfileTierLevel(Int x)                           { m_numProfileTierLevel = x;    }
 

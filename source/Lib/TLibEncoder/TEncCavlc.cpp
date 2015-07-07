@@ -2066,7 +2066,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #endif
 #endif // VIEW_ID_RELATED_SIGNALING
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
   for( Int layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     for( Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
@@ -2074,7 +2073,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_FLAG(vps->getDirectDependencyFlag(layerCtr, refLayerCtr), "direct_dependency_flag[i][j]" );
     }
   }
-#endif
+
 #if Q0078_ADD_LAYER_SETS
   if (vps->getNumIndependentLayers() > 1)
   {
@@ -2310,7 +2309,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if VPS_DPB_SIZE_TABLE
   codeVpsDpbSizeTable(vps);
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
 
   WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "default_direct_dependency_flag");
@@ -2332,7 +2331,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       }
     }
   }
-#endif
 
 #if P0307_VPS_NON_VUI_EXTENSION
   // The value of vps_non_vui_extension_length shall be in the range of 0 to 4096, inclusive.

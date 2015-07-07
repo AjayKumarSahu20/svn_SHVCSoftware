@@ -2763,7 +2763,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   }
 #endif
 #endif // view id related signaling
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
   // For other layers
@@ -2782,7 +2782,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     vps->setNumDirectRefLayers(layerId, numDirectRefLayers);
   }
-#endif
+
 #if Q0078_ADD_LAYER_SETS
 #if O0092_0094_DEPENDENCY_CONSTRAINT // Moved here
   vps->setNumRefLayers();
@@ -3243,7 +3243,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   parseVpsDpbSizeTable(vps);
 #endif
 
-#if VPS_EXTN_DIRECT_REF_LAYERS
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
 
   READ_FLAG(uiCode, "default_direct_dependency_type_flag"); 
@@ -3273,7 +3272,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
   }
-#endif
+
 #if !Q0078_ADD_LAYER_SETS
 #if O0092_0094_DEPENDENCY_CONSTRAINT // Moved up
   vps->setNumRefLayers();
