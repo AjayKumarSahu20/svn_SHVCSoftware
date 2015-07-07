@@ -189,9 +189,6 @@
 
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 
-#define O0153_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-O0153: alt output layer flag
-#define P0300_ALT_OUTPUT_LAYER_FLAG      1      ///< JCTVC-P0300: alt output layer flag
-
 #define Q0165_OUTPUT_LAYER_SET           1      ///< JCTVC-Q0165: add a constraint to disallow an empty output layer set
 #define Q0165_NUM_ADD_OUTPUT_LAYER_SETS  1      ///< JCTVC-Q0165: signal num_add_olss and default_target_output_layer_idc when vps_num_layer_sets_minus1 is greater than 0
 

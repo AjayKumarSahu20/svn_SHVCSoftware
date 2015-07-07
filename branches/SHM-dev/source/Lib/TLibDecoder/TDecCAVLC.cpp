@@ -2697,11 +2697,8 @@ Void TDecCavlc::parseExplicitRdpcmMode( TComTU &rTu, ComponentID compID )
 Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 {
   UInt uiCode;
-  // ... More syntax elements to be parsed here
-#if P0300_ALT_OUTPUT_LAYER_FLAG
   Int NumOutputLayersInOutputLayerSet[MAX_VPS_LAYER_SETS_PLUS1];
   Int OlsHighestOutputLayerId[MAX_VPS_LAYER_SETS_PLUS1];
-#endif
 #if LIST_OF_PTL
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
@@ -3088,7 +3085,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     READ_CODE( numBits, uiCode, "profile_tier_level_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
 #endif
-#if P0300_ALT_OUTPUT_LAYER_FLAG
+
     NumOutputLayersInOutputLayerSet[i] = 0;
     for (j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++)
     {
@@ -3112,8 +3109,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 #endif
 #if Q0165_OUTPUT_LAYER_SET
     assert( NumOutputLayersInOutputLayerSet[i]>0 );
-#endif
-
 #endif
   }
 #if NECESSARY_LAYER_FLAG
@@ -3209,16 +3204,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
     READ_CODE( numBits, uiCode, "profile_level_tier_idx[i]" );     vps->setProfileLevelTierIdx(i, uiCode);
   }
-#endif
-
-#if !P0300_ALT_OUTPUT_LAYER_FLAG
-#if O0153_ALT_OUTPUT_LAYER_FLAG
-  if( vps->getMaxLayers() > 1 )
-  {
-    READ_FLAG( uiCode, "alt_output_layer_flag");
-    vps->setAltOuputLayerFlag( uiCode ? true : false );
-  }
-#endif
 #endif
 
 #if REPN_FORMAT_IN_VPS
