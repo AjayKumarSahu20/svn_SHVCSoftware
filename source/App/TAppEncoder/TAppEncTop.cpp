@@ -154,12 +154,8 @@ Void TAppEncTop::xInitLibCfg()
 
   vps->setVpsNumRepFormats                                                ( maxRepFormatIdx + 1 );
 
-#if Q0195_REP_FORMAT_CLEANUP
   // When not present, the value of rep_format_idx_present_flag is inferred to be equal to 0
   vps->setRepFormatIdxPresentFlag                                         ( vps->getVpsNumRepFormats() > 1 ? true : false );
-#else
-  vps->setRepFormatIdxPresentFlag                                         ( true );
-#endif
 
   for(UInt idx=0; idx < vps->getVpsNumRepFormats(); idx++)
   {

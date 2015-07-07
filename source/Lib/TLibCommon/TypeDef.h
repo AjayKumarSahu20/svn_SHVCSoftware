@@ -187,8 +187,6 @@
 #endif
 #define O0096_DEFAULT_DEPENDENCY_TYPE    1      ///< JCTVC-O0096: specify default dependency type for all direct reference layers
 
-#define Q0195_REP_FORMAT_CLEANUP         1      ///< JCTVC-Q0195: restructureing of rep_format() signaling
-
 #define RESAMPLING_CONSTRAINT_BUG_FIX    1
 #define O0098_SCALED_REF_LAYER_ID        1      ///< JCTVC-O0098: signal scaled reference id
 
