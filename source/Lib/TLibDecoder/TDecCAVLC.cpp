@@ -1224,10 +1224,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     Int iBits = 0;
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
-      READ_FLAG(uiCode, "discardable_flag"); // ignored
-#if NON_REF_NAL_TYPE_DISCARDABLE
+      READ_FLAG(uiCode, "discardable_flag");
       pcSlice->setDiscardableFlag( uiCode ? true : false );
-      if (uiCode)
+
+      if( uiCode )
       {
         assert(pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TRAIL_R &&
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TSA_R &&
@@ -1235,7 +1235,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RADL_R &&
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RASL_R);
       }
-#endif
+
       iBits++;
     }
 
