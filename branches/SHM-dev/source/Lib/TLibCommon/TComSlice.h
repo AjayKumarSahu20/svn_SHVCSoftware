@@ -639,9 +639,7 @@ private:
   UInt       m_defaultTargetOutputLayerIdc;
   std::vector< std::vector<Int> >  m_profileLevelTierIdx;
   Bool       m_maxOneActiveRefLayerFlag;
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
   Bool       m_pocLsbNotPresentFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif
   Bool       m_crossLayerPictureTypeAlignFlag;
   Bool       m_crossLayerIrapAlignFlag;
   Bool       m_crossLayerAlignedIdrOnlyFlag;
@@ -941,10 +939,8 @@ Void      deriveNumberOfSubDpbs();
 
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;             }
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                }
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i];              }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;                 }
-#endif
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag;                 }
   Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x;                    }

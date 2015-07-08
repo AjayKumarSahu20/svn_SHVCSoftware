@@ -1980,9 +1980,7 @@ TComVPS::TComVPS()
   ::memset(m_directDependencyType, 0, sizeof(m_directDependencyType));
 
   m_maxOneActiveRefLayerFlag = true;
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
   ::memset(m_pocLsbNotPresentFlag, 0, sizeof(m_pocLsbNotPresentFlag));
-#endif
   m_crossLayerPictureTypeAlignFlag = true;
   m_crossLayerIrapAlignFlag = true;
   m_crossLayerAlignedIdrOnlyFlag = false;

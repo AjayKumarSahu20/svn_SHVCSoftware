@@ -979,11 +979,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     }
 
 #if SVC_EXTENSION
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( (pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag())
-#else
-    if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
-#endif
 #else
     if( !pcSlice->getIdrPicFlag() )
 #endif
@@ -2195,15 +2191,14 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
   WRITE_FLAG(vps->getVpsPocLsbAlignedFlag(), "vps_poc_lsb_aligned_flag");
 #endif
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
-  for(i = 1; i< vps->getMaxLayers(); i++)
+
+  for( i = 1; i< vps->getMaxLayers(); i++ )
   {
     if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
     {
       WRITE_FLAG(vps->getPocLsbNotPresentFlag(i), "poc_lsb_not_present_flag[i]");
     }
   }
-#endif
  
 #if VPS_DPB_SIZE_TABLE
   codeVpsDpbSizeTable(vps);

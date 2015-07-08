@@ -1277,11 +1277,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     }
 
 #if SVC_EXTENSION
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( ( pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag() )
-#else
-    if( pcSlice->getLayerId() > 0 || !pcSlice->getIdrPicFlag() )
-#endif
 #else
     else
 #endif
@@ -3033,7 +3029,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   READ_FLAG(uiCode, "vps_poc_lsb_aligned_flag");
   vps->setVpsPocLsbAlignedFlag(uiCode);
 #endif
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
+
   for(i = 1; i< vps->getMaxLayers(); i++)
   {
     if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
@@ -3042,7 +3038,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->setPocLsbNotPresentFlag(i, uiCode);
     }
   }
-#endif
 
 #if VPS_DPB_SIZE_TABLE
   parseVpsDpbSizeTable(vps);
@@ -3185,13 +3180,11 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
   vps->setVpsPocLsbAlignedFlag(false);
 #endif
 
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
   // When not present, poc_lsb_not_present_flag[ i ] is inferred to be equal to 0.
-  for(i = 1; i< vps->getMaxLayers(); i++)
+  for( i = 1; i< vps->getMaxLayers(); i++ )
   {
     vps->setPocLsbNotPresentFlag(i, 0);
   }
-#endif
 
   // set default values for VPS VUI
   defaultVPSVUI( vps );
