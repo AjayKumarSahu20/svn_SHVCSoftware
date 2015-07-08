@@ -60,7 +60,6 @@
 #define UNAVAILABLE_PIC_BUGFIX           1
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 
-#define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define NO_CLRAS_OUTPUT_FLAG             1
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension

@@ -119,10 +119,8 @@ TComSlice::TComSlice()
 #if SVC_EXTENSION
 , m_firstSliceInPic               ( false )
 , m_availableForTMVPRefFlag       ( true )
-, m_layerId                     ( 0 )
-#if REF_IDX_MFM
+, m_layerId                       ( 0 )
 , m_bMFMEnabledFlag               ( false )
-#endif
 , m_bDiscardableFlag              ( false )
 , m_bCrossLayerBLAFlag            ( false )
 , m_pocResetIdc                   ( 0 )
@@ -3728,7 +3726,6 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
       // assing VPS to ILRP to be used for deriving layerIdx
       pcIlpPic[refLayerIdc]->getSlice(0)->setVPS( m_pcPic->getSlice(0)->getVPS() );
 
-#if REF_IDX_MFM
       if( m_bMFMEnabledFlag && !(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) )
       {
         //set reference picture POC of each ILP reference 
@@ -3775,7 +3772,6 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
       {
         pcIlpPic[refLayerIdc]->initUpsampledMvField();
       }
-#endif
 
       Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1( pcIlpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx() );
       assert( (Int)pcIlpPic[refLayerIdc]->getSlice(0)->getTLayer() < maxTidIlRefPicsPlus1 || ( !maxTidIlRefPicsPlus1 && pcIlpPic[refLayerIdc]->getSlice(0)->getRapPicFlag() ) );

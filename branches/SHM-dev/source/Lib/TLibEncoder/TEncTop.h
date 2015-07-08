@@ -118,9 +118,7 @@ private:
   TEncTop**               m_ppcTEncTop;
   TEncTop*                getLayerEnc(UInt layerIdx)       { return m_ppcTEncTop[layerIdx]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
-#if REF_IDX_MFM
   Bool                    m_bMFMEnabledFlag;
-#endif
   UInt                    m_numRefLayerLocationOffsets;
   UInt                    m_refLocationOffsetLayerId[MAX_LAYERS];
   Window                  m_scaledRefLayerWindow[MAX_LAYERS];
@@ -232,10 +230,8 @@ public:
   Void      setResamplePhaseSetPresentFlag(Int x, Bool b)     { m_resamplePhaseSetPresentFlag[x] = b; }
 
   TComPic** getIlpList()                                      { return m_cIlpPic; }
-#if REF_IDX_MFM
   Void      setMFMEnabledFlag(Bool flag)                      { m_bMFMEnabledFlag = flag; }
   Bool      getMFMEnabledFlag()                               { return m_bMFMEnabledFlag; }    
-#endif
   Void      setInterLayerWeightedPredFlag(Bool flag)          { m_interLayerWeightedPredFlag = flag; }
   Bool      getInterLayerWeightedPredFlag()                   { return m_interLayerWeightedPredFlag; }
 

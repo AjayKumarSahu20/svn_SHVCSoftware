@@ -3415,14 +3415,12 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   Int iPelX = Clip3<Int>(0, m_pcPic->getPicYuvRec()->getWidth(COMPONENT_Y)  - 1, pelX);
   Int iPelY = Clip3<Int>(0, m_pcPic->getPicYuvRec()->getHeight(COMPONENT_Y) - 1, pelY);
 
-#if REF_IDX_MFM
   // centre of the collocated 16x16 block for motion mapping
   if( motionMapping )
   {
     iPelX = pelX + 8;
     iPelY = pelY + 8;
   }
-#endif
 
 #if !LAYER_CTB
   UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
@@ -3435,7 +3433,6 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
   Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
 
-#if REF_IDX_MFM
   // offset for collocated block in the motion mapping
   if( motionMapping )
   {
@@ -3452,7 +3449,6 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
       iBY = ( ( iBY + 4 ) >> 4 ) << 4;
     }
   }
-#endif
 
   if ( iBX < 0 || iBX >= baseColPic->getPicYuvRec()->getWidth(COMPONENT_Y) || iBY < 0 || iBY >= baseColPic->getPicYuvRec()->getHeight(COMPONENT_Y) )
   {

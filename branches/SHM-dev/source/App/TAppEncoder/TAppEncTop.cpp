@@ -252,13 +252,12 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setConformanceWindow                               ( m_acLayerCfg[layer].m_confWinLeft, m_acLayerCfg[layer].m_confWinRight, m_acLayerCfg[layer].m_confWinTop, m_acLayerCfg[layer].m_confWinBottom );
     m_acTEncTop[layer].setFramesToBeEncoded                               ( m_framesToBeEncoded );
 
-#if REF_IDX_MFM
 #if AVC_BASE
     m_acTEncTop[layer].setMFMEnabledFlag                                  (layer == 0 ? false : ( m_nonHEVCBaseLayerFlag ? false : true ) && m_acLayerCfg[layer].getNumMotionPredRefLayers());
 #else
     m_acTEncTop[layer].setMFMEnabledFlag                                  (layer == 0 ? false : ( m_acLayerCfg[layer].getNumMotionPredRefLayers() > 0 ) );
 #endif
-#endif
+
     // set layer ID
     m_acTEncTop[layer].setLayerId                                         ( m_acLayerCfg[layer].m_layerId );
     m_acTEncTop[layer].setNumLayer                                        ( m_numLayers );
