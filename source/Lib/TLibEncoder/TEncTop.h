@@ -134,9 +134,7 @@ private:
   Int                     m_phaseHorChroma[MAX_LAYERS];
   Int                     m_phaseVerChroma[MAX_LAYERS];
   Int                     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
-#if POC_RESET_IDC_ENCODER
   Int                     m_pocAdjustmentValue;
-#endif
 #if NO_CLRAS_OUTPUT_FLAG
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
@@ -248,26 +246,24 @@ public:
 
   TEncTop*  getRefLayerEnc(UInt refLayerIdx);
 
-#if POC_RESET_IDC_ENCODER
-  Int       getPocAdjustmentValue()      { return m_pocAdjustmentValue;}
-  Void      setPocAdjustmentValue(Int x) { m_pocAdjustmentValue = x;   }
-#endif
+  Int       getPocAdjustmentValue()                           { return m_pocAdjustmentValue;}
+  Void      setPocAdjustmentValue(Int x)                      { m_pocAdjustmentValue = x;   }
 #if NO_CLRAS_OUTPUT_FLAG
-  Int       getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
-  Void      setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
-  Int       getLayerInitializedFlag()             { return m_layerInitializedFlag;}
-  Void      setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
-  Int       getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
-  Void      setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
-  Int       getNoOutputOfPriorPicsFlags()         { return m_noOutputOfPriorPicsFlags;}
-  Void      setNoOutputOfPriorPicsFlags(Bool x)   { m_noOutputOfPriorPicsFlags = x;   }
+  Int       getNoClrasOutputFlag()                            { return m_noClrasOutputFlag;}
+  Void      setNoClrasOutputFlag(Bool x)                      { m_noClrasOutputFlag = x;   }
+  Int       getLayerInitializedFlag()                         { return m_layerInitializedFlag;}
+  Void      setLayerInitializedFlag(Bool x)                   { m_layerInitializedFlag = x;   }
+  Int       getFirstPicInLayerDecodedFlag()                   { return m_firstPicInLayerDecodedFlag;}
+  Void      setFirstPicInLayerDecodedFlag(Bool x)             { m_firstPicInLayerDecodedFlag = x;   }
+  Int       getNoOutputOfPriorPicsFlags()                     { return m_noOutputOfPriorPicsFlags;}
+  Void      setNoOutputOfPriorPicsFlags(Bool x)               { m_noOutputOfPriorPicsFlags = x;   }
 #endif
-  Void      setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
-  Int       getNumAddLayerSets()                  { return m_numAddLayerSets; }
-  Void      setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
-  Bool      getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
-  Void      setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
-  Int       getCurrPocMsb()                       { return m_currPocMsb; }
+  Void      setNumAddLayerSets(Int x)                         { m_numAddLayerSets = x;    }
+  Int       getNumAddLayerSets()                              { return m_numAddLayerSets; }
+  Void      setPocDecrementedInDPBFlag(Bool x)                { m_pocDecrementedInDPBFlag = x;    }
+  Bool      getPocDecrementedInDPBFlag()                      { return m_pocDecrementedInDPBFlag; }
+  Void      setCurrPocMsb(Int poc)                            { m_currPocMsb = poc;  }
+  Int       getCurrPocMsb()                                   { return m_currPocMsb; }
 #else //SVC_EXTENSION
   Void encode( Bool bEos,
                TComPicYuv* pcPicYuvOrg,

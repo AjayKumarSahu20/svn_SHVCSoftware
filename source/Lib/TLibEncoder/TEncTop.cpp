@@ -84,9 +84,7 @@ TEncTop::TEncTop()
   m_bMFMEnabledFlag = false;
 #endif
   m_numRefLayerLocationOffsets = 0;
-#if POC_RESET_IDC_ENCODER
   m_pocAdjustmentValue     = 0;
-#endif
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
   m_layerInitializedFlag       = false;
@@ -1045,11 +1043,9 @@ Void TEncTop::xInitPPS()
 #if Q0048_CGS_3D_ASYMLUT
   m_cPPS.setCGSFlag( m_nCGSFlag );
 #endif
-#if POC_RESET_IDC_ENCODER
   m_cPPS.setPocResetInfoPresentFlag( true );
   m_cPPS.setExtensionFlag( true );
   m_cPPS.setSliceHeaderExtensionPresentFlag( true );
-#endif
 #endif //SVC_EXTENSION
 }
 

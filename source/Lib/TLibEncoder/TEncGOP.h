@@ -147,11 +147,9 @@ private:
   Bool                    m_nestedBufferingPeriodSEIPresentInAU;
   Bool                    m_nestedPictureTimingSEIPresentInAU;
 
-#if POC_RESET_IDC_ENCODER
+#if SVC_EXTENSION
   Int                     m_pocCraWithoutReset;
   Int                     m_associatedIrapPocBeforeReset;
-#endif
-#if SVC_EXTENSION
   UInt                    m_layerId;      
   TEncTop**               m_ppcTEncTop;
   TEncSearch*             m_pcPredSearch;                       ///< encoder search class
@@ -171,9 +169,7 @@ private:
   static const Int m_phase_filter_1[8][13];
   Int   **m_temp;
 #endif
-#if POC_RESET_IDC_ENCODER
   Int   m_lastPocPeriodId;
-#endif
   Bool  m_noRaslOutputFlag;
   Bool  m_prevPicHasEos;
 #endif
@@ -213,7 +209,7 @@ public:
   NalUnitType getNalUnitType( Int pocCurr, Int lastIdr, Bool isField );
   Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>& );
 
-#if POC_RESET_IDC_ENCODER
+#if SVC_EXTENSION
   Void  determinePocResetIdc( Int const pocCurr, TComSlice *const slice);
   Int   getIntraRefreshInterval()  { return m_pcCfg->getIntraPeriod(); }
   Int   getIntraRefreshType()      { return m_pcCfg->getDecodingRefreshType(); }  

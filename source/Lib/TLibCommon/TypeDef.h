@@ -68,7 +68,6 @@
 #endif
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation
 #if POC_RESET_IDC
-#define POC_RESET_IDC_ENCODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the encoder
 #define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
 #endif
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
