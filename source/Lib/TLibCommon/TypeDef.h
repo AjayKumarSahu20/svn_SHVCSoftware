@@ -71,14 +71,13 @@
 #define POC_RESET_IDC_SIGNALLING         1      ///< JCTVC-P0041: Include signalling for poc_reset related syntax elements
 #define POC_RESET_IDC_ENCODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the encoder
 #define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
-#define ALIGN_IRAP_BUGFIX                1
-#define UNAVAILABLE_PIC_BUGFIX           1
 #endif
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define SVC_POC                          1      ///< POC signalling and reset
+#define UNAVAILABLE_PIC_BUGFIX           1
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
