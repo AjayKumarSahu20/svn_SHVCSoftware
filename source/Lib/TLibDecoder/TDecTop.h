@@ -149,11 +149,9 @@ private:
   Bool                    m_layerInitializedFlag;
   Bool                    m_firstPicInLayerDecodedFlag;
 #endif
-#if POC_RESET_IDC_DECODER
   Int                     m_parseIdc;
   Int                     m_lastPocPeriodId;
   Int                     m_prevPicOrderCnt;
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   Bool m_confModeFlag;
   std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
@@ -211,7 +209,6 @@ public:
   Void  setDecodedSEIMessageOutputStream(std::ostream *pOpStream) { m_pDecodedSEIOutputStream = pOpStream; }
 
 #if SVC_EXTENSION
-#if POC_RESET_IDC_DECODER
   Int       getParseIdc                     ()                              { return m_parseIdc;               }
   Void      setParseIdc                     (Int x)                         { m_parseIdc = x;                  }
   Void      markAllPicsAsNoCurrAu           (TComVPS *vps);
@@ -221,7 +218,7 @@ public:
 
   Int       getPrevPicOrderCnt              ()                              { return m_prevPicOrderCnt;        }
   Void      setPrevPicOrderCnt              (Int const x)                   { m_prevPicOrderCnt = x;           }
-#endif
+
   UInt      getLayerId                      ()                              { return m_layerId;                }
   Void      setLayerId                      (UInt layer)                    { m_layerId = layer;               }
   UInt      getNumLayer                     ()                              { return m_numLayer;               }

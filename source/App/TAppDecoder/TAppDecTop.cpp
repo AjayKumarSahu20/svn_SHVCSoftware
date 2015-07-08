@@ -244,8 +244,9 @@ Void TAppDecTop::decode()
       else
       {
         bNewPicture = m_acTDecTop[nalu.m_layerId].decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_layerId], curLayerId, bNewPOC);
-#if POC_RESET_IDC_DECODER
-        if ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) )
+
+#if SVC_POC
+        if( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) )
 #else
         if (bNewPicture)
 #endif
@@ -264,7 +265,7 @@ Void TAppDecTop::decode()
           bytestream.reset();
 #endif
         }
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
         else if(m_acTDecTop[nalu.m_layerId].getParseIdc() == 1) 
         {
           bitstreamFile.clear();
@@ -280,8 +281,8 @@ Void TAppDecTop::decode()
       }
     }
 
-#if POC_RESET_IDC_DECODER
-    if ( ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
+#if SVC_POC
+    if( ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
         !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
 #else
     if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS) &&
@@ -309,7 +310,7 @@ Void TAppDecTop::decode()
       m_acTDecTop[nalu.m_layerId].setFirstSliceInPicture (true);
     }
 
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
     if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 )
     {
       outputAllPictures( nalu.m_layerId, true );
@@ -341,7 +342,7 @@ Void TAppDecTop::decode()
         flushAllPictures( nalu.m_layerId, outputPicturesFlag );       
       }
 
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
       if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() != 0 )
       // New picture, slice header parsed but picture not decoded
 #else
@@ -1400,7 +1401,7 @@ Void TAppDecTop::flushAllPictures(Bool outputPictures)
     DpbStatus dpbStatus;
 
     // Find the status of the DPB
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
     xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus, false);
 #else
     xFindDPBStatus(listOfPocs, listOfPocsInEachLayer, listOfPocsPositionInEachLayer, dpbStatus);
@@ -1785,9 +1786,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
                             , std::vector<Int> *listOfPocsInEachLayer
                             , std::vector<Int> *listOfPocsPositionInEachLayer
                             , DpbStatus &dpbStatus
-#if POC_RESET_IDC_DECODER
                             , Bool notOutputCurrAu
-#endif
                             )
 {
   TComVPS *vps = NULL;
@@ -1816,14 +1815,14 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
         {
           vps = pic->getSlice(0)->getVPS();
         }
-#if POC_RESET_IDC_DECODER
+
         if( !(pic->isCurrAu() && notOutputCurrAu ) )
         {
-#endif
           std::vector<Int>::iterator it;
           if( pic->getOutputMark() ) // && pic->getPOC() > m_aiPOCLastDisplay[i])
           {
             it = find( listOfPocs.begin(), listOfPocs.end(), pic->getPOC() ); // Check if already included
+
             if( it == listOfPocs.end() )  // New POC value - i.e. new AU - add to the list
             {
               listOfPocs.push_back( pic->getPOC() );
@@ -1831,14 +1830,14 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
             listOfPocsInEachLayer         [i].push_back( pic->getPOC()    );    // POC to be output in each layer
             listOfPocsPositionInEachLayer [i].push_back( picPositionInList  );  // For ease of access
           }
+
           if( pic->getSlice(0)->isReferenced() || pic->getOutputMark() )
           {
             dpbStatus.m_numPicsInSubDpb[i]++;  // Count pictures that are "used for reference" or "needed for output"
           }
-#if POC_RESET_IDC_DECODER
         }
-#endif
       }
+
       iterPic++;
       picPositionInList++;
     }
@@ -1873,7 +1872,6 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
   assert( dpbStatus.m_numAUsNotDisplayed != -1 );
 }  
 
-#if POC_RESET_IDC_DECODER
 Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
 {
   { // All pictures in the DPB in that layer are to be output; this means other pictures would also be output
@@ -1899,7 +1897,6 @@ Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
     }
   }
 }
-#endif
 #endif
 
 #if Q0074_COLOUR_REMAPPING_SEI

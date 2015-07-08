@@ -66,10 +66,7 @@
 #define R0300_CGS_RES_COEFF_CODING       1      ///< JCTVC-R0300: improved residual coefficient coding for R0151
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
-#define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation
-#if POC_RESET_IDC
-#define POC_RESET_IDC_DECODER            1      ///< JCTVC-P0041: Include support of enabling POC reset at the decoder
-#endif
+
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
