@@ -2352,11 +2352,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( m_layerId == 0 )
 #endif
       {
+        //The following code also calculates the VPS VUI offset
 #else
       OutputNALUnit nalu(NAL_UNIT_VPS);
-#endif
-#if VPS_VUI_OFFSET
-      // The following code also calculates the VPS VUI offset
 #endif
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
       m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());
