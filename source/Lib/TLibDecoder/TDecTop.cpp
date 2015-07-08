@@ -98,9 +98,7 @@ TDecTop::TDecTop()
   m_pBLReconFile = NULL;
 #endif
   memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
-#if Q0177_EOS_CHECKS
   m_isLastNALWasEos = false;
-#endif
   m_lastPicHasEos = false;
 #if NO_CLRAS_OUTPUT_FLAG
   m_noClrasOutputFlag          = false;
@@ -1961,9 +1959,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS,nalu.m_Bitstream->readByteAlignment(),0);
 #endif
 #if SVC_EXTENSION
-#if Q0177_EOS_CHECKS
       m_isLastNALWasEos = false;
-#endif
 #if AVC_BASE
       if( m_parameterSetManagerDecoder.getPrefetchedVPS(0)->getNonHEVCBaseLayerFlag() )
       {
@@ -2003,8 +1999,8 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 
     case NAL_UNIT_PREFIX_SEI:
     case NAL_UNIT_SUFFIX_SEI:
-#if Q0177_EOS_CHECKS
-      if ( nalu.m_nalUnitType == NAL_UNIT_SUFFIX_SEI )
+#if SVC_EXTENSION
+      if( nalu.m_nalUnitType == NAL_UNIT_SUFFIX_SEI )
       {
         assert( m_isLastNALWasEos == false );
       }
@@ -2028,8 +2024,8 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_CODED_SLICE_RADL_R:
     case NAL_UNIT_CODED_SLICE_RASL_N:
     case NAL_UNIT_CODED_SLICE_RASL_R:
-#if Q0177_EOS_CHECKS
-      if (nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N ||
+#if SVC_EXTENSION
+      if( nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_R || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TRAIL_N ||
           nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_R || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_TSA_N ||
           nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_R || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_STSA_N ||
           nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_R || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_RADL_N ||
@@ -2041,8 +2037,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       {
         m_isLastNALWasEos = false;
       }
-#endif
-#if SVC_EXTENSION
+
       return xDecodeSlice(nalu, iSkipFrame, iPOCLastDisplay, curLayerId, bNewPOC);
 #else
       return xDecodeSlice(nalu, iSkipFrame, iPOCLastDisplay);
@@ -2050,7 +2045,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       break;
 
     case NAL_UNIT_EOS:
-#if Q0177_EOS_CHECKS
+#if SVC_EXTENSION
       assert( m_isLastNALWasEos == false );
 
       m_isLastNALWasEos = true;
@@ -2079,7 +2074,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_FILLER_DATA:
-#if Q0177_EOS_CHECKS
+#if SVC_EXTENSION
       assert( m_isLastNALWasEos == false );
 #endif
       return false;
