@@ -736,9 +736,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_ReconFile      [MAX_LAYERS];
   Double* cfg_fQP            [MAX_LAYERS];
   Int*    cfg_layerId        [MAX_LAYERS];
-#if REPN_FORMAT_IN_VPS
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
-#endif
   Int*    cfg_SourceWidth   [MAX_LAYERS]; 
   Int*    cfg_SourceHeight  [MAX_LAYERS];
   Int*    cfg_FrameRate     [MAX_LAYERS];
@@ -847,9 +845,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
     cfg_colourRemapSEIFileRoot[layer] = &m_acLayerCfg[layer].m_colourRemapSEIFileRoot;
 #endif
-#if REPN_FORMAT_IN_VPS
-    cfg_repFormatIdx[layer] = &m_acLayerCfg[layer].m_repFormatIdx;
-#endif
+    cfg_repFormatIdx[layer]         = &m_acLayerCfg[layer].m_repFormatIdx;
     cfg_layerId[layer]              = &m_acLayerCfg[layer].m_layerId;
     cfg_SourceWidth[layer]          = &m_acLayerCfg[layer].m_iSourceWidth;
     cfg_SourceHeight[layer]         = &m_acLayerCfg[layer].m_iSourceHeight;
@@ -1040,9 +1036,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SourceHeight%d,-hgt%d",                         cfg_SourceHeight,                            0, MAX_LAYERS, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",                             cfg_FrameRate,                               0, MAX_LAYERS, "Frame rate for layer %d")
   ("LambdaModifier%d,-LM%d",                        m_adLambdaModifier,                Double(1.0), MAX_TLAYER, "Lambda modifier for temporal layer %d")
-#if REPN_FORMAT_IN_VPS
   ("RepFormatIdx%d",                                cfg_repFormatIdx,                           -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
-#endif
   ("LayerId%d",                                     cfg_layerId,                                -1, MAX_LAYERS,  "Layer id")
 
   ("NumSamplePredRefLayers%d",                      cfg_numSamplePredRefLayers,                 -1, MAX_LAYERS, "Number of sample prediction reference layers")

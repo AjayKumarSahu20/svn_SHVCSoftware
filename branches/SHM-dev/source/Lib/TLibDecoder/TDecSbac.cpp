@@ -945,7 +945,7 @@ Void TDecSbac::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   if ( uiDQp > 0 )
   {
     UInt uiSign;
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffsetY();
 #else
     Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);

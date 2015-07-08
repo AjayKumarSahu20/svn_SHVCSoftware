@@ -507,7 +507,7 @@ public:
   }
 };
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
 class RepFormat
 {
   Bool m_chromaAndBitDepthVpsPresentFlag;
@@ -557,7 +557,7 @@ public:
   Window& getConformanceWindowVps()                           { return  m_conformanceWindowVps;             }
   Void    setConformanceWindowVps(Window& conformanceWindow ) { m_conformanceWindowVps = conformanceWindow; }
 };
-#endif //REPN_FORMAT_IN_VPS
+#endif
 
 class TComVPS
 {
@@ -681,12 +681,11 @@ private:
 
   Bool       m_altOutputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
 
-#if REPN_FORMAT_IN_VPS
   Bool       m_repFormatIdxPresentFlag;
   Int        m_vpsNumRepFormats;            // coded as minus1
   RepFormat  m_vpsRepFormat[16];
   Int        m_vpsRepFormatIdx[16];
-#endif
+
   Int        m_viewIdLen;
   Int        m_viewIdVal                [MAX_LAYERS];
 
@@ -1050,32 +1049,30 @@ Void      deriveNumberOfSubDpbs();
   Int      getBspHrdIdx(Int  i, Int j, Int k, Int l, Int m)                     { return m_bspHrdIdx[i][j][k][l][m];}
   Void     setBspHrdIdx(Int  i, Int j, Int k, Int l, Int m, Int val)            { m_bspHrdIdx[i][j][k][l][m] = val; }
 #endif
-  Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)   { m_baseLayerPSCompatibilityFlag[layer] = val; }
-  Int    getBaseLayerPSCompatibilityFlag (Int layer)            { return m_baseLayerPSCompatibilityFlag[layer];}
-  Bool   getAltOuputLayerFlag(Int idx)                          { return m_altOutputLayerFlag[idx]; }
-  Void   setAltOuputLayerFlag(Int idx, Bool x)                  { m_altOutputLayerFlag[idx] = x;    }
+  Void   setBaseLayerPSCompatibilityFlag (Int layer, int val)                   { m_baseLayerPSCompatibilityFlag[layer] = val; }
+  Int    getBaseLayerPSCompatibilityFlag (Int layer)                            { return m_baseLayerPSCompatibilityFlag[layer];}
+  Bool   getAltOuputLayerFlag(Int idx)                                          { return m_altOutputLayerFlag[idx]; }
+  Void   setAltOuputLayerFlag(Int idx, Bool x)                                  { m_altOutputLayerFlag[idx] = x;    }
 
-#if REPN_FORMAT_IN_VPS
-  Bool   getRepFormatIdxPresentFlag()       { return m_repFormatIdxPresentFlag; }
-  Void   setRepFormatIdxPresentFlag(Bool x) { m_repFormatIdxPresentFlag = x;    }
+  Bool   getRepFormatIdxPresentFlag()                                           { return m_repFormatIdxPresentFlag; }
+  Void   setRepFormatIdxPresentFlag(Bool x)                                     { m_repFormatIdxPresentFlag = x;    }
 
-  Int    getVpsNumRepFormats()              { return m_vpsNumRepFormats;        }
-  Void   setVpsNumRepFormats(Int x)         { m_vpsNumRepFormats = x;           }
+  Int    getVpsNumRepFormats()                                                  { return m_vpsNumRepFormats;        }
+  Void   setVpsNumRepFormats(Int x)                                             { m_vpsNumRepFormats = x;           }
 
-  RepFormat* getVpsRepFormat(Int idx)       { return &m_vpsRepFormat[idx];      }
+  RepFormat* getVpsRepFormat(Int idx)                                           { return &m_vpsRepFormat[idx];      }
 
-  Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];    }
-  Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;       }         
-#endif
+  Int    getVpsRepFormatIdx(Int idx)                                            { return m_vpsRepFormatIdx[idx];    }
+  Void   setVpsRepFormatIdx(Int idx, Int x)                                     { m_vpsRepFormatIdx[idx] = x;       }         
 
-  Void   setViewIdLen( Int  val )                                   { m_viewIdLen = val;  } 
-  Int    getViewIdLen(  )                                           { return m_viewIdLen; } 
+  Void   setViewIdLen( Int  val )                                               { m_viewIdLen = val;  } 
+  Int    getViewIdLen(  )                                                       { return m_viewIdLen; } 
 
-  Void   setViewIdVal( Int viewOrderIndex, Int  val )               { m_viewIdVal[viewOrderIndex] = val;  } 
-  Int    getViewIdVal( Int viewOrderIndex )                         { return m_viewIdVal[viewOrderIndex]; } 
+  Void   setViewIdVal( Int viewOrderIndex, Int  val )                           { m_viewIdVal[viewOrderIndex] = val;  } 
+  Int    getViewIdVal( Int viewOrderIndex )                                     { return m_viewIdVal[viewOrderIndex]; } 
   Int    getScalabilityId(Int, ScalabilityType scalType );
 
-  Int    getViewIndex    ( Int layerIdInNuh )                       { return getScalabilityId( getLayerIdxInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
+  Int    getViewIndex    ( Int layerIdInNuh )                                   { return getScalabilityId( getLayerIdxInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    
 
   Int    getNumViews();
   Int    scalTypeToScalIdx( ScalabilityType scalType );
@@ -1375,10 +1372,8 @@ private:
   UInt        m_numScaledRefLayerOffsets;
   Bool        m_multiLayerExtSpsFlag;
   Int         m_NumDirectRefLayers;
-#if REPN_FORMAT_IN_VPS
   Bool        m_updateRepFormatFlag;
   UInt        m_updateRepFormatIndex;
-#endif
 #if SCALINGLIST_INFERRING
   Bool        m_inferScalingListFlag;
   UInt        m_scalingListRefLayerId;
@@ -1547,12 +1542,10 @@ public:
 
   Int      getNumDirectRefLayers()                  { return  m_NumDirectRefLayers;  }
   Void     setNumDirectRefLayers(Int n)             {  m_NumDirectRefLayers = n;     }
-#if REPN_FORMAT_IN_VPS
   Bool     getUpdateRepFormatFlag()                 { return m_updateRepFormatFlag;   }
   Void     setUpdateRepFormatFlag(Bool x)           { m_updateRepFormatFlag = x;      }
   Int      getUpdateRepFormatIndex()                { return m_updateRepFormatIndex;  }
   Void     setUpdateRepFormatIndex(UInt index)      { m_updateRepFormatIndex = index; }
-#endif
 #if SCALINGLIST_INFERRING
   Bool     getInferScalingListFlag()                { return m_inferScalingListFlag;  }
   UInt     getScalingListRefLayerId()               { return m_scalingListRefLayerId; }
@@ -2342,7 +2335,6 @@ public:
 
   Int       getNumNegativeRpsCurrTempList();
 
-#if REPN_FORMAT_IN_VPS
   UInt getPicWidthInLumaSamples();
   UInt getPicHeightInLumaSamples();
 #if AUXILIARY_PICTURES
@@ -2356,7 +2348,6 @@ public:
   Int  getQpBDOffsetC();
 
   Window& getConformanceWindow();
-#endif
 
   Void setILRPic(TComPic **pcIlpPic);
 #if POC_RESET_IDC_SIGNALLING

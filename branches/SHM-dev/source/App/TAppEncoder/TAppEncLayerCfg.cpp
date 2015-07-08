@@ -44,10 +44,8 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   :m_cInputFile(string("")),
   m_cReconFile(string("")),
   m_conformanceMode( 0 ),
-  m_aidQP(NULL)
-#if REPN_FORMAT_IN_VPS
-, m_repFormatIdx (-1)
-#endif
+  m_aidQP(NULL),
+  m_repFormatIdx (-1)
 #if Q0074_COLOUR_REMAPPING_SEI
 ,  m_colourRemapSEIFileRoot(string(""))
 #endif
@@ -213,7 +211,7 @@ Void TAppEncLayerCfg::xPrintParameter()
 {
   printf("Input File                        : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File               : %s\n", m_cReconFile.c_str()  );
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
 #else
   printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
@@ -313,7 +311,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       {
         m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
         m_iSourceWidth  += m_confWinRight;
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
         m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
 #endif
       }
@@ -326,7 +324,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
           m_iSourceHeightOrg += m_confWinBottom << 1;
           m_aiPad[1] = m_confWinBottom << 1;
         }
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
         m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
 #endif
       }
@@ -345,7 +343,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       m_iSourceHeight += m_aiPad[1];
       m_confWinRight  = m_aiPad[0];
       m_confWinBottom = m_aiPad[1];
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
       m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
       m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
 #endif
@@ -428,7 +426,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
-#if !REPN_FORMAT_IN_VPS
+#if !SVC_EXTENSION
   xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");

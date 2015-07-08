@@ -737,7 +737,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   if (uiCode != 0)
   {
     Window &conf = pcSPS->getConformanceWindow();
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     READ_UVLC(   uiCode, "conf_win_left_offset" );               conf.setWindowLeftOffset  ( uiCode );
     READ_UVLC(   uiCode, "conf_win_right_offset" );              conf.setWindowRightOffset ( uiCode );
     READ_UVLC(   uiCode, "conf_win_top_offset" );                conf.setWindowTopOffset   ( uiCode );
@@ -1187,7 +1187,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
   {
     pcSlice->setDependentSliceSegmentFlag(false);
   }
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   Int numCTUs = ((pcSlice->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((pcSlice->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
 #else
   Int numCTUs = ((sps->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((sps->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
@@ -1788,7 +1788,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     READ_SVLC( iCode, "slice_qp_delta" );
     pcSlice->setSliceQp (26 + pps->getPicInitQPMinus26() + iCode);
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcSlice->getLayerId()] = pcSlice->getBitDepthY();
     g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcSlice->getLayerId()] = pcSlice->getBitDepthC();
 
@@ -2335,7 +2335,7 @@ Void TDecCavlc::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth 
   xReadSvlc( iDQp );
 #endif
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffsetY();
 #else
   Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
@@ -2956,7 +2956,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   vps->checkNecessaryLayerFlagCondition();  
 
-#if REPN_FORMAT_IN_VPS
   READ_UVLC( uiCode, "vps_num_rep_formats_minus1" );
   vps->setVpsNumRepFormats( uiCode + 1 );
 
@@ -3004,7 +3003,6 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       vps->setVpsRepFormatIdx( i, min( (Int)i, vps->getVpsNumRepFormats()-1 ) );
     }
   }
-#endif
 
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
@@ -3182,7 +3180,6 @@ Void TDecCavlc::defaultVPSVUI( TComVPS* vps )
   vps->setHigherLayerIrapSkipFlag( false );
 }
 
-#if REPN_FORMAT_IN_VPS
 Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev )
 {
   UInt uiCode;
@@ -3234,7 +3231,7 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
     READ_UVLC( uiCode, "conf_win_vps_bottom_offset" );       conf.setWindowBottomOffset( uiCode );
   }
 }
-#endif //REPN_FORMAT_IN_VPS
+
 #if VPS_DPB_SIZE_TABLE
 Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 {

@@ -83,10 +83,6 @@ protected:
 #if SVC_EXTENSION
 #if AVC_BASE
   Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
-#if !REPN_FORMAT_IN_VPS
-  Int           m_iBLSourceWidth;
-  Int           m_iBLSourceHeight;
-#endif
 #endif
   CommonDecoderParams             m_commonDecoderParams;
 #if CONFORMANCE_BITSTREAM_MODE
@@ -112,12 +108,6 @@ public:
   , m_decodedNoDisplaySEIEnabled(false)
 #if Q0074_COLOUR_REMAPPING_SEI
   , m_colourRemapSEIEnabled(0)
-#endif
-#if SVC_EXTENSION
-#if AVC_BASE && !REPN_FORMAT_IN_VPS
-  , m_iBLSourceWidth(0)
-  , m_iBLSourceHeight(0)
-#endif
 #endif
   , m_respectDefDispWindow(0)
 #if O0043_BEST_EFFORT_DECODING

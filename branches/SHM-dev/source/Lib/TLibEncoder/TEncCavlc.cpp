@@ -586,7 +586,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( conf.getWindowEnabledFlag(),          "conformance_window_flag" );
   if (conf.getWindowEnabledFlag())
   {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     WRITE_UVLC( conf.getWindowLeftOffset(),   "conf_win_left_offset"   );
     WRITE_UVLC( conf.getWindowRightOffset(),  "conf_win_right_offset"  );
     WRITE_UVLC( conf.getWindowTopOffset(),    "conf_win_top_offset"    );
@@ -1605,7 +1605,7 @@ Void TEncCavlc::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
 #else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
@@ -2131,7 +2131,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     assert( NumOutputLayersInOutputLayerSet[i] > 0 );
   }
 
-#if REPN_FORMAT_IN_VPS
   // The value of vps_num_rep_formats_minus1 shall be in the range of 0 to 255, inclusive.
   assert( vps->getVpsNumRepFormats() > 0 && vps->getVpsNumRepFormats() <= 256 );
   
@@ -2165,7 +2164,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
       WRITE_CODE( vps->getVpsRepFormatIdx(i), numBits, "vps_rep_format_idx[i]" );
     }
   }
-#endif
 
   WRITE_FLAG(vps->getMaxOneActiveRefLayerFlag(), "max_one_active_ref_layer_flag");
 
@@ -2229,7 +2227,6 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
   }
 }
 
-#if REPN_FORMAT_IN_VPS
 Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 {
   WRITE_CODE( repFormat->getPicWidthVpsInLumaSamples (), 16, "pic_width_vps_in_luma_samples" );    
@@ -2262,7 +2259,7 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
     WRITE_UVLC( conf.getWindowBottomOffset(), "conf_win_vps_bottom_offset" );
   }
 }
-#endif
+
 #if VPS_DPB_SIZE_TABLE
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {

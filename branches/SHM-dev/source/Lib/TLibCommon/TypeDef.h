@@ -77,7 +77,6 @@
 #define UNAVAILABLE_PIC_BUGFIX           1
 #endif
 #define POC_RESET_INFO_INFERENCE         1      ///< JCTVC-Q0146: Infer the value of poc_reset_info_present_flag when not present
-#define REPN_FORMAT_IN_VPS               1      ///< JCTVC-N0092: Signal represenation format (spatial resolution, bit depth, colour format) in the VPS
 #define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
 
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC

@@ -338,7 +338,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   dQP = m_pcCfg->getQP();
   if(eSliceType!=I_SLICE)
   {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getQpBDOffsetY() ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
 #else
     if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA) ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
@@ -412,7 +412,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
       dLambda *= 0.95;
     }
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #else
     iQP = max( -pSPS->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
@@ -473,7 +473,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   if (m_pcCfg->getUseRecalculateQPAccordingToLambda())
   {
     dQP = xGetQPValueAccordingToLambda( dLambda );
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     iQP = max( -rpcSlice->getQpBDOffsetY(), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
 #else
     iQP = max( -pSPS->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
@@ -720,7 +720,7 @@ Void TEncSlice::calCostSliceI(TComPic* pcPic)
     TComDataCU* pCtu = pcPic->getCtu( ctuRsAddr );
     pCtu->initCtu( pcPic, ctuRsAddr );
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     Int height  = min( pcSlice->getSPS()->getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - ctuRsAddr / pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUHeight() );
     Int width   = min( pcSlice->getSPS()->getMaxCUWidth(),pcSlice->getPicWidthInLumaSamples() - ctuRsAddr % pcPic->getFrameWidthInCtus() * pcSlice->getSPS()->getMaxCUWidth() );
 #else
@@ -896,7 +896,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic )
           estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP    ( estLambda, pcSlice->getSliceQp() );
         }
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
         estQP     = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, estQP );
 #else
         estQP     = Clip3( -pcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, estQP );

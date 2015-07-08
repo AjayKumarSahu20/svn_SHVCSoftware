@@ -1931,10 +1931,8 @@ TComVPS::TComVPS()
 , m_defaultTargetOutputLayerIdc(0)
 , m_bitRatePresentVpsFlag     (false)
 , m_picRatePresentVpsFlag     (false)
-#if REPN_FORMAT_IN_VPS
 , m_repFormatIdxPresentFlag   (false)
 , m_vpsNumRepFormats          (1)
-#endif
 , m_viewIdLen                (0)
 , m_vpsNonVuiExtLength (0)
 , m_vpsPocLsbAlignedFlag(false)
@@ -2008,16 +2006,14 @@ TComVPS::TComVPS()
     m_vpsMatCoeff[i] = 2;
   }
 
-  ::memset(m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag));
-  ::memset(m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag));
-  ::memset(m_avgBitRate        , 0, sizeof(m_avgBitRate)        );
-  ::memset(m_maxBitRate        , 0, sizeof(m_maxBitRate)        );
-  ::memset(m_constPicRateIdc   , 0, sizeof(m_constPicRateIdc)   );
-  ::memset(m_avgPicRate        , 0, sizeof(m_avgPicRate)        );
-#if REPN_FORMAT_IN_VPS
-  ::memset( m_vpsRepFormatIdx, 0, sizeof(m_vpsRepFormatIdx) );
-#endif
-  ::memset(m_viewIdVal, 0, sizeof(m_viewIdVal));
+  ::memset( m_bitRatePresentFlag, 0, sizeof(m_bitRatePresentFlag) );
+  ::memset( m_picRatePresentFlag, 0, sizeof(m_picRatePresentFlag) );
+  ::memset( m_avgBitRate        , 0, sizeof(m_avgBitRate)         );
+  ::memset( m_maxBitRate        , 0, sizeof(m_maxBitRate)         );
+  ::memset( m_constPicRateIdc   , 0, sizeof(m_constPicRateIdc)    );
+  ::memset( m_avgPicRate        , 0, sizeof(m_avgPicRate)         );
+  ::memset( m_vpsRepFormatIdx   , 0, sizeof(m_vpsRepFormatIdx)    );
+  ::memset( m_viewIdVal         , 0, sizeof(m_viewIdVal))         ;
 
   for( Int i = 0; i < MAX_NUM_LAYER_IDS; i++ )
   {
@@ -2114,10 +2110,8 @@ TComSPS::TComSPS()
 , m_layerId                   ( 0 )
 , m_extensionFlag             ( false )
 , m_bV1CompatibleSPSFlag      (  0)
-#if REPN_FORMAT_IN_VPS
 , m_updateRepFormatFlag       (false)
 , m_updateRepFormatIndex      (0)
-#endif
 #if SCALINGLIST_INFERRING
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
@@ -3506,7 +3500,6 @@ Void TComVPS::calculateMaxSLInLayerSets()
   }
 }
 
-#if REPN_FORMAT_IN_VPS
 UInt TComSlice::getPicWidthInLumaSamples()
 {
   TComSPS *sps = getSPS();
@@ -3572,7 +3565,7 @@ UInt TComSlice::getChromaFormatIdc()
   UInt retVal, layerId = getLayerId();
 #endif
 
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
@@ -3597,7 +3590,7 @@ UInt TComSlice::getBitDepthY()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
@@ -3622,7 +3615,7 @@ UInt TComSlice::getBitDepthC()
   TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
 
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
+  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
@@ -3686,7 +3679,6 @@ RepFormat::RepFormat()
 , m_bitDepthVpsLuma             (0)
 , m_bitDepthVpsChroma           (0)
 {}
-#endif //REPN_FORMAT_IN_VPS
 
 Void TComPTL::copyProfileInfo(TComPTL *ptl)
 {

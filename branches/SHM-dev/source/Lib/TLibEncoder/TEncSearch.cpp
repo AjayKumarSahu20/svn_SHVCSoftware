@@ -4695,7 +4695,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
     while( pcCU->getWidth(0) > (pcCU->getSlice()->getSPS()->getMaxTrSize()<<uiTrLevel) ) uiTrLevel++;
   }
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   qpMin =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) - m_iMaxDeltaQP ) : pcCU->getQP( 0 );
   qpMax =  bHighPass ? Clip3( -pcCU->getSlice()->getQpBDOffsetY(), MAX_QP, pcCU->getQP(0) + m_iMaxDeltaQP ) : pcCU->getQP( 0 );
 #else

@@ -92,7 +92,6 @@ Void TAppEncTop::xInitLibCfg()
     vps->setMaxDecPicBuffering                                            ( m_maxDecPicBuffering[i], i );
   }
 
-#if REPN_FORMAT_IN_VPS  
   Int maxRepFormatIdx = -1;
   Int formatIdx = -1;
   for(UInt layer=0; layer < m_numLayers; layer++)
@@ -182,8 +181,8 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[mapIdxToLayer[idx]].setSkipPictureAtArcSwitch             ( m_skipPictureAtArcSwitch );
   }
+
   delete [] mapIdxToLayer;
-#endif
 
   //Populate PTL in VPS
   TComVPS *pVPS = m_acTEncTop[0].getVPS();
@@ -2197,7 +2196,7 @@ Void TAppEncTop::xDeleteBuffer( )
 
 Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   ChromaFormat chromaFormatIdc = m_acLayerCfg[layer].getChromaFormatIDC();
   Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
@@ -2223,7 +2222,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 
       if( !m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed() )
       {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal, 
           m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal, NUM_CHROMA_FORMAT, m_isTopFieldFirst );
 #else
@@ -2248,7 +2247,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
       if( !m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed() )
       {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal,
           m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal );
 #else

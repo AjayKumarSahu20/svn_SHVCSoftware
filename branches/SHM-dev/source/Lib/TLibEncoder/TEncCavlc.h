@@ -159,9 +159,7 @@ public:
   Void codeSPSExtension        ( TComSPS* pcSPS );
   Void codeVPSExtension        ( TComVPS* pcVPS );
   Void codeVPSVUI              ( TComVPS *vps   );
-#if REPN_FORMAT_IN_VPS
   Void  codeRepFormat          ( RepFormat *repFormat );
-#endif
 #if VPS_DPB_SIZE_TABLE
   Void  codeVpsDpbSizeTable    (TComVPS *vps);
 #endif

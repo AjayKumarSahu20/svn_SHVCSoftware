@@ -117,9 +117,7 @@ protected:
   Bool      m_useExtendedPrecision;
   Bool      m_useHighPrecisionPredictionWeighting;
 
-#if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
-#endif
 #if Q0074_COLOUR_REMAPPING_SEI
   string    m_colourRemapSEIFileRoot;                           ///< Colour Remapping Information SEI message parameters file
   Int       m_colourRemapSEIId;
@@ -205,12 +203,10 @@ public:
   Int     getRCInitialQP()            {return m_RCInitialQP;           }
   Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
 #endif
-#if REPN_FORMAT_IN_VPS
   Int     getRepFormatIdx()           { return m_repFormatIdx;  }
   Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
   Void    setSourceWidth(Int x)       { m_iSourceWidth = x;     }
   Void    setSourceHeight(Int x)      { m_iSourceHeight = x;    }
-#endif
   Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
 #if LAYER_CTB
   UInt    getMaxCUWidth()             {return m_uiMaxCUWidth;      }

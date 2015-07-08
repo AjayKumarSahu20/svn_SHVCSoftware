@@ -812,7 +812,7 @@ Void TEncTop::xInitSPS()
 
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
   {
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
     m_cSPS.setBitDepth    (ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType))            );
     m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) - 8)));
 #else
@@ -1407,41 +1407,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
   return (TEncTop *)getLayerEnc( m_cVPS.getLayerIdxInVps(m_cVPS.getRefLayerId( m_layerId, refLayerIdx )) );
 }
 
-#if !REPN_FORMAT_IN_VPS
-Void TEncTop::xInitILRP()
-{
-  if(m_layerId>0)
-  {
-    g_bitDepthY     = m_cSPS.getBitDepthY();
-    g_bitDepthC     = m_cSPS.getBitDepthC();
-    g_uiMaxCUWidth  = m_cSPS.getMaxCUWidth();
-    g_uiMaxCUHeight = m_cSPS.getMaxCUHeight();
-    g_uiMaxCUDepth  = m_cSPS.getMaxCUDepth();
-    g_uiAddCUDepth  = max (0, m_cSPS.getLog2MinCodingBlockSize() - (Int)m_cSPS.getQuadtreeTULog2MinSize() );
-
-    Int  numReorderPics[MAX_TLAYER];
-    Window &conformanceWindow = m_cSPS.getConformanceWindow();
-    Window defaultDisplayWindow = m_cSPS.getVuiParametersPresentFlag() ? m_cSPS.getVuiParameters()->getDefaultDisplayWindow() : Window();
-
-    if (m_cIlpPic[0] == NULL)
-    {
-      for (Int j=0; j < m_numLayer; j++) // consider to set to NumDirectRefLayers[LayerIdInVps[nuh_layer_id]]
-      {
-        m_cIlpPic[j] = new  TComPic;
-#if AUXILIARY_PICTURES
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#else
-        m_cIlpPic[j]->create(m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, &m_cSPS, true);
-#endif
-        for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCUsInFrame(); i++)
-        {
-          m_cIlpPic[j]->getPicSym()->getCU(i)->initCU(m_cIlpPic[j], i);
-        }
-      }
-    }
-  }
-}
-#else
 Void TEncTop::xInitILRP()
 {
   RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
@@ -1509,7 +1474,6 @@ Void TEncTop::xInitILRP()
     }
   }
 }
-#endif
 
 Window& TEncTop::getScaledRefLayerWindowForLayer(Int layerId)
 {

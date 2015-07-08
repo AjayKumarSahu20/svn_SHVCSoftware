@@ -471,9 +471,8 @@ protected:
 #if SVC_EXTENSION
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
   Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
-#if REPN_FORMAT_IN_VPS
+
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool      m_interLayerConstrainedTileSetsSEIEnabled;
   UInt      m_ilNumSetsInMessage;
@@ -556,9 +555,7 @@ public:
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
 
-#if REPN_FORMAT_IN_VPS
   RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
-#endif
 #if LAYER_CTB
   Bool getUsePCM()                  { return m_usePCM;               }
   UInt getPCMLog2MinSize  ()        { return  m_uiPCMLog2MinSize;    }

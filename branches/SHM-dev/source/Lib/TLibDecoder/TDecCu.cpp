@@ -221,7 +221,8 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool 
   UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight>>uiDepth) - 1;
 
   TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
-#if REPN_FORMAT_IN_VPS
+
+#if SVC_EXTENSION
   if( ( uiRPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples() ) )
 #else
   if( ( uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
@@ -253,7 +254,7 @@ Void TDecCu::xDecodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool 
       uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiIdx] ];
       uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiIdx] ];
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
       if ( !isLastCtuOfSliceSegment && ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples() ) )
 #else
       if ( !isLastCtuOfSliceSegment && ( uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples() ) )
@@ -405,9 +406,8 @@ Void TDecCu::xDecompressCU( TComDataCU* pCtu, UInt uiAbsPartIdx,  UInt uiDepth )
 
   TComSlice * pcSlice = pCtu->getPic()->getSlice(pCtu->getPic()->getCurrSliceIdx());
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
   if( ( uiRPelX >= pcSlice->getPicWidthInLumaSamples() ) || ( uiBPelY >= pcSlice->getPicHeightInLumaSamples() ) )
-
 #else
   if( ( uiRPelX >= pcSlice->getSPS()->getPicWidthInLumaSamples() ) || ( uiBPelY >= pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
 #endif
@@ -425,7 +425,7 @@ Void TDecCu::xDecompressCU( TComDataCU* pCtu, UInt uiAbsPartIdx,  UInt uiDepth )
       uiLPelX = pCtu->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiIdx] ];
       uiTPelY = pCtu->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiIdx] ];
 
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
       if( ( uiLPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getPicHeightInLumaSamples() ) )
 #else
       if( ( uiLPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
