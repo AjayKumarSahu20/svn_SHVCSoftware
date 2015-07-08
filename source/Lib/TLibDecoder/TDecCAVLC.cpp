@@ -1276,7 +1276,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       rps->setNumberOfPictures(0);
       pcSlice->setRPS(rps);
     }
-#if N0065_LAYER_POC_ALIGNMENT
+#if SVC_EXTENSION
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( ( pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag() )
 #else
@@ -1287,10 +1287,10 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 #endif
     {
       READ_CODE(sps->getBitsForPOC(), uiCode, "pic_order_cnt_lsb");
+#if SVC_EXTENSION
 #if POC_RESET_IDC_DECODER
       pcSlice->setPicOrderCntLsb( uiCode );
 #endif
-#if SVC_EXTENSION
       iPOClsb = uiCode;
 #else
       Int iPOClsb = uiCode;
@@ -1321,7 +1321,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       }
       pcSlice->setPOC              (iPOCmsb+iPOClsb);
 
-#if N0065_LAYER_POC_ALIGNMENT
+#if SVC_EXTENSION
     }
 #if POC_RESET_IDC_DECODER
     else
