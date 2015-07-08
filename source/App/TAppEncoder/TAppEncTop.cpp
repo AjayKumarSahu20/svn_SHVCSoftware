@@ -1564,7 +1564,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #endif
 
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
-#if O0062_POC_LSB_NOT_PRESENT_FLAG
+
+    // POC LSB not present flag
     for( i = 1; i< vps->getMaxLayers(); i++ )
     {
       if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
@@ -1573,7 +1574,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         vps->setPocLsbNotPresentFlag(i, true); 
       }
     }
-#endif
+
     vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
     vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
     vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
