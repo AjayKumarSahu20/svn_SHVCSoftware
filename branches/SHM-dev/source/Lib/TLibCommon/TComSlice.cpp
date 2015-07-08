@@ -1963,13 +1963,7 @@ TComVPS::TComVPS()
 , m_repFormatIdxPresentFlag   (false)
 , m_vpsNumRepFormats          (1)
 #endif
-#if VIEW_ID_RELATED_SIGNALING 
-#if O0109_VIEW_ID_LEN
 , m_viewIdLen                (0)
-#else
-, m_viewIdLenMinus1           (0)
-#endif
-#endif
 , m_vpsNonVuiExtLength (0)
 #if P0297_VPS_POC_LSB_ALIGNED_FLAG
 , m_vpsPocLsbAlignedFlag(false)
@@ -2055,9 +2049,7 @@ TComVPS::TComVPS()
 #if REPN_FORMAT_IN_VPS
   ::memset( m_vpsRepFormatIdx, 0, sizeof(m_vpsRepFormatIdx) );
 #endif
-#if VIEW_ID_RELATED_SIGNALING 
   ::memset(m_viewIdVal, 0, sizeof(m_viewIdVal));
-#endif
 
   for( Int i = 0; i < MAX_NUM_LAYER_IDS; i++ )
   {
@@ -3277,7 +3269,6 @@ Void TComVPS::deriveLayerIdListVariablesForAddLayerSets()
   }
 }
 
-#if VIEW_ID_RELATED_SIGNALING 
 Int TComVPS::getNumViews()
 {
   Int numViews = 1; 
@@ -3292,10 +3283,12 @@ Int TComVPS::getNumViews()
 
   return numViews;
 }
+
 Int TComVPS::getScalabilityId( Int layerIdInVps, ScalabilityType scalType )
 {
   return getScalabilityMask( scalType ) ? getDimensionId( layerIdInVps, scalTypeToScalIdx( scalType ) ) : 0;
-}  
+}
+
 Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
 {
   assert( scalType >= 0 && scalType <= MAX_VPS_NUM_SCALABILITY_TYPES ); 
@@ -3309,7 +3302,7 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
 
   return scalIdx; 
 }
-#endif
+
 #if VPS_DPB_SIZE_TABLE
 Int TComVPS::getLayerIdcForOls( Int olsIdx, Int layerId )
 {

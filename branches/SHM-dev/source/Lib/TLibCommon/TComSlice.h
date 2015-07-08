@@ -689,14 +689,8 @@ private:
   RepFormat  m_vpsRepFormat[16];
   Int        m_vpsRepFormatIdx[16];
 #endif
-#if VIEW_ID_RELATED_SIGNALING 
-#if O0109_VIEW_ID_LEN
   Int        m_viewIdLen;
-#else
-  Int        m_viewIdLenMinus1;
-#endif
   Int        m_viewIdVal                [MAX_LAYERS];
-#endif
 
   Int        m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool       m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
@@ -1081,14 +1075,9 @@ Void      deriveNumberOfSubDpbs();
   Int    getVpsRepFormatIdx(Int idx)        { return m_vpsRepFormatIdx[idx];    }
   Void   setVpsRepFormatIdx(Int idx, Int x) { m_vpsRepFormatIdx[idx] = x;       }         
 #endif
-#if VIEW_ID_RELATED_SIGNALING
-#if O0109_VIEW_ID_LEN
+
   Void   setViewIdLen( Int  val )                                   { m_viewIdLen = val;  } 
   Int    getViewIdLen(  )                                           { return m_viewIdLen; } 
-#else
-  Void   setViewIdLenMinus1( Int  val )                             { m_viewIdLenMinus1 = val;  } 
-  Int    getViewIdLenMinus1(  )                                     { return m_viewIdLenMinus1; } 
-#endif
 
   Void   setViewIdVal( Int viewOrderIndex, Int  val )               { m_viewIdVal[viewOrderIndex] = val;  } 
   Int    getViewIdVal( Int viewOrderIndex )                         { return m_viewIdVal[viewOrderIndex]; } 
@@ -1098,7 +1087,7 @@ Void      deriveNumberOfSubDpbs();
 
   Int    getNumViews();
   Int    scalTypeToScalIdx( ScalabilityType scalType );
-#endif
+
 #if VPS_DPB_SIZE_TABLE
   Bool   getSubLayerFlagInfoPresentFlag(Int olsIdx)         { return m_subLayerFlagInfoPresentFlag[olsIdx]; }
   Void   setSubLayerFlagInfoPresentFlag(Int olsIdx, Bool x) { m_subLayerFlagInfoPresentFlag[olsIdx] = x;    }

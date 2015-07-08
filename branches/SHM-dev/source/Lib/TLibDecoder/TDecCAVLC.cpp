@@ -2724,28 +2724,15 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 
-#if VIEW_ID_RELATED_SIGNALING
-#if O0109_VIEW_ID_LEN
   READ_CODE( 4, uiCode, "view_id_len" ); vps->setViewIdLen( uiCode );
-#else
-  READ_CODE( 4, uiCode, "view_id_len_minus1" ); vps->setViewIdLenMinus1( uiCode );
-#endif
 
-#if O0109_VIEW_ID_LEN
   if ( vps->getViewIdLen() > 0 )
   {
-    for(  i = 0; i < vps->getNumViews(); i++ )
+    for( i = 0; i < vps->getNumViews(); i++ )
     {
       READ_CODE( vps->getViewIdLen( ), uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
     }
   }
-#else
-  for(  i = 0; i < vps->getNumViews(); i++ )
-  {
-    READ_CODE( vps->getViewIdLenMinus1( ) + 1, uiCode, "view_id_val[i]" ); vps->setViewIdVal( i, uiCode );
-  }
-#endif
-#endif // view id related signaling
 
   // For layer 0
   vps->setNumDirectRefLayers(0, 0);
