@@ -563,10 +563,6 @@ class TComVPS
 {
 private:
   Int         m_VPSId;
-#if VPS_RESERVED_FLAGS
-  Bool        m_baseLayerInternalFlag;
-  Bool        m_baseLayerAvailableFlag;
-#endif
   UInt        m_uiMaxTLayers;
   UInt        m_uiMaxLayers;
   Bool        m_bTemporalIdNestingFlag;
@@ -592,6 +588,8 @@ private:
   TimingInfo  m_timingInfo;
 
 #if SVC_EXTENSION
+  Bool        m_baseLayerInternalFlag;
+  Bool        m_baseLayerAvailableFlag;
 #if MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTLList[MAX_NUM_LAYER_IDS + 1];
 #endif
@@ -765,44 +763,12 @@ public:
   TComVPS();
   virtual ~TComVPS();
 
-#if VPS_RESERVED_FLAGS
-  Void        setBaseLayerInternalFlag(Bool x) { m_baseLayerInternalFlag = x; }
-  Bool        getBaseLayerInternalFlag()         { return m_baseLayerInternalFlag; }
-  Void        setBaseLayerAvailableFlag(Bool x) { m_baseLayerAvailableFlag = x; }
-  Bool        getBaseLayerAvailableFlag()         { return m_baseLayerAvailableFlag; }
-#endif
-
   Void    createHrdParamBuffer()
   {
     m_hrdParameters    = new TComHRD[ getNumHrdParameters() ];
     m_hrdOpSetIdx      = new UInt   [ getNumHrdParameters() ];
     m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
   }
-
-#if O0164_MULTI_LAYER_HRD
-  Void    createBspHrdParamBuffer(UInt numHrds)
-  {
-#if VPS_VUI_BSP_HRD_PARAMS
-    m_bspHrd.resize( numHrds );
-    m_cprmsAddPresentFlag.resize( numHrds );
-    m_numSubLayerHrdMinus1.resize( numHrds );
-#else
-    m_bspHrd    = new TComHRD[ numHrds ];
-#endif
-//    m_hrdOpSetIdx      = new UInt   [ getNumHrdParameters() ];
-//    m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
-  }
-#endif
-#if HRD_BPB
-  Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
-  {
-#if VPS_VUI_BSP_HRD_PARAMS
-    return m_bspHrd[i].getCpbCntMinus1(sl);
-#else
-    return m_bspHrd->getCpbCntMinus1(sl);
-#endif
-  }
-#endif
 
   TComHRD* getHrdParameters   ( UInt i )             { return &m_hrdParameters[ i ]; }
   UInt    getHrdOpSetIdx      ( UInt i )             { return m_hrdOpSetIdx[ i ]; }
@@ -851,6 +817,35 @@ public:
   TimingInfo* getTimingInfo() { return &m_timingInfo; }
 
 #if SVC_EXTENSION
+  Void        setBaseLayerInternalFlag(Bool x)                  { m_baseLayerInternalFlag = x;     }
+  Bool        getBaseLayerInternalFlag()                        { return m_baseLayerInternalFlag;  }
+  Void        setBaseLayerAvailableFlag(Bool x)                 { m_baseLayerAvailableFlag = x;    }
+  Bool        getBaseLayerAvailableFlag()                       { return m_baseLayerAvailableFlag; }
+
+#if O0164_MULTI_LAYER_HRD
+  Void    createBspHrdParamBuffer(UInt numHrds)
+  {
+#if VPS_VUI_BSP_HRD_PARAMS
+    m_bspHrd.resize( numHrds );
+    m_cprmsAddPresentFlag.resize( numHrds );
+    m_numSubLayerHrdMinus1.resize( numHrds );
+#else
+    m_bspHrd    = new TComHRD[ numHrds ];
+#endif
+//    m_hrdOpSetIdx      = new UInt   [ getNumHrdParameters() ];
+//    m_cprmsPresentFlag = new Bool   [ getNumHrdParameters() ];
+  }
+#endif
+#if HRD_BPB
+  Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
+  {
+#if VPS_VUI_BSP_HRD_PARAMS
+    return m_bspHrd[i].getCpbCntMinus1(sl);
+#else
+    return m_bspHrd->getCpbCntMinus1(sl);
+#endif
+  }
+#endif
 #if MULTIPLE_PTL_SUPPORT
   TComPTL* getPTL() { return &m_pcPTLList[0]; }
   TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
