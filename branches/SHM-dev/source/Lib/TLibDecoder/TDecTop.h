@@ -172,10 +172,8 @@ public:
   static Int                     m_nonBaseIdrType;
   static Bool                    m_picNonIdrWithRadlPresentFlag;
   static Bool                    m_picNonIdrNoLpPresentFlag;
-#if POC_RESET_VALUE_RESTRICTION
   static Int                     m_crossLayerPocResetPeriodId;
   static Int                     m_crossLayerPocResetIdc;
-#endif
 #endif //SVC_EXTENSION
 
   TDecTop();
