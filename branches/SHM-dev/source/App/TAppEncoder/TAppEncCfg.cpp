@@ -1646,7 +1646,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
   ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   ("CGS",     m_nCGSFlag , 0, "whether CGS is enabled")
   ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
   ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
@@ -4202,7 +4202,7 @@ Void TAppEncCfg::xCheckParameter()
 #endif
   }
 #endif 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
 #endif
 #endif //SVC_EXTENSION
@@ -4507,7 +4507,7 @@ Void TAppEncCfg::xPrintParameter()
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
 #endif
 #if R0151_CGS_3D_ASYMLUT_IMPROVE

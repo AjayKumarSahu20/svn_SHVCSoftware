@@ -54,8 +54,8 @@
 #define FIX_ALIGN_BUMPING                1
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 
-#define Q0048_CGS_3D_ASYMLUT             1      ///< JCTVC-Q0048: Colour gamut scalability with look-up table
-#if Q0048_CGS_3D_ASYMLUT
+#define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
+#if CGS_3D_ASYMLUT
 #define CGS_GCC_NO_VECTORIZATION         1
 #define R0150_CGS_SIGNAL_CONSTRAINTS     1      ///< JCTVC-R0150: CGS signaling improvement and constraints
 #define R0151_CGS_3D_ASYMLUT_IMPROVE     1      ///< JCTVC-R0151: Non-uniform chroma partitioning and improved LUT coefficient coding
@@ -71,6 +71,7 @@
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define SVC_POC                          1      ///< POC signalling and reset
 #define UNAVAILABLE_PIC_BUGFIX           1
+
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers

@@ -1668,7 +1668,7 @@ private:
   Int      m_phaseHorChroma[MAX_LAYERS];
   Int      m_phaseVerChroma[MAX_LAYERS];
   Bool     m_resamplePhaseSetPresentFlag[MAX_LAYERS];
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int      m_nCGSFlag;
   Int      m_nCGSOutputBitDepthY; // not for syntax
   Int      m_nCGSOutputBitDepthC; // not for syntax
@@ -1841,7 +1841,7 @@ public:
   Void setResamplePhaseSetPresentFlag(Int x, Bool b) { m_resamplePhaseSetPresentFlag[x] = b; }
   Bool hasZeroResamplingPhase(Int refLayerId);
   Void getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int& phaseHorLuma, Int& phaseVerLuma, Int& phaseHorChroma, Int& phaseVerChroma);
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int     getCGSFlag()                { return m_nCGSFlag;  }
   Void    setCGSFlag(Int n)           { m_nCGSFlag = n;     }
   Int     getCGSOutputBitDepthY()     { return m_nCGSOutputBitDepthY;  }
@@ -2007,7 +2007,7 @@ private:
   Int         m_pocResetDeltaPoc;
   Int         m_pocValueBeforeReset;
   Int         m_picOrderCntLsb;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int        m_nCGSOverWritePPS;  // for optimization, not output to bitstream
 #endif
 #endif //SVC_EXTENSION
@@ -2128,7 +2128,7 @@ public:
   Int       getAssociatedIrapPocBeforeReset(     ) { return m_associatedIrapPocBeforeReset; }
 
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int       getCGSOverWritePPS()              { return m_nCGSOverWritePPS;    }
   Void      setCGSOverWritePPS(Int n)         { m_nCGSOverWritePPS = n;       }
 #endif

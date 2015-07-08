@@ -42,7 +42,7 @@
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
 #include "TLibCommon/TComCodingStatistics.h"
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 #include "../TLibCommon/TCom3DAsymLUT.h"
 #endif
 
@@ -181,7 +181,7 @@ Void TDecCavlc::parseShortTermRefPicSet( TComSPS* sps, TComReferencePictureSet* 
 #endif
 }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TDecCavlc::parsePPS(TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT, Int nLayerID)
 #else
 Void TDecCavlc::parsePPS(TComPPS* pcPPS)
@@ -441,7 +441,7 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
                 READ_UVLC( uiCode, "phase_ver_chroma_plus8" );  pcPPS->setPhaseVerChroma (k, uiCode - 8);
               }
             }
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
             READ_FLAG( uiCode , "colour_mapping_enabled_flag" ); 
             pcPPS->setCGSFlag( uiCode );
             if( pcPPS->getCGSFlag() )
@@ -3502,7 +3502,7 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   assert( uiCode == 0 );
 }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 {
 #if R0150_CGS_SIGNAL_CONSTRAINTS

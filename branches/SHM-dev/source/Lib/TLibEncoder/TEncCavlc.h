@@ -47,7 +47,7 @@
 #include "TLibCommon/TComRom.h"
 #include "TEncEntropy.h"
 #include "SyntaxElementWriter.h"
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 #include "../TLibCommon/TCom3DAsymLUT.h"
 #include "TEnc3DAsymLUT.h"
 #endif
@@ -56,7 +56,7 @@
 //! \{
 
 class TEncTop;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 class TCom3DAsymLUT;
 #endif
 
@@ -90,7 +90,7 @@ public:
   Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
   Void  codeSPS                 ( TComSPS* pcSPS );
   Void  codePPS                 ( TComPPS* pcPPS 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     , TEnc3DAsymLUT * pc3DAsymLUT
 #endif
     );
@@ -162,7 +162,7 @@ public:
   Void  codeVpsDpbSizeTable    (TComVPS *vps);
 #endif
   Void  codeVpsVuiBspHrdParams  (TComVPS * const);
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 #if R0179_ENC_OPT_3DLUT_SIZE
 public:
   Void xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );

@@ -14,7 +14,7 @@
 #define MAX_C_SIZE                       4
 #endif
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 
 typedef struct _ColorInfo
 {

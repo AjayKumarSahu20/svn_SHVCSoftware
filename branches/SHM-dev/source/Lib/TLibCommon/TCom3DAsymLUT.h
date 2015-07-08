@@ -8,7 +8,7 @@
 #include <vector>
 #endif
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 
 typedef struct _SYUVP
 {

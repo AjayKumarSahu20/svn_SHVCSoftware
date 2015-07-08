@@ -44,7 +44,7 @@
 #include "TLibCommon/TComPic.h"
 #include "TLibCommon/TComTrQuant.h"
 #include "TLibCommon/SEI.h"
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 #include "TLibCommon/TCom3DAsymLUT.h"
 #endif
 
@@ -81,7 +81,7 @@ private:
 
   // functional classes
   TComPrediction          m_cPrediction;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   TCom3DAsymLUT           m_c3DAsymLUTPPS;
   TComPicYuv*             m_pColorMappedPic;
 #endif
@@ -274,7 +274,7 @@ protected:
 #endif
   Void      xDecodeVPS();
   Void      xDecodeSPS();
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void      xDecodePPS( TCom3DAsymLUT * pc3DAsymLUT );
 #else
   Void      xDecodePPS();
@@ -290,7 +290,7 @@ protected:
   Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
   Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void initAsymLut(TComSlice *pcSlice);
 #endif
   Void resetPocRestrictionCheckParameters();

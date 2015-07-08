@@ -153,7 +153,7 @@ Void TEncCavlc::codeShortTermRefPicSet( TComSPS* pcSPS, TComReferencePictureSet*
 
 
 Void TEncCavlc::codePPS( TComPPS* pcPPS 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   , TEnc3DAsymLUT * pc3DAsymLUT
 #endif
   )
@@ -252,7 +252,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 
 #if SVC_EXTENSION
   pps_extension_flags[PPS_EXT__MLAYER] = pcPPS->getExtensionFlag() ? 1 : 0;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   UInt bits = 0;
 #endif
 #endif
@@ -346,7 +346,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
                 WRITE_UVLC( pcPPS->getPhaseVerChroma(k) + 8, "phase_ver_chroma_plus8" );
               }
             }
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
             bits = getNumberOfWrittenBits();
             WRITE_FLAG( pcPPS->getCGSFlag() , "colour_mapping_enabled_flag" );
             if( pcPPS->getCGSFlag() )
@@ -2466,7 +2466,7 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
 }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 {
 #if R0150_CGS_SIGNAL_CONSTRAINTS

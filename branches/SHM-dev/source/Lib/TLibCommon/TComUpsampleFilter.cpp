@@ -116,7 +116,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     Int shift = g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId];
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift = g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthY();
@@ -152,7 +152,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId];
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthC();
@@ -220,7 +220,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] - 8;
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift1 = currSlice->getPPS()->getCGSOutputBitDepthY() - 8;
@@ -322,7 +322,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] - 8;
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift1 = currSlice->getPPS()->getCGSOutputBitDepthC() - 8;

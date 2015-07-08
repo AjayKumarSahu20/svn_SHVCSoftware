@@ -634,7 +634,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             || !equalOffsets
             || !zeroPhase
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
 #if LAYER_CTB
@@ -679,7 +679,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !sameBitDepths 
             || !equalOffsets 
             || !zeroPhase
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
 #if LAYER_CTB
@@ -1040,7 +1040,7 @@ Void TEncTop::xInitPPS()
     m_cPPS.setPhaseHorChroma( m_refLocationOffsetLayerId[i], m_phaseHorChroma[i] );
     m_cPPS.setPhaseVerChroma( m_refLocationOffsetLayerId[i], m_phaseVerChroma[i] );
   }
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   m_cPPS.setCGSFlag( m_nCGSFlag );
 #endif
   m_cPPS.setPocResetInfoPresentFlag( true );

@@ -53,7 +53,7 @@
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
 #include "SEIwrite.h"
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 #include "TEnc3DAsymLUT.h"
 #endif
 
@@ -153,7 +153,7 @@ private:
   UInt                    m_layerId;      
   TEncTop**               m_ppcTEncTop;
   TEncSearch*             m_pcPredSearch;                       ///< encoder search class
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   TEnc3DAsymLUT           m_Enc3DAsymLUTPicUpdate;
   TEnc3DAsymLUT           m_Enc3DAsymLUTPPS;
   TComPicYuv*             m_pColorMappedPic;
@@ -285,7 +285,7 @@ protected:
 #if Q0096_OVERLAY_SEI
   SEIOverlayInfo* xCreateSEIOverlayInfo();
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
   Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest);
   Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );

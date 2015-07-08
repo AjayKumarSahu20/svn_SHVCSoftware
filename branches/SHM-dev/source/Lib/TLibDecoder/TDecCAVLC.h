@@ -45,7 +45,7 @@
 #include "TDecEntropy.h"
 #include "SyntaxElementParser.h"
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 class TCom3DAsymLUT;
 #endif
 //! \ingroup TLibDecoder
@@ -137,14 +137,14 @@ public:
 #endif
   Void  parseVpsVuiBspHrdParams( TComVPS *vps );
   Void  parseSPSExtension    ( TComSPS* pcSPS );
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void  parsePPS            ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID );
 #else
   Void  parsePPS            ( TComPPS* pcPPS );
 #endif
 
 protected:
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
   Void xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
 #if R0151_CGS_3D_ASYMLUT_IMPROVE

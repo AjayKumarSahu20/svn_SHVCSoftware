@@ -110,7 +110,7 @@ TDecTop::TDecTop()
   m_parseIdc = -1;
   m_lastPocPeriodId = -1;
   m_prevPicOrderCnt = 0;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   m_pColorMappedPic = NULL;
 #endif
 
@@ -132,7 +132,7 @@ TDecTop::~TDecTop()
     fclose( g_hTrace );
   }
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   if(m_pColorMappedPic)
   {
     m_pColorMappedPic->destroy();
@@ -1633,7 +1633,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 
-#if Q0048_CGS_3D_ASYMLUT 
+#if CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
         if( pcSlice->getPPS()->getCGSFlag() 
 #if R0150_CGS_SIGNAL_CONSTRAINTS
@@ -1862,7 +1862,7 @@ Void TDecTop::xDecodeSPS()
   m_parameterSetManagerDecoder.storePrefetchedSPS(sps);
 }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TDecTop::xDecodePPS( TCom3DAsymLUT * pc3DAsymLUT )
 #else
 Void TDecTop::xDecodePPS()
@@ -1873,7 +1873,7 @@ Void TDecTop::xDecodePPS()
 #if SCALINGLIST_INFERRING
   pps->setLayerId( m_layerId );
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   m_cEntropyDecoder.decodePPS( pps, pc3DAsymLUT, m_layerId );
 #else
   m_cEntropyDecoder.decodePPS( pps );
@@ -1995,7 +1995,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 
     case NAL_UNIT_PPS:
       xDecodePPS(
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
         &m_c3DAsymLUTPPS
 #endif
         );
@@ -2427,7 +2427,7 @@ Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)
   }
 }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TDecTop::initAsymLut(TComSlice *pcSlice)
 {
   if(m_layerId>0)
@@ -2600,7 +2600,7 @@ Void TDecTop::xSetSpatialEnhLayerFlag(TComSlice* slice, TComPic* pic)
     }
 
     if( !pic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
       || slice->getPPS()->getCGSFlag() > 0
 #endif
 #if LAYER_CTB

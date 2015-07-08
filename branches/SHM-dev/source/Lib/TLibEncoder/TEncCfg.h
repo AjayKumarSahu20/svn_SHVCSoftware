@@ -403,7 +403,7 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int       m_nCGSFlag;
   Int       m_nCGSMaxOctantDepth;
   Int       m_nCGSMaxYPartNumLog2;
@@ -1140,7 +1140,7 @@ public:
   Void                                setOverlaySEIPersistenceFlag(Int b)                                      { m_overlayInfoPersistenceFlag = b; } 
   Bool                                getOverlaySEIPersistenceFlag()                                           { return m_overlayInfoPersistenceFlag; } 
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void      setCGSFlag(Int n)             { m_nCGSFlag = n;    }
   Int       getCGSFlag()                  { return m_nCGSFlag; }
   Void      setCGSMaxOctantDepth(Int n)   { m_nCGSMaxOctantDepth = n;    }
