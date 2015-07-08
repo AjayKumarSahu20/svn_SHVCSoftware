@@ -120,9 +120,7 @@ private:
   std::ostream           *m_pDecodedSEIOutputStream;
 
 #if SVC_EXTENSION
-#if Q0177_EOS_CHECKS
   Bool                    m_isLastNALWasEos;
-#endif
   Bool                    m_lastPicHasEos;
   static UInt             m_prevPOC;        // POC of the previous slice
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
