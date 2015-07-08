@@ -116,11 +116,7 @@ protected:
   Void xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrainedTileSets &sei, UInt payloadSize, std::ostream *pDecodedMessageOutputStream);
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
-#if OLS_IDX_CHK
 Void   xParseSEISubBitstreamProperty          (SEISubBitstreamProperty &sei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream);
-#else
-Void   xParseSEISubBitstreamProperty          (SEISubBitstreamProperty &sei, std::ostream *pDecodedMessageOutputStream);
-#endif
 #endif
 #if LAYERS_NOT_PRESENT_SEI
   Void xParseSEILayersNotPresent              (SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps ,std::ostream *pDecodedMessageOutputStream);
