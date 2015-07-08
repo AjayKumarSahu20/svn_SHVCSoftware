@@ -50,7 +50,7 @@
 class TEncSbac;
 class TEncCavlc;
 class SEI;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 class TEnc3DAsymLUT;
 #endif
 
@@ -72,7 +72,7 @@ public:
   virtual Void  codeVPS                 ( TComVPS* pcVPS )                                      = 0;
   virtual Void  codeSPS                 ( TComSPS* pcSPS )                                      = 0;
   virtual Void  codePPS                 ( TComPPS* pcPPS 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     , TEnc3DAsymLUT * pc3DAsymLUT
 #endif
     )                                      = 0;
@@ -152,7 +152,7 @@ public:
   // SPS
   Void encodeSPS               ( TComSPS* pcSPS );
   Void encodePPS               ( TComPPS* pcPPS 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     , TEnc3DAsymLUT * pc3DAsymLUT
 #endif
     );

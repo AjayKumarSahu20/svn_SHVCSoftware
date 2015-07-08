@@ -79,7 +79,7 @@ public:
   Void  parseVPS                  ( TComVPS* /*pcVPS*/ ) {}
   Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
   Void  parsePPS                  ( TComPPS* /*pcPPS*/ 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     , TCom3DAsymLUT * /*pc3DAsymLUT*/ , Int /*nLayerID*/
 #endif
     ) {}

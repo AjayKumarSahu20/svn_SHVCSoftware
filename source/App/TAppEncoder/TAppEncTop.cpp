@@ -755,7 +755,7 @@ Void TAppEncTop::xInitLibCfg()
 #endif
     m_acTEncTop[layer].setAltOuputLayerFlag                      ( m_altOutputLayerFlag );
     m_acTEncTop[layer].setCrossLayerBLAFlag                      ( m_crossLayerBLAFlag );
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     m_acTEncTop[layer].setCGSFlag                                ( layer == 0 ? 0 : m_nCGSFlag );
     m_acTEncTop[layer].setCGSMaxOctantDepth                      ( m_nCGSMaxOctantDepth );
     m_acTEncTop[layer].setCGSMaxYPartNumLog2                     ( m_nCGSMaxYPartNumLog2 );

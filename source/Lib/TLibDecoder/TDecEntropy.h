@@ -49,7 +49,7 @@
 class TDecSbac;
 class TDecCavlc;
 class ParameterSetManagerDecoder;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 class TCom3DAsymLUT;
 #endif
 
@@ -70,7 +70,7 @@ public:
 
   virtual Void  parseVPS                  ( TComVPS* pcVPS )     = 0;
   virtual Void  parseSPS                  ( TComSPS* pcSPS )     = 0;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   virtual Void  parsePPS                  ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID )     = 0;
 #else
   virtual Void  parsePPS                  ( TComPPS* pcPPS )     = 0;
@@ -144,7 +144,7 @@ public:
   Void    decodeVPS                   ( TComVPS* pcVPS ) { m_pcEntropyDecoderIf->parseVPS(pcVPS); }
   Void    decodeSPS                   ( TComSPS* pcSPS ) { m_pcEntropyDecoderIf->parseSPS(pcSPS); }
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void    decodePPS                   ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT, Int nLayerID )    { m_pcEntropyDecoderIf->parsePPS(pcPPS, pc3DAsymLUT , nLayerID );                     }
 #else
   Void    decodePPS                   ( TComPPS* pcPPS ) { m_pcEntropyDecoderIf->parsePPS(pcPPS); }

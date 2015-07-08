@@ -8,7 +8,7 @@
 #include "TCom3DAsymLUT.h"
 #include "TComPicYuv.h"
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 
 const Int TCom3DAsymLUT::m_nVertexIdxOffset[4][3] = { { 0 , 0 , 0 } , { 0 , 1 , 0 } , { 0 , 1 , 1 } , { 1 , 1 , 1 } };
 

@@ -511,7 +511,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         // motion resampling constraint
         // Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction
         if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepths 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
           || getPPS()->getCGSFlag()
 #endif
           ) // ratio 1x
@@ -2304,7 +2304,7 @@ TComPPS::TComPPS()
 #endif
 , m_pocResetInfoPresentFlag   (false)
 , m_numRefLayerLocationOffsets  ( 0 )
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 , m_nCGSFlag(0)
 , m_nCGSOutputBitDepthY(0)
 , m_nCGSOutputBitDepthC(0)

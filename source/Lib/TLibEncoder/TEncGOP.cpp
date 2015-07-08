@@ -112,7 +112,7 @@ TEncGOP::TEncGOP()
   m_pocCraWithoutReset = 0;
   m_associatedIrapPocBeforeReset = 0;
   m_pcPredSearch        = NULL;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   m_temp = NULL;
   m_pColorMappedPic = NULL;
 #endif
@@ -135,7 +135,7 @@ TEncGOP::TEncGOP()
 
 TEncGOP::~TEncGOP()
 {
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   if(m_pColorMappedPic)
   {
     m_pColorMappedPic->destroy();
@@ -192,7 +192,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 #if SVC_EXTENSION
   m_ppcTEncTop           = pcTEncTop->getLayerEnc();
   m_pcPredSearch         = pcTEncTop->getPredSearch();                       ///< encoder search class
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   if( pcTEncTop->getLayerId() )
   {
     UInt prevLayerIdx = 0;
@@ -1393,7 +1393,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
         g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
 
-#if Q0048_CGS_3D_ASYMLUT 
+#if CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
         if( pcSlice->getPPS()->getCGSFlag() )
         {
@@ -1434,7 +1434,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
         else
         {
-#if Q0048_CGS_3D_ASYMLUT 
+#if CGS_3D_ASYMLUT 
           pcPic->setFullPelBaseRec( refLayerIdc, pBaseColRec );
 #else
           pcPic->setFullPelBaseRec( refLayerIdc, pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec() );
@@ -2282,7 +2282,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       // dependency constraint
       assert( pcSlice->getPPS()->getLayerId() == 0 || pcSlice->getPPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getLayerId()) );
 #endif
-#if SVC_EXTENSION && Q0048_CGS_3D_ASYMLUT
+#if SVC_EXTENSION && CGS_3D_ASYMLUT
       m_pcEntropyCoder->encodePPS(pcSlice->getPPS(), &m_Enc3DAsymLUTPPS);
 #else
       m_pcEntropyCoder->encodePPS(pcSlice->getPPS());
@@ -2334,7 +2334,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       m_bSeqFirst = false;
     }
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     else if( m_pcCfg->getCGSFlag() && pcSlice->getLayerId() && pcSlice->getCGSOverWritePPS() )
     {
       OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
@@ -3742,7 +3742,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     }
     printf("]");
   }
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   pcPic->setFrameBit( (Int)uibits );
   if( m_layerId && pcSlice->getPPS()->getCGSFlag() )
   {
@@ -4824,7 +4824,7 @@ SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx
 }
 #endif
 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
 Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS )
 {
   Int nCGSFlag = pSlice->getPPS()->getCGSFlag();

@@ -89,7 +89,7 @@ public:
   Void  codeVPS                ( TComVPS* pcVPS );
   Void  codeSPS                ( TComSPS* pcSPS     );
   Void  codePPS                ( TComPPS* pcPPS     
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
     , TEnc3DAsymLUT * pc3DAsymLUT
 #endif
     );

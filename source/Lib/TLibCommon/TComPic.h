@@ -94,7 +94,7 @@ private:
 #if REF_IDX_MFM
   Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS]; 
 #endif
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
 #endif
   Bool                  m_currAuFlag;
@@ -213,7 +213,7 @@ public:
 #endif
   Bool          checkSameRefInfo();
   Void          copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Void          setFrameBit( Int n )  { m_nFrameBit = n;    }
   Int           getFrameBit()         { return m_nFrameBit; }
 #endif

@@ -505,7 +505,7 @@ protected:
   Bool      m_crossLayerAlignedIdrOnlyFlag;
   Bool      m_crossLayerBLAFlag;
   Bool      m_useInterLayerWeightedPred;
-#if Q0048_CGS_3D_ASYMLUT
+#if CGS_3D_ASYMLUT
   Int       m_nCGSFlag;
   Int       m_nCGSMaxOctantDepth;
   Int       m_nCGSMaxYPartNumLog2;
