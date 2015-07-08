@@ -581,8 +581,6 @@ private:
 #if !SVC_EXTENSION
   UInt        m_numOpSets;
   Bool        m_layerIdIncludedFlag[MAX_VPS_OP_SETS_PLUS1][MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1];
-#endif
-#if !MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTL;
 #endif
   TimingInfo  m_timingInfo;
@@ -590,9 +588,7 @@ private:
 #if SVC_EXTENSION
   Bool        m_baseLayerInternalFlag;
   Bool        m_baseLayerAvailableFlag;
-#if MULTIPLE_PTL_SUPPORT
   TComPTL     m_pcPTLList[MAX_NUM_LAYER_IDS + 1];
-#endif
 
   std::vector< std::vector<Int> >     m_layerSetLayerIdList;
   std::vector<Int>                    m_numLayerInIdList;
@@ -622,7 +618,7 @@ private:
 
   // Profile-tier-level signalling related
   Bool       m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
-#if !MULTIPLE_PTL_SUPPORT
+#if !SVC_EXTENSION
   std::vector<TComPTL>    m_pcPTLForExtn;  
 #endif
 
@@ -810,7 +806,7 @@ public:
   Bool    getLayerIdIncludedFlag(UInt opsIdx, UInt id)          { return m_layerIdIncludedFlag[opsIdx][id]; }
   Void    setLayerIdIncludedFlag(Bool v, UInt opsIdx, UInt id)  { m_layerIdIncludedFlag[opsIdx][id] = v;    }
 
-#if !MULTIPLE_PTL_SUPPORT
+#if !SVC_EXTENSION
   TComPTL* getPTL() { return &m_pcPTL; }
 #endif
 
@@ -846,10 +842,9 @@ public:
 #endif
   }
 #endif
-#if MULTIPLE_PTL_SUPPORT
-  TComPTL* getPTL() { return &m_pcPTLList[0]; }
-  TComPTL* getPTL(UInt idx) { return &m_pcPTLList[idx]; }
-#endif
+  TComPTL* getPTL()                                             { return &m_pcPTLList[0]; }
+  TComPTL* getPTL(UInt idx)                                     { return &m_pcPTLList[idx]; }
+
   Int     getLayerSetLayerIdList(Int set, Int layerId)          { return m_layerSetLayerIdList[set][layerId]; }
   Void    setLayerSetLayerIdList(Int set, Int layerId, Int x)   { m_layerSetLayerIdList[set][layerId] = x;    }
 
@@ -927,10 +922,6 @@ Void      deriveNumberOfSubDpbs();
   Bool   getProfilePresentFlag(Int id)                          { return m_profilePresentFlag[id]; }
   Void   setProfilePresentFlag(Int id, Bool x)                  { m_profilePresentFlag[id] = x;    }
 
-#if !MULTIPLE_PTL_SUPPORT
-  std::vector<TComPTL>* getPTLForExtnPtr()                      { return &m_pcPTLForExtn;          }
-  TComPTL* getPTLForExtn(Int id)                                { return &m_pcPTLForExtn[id];      }
-#endif
   // Target output layer signalling related
   UInt   getNumOutputLayerSets()                                { return m_numOutputLayerSets;     } 
   Void   setNumOutputLayerSets(Int x)                           { m_numOutputLayerSets = x;        }
@@ -975,9 +966,7 @@ Void      deriveNumberOfSubDpbs();
   std::vector<Int>* getProfileLevelTierIdx(Int const olsIdx)                    { return &m_profileLevelTierIdx[olsIdx]; }
   Int    getProfileLevelTierIdx(Int const olsIdx, Int const layerIdx)                   { return m_profileLevelTierIdx[olsIdx][layerIdx]; }
   Void   setProfileLevelTierIdx(Int const olsIdx, Int const layerIdx, Int const ptlIdx) { m_profileLevelTierIdx[olsIdx][layerIdx] = ptlIdx; }
-#if MULTIPLE_PTL_SUPPORT
   Void   addProfileLevelTierIdx(Int const olsIdx, Int const ptlIdx)             { m_profileLevelTierIdx[olsIdx].push_back(ptlIdx); }
-#endif
   Int    calculateLenOfSyntaxElement( Int const numVal );
 
   Bool   getMaxOneActiveRefLayerFlag()                                          { return m_maxOneActiveRefLayerFlag;             }

@@ -64,7 +64,7 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MAINSTILLPICTURE = 3,
   MAINREXT = 4,
   HIGHTHROUGHPUTREXT = 5, // Placeholder profile for development
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   MULTIVIEWMAIN = 6,
   SCALABLEMAIN = 7,
   SCALABLEMAIN10 = 8,
@@ -306,7 +306,7 @@ strToProfile[] =
   {"main-still-picture",   Profile::MAINSTILLPICTURE   },
   {"main-RExt",            Profile::MAINREXT           },
   {"high-throughput-RExt", Profile::HIGHTHROUGHPUTREXT },
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   {"multiview-main",       Profile::MULTIVIEWMAIN      },       //This is not used in this software
   {"scalable-main",        Profile::SCALABLEMAIN       },
   {"scalable-main10",      Profile::SCALABLEMAIN10     },
@@ -345,7 +345,7 @@ strToExtendedProfile[] =
     {"main_444_10_intra",  MAIN_444_10_INTRA},
     {"main_444_12_intra",  MAIN_444_12_INTRA},
     {"main_444_16_intra",  MAIN_444_16_INTRA},
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
     {"multiview-main",     MULTIVIEWMAIN    },
     {"scalable-main",      SCALABLEMAIN     },
     {"scalable-main10",    SCALABLEMAIN10   },
@@ -494,7 +494,7 @@ static inline istream& operator >> (istream &in, ScalingListMode &mode)
   return readStrToEnum(strToScalingListMode, sizeof(strToScalingListMode)/sizeof(*strToScalingListMode), in, mode);
 }
 
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
 namespace Profile
 {
   static inline istream& operator >> (istream &in, Name &profile)
@@ -834,14 +834,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
 
-#if MULTIPLE_PTL_SUPPORT
   Bool    tmpIntraConstraintFlag;
   Bool    tmpLowerBitRateConstraintFlag;
   UInt    tmpBitDepthConstraint;
   Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
+  for( UInt layer = 0; layer < MAX_LAYERS; layer++ )
   {
     cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
     cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
@@ -930,9 +928,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
     cfg_layerSwitchOffBegin[layer]  = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
     cfg_layerSwitchOffEnd[layer]    = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
-#if MULTIPLE_PTL_SUPPORT
     cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
-#endif
   }
 
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -953,9 +949,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_numOutputLayersInOutputLayerSet = new string;
   string* cfg_listOfOutputLayers     = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
   string* cfg_outputLayerSetIdx      = new string;
-#if MULTIPLE_PTL_SUPPORT
   string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
-#endif
 #if AVC_BASE
   string  cfg_BLInputFile;
 #endif
@@ -977,7 +971,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int tmpInputChromaFormat;
   Int tmpConstraintChromaFormat;
   string inputColourSpaceConvert;
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   ExtendedProfileName extendedProfile[MAX_NUM_LAYER_IDS + 1];
 #else
   ExtendedProfileName extendedProfile;
@@ -1206,7 +1200,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TopFieldFirst, Tff",                              m_isTopFieldFirst,                                false, "In case of field based coding, signals whether if it's a top field first or not")
 
   // Profile and level
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   ("NumProfileTierLevel",                             m_numPTLInfo,                                         1, "Number of Profile, Tier and Level information")
   ("Profile%d",                                       extendedProfile,          NONE, (MAX_NUM_LAYER_IDS + 1),  "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level%d",                                         m_levelList,       Level::NONE, (MAX_NUM_LAYER_IDS + 1), "Level limit to be used, eg 5.1, or none")
@@ -1875,27 +1869,22 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 
 #if SVC_EXTENSION
-  for (Int layer = 0; layer < MAX_LAYERS; layer++)
+  for( Int layer = 0; layer < MAX_LAYERS; layer++)
   {
-    if (m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd)
+    if( m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd )
     {
-      if (m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0)
+      if( m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0 )
       {
         printf("LayerSwitchOffBegin%d: Must be multiple of GOP size.\n", layer);
         exit(EXIT_FAILURE);
       }
-      if (m_acLayerCfg[layer].m_iIntraPeriod > 0 && (m_acLayerCfg[layer].m_layerSwitchOffEnd % m_acLayerCfg[layer].m_iIntraPeriod) != 0)
+      if( m_acLayerCfg[layer].m_iIntraPeriod > 0 && (m_acLayerCfg[layer].m_layerSwitchOffEnd % m_acLayerCfg[layer].m_iIntraPeriod) != 0 )
       {
         printf("LayerSwitchOffEnd%d: Must be IRAP picture.\n", layer);
         exit(EXIT_FAILURE);
       }
     }
-  }
-#endif
 
-#if MULTIPLE_PTL_SUPPORT
-  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
-  {
     m_acLayerCfg[layer].m_bitDepthConstraint = tmpBitDepthConstraint;
     m_acLayerCfg[layer].m_intraConstraintFlag = tmpIntraConstraintFlag;
     m_acLayerCfg[layer].m_lowerBitRateConstraintFlag = tmpLowerBitRateConstraintFlag;    
@@ -2005,10 +1994,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     m_profile = Profile::Name(extendedProfile);
   }
 
-#if SVC_EXTENSION
-  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[0].m_chromaFormatIDC;
-#endif
-
   if (m_profile == Profile::HIGHTHROUGHPUTREXT )
   {
     if (m_bitDepthConstraint == 0) m_bitDepthConstraint = 16;
@@ -2018,11 +2003,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     if (m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0)
     {
-#if SVC_EXTENSION
-      Bool m_useExtendedPrecision    = m_acLayerCfg[0].m_useExtendedPrecision;
-      Int  m_internalBitDepth[]      = {m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[0].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-      ChromaFormat m_chromaFormatIDC = m_acLayerCfg[0].m_chromaFormatIDC;
-#endif
       // produce a valid combination, if possible.
       const Bool bUsingGeneralRExtTools  = m_useResidualRotation                    ||
                                            m_useSingleSignificanceMapContext        ||
@@ -2065,11 +2045,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   for(Int layer = 0; layer < MAX_LAYERS; layer++)
   {
-#if !MULTIPLE_PTL_SUPPORT
-    m_acLayerCfg[layer].m_chromaFormatConstraint = m_chromaFormatConstraint;
-    m_acLayerCfg[layer].m_bitDepthConstraint = m_bitDepthConstraint;
-#endif
-
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
     if(m_acLayerCfg[layer].m_numRefLayerLocationOffsets)
     {
@@ -2463,12 +2438,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   // Number of output layers in output layer sets
   scanStringToArray( *cfg_numOutputLayersInOutputLayerSet, m_numOutputLayerSets - 1, "NumOutputLayersInOutputLayerSets", m_numOutputLayersInOutputLayerSet );
   m_numOutputLayersInOutputLayerSet.insert(m_numOutputLayersInOutputLayerSet.begin(), 1);
+
   // Layers in the output layer set
   m_listOfOutputLayers.resize(m_numOutputLayerSets);
-
-#if MULTIPLE_PTL_SUPPORT
   m_listOfLayerPTLofOlss.resize(m_numOutputLayerSets);
-#endif
 
   Int startOlsCtr = 1;
   if( m_defaultTargetOutputLayerIdc == 0 || m_defaultTargetOutputLayerIdc == 1 )
@@ -2476,6 +2449,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Default output layer sets defined
     startOlsCtr = m_numLayerSets;
   }
+
   for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
   {
     if( olsCtr < startOlsCtr )
@@ -2489,11 +2463,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       assert( scanStringToArray( cfg_listOfOutputLayers[olsCtr], m_numOutputLayersInOutputLayerSet[olsCtr], "ListOfOutputLayers", m_listOfOutputLayers[olsCtr] ) );
     }
-#if MULTIPLE_PTL_SUPPORT
+
     Int olsToLsIndex = (olsCtr >= (m_numLayerSets + m_numAddLayerSets)) ? m_outputLayerSetIdx[olsCtr - (m_numLayerSets + m_numAddLayerSets)] : olsCtr;
 
     // This is a fix to allow setting of PTL for additional layer sets
-    if (olsCtr >= m_numLayerSets && olsCtr < (m_numLayerSets + m_numAddLayerSets))
+    if( olsCtr >= m_numLayerSets && olsCtr < (m_numLayerSets + m_numAddLayerSets) )
     {
       scanStringToArrayNumEntries(cfg_listOfLayerPTLOfOlss[olsCtr], m_numLayerInIdList[olsToLsIndex], "List of PTL for each layers in OLS", m_listOfLayerPTLofOlss[olsCtr]);
     }
@@ -2520,12 +2494,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
         }
       }
     }
-#endif
   }
-#if MULTIPLE_PTL_SUPPORT
+
   m_listOfLayerPTLofOlss[0].push_back(*cfg_layerPTLIdx[0]);
   delete [] cfg_listOfLayerPTLOfOlss;
-#endif
   delete cfg_numOutputLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
@@ -2904,13 +2876,11 @@ Void TAppEncCfg::xCheckParameter(UInt layerIdx)
   m_saoOffsetBitShift[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_saoOffsetBitShift[CHANNEL_TYPE_LUMA];
   m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA];
 
-#if MULTIPLE_PTL_SUPPORT
   Int layerPTLIdx = m_acLayerCfg[layerIdx].m_layerPTLIdx;
   Profile::Name m_profile           = m_profileList[layerPTLIdx];
   UInt m_bitDepthConstraint         = m_acLayerCfg[layerIdx].m_bitDepthConstraint;
   Bool m_intraConstraintFlag        = m_acLayerCfg[layerIdx].m_intraConstraintFlag;
   Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerIdx].m_lowerBitRateConstraintFlag;
-#endif
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -2924,7 +2894,7 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "**          decoder requires this option to be enabled.         **\n");
     fprintf(stderr, "******************************************************************\n");
   }
-#if SVC_EXTENSION && MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   Int ii = 0;
   while( ii < m_numPTLInfo )
   {
@@ -3018,7 +2988,7 @@ Void TAppEncCfg::xCheckParameter()
   }
   else
   {
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
     xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10 || m_profile==Profile::SCALABLEMAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 or Scalable-main10 profile.");
 #else
     xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 profile.");
@@ -4433,7 +4403,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("Frame/Field                       : Frame based coding\n");
     printf("Frame index                       : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
   }
-#if !MULTIPLE_PTL_SUPPORT
+#if !SVC_EXTENSION
   if (m_profile == Profile::MAINREXT)
   {
     const UInt intraIdx = m_intraConstraintFlag ? 1:0;

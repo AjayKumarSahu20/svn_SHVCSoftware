@@ -192,7 +192,6 @@ Void TAppEncTop::xInitLibCfg()
   delete [] mapIdxToLayer;
 #endif
 
-#if MULTIPLE_PTL_SUPPORT
   //Populate PTL in VPS
   TComVPS *pVPS = m_acTEncTop[0].getVPS();
   for( Int ii = 0; ii < m_numPTLInfo; ii++ )
@@ -208,18 +207,17 @@ Void TAppEncTop::xInitLibCfg()
   }
   pVPS->setNumProfileTierLevel(m_numPTLInfo);
 
-  std::vector<int> myvector;
+  std::vector<Int> myvector;
   vps->getProfileLevelTierIdx()->resize(m_numOutputLayerSets);
-  for (int ii = 0; ii < m_numOutputLayerSets; ii++)
+  for( Int ii = 0; ii < m_numOutputLayerSets; ii++ )
   {
     myvector =  m_listOfLayerPTLofOlss[ii];
 
-    for (std::vector<int>::iterator it = myvector.begin() ; it != myvector.end(); ++it)
+    for( std::vector<Int>::iterator it = myvector.begin() ; it != myvector.end(); ++it )
     {
       pVPS->addProfileLevelTierIdx(ii, it[0]);
     }
   }
-#endif
 
   assert( m_numLayers <= MAX_LAYERS );
 
@@ -242,7 +240,6 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 #endif
     
-#if MULTIPLE_PTL_SUPPORT
     Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
     m_acTEncTop[layer].setProfile                                         ( m_profileList[layerPTLIdx] );
     m_acTEncTop[layer].setLevel                                           ( m_levelTierList[layerPTLIdx], m_levelList[layerPTLIdx] );
@@ -254,18 +251,6 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
     m_acTEncTop[layer].setIntraConstraintFlag                             ( m_acLayerCfg[layer].m_intraConstraintFlag );
     m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_acLayerCfg[layer].m_lowerBitRateConstraintFlag );
-#else
-    m_acTEncTop[layer].setProfile                                         ( m_profile );
-    m_acTEncTop[layer].setLevel                                           ( m_levelTier, m_level );
-    m_acTEncTop[layer].setProgressiveSourceFlag                           ( m_progressiveSourceFlag );
-    m_acTEncTop[layer].setInterlacedSourceFlag                            ( m_interlacedSourceFlag );
-    m_acTEncTop[layer].setNonPackedConstraintFlag                         ( m_nonPackedConstraintFlag );
-    m_acTEncTop[layer].setFrameOnlyConstraintFlag                         ( m_frameOnlyConstraintFlag );
-    m_acTEncTop[layer].setBitDepthConstraintValue                         ( m_bitDepthConstraint );
-    m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
-    m_acTEncTop[layer].setIntraConstraintFlag                             ( m_intraConstraintFlag );
-    m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_lowerBitRateConstraintFlag );
-#endif
 
     m_acTEncTop[layer].setPrintMSEBasedSequencePSNR                       ( m_printMSEBasedSequencePSNR);
     m_acTEncTop[layer].setPrintFrameMSE                                   ( m_printFrameMSE);
@@ -1554,33 +1539,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
   vps->deriveNecessaryLayerFlag();
   vps->checkNecessaryLayerFlagCondition();
-
-#if !MULTIPLE_PTL_SUPPORT
-  vps->getProfileLevelTierIdx()->resize(vps->getNumOutputLayerSets());
-  vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0 ); // Default 0-th output layer set
-  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
-  {
-    Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
-    Int numLayerInLayerSet = vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet );
-    for(Int j = 0; j < numLayerInLayerSet; j++)
-    {
-      Int layerIdxInVps = vps->getLayerIdxInVps( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) );
-      if( vps->getNecessaryLayerFlag(i, j) )
-      {
-        vps->getProfileLevelTierIdx(i)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? layerIdxInVps + 1 : layerIdxInVps);
-      }
-      else
-      {
-        vps->getProfileLevelTierIdx(i)->push_back( -1 );
-      }
-    }
-  }
-#endif
-
   vps->calculateMaxSLInLayerSets();
 
   // Initialize dpb_size_table() for all ouput layer sets in the VPS extension
-  for(i = 1; i < vps->getNumOutputLayerSets(); i++)
+  for( i = 1; i < vps->getNumOutputLayerSets(); i++ )
   {
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
     Int layerSetId = vps->getOutputLayerSetIdx(i);
@@ -1600,6 +1562,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 #endif
+
     vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     for( i = 1; i< vps->getMaxLayers(); i++ )
