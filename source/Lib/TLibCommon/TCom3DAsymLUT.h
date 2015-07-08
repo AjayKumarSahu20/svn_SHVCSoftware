@@ -29,21 +29,21 @@ public:
   virtual Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
   virtual Void destroy();
 
-  Int   getMaxOctantDepth() { return m_nMaxOctantDepth; }
-  Int   getCurOctantDepth() { return m_nCurOctantDepth; }
-  Int   getInputBitDepthY()  { return m_nInputBitDepthY;  }
-  Int   getOutputBitDepthY()  { return m_nOutputBitDepthY;  }
-  Int   getInputBitDepthC()  { return m_nInputBitDepthC;  }
-  Int   getOutputBitDepthC()  { return m_nOutputBitDepthC;  }
-  Int   getResQuantBit()     { return m_nResQuanBit; }
-  Void  setResQuantBit(Int n){ m_nResQuanBit = n; }
-#if R0300_CGS_RES_COEFF_CODING 
-  Int   getMappingShift()     { return m_nMappingShift; }
-  Int   getDeltaBits()        { return m_nDeltaBits; }
-  Void  setDeltaBits(Int n)   { m_nDeltaBits = n; }
-#endif 
-  Int   getMaxYPartNumLog2() { return m_nMaxYPartNumLog2; }
-  Int   getCurYPartNumLog2() { return m_nCurYPartNumLog2; }
+  Int   getMaxOctantDepth()   { return m_nMaxOctantDepth;  }
+  Int   getCurOctantDepth()   { return m_nCurOctantDepth;  }
+  Int   getInputBitDepthY()   { return m_nInputBitDepthY;  }
+  Int   getOutputBitDepthY()  { return m_nOutputBitDepthY; }
+  Int   getInputBitDepthC()   { return m_nInputBitDepthC;  }
+  Int   getOutputBitDepthC()  { return m_nOutputBitDepthC; }
+  Int   getResQuantBit()      { return m_nResQuanBit;      }
+  Void  setResQuantBit(Int n) { m_nResQuanBit = n;         }
+
+  Int   getMappingShift()     { return m_nMappingShift;    }
+  Int   getDeltaBits()        { return m_nDeltaBits;       }
+  Void  setDeltaBits(Int n)   { m_nDeltaBits = n;          }
+
+  Int   getMaxYPartNumLog2()  { return m_nMaxYPartNumLog2; }
+  Int   getCurYPartNumLog2()  { return m_nCurYPartNumLog2; }
 
   Void  addRefLayerId( UInt uiRefLayerId )  
   { 
@@ -100,9 +100,8 @@ private:
   Int   m_nMappingShift;
   Int   m_nMappingOffset;
   Int   m_nResQuanBit;
-#if R0300_CGS_RES_COEFF_CODING
   Int   m_nDeltaBits;
-#endif
+
   SCuboid *** m_pCuboid;
   const static Int m_nVertexIdxOffset[4][3];
   std::vector<UInt> m_vRefLayerId;
