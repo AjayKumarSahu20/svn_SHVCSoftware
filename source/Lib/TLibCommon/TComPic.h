@@ -213,9 +213,7 @@ public:
   Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
   Void          initUpsampledMvField  ();
 #endif
-#if MFM_ENCCONSTRAINT
   Bool          checkSameRefInfo();
-#endif
   Void          copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
 #if Q0048_CGS_3D_ASYMLUT
   Void          setFrameBit( Int n )  { m_nFrameBit = n;    }

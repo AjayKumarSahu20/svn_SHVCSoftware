@@ -3708,12 +3708,10 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
 #endif
 }
 
-#if MFM_ENCCONSTRAINT
 TComPic* TComSlice::getBaseColPic(  TComList<TComPic*>& rcListPic )
 {
   return xGetRefPic( rcListPic, m_iPOC );
 }
-#endif
 
 Void TComSlice::setILRPic(TComPic **pcIlpPic)
 {

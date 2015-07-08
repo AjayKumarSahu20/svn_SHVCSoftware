@@ -1758,7 +1758,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       pcSlice->setRefPicList( m_cListPic, false, NULL);
     }
-#if MFM_ENCCONSTRAINT
+
+    // motion field mapping constraint
     if( pcSlice->getMFMEnabledFlag() )
     {
       TComPic* refPic = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() );
@@ -1773,7 +1774,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         assert( pColBasePic->checkSameRefInfo() == true );
       }
     }
-#endif
 #endif
     
     if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
