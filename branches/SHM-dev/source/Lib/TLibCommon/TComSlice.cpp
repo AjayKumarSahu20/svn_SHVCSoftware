@@ -608,7 +608,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   }
 
 #if SVC_EXTENSION
-#if RPL_INIT_N0316_N0082
+    // initial reference picture list construction
     if( m_layerId > 0 )
     {      
       for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
@@ -621,8 +621,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         }
       }
     }
-#endif
 #endif //SVC_EXTENSION
+
     for ( i=0; i<NumPocStCurr1; i++, cIdx++)
     {
       rpsCurrList0[cIdx] = RefPicSetStCurr1[i];
@@ -631,22 +631,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     {
       rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
     } 
-#if !RPL_INIT_N0316_N0082
-#if SVC_EXTENSION
-    if( m_layerId > 0 )
-    {
-      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPocTotalCurr; cIdx ++, i ++)      
-      {
-        Int refLayerIdc = m_interLayerPredLayerIdc[i];
-        Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx());
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
-        {
-          rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
-        }
-      }
-    }
-#endif
-#endif
+
   assert(cIdx == numPocTotalCurr);
 
   if (m_eSliceType==B_SLICE)
@@ -690,7 +675,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     cIdx = m_RefPicListModification.getRefPicListModificationFlagL0() ? m_RefPicListModification.getRefPicSetIdxL0(rIdx) : rIdx % numPocTotalCurr;
     assert(cIdx >= 0 && cIdx < numPocTotalCurr);
     m_apcRefPicList[REF_PIC_LIST_0][rIdx] = rpsCurrList0[ cIdx ];
-#if RPL_INIT_N0316_N0082
+
+#if SVC_EXTENSION
     m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPocStCurr0 && cIdx < NumPocStCurr0 + m_activeNumILRRefIdx ) || ( cIdx >= NumPocStCurr0 + NumPocStCurr1 + m_activeNumILRRefIdx );
 #else
     m_bIsUsedAsLongTerm[REF_PIC_LIST_0][rIdx] = ( cIdx >= NumPocStCurr0 + NumPocStCurr1 );
@@ -3937,7 +3923,7 @@ Void TComSlice::setRefPicListModificationSvc()
 
   TComRefPicListModification* refPicListModification = &m_RefPicListModification;
   Int numberOfRpsCurrTempList = this->getNumRpsCurrTempList();  // total number of ref pics in listTemp0 including inter-layer ref pics
-#if RPL_INIT_N0316_N0082
+#if SVC_EXTENSION
   Int numberOfPocBeforeCurr = this->getNumNegativeRpsCurrTempList();  // number of negative temporal ref pics 
 #endif
 
@@ -3945,7 +3931,7 @@ Void TComSlice::setRefPicListModificationSvc()
   assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 0);
 
   //set L0 inter-layer reference picture modification
-#if RPL_INIT_N0316_N0082
+#if SVC_EXTENSION
   Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
 
   if( m_activeNumILRRefIdx > 1 )
@@ -3979,15 +3965,15 @@ Void TComSlice::setRefPicListModificationSvc()
 
       for(Int i = includeNumILRP; i > 0; i-- )
       {
-#if RPL_INIT_N0316_N0082
-        if((numberOfPocBeforeCurr) >= m_aiNumRefIdx[REF_PIC_LIST_0])
+#if SVC_EXTENSION
+        if( numberOfPocBeforeCurr >= m_aiNumRefIdx[REF_PIC_LIST_0] )
         {
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + includeNumILRP - i);
         }
         else
         {
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + includeNumILRP - i);
-          for (Int j = numberOfPocBeforeCurr; j < (m_aiNumRefIdx[REF_PIC_LIST_0] - i); j++)
+          for( Int j = numberOfPocBeforeCurr; j < (m_aiNumRefIdx[REF_PIC_LIST_0] - i); j++ )
           {
             assert( j + includeNumILRP < numberOfRpsCurrTempList );
             refPicListModification->setRefPicSetIdxL0(j, j + includeNumILRP);
@@ -4032,7 +4018,6 @@ Void TComSlice::setRefPicListModificationSvc()
   return;
 }
 
-#if RPL_INIT_N0316_N0082
 Int TComSlice::getNumNegativeRpsCurrTempList()
 {
   if( m_eSliceType == I_SLICE ) 
@@ -4041,9 +4026,10 @@ Int TComSlice::getNumNegativeRpsCurrTempList()
   }
 
   Int numPocBeforeCurr = 0;
+
   for( UInt i = 0; i < m_pcRPS->getNumberOfNegativePictures(); i++ )
   {
-    if(m_pcRPS->getUsed(i))
+    if( m_pcRPS->getUsed(i) )
     {
       numPocBeforeCurr++;
     }
@@ -4051,7 +4037,6 @@ Int TComSlice::getNumNegativeRpsCurrTempList()
 
   return numPocBeforeCurr;
 }
-#endif
 #endif //SVC_EXTENSION
 
 //! \}

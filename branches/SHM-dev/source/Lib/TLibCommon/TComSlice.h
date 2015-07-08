@@ -2350,9 +2350,7 @@ public:
   Bool      getCrossLayerBLAFlag  ()                         { return m_bCrossLayerBLAFlag;  }
   Void      setCrossLayerBLAFlag  (Bool b)                   { m_bCrossLayerBLAFlag = b;     }
 
-#if RPL_INIT_N0316_N0082
   Int       getNumNegativeRpsCurrTempList();
-#endif
 
 #if REPN_FORMAT_IN_VPS
   UInt getPicWidthInLumaSamples();
