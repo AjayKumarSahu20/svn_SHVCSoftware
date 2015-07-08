@@ -44,8 +44,12 @@
 
 #if SVC_EXTENSION
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
+
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 
+#define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
+#define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
+#define SVC_POC                          1      ///< POC signalling and reset
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 
 #define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
@@ -55,14 +59,9 @@
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
 
-#define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
-#define SVC_POC                          1      ///< POC signalling and reset
 #define UNAVAILABLE_PIC_BUGFIX           1
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
-
-#define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define NO_CLRAS_OUTPUT_FLAG             1
-#define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 
 /// scalability types
 enum ScalabilityType
@@ -110,6 +109,7 @@ enum AuxType
 #endif
 #define P0123_ALPHA_CHANNEL_SEI          1      ///< JCTVC-P0123: SEI message for alpha channel information
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
+#define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 
 /// constants
 #define MAX_NUM_ADD_LAYER_SETS           1023
