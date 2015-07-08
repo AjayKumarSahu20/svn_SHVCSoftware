@@ -46,7 +46,6 @@
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 #define INFERENCE_POC_MSB_VAL_PRESENT    1      ///< JCTVC-Q0146 -- poc_msb_val_present_flag shall be equal to 0 when slice_header_extension_length is (inferred to be ) equal to 0
-#define NON_REF_NAL_TYPE_DISCARDABLE     1      ///< JCTVC-P0041 -- If discardable picture is a non-IRAP, it must be a non-referenced sub-layer picture
 #define POC_RESET_RESTRICTIONS           1      ///< Restrictions on semantics of POC reset-related syntax elements, including one item from R0223
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
 

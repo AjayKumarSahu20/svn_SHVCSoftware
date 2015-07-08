@@ -937,7 +937,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if(pcSlice->getPPS()->getNumExtraSliceHeaderBits() > iBits)
     {
       assert(!!"discardable_flag");
-#if NON_REF_NAL_TYPE_DISCARDABLE
+
       if (pcSlice->getDiscardableFlag())
       {
         assert(pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_TRAIL_R &&
@@ -946,7 +946,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RADL_R &&
           pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_RASL_R);
       }
-#endif
+
       WRITE_FLAG(pcSlice->getDiscardableFlag(), "discardable_flag");
       iBits++;
     }
