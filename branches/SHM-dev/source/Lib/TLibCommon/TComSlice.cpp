@@ -2011,14 +2011,12 @@ TComVPS::TComVPS()
     }
   }
 
-#if VPS_DPB_SIZE_TABLE
   ::memset( m_subLayerFlagInfoPresentFlag,  0, sizeof(m_subLayerFlagInfoPresentFlag ) );
   ::memset( m_subLayerDpbInfoPresentFlag,   0, sizeof(m_subLayerDpbInfoPresentFlag )  );
   ::memset( m_maxVpsDecPicBufferingMinus1,  0, sizeof(m_maxVpsDecPicBufferingMinus1 ) );
   ::memset( m_maxVpsNumReorderPics,         0, sizeof(m_maxVpsNumReorderPics )        );
   ::memset( m_maxVpsLatencyIncreasePlus1,   0, sizeof(m_maxVpsLatencyIncreasePlus1 )  );
   ::memset( m_numSubDpbs                ,   0, sizeof(m_numSubDpbs)                   );
-#endif
   ::memset( m_baseLayerPSCompatibilityFlag, 0, sizeof(m_baseLayerPSCompatibilityFlag) );
 }
 #else
@@ -3067,7 +3065,6 @@ Void TComVPS::deriveLayerIdListVariables()
   }
 }
 
-#if VPS_DPB_SIZE_TABLE
 Void TComVPS::deriveNumberOfSubDpbs()
 {
   // Derive number of sub-DPBs
@@ -3079,7 +3076,6 @@ Void TComVPS::deriveNumberOfSubDpbs()
     m_numSubDpbs[i] = m_numLayerInIdList[i];
   }
 }
-#endif
 
 Void TComVPS::setTilesNotInUseFlag(Bool x)
 {
@@ -3246,7 +3242,6 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
   return scalIdx; 
 }
 
-#if VPS_DPB_SIZE_TABLE
 Int TComVPS::getLayerIdcForOls( Int olsIdx, Int layerId )
 {
   Int layerIdc = -1;
@@ -3312,7 +3307,6 @@ Void TComVPS::determineSubDpbInfoFlags()
     setSubLayerFlagInfoPresentFlag( i, checkFlagOuter );
   }
 }
-#endif
 
 #if O0164_MULTI_LAYER_HRD
 Void TComVPS::setBspHrdParameters( UInt hrdIdx, UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess )

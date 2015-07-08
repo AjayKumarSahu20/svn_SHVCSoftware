@@ -1464,7 +1464,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   }
 
   // Target output layer
-#if VPS_DPB_SIZE_TABLE
   vps->deriveNumberOfSubDpbs();
   vps->setOutputLayerFlag( 0, 0, 1 );
 
@@ -1524,37 +1523,36 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->determineSubDpbInfoFlags();
     }
   }
-#endif
 
-    vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
+  vps->setMaxOneActiveRefLayerFlag(maxDirectRefLayers > 1 ? false : true);
 
-    // POC LSB not present flag
-    for( i = 1; i< vps->getMaxLayers(); i++ )
+  // POC LSB not present flag
+  for( i = 1; i< vps->getMaxLayers(); i++ )
+  {
+    if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
     {
-      if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
-      {
-        // make independedent layers base-layer compliant
-        vps->setPocLsbNotPresentFlag(i, true); 
-      }
+      // make independedent layers base-layer compliant
+      vps->setPocLsbNotPresentFlag(i, true); 
     }
+  }
 
-    vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
-    vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
-    vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
-    for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  vps->setCrossLayerPictureTypeAlignFlag( m_crossLayerPictureTypeAlignFlag );
+  vps->setCrossLayerAlignedIdrOnlyFlag( m_crossLayerAlignedIdrOnlyFlag );
+  vps->setCrossLayerIrapAlignFlag( m_crossLayerIrapAlignFlag );
+  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  {
+    for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
     {
-      for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
+      if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
       {
-        if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
+        if(m_acTEncTop[layerCtr].getIntraPeriod() !=  m_acTEncTop[refLayerCtr].getIntraPeriod())
         {
-          if(m_acTEncTop[layerCtr].getIntraPeriod() !=  m_acTEncTop[refLayerCtr].getIntraPeriod())
-          {
-            vps->setCrossLayerIrapAlignFlag(false);
-            break;
-          }
+          vps->setCrossLayerIrapAlignFlag(false);
+          break;
         }
       }
     }
+  }
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 

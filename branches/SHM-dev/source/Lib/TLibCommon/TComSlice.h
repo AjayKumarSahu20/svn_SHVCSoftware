@@ -701,14 +701,12 @@ private:
   UInt       m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
 
   Int        m_TolsIdx;
-#if VPS_DPB_SIZE_TABLE
   Bool       m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool       m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
   Int        m_maxVpsNumReorderPics        [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_maxVpsLatencyIncreasePlus1  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int        m_numSubDpbs                  [MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
-#endif
 
   Bool       m_vpsVuiPresentFlag;
   Bool       m_vpsExtensionFlag;
@@ -817,9 +815,7 @@ public:
   Void    setNumLayersInIdList(Int set, Int x)                  { m_numLayerInIdList[set] = x;    }
 
   Void    deriveLayerIdListVariables();
-#if VPS_DPB_SIZE_TABLE
-Void      deriveNumberOfSubDpbs();
-#endif
+  Void    deriveNumberOfSubDpbs();
 
   Void    setRefLayersFlags(Int currLayerId);
   Bool    getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId)              { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
@@ -1077,7 +1073,6 @@ Void      deriveNumberOfSubDpbs();
   Int    getNumViews();
   Int    scalTypeToScalIdx( ScalabilityType scalType );
 
-#if VPS_DPB_SIZE_TABLE
   Bool   getSubLayerFlagInfoPresentFlag(Int olsIdx)         { return m_subLayerFlagInfoPresentFlag[olsIdx]; }
   Void   setSubLayerFlagInfoPresentFlag(Int olsIdx, Bool x) { m_subLayerFlagInfoPresentFlag[olsIdx] = x;    }
 
@@ -1098,7 +1093,6 @@ Void      deriveNumberOfSubDpbs();
   Int    getNumSubDpbs(Int olsIdx)                          { return m_numSubDpbs[olsIdx]; }
   Void   setNumSubDpbs(Int olsIdx, Int x)                   { m_numSubDpbs[olsIdx] = x;    }
   Void   determineSubDpbInfoFlags();
-#endif
 
   Bool   getVpsVuiPresentFlag()                        { return m_vpsVuiPresentFlag; }
   Void   setVpsVuiPresentFlag(Bool x)                  { m_vpsVuiPresentFlag = x;    }

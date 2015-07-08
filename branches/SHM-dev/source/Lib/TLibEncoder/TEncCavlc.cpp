@@ -2171,9 +2171,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
  
-#if VPS_DPB_SIZE_TABLE
   codeVpsDpbSizeTable(vps);
-#endif
 
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
 
@@ -2254,7 +2252,6 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
   }
 }
 
-#if VPS_DPB_SIZE_TABLE
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
   for( Int i = 1; i < vps->getNumOutputLayerSets(); i++ )
@@ -2287,7 +2284,6 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
     }
   }
 }
-#endif
 
 Void TEncCavlc::codeVPSVUI (TComVPS *vps)
 {

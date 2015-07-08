@@ -153,15 +153,13 @@ public:
   Void codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID );
 
 #if SVC_EXTENSION
-  Void  codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow );
-  Void codeSPSExtension        ( TComSPS* pcSPS );
-  Void codeVPSExtension        ( TComVPS* pcVPS );
-  Void codeVPSVUI              ( TComVPS *vps   );
-  Void  codeRepFormat          ( RepFormat *repFormat );
-#if VPS_DPB_SIZE_TABLE
-  Void  codeVpsDpbSizeTable    (TComVPS *vps);
-#endif
-  Void  codeVpsVuiBspHrdParams  (TComVPS * const);
+  Void  codeSliceHeaderExtn  ( TComSlice* slice, Int shBitsWrittenTillNow );
+  Void codeSPSExtension      ( TComSPS* pcSPS );
+  Void codeVPSExtension      ( TComVPS* pcVPS );
+  Void codeVPSVUI            ( TComVPS *vps   );
+  Void codeRepFormat         ( RepFormat *repFormat );
+  Void codeVpsDpbSizeTable   ( TComVPS *vps );
+  Void codeVpsVuiBspHrdParams( TComVPS * const );
 
 #if CGS_3D_ASYMLUT
 #if R0179_ENC_OPT_3DLUT_SIZE
