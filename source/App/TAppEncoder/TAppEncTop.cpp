@@ -107,9 +107,7 @@ Void TAppEncTop::xInitLibCfg()
 #if AUXILIARY_PICTURES
           && m_acLayerCfg[layer].getChromaFormatIDC() == m_acLayerCfg[idx].getChromaFormatIDC()
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
           && m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA] == m_acLayerCfg[idx].m_internalBitDepth[CHANNEL_TYPE_LUMA] && m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA] == m_acLayerCfg[idx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]
-#endif
           )
         {
           found = true;
@@ -173,13 +171,9 @@ Void TAppEncTop::xInitLibCfg()
     repFormat->setChromaFormatVpsIdc                                      ( 1 );  // Need modification to change for each layer - corresponds to 420
 #endif
     repFormat->setSeparateColourPlaneVpsFlag                              ( 0 );  // Need modification to change for each layer
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
     repFormat->setBitDepthVpsLuma                                         ( getInternalBitDepth(mapIdxToLayer[idx], CHANNEL_TYPE_LUMA)      );  // Need modification to change for each layer
     repFormat->setBitDepthVpsChroma                                       ( getInternalBitDepth(mapIdxToLayer[idx], CHANNEL_TYPE_CHROMA)    );  // Need modification to change for each layer
-#else
-    repFormat->setBitDepthVpsLuma                                         ( getInternalBitDepth(CHANNEL_TYPE_LUMA)                        );  // Need modification to change for each layer
-    repFormat->setBitDepthVpsChroma                                       ( getInternalBitDepth(CHANNEL_TYPE_CHROMA)                      );  // Need modification to change for each layer
-#endif
 
     repFormat->getConformanceWindowVps().setWindow                        ( m_acLayerCfg[mapIdxToLayer[idx]].m_confWinLeft,                                                                             
                                                                             m_acLayerCfg[mapIdxToLayer[idx]].m_confWinRight, 
@@ -222,7 +216,6 @@ Void TAppEncTop::xInitLibCfg()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     //1
     g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
@@ -236,7 +229,6 @@ Void TAppEncTop::xInitLibCfg()
 
 #if O0194_WEIGHTED_PREDICTION_CGS
     m_acTEncTop[layer].setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
-#endif
 #endif
     
     Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
@@ -1102,14 +1094,13 @@ Void TAppEncTop::xCreateLib()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     //2
     for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
     }
-#endif
+
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
     g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1117,20 +1108,12 @@ Void TAppEncTop::xCreateLib()
     g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
 #endif
     // Video I/O
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_acLayerCfg[layer].m_inputBitDepth, m_acLayerCfg[layer].m_MSBExtendedBitDepth, m_acLayerCfg[layer].m_internalBitDepth );  // read  mode
-#else
-    m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // read  mode
-#endif
     m_acTVideoIOYuvInputFile[layer].skipFrames(m_FrameSkip, m_acLayerCfg[layer].getSourceWidth() - m_acLayerCfg[layer].getPad()[0], m_acLayerCfg[layer].getSourceHeight() - m_acLayerCfg[layer].getPad()[1], m_acLayerCfg[layer].m_InputChromaFormatIDC);
 
-    if (!m_acLayerCfg[layer].getReconFile().empty())
+    if( !m_acLayerCfg[layer].getReconFile().empty() )
     {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
       m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_acLayerCfg[layer].m_outputBitDepth, m_acLayerCfg[layer].m_MSBExtendedBitDepth, m_acLayerCfg[layer].m_internalBitDepth );  // write mode
-#else
-      m_acTVideoIOYuvReconFile[layer].open((Char *)m_acLayerCfg[layer].getReconFile().c_str(), true, m_outputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // write mode
-#endif
     }
 
     // Neo Decoder
@@ -1211,14 +1194,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     //3
     for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
     }
-#endif
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
     g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1254,14 +1235,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       {
         Int layerId = m_layerSetLayerIdList[setId][i];
         Int layerIdx = vps->getLayerIdxInVps(m_layerSetLayerIdList[setId][i]);
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
         g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
         g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
         g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
         g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-#endif
 
         vps->setLayerIdIncludedFlag(true, setId, layerId);
       }
@@ -1275,7 +1254,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       for (Int layerIdx = 0; layerIdx <= vps->getMaxLayers(); layerIdx++)
       {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
         //4
         UInt layerId = vps->getLayerIdInNuh(layerIdx);
         g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
@@ -1283,7 +1261,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
         g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
         g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-#endif
+
         if (layerId <= setId)
         {
           vps->setLayerIdIncludedFlag(true, setId, layerId);
@@ -1725,14 +1703,13 @@ Void TAppEncTop::encode()
 
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     //5
     g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
     g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-#endif
+
     // allocate original YUV buffer
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
@@ -1766,14 +1743,12 @@ Void TAppEncTop::encode()
     {
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
         //6
         for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
           g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         }
-#endif
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
         g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1853,19 +1828,17 @@ Void TAppEncTop::encode()
     }
 
     // loop through frames in one GOP
-    for ( UInt iPicIdInGOP=0; iPicIdInGOP < (bFirstFrame? 1:m_iGOPSize); iPicIdInGOP++ )
+    for( UInt iPicIdInGOP=0; iPicIdInGOP < (bFirstFrame? 1:m_iGOPSize); iPicIdInGOP++ )
     {
       // layer by layer for each frame
-      for(UInt layer=0; layer<m_numLayers; layer++)
+      for( UInt layer=0; layer<m_numLayers; layer++ )
       {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
         //7
-        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+        for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
           g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         }
-#endif
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
         g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1925,16 +1898,15 @@ Void TAppEncTop::encode()
 #endif
 
     iTotalNumEncoded = 0;
-    for(UInt layer=0; layer<m_numLayers; layer++)
+    for( UInt layer=0; layer<m_numLayers; layer++ )
     {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
       //8
-      for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+      for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
       {
         g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       }
-#endif
+
       // write bistream to file if necessary
       iNumEncoded = m_acTEncTop[layer].getNumPicRcvd();
       if ( iNumEncoded > 0 )

@@ -566,10 +566,8 @@ Void TDecTop::xActivateParameterSets()
       // it is needed where the VPS is accessed through the slice
       pBLPic->getSlice(0)->setVPS( activeVPS );
 
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
       g_bitDepthLayer[CHANNEL_TYPE_LUMA][0] = repFormat->getBitDepthVpsLuma();
       g_bitDepthLayer[CHANNEL_TYPE_CHROMA][0] = repFormat->getBitDepthVpsChroma();
-#endif
     }
   }
 #endif

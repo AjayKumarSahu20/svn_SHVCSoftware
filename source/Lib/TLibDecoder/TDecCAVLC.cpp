@@ -1789,10 +1789,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     pcSlice->setSliceQp (26 + pps->getPicInitQPMinus26() + iCode);
 
 #if REPN_FORMAT_IN_VPS
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
     g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcSlice->getLayerId()] = pcSlice->getBitDepthY();
     g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcSlice->getLayerId()] = pcSlice->getBitDepthC();
-#endif
+
     assert( pcSlice->getSliceQp() >= -pcSlice->getQpBDOffsetY() );
 #else    
     assert( pcSlice->getSliceQp() >= -sps->getQpBDOffset(CHANNEL_TYPE_LUMA) );

@@ -677,9 +677,7 @@ UInt g_scalingListSizeX  [SCALING_LIST_SIZE_NUM] = { 4, 8, 16,  32};
 UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; 
 UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
 Int  g_bitDepthLayer[MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
-#endif
 #if O0194_WEIGHTED_PREDICTION_CGS
 void * g_refWeightACDCParam; // type=wpACDCParam
 #endif

@@ -610,9 +610,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       TEncPic* pcEPic = new TEncPic;
 
 #if SVC_EXTENSION //Temporal solution, should be modified
-      if(m_layerId > 0)
+      if( m_layerId > 0 )
       {
-        for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
+        for( UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
           const Window altRL = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
@@ -620,7 +620,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
@@ -643,12 +643,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
 #endif
             )
-#else
-          if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight()
-            || !equalOffsets
-            || !zeroPhase
-          )
-#endif
           {
             pcEPic->setSpatialEnhLayerFlag( i, true );
 
@@ -657,9 +651,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           }
         }
       }
-#endif
 
-#if SVC_EXTENSION
       pcEPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1 ,
                       m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else  //SVC_EXTENSION
@@ -672,9 +664,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
       rpcPic = new TComPic;
 
 #if SVC_EXTENSION //Temporal solution, should be modified
-      if(m_layerId > 0)
+      if( m_layerId > 0 )
       {
-        for(UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
+        for( UInt i = 0; i < m_cVPS.getNumDirectRefLayers( m_layerId ); i++ )
         {
           const Window scalEL = getPPS()->getScaledRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
           const Window altRL = getPPS()->getRefLayerWindowForLayer(m_cVPS.getRefLayerId(m_layerId, i));
@@ -682,7 +674,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           Bool zeroPhase = getPPS()->hasZeroResamplingPhase(m_cVPS.getRefLayerId(m_layerId, i));
 
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
@@ -695,13 +687,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if LAYER_CTB
             || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
 #endif
-)
-#else
-          if(m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight()
-            || !equalOffsets 
-            || !zeroPhase
-          )
-#endif
+            )
           {
             rpcPic->setSpatialEnhLayerFlag( i, true );
 
@@ -710,9 +696,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           }
         }
       }
-#endif
 
-#if SVC_EXTENSION
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, &m_cSPS);
 #else  //SVC_EXTENSION
       rpcPic->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, m_conformanceWindow, m_defaultDisplayWindow, m_numReorderPics, false );

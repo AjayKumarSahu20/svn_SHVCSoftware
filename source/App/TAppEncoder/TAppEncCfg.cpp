@@ -821,11 +821,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_RCInitialQP          [MAX_LAYERS];
   Bool*   cfg_RCForceIntraQP       [MAX_LAYERS];
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
   Int*    cfg_InputBitDepth    [MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
   Int*    cfg_InternalBitDepth [MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
   Int*    cfg_OutputBitDepth   [MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
-#endif
+
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
 #if Q0074_COLOUR_REMAPPING_SEI
   string* cfg_colourRemapSEIFileRoot[MAX_LAYERS];
@@ -914,14 +914,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
     cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
     cfg_InputBitDepth   [CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA];
     cfg_InternalBitDepth[CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     cfg_OutputBitDepth  [CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_outputBitDepth[CHANNEL_TYPE_LUMA];
     cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
     cfg_InputBitDepth   [CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA];
     cfg_OutputBitDepth  [CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_outputBitDepth[CHANNEL_TYPE_CHROMA];
-#endif
+
     cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1;
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
@@ -1087,15 +1087,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ScalabilityMask3",                              m_scalabilityMask[AUX_ID],                               0, "scalability_mask[3] (auxiliary pictures)" )
 #endif
   ("BitstreamFile,b",                               cfg_BitstreamFile, string(""), "Bitstream output file name")
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
-  ("InputBitDepth",                                 m_inputBitDepthY,                                        8, "Bit-depth of input file")
-  ("OutputBitDepth",                                m_outputBitDepthY,                                       0, "Bit-depth of output file (default:InternalBitDepth)")
-  ("InternalBitDepth",                              m_internalBitDepthY,                                     0, "Bit-depth the codec operates at. (default:InputBitDepth)"
-                                                                                                                "If different to InputBitDepth, source data will be converted")
-  ("InputBitDepthC",                                m_inputBitDepthC,                                        0, "As per InputBitDepth but for chroma component. (default:InputBitDepth)")
-  ("OutputBitDepthC",                               m_outputBitDepthC,                                       0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
-  ("InternalBitDepthC",                             m_internalBitDepthC,                                     0, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth)")
-#endif
   ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,              0, MAX_LAYERS,  "Number of reference layer offset sets ")
   ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,    string(""), MAX_LAYERS, "Layer ID of reference location offset")
   ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,    string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
@@ -1124,7 +1115,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileRoot,           string(""), MAX_LAYERS, "Colour Remapping Information SEI parameters file name for layer %d")
 #endif
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
   ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],      8, MAX_LAYERS, "Bit-depth of input file for layer %d")
   ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],   0, MAX_LAYERS, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
                                                                                                                " If different to InputBitDepth, source data will be converted")
@@ -1132,7 +1122,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InputBitDepthC%d",                               cfg_InputBitDepth[CHANNEL_TYPE_CHROMA],    0, MAX_LAYERS, "As per InputBitDepth but for chroma component. (default:InputBitDepth) for layer %d")
   ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA], 0, MAX_LAYERS, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
   ("OutputBitDepthC%d",                              cfg_OutputBitDepth[CHANNEL_TYPE_CHROMA],   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
-#endif
+
   ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                            false, "max_tid_ref_present_flag (0: not present, 1: present) " )
   ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  7, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
@@ -1831,8 +1821,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   
   /* rules for input, output and internal bitdepths as per help text */
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+#if SVC_EXTENSION
+  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
   {
     if( m_acLayerCfg[layer].m_layerId < 0 )
     {
@@ -1853,24 +1843,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     m_acLayerCfg[layer].m_useHighPrecisionPredictionWeighting = false;
     m_acLayerCfg[layer].m_useExtendedPrecision = false;
-  }
-#else
-  /* rules for input, output and internal bitdepths as per help text */
-  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-  if (m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-  if (m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-  if (m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-  if (m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-  if (m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
 
-  m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
-  m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
-#endif
-
-#if SVC_EXTENSION
-  for( Int layer = 0; layer < MAX_LAYERS; layer++)
-  {
     if( m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd )
     {
       if( m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0 )
@@ -1971,6 +1944,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #else
+ /* rules for input, output and internal bitdepths as per help text */
+  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
+  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
+  if (m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
+  if (m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
+  if (m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
+  if (m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
+  if (m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
+
+  m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
+  m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
+
   if (extendedProfile >= 1000 && extendedProfile <= 2316)
   {
     m_profile = Profile::MAINREXT;
@@ -4274,21 +4259,12 @@ Void TAppEncCfg::xSetGlobal(UInt layerId)
   g_auiLayerAddCUDepth[layerId]++;
   g_auiLayerMaxCUDepth[layerId] = m_acLayerCfg[layerId].m_uiMaxCUDepth;
   
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
   // set internal bit-depth to constant value to make sure to be updated later
   g_bitDepthY = -1;
   g_bitDepthC = -1;
   
   g_uiPCMBitDepthLuma = -1;
   g_uiPCMBitDepthChroma = -1;
-#else
-  // set internal bit-depth and constants
-  g_bitDepthY = m_internalBitDepthY;
-  g_bitDepthC = m_internalBitDepthC;
-  
-  g_uiPCMBitDepthLuma = m_bPCMInputBitDepthFlag ? m_inputBitDepthY : m_internalBitDepthY;
-  g_uiPCMBitDepthChroma = m_bPCMInputBitDepthFlag ? m_inputBitDepthC : m_internalBitDepthC;
-#endif
 }
 #else
 Void TAppEncCfg::xSetGlobal()
@@ -4442,7 +4418,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Max CU chroma QP adjustment depth : %d\n", m_maxCUChromaQpAdjustmentDepth);
   printf("QP adaptation                     : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0) );
   printf("GOP size                          : %d\n", m_iGOPSize );
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
+#if !SVC_EXTENSION
   printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("MSB-extended bit depth            : (Y:%d, C:%d)\n", m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
@@ -4455,7 +4431,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Residual rotation                 : %s\n", (m_useResidualRotation                    ? "Enabled" : "Disabled") );
   printf("Single significance map context   : %s\n", (m_useSingleSignificanceMapContext        ? "Enabled" : "Disabled") );
   printf("Cross-component prediction        : %s\n", (m_useCrossComponentPrediction            ? (m_reconBasedCrossCPredictionEstimate ? "Enabled (reconstructed-residual-based estimate)" : "Enabled (encoder-side-residual-based estimate)") : "Disabled") );
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
+#if !SVC_EXTENSION
   printf("High-precision prediction weight  : %s\n", (m_useHighPrecisionPredictionWeighting    ? "Enabled" : "Disabled") );
 #endif
   printf("Golomb-Rice parameter adaptation  : %s\n", (m_useGolombRiceParameterAdaptation       ? "Enabled" : "Disabled") );
@@ -4493,7 +4469,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("\n");
 
   printf("TOOL CFG: ");
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
+#if !SVC_EXTENSION
   printf("IBD:%d ", ((g_bitDepth[CHANNEL_TYPE_LUMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]) || (g_bitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
 #endif
   printf("HAD:%d ", m_bUseHADME           );
@@ -4559,7 +4535,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
   printf("REF_IDX_MFM: %d ", REF_IDX_MFM);
-  printf("O0194_DIFFERENT_BITDEPTH_EL_BL: %d ", O0194_DIFFERENT_BITDEPTH_EL_BL);
   printf("O0194_JOINT_US_BITSHIFT: %d ", O0194_JOINT_US_BITSHIFT);
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );

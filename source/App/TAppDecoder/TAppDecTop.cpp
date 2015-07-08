@@ -288,11 +288,10 @@ Void TAppDecTop::decode()
         !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
 #endif
     {
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-      //Bug fix: The bit depth was not set correctly for each layer when doing DBF
+      // Set bitdepth for each layer when doing DBF
       g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][curLayerId];
       g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][curLayerId];
-#endif
+
       if (!loopFiltered[curLayerId] || bitstreamFile)
       {
         m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
