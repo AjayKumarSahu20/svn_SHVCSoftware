@@ -228,16 +228,15 @@ protected:
 #endif
   
   // coding tools (bit-depth)
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
+#if !SVC_EXTENSION
   Int       m_inputBitDepth   [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of input file
   Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file
   Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
   Bool      m_useExtendedPrecision;
   Bool      m_useHighPrecisionPredictionWeighting;
-#endif
+
   //coding tools (chroma format)
-#if !SVC_EXTENSION
   ChromaFormat m_chromaFormatIDC;
 #endif
 
@@ -539,12 +538,10 @@ public:
   Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
   Int  getNumLayer()               {return m_numLayers;         }
   Int  getGOPSize()                {return m_iGOPSize;          }
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
+
   UInt getInternalBitDepth(Int iLayer, ChannelType type)      {return m_acLayerCfg[iLayer].m_internalBitDepth[type]; }
-  Bool getPCMInputBitDepthFlag()             {return m_bPCMInputBitDepthFlag;                  }
-#else
-  UInt getInternalBitDepth( ChannelType type )      {return m_internalBitDepth[type]; }  
-#endif
+  Bool getPCMInputBitDepthFlag()                              {return m_bPCMInputBitDepthFlag;                       }
+
 #if !LAYER_CTB
   UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
   UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }

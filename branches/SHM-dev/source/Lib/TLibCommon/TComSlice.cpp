@@ -514,7 +514,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                              (scalEL.getWindowBottomOffset() == 0 ) 
                             );
 
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
         Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
         // motion resampling constraint
@@ -524,9 +523,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
           || getPPS()->getCGSFlag()
 #endif
           ) // ratio 1x
-#else
-        if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
-#endif
         {
           UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, refLayerId ) + 1;
 
