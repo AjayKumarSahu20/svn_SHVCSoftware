@@ -3534,7 +3534,6 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   pc3DAsymLUT->setDeltaBits(uiDeltaBits + 1);
 #endif
 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int nAdaptCThresholdU = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
   Int nAdaptCThresholdV = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
 
@@ -3546,17 +3545,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
     READ_SVLC( delta , "cm_adapt_threshold_v_delta" );
     nAdaptCThresholdV += delta;
   }
-#endif
+
   pc3DAsymLUT->destroy();
-  pc3DAsymLUT->create( uiCurOctantDepth , uiInputBitDepthM8 + 8 ,  
-    uiChromaInputBitDepthM8 + 8 ,
-    uiOutputBitDepthM8 + 8 , 
-    uiChromaOutputBitDepthM8 + 8 ,
-    uiCurPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-    , nAdaptCThresholdU , nAdaptCThresholdV 
-#endif    
-    );
+  pc3DAsymLUT->create( uiCurOctantDepth, uiInputBitDepthM8 + 8, uiChromaInputBitDepthM8 + 8, uiOutputBitDepthM8 + 8, uiChromaOutputBitDepthM8 + 8, uiCurPartNumLog2, nAdaptCThresholdU, nAdaptCThresholdV );
   pc3DAsymLUT->setResQuantBit( uiResQaunBit );
 
 #if R0164_CGS_LUT_BUGFIX_CHECK
@@ -3612,7 +3603,6 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
         READ_FLAG( uiCodeVertex , "coded_vertex_flag" );
         if( uiCodeVertex )
         {
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0300_CGS_RES_COEFF_CODING
           xReadParam( deltaY, nFLCbits );
           xReadParam( deltaU, nFLCbits );
@@ -3621,11 +3611,6 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
           xReadParam( deltaY );
           xReadParam( deltaU );
           xReadParam( deltaV );
-#endif
-#else
-          READ_SVLC( deltaY , "resY" );
-          READ_SVLC( deltaU , "resU" );
-          READ_SVLC( deltaV , "resV" );
 #endif
         }
 #if R0164_CGS_LUT_BUGFIX
@@ -3664,7 +3649,6 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
   }
 }
 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0300_CGS_RES_COEFF_CODING
 Void TDecCavlc::xReadParam( Int& param, Int rParam )
 #else
@@ -3690,7 +3674,6 @@ Void TDecCavlc::xReadParam( Int& param )
   }
   else param = 0;
 }
-#endif
 #endif
 
 Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )

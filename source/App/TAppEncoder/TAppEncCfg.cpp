@@ -1651,9 +1651,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
   ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
   ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   ("CGSAdaptC",     m_nCGSAdaptiveChroma , 1, "adaptive chroma partition (only for the case of two chroma partitions)")
-#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   ("CGSSizeRDO",     m_nCGSLutSizeRDO , 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
 #endif
@@ -4510,9 +4508,7 @@ Void TAppEncCfg::xPrintParameter()
 #if CGS_3D_ASYMLUT
   printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
 #endif
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   printf("CGSAdaptC:%d " , m_nCGSAdaptiveChroma );
-#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   printf("CGSSizeRDO:%d " , m_nCGSLutSizeRDO );
 #endif

@@ -2494,13 +2494,12 @@ Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   assert(pc3DAsymLUT->getDeltaBits() >=1 && pc3DAsymLUT->getDeltaBits() <= 4);
   WRITE_CODE( pc3DAsymLUT->getDeltaBits()-1 , 2 , "cm_delta_bit" );
 #endif 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   if( pc3DAsymLUT->getCurOctantDepth() == 1 )
   {
     WRITE_SVLC( pc3DAsymLUT->getAdaptChromaThresholdU() - ( 1 << ( pc3DAsymLUT->getInputBitDepthC() - 1 ) ) , "cm_adapt_threshold_u_delta" );
     WRITE_SVLC( pc3DAsymLUT->getAdaptChromaThresholdV() - ( 1 << ( pc3DAsymLUT->getInputBitDepthC() - 1 ) ) , "cm_adapt_threshold_v_delta" );
   }
-#endif
 
 #if R0164_CGS_LUT_BUGFIX_CHECK
   pc3DAsymLUT->xInitCuboids();
@@ -2554,7 +2553,6 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
         WRITE_FLAG( uiCodeVertex , "coded_vertex_flag" );
         if( uiCodeVertex )
         {
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0300_CGS_RES_COEFF_CODING
           xWriteParam( sRes.Y, nFLCbits );
           xWriteParam( sRes.U, nFLCbits );
@@ -2563,11 +2561,6 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
           xWriteParam( sRes.Y );
           xWriteParam( sRes.U );
           xWriteParam( sRes.V );
-#endif
-#else
-          WRITE_SVLC( sRes.Y , "resY" );
-          WRITE_SVLC( sRes.U , "resU" );
-          WRITE_SVLC( sRes.V , "resV" );
 #endif
         }
       }
@@ -2578,7 +2571,6 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
   }
 }
 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0300_CGS_RES_COEFF_CODING
 Void TEncCavlc::xWriteParam( Int param, UInt rParam)
 #else
@@ -2594,7 +2586,6 @@ Void TEncCavlc::xWriteParam( Int param)
   if (abs(param))
     WRITE_FLAG( param <0, "sign");
 }
-#endif
 
 #if R0300_CGS_RES_COEFF_CODING
 Void TEncCavlc::xFindDeltaBits( TCom3DAsymLUT * pc3DAsymLUT )
