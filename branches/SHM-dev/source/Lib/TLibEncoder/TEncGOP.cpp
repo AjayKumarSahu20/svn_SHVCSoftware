@@ -48,7 +48,7 @@
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_EXTENSION
 #include <limits.h>
 #endif
 
@@ -1145,7 +1145,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Check if the current picture is to be assigned as a reset picture
     determinePocResetIdc(pocCurr, pcSlice);
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
     Bool pocResettingFlag = false;
 
     if (pcSlice->getPocResetIdc() != 0)
@@ -1163,14 +1162,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pocResettingFlag = true;
       }
     }
-#endif
 
     // If reset, do the following steps:
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
     if( pocResettingFlag )
-#else
-    if( pcSlice->getPocResetIdc() )
-#endif
     {
       updatePocValuesOfPics(pocCurr, pcSlice);
     }
@@ -3456,10 +3450,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
 #if SVC_EXTENSION
     pcPicYuvRecOut->setReconstructed(true);
-#endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
     m_pcEncTop->setFirstPicInLayerDecodedFlag(true);
 #endif
+
     pcPic->setReconMark   ( true );
     m_bFirst = false;
     m_iNumPicCoded++;
@@ -4642,16 +4635,14 @@ Void TEncGOP::xBuildTileSetsMap(TComPicSym* picSym)
 }
 #endif
 
-
 #if POC_RESET_IDC_ENCODER
 Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
 {
   // If one picture in the AU is IDR, and another picture is not IDR, set the poc_reset_idc to 1 or 2
   // If BL picture in the AU is IDR, and another picture is not IDR, set the poc_reset_idc to 2
   // If BL picture is IRAP, and another picture is non-IRAP, then the poc_reset_idc is equal to 1 or 2.
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   slice->setPocMsbNeeded(false);
-#endif
+
   if( slice->getSliceIdx() == 0 ) // First slice - compute, copy for other slices
   {
     Int needReset = false;
@@ -4677,15 +4668,15 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
         }
       }
     }
-    
+
     if( !needReset )// No need reset due to base layer IRAP
     {
       // Check if EL IDRs results in POC Reset
       for(Int i = 1; i < slice->getVPS()->getMaxLayers() && !needReset; i++)
       {
         Bool idrFlag = ( (m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshType() == 2) 
-                        && ( pocCurr % m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
-                        );
+          && ( pocCurr % m_ppcTEncTop[i]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
+          );
         for(Int j = 0; j < slice->getVPS()->getMaxLayers(); j++)
         {
           if( j == i )
@@ -4694,8 +4685,8 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
           }
 
           Bool idrOtherPicFlag = ( (m_ppcTEncTop[j]->getGOPEncoder()->getIntraRefreshType() == 2) 
-                                  && ( pocCurr % m_ppcTEncTop[j]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
-                                  );
+            && ( pocCurr % m_ppcTEncTop[j]->getGOPEncoder()->getIntraRefreshInterval() == 0 )
+            );
 
           if( idrFlag != idrOtherPicFlag )
           {
@@ -4712,12 +4703,11 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
         if( resetDueToBL )
         {
           slice->setPocResetIdc( 2 ); // Full reset needed
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-          if (slice->getVPS()->getVpsPocLsbAlignedFlag() && slice->getVPS()->getNumDirectRefLayers(slice->getLayerId()) == 0)
+
+          if( slice->getVPS()->getVpsPocLsbAlignedFlag() && slice->getVPS()->getNumDirectRefLayers(slice->getLayerId()) == 0 )
           {
             slice->setPocMsbNeeded(true);  // Force msb writing
           }
-#endif
         }
         else
         {
@@ -4735,12 +4725,10 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
         Int periodId = rand() % 64;
         m_lastPocPeriodId = (periodId == m_lastPocPeriodId) ? (periodId + 1) % 64 : periodId ;
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-        for (UInt i = 0; i < MAX_LAYERS; i++)
+        for( UInt i = 0; i < MAX_LAYERS; i++ )
         {
           m_ppcTEncTop[i]->setPocDecrementedInDPBFlag(false);
         }
-#endif
       }
       else
       {
@@ -4757,7 +4745,6 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
 
 Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
 {
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   UInt affectedLayerList[MAX_NUM_LAYER_IDS];
   Int  numAffectedLayers;
 
@@ -4772,7 +4759,6 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
     }
     numAffectedLayers = m_pcEncTop->getVPS()->getNumPredictedLayers(m_layerId) + 1;
   }
-#endif
 
   Int pocAdjustValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
 
@@ -4781,147 +4767,118 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
 
   maxPocLsb   = 1 << slice->getSPS()->getBitsForPOC();
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Int adjustedPocValue = pocCurr;
 
   if (m_pcEncTop->getFirstPicInLayerDecodedFlag())
   {
-#endif
+    pocLsbVal   = (slice->getPocResetIdc() == 3)
+      ? slice->getPocLsbVal()
+      : pocAdjustValue % maxPocLsb; 
+    pocMsbDelta = pocAdjustValue - pocLsbVal;
+    pocLsbDelta = (slice->getPocResetIdc() == 2 || ( slice->getPocResetIdc() == 3 && slice->getFullPocResetFlag() )) 
+      ? pocLsbVal 
+      : 0; 
+    deltaPocVal = pocMsbDelta  + pocLsbDelta;
 
-  pocLsbVal   = (slice->getPocResetIdc() == 3)
-                ? slice->getPocLsbVal()
-                : pocAdjustValue % maxPocLsb; 
-  pocMsbDelta = pocAdjustValue - pocLsbVal;
-  pocLsbDelta = (slice->getPocResetIdc() == 2 || ( slice->getPocResetIdc() == 3 && slice->getFullPocResetFlag() )) 
-                ? pocLsbVal 
-                : 0; 
-  deltaPocVal = pocMsbDelta  + pocLsbDelta;
+    Int origDeltaPocVal = deltaPocVal;  // original value needed when updating POC adjustment value
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  Int origDeltaPocVal = deltaPocVal;  // original value needed when updating POC adjustment value
-
-  if (slice->getPocMsbNeeded())  // IDR picture in base layer, non-IDR picture in other layers, poc_lsb_aligned_flag = 1
-  {
-    if (slice->getLayerId() == 0)
+    // IDR picture in base layer, non-IDR picture in other layers, poc_lsb_aligned_flag = 1
+    if( slice->getPocMsbNeeded() )
     {
-      Int highestPoc = INT_MIN;
-      // Find greatest POC in DPB for layer 0
-      for (TComList<TComPic*>::iterator iterPic = m_pcEncTop->getListPic()->begin(); iterPic != m_pcEncTop->getListPic()->end(); ++iterPic)
+      if (slice->getLayerId() == 0)
       {
-        TComPic *dpbPic = *iterPic;
-        if (dpbPic->getReconMark() && dpbPic->getLayerId() == 0 && dpbPic->getPOC() > highestPoc)
+        Int highestPoc = INT_MIN;
+
+        // Find greatest POC in DPB for layer 0
+        for (TComList<TComPic*>::iterator iterPic = m_pcEncTop->getListPic()->begin(); iterPic != m_pcEncTop->getListPic()->end(); ++iterPic)
         {
-          highestPoc = dpbPic->getPOC();
+          TComPic *dpbPic = *iterPic;
+          if (dpbPic->getReconMark() && dpbPic->getLayerId() == 0 && dpbPic->getPOC() > highestPoc)
+          {
+            highestPoc = dpbPic->getPOC();
+          }
+        }
+        deltaPocVal = (highestPoc - (highestPoc & (maxPocLsb - 1))) + 1*maxPocLsb;
+        m_pcEncTop->setCurrPocMsb(deltaPocVal);
+      }
+      else
+      {
+        deltaPocVal = m_ppcTEncTop[0]->getCurrPocMsb();  // copy from base layer
+      }
+      slice->setPocMsbVal(deltaPocVal);
+    }
+
+    for( UInt layerIdx = 0; layerIdx < numAffectedLayers; layerIdx++ )
+    {
+      UInt lIdx = slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx]);
+
+      if( !m_ppcTEncTop[lIdx]->getPocDecrementedInDPBFlag() )
+      {
+        m_ppcTEncTop[lIdx]->setPocDecrementedInDPBFlag(true);
+
+        // Decrement value of associatedIrapPoc of the TEncGop object
+        m_ppcTEncTop[lIdx]->getGOPEncoder()->m_associatedIRAPPOC -= deltaPocVal;
+
+        // Decrememnt the value of m_pocCRA
+        m_ppcTEncTop[lIdx]->getGOPEncoder()->m_pocCRA -= deltaPocVal;
+
+        TComList<TComPic*>::iterator  iterPic = m_ppcTEncTop[lIdx]->getListPic()->begin();
+        while (iterPic != m_ppcTEncTop[lIdx]->getListPic()->end())
+        {
+          TComPic *dpbPic = *iterPic;
+
+          if( dpbPic->getReconMark() )
+          {
+            for( Int i = dpbPic->getNumAllocatedSlice() - 1; i >= 0; i-- )
+            {
+              TComSlice *dpbPicSlice = dpbPic->getSlice( i );
+              TComReferencePictureSet *dpbPicRps = dpbPicSlice->getRPS();
+
+              // Decrement POC of slice
+              dpbPicSlice->setPOC( dpbPicSlice->getPOC() - deltaPocVal );
+
+              // Decrement POC value stored in the RPS of each such slice
+              for( Int j = dpbPicRps->getNumberOfPictures() - 1; j >= 0; j-- )
+              {
+                dpbPicRps->setPOC( j, dpbPicRps->getPOC(j) - deltaPocVal );
+              }
+
+              // Decrement value of refPOC
+              dpbPicSlice->decrementRefPocValues( deltaPocVal );
+
+              // Update value of associatedIrapPoc of each slice
+              dpbPicSlice->setAssociatedIRAPPOC( dpbPicSlice->getAssociatedIRAPPOC() - deltaPocVal );
+
+              if( slice->getPocMsbNeeded() )
+              {
+                // this delta value is needed when computing delta POCs in reference picture set initialization
+                dpbPicSlice->setPocResetDeltaPoc(dpbPicSlice->getPocResetDeltaPoc() + (deltaPocVal - pocLsbVal));
+              }
+            }
+          }
+          iterPic++;
         }
       }
-      deltaPocVal = (highestPoc - (highestPoc & (maxPocLsb - 1))) + 1*maxPocLsb;
-      m_pcEncTop->setCurrPocMsb(deltaPocVal);
     }
-    else
+
+    // Actual POC value before reset
+    adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
+
+    // Set MSB value before reset
+    Int tempLsbVal = adjustedPocValue & (maxPocLsb - 1);
+    if (!slice->getPocMsbNeeded())  // set poc msb normally if special msb handling is not needed
     {
-      deltaPocVal = m_ppcTEncTop[0]->getCurrPocMsb();  // copy from base layer
+      slice->setPocMsbVal(adjustedPocValue - tempLsbVal);
     }
-    slice->setPocMsbVal(deltaPocVal);
+
+    // Set LSB value before reset - this is needed in the case of resetIdc = 2
+    slice->setPicOrderCntLsb( tempLsbVal );
+
+    // Cumulative delta
+    deltaPocVal = origDeltaPocVal;  // restore deltaPoc for correct adjustment value update
+
+    m_pcEncTop->setPocAdjustmentValue( m_pcEncTop->getPocAdjustmentValue() + deltaPocVal );
   }
-
-  for (UInt layerIdx = 0; layerIdx < numAffectedLayers; layerIdx++)
-  {
-    UInt lIdx = slice->getVPS()->getLayerIdxInVps(affectedLayerList[layerIdx]);
-
-    if (!m_ppcTEncTop[lIdx]->getPocDecrementedInDPBFlag())
-    {
-      m_ppcTEncTop[lIdx]->setPocDecrementedInDPBFlag(true);
-
-      // Decrement value of associatedIrapPoc of the TEncGop object
-      m_ppcTEncTop[lIdx]->getGOPEncoder()->m_associatedIRAPPOC -= deltaPocVal;
-
-      // Decrememnt the value of m_pocCRA
-      m_ppcTEncTop[lIdx]->getGOPEncoder()->m_pocCRA -= deltaPocVal;
-
-      TComList<TComPic*>::iterator  iterPic = m_ppcTEncTop[lIdx]->getListPic()->begin();
-      while (iterPic != m_ppcTEncTop[lIdx]->getListPic()->end())
-#else
-  // Decrement value of associatedIrapPoc of the TEncGop object
-  this->m_associatedIRAPPOC -= deltaPocVal;
-
-  // Decrememnt the value of m_pocCRA
-  this->m_pocCRA -= deltaPocVal;
-
-  // Iterate through all pictures in the DPB
-  TComList<TComPic*>::iterator  iterPic = getListPic()->begin();  
-  while( iterPic != getListPic()->end() )
-#endif
-  {
-    TComPic *dpbPic = *iterPic;
-    
-    if( dpbPic->getReconMark() )
-    {
-      for(Int i = dpbPic->getNumAllocatedSlice() - 1; i >= 0; i--)
-      {
-        TComSlice *dpbPicSlice = dpbPic->getSlice( i );
-        TComReferencePictureSet *dpbPicRps = dpbPicSlice->getRPS();
-
-        // Decrement POC of slice
-        dpbPicSlice->setPOC( dpbPicSlice->getPOC() - deltaPocVal );
-
-        // Decrement POC value stored in the RPS of each such slice
-        for( Int j = dpbPicRps->getNumberOfPictures() - 1; j >= 0; j-- )
-        {
-          dpbPicRps->setPOC( j, dpbPicRps->getPOC(j) - deltaPocVal );
-        }
-
-        // Decrement value of refPOC
-        dpbPicSlice->decrementRefPocValues( deltaPocVal );
-
-        // Update value of associatedIrapPoc of each slice
-        dpbPicSlice->setAssociatedIRAPPOC( dpbPicSlice->getAssociatedIRAPPOC() - deltaPocVal );
-
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-        if (slice->getPocMsbNeeded())
-        {
-          // this delta value is needed when computing delta POCs in reference picture set initialization
-          dpbPicSlice->setPocResetDeltaPoc(dpbPicSlice->getPocResetDeltaPoc() + (deltaPocVal - pocLsbVal));
-        }
-#endif
-      }
-    }
-    iterPic++;
-  }
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-    }
-  }
-#endif
-
-  // Actual POC value before reset
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
-#else
-  Int adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
-#endif
-
-  // Set MSB value before reset
-  Int tempLsbVal = adjustedPocValue & (maxPocLsb - 1);
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  if (!slice->getPocMsbNeeded())  // set poc msb normally if special msb handling is not needed
-  {
-#endif
-    slice->setPocMsbVal(adjustedPocValue - tempLsbVal);
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  }
-#endif
-
-  // Set LSB value before reset - this is needed in the case of resetIdc = 2
-  slice->setPicOrderCntLsb( tempLsbVal );
-
-  // Cumulative delta
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  deltaPocVal = origDeltaPocVal;  // restore deltaPoc for correct adjustment value update
-#endif
-  m_pcEncTop->setPocAdjustmentValue( m_pcEncTop->getPocAdjustmentValue() + deltaPocVal );
-
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  }
-#endif
 
   // New LSB value, after reset
   adjustedPocValue = pocCurr - m_pcEncTop->getPocAdjustmentValue();
@@ -4939,9 +4896,9 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
   else if( slice->getPocResetIdc() == 3 )
   {
     Int picOrderCntMsb = slice->getCurrMsb( newLsbVal, 
-                                        slice->getFullPocResetFlag() ? 0 : slice->getPocLsbVal(), 
-                                        0,
-                                        maxPocLsb );
+      slice->getFullPocResetFlag() ? 0 : slice->getPocLsbVal(), 
+      0,
+      maxPocLsb );
     slice->setPOC( picOrderCntMsb + newLsbVal );
   }
   else
@@ -4950,7 +4907,6 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
   }
 }
 #endif
-
 
 #if O0164_MULTI_LAYER_HRD
 SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx)

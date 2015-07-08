@@ -123,10 +123,8 @@ TDecTop::TDecTop()
 #if POC_RESET_RESTRICTIONS
   resetPocRestrictionCheckParameters();
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   m_pocResettingFlag        = false;
   m_pocDecrementedInDPBFlag = false;
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   m_confModeFlag = false;
 #endif
@@ -908,21 +906,18 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       resetPocRestrictionCheckParameters();
 #endif
       markAllPicsAsNoCurrAu(m_apcSlicePilot->getVPS());
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-      for (UInt i = 0; i < MAX_LAYERS; i++)
+
+      for( UInt i = 0; i < MAX_LAYERS; i++ )
       {
         m_ppcTDecTop[m_apcSlicePilot->getVPS()->getLayerIdInNuh(i)]->m_pocDecrementedInDPBFlag = false;
       }
-#endif
     }
 
-
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
     m_pocResettingFlag = false;
 
-    if (m_apcSlicePilot->getPocResetIdc() != 0)
+    if( m_apcSlicePilot->getPocResetIdc() != 0 )
     {
-      if (m_apcSlicePilot->getVPS()->getVpsPocLsbAlignedFlag())
+      if( m_apcSlicePilot->getVPS()->getVpsPocLsbAlignedFlag() )
       {
         m_pocResettingFlag = true;
       }
@@ -935,7 +930,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         m_pocResettingFlag = true;
       }
     }
-#endif
 
     if( m_apcSlicePilot->getPocResetIdc() && m_apcSlicePilot->getSliceIdx() == 0 )
     {
@@ -983,42 +977,34 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if ALIGNED_BUMPING
 #if POC_RESET_IDC_DECODER
-
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   UInt affectedLayerList[MAX_LAYERS];
   Int  numAffectedLayers;
 
   affectedLayerList[0] = m_apcSlicePilot->getLayerId();
   numAffectedLayers = 1;
 
-  if (m_apcSlicePilot->getVPS()->getVpsPocLsbAlignedFlag())
+  if( m_apcSlicePilot->getVPS()->getVpsPocLsbAlignedFlag() )
   {
-    for (UInt j = 0; j < m_apcSlicePilot->getVPS()->getNumPredictedLayers(m_apcSlicePilot->getLayerId()); j++)
+    for( UInt j = 0; j < m_apcSlicePilot->getVPS()->getNumPredictedLayers(m_apcSlicePilot->getLayerId()); j++ )
     {
       affectedLayerList[j + 1] = m_apcSlicePilot->getVPS()->getPredictedLayerId(m_apcSlicePilot->getLayerId(), j);
     }
     numAffectedLayers = m_apcSlicePilot->getVPS()->getNumPredictedLayers(m_apcSlicePilot->getLayerId()) + 1;
   }
-#endif
 
-  //if(  (bNewPOC || m_layerId != m_uiPrevLayerId) && ( m_parseIdc != 1) )
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  if (m_parseIdc == 1 && m_pocResettingFlag)
-#else
-  if (m_parseIdc == 1)
-#endif
+  if( m_parseIdc == 1 && m_pocResettingFlag )
   {
     // Invoke output of pictures if the current picture is a POC reset picture
     bNewPOC = true;
     /* Include reset of all POCs in the layer */
 
-  // This operation would do the following:
-  // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
-  // 2. Update the value of m_pocCRA.
-  // 3. Reset the POC values at the decoder for the current picture to be zero - will be done later
-  // 4. update value of POCLastDisplay
-      
-  //Do the reset stuff here
+    // This operation would do the following:
+    // 1. Update the other picture in the DPB. This should be done only for the first slice of the picture.
+    // 2. Update the value of m_pocCRA.
+    // 3. Reset the POC values at the decoder for the current picture to be zero - will be done later
+    // 4. update value of POCLastDisplay
+
+    //Do the reset stuff here
     Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
     Int pocLsbVal;
     if( m_apcSlicePilot->getPocResetIdc() == 3 )
@@ -1031,7 +1017,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
     Int pocMsbDelta = 0;
-    if ( m_apcSlicePilot->getPocMsbValPresentFlag() ) 
+    if( m_apcSlicePilot->getPocMsbValPresentFlag() ) 
     {
       pocMsbDelta = m_apcSlicePilot->getPocMsbVal() * maxPocLsb;
     }
@@ -1057,68 +1043,51 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
     Int deltaPocVal  =  pocMsbDelta + pocLsbDelta;
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-    for (UInt layerIdx = 0; layerIdx < numAffectedLayers; layerIdx++)
+    for( UInt layerIdx = 0; layerIdx < numAffectedLayers; layerIdx++ )
     {
       if (!m_ppcTDecTop[affectedLayerList[layerIdx]]->m_pocDecrementedInDPBFlag)
       {
         m_ppcTDecTop[affectedLayerList[layerIdx]]->m_pocDecrementedInDPBFlag = true;
         TComList<TComPic*>::iterator  iterPic = m_ppcTDecTop[affectedLayerList[layerIdx]]->getListPic()->begin();
+
         while (iterPic != m_ppcTDecTop[affectedLayerList[layerIdx]]->getListPic()->end())
-#else
-    //Reset all POC for DPB -> basically do it for each slice in the picutre
-    TComList<TComPic*>::iterator  iterPic = m_cListPic.begin();  
-
-    // Iterate through all picture in DPB
-    while( iterPic != m_cListPic.end() )
-#endif
-    {
-      TComPic *dpbPic = *iterPic;
-      // Check if the picture pointed to by iterPic is either used for reference or
-      // needed for output, are in the same layer, and not the current picture.
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-      assert(dpbPic->getLayerId() == affectedLayerList[layerIdx]);
-      if ( (dpbPic->getReconMark()) && (dpbPic->getPicSym()->getSlice(0)->getPicOutputFlag()) )
-#else
-      if ( /*  ( ( dpbPic->getSlice(0)->isReferenced() ) || ( dpbPic->getOutputMark() ) )
-          &&*/ ( dpbPic->getLayerId() == m_apcSlicePilot->getLayerId() )
-            && ( dpbPic->getReconMark() ) && ( dpbPic->getPicSym()->getSlice(0)->getPicOutputFlag() ))
-#endif
-      {
-        for(Int i = dpbPic->getNumAllocatedSlice()-1; i >= 0; i--)
         {
+          TComPic *dpbPic = *iterPic;
+          // Check if the picture pointed to by iterPic is either used for reference or
+          // needed for output, are in the same layer, and not the current picture.
+          assert(dpbPic->getLayerId() == affectedLayerList[layerIdx]);
 
-          TComSlice *slice = dpbPic->getSlice(i);
-          TComReferencePictureSet *rps = slice->getRPS();
-          slice->setPOC( slice->getPOC() - deltaPocVal );
-
-          // Also adjust the POC value stored in the RPS of each such slice
-          for(Int j = rps->getNumberOfPictures(); j >= 0; j--)
+          if( (dpbPic->getReconMark()) && (dpbPic->getPicSym()->getSlice(0)->getPicOutputFlag()) )
           {
-            rps->setPOC( j, rps->getPOC(j) - deltaPocVal );
-          }
-          // Also adjust the value of refPOC
-          for(Int k = 0; k < 2; k++)  // For List 0 and List 1
-          {
-            RefPicList list = (k == 1) ? REF_PIC_LIST_1 : REF_PIC_LIST_0;
-            for(Int j = 0; j < slice->getNumRefIdx(list); j++)
+            for(Int i = dpbPic->getNumAllocatedSlice()-1; i >= 0; i--)
             {
-              slice->setRefPOC( slice->getRefPOC(list, j) - deltaPocVal, list, j);
+
+              TComSlice *slice = dpbPic->getSlice(i);
+              TComReferencePictureSet *rps = slice->getRPS();
+              slice->setPOC( slice->getPOC() - deltaPocVal );
+
+              // Also adjust the POC value stored in the RPS of each such slice
+              for(Int j = rps->getNumberOfPictures(); j >= 0; j--)
+              {
+                rps->setPOC( j, rps->getPOC(j) - deltaPocVal );
+              }
+              // Also adjust the value of refPOC
+              for(Int k = 0; k < 2; k++)  // For List 0 and List 1
+              {
+                RefPicList list = (k == 1) ? REF_PIC_LIST_1 : REF_PIC_LIST_0;
+                for(Int j = 0; j < slice->getNumRefIdx(list); j++)
+                {
+                  slice->setRefPOC( slice->getRefPOC(list, j) - deltaPocVal, list, j);
+                }
+              }
             }
           }
+          iterPic++;
         }
-      }
-      iterPic++;
-    }
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
         // Update the value of pocCRA
         m_ppcTDecTop[affectedLayerList[layerIdx]]->m_pocCRA -= deltaPocVal;
       }
     }
-#else
-    // Update the value of pocCRA
-    m_pocCRA -= deltaPocVal;
-#endif
 
     // Update value of POCLastDisplay
     iPOCLastDisplay -= deltaPocVal;
@@ -1126,11 +1095,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
   Int slicePicOrderCntLsb = m_apcSlicePilot->getPicOrderCntLsb();
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  if (m_pocResettingFlag && (m_parseIdc == 1 || m_parseIdc == 2))
-#else
-  if (m_parseIdc == 1 || m_parseIdc == 2) // TODO This should be replaced by pocResettingFlag.
-#endif
+  if( m_pocResettingFlag && (m_parseIdc == 1 || m_parseIdc == 2) )
   {
     // Set poc for current slice
     if( m_apcSlicePilot->getPocResetIdc() == 1 )
@@ -1171,35 +1136,25 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     // Adjust prevPicOrderCnt
     if(    !m_apcSlicePilot->getRaslPicFlag() 
-        && !m_apcSlicePilot->getRadlPicFlag()
-        && (m_apcSlicePilot->getNalUnitType() % 2 == 1)
-        && ( nalu.m_temporalId == 0 )
-        && !m_apcSlicePilot->getDiscardableFlag() )
+      && !m_apcSlicePilot->getRadlPicFlag()
+      && (m_apcSlicePilot->getNalUnitType() % 2 == 1)
+      && ( nalu.m_temporalId == 0 )
+      && !m_apcSlicePilot->getDiscardableFlag() )
     {
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-      for (UInt i = 0; i < numAffectedLayers; i++)
+      for( UInt i = 0; i < numAffectedLayers; i++ )
       {
         m_ppcTDecTop[affectedLayerList[i]]->setPrevPicOrderCnt(m_apcSlicePilot->getPOC());
       }
-#else
-      this->setPrevPicOrderCnt( m_apcSlicePilot->getPOC() );
-#endif
     }
-    else if ( m_apcSlicePilot->getPocResetIdc() == 3 )
+    else if( m_apcSlicePilot->getPocResetIdc() == 3 )
     {
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-      if (!m_firstPicInLayerDecodedFlag || (m_firstPicInLayerDecodedFlag && m_pocResettingFlag))
+      if( !m_firstPicInLayerDecodedFlag || (m_firstPicInLayerDecodedFlag && m_pocResettingFlag) )
       {
-        for (UInt i = 0; i < numAffectedLayers; i++)
+        for( UInt i = 0; i < numAffectedLayers; i++ )
         {
-          m_ppcTDecTop[affectedLayerList[i]]->setPrevPicOrderCnt( m_apcSlicePilot->getFullPocResetFlag() 
-                                                                  ? 0 : m_apcSlicePilot->getPocLsbVal() );
+          m_ppcTDecTop[affectedLayerList[i]]->setPrevPicOrderCnt( m_apcSlicePilot->getFullPocResetFlag() ? 0 : m_apcSlicePilot->getPocLsbVal() );
         }
       }
-#else
-      this->setPrevPicOrderCnt( m_apcSlicePilot->getFullPocResetFlag() 
-                                            ? 0 : m_apcSlicePilot->getPocLsbVal() );
-#endif
     }
 #else
   if (bNewPOC || m_layerId!=m_uiPrevLayerId)
@@ -1946,10 +1901,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   //  Decode a picture
   m_cGopDecoder.decompressSlice(nalu.m_Bitstream, m_pcPic);
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-  setFirstPicInLayerDecodedFlag(true);
-#endif
 #if SVC_EXTENSION
+  setFirstPicInLayerDecodedFlag(true);
   m_lastPicHasEos = false;
 #endif
 

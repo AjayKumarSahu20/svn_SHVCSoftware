@@ -133,9 +133,7 @@ TComSlice::TComSlice()
 , m_pocMsbVal                     ( 0 )
 , m_pocMsbValRequiredFlag         ( false )
 , m_pocMsbValPresentFlag          ( false )
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
 , m_pocMsbValNeeded               ( false )
-#endif
 #endif
 #if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
 , m_picOrderCntLsb (0)
@@ -234,10 +232,8 @@ Void TComSlice::initSlice()
 #if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   m_picOrderCntLsb = 0;
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   m_pocMsbValNeeded  = false;
   m_pocResetDeltaPoc = 0;
-#endif
 }
 
 Bool TComSlice::getRapPicFlag()
@@ -1691,7 +1687,7 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
 #if EFFICIENT_FIELD_IRAP
   Bool irapIsInRPS = false;
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_POC
   Bool pocsAdjusted = false;
 #endif
 
@@ -1706,7 +1702,7 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
       j++;
       rpcPic = *(iterPic++);
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_POC
       // poc adjustement by poc reset needs to be taken into account here
       Int deltaPOC = pReferencePictureSet->getDeltaPOC(i) - rpcPic->getPicSym()->getSlice(0)->getPocResetDeltaPoc();
       if (rpcPic->getPicSym()->getSlice(0)->getPocResetDeltaPoc() != 0)
@@ -1721,14 +1717,14 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
       {
         // This picture exists as a reference picture
         // and should be added to the explicit Reference Picture Set
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_POC
         pcRPS->setDeltaPOC(k, deltaPOC);
 #else
         pcRPS->setDeltaPOC(k, pReferencePictureSet->getDeltaPOC(i));
 #endif
         pcRPS->setUsed(k, pReferencePictureSet->getUsed(i) && (!isRAP));
 #if ALLOW_RECOVERY_POINT_AS_RAP
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_POC
         pcRPS->setUsed(k, pcRPS->getUsed(k) && !(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + deltaPOC < pocRandomAccess) ); 
 #else
         pcRPS->setUsed(k, pcRPS->getUsed(k) && !(bUseRecoveryPoint && this->getPOC() > pocRandomAccess && this->getPOC() + pReferencePictureSet->getDeltaPOC(i) < pocRandomAccess) ); 
@@ -1783,7 +1779,7 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
 #if EFFICIENT_FIELD_IRAP
     || useNewRPS
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+#if SVC_POC
     || pocsAdjusted  // inter RPS prediction does not work if POCs have been adjusted
 #endif
     )
@@ -1945,9 +1941,7 @@ TComVPS::TComVPS()
 #endif
 , m_viewIdLen                (0)
 , m_vpsNonVuiExtLength (0)
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
 , m_vpsPocLsbAlignedFlag(false)
-#endif
 {
   for( Int i = 0; i < MAX_TLAYER; i++)
   {

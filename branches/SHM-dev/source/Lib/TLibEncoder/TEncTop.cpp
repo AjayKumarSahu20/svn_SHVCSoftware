@@ -93,9 +93,7 @@ TEncTop::TEncTop()
   m_firstPicInLayerDecodedFlag = false;
   m_noOutputOfPriorPicsFlags   = false;
 #endif
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   m_pocDecrementedInDPBFlag    = false;
-#endif
 #endif //SVC_EXTENSION
 }
 

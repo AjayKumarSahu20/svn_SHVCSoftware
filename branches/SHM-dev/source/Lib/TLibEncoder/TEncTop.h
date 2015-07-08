@@ -147,10 +147,8 @@ private:
   Bool                    m_interLayerWeightedPredFlag;
 #endif
   Int                     m_numAddLayerSets;
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool                    m_pocDecrementedInDPBFlag;
   Int                     m_currPocMsb;
-#endif
   Bool                    m_prevPicHasEos;
 #endif //SVC_EXTENSION
 protected:
@@ -269,12 +267,10 @@ public:
 #endif
   Void      setNumAddLayerSets(Int x)             { m_numAddLayerSets = x; }
   Int       getNumAddLayerSets()                  { return m_numAddLayerSets; }
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Void      setPocDecrementedInDPBFlag(Bool x)    { m_pocDecrementedInDPBFlag = x; }
   Bool      getPocDecrementedInDPBFlag()          { return m_pocDecrementedInDPBFlag; }
   Void      setCurrPocMsb(Int poc)                { m_currPocMsb = poc; }
   Int       getCurrPocMsb()                       { return m_currPocMsb; }
-#endif
 #else //SVC_EXTENSION
   Void encode( Bool bEos,
                TComPicYuv* pcPicYuvOrg,
