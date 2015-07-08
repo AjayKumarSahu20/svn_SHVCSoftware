@@ -51,8 +51,6 @@
 
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
 
-#define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
-
 #define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
 #define Q0142_POC_LSB_NOT_PRESENT        1      ///< JCTVC-Q0142; Add constraint checking on the value of poc_reset_idc and poc_lsb_val

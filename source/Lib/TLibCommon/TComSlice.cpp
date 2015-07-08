@@ -118,9 +118,7 @@ TComSlice::TComSlice()
 , m_enableTMVPFlag                ( true )
 #if SVC_EXTENSION
 , m_firstSliceInPic               ( false )
-#if R0226_SLICE_TMVP
 , m_availableForTMVPRefFlag       ( true )
-#endif
 , m_layerId                     ( 0 )
 #if REF_IDX_MFM
 , m_bMFMEnabledFlag               ( false )
