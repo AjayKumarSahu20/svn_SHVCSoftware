@@ -54,10 +54,8 @@ Bool  TDecTop::m_nonBaseIdrPresentFlag               = false;
 Int   TDecTop::m_nonBaseIdrType                      = -1;
 Bool  TDecTop::m_picNonIdrWithRadlPresentFlag        = false;
 Bool  TDecTop::m_picNonIdrNoLpPresentFlag            = false;
-#if POC_RESET_VALUE_RESTRICTION
 Int   TDecTop::m_crossLayerPocResetPeriodId          = -1;
 Int   TDecTop::m_crossLayerPocResetIdc               = -1;
-#endif
 #endif
 
 //! \ingroup TLibDecoder
@@ -922,7 +920,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         setLastPocPeriodId(pocResetPeriodId);
         m_parseIdc = 0;
       }
-#if POC_RESET_VALUE_RESTRICTION
+
       // Check if the POC Reset period ID matches with the Reset Period ID 
       if( pocResetPeriodId == m_crossLayerPocResetPeriodId )
       {
@@ -948,7 +946,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           assert ( 0 );
         }
       }
-#endif
     }
     else
     {
