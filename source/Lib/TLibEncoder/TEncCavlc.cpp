@@ -2022,34 +2022,16 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
     }
   }
 
-#if VIEW_ID_RELATED_SIGNALING
-  // if ( pcVPS->getNumViews() > 1 )  
-  //   However, this is a bug in the text since, view_id_len_minus1 is needed to parse view_id_val. 
-  {
-#if O0109_VIEW_ID_LEN
-    WRITE_CODE( vps->getViewIdLen( ), 4, "view_id_len" );
-    assert ( vps->getNumViews() >= (1<<vps->getViewIdLen()) );
-#else
-    WRITE_CODE( vps->getViewIdLenMinus1( ), 4, "view_id_len_minus1" );
-#endif
-  }
+  WRITE_CODE( vps->getViewIdLen( ), 4, "view_id_len" );
+  assert ( vps->getNumViews() >= (1<<vps->getViewIdLen()) );
 
-#if O0109_VIEW_ID_LEN
   if ( vps->getViewIdLen() > 0 )
   {
-#endif
-  for(  i = 0; i < vps->getNumViews(); i++ )
-  {
-#if O0109_VIEW_ID_LEN
-    WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLen( ), "view_id_val[i]" );
-#else
-    WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLenMinus1( ) + 1, "view_id_val[i]" );
-#endif
+    for( i = 0; i < vps->getNumViews(); i++ )
+    {
+      WRITE_CODE( vps->getViewIdVal( i ), vps->getViewIdLen( ), "view_id_val[i]" );
+    }
   }
-#if O0109_VIEW_ID_LEN
-  }
-#endif
-#endif // VIEW_ID_RELATED_SIGNALING
 
   for( Int layerCtr = 1; layerCtr < vps->getMaxLayers(); layerCtr++)
   {
