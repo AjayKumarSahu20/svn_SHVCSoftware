@@ -57,7 +57,6 @@
 #define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
 #if CGS_3D_ASYMLUT
 #define CGS_GCC_NO_VECTORIZATION         1      ///< disable victorization to avoid issues with some compilers
-#define R0164_CGS_LUT_BUGFIX             1      ///< JCTVC-R0164: Bug fix with LUT syntax
 #define R0164_CGS_LUT_BUGFIX_CHECK       0      ///< JCTVC-R0164: Add traces explicitly/non-explicitly encoded vertices and check if 3DLUT is correctly filled
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
