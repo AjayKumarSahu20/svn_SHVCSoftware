@@ -1911,10 +1911,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
   else
   {
     sliceHeaderExtensionLength = 0;
-#if INFERENCE_POC_MSB_VAL_PRESENT
     pcSlice->setPocMsbValPresentFlag( false );
-#endif
   }
+
   UInt startBits = m_pcBitstream->getNumBitsRead();     // Start counter of # SH Extn bits
   if( sliceHeaderExtensionLength > 0 )
   {
