@@ -1213,7 +1213,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     pcSlice->setSliceCurEndCtuTsAddr(numCTUs);
   }
 
-#if Q0142_POC_LSB_NOT_PRESENT
+#if SVC_EXTENSION
   Int iPOClsb = 0;
 #endif
 
@@ -1275,6 +1275,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       rps->setNumberOfPictures(0);
       pcSlice->setRPS(rps);
     }
+
 #if SVC_EXTENSION
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( ( pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag() )
@@ -1944,12 +1945,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     {
       pcSlice->setPocResetIdc( 0 );
     }
-#if Q0142_POC_LSB_NOT_PRESENT
-    if ( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId()) ) && iPOClsb > 0 )
+
+    if( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId()) ) && iPOClsb > 0 )
     {
       assert( pcSlice->getPocResetIdc() != 2 );
     }
-#endif
+
     if( pcSlice->getPocResetIdc() > 0 )
     {
       READ_CODE(6, uiCode,      "poc_reset_period_id"); pcSlice->setPocResetPeriodId(uiCode);
@@ -1960,16 +1961,15 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       pcSlice->setPocResetPeriodId( 0 );
     }
 
-    if (pcSlice->getPocResetIdc() == 3)
+    if( pcSlice->getPocResetIdc() == 3 )
     {
       READ_FLAG( uiCode,        "full_poc_reset_flag"); pcSlice->setFullPocResetFlag((uiCode == 1) ? true : false);
       READ_CODE(pcSlice->getSPS()->getBitsForPOC(), uiCode,"poc_lsb_val"); pcSlice->setPocLsbVal(uiCode);
-#if Q0142_POC_LSB_NOT_PRESENT
-      if ( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId()) ) && pcSlice->getFullPocResetFlag() )
+
+      if( pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId()) ) && pcSlice->getFullPocResetFlag() )
       {
         assert( pcSlice->getPocLsbVal() == 0 );
       }
-#endif
     }
 
     // Derive the value of PocMsbValRequiredFlag
