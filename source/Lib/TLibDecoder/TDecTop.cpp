@@ -1580,7 +1580,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         isTff =  (pictureTiming->m_picStruct == 1);
       }
 
-#if R0226_CONSTRAINT_TMVP_SEI
       // Check if any new temporal motion vector prediction constraints SEI has arrived
       SEIMessages seiTMVPConstrainsList = extractSeisByType (m_SEIs, SEI::TMVP_CONSTRAINTS);
       if (seiTMVPConstrainsList.size() > 0)
@@ -1606,7 +1605,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           }
         }
       }
-#endif
     }
     
     //Set Field/Frame coding mode
