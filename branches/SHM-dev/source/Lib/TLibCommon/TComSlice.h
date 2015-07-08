@@ -815,12 +815,9 @@ public:
     m_numSubLayerHrdMinus1.resize( numHrds );
   }
 #endif
-#if HRD_BPB
-  Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)
-  {
-    return m_bspHrd[i].getCpbCntMinus1(sl);
-  }
-#endif
+
+  Int getBspHrdParamBufferCpbCntMinus1(UInt i, UInt sl)         { return m_bspHrd[i].getCpbCntMinus1(sl);    }
+
   TComPTL* getPTL()                                             { return &m_pcPTLList[0]; }
   TComPTL* getPTL(UInt idx)                                     { return &m_pcPTLList[idx]; }
 

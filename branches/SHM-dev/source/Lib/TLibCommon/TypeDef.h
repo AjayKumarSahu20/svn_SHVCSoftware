@@ -119,11 +119,9 @@
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
 #define P0166_MODIFIED_PPS_EXTENSION     1      ///< JCTVC-P0166: add pps_extension_type_flag
 #define LAYER_DECPICBUFF_PARAM           1      ///< JCTVC-Q0102 Proposal 2 infer value from layer DPB param
-#define HRD_BPB                          1      ///< JCTVC-Q0101 Bitstream Partition Buffering Proposals
 #define DPB_CONSTRAINTS                  1      ///< JCTVC-Q0100 RPS DPB constraints
 #define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
 #define OLS_IDX_CHK                      1      ///< JCTVC-R0155: Proposal 2 valid range for output_layer_set_idx_to_vps[i]
-#define R0340_RESAMPLING_MODIFICATION    1      ///< JCTVC-R0340: set of changes regarding resampling (as listed below)
 #define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
 
 /// scalability types
