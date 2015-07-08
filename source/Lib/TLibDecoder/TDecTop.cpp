@@ -627,7 +627,7 @@ Void TDecTop::xActivateParameterSets()
     }    
   }
 
-#if R0227_REP_FORMAT_CONSTRAINT //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
+  //Conformance checking for rep format -- rep format of current picture of current layer shall never be greater rep format defined in VPS for the current layer
   UInt layerIdx = activeVPS->getLayerIdxInVps(m_apcSlicePilot->getLayerId());
 
   if ( activeVPS->getVpsExtensionFlag() == 1 && (m_apcSlicePilot->getLayerId() == 0 || sps->getV1CompatibleSPSFlag() == 1) )
@@ -646,7 +646,6 @@ Void TDecTop::xActivateParameterSets()
     assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsLuma()           <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsLuma());
     assert( activeVPS->getVpsRepFormat( sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma()         <= activeVPS->getVpsRepFormat( activeVPS->getVpsRepFormatIdx(layerIdx))->getBitDepthVpsChroma());
   }
-#endif
 #endif //SVC_EXTENSION
 
   m_apcSlicePilot->setPPS(pps);
