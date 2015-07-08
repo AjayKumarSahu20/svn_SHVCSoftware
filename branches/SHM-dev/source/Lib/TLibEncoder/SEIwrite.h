@@ -57,18 +57,14 @@ public:
 
 protected:
 #if O0164_MULTI_LAYER_HRD
-#if VPS_VUI_BSP_HRD_PARAMS
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei);
-#else
-  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting& nestingSei, const SEIBspNesting& bspNestingSei);
-#endif
 #else
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps);
 #endif
   Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
   Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
   Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);
   Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);
   Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps);

@@ -601,7 +601,7 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
       READ_CODE( 5, uiCode, "au_cpb_removal_delay_length_minus1" );      hrd->setCpbRemovalDelayLengthMinus1( uiCode );
       READ_CODE( 5, uiCode, "dpb_output_delay_length_minus1" );       hrd->setDpbOutputDelayLengthMinus1( uiCode );
     }
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
     else
     {
       hrd->setInitialCpbRemovalDelayLengthMinus1( 23 );
@@ -3528,86 +3528,10 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 
 #if O0164_MULTI_LAYER_HRD
   READ_FLAG(uiCode, "vps_vui_bsp_hrd_present_flag" ); vps->setVpsVuiBspHrdPresentFlag(uiCode);
-  if (vps->getVpsVuiBspHrdPresentFlag())
-  {
-#if VPS_VUI_BSP_HRD_PARAMS
-    parseVpsVuiBspHrdParams(vps);
-#else
-#if R0227_VUI_BSP_HRD_FLAG
-    assert (vps->getTimingInfo()->getTimingInfoPresentFlag() == 1);
-#endif
-    READ_UVLC( uiCode, "vps_num_bsp_hrd_parameters_minus1" ); vps->setVpsNumBspHrdParametersMinus1(uiCode);
-    vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
-    for( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
-    {
-      if( i > 0 )
-      {
-        READ_FLAG( uiCode, "bsp_cprms_present_flag[i]" ); vps->setBspCprmsPresentFlag(i, uiCode);
-      }
-      parseHrdParameters(vps->getBspHrd(i), i==0 ? 1 : vps->getBspCprmsPresentFlag(i), vps->getMaxTLayers()-1);
-    }
-    for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
-    {
-      READ_UVLC( uiCode, "num_bitstream_partitions[i]"); vps->setNumBitstreamPartitions(h, uiCode);
-#if HRD_BPB
-      Int chkPart=0;
-#endif
-      for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
-      {
-        for( j = 0; j <= (vps->getMaxLayers()-1); j++ )
-        {
-          if( vps->getLayerIdIncludedFlag(h, j) )
-          {
-            READ_FLAG( uiCode, "layer_in_bsp_flag[h][i][j]" ); vps->setLayerInBspFlag(h, i, j, uiCode);
-          }
-        }
-#if HRD_BPB
-        chkPart+=vps->getLayerInBspFlag(h, i, j);
-#endif
-      }
-#if HRD_BPB
-      assert(chkPart<=1);
-#endif
-#if HRD_BPB
-      if(vps->getNumBitstreamPartitions(h)==1)
-      {
-        Int chkPartition1=0; Int chkPartition2=0;
-        for( j = 0; j <= (vps->getMaxLayers()-1); j++ )
-        {
-          if( vps->getLayerIdIncludedFlag(h, j) )
-          {
-            chkPartition1+=vps->getLayerInBspFlag(h, 0, j);
-            chkPartition2++;
-          }
-        }
-        assert(chkPartition1!=chkPartition2);
-      }
-#endif
-      if (vps->getNumBitstreamPartitions(h))
-      {
-#if Q0182_MULTI_LAYER_HRD_UPDATE
-        READ_UVLC( uiCode, "num_bsp_sched_combinations_minus1[h]"); vps->setNumBspSchedCombinations(h, uiCode + 1);
-#else
-        READ_UVLC( uiCode, "num_bsp_sched_combinations[h]"); vps->setNumBspSchedCombinations(h, uiCode);
-#endif
-        for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
-        {
-          for( j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
-          {
-            READ_UVLC( uiCode, "bsp_comb_hrd_idx[h][i][j]"); vps->setBspCombHrdIdx(h, i, j, uiCode);
-#if HRD_BPB
-            assert(uiCode <= vps->getVpsNumBspHrdParametersMinus1());
-#endif
 
-            READ_UVLC( uiCode, "bsp_comb_sched_idx[h][i][j]"); vps->setBspCombSchedIdx(h, i, j, uiCode);
-#if HRD_BPB
-            assert(uiCode <= vps->getBspHrdParamBufferCpbCntMinus1(uiCode,vps->getMaxTLayers()-1));
-#endif
-          }
-        }
-      }
-    }
-#endif
+  if( vps->getVpsVuiBspHrdPresentFlag() )
+  {
+    parseVpsVuiBspHrdParams(vps);
   }
 #endif
 
@@ -3634,7 +3558,6 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   // Vertical MV component restriction is not used in SHVC CTC
   assert( uiCode == 0 );
 }
-#endif
 
 #if Q0048_CGS_3D_ASYMLUT
 Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
@@ -3845,7 +3768,8 @@ Void TDecCavlc::xReadParam( Int& param )
   else param = 0;
 }
 #endif
-#if VPS_VUI_BSP_HRD_PARAMS
+#endif
+
 Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
 {
   UInt uiCode;
@@ -3867,10 +3791,12 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
         vps->setCprmsAddPresentFlag(0, true);
       }
     }
+
     READ_UVLC( uiCode, "num_sub_layer_hrd_minus1[i]" ); vps->setNumSubLayerHrdMinus1(j, uiCode );
     assert( uiCode <= vps->getMaxTLayers() - 1 );
     
     parseHrdParameters( vps->getBspHrd(j), vps->getCprmsAddPresentFlag(j), vps->getNumSubLayerHrdMinus1(j) );
+
     if( i > 0 && !vps->getCprmsAddPresentFlag(i) )
     {
       // Copy common information parameters
@@ -3884,41 +3810,49 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
       }
     }
   }
+
   if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 0 )
   {
     for (Int h = 1; h < vps->getNumOutputLayerSets(); h++)
     {
       Int lsIdx = vps->getOutputLayerSetIdx(h);
       READ_UVLC(uiCode, "num_signalled_partitioning_schemes[h]"); vps->setNumSignalledPartitioningSchemes(h, uiCode);
+
       for (Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h) + 1; j++)
       {
         READ_UVLC(uiCode, "num_partitions_in_scheme_minus1[h][j]"); vps->setNumPartitionsInSchemeMinus1(h, j, uiCode);
-        for (Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++)
+
+        for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++ )
         {
-          for (Int r = 0; r < vps->getNumLayersInIdList(lsIdx); r++)
+          for( Int r = 0; r < vps->getNumLayersInIdList(lsIdx); r++ )
           {
             READ_FLAG(uiCode, "layer_included_in_partition_flag[h][j][k][r]"); vps->setLayerIncludedInPartitionFlag(h, j, k, r, uiCode ? true : false);
           }
         }
       }
-      for (Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++)
+
+      for( Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++ )
       {
-        for (Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++)
+        for( Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++ )
         {
           READ_UVLC(uiCode, "num_bsp_schedules_minus1[h][i][t]");              vps->setNumBspSchedulesMinus1(h, i, t, uiCode);
-          for (Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++)
+
+          for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++)
           {
             for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
             {
               if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 1 )
               {
                 Int numBits = 1;
-                while ((1 << numBits) < (vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams()))
+
+                while( (1 << numBits) < (vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams()) )
                 {
                   numBits++;
                 }
+
                 READ_CODE(numBits, uiCode, "bsp_comb_hrd_idx[h][i][t][j][k]");      vps->setBspHrdIdx(h, i, t, j, k, uiCode);
               }
+
               READ_UVLC(uiCode, "bsp_comb_sched_idx[h][i][t][j][k]");    vps->setBspSchedIdx(h, i, t, j, k, uiCode);
             }
           }
@@ -3931,7 +3865,6 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
     }
   }
 }
-#endif
-#endif
+#endif //SVC_EXTENSION
 //! \}
 

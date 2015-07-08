@@ -1594,12 +1594,12 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   vps->setSingleLayerForNonIrapFlag(m_adaptiveResolutionChange > 0 ? true : false);
   vps->setHigherLayerIrapSkipFlag(m_skipPictureAtArcSwitch);
 
-  for (Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++)
+  for( Int k = 0; k < MAX_VPS_LAYER_SETS_PLUS1; k++ )
   {
     vps->setAltOuputLayerFlag( k, m_altOutputLayerFlag );
   }
 
-#if VPS_VUI_BSP_HRD_PARAMS
+  // VPS VUI BSP HRD parameters
   vps->setVpsVuiBspHrdPresentFlag(false);
   TEncTop *pcCfg = &m_acTEncTop[0];
   if( pcCfg->getBufferingPeriodSEIEnabled() )
@@ -1639,7 +1639,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
 
     // Signalling of additional partitioning schemes
-    for(Int h = 1; h < vps->getNumOutputLayerSets(); h++)
+    for( Int h = 1; h < vps->getNumOutputLayerSets(); h++ )
     {
       Int lsIdx = vps->getOutputLayerSetIdx( h );
       vps->setNumSignalledPartitioningSchemes(h, 1);  // Only the default per-layer partitioning scheme
@@ -1677,74 +1677,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       }
     }
   }
-#else
-
-#if O0164_MULTI_LAYER_HRD
-  vps->setVpsVuiBspHrdPresentFlag(false);
-  TEncTop *pcCfg = &m_acTEncTop[0];
-  if( pcCfg->getBufferingPeriodSEIEnabled() )
-  {
-    vps->setVpsVuiBspHrdPresentFlag(true);
-    vps->setVpsNumBspHrdParametersMinus1(vps->getVpsNumLayerSetsMinus1() - 1); 
-    vps->createBspHrdParamBuffer(vps->getVpsNumBspHrdParametersMinus1() + 1);
-    for ( i = 0; i <= vps->getVpsNumBspHrdParametersMinus1(); i++ )
-    {
-      vps->setBspCprmsPresentFlag(i, true);
-
-      UInt layerId = i + 1;
-      TEncTop *pcCfgLayer = &m_acTEncTop[layerId];
-
-      Int iPicWidth         = pcCfgLayer->getSourceWidth();
-      Int iPicHeight        = pcCfgLayer->getSourceHeight();
-#if LAYER_CTB
-      UInt uiWidthInCU       = ( iPicWidth  % m_acLayerCfg[layerId].m_uiMaxCUWidth  ) ? iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth  + 1 : iPicWidth  / m_acLayerCfg[layerId].m_uiMaxCUWidth;
-      UInt uiHeightInCU      = ( iPicHeight % m_acLayerCfg[layerId].m_uiMaxCUHeight ) ? iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight + 1 : iPicHeight / m_acLayerCfg[layerId].m_uiMaxCUHeight;
-#else
-      UInt uiWidthInCU       = ( iPicWidth %m_uiMaxCUWidth  ) ? iPicWidth /m_uiMaxCUWidth  + 1 : iPicWidth /m_uiMaxCUWidth;
-      UInt uiHeightInCU      = ( iPicHeight%m_uiMaxCUHeight ) ? iPicHeight/m_uiMaxCUHeight + 1 : iPicHeight/m_uiMaxCUHeight;
-#endif
-      UInt uiNumCUsInFrame   = uiWidthInCU * uiHeightInCU;
-
-#if LAYER_CTB
-      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_acLayerCfg[layerId].m_uiMaxCUDepth << 1);
-#else
-      UInt maxCU = pcCfgLayer->getSliceArgument() >> ( m_uiMaxCUDepth << 1);
-#endif
-      UInt numDU = ( pcCfgLayer->getSliceMode() == 1 ) ? ( uiNumCUsInFrame / maxCU ) : ( 0 );
-      if( uiNumCUsInFrame % maxCU != 0 || numDU == 0 )
-      {
-        numDU ++;
-      }
-      vps->getBspHrd(i)->setNumDU( numDU );
-      vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
-    }
-    for (UInt h = 1; h <= vps->getVpsNumLayerSetsMinus1(); h++)
-    {
-      vps->setNumBitstreamPartitions(h, 1);
-      for( i = 0; i < vps->getNumBitstreamPartitions(h); i++ )
-      {
-        for( UInt j = 0; j <= (vps->getMaxLayers()-1); j++ )
-        {
-          if (vps->getLayerIdIncludedFlag(h, j) && h == j)
-          {
-            vps->setLayerInBspFlag(h, i, j, true);
-          }
-        }
-      }
-      vps->setNumBspSchedCombinations(h, 1);
-      for( i = 0; i < vps->getNumBspSchedCombinations(h); i++ )
-      {
-        for( UInt j = 0; j < vps->getNumBitstreamPartitions(h); j++ )
-        {
-          vps->setBspCombHrdIdx(h, i, j, 0);
-          vps->setBspCombSchedIdx(h, i, j, 0);
-        }
-      }
-    }
-  }
-#endif
-#endif
-
 #else //SVC_EXTENSION
   m_cTEncTop.init(isFieldCoding);
 #endif //SVC_EXTENSION

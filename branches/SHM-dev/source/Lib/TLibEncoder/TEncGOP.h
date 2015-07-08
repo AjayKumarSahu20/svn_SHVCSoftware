@@ -281,11 +281,7 @@ protected:
   SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
 #endif
 #if O0164_MULTI_LAYER_HRD
-#if VPS_VUI_BSP_HRD_PARAMS
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
-#else
-  SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
-#endif
 #endif
 #if P0123_ALPHA_CHANNEL_SEI
   SEIAlphaChannelInfo* xCreateSEIAlphaChannelInfo();

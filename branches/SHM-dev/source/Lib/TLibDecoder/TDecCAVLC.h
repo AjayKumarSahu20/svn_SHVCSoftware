@@ -137,9 +137,7 @@ public:
 #if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
 #endif
-#if VPS_VUI_BSP_HRD_PARAMS
   Void  parseVpsVuiBspHrdParams( TComVPS *vps );
-#endif
   Void  parseSPSExtension    ( TComSPS* pcSPS );
 #if Q0048_CGS_3D_ASYMLUT
   Void  parsePPS            ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID );
