@@ -73,6 +73,13 @@ protected:
   Bool          m_colourRemapSEIEnabled;              ///< Enable the Colour Remapping Information SEI message if available (remapping decoded pictures)
 #endif
 
+  std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
+  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
+#if O0043_BEST_EFFORT_DECODING
+  UInt          m_forceDecodeBitDepth;                ///< if non-zero, force the bit depth at the decoder (best effort decoding)
+#endif
+  std::string   m_outputDecodedSEIMessagesFilename;   ///< filename to output decoded SEI messages to. If '-', then use stdout. If empty, do not output details.
+
 #if SVC_EXTENSION
 #if AVC_BASE
   Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
@@ -81,17 +88,7 @@ protected:
   Int           m_iBLSourceHeight;
 #endif
 #endif
-#endif
-
-  std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
-  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
-#if O0043_BEST_EFFORT_DECODING
-  UInt          m_forceDecodeBitDepth;                ///< if non-zero, force the bit depth at the decoder (best effort decoding)
-#endif
-  std::string   m_outputDecodedSEIMessagesFilename;   ///< filename to output decoded SEI messages to. If '-', then use stdout. If empty, do not output details.
-#if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams             m_commonDecoderParams;
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   Bool          m_confModeFlag;
   std::string   m_confPrefix;
@@ -99,6 +96,7 @@ protected:
   Bool          m_metadataFileRefresh;
   std::string   m_decodedYuvLayerFileName[63];
   Bool          m_decodedYuvLayerRefresh[63];
+#endif
 #endif
 
 public:
@@ -133,9 +131,10 @@ public:
   virtual ~TAppDecCfg() {}
 
   Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
-#if OUTPUT_LAYER_SET_INDEX
+
+#if SVC_EXTENSION
   CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
-#endif
+
 #if CONFORMANCE_BITSTREAM_MODE
   Bool const getConfModeFlag() { return m_confModeFlag;  }
   std::string const getConfPrefix() { return m_confPrefix;}
@@ -147,6 +146,8 @@ public:
   Bool const getDecodedYuvLayerRefresh(Int const layerId) {return m_decodedYuvLayerRefresh[layerId]; }
   Void setDecodedYuvLayerRefresh(Int const layerId, Bool const x) {m_decodedYuvLayerRefresh[layerId] = x; }
 #endif
+#endif
+
 };
 
 //! \}

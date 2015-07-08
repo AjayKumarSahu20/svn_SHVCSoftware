@@ -123,10 +123,7 @@
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
 #if VPS_DPB_SIZE_TABLE 
-#define OUTPUT_LAYER_SET_INDEX           1      ///< JCTVC-O0217: DPB operations: Inference/input of output layer set index
-#if OUTPUT_LAYER_SET_INDEX
 #define USE_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: Use signaled DPB-size table parameters in the decoder
-#endif
 #endif
 #define DPB_PARAMS_MAXTLAYERS            1      ///< JCTVC-P0156 DPB parameters up to maximum temporal sub-layers in the layer set
 #define NO_CLRAS_OUTPUT_FLAG             1

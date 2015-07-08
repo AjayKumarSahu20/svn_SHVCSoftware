@@ -305,7 +305,7 @@ enum NalUnitType
   NAL_UNIT_INVALID,
 };
 
-#if OUTPUT_LAYER_SET_INDEX
+#if SVC_EXTENSION
 class CommonDecoderParams
 {
   Int m_targetLayerId;
