@@ -875,7 +875,7 @@ Void TEncSbac::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
   
-#if REPN_FORMAT_IN_VPS  
+#if SVC_EXTENSION  
   Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
 #else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);

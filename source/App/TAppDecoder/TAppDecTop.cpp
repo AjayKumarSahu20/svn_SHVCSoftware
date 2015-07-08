@@ -795,7 +795,6 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
 
           if (display)
           {            
-#if REPN_FORMAT_IN_VPS
             UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
             Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -805,14 +804,6 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
               conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
               conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
               conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(), NUM_CHROMA_FORMAT, isTff );
-#else
-            m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
-              m_outputColourSpaceConvert,
-              conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
-              conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
-              conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
-              conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), NUM_CHROMA_FORMAT, isTff );
-#endif
           }
         }
 
@@ -914,7 +905,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
-#if REPN_FORMAT_IN_VPS
+
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -923,13 +914,6 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
-#else
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
-            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-#endif
         }
 
         // update POC of display order
@@ -1050,7 +1034,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();          
-#if REPN_FORMAT_IN_VPS
+
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -1059,13 +1043,6 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(), NUM_CHROMA_FORMAT, isTff );
-#else
-          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(), m_outputColourSpaceConvert,
-            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(), NUM_CHROMA_FORMAT, isTff );
-#endif
         }
 
         // update POC of display order
@@ -1153,7 +1130,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
-#if REPN_FORMAT_IN_VPS
+
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -1162,13 +1139,6 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
             conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
-#else
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
-            conf.getWindowLeftOffset()   + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset()  + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset()    + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
-#endif
         }
 
         // update POC of display order
@@ -1299,11 +1269,11 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     const Window &conf = pic->getConformanceWindow();
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
     Int xScal =  1, yScal = 1;
-#if REPN_FORMAT_IN_VPS
+
     UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
     xScal = TComSPS::getWinUnitX( chromaFormatIdc );
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-#endif
+
     TComPicYuv* pPicCYuvRec = pic->getPicYuvRec();
     m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec, m_outputColourSpaceConvert,
       conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
@@ -1654,11 +1624,11 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         const Window &conf = checkPic.getConformanceWindow();
         const Window &defDisp = m_respectDefDispWindow ? checkPic.getDefDisplayWindow() : Window();
         Int xScal = 1, yScal = 1;
-  #if REPN_FORMAT_IN_VPS
+  
         UInt chromaFormatIdc = checkPic.getSlice(0)->getChromaFormatIdc();
         xScal = TComSPS::getWinUnitX( chromaFormatIdc );
         yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-  #endif
+  
         if( checkPic.getPOC() <= pocValue )
         {
           TComPicYuv* pPicCYuvRec = checkPic.getPicYuvRec();

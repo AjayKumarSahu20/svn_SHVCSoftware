@@ -1162,7 +1162,6 @@ public:
 };
 
 #if SVC_EXTENSION
-#if REPN_FORMAT_IN_VPS
 struct RepFormatCfg
 {
   Int   m_chromaFormatIdc;
@@ -1181,7 +1180,6 @@ struct RepFormatCfg
   {}
 };
 std::istringstream &operator>>(std::istringstream &in, RepFormatCfg &repFormatCfg);
-#endif
 #endif //SVC_EXTENSION
 
 //! \}

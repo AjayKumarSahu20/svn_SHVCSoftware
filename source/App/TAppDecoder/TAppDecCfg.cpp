@@ -94,10 +94,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
                                                      "YUV writing is skipped if omitted")
 #if AVC_BASE
   ("BLReconFile,-ibl",    cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
-#if !REPN_FORMAT_IN_VPS
-  ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
-  ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
-#endif
 #endif
   ("TargetLayerId,-lid", targetLayerId, -1, "Target layer id")
   ("LayerNum,-ls", layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option

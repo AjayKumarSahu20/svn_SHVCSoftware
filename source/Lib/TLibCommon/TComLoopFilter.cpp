@@ -180,7 +180,7 @@ Void TComLoopFilter::xDeblockCU( TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiD
     {
       UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsZorderIdx] ];
       UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsZorderIdx] ];
-#if REPN_FORMAT_IN_VPS
+#if SVC_EXTENSION
       if( ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples() ) )
 #else
       if( ( uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples() ) )
