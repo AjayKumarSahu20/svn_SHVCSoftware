@@ -2099,10 +2099,8 @@ TComSPS::TComSPS()
 , m_bV1CompatibleSPSFlag      (  0)
 , m_updateRepFormatFlag       (false)
 , m_updateRepFormatIndex      (0)
-#if SCALINGLIST_INFERRING
-, m_inferScalingListFlag ( false )
-, m_scalingListRefLayerId ( 0 )
-#endif
+, m_inferScalingListFlag      ( false )
+, m_scalingListRefLayerId     ( 0 )
 #endif //SVC_EXTENSION
 {
   for(Int ch=0; ch<MAX_NUM_CHANNEL_TYPE; ch++)
@@ -2131,7 +2129,7 @@ TComSPS::TComSPS()
 
 TComSPS::~TComSPS()
 {
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
   if( !m_inferScalingListFlag )
 #endif
   delete m_scalingList;
@@ -2298,11 +2296,9 @@ TComPPS::TComPPS()
 
 #if SVC_EXTENSION
 , m_extensionFlag(false)
-#if SCALINGLIST_INFERRING
 , m_layerId(0)
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
-#endif
 , m_pocResetInfoPresentFlag   (false)
 , m_numRefLayerLocationOffsets  ( 0 )
 #if CGS_3D_ASYMLUT
@@ -2333,7 +2329,7 @@ TComPPS::TComPPS()
 
 TComPPS::~TComPPS()
 {
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
   if( !m_inferScalingListFlag )
 #endif
   delete m_scalingList;

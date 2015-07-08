@@ -55,8 +55,6 @@
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
 
-#define SCALINGLIST_INFERRING            1      ///< JCTVC-N0371: inter-layer scaling list
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define SVC_POC                          1      ///< POC signalling and reset
 #define UNAVAILABLE_PIC_BUGFIX           1

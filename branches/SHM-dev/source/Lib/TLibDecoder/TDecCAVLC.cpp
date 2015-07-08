@@ -396,7 +396,6 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
             READ_FLAG( uiCode, "poc_reset_info_present_flag" );
             pcPPS->setPocResetInfoPresentFlag(uiCode ? true : false);
 
-#if SCALINGLIST_INFERRING
             READ_FLAG( uiCode, "pps_infer_scaling_list_flag" );
             pcPPS->setInferScalingListFlag( uiCode );
 
@@ -408,7 +407,6 @@ Void TDecCavlc::parsePPS(TComPPS* pcPPS)
               assert( pcPPS->getScalingListRefLayerId() <= 62 );
               pcPPS->setScalingListPresentFlag( false );
             }
-#endif
 
             READ_UVLC( uiCode,      "num_ref_loc_offsets" ); pcPPS->setNumRefLayerLocationOffsets(uiCode);
             for(Int k = 0; k < pcPPS->getNumRefLayerLocationOffsets(); k++)

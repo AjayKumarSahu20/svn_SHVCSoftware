@@ -1374,10 +1374,8 @@ private:
   Int         m_NumDirectRefLayers;
   Bool        m_updateRepFormatFlag;
   UInt        m_updateRepFormatIndex;
-#if SCALINGLIST_INFERRING
   Bool        m_inferScalingListFlag;
   UInt        m_scalingListRefLayerId;
-#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -1507,7 +1505,7 @@ public:
   Bool getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
   Void setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
 #else
   Void setScalingList      ( TComScalingList *scalingList);
@@ -1546,12 +1544,10 @@ public:
   Void     setUpdateRepFormatFlag(Bool x)           { m_updateRepFormatFlag = x;      }
   Int      getUpdateRepFormatIndex()                { return m_updateRepFormatIndex;  }
   Void     setUpdateRepFormatIndex(UInt index)      { m_updateRepFormatIndex = index; }
-#if SCALINGLIST_INFERRING
   Bool     getInferScalingListFlag()                { return m_inferScalingListFlag;  }
   UInt     getScalingListRefLayerId()               { return m_scalingListRefLayerId; }
   Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
   Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
-#endif
 #endif //SVC_EXTENSION
 };
 
@@ -1651,11 +1647,9 @@ private:
 
 #if SVC_EXTENSION
   Bool     m_extensionFlag;
-#if SCALINGLIST_INFERRING
   UInt     m_layerId;
   Bool     m_inferScalingListFlag;
   UInt     m_scalingListRefLayerId;
-#endif
   Bool     m_pocResetInfoPresentFlag;
   UInt     m_numRefLayerLocationOffsets;
   UInt     m_refLocationOffsetLayerId[MAX_LAYERS];
@@ -1786,7 +1780,7 @@ public:
   Bool     getScalingListPresentFlag()         { return m_scalingListPresentFlag;     }
   Void     setScalingListPresentFlag( Bool b ) { m_scalingListPresentFlag  = b;       }
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
   Void     setScalingList( TComScalingList *scalingList ) { m_scalingList = scalingList; }
 #else
   Void     setScalingList      ( TComScalingList *scalingList);
@@ -1805,14 +1799,12 @@ public:
 #if SVC_EXTENSION
   Int     getExtensionFlag()                                  { return m_extensionFlag;  }
   Void    setExtensionFlag(Int n)                             { m_extensionFlag = n;     }
-#if SCALINGLIST_INFERRING
   UInt     getLayerId()                                       { return m_layerId; }
   Void     setLayerId( UInt layerId )                         { m_layerId = layerId;            }
   Bool     getInferScalingListFlag()                          { return m_inferScalingListFlag;  }
   UInt     getScalingListRefLayerId()                         { return m_scalingListRefLayerId; }
   Void     setInferScalingListFlag( Bool flag )               { m_inferScalingListFlag = flag;     }
   Void     setScalingListRefLayerId( UInt layerId )           { m_scalingListRefLayerId = layerId; }
-#endif
   Bool     getPocResetInfoPresentFlag()                       { return m_pocResetInfoPresentFlag; }
   Void     setPocResetInfoPresentFlag(const Bool val)         { m_pocResetInfoPresentFlag = val;  }
   UInt     getNumRefLayerLocationOffsets()                    { return m_numRefLayerLocationOffsets; }

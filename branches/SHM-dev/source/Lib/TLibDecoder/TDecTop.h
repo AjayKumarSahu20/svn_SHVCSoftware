@@ -249,9 +249,9 @@ public:
   CommonDecoderParams*    getCommonDecoderParams()                          { return m_commonDecoderParams; }
   Void                    setCommonDecoderParams(CommonDecoderParams* x)    { m_commonDecoderParams = x;    }
   Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
-#if SCALINGLIST_INFERRING
+
   ParameterSetManagerDecoder* getParameterSetManager()                      { return &m_parameterSetManagerDecoder; }
-#endif
+
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
   Bool const getConfModeFlag() { return m_confModeFlag; }
