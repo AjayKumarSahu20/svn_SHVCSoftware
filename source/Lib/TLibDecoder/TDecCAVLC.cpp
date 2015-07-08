@@ -3308,16 +3308,17 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
           vps->setSubLayerDpbInfoPresentFlag( i, j, false );
         }
       }
+
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )  // If sub-layer DPB information is present
       {
         for(Int k = 0; k < vps->getNumSubDpbs(layerSetIdxForOutputLayerSet); k++)
         {
-#if DPB_INTERNAL_BL_SIG
-            uiCode=0;
+          uiCode=0;
 
-        if( vps->getNecessaryLayerFlag(i, k) && ( vps->getBaseLayerInternalFlag() || vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) ) )
-#endif
-          READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
+          if( vps->getNecessaryLayerFlag(i, k) && ( vps->getBaseLayerInternalFlag() || vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) ) )
+          {
+            READ_UVLC( uiCode, "max_vps_dec_pic_buffering_minus1[i][k][j]" ); vps->setMaxVpsDecPicBufferingMinus1( i, k, j, uiCode );
+          }
         }
         READ_UVLC( uiCode, "max_vps_num_reorder_pics[i][j]" );              vps->setMaxVpsNumReorderPics( i, j, uiCode);
 

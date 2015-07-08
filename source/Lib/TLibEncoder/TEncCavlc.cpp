@@ -2314,7 +2314,7 @@ Void  TEncCavlc::codeRepFormat( RepFormat *repFormat )
 #if VPS_DPB_SIZE_TABLE
 Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
 {
-  for(Int i = 1; i < vps->getNumOutputLayerSets(); i++)
+  for( Int i = 1; i < vps->getNumOutputLayerSets(); i++ )
   {
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx( i );
 
@@ -2326,15 +2326,17 @@ Void TEncCavlc::codeVpsDpbSizeTable(TComVPS *vps)
       {
         WRITE_FLAG( vps->getSubLayerDpbInfoPresentFlag( i, j), "sub_layer_dpb_info_present_flag[i]");  
       }
+
       if( vps->getSubLayerDpbInfoPresentFlag(i, j) )
       {
         for(Int k = 0; k < vps->getNumLayersInIdList( layerSetIdxForOutputLayerSet ); k++)
         {
-#if DPB_INTERNAL_BL_SIG
-        if( vps->getNecessaryLayerFlag(i, k) && (vps->getBaseLayerInternalFlag() || (vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) != 0)) )
-#endif
-          WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j ), "max_vps_dec_pic_buffering_minus1[i][k][j]" );
+          if( vps->getNecessaryLayerFlag(i, k) && (vps->getBaseLayerInternalFlag() || (vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, k) != 0)) )
+          {
+            WRITE_UVLC( vps->getMaxVpsDecPicBufferingMinus1( i, k, j ), "max_vps_dec_pic_buffering_minus1[i][k][j]" );
+          }
         }
+
         WRITE_UVLC( vps->getMaxVpsNumReorderPics( i, j), "max_vps_num_reorder_pics[i][j]" );              
 
         WRITE_UVLC( vps->getMaxVpsLatencyIncreasePlus1( i, j), "max_vps_latency_increase_plus1[i][j]" );        
