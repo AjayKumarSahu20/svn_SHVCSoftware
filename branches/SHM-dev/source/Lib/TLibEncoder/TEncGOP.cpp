@@ -1478,13 +1478,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           {
             pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
           }
-        }
-        else
-        {
-#if !ALIGN_IRAP_BUGFIX
-          pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_CRA);
-#endif
-        }
+        }        
       }
 
       if( pcSlice->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && pcSlice->getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA )
