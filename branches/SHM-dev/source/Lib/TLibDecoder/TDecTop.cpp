@@ -2069,7 +2069,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_EOB:
-#if P0130_EOB
+#if SVC_EXTENSION
       //Check layer id of the nalu. if it is not 0, give a warning message.
       if (nalu.m_layerId > 0)
       {

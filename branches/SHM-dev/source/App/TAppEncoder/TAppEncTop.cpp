@@ -1904,9 +1904,8 @@ Void TAppEncTop::encode()
     }
 
     // write bitstream out
-    if(iTotalNumEncoded)
+    if( iTotalNumEncoded )
     {
-#if P0130_EOB
       if( bEos )
       {
         OutputNALUnit nalu(NAL_UNIT_EOB);
@@ -1916,7 +1915,7 @@ Void TAppEncTop::encode()
         nalu.m_temporalId = 0;
         accessUnit.push_back(new NALUnitEBSP(nalu));
       }
-#endif
+
       xWriteStream(bitstreamFile, iTotalNumEncoded, outputAccessUnits);
       outputAccessUnits.clear();
     }
@@ -2129,7 +2128,7 @@ Void TAppEncTop::encode()
 
   return;
 }
-#endif
+#endif //SVC_EXTENSION
 
 // ====================================================================================================================
 // Protected member functions
