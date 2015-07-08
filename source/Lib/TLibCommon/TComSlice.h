@@ -729,9 +729,7 @@ private:
 #endif
   UInt       m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
   Int        m_vpsNonVuiExtLength;
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool       m_vpsPocLsbAlignedFlag;
-#endif
   std::vector< std::vector<Bool> > m_necessaryLayerFlag;
   std::vector<Int>                 m_numNecessaryLayers;
 #endif //SVC_EXTENSION
@@ -941,10 +939,8 @@ Void      deriveNumberOfSubDpbs();
   Void   setMaxOneActiveRefLayerFlag(Bool x)                                    { m_maxOneActiveRefLayerFlag = x;                }
   UInt   getPocLsbNotPresentFlag(Int i)                                         { return m_pocLsbNotPresentFlag[i];              }
   Void   setPocLsbNotPresentFlag(Int i, Bool x)                                 { m_pocLsbNotPresentFlag[i] = x;                 }
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool   getVpsPocLsbAlignedFlag()                                              { return m_vpsPocLsbAlignedFlag;                 }
   Void   setVpsPocLsbAlignedFlag(Bool x)                                        { m_vpsPocLsbAlignedFlag = x;                    }
-#endif
   Bool   getCrossLayerPictureTypeAlignFlag()                                    { return m_crossLayerPictureTypeAlignFlag;       }
   Void   setCrossLayerPictureTypeAlignFlag(Bool x)                              { m_crossLayerPictureTypeAlignFlag = x;          }
   Bool   getCrossLayerAlignedIdrOnlyFlag()                                      { return m_crossLayerAlignedIdrOnlyFlag;         }
@@ -2021,10 +2017,8 @@ private:
   Int         m_pocMsbVal;
   Bool        m_pocMsbValRequiredFlag;
   Bool        m_pocMsbValPresentFlag;
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool        m_pocMsbValNeeded;
   Int         m_pocResetDeltaPoc;
-#endif
 #endif
 #if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
@@ -2374,12 +2368,10 @@ public:
   Void      setFullPocResetFlag  (Bool b)                        { m_fullPocResetFlag = b;          }
   Int       getPocLsbVal         ()                              { return m_pocLsbVal;       }
   Void      setPocLsbVal       (Int b)                           { m_pocLsbVal = b;          }
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Void      setPocMsbNeeded      (Bool x)                        { m_pocMsbValNeeded = x; }
   Bool      getPocMsbNeeded      ()                              { return m_pocMsbValNeeded; }
   Int       getPocResetDeltaPoc  ()                              { return m_pocResetDeltaPoc; }
   Void      setPocResetDeltaPoc  (Int x)                         { m_pocResetDeltaPoc = x; }
-#endif
   Int       getPocMsbVal         ()                              { return m_pocMsbVal;       }
   Void      setPocMsbVal       (Int b)                           { m_pocMsbVal = b;          }
   Bool      getPocMsbValPresentFlag ()                           { return m_pocMsbValPresentFlag; }

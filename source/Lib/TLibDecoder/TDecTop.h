@@ -131,10 +131,8 @@ private:
   UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
   UInt                    m_smallestLayerId;
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   Bool                    m_pocResettingFlag;
   Bool                    m_pocDecrementedInDPBFlag;
-#endif
 #if AVC_BASE
   fstream*                m_pBLReconFile;
 #if !REPN_FORMAT_IN_VPS

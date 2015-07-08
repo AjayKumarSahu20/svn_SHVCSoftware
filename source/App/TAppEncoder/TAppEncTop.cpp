@@ -79,9 +79,8 @@ Void TAppEncTop::xInitLibCfg()
 {
   TComVPS* vps = m_acTEncTop[0].getVPS();
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   vps->setVpsPocLsbAlignedFlag(false);
-#endif
+
   vps->setMaxTLayers                                                      ( m_maxTempLayer );
   if (m_maxTempLayer == 1)
   {

@@ -1968,26 +1968,14 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     }
 
     // Derive the value of PocMsbValRequiredFlag
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
     pcSlice->setPocMsbValRequiredFlag( (pcSlice->getCraPicFlag() || pcSlice->getBlaPicFlag())
       && (!pcSlice->getVPS()->getVpsPocLsbAlignedFlag() ||
       (pcSlice->getVPS()->getVpsPocLsbAlignedFlag() && pcSlice->getVPS()->getNumDirectRefLayers(pcSlice->getLayerId()) == 0))
       );
-#else
-    pcSlice->setPocMsbValRequiredFlag( pcSlice->getCraPicFlag() || pcSlice->getBlaPicFlag() );
-#endif
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
-    if (!pcSlice->getPocMsbValRequiredFlag() && pcSlice->getVPS()->getVpsPocLsbAlignedFlag())
-#else
-    if (!pcSlice->getPocMsbValRequiredFlag() /* vps_poc_lsb_aligned_flag */)
-#endif
+    if( !pcSlice->getPocMsbValRequiredFlag() && pcSlice->getVPS()->getVpsPocLsbAlignedFlag() )
     {
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
       READ_FLAG(uiCode, "poc_msb_cycle_val_present_flag"); pcSlice->setPocMsbValPresentFlag(uiCode ? true : false);
-#else
-      READ_FLAG(uiCode, "poc_msb_val_present_flag"); pcSlice->setPocMsbValPresentFlag(uiCode ? true : false);
-#endif
     }
     else
     {
@@ -2006,11 +1994,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 #endif
     if( pcSlice->getPocMsbValPresentFlag() )
     {
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
       READ_UVLC( uiCode,    "poc_msb_cycle_val");             pcSlice->setPocMsbVal( uiCode );
-#else
-      READ_UVLC( uiCode,    "poc_msb_val");             pcSlice->setPocMsbVal( uiCode );
-#endif
 
 #if !POC_RESET_IDC_DECODER
       // Update POC of the slice based on this MSB val
@@ -3025,12 +3009,11 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   READ_FLAG(uiCode, "max_one_active_ref_layer_flag" );
   vps->setMaxOneActiveRefLayerFlag(uiCode);
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
+
   READ_FLAG(uiCode, "vps_poc_lsb_aligned_flag");
   vps->setVpsPocLsbAlignedFlag(uiCode);
-#endif
 
-  for(i = 1; i< vps->getMaxLayers(); i++)
+  for( i = 1; i< vps->getMaxLayers(); i++ )
   {
     if( vps->getNumDirectRefLayers( vps->getLayerIdInNuh(i) ) == 0  )
     {
@@ -3176,9 +3159,7 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
     }
   }
 
-#if P0297_VPS_POC_LSB_ALIGNED_FLAG
   vps->setVpsPocLsbAlignedFlag(false);
-#endif
 
   // When not present, poc_lsb_not_present_flag[ i ] is inferred to be equal to 0.
   for( i = 1; i< vps->getMaxLayers(); i++ )
