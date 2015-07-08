@@ -116,7 +116,6 @@
 #define NO_CLRAS_OUTPUT_FLAG             1
 
 #define P0138_USE_ALT_CPB_PARAMS_FLAG    1      ///< JCTVC-P0138: use_alt_cpb_params_flag syntax in buffering period SEI message extension
-#define DPB_INTERNAL_BL_SIG              1      ///< JCTVC-R0153: external base layer
 #define OLS_IDX_CHK                      1      ///< JCTVC-R0155: Proposal 2 valid range for output_layer_set_idx_to_vps[i]
 #define R0157_RESTRICT_PPSID_FOR_CGS_LUT 1      ///< JCTVC-R0157: when pps_pic_parameter_set_id greater than or equal to 8, colour_mapping_enabled_flag shall be equal to 0
 
