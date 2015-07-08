@@ -45,7 +45,6 @@
 UInt  TDecTop::m_prevPOC = MAX_UINT;
 UInt  TDecTop::m_uiPrevLayerId = MAX_UINT;
 Bool  TDecTop::m_bFirstSliceInSequence = true;
-#if POC_RESET_RESTRICTIONS
 Bool  TDecTop::m_checkPocRestrictionsForCurrAu       = false;
 Int   TDecTop::m_pocResetIdcOrCurrAu                 = -1;
 Bool  TDecTop::m_baseLayerIdrFlag                    = false;
@@ -55,7 +54,6 @@ Bool  TDecTop::m_nonBaseIdrPresentFlag               = false;
 Int   TDecTop::m_nonBaseIdrType                      = -1;
 Bool  TDecTop::m_picNonIdrWithRadlPresentFlag        = false;
 Bool  TDecTop::m_picNonIdrNoLpPresentFlag            = false;
-#endif
 #if POC_RESET_VALUE_RESTRICTION
 Int   TDecTop::m_crossLayerPocResetPeriodId          = -1;
 Int   TDecTop::m_crossLayerPocResetIdc               = -1;
@@ -120,9 +118,7 @@ TDecTop::TDecTop()
   m_pColorMappedPic = NULL;
 #endif
 
-#if POC_RESET_RESTRICTIONS
   resetPocRestrictionCheckParameters();
-#endif
   m_pocResettingFlag        = false;
   m_pocDecrementedInDPBFlag = false;
 #if CONFORMANCE_BITSTREAM_MODE
@@ -711,7 +707,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_apcSlicePilot->setSliceIdx(m_uiSliceIdx);
 
   m_apcSlicePilot->setNalUnitType(nalu.m_nalUnitType);
-#if POC_RESET_RESTRICTIONS
+#if SVC_EXTENSION
   m_apcSlicePilot->setTLayer( nalu.m_temporalId );
 #endif
   Bool nonReferenceFlag = (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_TRAIL_N ||
@@ -888,10 +884,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Update CurrAU marking
     if(( m_layerId < m_uiPrevLayerId) ||( ( m_layerId == m_uiPrevLayerId) && bNewPOC)) // Decoding a lower layer than or same layer as previous - mark all earlier pictures as not in current AU
     {
-#if POC_RESET_RESTRICTIONS
       // New access unit; reset all variables related to POC reset restrictions
       resetPocRestrictionCheckParameters();
-#endif
+
       markAllPicsAsNoCurrAu(m_apcSlicePilot->getVPS());
 
       for( UInt i = 0; i < MAX_LAYERS; i++ )
@@ -1423,7 +1418,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
 #if POC_RESET_IDC_DECODER
     m_pcPic->setCurrAuFlag( true );
-#if POC_RESET_RESTRICTIONS
+
     if( m_pcPic->getLayerId() > 0 && m_apcSlicePilot->isIDR() && !m_nonBaseIdrPresentFlag )
     {
       // IDR picture with nuh_layer_id > 0 present
@@ -1506,7 +1501,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         assert( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 );
       }
     }
-#endif
 #endif
 
     Bool isField = false;
@@ -2505,7 +2499,7 @@ Void TDecTop::initAsymLut(TComSlice *pcSlice)
   }
 }
 #endif
-#if POC_RESET_RESTRICTIONS
+
 Void TDecTop::resetPocRestrictionCheckParameters()
 {
   TDecTop::m_checkPocRestrictionsForCurrAu       = false;
@@ -2518,7 +2512,6 @@ Void TDecTop::resetPocRestrictionCheckParameters()
   TDecTop::m_picNonIdrWithRadlPresentFlag        = false;
   TDecTop::m_picNonIdrNoLpPresentFlag            = false;
 }
-#endif
 
 Void TDecTop::xCheckLayerReset()
 {

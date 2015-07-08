@@ -1915,7 +1915,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     if( pcSlice->getPPS()->getPocResetInfoPresentFlag() )
     {
       READ_CODE( 2, uiCode,       "poc_reset_idc"); pcSlice->setPocResetIdc(uiCode);
-#if POC_RESET_RESTRICTIONS
+
       /* The value of poc_reset_idc shall not be equal to 1 or 2 for a RASL picture, a RADL picture, 
       a sub-layer non-reference picture, or a picture that has TemporalId greater than 0, 
       or a picture that has discardable_flag equal to 1. */
@@ -1933,7 +1933,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
       {
         assert( ! ( pcSlice->isCRA() || pcSlice->isBLA() ) );
       }
-#endif
     }
     else
     {

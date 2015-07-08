@@ -163,7 +163,6 @@ private:
 
 public:
 #if SVC_EXTENSION
-#if POC_RESET_RESTRICTIONS
   static Bool                    m_checkPocRestrictionsForCurrAu;
   static Int                     m_pocResetIdcOrCurrAu;
   static Bool                    m_baseLayerIdrFlag;
@@ -173,7 +172,6 @@ public:
   static Int                     m_nonBaseIdrType;
   static Bool                    m_picNonIdrWithRadlPresentFlag;
   static Bool                    m_picNonIdrNoLpPresentFlag;
-#endif
 #if POC_RESET_VALUE_RESTRICTION
   static Int                     m_crossLayerPocResetPeriodId;
   static Int                     m_crossLayerPocResetIdc;
@@ -300,9 +298,7 @@ protected:
 #if Q0048_CGS_3D_ASYMLUT
   Void initAsymLut(TComSlice *pcSlice);
 #endif
-#if POC_RESET_RESTRICTIONS
   Void resetPocRestrictionCheckParameters();
-#endif
   Void xCheckLayerReset();
   Void xSetNoRaslOutputFlag();
   Void xSetLayerInitializedFlag();
