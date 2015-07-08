@@ -352,7 +352,6 @@ Void TComPic::initUpsampledMvField()
 }
 #endif
 
-#if MFM_ENCCONSTRAINT
 Bool TComPic::checkSameRefInfo()
 {
   Bool bSameRefInfo = true;
@@ -392,7 +391,6 @@ Bool TComPic::checkSameRefInfo()
 
   return( bSameRefInfo );  
 }
-#endif
 #endif //SVC_EXTENSION
 
 //! \}

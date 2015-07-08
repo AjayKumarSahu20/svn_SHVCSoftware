@@ -1935,11 +1935,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
           // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
           // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
-          if( refPic->isILR(m_layerId) && pcSlice->getVPS()->isMotionPredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), refPic->getLayerIdx() )
-#if MFM_ENCCONSTRAINT
-            && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerIdx()]->getListPic() )->checkSameRefInfo() == true 
-#endif
-            ) 
+          if( refPic->isILR(m_layerId) && pcSlice->getVPS()->isMotionPredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), refPic->getLayerIdx() )            
+            && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerIdx()]->getListPic() )->checkSameRefInfo() == true ) 
           { 
             ColRefIdx = colIdx; 
             found = true;
@@ -1958,10 +1955,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
             // It is a requirement of bitstream conformance when the collocated picture, used for temporal motion vector prediction, is an inter-layer reference picture, 
             // VpsInterLayerMotionPredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture.
             if( refPic->isILR(m_layerId) && pcSlice->getVPS()->isMotionPredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), refPic->getLayerIdx() )
-#if MFM_ENCCONSTRAINT
-              && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerIdx()]->getListPic() )->checkSameRefInfo() == true 
-#endif
-              ) 
+              && pcSlice->getBaseColPic( *m_ppcTEncTop[refPic->getLayerIdx()]->getListPic() )->checkSameRefInfo() == true ) 
             { 
               ColRefIdx = colIdx; 
               found = true; 

@@ -2275,9 +2275,7 @@ public:
   Void      setBaseColPic       (UInt refLayerIdc, TComPic* p)    { m_pcBaseColPic[refLayerIdc] = p;    }
   TComPic*  getBaseColPic       (UInt refLayerIdc)                { return m_pcBaseColPic[refLayerIdc]; }
   TComPic** getBaseColPic       ()                                { return &m_pcBaseColPic[0];          }
-#if MFM_ENCCONSTRAINT
   TComPic*  getBaseColPic( TComList<TComPic*>& rcListPic );
-#endif
 
   Void      setLayerId (UInt layerId)   { m_layerId = layerId; }
   UInt      getLayerId ()               { return m_layerId;    }
