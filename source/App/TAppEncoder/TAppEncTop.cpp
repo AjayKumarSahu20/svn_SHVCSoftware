@@ -1747,12 +1747,7 @@ Void TAppEncTop::encode()
         m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_acLayerCfg[layer].getPad(), m_acLayerCfg[layer].getInputChromaFormat() );
 
 #if AUXILIARY_PICTURES
-#if R0062_AUX_PSEUDO_MONOCHROME
-        if ( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 ||
-             (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
-#else
-        if (m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400)
-#endif
+        if( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 || (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
         {
           pcPicYuvOrg[layer]->convertToMonochrome();
         }

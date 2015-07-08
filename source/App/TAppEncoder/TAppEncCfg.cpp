@@ -4192,12 +4192,7 @@ Void TAppEncCfg::xCheckParameter()
 #if AUXILIARY_PICTURES
   if( layerIdx < MAX_LAYERS-1 )
   {
-#if R0062_AUX_PSEUDO_MONOCHROME
     xConfirmPara(m_acLayerCfg[layerIdx].m_auxId < 0 || m_acLayerCfg[layerIdx].m_auxId > 2, "AuxId must be in range 0 to 2");
-#else
-    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId < 0 || m_acLayerCfg[layerIdx].m_auxId > 4, "AuxId must be in range 0 to 4");
-    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId > 0 && m_acLayerCfg[layerIdx].m_chromaFormatIDC != CHROMA_400, "Auxiliary picture must be monochrome picture");
-#endif
   }
 #endif 
 #if CGS_3D_ASYMLUT
