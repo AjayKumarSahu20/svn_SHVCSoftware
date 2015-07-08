@@ -1884,7 +1884,7 @@ struct WPACDCParam
 {
   Int64 iAC;
   Int64 iDC;
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
   Int iSamples;
 #endif
 };

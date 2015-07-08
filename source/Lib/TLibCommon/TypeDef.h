@@ -69,7 +69,6 @@
 #define R0300_CGS_RES_COEFF_CODING       1      ///< JCTVC-R0300: improved residual coefficient coding for R0151
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
-#define O0194_WEIGHTED_PREDICTION_CGS    1      ///< JCTVC-O0194: Weighted prediction for colour gamut scalability
 #define POC_RESET_IDC                    1      ///< JCTVC-P0041: Include poc_reset_idc and related derivation
 #if POC_RESET_IDC
 #define POC_RESET_IDC_SIGNALLING         1      ///< JCTVC-P0041: Include signalling for poc_reset related syntax elements

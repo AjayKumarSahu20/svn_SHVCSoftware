@@ -3942,8 +3942,8 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
   pcCU->clipMv( cMvCand );
 
   // prediction pattern
-#if O0194_WEIGHTED_PREDICTION_CGS
-  // Bug Fix (It did not check WP for BSlices)
+#if SVC_EXTENSION
+  // Check WP for B-slices
   if ( pcCU->getSlice()->getPPS()->getUseWP())
 #else
   if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
@@ -3956,9 +3956,9 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
     xPredInterBlk( COMPONENT_Y, pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, false );
   }
 
-#if O0194_WEIGHTED_PREDICTION_CGS
-  if ( pcCU->getSlice()->getPPS()->getUseWP())
-  ///< Bug Fix (It did not check WP for BSlices)
+#if SVC_EXTENSION
+  // Check WP for B-slices
+  if( pcCU->getSlice()->getPPS()->getUseWP())
 #else
   if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
 #endif

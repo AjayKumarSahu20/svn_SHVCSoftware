@@ -110,11 +110,11 @@ Void WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *const slice)
     }
 
     const Int fixedBitShift = (slice->getSPS()->getUseHighPrecisionPredictionWeighting())?RExt__PREDICTION_WEIGHTING_ANALYSIS_DC_PRECISION:0;
-#if O0194_WEIGHTED_PREDICTION_CGS
-    weightACDCParam[compID].iSamples = iSample;
-#endif
     weightACDCParam[compID].iDC = (((iOrgDC<<fixedBitShift)+(iSample>>1)) / iSample);
     weightACDCParam[compID].iAC = iOrgAC;
+#if SVC_EXTENSION
+    weightACDCParam[compID].iSamples = iSample;
+#endif
   }
 
   slice->setWpAcDcParam(weightACDCParam);
@@ -241,7 +241,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
       slice->getWpAcDcParam(currWeightACDCParam);
       slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
 
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
       UInt currLayerId = slice->getLayerId();
       UInt refLayerId  = slice->getRefPic(eRefPicList, refIdxTemp)->getLayerId();
       Bool validILRPic = slice->getRefPic(eRefPicList, refIdxTemp)->isILR( currLayerId ) && refLayerId == 0;
@@ -263,7 +263,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
         const Int64 currDC = currWeightACDCParam[comp].iDC;
         const Int64 currAC = currWeightACDCParam[comp].iAC;
         // reference frame
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
         Int64 refDC  = refWeightACDCParam[comp].iDC;
         Int64 refAC  = refWeightACDCParam[comp].iAC;
 
@@ -281,7 +281,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 #endif
 
         // calculating iWeight and iOffset params
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
         Double dWeight = (refAC==0) ? (Double)1.0 : Clip3( -16.0, 15.0, ((Double)currAC / (Double)refAC) );
         Int weight     = (Int)( 0.5 + dWeight * (Double)(1<<log2Denom) );
         Int offset     = (Int)( ((currDC<<log2Denom) - ((Int64)weight * refDC) + (Int64)realOffset) >> realLog2Denom );
@@ -318,7 +318,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
         if(deltaWeight >= range || deltaWeight < -range)
           return false;
 
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
         // make sure the reference frames other than ILR are not using weighted prediction
         else
         if( !validILRPic )

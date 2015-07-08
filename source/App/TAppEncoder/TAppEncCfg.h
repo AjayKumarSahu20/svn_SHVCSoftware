@@ -509,9 +509,7 @@ protected:
 #endif
   Bool      m_crossLayerAlignedIdrOnlyFlag;
   Bool      m_crossLayerBLAFlag;
-#if O0194_WEIGHTED_PREDICTION_CGS
   Bool      m_useInterLayerWeightedPred;
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int       m_nCGSFlag;
   Int       m_nCGSMaxOctantDepth;
