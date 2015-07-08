@@ -3,12 +3,10 @@
 #define __TCOM3DASYMLUT__
 
 #include "TypeDef.h"
-#if R0150_CGS_SIGNAL_CONSTRAINTS
-#include <cassert>
-#include <vector>
-#endif
 
 #if CGS_3D_ASYMLUT
+#include <cassert>
+#include <vector>
 
 typedef struct _SYUVP
 {
@@ -28,11 +26,7 @@ public:
   TCom3DAsymLUT();
   virtual ~TCom3DAsymLUT();
 
-  virtual Void  create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
-#endif
-    );
+  virtual Void  create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
   virtual Void  destroy();
 
   Int   getMaxOctantDepth() { return m_nMaxOctantDepth; }
@@ -50,7 +44,7 @@ public:
 #endif 
   Int   getMaxYPartNumLog2() { return m_nMaxYPartNumLog2; }
   Int   getCurYPartNumLog2() { return m_nCurYPartNumLog2; }
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+
   Void  addRefLayerId( UInt uiRefLayerId )  
   { 
     if( !isRefLayer( uiRefLayerId ) )
@@ -59,7 +53,7 @@ public:
   size_t  getRefLayerNum()     { return m_vRefLayerId.size();  }
   UInt  getRefLayerId( UInt n )  { assert( n < m_vRefLayerId.size() ); return m_vRefLayerId[n];   }
   Bool  isRefLayer( UInt uiRefLayerId );
-#endif
+
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Void  setAdaptChromaThresholdU( Int n ) { m_nAdaptCThresholdU = n; }
   Int   getAdaptChromaThresholdU()        { return m_nAdaptCThresholdU; }
@@ -112,9 +106,7 @@ private:
 #endif
   SCuboid *** m_pCuboid;
   const static Int m_nVertexIdxOffset[4][3];
-#if R0150_CGS_SIGNAL_CONSTRAINTS
   std::vector<UInt> m_vRefLayerId;
-#endif
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int   m_nAdaptCThresholdU;
   Int   m_nAdaptCThresholdV;
