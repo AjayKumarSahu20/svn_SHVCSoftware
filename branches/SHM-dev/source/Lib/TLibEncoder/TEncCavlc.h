@@ -173,7 +173,6 @@ protected:
   Void xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT );
   Void xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength );
 #endif
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
 #if R0300_CGS_RES_COEFF_CODING
   Void xWriteParam( Int param, UInt nFLCBits);
   Void xCheckParamBits( Int param, Int nFLCBits, Int & nCurBits);
@@ -181,7 +180,6 @@ protected:
   Void xFindDeltaBits( TCom3DAsymLUT * pc3DAsymLUT );
 #else
   Void xWriteParam( Int param);
-#endif
 #endif
 #endif
 #endif //SVC_EXTENSION

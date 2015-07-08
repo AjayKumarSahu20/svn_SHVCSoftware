@@ -408,9 +408,7 @@ protected:
   Int       m_nCGSMaxOctantDepth;
   Int       m_nCGSMaxYPartNumLog2;
   Int       m_nCGSLUTBit;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int       m_nCGSAdaptiveChroma;
-#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   Int       m_nCGSLutSizeRDO;
 #endif
@@ -1149,10 +1147,8 @@ public:
   Int       getCGSMaxYPartNumLog2()       { return m_nCGSMaxYPartNumLog2; }
   Void      setCGSLUTBit(Int n)           { m_nCGSLUTBit = n;    }
   Int       getCGSLUTBit()                { return m_nCGSLUTBit; }
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Void      setCGSAdaptChroma(Int n)      { m_nCGSAdaptiveChroma = n;  }
   Int       getCGSAdaptChroma()           { return m_nCGSAdaptiveChroma; }
-#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   Void      setCGSLutSizeRDO(Int n)      { m_nCGSLutSizeRDO = n;  }
   Int       getCGSLutSizeRDO()           { return m_nCGSLutSizeRDO; }

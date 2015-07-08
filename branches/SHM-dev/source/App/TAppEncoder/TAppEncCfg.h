@@ -510,9 +510,7 @@ protected:
   Int       m_nCGSMaxOctantDepth;
   Int       m_nCGSMaxYPartNumLog2;
   Int       m_nCGSLUTBit;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int       m_nCGSAdaptiveChroma;
-#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   Int       m_nCGSLutSizeRDO;
 #endif

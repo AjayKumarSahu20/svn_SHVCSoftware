@@ -26,8 +26,8 @@ public:
   TCom3DAsymLUT();
   virtual ~TCom3DAsymLUT();
 
-  virtual Void  create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
-  virtual Void  destroy();
+  virtual Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
+  virtual Void destroy();
 
   Int   getMaxOctantDepth() { return m_nMaxOctantDepth; }
   Int   getCurOctantDepth() { return m_nCurOctantDepth; }
@@ -54,12 +54,11 @@ public:
   UInt  getRefLayerId( UInt n )  { assert( n < m_vRefLayerId.size() ); return m_vRefLayerId[n];   }
   Bool  isRefLayer( UInt uiRefLayerId );
 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Void  setAdaptChromaThresholdU( Int n ) { m_nAdaptCThresholdU = n; }
   Int   getAdaptChromaThresholdU()        { return m_nAdaptCThresholdU; }
   Void  setAdaptChromaThresholdV( Int n ) { m_nAdaptCThresholdV = n;  }
   Int   getAdaptChromaThresholdV()        { return m_nAdaptCThresholdV; }
-#endif
+
 #if R0179_ENC_OPT_3DLUT_SIZE
   Int   getMaxYSize() { return 1<<(m_nMaxOctantDepth+m_nMaxYPartNumLog2); }
   Int   getMaxCSize() { return 1<<m_nMaxOctantDepth; }
@@ -107,10 +106,10 @@ private:
   SCuboid *** m_pCuboid;
   const static Int m_nVertexIdxOffset[4][3];
   std::vector<UInt> m_vRefLayerId;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   Int   m_nAdaptCThresholdU;
   Int   m_nAdaptCThresholdV;
-#endif
+
 #if R0164_CGS_LUT_BUGFIX_CHECK
   Bool  *** m_pCuboidExplicit;
   Bool  *** m_pCuboidFilled;
@@ -124,11 +123,7 @@ protected:
   template <class T>
   Void xFree3DArray( T *** &p );
 
-  Void  xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-    , Int nAdaptCThresholdU , Int nAdaptCThreshodV
-#endif
-    );
+  Void  xUpdatePartitioning( Int nCurOctantDepth, Int nCurYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThreshodV );
   SYUVP xGetCuboidVertexPredA( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx );
   Pel   xMapY( Pel y , Pel u , Pel v );
   SYUVP xMapUV( Pel y , Pel u , Pel v );
@@ -136,16 +131,10 @@ protected:
   Int   xGetYSize()  { return m_nYSize;  }
   Int   xGetUSize()  { return m_nUSize;  }
   Int   xGetVSize()  { return m_nVSize;  }
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int   xGetYIdx(Pel y)  { return( y >> m_nYShift2Idx ); }
   Int   xGetUIdx(Pel u)  { return( m_nCurOctantDepth == 1 ? u >= m_nAdaptCThresholdU : u >> m_nUShift2Idx ); }
   Int   xGetVIdx(Pel v)  { return( m_nCurOctantDepth == 1 ? v >= m_nAdaptCThresholdV : v >> m_nVShift2Idx ); }
   Int   xGetNormCoeffOne()    { return( 1 << m_nMappingShift ); }
-#else
-  Int   xGetYShift2Idx() { return m_nYShift2Idx; }
-  Int   xGetUShift2Idx() { return m_nUShift2Idx; }
-  Int   xGetVShift2Idx() { return m_nVShift2Idx; } 
-#endif
   SCuboid & xGetCuboid( Int yIdx , Int uIdx , Int vIdx ){ return m_pCuboid[yIdx][uIdx][vIdx];  }
   Void  xSaveCuboids( SCuboid *** pSrcCuboid );
 };
