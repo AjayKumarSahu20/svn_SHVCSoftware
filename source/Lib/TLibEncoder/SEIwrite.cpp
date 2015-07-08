@@ -54,16 +54,12 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 #endif
 
 #if O0164_MULTI_LAYER_HRD
-#if VPS_VUI_BSP_HRD_PARAMS
 Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSeiPtr, const SEIBspNesting* bspNestingSeiPtr)
-#else
-Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting& nestingSei, const SEIBspNesting& bspNestingSei)
-#endif
 #else
 Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps)
 #endif
 {
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   SEIScalableNesting nestingSei;
   SEIBspNesting      bspNestingSei;
   if( nestingSeiPtr )
@@ -86,7 +82,7 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
   case SEI::DECODED_PICTURE_HASH:
     xWriteSEIDecodedPictureHash(*static_cast<const SEIDecodedPictureHash*>(&sei));
     break;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   case SEI::DECODING_UNIT_INFO:
     xWriteSEIDecodingUnitInfo(*static_cast<const SEIDecodingUnitInfo*>(& sei), sps, nestingSeiPtr, bspNestingSeiPtr, vps);
     break;
@@ -235,11 +231,7 @@ Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
   g_HLSTraceEnable = false;
 #endif
 #if O0164_MULTI_LAYER_HRD
-#if VPS_VUI_BSP_HRD_PARAMS
   xWriteSEIpayloadData(bs_count, sei, vps, sps, nestingSei, bspNestingSei);
-#else
-  xWriteSEIpayloadData(bs_count, sei, vps, sps, *nestingSei, *bspNestingSei);
-#endif
 #else
   xWriteSEIpayloadData(bs_count, sei, sps);
 #endif
@@ -278,11 +270,7 @@ Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
 #endif
 
 #if O0164_MULTI_LAYER_HRD
-#if VPS_VUI_BSP_HRD_PARAMS
   xWriteSEIpayloadData(bs, sei, vps, sps, nestingSei, bspNestingSei);
-#else
-  xWriteSEIpayloadData(bs, sei, vps, sps, *nestingSei, *bspNestingSei);
-#endif
 #else
   xWriteSEIpayloadData(bs, sei, sps);
 #endif
@@ -351,13 +339,9 @@ Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
 #endif
 }
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
 Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
-#else
-Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps)
-#endif
 {
-#if VPS_VUI_BSP_HRD_PARAMS
   TComHRD *hrd;
   if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
@@ -405,7 +389,10 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
   {
     WRITE_CODE(sei.m_picSptDpbOutputDuDelay, hrd->getDpbOutputDelayDuLengthMinus1() + 1, "pic_spt_dpb_output_du_delay");
   }
+}
 #else
+Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps)
+{
   TComVUI *vui = sps->getVuiParameters();
   WRITE_UVLC(sei.m_decodingUnitIdx, "decoding_unit_idx");
   if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
@@ -417,17 +404,17 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
   {
     WRITE_CODE(sei.m_picSptDpbOutputDuDelay, vui->getHrdParameters()->getDpbOutputDelayDuLengthMinus1() + 1, "pic_spt_dpb_output_du_delay");
   }
-#endif
 }
+#endif
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
 Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
 #else
 Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps)
 #endif
 {
   Int i, nalOrVcl;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   TComHRD *hrd;
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
@@ -505,14 +492,15 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
   }
 #endif
 }
-#if VPS_VUI_BSP_HRD_PARAMS
+
+#if SVC_EXTENSION
 Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
 #else
 Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps)
 #endif
 {
   Int i;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   TComHRD *hrd;    
   TComVUI *vui = sps->getVuiParameters(); 
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
@@ -1164,7 +1152,7 @@ Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &s
 {
   assert(vps->getVpsVuiPresentFlag());
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   Int psIdx = bspNestingSei.m_seiPartitioningSchemeIdx;
   Int seiOlsIdx = bspNestingSei.m_seiOlsIdx;
   Int maxTemporalId = nestingSei.m_nestingMaxTemporalIdPlus1[0] - 1;

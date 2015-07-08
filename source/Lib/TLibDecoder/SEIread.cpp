@@ -198,7 +198,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIDecodingUnitInfo;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
         xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps, pDecodedMessageOutputStream);
 #else        
         xParseSEIDecodingUnitInfo((SEIDecodingUnitInfo&) *sei, payloadSize, sps, pDecodedMessageOutputStream);
@@ -213,7 +213,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIBufferingPeriod;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
         xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps, nestingSei, bspNestingSei, vps, pDecodedMessageOutputStream);
 #else
         xParseSEIBufferingPeriod((SEIBufferingPeriod&) *sei, payloadSize, sps, pDecodedMessageOutputStream);
@@ -228,7 +228,7 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       else
       {
         sei = new SEIPictureTiming;
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
         xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps, nestingSei, bspNestingSei, vps, pDecodedMessageOutputStream);
 #else
         xParseSEIPictureTiming((SEIPictureTiming&)*sei, payloadSize, sps, pDecodedMessageOutputStream);
@@ -559,7 +559,7 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt p
 #endif  
 }
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
 Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps,std::ostream *pDecodedMessageOutputStream)
 #else
 Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
@@ -570,7 +570,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
   sei_read_uvlc( pDecodedMessageOutputStream, val, "decoding_unit_idx");
   sei.m_decodingUnitIdx = val;
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   TComHRD *hrd;
   if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
@@ -644,7 +644,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
 #endif
 }
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
 Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 #else
 Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
@@ -653,7 +653,7 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
   Int i, nalOrVcl;
   UInt code;
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   TComHRD *pHRD;
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
@@ -748,7 +748,7 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
 #endif
 }
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
 Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 #else
 Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
@@ -757,7 +757,7 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, 
   Int i;
   UInt code;
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   TComHRD *hrd;    
   TComVUI *vui = sps->getVuiParameters(); 
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
@@ -1547,7 +1547,7 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
 {
   assert(vps->getVpsVuiPresentFlag());
 
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   UInt uiCode;
   Int psIdx         = bspNestingSei.m_seiPartitioningSchemeIdx;
   Int seiOlsIdx     = bspNestingSei.m_seiOlsIdx;

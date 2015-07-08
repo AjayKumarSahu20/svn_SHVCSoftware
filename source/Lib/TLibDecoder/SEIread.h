@@ -77,7 +77,7 @@ protected:
   Void xParseSEIuserDataUnregistered          (SEIuserDataUnregistered &sei,          UInt payloadSize,               std::ostream *pDecodedMessageOutputStream);
   Void xParseSEIActiveParameterSets           (SEIActiveParameterSets  &sei,          UInt payloadSize,               std::ostream *pDecodedMessageOutputStream);
   Void xParseSEIDecodedPictureHash            (SEIDecodedPictureHash& sei,            UInt payloadSize,               std::ostream *pDecodedMessageOutputStream);
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   Void xParseSEIDecodingUnitInfo              (SEIDecodingUnitInfo& sei,              UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream);
   Void xParseSEIBufferingPeriod               (SEIBufferingPeriod& sei,               UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream);
   Void xParseSEIPictureTiming                 (SEIPictureTiming& sei,                 UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream);

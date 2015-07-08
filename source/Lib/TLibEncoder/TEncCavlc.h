@@ -165,9 +165,7 @@ public:
 #if VPS_DPB_SIZE_TABLE
   Void  codeVpsDpbSizeTable    (TComVPS *vps);
 #endif
-#if VPS_VUI_BSP_HRD_PARAMS
   Void  codeVpsVuiBspHrdParams  (TComVPS * const);
-#endif
 #if Q0048_CGS_3D_ASYMLUT
 #if R0179_ENC_OPT_3DLUT_SIZE
 public:

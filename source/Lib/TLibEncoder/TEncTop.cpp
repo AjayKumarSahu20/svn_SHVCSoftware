@@ -239,7 +239,7 @@ Void TEncTop::init(Bool isFieldCoding)
   xInitSPS();
 
   // set the VPS profile information
-#if VPS_VUI_BSP_HRD_PARAMS
+#if SVC_EXTENSION
   m_cVPS.getTimingInfo()->setTimingInfoPresentFlag       ( true );
 #else
   *m_cVPS.getPTL() = *m_cSPS.getPTL();

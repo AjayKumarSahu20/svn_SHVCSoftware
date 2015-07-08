@@ -50,10 +50,8 @@
 #define POC_RESET_VALUE_RESTRICTION      1      ///< R0223: Restriction on the value of full_poc_reset_flag
 
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
-#define VPS_VUI_BSP_HRD_PARAMS           1      ///< JCTVC-R0231: Define the VPS VUI BSP hrd_params() as a separate function, and apply changes adopted.
 
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
-#define R0227_VUI_BSP_HRD_FLAG           1      ///< JCTVC-R0227, Conformance checking such that VPS VUI HRD only present if VPS timing info is signalled
 
 #define Q0108_TSA_STSA                   1      ///< JCTVC-Q0108, Remove cross-layer alignment constraints of TSA and STSA pictures, enable to have different prediction structures in different layers
 #define Q0177_EOS_CHECKS                 1      ///< JCTVC-Q0177; Put checks on handling EOS
