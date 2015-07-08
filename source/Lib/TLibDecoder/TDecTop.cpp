@@ -698,19 +698,20 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 {
 #if SVC_EXTENSION
   m_apcSlicePilot->setVPS( m_parameterSetManagerDecoder.getPrefetchedVPS(0) );
-#if OUTPUT_LAYER_SET_INDEX
+
   // Following check should go wherever the VPS is activated
-  if (!m_apcSlicePilot->getVPS()->getBaseLayerAvailableFlag())
+  if( !m_apcSlicePilot->getVPS()->getBaseLayerAvailableFlag() )
   {
     assert(nalu.m_layerId != 0);
     assert(m_apcSlicePilot->getVPS()->getNumAddLayerSets() > 0);
-    if (getCommonDecoderParams()->getTargetOutputLayerSetIdx() >= 0)
+
+    if( m_commonDecoderParams->getTargetOutputLayerSetIdx() >= 0 )
     {
       UInt layerIdx = m_apcSlicePilot->getVPS()->getOutputLayerSetIdx(getCommonDecoderParams()->getTargetOutputLayerSetIdx());
       assert(layerIdx > m_apcSlicePilot->getVPS()->getVpsNumLayerSetsMinus1());
     }
   }  
-#endif
+
   m_apcSlicePilot->initSlice( nalu.m_layerId );
 #else //SVC_EXTENSION
   m_apcSlicePilot->initSlice();
@@ -2453,7 +2454,6 @@ Void TDecTop::setRefLayerParams( TComVPS* vps )
   }
 }
 
-#if OUTPUT_LAYER_SET_INDEX
 Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
   CommonDecoderParams* params = this->getCommonDecoderParams();
@@ -2476,12 +2476,12 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     // Based on the value of targetLayerId, check if any of the output layer matches
     // Currently, the target layer ID in the encoder assumes that all the layers are decoded    
     // Check if any of the output layer sets match this description
-    for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+    for( Int i = 0; i < vps->getNumOutputLayerSets(); i++ )
     {
       Bool layerSetMatchFlag = false;
       Int layerSetIdx = vps->getOutputLayerSetIdx( i );
 
-      for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+      for( Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++ )
       {
         if( vps->getLayerSetLayerIdList( layerSetIdx, j ) == params->getTargetLayerId() )
         {
@@ -2497,7 +2497,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
         {
           if( params->getTargetDecLayerIdSet()->size() )  
           {
-            for(Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++)
+            for( Int j = 0; j < vps->getNumLayersInIdList( layerSetIdx ); j++ )
             {
               if( *(params->getTargetDecLayerIdSet()->begin() + j) != vps->getLayerIdInNuh(vps->getLayerSetLayerIdList( layerSetIdx, j )))
               {
@@ -2551,7 +2551,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   params->setTargetLayerId( vps->getLayerSetLayerIdList( targetLsIdx, vps->getNumLayersInIdList(targetLsIdx)-1 ) );
 
   // Check if the current layer is an output layer
-  for(Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++)
+  for( Int i = 0; i < vps->getNumLayersInIdList( targetLsIdx ); i++ )
   {
     if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
     {
@@ -2559,7 +2559,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     }
   }
 }
-#endif
 
 #if POC_RESET_IDC_DECODER
 Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)

@@ -69,9 +69,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   string cfg_ReconFile [MAX_LAYERS];
   Int layerNum, targetLayerId;
-#if OUTPUT_LAYER_SET_INDEX
   Int olsIdx;
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   string cfg_confPrefix;
 #endif
@@ -103,9 +101,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("TargetLayerId,-lid", targetLayerId, -1, "Target layer id")
   ("LayerNum,-ls", layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
-#if OUTPUT_LAYER_SET_INDEX
   ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
-#endif
 #if CONFORMANCE_BITSTREAM_MODE
   ("ConformanceBitstremMode,-confMode", m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
   ("ConformanceMetadataPrefix,-confPrefix", cfg_confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
@@ -170,7 +166,6 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if O0137_MAX_LAYERID
   assert( targetLayerId < MAX_NUM_LAYER_IDS );
 #endif
-#if OUTPUT_LAYER_SET_INDEX
 #if CONFORMANCE_BITSTREAM_MODE
   if( m_confModeFlag )
   {
@@ -201,7 +196,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   m_commonDecoderParams.setTargetOutputLayerSetIdx( olsIdx );
   m_commonDecoderParams.setTargetLayerId( targetLayerId );
-#endif
+
 #if CONFORMANCE_BITSTREAM_MODE
   for(Int layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
   {
@@ -263,8 +258,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     {
       fprintf(stderr, "File %s could not be opened. Using all LayerIds as default.\n", cfg_TargetDecLayerIdSetFile.c_str() );
     }
-#if OUTPUT_LAYER_SET_INDEX  
-    this->getCommonDecoderParams()->setTargetDecLayerIdSet( &m_targetDecLayerIdSet );
+
+#if SVC_EXTENSION
+    m_commonDecoderParams.setTargetDecLayerIdSet( &m_targetDecLayerIdSet );
 #endif
   }
 

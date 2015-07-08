@@ -665,9 +665,7 @@ Void TAppDecTop::xInitDecLib()
 #else
     m_acTDecTop[layer].setNumLayer( m_tgtLayerId + 1 );
 #endif
-#if OUTPUT_LAYER_SET_INDEX
     m_acTDecTop[layer].setCommonDecoderParams( &m_commonDecoderParams );
-#endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)

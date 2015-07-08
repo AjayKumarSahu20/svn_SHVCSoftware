@@ -149,9 +149,7 @@ private:
   Int                     m_numMotionPredRefLayers;
 
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture
-#if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams*    m_commonDecoderParams;
-#endif
 #if NO_CLRAS_OUTPUT_FLAG  
   Bool                    m_noClrasOutputFlag;
   Bool                    m_layerInitializedFlag;
@@ -259,8 +257,8 @@ public:
   Void      setRefLayerParams( TComVPS* vps );
 
 #if AVC_BASE
-  Void      setBLReconFile( fstream* pFile ) { m_pBLReconFile = pFile; }
-  fstream*  getBLReconFile() { return m_pBLReconFile; }
+  Void      setBLReconFile( fstream* pFile )                                { m_pBLReconFile = pFile; }
+  fstream*  getBLReconFile()                                                { return m_pBLReconFile;  }
 #if !REPN_FORMAT_IN_VPS
   Void      setBLsize( Int iWidth, Int iHeight ) { m_iBLSourceWidth = iWidth; m_iBLSourceHeight = iHeight; }
   Int       getBLWidth() { return  m_iBLSourceWidth; }
@@ -272,13 +270,11 @@ public:
 #else
   Void      xInitILRP(TComSPS *pcSPS);
 #endif
-#if OUTPUT_LAYER_SET_INDEX
-  CommonDecoderParams*    getCommonDecoderParams() { return m_commonDecoderParams; }
-  Void                    setCommonDecoderParams(CommonDecoderParams* x) { m_commonDecoderParams = x; }
+  CommonDecoderParams*    getCommonDecoderParams()                          { return m_commonDecoderParams; }
+  Void                    setCommonDecoderParams(CommonDecoderParams* x)    { m_commonDecoderParams = x;    }
   Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
-#endif
 #if SCALINGLIST_INFERRING
-  ParameterSetManagerDecoder* getParameterSetManager() { return &m_parameterSetManagerDecoder; }
+  ParameterSetManagerDecoder* getParameterSetManager()                      { return &m_parameterSetManagerDecoder; }
 #endif
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
