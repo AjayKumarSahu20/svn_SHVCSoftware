@@ -316,7 +316,7 @@ protected:
   Int       m_cameraIsoSpeedValue;
   Int       m_exposureIndexIdc;
   Int       m_exposureIndexValue;
-  Int       m_exposureCompensationValueSignFlag;
+  Bool      m_exposureCompensationValueSignFlag;
   Int       m_exposureCompensationValueNumerator;
   Int       m_exposureCompensationValueDenomIdc;
   Int       m_refScreenLuminanceWhite;
@@ -366,7 +366,7 @@ protected:
   UInt      m_maxNumMergeCand;                                ///< Max number of merge candidates
 
   Int       m_TMVPModeId;
-  Int       m_signHideFlag;
+  Bool      m_signHideFlag;
 #if !RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
