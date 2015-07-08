@@ -57,10 +57,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
   Int i, j;
 
-#if O0194_JOINT_US_BITSHIFT
   UInt currLayerId = currSlice->getLayerId();
   UInt refLayerId  = currSlice->getVPS()->getRefLayerId( currLayerId, refLayerIdc );
-#endif
 
   const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
   const Window &windowRL = currSlice->getPPS()->getRefLayerWindowForLayer(refLayerId);
@@ -116,8 +114,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     piSrcY = piSrcBufY;
     piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
 
-#if O0194_JOINT_US_BITSHIFT
     Int shift = g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId];
+
 #if Q0048_CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
@@ -125,18 +123,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     }
     assert( shift >= 0 );
 #endif
-#endif
 
     for( i = 0; i < heightBL; i++ )
     {
-#if O0194_JOINT_US_BITSHIFT
       for( j = 0; j < widthBL; j++ )
       {
         piDstY[j] = piSrcY[j] << shift;
       }
-#else
-      memcpy( piDstY, piSrcY, sizeof(Pel) * widthBL );
-#endif
+
       piSrcY += strideBL;
       piDstY += strideEL;
     }
@@ -156,28 +150,23 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
     piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
 
-#if O0194_JOINT_US_BITSHIFT
     shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId];
+
 #if Q0048_CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthC();
     }
 #endif
-#endif
 
     for( i = 0; i < heightBL; i++ )
     {
-#if O0194_JOINT_US_BITSHIFT
       for( j = 0; j < widthBL; j++ )
       {
         piDstU[j] = piSrcU[j] << shift;
         piDstV[j] = piSrcV[j] << shift;
       }
-#else
-      memcpy( piDstU, piSrcU, sizeof(Pel) * widthBL );
-      memcpy( piDstV, piSrcV, sizeof(Pel) * widthBL );
-#endif
+
       piSrcU += strideBL;
       piSrcV += strideBL;
       piDstU += strideEL;
@@ -228,17 +217,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     Int rlClipT = -(NTAPS_US_LUMA>>1);
     Int rlClipB = heightBL - 1 + (NTAPS_US_LUMA>>1);
 
-#if O0194_JOINT_US_BITSHIFT
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     Int shift1 = g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] - 8;
+
 #if Q0048_CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift1 = currSlice->getPPS()->getCGSOutputBitDepthY() - 8;
     }
-#endif
-#else
-    Int shift1 = g_bitDepthY - 8;
 #endif
 
     //========== horizontal upsampling ===========
@@ -268,11 +254,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL);
 
-#if O0194_JOINT_US_BITSHIFT
     Int nShift = 20 - g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId];
-#else
-    Int nShift = US_FILTER_PREC*2 - shift1;
-#endif
+
     Int iOffset = 1 << (nShift - 1);
 
     for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y); j++ )
@@ -336,17 +319,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     widthBL   = pcBasePic->getWidth (COMPONENT_Y) >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight(COMPONENT_Y) >> 1, heightEL );
 
-#if O0194_JOINT_US_BITSHIFT
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
     shift1 = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] - 8;
+
 #if Q0048_CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
       shift1 = currSlice->getPPS()->getCGSOutputBitDepthC() - 8;
     }
-#endif
-#else
-    shift1 = g_bitDepthC - 8;
 #endif
 
     //========== horizontal upsampling ===========
@@ -382,11 +362,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL << 1);
 
-#if O0194_JOINT_US_BITSHIFT
     nShift = 20 - g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId];
-#else
-    nShift = US_FILTER_PREC*2 - shift1;
-#endif
+
     iOffset = 1 << (nShift - 1);
 
     for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y) >> 1; j++ )

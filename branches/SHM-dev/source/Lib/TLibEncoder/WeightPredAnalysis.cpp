@@ -270,10 +270,10 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
         if( validILRPic )
         {
           refAC = ( refAC * currWeightACDCParam[comp].iSamples ) /refWeightACDCParam[comp].iSamples;
-#if O0194_JOINT_US_BITSHIFT
+
+          // jonint upsampling bitshift
           refAC <<= (g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId]);
           refDC <<= (g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId]);
-#endif
         }
 #else
         const Int64 refDC  = refWeightACDCParam[comp].iDC;
