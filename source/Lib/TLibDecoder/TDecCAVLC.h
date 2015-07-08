@@ -132,9 +132,7 @@ public:
   Void  parseVPSVUI         ( TComVPS* pcVPS );
   Void  defaultVPSVUI       ( TComVPS* pcVPS );
   Void  parseRepFormat      ( RepFormat *repFormat, RepFormat *repFormatPrev );
-#if VPS_DPB_SIZE_TABLE
   Void  parseVpsDpbSizeTable( TComVPS *vps );
-#endif
   Void  parseVpsVuiBspHrdParams( TComVPS *vps );
   Void  parseSPSExtension    ( TComSPS* pcSPS );
 #if CGS_3D_ASYMLUT

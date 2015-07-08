@@ -3001,9 +3001,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
     }
   }
 
-#if VPS_DPB_SIZE_TABLE
   parseVpsDpbSizeTable(vps);
-#endif
 
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
 
@@ -3214,7 +3212,6 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
   }
 }
 
-#if VPS_DPB_SIZE_TABLE
 Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
 {
   UInt uiCode;
@@ -3286,7 +3283,6 @@ Void TDecCavlc::parseVpsDpbSizeTable( TComVPS *vps )
     }
   }
 }
-#endif
 
 Void TDecCavlc::parseVPSVUI(TComVPS *vps)
 {
