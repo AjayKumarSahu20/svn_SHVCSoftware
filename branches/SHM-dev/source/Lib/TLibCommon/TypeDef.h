@@ -122,9 +122,7 @@
 #define MULTIPLE_PTL_SUPPORT             1      ///< Profile, tier and level signalling
 
 #define VPS_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: signaling DPB-related parameters
-#if VPS_DPB_SIZE_TABLE 
-#define USE_DPB_SIZE_TABLE               1      ///< JCTVC-O0217: DPB operations: Use signaled DPB-size table parameters in the decoder
-#endif
+
 #define DPB_PARAMS_MAXTLAYERS            1      ///< JCTVC-P0156 DPB parameters up to maximum temporal sub-layers in the layer set
 #define NO_CLRAS_OUTPUT_FLAG             1
 

@@ -246,7 +246,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 
   for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++)
   {
-#if USE_DPB_SIZE_TABLE
+#if SVC_EXTENSION
     if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
     {
       assert( this->getLayerId() == 0 );
@@ -263,7 +263,7 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 #endif
   }
 
-#if USE_DPB_SIZE_TABLE
+#if SVC_EXTENSION
   if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
   {
     assert( this->getLayerId() == 0 );
@@ -273,14 +273,12 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   {
     m_iMaxRefPicNum = pcSlice->getVPS()->getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), pcSlice->getVPS()->getLayerIdcForOls( pcSlice->getVPS()->getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx()), pcSlice->getLayerId() ), pcSlice->getTLayer() ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
   }
+
+  m_iMaxRefPicNum += 1; // it should be updated if more than 1 resampling picture is used
 #else
   m_iMaxRefPicNum = pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getTLayer());     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
-
-#if SVC_EXTENSION
-  m_iMaxRefPicNum += 1; // it should be updated if more than 1 resampling picture is used
-#endif
-
+  
   if (m_cListPic.size() < (UInt)m_iMaxRefPicNum)
   {
     rpcPic = new TComPic();
@@ -2369,10 +2367,9 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     Window &conformanceWindow = slice->getConformanceWindow();
     Window defaultDisplayWindow = pcSPS->getVuiParametersPresentFlag() ? pcSPS->getVuiParameters()->getDefaultDisplayWindow() : Window();
 
-    for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++) 
+    for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++ ) 
     {
-#if USE_DPB_SIZE_TABLE
-      if( getCommonDecoderParams()->getTargetOutputLayerSetIdx() == 0 )
+      if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
       {
         assert( this->getLayerId() == 0 );
         numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
@@ -2383,9 +2380,6 @@ Void TDecTop::xInitILRP(TComSlice *slice)
         // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
         numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
       }
-#else
-      numReorderPics[temporalLayer] = pcSPS->getNumReorderPics(temporalLayer);
-#endif
     }
 
     if (m_cIlpPic[0] == NULL)
