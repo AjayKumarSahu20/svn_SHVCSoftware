@@ -107,11 +107,9 @@ TDecTop::TDecTop()
   m_layerInitializedFlag       = false;
   m_firstPicInLayerDecodedFlag = false;  
 #endif
-#if POC_RESET_IDC_DECODER
   m_parseIdc = -1;
   m_lastPocPeriodId = -1;
   m_prevPicOrderCnt = 0;
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   m_pColorMappedPic = NULL;
 #endif
@@ -862,7 +860,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
   }
 
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
   if( m_parseIdc != -1 ) // Second pass for a POC resetting picture
   {
     m_parseIdc++; // Proceed to POC decoding and RPS derivation
@@ -955,7 +953,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
 #if ALIGNED_BUMPING
-#if POC_RESET_IDC_DECODER
   UInt affectedLayerList[MAX_LAYERS];
   Int  numAffectedLayers;
 
@@ -1135,15 +1132,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
-#else
-  if (bNewPOC || m_layerId!=m_uiPrevLayerId)
-  {
-#endif
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
   }
-#endif
-#if POC_RESET_IDC_DECODER
-  if (!m_apcSlicePilot->getDependentSliceSegmentFlag() && (bNewPOC || m_layerId!=m_uiPrevLayerId || m_parseIdc == 1) && !m_bFirstSliceInSequence )
+
+  if( !m_apcSlicePilot->getDependentSliceSegmentFlag() && (bNewPOC || m_layerId!=m_uiPrevLayerId || m_parseIdc == 1) && !m_bFirstSliceInSequence )
 #else
   if (!m_apcSlicePilot->getDependentSliceSegmentFlag() && (bNewPOC || m_layerId!=m_uiPrevLayerId) && !m_bFirstSliceInSequence )
 #endif
@@ -1154,10 +1146,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     return true;
   }
 
-#if SVC_EXTENSION
-#if POC_RESET_IDC_DECODER
   m_parseIdc = -1;
-#endif
 
   if( m_apcSlicePilot->getTLayer() == 0 && m_apcSlicePilot->getEnableTMVPFlag() == 0 )
   {
@@ -1180,17 +1169,14 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
   }
   m_apcSlicePilot->setAvailableForTMVPRefFlag( true );
-#endif
 
   // actual decoding starts here
   xActivateParameterSets();
 
-#if SVC_EXTENSION
   // Initialize ILRP if needed, only for the current layer  
   // ILRP intialization should go along with activation of parameters sets, 
   // although activation of parameter sets itself need not be done for each and every slice!!!
   xInitILRP(m_apcSlicePilot);
-#endif
 
   if (!m_apcSlicePilot->getDependentSliceSegmentFlag()) 
   {
@@ -1413,7 +1399,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     //  Get a new picture buffer
     xGetNewPicBuffer (m_apcSlicePilot, m_pcPic);
 
-#if POC_RESET_IDC_DECODER
+#if SVC_POC
     m_pcPic->setCurrAuFlag( true );
 
     if( m_pcPic->getLayerId() > 0 && m_apcSlicePilot->isIDR() && !m_nonBaseIdrPresentFlag )
@@ -2465,7 +2451,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   }
 }
 
-#if POC_RESET_IDC_DECODER
 Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)
 {
   for(Int i = 0; i < MAX_LAYERS; i++)
@@ -2480,7 +2465,7 @@ Void TDecTop::markAllPicsAsNoCurrAu(TComVPS *vps)
     }
   }
 }
-#endif
+
 #if Q0048_CGS_3D_ASYMLUT
 Void TDecTop::initAsymLut(TComSlice *pcSlice)
 {

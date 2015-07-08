@@ -94,11 +94,9 @@ private:
 #if REF_IDX_MFM
   Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS]; 
 #endif
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
 #endif
-#if POC_RESET_IDC_DECODER
   Bool                  m_currAuFlag;
 #endif
 public:
@@ -219,10 +217,8 @@ public:
   Void          setFrameBit( Int n )  { m_nFrameBit = n;    }
   Int           getFrameBit()         { return m_nFrameBit; }
 #endif
-#if POC_RESET_IDC_DECODER
   Bool          isCurrAu() { return m_currAuFlag; }
   Void          setCurrAuFlag(Bool x) {m_currAuFlag = x; }
-#endif
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TComPic
 

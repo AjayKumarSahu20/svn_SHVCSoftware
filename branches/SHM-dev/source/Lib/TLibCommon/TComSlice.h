@@ -1656,9 +1656,7 @@ private:
   Bool     m_inferScalingListFlag;
   UInt     m_scalingListRefLayerId;
 #endif
-#if POC_RESET_IDC
   Bool     m_pocResetInfoPresentFlag;
-#endif
   UInt     m_numRefLayerLocationOffsets;
   UInt     m_refLocationOffsetLayerId[MAX_LAYERS];
   Window   m_scaledRefLayerWindow[MAX_LAYERS];
@@ -1805,25 +1803,23 @@ public:
     Bool getSliceHeaderExtensionPresentFlag   ()                    { return m_sliceHeaderExtensionPresentFlag; }
   Void setSliceHeaderExtensionPresentFlag   (Bool val)            { m_sliceHeaderExtensionPresentFlag = val; }
 #if SVC_EXTENSION
-  Int     getExtensionFlag()                { return m_extensionFlag;  }
-  Void    setExtensionFlag(Int n)           { m_extensionFlag = n;     }
+  Int     getExtensionFlag()                                  { return m_extensionFlag;  }
+  Void    setExtensionFlag(Int n)                             { m_extensionFlag = n;     }
 #if SCALINGLIST_INFERRING
-  UInt     getLayerId() { return m_layerId; }
-  Void     setLayerId( UInt layerId ) { m_layerId = layerId;            }
-  Bool     getInferScalingListFlag()  { return m_inferScalingListFlag;  }
-  UInt     getScalingListRefLayerId() { return m_scalingListRefLayerId; }
-  Void     setInferScalingListFlag( Bool flag )     { m_inferScalingListFlag = flag;     }
-  Void     setScalingListRefLayerId( UInt layerId ) { m_scalingListRefLayerId = layerId; }
+  UInt     getLayerId()                                       { return m_layerId; }
+  Void     setLayerId( UInt layerId )                         { m_layerId = layerId;            }
+  Bool     getInferScalingListFlag()                          { return m_inferScalingListFlag;  }
+  UInt     getScalingListRefLayerId()                         { return m_scalingListRefLayerId; }
+  Void     setInferScalingListFlag( Bool flag )               { m_inferScalingListFlag = flag;     }
+  Void     setScalingListRefLayerId( UInt layerId )           { m_scalingListRefLayerId = layerId; }
 #endif
-#if POC_RESET_IDC
-  Bool getPocResetInfoPresentFlag   ()                    { return m_pocResetInfoPresentFlag; }
-  Void setPocResetInfoPresentFlag   (const Bool val)      { m_pocResetInfoPresentFlag = val; }
-#endif
-  UInt     getNumRefLayerLocationOffsets()       { return m_numRefLayerLocationOffsets; }
-  Void     setNumRefLayerLocationOffsets(Int x)  { m_numRefLayerLocationOffsets = x;    }
+  Bool     getPocResetInfoPresentFlag()                       { return m_pocResetInfoPresentFlag; }
+  Void     setPocResetInfoPresentFlag(const Bool val)         { m_pocResetInfoPresentFlag = val;  }
+  UInt     getNumRefLayerLocationOffsets()                    { return m_numRefLayerLocationOffsets; }
+  Void     setNumRefLayerLocationOffsets(Int x)               { m_numRefLayerLocationOffsets = x;    }
 
-  UInt     getRefLocationOffsetLayerId(Int x)          { return m_refLocationOffsetLayerId[x]; }
-  Void     setRefLocationOffsetLayerId(Int x, UInt id) { m_refLocationOffsetLayerId[x] = id;   }
+  UInt     getRefLocationOffsetLayerId(Int x)                 { return m_refLocationOffsetLayerId[x]; }
+  Void     setRefLocationOffsetLayerId(Int x, UInt id)        { m_refLocationOffsetLayerId[x] = id;   }
   Window&  getScaledRefLayerWindowForLayer( Int layerId );
 
   Window&  getScaledRefLayerWindow( Int x )   { return m_scaledRefLayerWindow[x]; }
@@ -2127,9 +2123,7 @@ public:
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
 
 #if SVC_EXTENSION
-#if POC_RESET_IDC_DECODER
   Void      setPrevTid0POC( Int x ) { m_prevTid0POC = x; }
-#endif
   Void      setAssociatedIrapPocBeforeReset(Int x) { m_associatedIrapPocBeforeReset = x; }
   Int       getAssociatedIrapPocBeforeReset(     ) { return m_associatedIrapPocBeforeReset; }
 
@@ -2359,10 +2353,8 @@ public:
 
   Bool      getBlaPicFlag       ();
   Bool      getCraPicFlag       ();
-#if POC_RESET_IDC_DECODER
   Bool      getRaslPicFlag      ();
   Bool      getRadlPicFlag      ();
-#endif
   Int       getPicOrderCntLsb() { return m_picOrderCntLsb; }
   Void      setPicOrderCntLsb(Int x) { m_picOrderCntLsb = x; }
 

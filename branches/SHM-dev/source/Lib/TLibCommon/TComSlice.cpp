@@ -300,7 +300,7 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic, Int poc)
 #endif
     pcPic = *(iterPic);
   }
-#if POC_RESET_IDC_DECODER
+#if SVC_EXTENSION
   assert( pcPic->getSlice(0)->isReferenced() );
 #endif
   return  pcPic;
@@ -2302,9 +2302,7 @@ TComPPS::TComPPS()
 , m_inferScalingListFlag ( false )
 , m_scalingListRefLayerId ( 0 )
 #endif
-#if POC_RESET_IDC
 , m_pocResetInfoPresentFlag   (false)
-#endif
 , m_numRefLayerLocationOffsets  ( 0 )
 #if Q0048_CGS_3D_ASYMLUT
 , m_nCGSFlag(0)
@@ -3679,7 +3677,7 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
     memset( m_pcBaseColPic, 0, sizeof( m_pcBaseColPic ) );
     return false;
   }        
-#if POC_RESET_IDC_DECODER
+
   TComPic* pic = xGetRefPic( rcListPic, getPOC() );
 
   if( pic )
@@ -3692,10 +3690,6 @@ Bool TComSlice::setBaseColPic(  TComList<TComPic*>& rcListPic, UInt refLayerIdc 
   }
   
   return true;
-#else
-  setBaseColPic(refLayerIdc, xGetRefPic(rcListPic, getPOC()));
-  return true;
-#endif
 }
 
 TComPic* TComSlice::getBaseColPic(  TComList<TComPic*>& rcListPic )
@@ -3812,30 +3806,29 @@ Int TComSlice::getReferenceLayerIdc( UInt refLayerId )
   return -1;
 }
 
-Bool TComSlice::getBlaPicFlag       ()
+Bool TComSlice::getBlaPicFlag()
 {
     return  getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
     || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
     || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP;
 }
 
-Bool TComSlice::getCraPicFlag       ()
+Bool TComSlice::getCraPicFlag()
 {
     return getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA;
 }
 
-#if POC_RESET_IDC_DECODER
-Bool TComSlice::getRaslPicFlag      ()
+Bool TComSlice::getRaslPicFlag()
 {
   return  getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_R
   || getNalUnitType() == NAL_UNIT_CODED_SLICE_RASL_N;
 }
-Bool TComSlice::getRadlPicFlag      ()
+
+Bool TComSlice::getRadlPicFlag()
 {
   return  getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_R
   || getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N;
 }
-#endif
 
 Void TComSlice::decrementRefPocValues(Int const decrementValue)
 {
