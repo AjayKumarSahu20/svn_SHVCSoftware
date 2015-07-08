@@ -2071,9 +2071,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   m_cEntropyDecoder.setEntropyDecoder (&m_cCavlcDecoder);
   m_cEntropyDecoder.setBitstream      (nalu.m_Bitstream);
 
-#if O0137_MAX_LAYERID
+#if SVC_EXTENSION
   // ignore any NAL units with nuh_layer_id == 63
-  if (nalu.m_layerId == 63 )
+  if( nalu.m_layerId == 63 )
   {  
     return false;
   }
