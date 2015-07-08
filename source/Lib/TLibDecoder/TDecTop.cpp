@@ -1691,7 +1691,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
       pcSlice->setILRPic( m_cIlpPic );
 
-#if REF_IDX_MFM
       pcSlice->setRefPicList( m_cListPic, false, m_cIlpPic);
     }
     else if ( m_layerId > 0 )
@@ -1714,7 +1713,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         assert( pColBasePic->checkSameRefInfo() == true );
       }
     }
-#endif
     
     if( m_layerId > 0 && pcSlice->getVPS()->getCrossLayerIrapAlignFlag() && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
     {

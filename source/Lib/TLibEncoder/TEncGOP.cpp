@@ -1781,14 +1781,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
       pcSlice->setILRPic( m_pcEncTop->getIlpList() );
-#if !REF_IDX_MFM
-      //  Set reference list
-      pcSlice->setRefPicList ( rcListPic );
-#endif
       pcSlice->setRefPicListModificationSvc();
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
-#if REF_IDX_MFM
       if( pcSlice->getMFMEnabledFlag() )
       {
         Bool found         = false;
@@ -1837,7 +1832,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           pcSlice->setColRefIdx(ColRefIdx);
         }
       }
-#endif
     }
 #else //SVC_EXTENSION
     //  Set reference list

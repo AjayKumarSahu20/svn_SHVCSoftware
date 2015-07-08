@@ -1970,12 +1970,10 @@ private:
   TComPic*    m_pcBaseColPic[MAX_LAYERS];
   TComPicYuv* m_pcFullPelBaseRec[MAX_LAYERS];
   Int         m_numMotionPredRefLayers;
-#if REF_IDX_MFM
   Bool        m_bMFMEnabledFlag;
   Int         m_colRefLayerIdx;
   Bool        m_altColIndicationFlag;
   TComPic*    m_pcIlpPic;
-#endif
 
   Bool        m_interLayerPredEnabledFlag;
   Int         m_activeNumILRRefIdx;        //< Active inter-layer reference pictures
@@ -2270,10 +2268,9 @@ public:
 
   Void      setNumMotionPredRefLayers(int i)            { m_numMotionPredRefLayers = i; }
   Int       getNumMotionPredRefLayers()                 { return m_numMotionPredRefLayers; }
-#if REF_IDX_MFM
+
   Void      setMFMEnabledFlag(Bool flag)                { m_bMFMEnabledFlag = flag; }
   Bool      getMFMEnabledFlag()                         { return m_bMFMEnabledFlag; }
-#endif
 
   TComPic* getRefPic(TComList<TComPic*>& rcListPic, Int poc) { return xGetRefPic( rcListPic, poc ); } 
 

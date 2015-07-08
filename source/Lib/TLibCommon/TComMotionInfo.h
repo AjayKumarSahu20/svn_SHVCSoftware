@@ -154,7 +154,7 @@ public:
 
   Void compress(Char* pePredMode, Int scale);
 
-#if REF_IDX_MFM
+#if SVC_EXTENSION
   Void setMvField( TComMvField const& mvField, Int iIdx )
   {
     m_pcMv[iIdx]      = mvField.getMv();

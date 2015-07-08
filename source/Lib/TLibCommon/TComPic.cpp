@@ -276,7 +276,6 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
     upsampledRowWidthCroma);
 }
 
-#if REF_IDX_MFM
 Void TComPic::copyUpsampledMvField(UInt refLayerIdc, TComPic* pcPicBase)
 {
   UInt numPartitions = 1<<(g_uiMaxCUDepth<<1);
@@ -350,7 +349,6 @@ Void TComPic::initUpsampledMvField()
   }
   return;
 }
-#endif
 
 Bool TComPic::checkSameRefInfo()
 {

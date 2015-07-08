@@ -1744,7 +1744,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
 
     if ( pcSlice->getEnableTMVPFlag() )
     {
-#if SVC_EXTENSION && REF_IDX_MFM
+#if SVC_EXTENSION
       // set motion mapping flag
       pcSlice->setMFMEnabledFlag( ( pcSlice->getNumMotionPredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() && !pcSlice->isIntra() ) ? true : false );
 #endif

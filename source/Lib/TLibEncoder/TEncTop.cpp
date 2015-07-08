@@ -79,10 +79,8 @@ TEncTop::TEncTop()
 #endif
 
 #if SVC_EXTENSION
-  memset(m_cIlpPic, 0, sizeof(m_cIlpPic));
-#if REF_IDX_MFM
+  memset( m_cIlpPic, 0, sizeof(m_cIlpPic) );
   m_bMFMEnabledFlag = false;
-#endif
   m_numRefLayerLocationOffsets = 0;
   m_pocAdjustmentValue     = 0;
 #if NO_CLRAS_OUTPUT_FLAG
@@ -622,18 +620,12 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
           Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
-#if REF_IDX_MFM
           if( m_iSourceWidth == pcEncTopBase->getSourceWidth() && m_iSourceHeight == pcEncTopBase->getSourceHeight() && equalOffsets && zeroPhase )
           {
             pcEPic->setEqualPictureSizeAndOffsetFlag( i, true );
           }
 
           if( !pcEPic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
-#else
-          if( m_iSourceWidth != pcEncTopBase->getSourceWidth() || m_iSourceHeight != pcEncTopBase->getSourceHeight() || !sameBitDepths 
-            || !equalOffsets
-            || !zeroPhase
-#endif
 #if CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
