@@ -2605,16 +2605,12 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
 
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
-#if R0164_CGS_LUT_BUGFIX      
       Int shift = pc3DAsymLUT->getCurOctantDepth() - nDepth ;
-#endif
+
       for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
       {
-#if R0164_CGS_LUT_BUGFIX 
         SYUVP sRes = pc3DAsymLUT->getCuboidVertexResTree( yIdx + (l<<shift) , uIdx , vIdx , nVertexIdx );
-#else
-        SYUVP sRes = pc3DAsymLUT->getCuboidVertexResTree( yIdx + l , uIdx , vIdx , nVertexIdx );
-#endif
+
         UInt uiCodeVertex = sRes.Y != 0 || sRes.U != 0 || sRes.V != 0;
         WRITE_FLAG( uiCodeVertex , "coded_vertex_flag" );
         if( uiCodeVertex )
