@@ -46,8 +46,6 @@
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 
-#define DISCARDABLE_PIC_RPS              1      ///< JCTVC-P0130: Inter-layer RPS and temporal RPS should not contain picture with discardable_flag equal to 1
-
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 
 #define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
