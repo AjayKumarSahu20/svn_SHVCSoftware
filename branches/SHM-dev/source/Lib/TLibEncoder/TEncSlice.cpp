@@ -770,7 +770,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic )
   {
     xCalcACDCParamSlice(pcSlice);
   }
-#if O0194_WEIGHTED_PREDICTION_CGS
+#if SVC_EXTENSION
   else if( m_ppcTEncTop[pcSlice->getLayerIdx()]->getInterLayerWeightedPredFlag() )
   {
     // Calculate for the base layer to be used in EL as Inter layer reference
@@ -1347,7 +1347,7 @@ Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP , Double beta )
   return( gamma );
 }
 #endif
-#if O0194_WEIGHTED_PREDICTION_CGS
+
 Void TEncSlice::estimateILWpParam( TComSlice* pcSlice )
 {
   xCalcACDCParamSlice(pcSlice);
@@ -1356,6 +1356,5 @@ Void TEncSlice::estimateILWpParam( TComSlice* pcSlice )
   pcSlice->getWpAcDcParam(temp_weightACDCParam);
   g_refWeightACDCParam = (void *) temp_weightACDCParam;
 }
-#endif
 #endif //SVC_EXTENSION
 //! \}

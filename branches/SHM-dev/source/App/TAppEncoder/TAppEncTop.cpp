@@ -227,9 +227,7 @@ Void TAppEncTop::xInitLibCfg()
     g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_acLayerCfg[layer].m_layerId]   = g_bitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_acLayerCfg[layer].m_layerId] = g_bitDepth[CHANNEL_TYPE_CHROMA];
 
-#if O0194_WEIGHTED_PREDICTION_CGS
     m_acTEncTop[layer].setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
-#endif
     
     Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
     m_acTEncTop[layer].setProfile                                         ( m_profileList[layerPTLIdx] );
@@ -502,14 +500,14 @@ Void TAppEncTop::xInitLibCfg()
 #if FAST_INTRA_SHVC
     m_acTEncTop[layer].setUseFastIntraScalable                             ( m_useFastIntraScalable );
 #endif
-#if O0194_WEIGHTED_PREDICTION_CGS
+
     if( layer != 0 && m_useInterLayerWeightedPred )
     {
       // Enable weighted prediction for enhancement layer
       m_acTEncTop[layer].setUseWP                                           ( true   );
       m_acTEncTop[layer].setWPBiPred                                        ( true   );
     }
-#endif
+
     //====== Parallel Merge Estimation ========
     m_acTEncTop[layer].setLog2ParallelMergeLevelMinus2                      ( m_log2ParallelMergeLevel - 2 );
 

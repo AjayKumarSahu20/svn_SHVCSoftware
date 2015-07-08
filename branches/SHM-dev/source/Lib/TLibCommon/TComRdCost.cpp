@@ -339,8 +339,8 @@ Void TComRdCost::setDistParam( TComPattern* pcPatternKey, Pel* piRefY, Int iRefS
 // Setting the Distortion Parameter for Inter (subpel ME with step)
 Void TComRdCost::setDistParam( TComPattern* pcPatternKey, Pel* piRefY, Int iRefStride, Int iStep, DistParam& rcDistParam, Bool bHADME )
 {
-#if O0194_WEIGHTED_PREDICTION_CGS
-  // Bug fix: The correct bit depth has not been used for weighted cost calculation
+#if SVC_EXTENSION
+  // Set bit depth for weighted cost calculation
   rcDistParam.bitDepth = g_bitDepth[CHANNEL_TYPE_LUMA];
 #endif
   // set Original & Curr Pointer / Stride

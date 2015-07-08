@@ -143,9 +143,7 @@ private:
   Bool                    m_firstPicInLayerDecodedFlag;
   Bool                    m_noOutputOfPriorPicsFlags;
 #endif
-#if O0194_WEIGHTED_PREDICTION_CGS
   Bool                    m_interLayerWeightedPredFlag;
-#endif
   Int                     m_numAddLayerSets;
   Bool                    m_pocDecrementedInDPBFlag;
   Int                     m_currPocMsb;
@@ -240,10 +238,9 @@ public:
   Void      setMFMEnabledFlag(Bool flag)                      { m_bMFMEnabledFlag = flag; }
   Bool      getMFMEnabledFlag()                               { return m_bMFMEnabledFlag; }    
 #endif
-#if O0194_WEIGHTED_PREDICTION_CGS
   Void      setInterLayerWeightedPredFlag(Bool flag)          { m_interLayerWeightedPredFlag = flag; }
   Bool      getInterLayerWeightedPredFlag()                   { return m_interLayerWeightedPredFlag; }
-#endif
+
   Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP );
   Void      encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg );
   Void      encode    ( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion snrCSC, TComList<TComPicYuv*>& rcListPicYuvRecOut, std::list<AccessUnit>& accessUnitsOut, Int iPicIdInGOP, Bool isTff );

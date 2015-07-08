@@ -1128,9 +1128,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
   ("CrossLayerIrapAlignFlag",                        m_crossLayerIrapAlignFlag,                          true, "align IRAP across layers" )  
   ("CrossLayerAlignedIdrOnlyFlag",                   m_crossLayerAlignedIdrOnlyFlag,                     true, "only idr for IRAP across layers" )  
-#if O0194_WEIGHTED_PREDICTION_CGS
   ("InterLayerWeightedPred",                          m_useInterLayerWeightedPred,                       false, "enable IL WP parameters estimation at encoder" )  
-#endif
 #if AVC_BASE
   ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                                0, "BL is available but not internal")
   ("InputBLFile,-ibl",                                cfg_BLInputFile,                              string(""), "Base layer rec YUV input file name")
@@ -4343,9 +4341,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("Align picture type                : %d\n", m_crossLayerPictureTypeAlignFlag );
   printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );
   printf("IDR only for IRAP                 : %d\n", m_crossLayerAlignedIdrOnlyFlag );
-#if O0194_WEIGHTED_PREDICTION_CGS
   printf("InterLayerWeightedPred            : %d\n", m_useInterLayerWeightedPred );
-#endif
   printf("\n");
   for(UInt layer=0; layer<m_numLayers; layer++)
   {

@@ -141,8 +141,6 @@ extern Int g_bitDepth[MAX_NUM_CHANNEL_TYPE];
 
 #if SVC_EXTENSION
 extern Int  g_bitDepthLayer[MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
-#endif
-#if O0194_WEIGHTED_PREDICTION_CGS
 extern void* g_refWeightACDCParam; //type:wpACDCParam
 #endif
 
