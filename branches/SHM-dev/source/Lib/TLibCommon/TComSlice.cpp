@@ -494,7 +494,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     {
       m_activeNumILRRefIdx = numInterLayerRPSPics;
     }
-#if MAX_ONE_RESAMPLING_DIRECT_LAYERS
+
+    // max one resampling direct layer
     if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) )
     {
       Int numResampler = 0;
@@ -564,7 +565,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       assert( numMotionResamplers <= 1  && "Up to 1 motion resampling is allowed" );
 #endif
     }
-#endif
   }
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_activeNumILRRefIdx;
 #else //SVC_EXTENSION
