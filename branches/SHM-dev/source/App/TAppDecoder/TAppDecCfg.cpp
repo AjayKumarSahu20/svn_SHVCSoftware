@@ -163,9 +163,8 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   assert( targetLayerId >= 0 );
-#if O0137_MAX_LAYERID
   assert( targetLayerId < MAX_NUM_LAYER_IDS );
-#endif
+
 #if CONFORMANCE_BITSTREAM_MODE
   if( m_confModeFlag )
   {

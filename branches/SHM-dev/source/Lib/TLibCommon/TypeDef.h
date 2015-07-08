@@ -54,7 +54,6 @@
 
 #define BSP_INIT_ARRIVAL_SEI             1      ///< JCTVC-R0231: Make signalling of vcl_initial_arrival_delay independent of NalHrdBpPresentFlag
 #define VPS_VUI_BSP_HRD_PARAMS           1      ///< JCTVC-R0231: Define the VPS VUI BSP hrd_params() as a separate function, and apply changes adopted.
-#define O0137_MAX_LAYERID                1      ///< JCTVC-O0137, JCTVC-O0200, JCTVC-O0223: restrict nuh_layer_id and vps_max_layers_minus1
 
 #define R0226_CONSTRAINT_TMVP_SEI        1      ///< JCTVC-R0226, Modification to semantics in temporal motion vector prediction constraints SEI message
 #define R0226_SLICE_TMVP                 1      ///< JCTVC-R0226, Regarding slice_temporal_mvp_enabled_flag
@@ -264,7 +263,7 @@ enum AuxType
 
 #define MAX_CPB_CNT                                      32 ///< Upper bound of (cpb_cnt_minus1 + 1)
 
-#if O0137_MAX_LAYERID
+#if SVC_EXTENSION
 #define MAX_NUM_LAYER_IDS                                63
 #else
 #define MAX_NUM_LAYER_IDS                                64

@@ -1007,11 +1007,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
 #endif
 #if SVC_EXTENSION
-#if O0137_MAX_LAYERID
   READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( min( 62u, uiCode) + 1 );
-#else
-  READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );              pcVPS->setMaxLayers( uiCode + 1 );
-#endif
   assert( pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1 );
 #else
   READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
