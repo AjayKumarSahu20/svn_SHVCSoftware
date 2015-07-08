@@ -146,10 +146,8 @@ protected:
   Int       m_layerSwitchOffBegin;
   Int       m_layerSwitchOffEnd;
 
-#if MULTIPLE_PTL_SUPPORT
   // profile/level
   Int       m_layerPTLIdx;
-#endif
 
 public:
   TAppEncLayerCfg();

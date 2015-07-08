@@ -123,7 +123,7 @@ protected:
   Bool      m_printSequenceMSE;
   Bool      m_cabacZeroWordPaddingEnabled;
 
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   Int           m_numPTLInfo;
   Profile::Name m_profileList[MAX_NUM_LAYER_IDS + 1];
   Level::Tier   m_levelTierList[MAX_NUM_LAYER_IDS + 1];

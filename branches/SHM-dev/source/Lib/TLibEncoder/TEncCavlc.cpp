@@ -1332,7 +1332,7 @@ Void TEncCavlc::codePTL( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubL
 
   for (Int i = 0; i < maxNumSubLayersMinus1; i++)
   {
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
     WRITE_FLAG( pcPTL->getSubLayerProfilePresentFlag(i), "sub_layer_profile_present_flag[i]" );
 #else
     if(profilePresentFlag)
@@ -1354,7 +1354,7 @@ Void TEncCavlc::codePTL( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubL
 
   for(Int i = 0; i < maxNumSubLayersMinus1; i++)
   {
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
     if( pcPTL->getSubLayerProfilePresentFlag(i) )
 #else
     if( profilePresentFlag && pcPTL->getSubLayerProfilePresentFlag(i) )
@@ -1372,7 +1372,7 @@ Void TEncCavlc::codeProfileTier( ProfileTierLevel* ptl )
 {
   WRITE_CODE( ptl->getProfileSpace(), 2 ,     "XXX_profile_space[]");
   WRITE_FLAG( ptl->getTierFlag()==Level::HIGH, "XXX_tier_flag[]"    );
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
   WRITE_CODE( (ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10) ? 7 : Int(ptl->getProfileIdc()), 5 ,  "XXX_profile_idc[]"  );
 #else
   WRITE_CODE( Int(ptl->getProfileIdc()), 5 ,  "XXX_profile_idc[]"  );
@@ -1400,7 +1400,7 @@ Void TEncCavlc::codeProfileTier( ProfileTierLevel* ptl )
     WRITE_FLAG(ptl->getIntraConstraintFlag(),        "general_intra_constraint_flag");
     WRITE_FLAG(0,                                    "general_one_picture_only_constraint_flag");
     WRITE_FLAG(ptl->getLowerBitRateConstraintFlag(), "general_lower_bit_rate_constraint_flag");
-#if MULTIPLE_PTL_SUPPORT
+#if SVC_EXTENSION
     WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
   }
   else if( ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10 )      // at encoder side, scalable-main10 profile has a profile idc equal to 8, which is converted to 7 during signalling
@@ -1976,11 +1976,7 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   if( vps->getMaxLayers() > 1 && vps->getBaseLayerInternalFlag() )
   {
-#if MULTIPLE_PTL_SUPPORT
     codePTL( vps->getPTL(1), false, vps->getMaxTLayers() - 1 );
-#else
-    codePTL( vps->getPTLForExtn(1), false, vps->getMaxTLayers() - 1 );
-#endif
   }
 
   UInt i = 0, j = 0;
@@ -2111,22 +2107,15 @@ Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 
   Int const numBitsForPtlIdx = vps->calculateLenOfSyntaxElement( vps->getNumProfileTierLevel() );
 
-#if MULTIPLE_PTL_SUPPORT
   //Do something here to make sure the loop is correct to consider base layer internal stuff
-#else
-  assert( vps->getNumProfileTierLevel() == vps->getPTLForExtnPtr()->size());
-#endif
-  for(Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++)
+
+  for( Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++ )
   {
-#if MULTIPLE_PTL_SUPPORT
     vps->setProfilePresentFlag(idx, true);
-#endif
+
     WRITE_FLAG( vps->getProfilePresentFlag(idx),       "vps_profile_present_flag[i]" );
-#if MULTIPLE_PTL_SUPPORT
+
     codePTL( vps->getPTL(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
-#else
-    codePTL( vps->getPTLForExtn(idx), vps->getProfilePresentFlag(idx), vps->getMaxTLayers() - 1 );
-#endif
   }
 
   Int numOutputLayerSets = vps->getNumOutputLayerSets();
