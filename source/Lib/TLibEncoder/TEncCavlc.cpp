@@ -305,7 +305,7 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
 #if SVC_EXTENSION
           case PPS_EXT__MLAYER:
             WRITE_FLAG( pcPPS->getPocResetInfoPresentFlag() ? 1 : 0, "poc_reset_info_present_flag" );
-#if SCALINGLIST_INFERRING
+
             WRITE_FLAG( pcPPS->getInferScalingListFlag() ? 1 : 0, "pps_infer_scaling_list_flag" );
             if( pcPPS->getInferScalingListFlag() )
             {
@@ -313,7 +313,6 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS
               assert( pcPPS->getScalingListRefLayerId() <= 62 );
               WRITE_CODE( pcPPS->getScalingListRefLayerId(), 6, "pps_scaling_list_ref_layer_id" );
             }
-#endif
 
             WRITE_UVLC( pcPPS->getNumRefLayerLocationOffsets(),      "num_ref_loc_offsets" );
             for(Int k = 0; k < pcPPS->getNumRefLayerLocationOffsets(); k++)
@@ -643,7 +642,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   WRITE_FLAG( pcSPS->getScalingListFlag() ? 1 : 0,                                   "scaling_list_enabled_flag" );
   if(pcSPS->getScalingListFlag())
   {
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
     if( !V1CompatibleSPSFlag )
     {
       WRITE_FLAG( pcSPS->getInferScalingListFlag() ? 1 : 0, "sps_infer_scaling_list_flag" );
@@ -664,7 +663,7 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
     {
       codeScalingList( m_pcSlice->getScalingList() );
     }
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
     }
 #endif
   }

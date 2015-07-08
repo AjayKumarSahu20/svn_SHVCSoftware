@@ -459,7 +459,6 @@ Void TDecTop::xActivateParameterSets()
   }
 
 #if SVC_EXTENSION
-#if SCALINGLIST_INFERRING
   // scaling list settings and checks
   TComVPS *activeVPS = m_parameterSetManagerDecoder.getActiveVPS();
   TComSPS *activeSPS = m_parameterSetManagerDecoder.getActiveSPS();
@@ -523,7 +522,6 @@ Void TDecTop::xActivateParameterSets()
     }
 
   }
-#endif
 
 #if AVC_BASE
   if( activeVPS->getNonHEVCBaseLayerFlag() )
@@ -1795,7 +1793,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     pcSlice->setScalingList ( pcSlice->getSPS()->getScalingList()  );
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
     if( pcSlice->getPPS()->getScalingListPresentFlag() || pcSlice->getPPS()->getInferScalingListFlag() )
 #else
     if(pcSlice->getPPS()->getScalingListPresentFlag())
@@ -1803,7 +1801,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       pcSlice->setScalingList ( pcSlice->getPPS()->getScalingList()  );
     }
-#if SCALINGLIST_INFERRING
+
+#if SVC_EXTENSION
     if( m_layerId == 0 || ( m_layerId > 0 && !pcSlice->getPPS()->getInferScalingListFlag() && !pcSlice->getSPS()->getInferScalingListFlag() ) )
 #endif
     if(!pcSlice->getPPS()->getScalingListPresentFlag() && !pcSlice->getSPS()->getScalingListPresentFlag())
@@ -1865,7 +1864,7 @@ Void TDecTop::xDecodePPS()
 {
   TComPPS* pps = new TComPPS();
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
   pps->setLayerId( m_layerId );
 #endif
 #if CGS_3D_ASYMLUT

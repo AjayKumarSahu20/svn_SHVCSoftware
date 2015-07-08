@@ -1261,7 +1261,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     else if(m_pcEncTop->getUseScalingListId() == SCALING_LIST_DEFAULT)
     {
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
       // inferring of the scaling list can be moved to the config file
       UInt refLayerId = 0;
       if( m_layerId > 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
@@ -1282,7 +1282,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_pcEncTop->getSPS()->setScalingListPresentFlag(false);
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
       }
 #endif
 
@@ -1291,7 +1291,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     else if(m_pcEncTop->getUseScalingListId() == SCALING_LIST_FILE_READ)
     {
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
       // inferring of the scaling list can be moved to the config file
       UInt refLayerId = 0;
       if( m_layerId > 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() && m_pcEncTop->getVPS()->getRecursiveRefLayerFlag( m_layerId, refLayerId ) )
@@ -1319,7 +1319,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_pcEncTop->getSPS()->setScalingListPresentFlag(pcSlice->checkDefaultScalingList());
       m_pcEncTop->getPPS()->setScalingListPresentFlag(false);
 
-#if SCALINGLIST_INFERRING
+#if SVC_EXTENSION
     }
 #endif
 

@@ -998,9 +998,7 @@ Void TEncTop::xInitPPS()
   }
   
 #if SVC_EXTENSION
-#if SCALINGLIST_INFERRING
   m_cPPS.setLayerId( m_layerId );
-#endif
 
   if( !m_numDirectRefLayers && m_numAddLayerSets )
   {
