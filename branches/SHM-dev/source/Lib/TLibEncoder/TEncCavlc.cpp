@@ -978,7 +978,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG( pcSlice->getPicOutputFlag() ? 1 : 0, "pic_output_flag" );
     }
 
-#if N0065_LAYER_POC_ALIGNMENT
+#if SVC_EXTENSION
 #if O0062_POC_LSB_NOT_PRESENT_FLAG
     if( (pcSlice->getLayerId() > 0 && !pcSlice->getVPS()->getPocLsbNotPresentFlag( pcSlice->getVPS()->getLayerIdxInVps(pcSlice->getLayerId())) ) || !pcSlice->getIdrPicFlag())
 #else
@@ -988,7 +988,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if( !pcSlice->getIdrPicFlag() )
 #endif
     {
-#if POC_RESET_IDC_ENCODER
+#if SVC_EXTENSION && POC_RESET_IDC_ENCODER
       Int picOrderCntLSB;
       if( pcSlice->getPocResetIdc() == 2 )  // i.e. the LSB is reset
       {
@@ -1003,7 +1003,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #endif
       WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
 
-#if N0065_LAYER_POC_ALIGNMENT
+#if SVC_EXTENSION
     }
     if( !pcSlice->getIdrPicFlag() )
     {

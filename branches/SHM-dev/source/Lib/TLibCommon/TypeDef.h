@@ -106,7 +106,6 @@
 #define MOTION_RESAMPLING_CONSTRAINT     1      ///< JCTVC-N0108: Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction.
 
 #define VIEW_ID_RELATED_SIGNALING        1      ///< Introduce syntax elements view_id and view_id_val
-#define N0065_LAYER_POC_ALIGNMENT        1
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define R0062_AUX_PSEUDO_MONOCHROME      1      ///> JCVVC-R0063: pseudo monochrome for auxiliary pictures
 
