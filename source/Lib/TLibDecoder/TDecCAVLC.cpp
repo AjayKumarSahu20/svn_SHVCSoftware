@@ -3475,15 +3475,15 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
     }
   }
 
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
-  UInt layerIdx;
   READ_FLAG( uiCode, "tiles_not_in_use_flag" ); vps->setTilesNotInUseFlag(uiCode == 1);
-  if (!uiCode)
+
+  if( !uiCode )
   {
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
     {
       READ_FLAG( uiCode, "tiles_in_use_flag[ i ]" ); vps->setTilesInUseFlag(i, (uiCode == 1));
-      if (uiCode)
+
+      if( uiCode )
       {
         READ_FLAG( uiCode, "loop_filter_not_across_tiles_flag[ i ]" ); vps->setLoopFilterNotAcrossTilesFlag(i, (uiCode == 1));
       }
@@ -3492,35 +3492,29 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
         vps->setLoopFilterNotAcrossTilesFlag(i, false);
       }
     }
-#endif
 
-      for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
+    for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
     {
-      for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
+      for( j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++ )
       {
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
-        layerIdx = vps->getLayerIdxInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
-        if (vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx)) {
+        UInt layerIdx = vps->getLayerIdxInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
+
+        if( vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx) )
+        {
           READ_FLAG( uiCode, "tile_boundaries_aligned_flag[i][j]" ); vps->setTileBoundariesAlignedFlag(i,j,(uiCode == 1));
         }
-#else
-        READ_FLAG( uiCode, "tile_boundaries_aligned_flag[i][j]" ); vps->setTileBoundariesAlignedFlag(i,j,(uiCode == 1));
-#endif
       }
     }
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
   }
-#endif
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+
   READ_FLAG( uiCode, "wpp_not_in_use_flag" ); vps->setWppNotInUseFlag(uiCode == 1);
-  if (!uiCode)
+  if( !uiCode )
   {
-      for (i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++)
+    for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
     {
       READ_FLAG( uiCode, "wpp_in_use_flag[ i ]" ); vps->setWppInUseFlag(i, (uiCode == 1));
     }
   }
-#endif
 
   READ_FLAG(uiCode, "single_layer_for_non_irap_flag" ); vps->setSingleLayerForNonIrapFlag(uiCode == 1 ? true : false);
 

@@ -106,9 +106,6 @@
 
 #define P0297_VPS_POC_LSB_ALIGNED_FLAG   1      ///< JCTVC-P0297: vps_poc_lsb_aligned_flag for cross-layer POC anchor picture derivation
 
-#define VPS_VUI_TILES_NOT_IN_USE__FLAG   1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
-#define VPS_VUI_WPP_NOT_IN_USE__FLAG     1      ///< JCTVC-O0226: VPS VUI flag to indicate tile not in use
-
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture

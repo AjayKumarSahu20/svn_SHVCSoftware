@@ -2435,48 +2435,43 @@ Void TEncCavlc::codeVPSVUI (TComVPS *vps)
     }
   }
 
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
-  UInt layerIdx;
   WRITE_FLAG( vps->getTilesNotInUseFlag() ? 1 : 0 , "tiles_not_in_use_flag" );
-  if (!vps->getTilesNotInUseFlag())
+
+  if( !vps->getTilesNotInUseFlag() )
   {
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
     {
       WRITE_FLAG( vps->getTilesInUseFlag(i) ? 1 : 0 , "tiles_in_use_flag[ i ]" );
-      if (vps->getTilesInUseFlag(i))
+
+      if( vps->getTilesInUseFlag(i) )
       {
         WRITE_FLAG( vps->getLoopFilterNotAcrossTilesFlag(i) ? 1 : 0 , "loop_filter_not_across_tiles_flag[ i ]" );
       }
     }
-#endif
 
     for( i = vps->getBaseLayerInternalFlag() ? 1 : 2; i < vps->getMaxLayers(); i++ )
     {
       for(j = 0; j < vps->getNumDirectRefLayers(vps->getLayerIdInNuh(i)); j++)
       {
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
-        layerIdx = vps->getLayerIdxInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
-        if (vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx)) {
+        UInt layerIdx = vps->getLayerIdxInVps(vps->getRefLayerId(vps->getLayerIdInNuh(i), j));
+
+        if( vps->getTilesInUseFlag(i) && vps->getTilesInUseFlag(layerIdx) )
+        {
           WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
         }
-#else
-        WRITE_FLAG( vps->getTileBoundariesAlignedFlag(i,j) ? 1 : 0 , "tile_boundaries_aligned_flag[i][j]" );
-#endif
       }
     }  
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
   }
-#endif
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG
+
   WRITE_FLAG( vps->getWppNotInUseFlag() ? 1 : 0 , "wpp_not_in_use_flag" );
-  if (!vps->getWppNotInUseFlag())
+
+  if( !vps->getWppNotInUseFlag() )
   {
     for( i = vps->getBaseLayerInternalFlag() ? 0 : 1; i < vps->getMaxLayers(); i++ )
     {
       WRITE_FLAG( vps->getWppInUseFlag(i) ? 1 : 0 , "wpp_in_use_flag[ i ]" );
     }
   }
-#endif
 
   WRITE_FLAG(vps->getSingleLayerForNonIrapFlag(), "single_layer_for_non_irap_flag" );
 

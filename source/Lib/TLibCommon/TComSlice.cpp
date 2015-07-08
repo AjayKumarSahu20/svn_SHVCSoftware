@@ -2022,16 +2022,13 @@ TComVPS::TComVPS()
       m_maxTidIlRefPicsPlus1[i][j] = m_uiMaxTLayers + 1;
     }
   }
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+
   m_tilesNotInUseFlag = true;
+  m_wppNotInUseFlag = true;
   ::memset(m_tilesInUseFlag,  0, sizeof(m_tilesInUseFlag));
   ::memset(m_loopFilterNotAcrossTilesFlag,  0, sizeof(m_loopFilterNotAcrossTilesFlag));
-#endif
   ::memset(m_tileBoundariesAlignedFlag,  0, sizeof(m_tileBoundariesAlignedFlag));
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG
-  m_wppNotInUseFlag = true;
   ::memset(m_wppInUseFlag,  0, sizeof(m_wppInUseFlag));
-#endif
 
   m_ilpRestrictedRefLayersFlag = false;
   ::memset(m_minSpatialSegmentOffsetPlus1,  0, sizeof(m_minSpatialSegmentOffsetPlus1));
@@ -3150,44 +3147,40 @@ Void TComVPS::deriveNumberOfSubDpbs()
   }
 }
 #endif
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
+
 Void TComVPS::setTilesNotInUseFlag(Bool x)
 {
   m_tilesNotInUseFlag = x;
-  if (m_tilesNotInUseFlag)
+
+  if( m_tilesNotInUseFlag )
   {
-    for (int i = 0; i < getMaxLayers(); i++)
+    for( Int i = 0; i < getMaxLayers(); i++ )
     {
       m_tilesInUseFlag[i] = m_loopFilterNotAcrossTilesFlag[i] = m_tilesNotInUseFlag;
     }
-  }
-
-  if (m_tilesNotInUseFlag)
-  {
-    for (int i = 1; i < getMaxLayers(); i++)
+  
+    for( Int i = 1; i < getMaxLayers(); i++ )
     {
-      for(int j = 0; j < getNumDirectRefLayers(getLayerIdInNuh(i)); j++)
+      for( Int j = 0; j < getNumDirectRefLayers(getLayerIdInNuh(i)); j++)
       {
         setTileBoundariesAlignedFlag(i, j, m_tilesNotInUseFlag);
       }
     }
   }
 }
-#endif
 
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG
 Void TComVPS::setWppNotInUseFlag(Bool x)
 {
   m_wppNotInUseFlag = x;
-  if (m_wppNotInUseFlag)
+
+  if( m_wppNotInUseFlag )
   {
-    for (int i = 0; i < getMaxLayers(); i++)
+    for( Int i = 0; i < getMaxLayers(); i++ )
     {
       m_wppInUseFlag[i] = m_wppNotInUseFlag;
     }
   }
 }
-#endif
 
 Void TComVPS::setRefLayersFlags(Int currLayerId)
 {

@@ -657,16 +657,12 @@ private:
   UInt       m_maxTSLayerMinus1[MAX_LAYERS];
   Bool       m_singleLayerForNonIrapFlag;
   Bool       m_higherLayerIrapSkipFlag;
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG
   Bool       m_tilesNotInUseFlag;
   Bool       m_tilesInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
   Bool       m_loopFilterNotAcrossTilesFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif 
   Bool       m_tileBoundariesAlignedFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG
   Bool       m_wppNotInUseFlag;
   Bool       m_wppInUseFlag[MAX_VPS_LAYER_IDX_PLUS1];
-#endif
 
   Bool       m_ilpRestrictedRefLayersFlag;
   Int        m_minSpatialSegmentOffsetPlus1[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
@@ -1017,22 +1013,19 @@ Void      deriveNumberOfSubDpbs();
   Void   setSingleLayerForNonIrapFlag(Bool x)                                   { m_singleLayerForNonIrapFlag = x;               }
   Bool   getHigherLayerIrapSkipFlag()                                           { return m_higherLayerIrapSkipFlag;              }
   Void   setHigherLayerIrapSkipFlag(Bool x)                                     { m_higherLayerIrapSkipFlag = x;                 }
-#if VPS_VUI_TILES_NOT_IN_USE__FLAG  
-  Bool   getTilesNotInUseFlag()         { return m_tilesNotInUseFlag; }
+
+  Bool   getTilesNotInUseFlag()                                                  { return m_tilesNotInUseFlag; }
   Void   setTilesNotInUseFlag(Bool x); 
-  Bool   getTilesInUseFlag(Int currLayerId)    { return m_tilesInUseFlag[currLayerId]; }
-  Void   setTilesInUseFlag(Int currLayerId, Bool x)    { m_tilesInUseFlag[currLayerId] = x; } 
-  Bool   getLoopFilterNotAcrossTilesFlag(Int currLayerId)    { return m_loopFilterNotAcrossTilesFlag[currLayerId]; }
-  Void   setLoopFilterNotAcrossTilesFlag(Int currLayerId, Bool x)    { m_loopFilterNotAcrossTilesFlag[currLayerId] = x; } 
-#endif 
+  Bool   getTilesInUseFlag(Int currLayerId)                                      { return m_tilesInUseFlag[currLayerId]; }
+  Void   setTilesInUseFlag(Int currLayerId, Bool x)                              { m_tilesInUseFlag[currLayerId] = x; } 
+  Bool   getLoopFilterNotAcrossTilesFlag(Int currLayerId)                        { return m_loopFilterNotAcrossTilesFlag[currLayerId]; }
+  Void   setLoopFilterNotAcrossTilesFlag(Int currLayerId, Bool x)                { m_loopFilterNotAcrossTilesFlag[currLayerId] = x; } 
   Bool   getTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId)           { return m_tileBoundariesAlignedFlag[currLayerId][refLayerId]; }
   Void   setTileBoundariesAlignedFlag(Int currLayerId, Int refLayerId, Bool x)   { m_tileBoundariesAlignedFlag[currLayerId][refLayerId] = x; } 
-#if VPS_VUI_WPP_NOT_IN_USE__FLAG  
-  Bool   getWppNotInUseFlag()         { return m_wppNotInUseFlag; }
+  Bool   getWppNotInUseFlag()                                                    { return m_wppNotInUseFlag; }
   Void   setWppNotInUseFlag(Bool x); 
-  Bool   getWppInUseFlag(Int currLayerId)    { return m_wppInUseFlag[currLayerId]; }
-  Void   setWppInUseFlag(Int currLayerId, Bool x)    { m_wppInUseFlag[currLayerId] = x; } 
-#endif 
+  Bool   getWppInUseFlag(Int currLayerId)                                        { return m_wppInUseFlag[currLayerId]; }
+  Void   setWppInUseFlag(Int currLayerId, Bool x)                                { m_wppInUseFlag[currLayerId] = x; } 
 
   Bool   getIlpRestrictedRefLayersFlag  ( )                                            { return m_ilpRestrictedRefLayersFlag;}
   Void   setIlpRestrictedRefLayersFlag  ( Int val )                                    { m_ilpRestrictedRefLayersFlag = val; }  
