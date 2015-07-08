@@ -1444,7 +1444,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 
     Bool isField = false;
-    Bool isTff = false;
+    Bool isTopField = false;
     
     if(!m_SEIs.empty())
     {
@@ -1453,10 +1453,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       if (pictureTimingSEIs.size()>0)
       {
         SEIPictureTiming* pictureTiming = (SEIPictureTiming*) *(pictureTimingSEIs.begin());
-        isField = (pictureTiming->m_picStruct == 1) || (pictureTiming->m_picStruct == 2);
-        isTff =  (pictureTiming->m_picStruct == 1);
+        isField    = (pictureTiming->m_picStruct == 1) || (pictureTiming->m_picStruct == 2) || (pictureTiming->m_picStruct == 9) || (pictureTiming->m_picStruct == 10) || (pictureTiming->m_picStruct == 11) || (pictureTiming->m_picStruct == 12);
+        isTopField = (pictureTiming->m_picStruct == 1) || (pictureTiming->m_picStruct == 9) || (pictureTiming->m_picStruct == 11);
       }
 
+#if Q0189_TMVP_CONSTRAINTS
       // Check if any new temporal motion vector prediction constraints SEI has arrived
       SEIMessages seiTMVPConstrainsList = extractSeisByType (m_SEIs, SEI::TMVP_CONSTRAINTS);
       if (seiTMVPConstrainsList.size() > 0)
@@ -1482,11 +1483,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           }
         }
       }
+#endif
     }
     
     //Set Field/Frame coding mode
     m_pcPic->setField(isField);
-    m_pcPic->setTopField(isTff);
+    m_pcPic->setTopField(isTopField);
 
     // transfer any SEI messages that have been received to the picture
     m_pcPic->setSEIs(m_SEIs);
