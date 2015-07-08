@@ -499,11 +499,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) )
     {
       Int numResampler = 0;
-#if MOTION_RESAMPLING_CONSTRAINT
+
+      // motion resampling constraint
       Int numMotionResamplers = 0;
       Int refResamplingLayer[MAX_LAYERS];
       memset( refResamplingLayer, 0, sizeof( refResamplingLayer ) );
-#endif
 
       for( i=0; i < m_activeNumILRRefIdx; i++ )
       {
@@ -521,6 +521,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 #if O0194_DIFFERENT_BITDEPTH_EL_BL
         Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
 
+        // motion resampling constraint
+        // Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction
         if( !( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || !scalingOffset || !sameBitDepths 
 #if Q0048_CGS_3D_ASYMLUT
           || getPPS()->getCGSFlag()
@@ -530,7 +532,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         if(!( g_posScalingFactor[refLayerIdc][0] == 65536 && g_posScalingFactor[refLayerIdc][1] == 65536 ) || (!scalingOffset)) // ratio 1x
 #endif
         {
-#if MOTION_RESAMPLING_CONSTRAINT
           UInt predType = m_pcVPS->getDirectDependencyType( m_layerId, refLayerId ) + 1;
 
           if( predType & 0x1 )
@@ -544,9 +545,6 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
             numMotionResamplers++;
             refResamplingLayer[i] -= refLayerIdc + 1;
           }
-#else
-          numResampler++;
-#endif
         }
       }
       
@@ -561,9 +559,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 
       // Bitstream constraint for SHVC: The picture resampling process as specified in subclause G.8.1.4.1 shall not be invoked more than once for decoding of each particular picture.
       assert(numResampler <= 1);
-#if MOTION_RESAMPLING_CONSTRAINT
       assert( numMotionResamplers <= 1  && "Up to 1 motion resampling is allowed" );
-#endif
     }
   }
   Int numPocTotalCurr = NumPocStCurr0 + NumPocStCurr1 + NumPocLtCurr + m_activeNumILRRefIdx;
