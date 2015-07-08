@@ -105,11 +105,9 @@ public:
   Void  codeScalingList      ( TComScalingList* /*scalingList*/     ){ assert (0);  return;};
 
 #if SVC_EXTENSION
-#if POC_RESET_IDC_SIGNALLING
   Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
-#endif  
-  Void codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal);
-  Void codeSAOBlkParam(SAOBlkParam& saoBlkParam
+  Void  codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal);
+  Void  codeSAOBlkParam(SAOBlkParam& saoBlkParam
                     , UInt* saoMaxOffsetQVal
                     , Bool* sliceEnabled
                     , Bool leftMergeAvail

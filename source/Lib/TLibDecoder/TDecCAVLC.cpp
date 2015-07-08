@@ -1897,7 +1897,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
     }
   }
 
-#if POC_RESET_IDC_SIGNALLING
+#if SVC_EXTENSION
   Int sliceHeaderExtensionLength = 0;
   if(pps->getSliceHeaderExtensionPresentFlag())
   {

@@ -125,7 +125,6 @@ TComSlice::TComSlice()
 #endif
 , m_bDiscardableFlag              ( false )
 , m_bCrossLayerBLAFlag            ( false )
-#if POC_RESET_IDC_SIGNALLING
 , m_pocResetIdc                   ( 0 )
 , m_pocResetPeriodId              ( 0 )
 , m_fullPocResetFlag              ( false )
@@ -134,7 +133,6 @@ TComSlice::TComSlice()
 , m_pocMsbValRequiredFlag         ( false )
 , m_pocMsbValPresentFlag          ( false )
 , m_pocMsbValNeeded               ( false )
-#endif
 #if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
 , m_picOrderCntLsb (0)
 #endif
@@ -220,7 +218,6 @@ Void TComSlice::initSlice()
   m_substreamSizes.clear();
   m_cabacInitFlag        = false;
   m_enableTMVPFlag = true;
-#if POC_RESET_IDC_SIGNALLING
   m_pocResetIdc                   = 0;
   m_pocResetPeriodId              = 0;
   m_fullPocResetFlag              = false;
@@ -228,7 +225,6 @@ Void TComSlice::initSlice()
   m_pocMsbVal                     = 0;
   m_pocMsbValRequiredFlag         = false;
   m_pocMsbValPresentFlag          = false;
-#endif
 #if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   m_picOrderCntLsb = 0;
 #endif

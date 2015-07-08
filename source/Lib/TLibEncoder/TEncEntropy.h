@@ -84,10 +84,6 @@ public:
   virtual Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList ) = 0;
   virtual Void codeScalingList   ( TComScalingList* scalingList )      = 0;
 
-#if POC_RESET_IDC_SIGNALLING
-  virtual Void codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
-#endif
-
 public:
   virtual Void codeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx ) = 0;
   virtual Void codeSkipFlag      ( TComDataCU* pcCU, UInt uiAbsPartIdx ) = 0;
@@ -119,6 +115,7 @@ public:
   virtual Void codeCoeffNxN      ( TComTU &rTu, TCoeff* pcCoef, const ComponentID compID ) = 0;
   virtual Void codeTransformSkipFlags ( TComTU &rTu, ComponentID component ) = 0;
 #if SVC_EXTENSION
+  virtual Void codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
   virtual Void codeSAOBlkParam   (SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
 #else
   virtual Void codeSAOBlkParam   (SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
@@ -150,9 +147,6 @@ public:
   Void    encodeSliceFinish         ();
   TEncEntropyIf*      m_pcEntropyCoderIf;
 
-#if POC_RESET_IDC_SIGNALLING
-  Void    encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
-#endif
 public:
   Void encodeVPS               ( TComVPS* pcVPS);
   // SPS
@@ -203,6 +197,7 @@ public:
 
   Void estimateBit             ( estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, ChannelType chType );
 #if SVC_EXTENSION
+  Void encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
   Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, saoMaxOffsetQVal, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
 #else
   Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
