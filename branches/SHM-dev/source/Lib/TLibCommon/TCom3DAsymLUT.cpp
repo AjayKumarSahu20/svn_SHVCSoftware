@@ -284,12 +284,11 @@ Void TCom3DAsymLUT::setCuboidVertexResTree( Int yIdx , Int uIdx , Int vIdx , Int
   rYUVP.Y = sPred.Y + ( deltaY << m_nResQuanBit );
   rYUVP.U = sPred.U + ( deltaU << m_nResQuanBit );
   rYUVP.V = sPred.V + ( deltaV << m_nResQuanBit );
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+
   // LUT coefficients are less than 12-bit
   assert( -2048 <= rYUVP.Y && rYUVP.Y <= 2047 );
   assert( -2048 <= rYUVP.U && rYUVP.U <= 2047 );
   assert( -2048 <= rYUVP.V && rYUVP.V <= 2047 );
-#endif
 }
 
 Pel TCom3DAsymLUT::xMapY( Pel y , Pel u , Pel v )
@@ -412,7 +411,6 @@ Void TCom3DAsymLUT::xCuboidsFilledCheck( Bool bDecode )
 }
 #endif
 
-#if R0150_CGS_SIGNAL_CONSTRAINTS
 Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
 {
   Bool bIsRefLayer = false;
@@ -427,7 +425,6 @@ Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
 
   return( bIsRefLayer );
 }
-#endif
 
 #if R0164_CGS_LUT_BUGFIX_CHECK
 Void  TCom3DAsymLUT::display( Bool bFilled )

@@ -3505,7 +3505,6 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
 #if CGS_3D_ASYMLUT
 Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 {
-#if R0150_CGS_SIGNAL_CONSTRAINTS
   UInt uiNumRefLayersM1;
   READ_UVLC( uiNumRefLayersM1 , "num_cm_ref_layers_minus1" );
   assert( uiNumRefLayersM1 <= 61 );
@@ -3515,27 +3514,20 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
     READ_CODE( 6 , uiRefLayerId , "cm_ref_layer_id" );
     pc3DAsymLUT->addRefLayerId( uiRefLayerId );
   }
-#endif
+
   UInt uiCurOctantDepth , uiCurPartNumLog2 , uiInputBitDepthM8 , uiOutputBitDepthM8 , uiResQaunBit;
 #if R0300_CGS_RES_COEFF_CODING
   UInt uiDeltaBits; 
 #endif 
   READ_CODE( 2 , uiCurOctantDepth , "cm_octant_depth" ); 
   READ_CODE( 2 , uiCurPartNumLog2 , "cm_y_part_num_log2" );     
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+
   UInt uiChromaInputBitDepthM8 , uiChromaOutputBitDepthM8;
+
   READ_UVLC( uiInputBitDepthM8 , "cm_input_luma_bit_depth_minus8" );
   READ_UVLC( uiChromaInputBitDepthM8 , "cm_input_chroma_bit_depth_minus8" );
   READ_UVLC( uiOutputBitDepthM8 , "cm_output_luma_bit_depth_minus8" );
   READ_UVLC( uiChromaOutputBitDepthM8 , "cm_output_chroma_bit_depth_minus8" );
-#else
-  READ_CODE( 3 , uiInputBitDepthM8 , "cm_input_bit_depth_minus8" );
-  Int iInputBitDepthCDelta;
-  READ_SVLC(iInputBitDepthCDelta, "cm_input_bit_depth_chroma delta");
-  READ_CODE( 3 , uiOutputBitDepthM8 , "cm_output_bit_depth_minus8" ); 
-  Int iOutputBitDepthCDelta;
-  READ_SVLC(iOutputBitDepthCDelta, "cm_output_bit_depth_chroma_delta");
-#endif
   READ_CODE( 2 , uiResQaunBit , "cm_res_quant_bit" );
 #if R0300_CGS_RES_COEFF_CODING
   READ_CODE( 2 , uiDeltaBits , "cm_flc_bits" );
@@ -3543,13 +3535,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 #endif
 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
-#if R0150_CGS_SIGNAL_CONSTRAINTS
   Int nAdaptCThresholdU = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
   Int nAdaptCThresholdV = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
-#else
-  Int nAdaptCThresholdU = 1 << ( uiInputBitDepthM8 + 8 + iInputBitDepthCDelta - 1 );
-  Int nAdaptCThresholdV = 1 << ( uiInputBitDepthM8 + 8 + iInputBitDepthCDelta - 1 );
-#endif
+
   if( uiCurOctantDepth == 1 )
   {
     Int delta = 0;
@@ -3561,17 +3549,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 #endif
   pc3DAsymLUT->destroy();
   pc3DAsymLUT->create( uiCurOctantDepth , uiInputBitDepthM8 + 8 ,  
-#if R0150_CGS_SIGNAL_CONSTRAINTS
     uiChromaInputBitDepthM8 + 8 ,
-#else
-    uiInputBitDepthM8 + 8 + iInputBitDepthCDelta, 
-#endif
     uiOutputBitDepthM8 + 8 , 
-#if R0150_CGS_SIGNAL_CONSTRAINTS
     uiChromaOutputBitDepthM8 + 8 ,
-#else
-    uiOutputBitDepthM8 + 8 + iOutputBitDepthCDelta ,
-#endif
     uiCurPartNumLog2 
 #if R0151_CGS_3D_ASYMLUT_IMPROVE
     , nAdaptCThresholdU , nAdaptCThresholdV 

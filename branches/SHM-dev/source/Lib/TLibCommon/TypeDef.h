@@ -57,7 +57,6 @@
 #define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
 #if CGS_3D_ASYMLUT
 #define CGS_GCC_NO_VECTORIZATION         1
-#define R0150_CGS_SIGNAL_CONSTRAINTS     1      ///< JCTVC-R0150: CGS signaling improvement and constraints
 #define R0151_CGS_3D_ASYMLUT_IMPROVE     1      ///< JCTVC-R0151: Non-uniform chroma partitioning and improved LUT coefficient coding
 #define R0164_CGS_LUT_BUGFIX             1      ///< JCTVC-R0164: Bug fix with LUT syntax
 #define R0164_CGS_LUT_BUGFIX_CHECK       0      ///< JCTVC-R0164: Add traces explicitly/non-explicitly encoded vertices and check if 3DLUT is correctly filled
