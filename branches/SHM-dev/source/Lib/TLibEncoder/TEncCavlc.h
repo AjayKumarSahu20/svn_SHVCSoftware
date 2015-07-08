@@ -153,9 +153,7 @@ public:
   Void codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID );
 
 #if SVC_EXTENSION
-#if POC_RESET_IDC_SIGNALLING
   Void  codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow );
-#endif
   Void codeSPSExtension        ( TComSPS* pcSPS );
   Void codeVPSExtension        ( TComVPS* pcVPS );
   Void codeVPSVUI              ( TComVPS *vps   );

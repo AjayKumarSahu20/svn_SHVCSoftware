@@ -746,8 +746,8 @@ Void TEncEntropy::encodeScalingList( TComScalingList* scalingList )
   m_pcEntropyCoderIf->codeScalingList( scalingList );
 }
 
-#if POC_RESET_IDC_SIGNALLING
-Void  TEncEntropy::encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
+#if SVC_EXTENSION
+Void TEncEntropy::encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
 {
   m_pcEntropyCoderIf->codeSliceHeaderExtn( pSlice, shBitsWrittenTillNow );
 }

@@ -2027,8 +2027,8 @@ Void TEncSbac::codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID )
   }
 }
 
-#if POC_RESET_IDC_SIGNALLING
-Void  TEncSbac::codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
+#if SVC_EXTENSION
+Void TEncSbac::codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )
 {
   assert (0);
   return;

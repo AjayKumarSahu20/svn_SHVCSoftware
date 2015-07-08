@@ -1305,13 +1305,6 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag()?1:0, "slice_loop_filter_across_slices_enabled_flag");
     }
   }
-
-#if !POC_RESET_IDC_SIGNALLING   // Wrong place to put slice header extension
-  if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
-  {
-    WRITE_UVLC(0,"slice_header_extension_length");
-  }
-#endif
 }
 
 Void TEncCavlc::codePTL( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1)
@@ -1834,9 +1827,7 @@ Void TEncCavlc::codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID )
  }
 
 #if SVC_EXTENSION
-
-#if POC_RESET_IDC_SIGNALLING
-Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow )
+Void TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow )
 {
   Int tmpBitsBeforeWriting = getNumberOfWrittenBits();
   Int maxPocLsb = 1 << slice->getSPS()->getBitsForPOC();
@@ -1850,20 +1841,22 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
 
     // Determine value of SH extension length.
     Int shExtnLengthInBit = 0;
-    if (slice->getPPS()->getPocResetInfoPresentFlag())
+    if( slice->getPPS()->getPocResetInfoPresentFlag() )
     {
       shExtnLengthInBit += 2;
     }
-    if (slice->getPocResetIdc() > 0)
+
+    if( slice->getPocResetIdc() > 0 )
     {
       shExtnLengthInBit += 6;
     }
-    if (slice->getPocResetIdc() == 3)
+
+    if( slice->getPocResetIdc() == 3 )
     {
       shExtnLengthInBit += (slice->getSPS()->getBitsForPOC() + 1);
     }
 
-    if (!slice->getPocMsbValRequiredFlag() && slice->getVPS()->getVpsPocLsbAlignedFlag())
+    if( !slice->getPocMsbValRequiredFlag() && slice->getVPS()->getVpsPocLsbAlignedFlag() )
     {
       shExtnLengthInBit++;
     }
@@ -1879,12 +1872,12 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       }
     }
 
-    if (slice->getPocMsbNeeded())
+    if( slice->getPocMsbNeeded() )
     {
       slice->setPocMsbValPresentFlag(true);
     }
 
-    if (slice->getPocMsbValPresentFlag())
+    if( slice->getPocMsbValPresentFlag() )
     {
       UInt lengthVal = 1;
       UInt tempVal = (slice->getPocMsbVal() / maxPocLsb) + 1;
@@ -1896,23 +1889,26 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       }
       shExtnLengthInBit += lengthVal;
     }
+
     Int shExtnAdditionalBits = 0;
-    if(shExtnLengthInBit % 8 != 0)
+
+    if( shExtnLengthInBit % 8 != 0 )
     {
       shExtnAdditionalBits = 8 - (shExtnLengthInBit % 8);
     }
+
     Int shExtnLength = (shExtnLengthInBit + shExtnAdditionalBits) / 8;
     WRITE_UVLC( shExtnLength, "slice_header_extension_length" );
 
-    if(slice->getPPS()->getPocResetInfoPresentFlag())
+    if( slice->getPPS()->getPocResetInfoPresentFlag() )
     {
       WRITE_CODE( slice->getPocResetIdc(), 2,                                 "poc_reset_idc");
     }
-    if(slice->getPocResetIdc() > 0)
+    if( slice->getPocResetIdc() > 0 )
     {
       WRITE_CODE( slice->getPocResetPeriodId(), 6,                            "poc_reset_period_id");
     }
-    if(slice->getPocResetIdc() == 3) 
+    if( slice->getPocResetIdc() == 3 ) 
     {
       WRITE_FLAG( slice->getFullPocResetFlag() ? 1 : 0,                       "full_poc_reset_flag");
       WRITE_CODE( slice->getPocLsbVal(), slice->getSPS()->getBitsForPOC(),  "poc_lsb_val");
@@ -1929,7 +1925,7 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
       WRITE_UVLC(slice->getPocMsbVal() / maxPocLsb, "poc_msb_cycle_val");
     }
 
-    for (Int i = 0; i < shExtnAdditionalBits; i++)
+    for(Int i = 0; i < shExtnAdditionalBits; i++)
     {
       WRITE_FLAG( 1, "slice_segment_header_extension_data_bit");
     }
@@ -1939,7 +1935,6 @@ Void  TEncCavlc::codeSliceHeaderExtn( TComSlice* slice, Int shBitsWrittenTillNow
   
   // Slice header byte_alignment() included in xAttachSliceDataToNalUnit
 }
-#endif
 
 Void TEncCavlc::codeVPSExtension (TComVPS *vps)
 {

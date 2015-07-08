@@ -2002,7 +2002,6 @@ private:
   Int         m_interLayerPredLayerIdc  [MAX_VPS_LAYER_IDX_PLUS1];
   Bool        m_bDiscardableFlag;
   Bool        m_bCrossLayerBLAFlag;
-#if POC_RESET_IDC_SIGNALLING
   Int         m_pocResetIdc;
   Int         m_pocResetPeriodId;
   Bool        m_fullPocResetFlag;
@@ -2012,7 +2011,6 @@ private:
   Bool        m_pocMsbValPresentFlag;
   Bool        m_pocMsbValNeeded;
   Int         m_pocResetDeltaPoc;
-#endif
 #if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
 #endif
@@ -2349,7 +2347,7 @@ public:
   Window& getConformanceWindow();
 
   Void setILRPic(TComPic **pcIlpPic);
-#if POC_RESET_IDC_SIGNALLING
+
   Int       getPocResetIdc       ()                              { return m_pocResetIdc;       }
   Void      setPocResetIdc       (Int b)                         { m_pocResetIdc = b;          }
   Int       getPocResetPeriodId  ()                              { return m_pocResetPeriodId;       }
@@ -2368,7 +2366,6 @@ public:
   Void      setPocMsbValPresentFlag (Bool x)                     { m_pocMsbValPresentFlag = x; }
   Bool      getPocMsbValRequiredFlag ()                           { return m_pocMsbValRequiredFlag; }
   Void      setPocMsbValRequiredFlag (Bool x)                     { m_pocMsbValRequiredFlag = x; }
-#endif
 
   Bool      getBlaPicFlag       ();
   Bool      getCraPicFlag       ();
