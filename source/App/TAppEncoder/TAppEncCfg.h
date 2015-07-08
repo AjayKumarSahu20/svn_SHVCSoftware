@@ -157,17 +157,16 @@ protected:
   Int       m_iDecodingRefreshType;                           ///< random access type
   Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
 
-#if !Q0108_TSA_STSA
-  Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
-#else
+#if SVC_EXTENSION
   Int       m_extraRPSs[MAX_LAYERS];                          ///< extra RPSs added to handle CRA
+  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
+  Int       m_inheritCodingStruct[MAX_LAYERS];
+  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
+#else
+  Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
 #endif
 
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
-#if Q0108_TSA_STSA
-  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
-  Int       m_inheritCodingStruct[MAX_LAYERS];
-#endif
 
   Int       m_numReorderPics[MAX_TLAYER];                     ///< total number of reorder pictures
   Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of pictures in the decoded picture buffer
@@ -208,9 +207,6 @@ protected:
   Int       m_iQPAdaptationRange;                             ///< dQP range by QP adaptation
 
   Int       m_maxTempLayer;                                  ///< Max temporal layer
-#if Q0108_TSA_STSA
-  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
-#endif
 
 #if !LAYER_CTB
   // coding unit (CU) definition
