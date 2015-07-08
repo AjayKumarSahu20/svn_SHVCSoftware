@@ -47,8 +47,7 @@
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
 
 #define DISCARDABLE_PIC_RPS              1      ///< JCTVC-P0130: Inter-layer RPS and temporal RPS should not contain picture with discardable_flag equal to 1
-#define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
-#define FIX_ALIGN_BUMPING                1
+
 #define O0164_MULTI_LAYER_HRD            1      ///< JCTVC-O0164: Multi-layer HRD operation
 
 #define CGS_3D_ASYMLUT                   1      ///< Colour gamut scalability with look-up table
@@ -63,7 +62,7 @@
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
 #define SVC_POC                          1      ///< POC signalling and reset
 #define UNAVAILABLE_PIC_BUGFIX           1
-
+#define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 
 #define REF_IDX_MFM                      1      ///< JCTVC-L0336: motion vector mapping of inter-layer reference picture
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
