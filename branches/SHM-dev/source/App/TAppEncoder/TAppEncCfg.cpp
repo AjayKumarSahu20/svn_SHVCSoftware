@@ -1658,9 +1658,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CGSSizeRDO",     m_nCGSLutSizeRDO , 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
 #endif
 #endif
-#if Q0108_TSA_STSA
   ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
-#endif
 #endif //SVC_EXTENSION
   ;
 
@@ -1670,7 +1668,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     opts.addOptions()(cOSS.str(), m_GOPList[i-1], GOPEntry());
   }
 
-#if Q0108_TSA_STSA
+#if SVC_EXTENSION
   for (Int i=1; i<MAX_LAYERS; i++)
   {
     for(Int j=1; j<MAX_GOP+1; j++)
@@ -1685,7 +1683,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   po::setDefaults(opts);
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
-#if Q0108_TSA_STSA
+#if SVC_EXTENSION
   for (Int i=1; i<MAX_LAYERS; i++)
   {
     if(m_inheritCodingStruct[i] == 0)
@@ -3231,7 +3229,6 @@ Void TAppEncCfg::xCheckParameter()
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
 #if SVC_EXTENSION
-#if Q0108_TSA_STSA
   if( m_acLayerCfg[0].m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1 )
   {
     m_GOPList[0] = GOPEntry();
@@ -3258,24 +3255,6 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara( m_intraConstraintFlag, "IntraConstraintFlag cannot be 1 for inter sequences");
   }
-#else
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    Int m_iIntraPeriod = m_acLayerCfg[layer].m_iIntraPeriod;
-    if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1) {
-      m_GOPList[0] = GOPEntry();
-      m_GOPList[0].m_QPFactor = 1;
-      m_GOPList[0].m_betaOffsetDiv2 = 0;
-      m_GOPList[0].m_tcOffsetDiv2 = 0;
-      m_GOPList[0].m_POC = 1;
-      m_GOPList[0].m_numRefPicsActive = 4;
-    }
-    else
-    {
-      xConfirmPara( m_intraConstraintFlag, "IntraConstraintFlag cannot be 1 for inter sequences");
-    }
-  }
-#endif
 #else
   if (m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1)
   {
@@ -3351,11 +3330,12 @@ Void TAppEncCfg::xCheckParameter()
     }
   }
 
-#if !Q0108_TSA_STSA
-  m_extraRPSs=0;                                     
-#else
+#if SVC_EXTENSION
   memset( m_extraRPSs, 0, sizeof( m_extraRPSs ) );
+#else
+  m_extraRPSs=0;                                     
 #endif
+
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
   while(!verifiedGOP&&!errorGOP)
   {
@@ -3421,10 +3401,10 @@ Void TAppEncCfg::xCheckParameter()
       else
       {
         //create a new GOPEntry for this frame containing all the reference pictures that were available (POC > 0)
-#if !Q0108_TSA_STSA
-        m_GOPList[m_iGOPSize+m_extraRPSs]=m_GOPList[curGOP];
-#else
+#if SVC_EXTENSION
         m_GOPList[m_iGOPSize+m_extraRPSs[0]]=m_GOPList[curGOP];
+#else
+        m_GOPList[m_iGOPSize+m_extraRPSs]=m_GOPList[curGOP];
 #endif
         Int newRefs=0;
         for(Int i = 0; i< m_GOPList[curGOP].m_numRefPics; i++)
@@ -3432,12 +3412,12 @@ Void TAppEncCfg::xCheckParameter()
           Int absPOC = curPOC+m_GOPList[curGOP].m_referencePics[i];
           if(absPOC>=0)
           {
-#if !Q0108_TSA_STSA
-            m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[newRefs]=m_GOPList[curGOP].m_referencePics[i];
-            m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[newRefs]=m_GOPList[curGOP].m_usedByCurrPic[i];
-#else
+#if SVC_EXTENSION
             m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[newRefs]=m_GOPList[curGOP].m_referencePics[i];
             m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[newRefs]=m_GOPList[curGOP].m_usedByCurrPic[i];
+#else
+            m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[newRefs]=m_GOPList[curGOP].m_referencePics[i];
+            m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[newRefs]=m_GOPList[curGOP].m_usedByCurrPic[i];
 #endif
             newRefs++;
           }
@@ -3461,10 +3441,10 @@ Void TAppEncCfg::xCheckParameter()
             }
             for(Int i=0; i<newRefs; i++)
             {
-#if !Q0108_TSA_STSA
-              if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[i]==offPOC-curPOC)
+#if SVC_EXTENSION
+              if( m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[i] == offPOC-curPOC )
 #else
-              if(m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[i]==offPOC-curPOC)
+              if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[i]==offPOC-curPOC)
 #endif
               {
                 newRef=false;
@@ -3480,10 +3460,10 @@ Void TAppEncCfg::xCheckParameter()
               }
               for(Int j=0; j<newRefs; j++)
               {
-#if !Q0108_TSA_STSA
-                if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]<offPOC-curPOC||m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]>0)
+#if SVC_EXTENSION
+                if( m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j] < offPOC-curPOC || m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j] > 0 )
 #else
-                if(m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]<offPOC-curPOC||m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]>0)
+                if(m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]<offPOC-curPOC||m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]>0)
 #endif
                 {
                   insertPoint = j;
@@ -3494,16 +3474,16 @@ Void TAppEncCfg::xCheckParameter()
               Int prevUsed = m_GOPList[offGOP].m_temporalId<=m_GOPList[curGOP].m_temporalId;
               for(Int j=insertPoint; j<newRefs+1; j++)
               {
-#if !Q0108_TSA_STSA
-                Int newPrev = m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j];
-                Int newUsed = m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j];
-                m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]=prev;
-                m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j]=prevUsed;
-#else
+#if SVC_EXTENSION
                 Int newPrev = m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j];
                 Int newUsed = m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[j];
                 m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j]=prev;
                 m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_usedByCurrPic[j]=prevUsed;
+#else
+                Int newPrev = m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j];
+                Int newUsed = m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j];
+                m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j]=prev;
+                m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j]=prevUsed;
 #endif
 
                 prevUsed=newUsed;
@@ -3517,33 +3497,31 @@ Void TAppEncCfg::xCheckParameter()
             break;
           }
         }
-#if !Q0108_TSA_STSA
-        m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics=newRefs;
-        m_GOPList[m_iGOPSize+m_extraRPSs].m_POC = curPOC;
-#else
+
+#if SVC_EXTENSION
         m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefPics=newRefs;
         m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_POC = curPOC;
-#endif
-#if !Q0108_TSA_STSA
-        if (m_extraRPSs == 0)
-#else
-        if (m_extraRPSs[0] == 0)
-#endif
+
+        if( m_extraRPSs[0] == 0 )
         {
-#if !Q0108_TSA_STSA
-          m_GOPList[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 0;
-          m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefIdc = 0;
-#else
           m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_interRPSPrediction = 0;
           m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefIdc = 0;
-#endif
         }
         else
         {
-#if !Q0108_TSA_STSA
-          Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
-#else
           Int rIdx =  m_iGOPSize + m_extraRPSs[0] - 1;
+#else
+        m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics=newRefs;
+        m_GOPList[m_iGOPSize+m_extraRPSs].m_POC = curPOC;
+
+        if (m_extraRPSs == 0)
+        {
+          m_GOPList[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 0;
+          m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefIdc = 0;
+        }
+        else
+        {
+          Int rIdx =  m_iGOPSize + m_extraRPSs - 1;
 #endif
           Int refPOC = m_GOPList[rIdx].m_POC;
           Int refPics = m_GOPList[rIdx].m_numRefPics;
@@ -3553,32 +3531,8 @@ Void TAppEncCfg::xCheckParameter()
             Int deltaPOC = ((i != refPics)? m_GOPList[rIdx].m_referencePics[i] : 0);  // check if the reference abs POC is >= 0
             Int absPOCref = refPOC+deltaPOC;
             Int refIdc = 0;
-#if !Q0108_TSA_STSA
-            for (Int j = 0; j < m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics; j++)
-            {
-              if ( (absPOCref - curPOC) == m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j])
-              {
-                if (m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j])
-                {
-                  refIdc = 1;
-                }
-                else
-                {
-                  refIdc = 2;
-                }
-              }
-            }
-            m_GOPList[m_iGOPSize+m_extraRPSs].m_refIdc[newIdc]=refIdc;
-            newIdc++;
-          }
-          m_GOPList[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 1;  
-          m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefIdc = newIdc;
-          m_GOPList[m_iGOPSize+m_extraRPSs].m_deltaRPS = refPOC - m_GOPList[m_iGOPSize+m_extraRPSs].m_POC; 
-        }
-        curGOP=m_iGOPSize+m_extraRPSs;
-        m_extraRPSs++;
-      }
-#else
+
+#if SVC_EXTENSION
             for (Int j = 0; j < m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_numRefPics; j++)
             {
               if ( (absPOCref - curPOC) == m_GOPList[m_iGOPSize+m_extraRPSs[0]].m_referencePics[j])
@@ -3603,6 +3557,31 @@ Void TAppEncCfg::xCheckParameter()
         curGOP=m_iGOPSize+m_extraRPSs[0];
         m_extraRPSs[0]++;
       }
+#else
+            for (Int j = 0; j < m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefPics; j++)
+            {
+              if ( (absPOCref - curPOC) == m_GOPList[m_iGOPSize+m_extraRPSs].m_referencePics[j])
+              {
+                if (m_GOPList[m_iGOPSize+m_extraRPSs].m_usedByCurrPic[j])
+                {
+                  refIdc = 1;
+                }
+                else
+                {
+                  refIdc = 2;
+                }
+              }
+            }
+            m_GOPList[m_iGOPSize+m_extraRPSs].m_refIdc[newIdc]=refIdc;
+            newIdc++;
+          }
+          m_GOPList[m_iGOPSize+m_extraRPSs].m_interRPSPrediction = 1;  
+          m_GOPList[m_iGOPSize+m_extraRPSs].m_numRefIdc = newIdc;
+          m_GOPList[m_iGOPSize+m_extraRPSs].m_deltaRPS = refPOC - m_GOPList[m_iGOPSize+m_extraRPSs].m_POC; 
+        }
+        curGOP=m_iGOPSize+m_extraRPSs;
+        m_extraRPSs++;
+      }
 #endif
 
       numRefs=0;
@@ -3622,7 +3601,7 @@ Void TAppEncCfg::xCheckParameter()
   }
   xConfirmPara(errorGOP,"Invalid GOP structure given");
 
-#if SVC_EXTENSION && Q0108_TSA_STSA
+#if SVC_EXTENSION
   if( layerIdx > 0 )
   {
     verifiedGOP=false;
@@ -3871,7 +3850,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_GOPList[i].m_sliceType!='B' && m_GOPList[i].m_sliceType!='P' && m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
   }
 
-#if Q0108_TSA_STSA
+#if SVC_EXTENSION
   if( layerIdx > 0 )
   {
     m_EhMaxTempLayer[layerIdx] = 1;
