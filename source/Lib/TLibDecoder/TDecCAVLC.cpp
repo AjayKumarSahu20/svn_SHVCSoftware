@@ -1443,7 +1443,9 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
         offset += rps->getNumberOfLongtermPictures();
         rps->setNumberOfPictures(offset);
       }
-#if DPB_CONSTRAINTS
+
+#if SVC_EXTENSION
+      // DPB constraints
       if( pcSlice->getVPS()->getVpsExtensionFlag() == 1 )
       {
         for( Int ii = 1; ii < (pcSlice->getVPS()->getVpsNumLayerSetsMinus1() + 1); ii++ )  // prevent assert error when num_add_layer_sets > 0
@@ -1475,6 +1477,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManagerDecoder
         assert((rps->getNumberOfPositivePictures() + rps->getNumberOfNegativePictures() + rps->getNumberOfLongtermPictures()) <= pcSlice->getSPS()->getMaxDecPicBuffering(pcSlice->getSPS()->getMaxTLayers()-1));
       }
 #endif
+
       if ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
         || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
         || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP )
