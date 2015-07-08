@@ -3515,10 +3515,8 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
     pc3DAsymLUT->addRefLayerId( uiRefLayerId );
   }
 
-  UInt uiCurOctantDepth , uiCurPartNumLog2 , uiInputBitDepthM8 , uiOutputBitDepthM8 , uiResQaunBit;
-#if R0300_CGS_RES_COEFF_CODING
-  UInt uiDeltaBits; 
-#endif 
+  UInt uiCurOctantDepth, uiCurPartNumLog2, uiInputBitDepthM8, uiOutputBitDepthM8, uiResQaunBit, uiDeltaBits;;
+  
   READ_CODE( 2 , uiCurOctantDepth , "cm_octant_depth" ); 
   READ_CODE( 2 , uiCurPartNumLog2 , "cm_y_part_num_log2" );     
 
@@ -3529,10 +3527,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   READ_UVLC( uiOutputBitDepthM8 , "cm_output_luma_bit_depth_minus8" );
   READ_UVLC( uiChromaOutputBitDepthM8 , "cm_output_chroma_bit_depth_minus8" );
   READ_CODE( 2 , uiResQaunBit , "cm_res_quant_bit" );
-#if R0300_CGS_RES_COEFF_CODING
+
   READ_CODE( 2 , uiDeltaBits , "cm_flc_bits" );
   pc3DAsymLUT->setDeltaBits(uiDeltaBits + 1);
-#endif
 
   Int nAdaptCThresholdU = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
   Int nAdaptCThresholdV = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
@@ -3587,10 +3584,9 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
   }
   else
   {
-#if R0300_CGS_RES_COEFF_CODING
     Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
     nFLCbits = nFLCbits >= 0 ? nFLCbits:0;
-#endif
+
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
 #if R0164_CGS_LUT_BUGFIX
@@ -3603,15 +3599,9 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
         READ_FLAG( uiCodeVertex , "coded_vertex_flag" );
         if( uiCodeVertex )
         {
-#if R0300_CGS_RES_COEFF_CODING
           xReadParam( deltaY, nFLCbits );
           xReadParam( deltaU, nFLCbits );
           xReadParam( deltaV, nFLCbits );
-#else
-          xReadParam( deltaY );
-          xReadParam( deltaU );
-          xReadParam( deltaV );
-#endif
         }
 #if R0164_CGS_LUT_BUGFIX
         pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) , uIdx , vIdx , nVertexIdx , deltaY , deltaU , deltaV );
@@ -3649,15 +3639,8 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
   }
 }
 
-#if R0300_CGS_RES_COEFF_CODING
 Void TDecCavlc::xReadParam( Int& param, Int rParam )
-#else
-Void TDecCavlc::xReadParam( Int& param )
-#endif
 {
-#if !R0300_CGS_RES_COEFF_CODING
-  const UInt rParam = 7;
-#endif
   UInt prefix;
   UInt codeWord ;
   UInt rSymbol;

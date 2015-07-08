@@ -2466,6 +2466,74 @@ Void TEncCavlc::codeSPSExtension( TComSPS* pcSPS )
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
 }
 
+Void TEncCavlc::codeVpsVuiBspHrdParams(TComVPS * const vps)
+{
+  WRITE_UVLC( vps->getVpsNumAddHrdParams(), "vps_num_add_hrd_params" );
+
+  for( Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++ ) // j = i - vps->getNumHrdParameters()
+  {
+    if( i > 0 )
+    {
+      WRITE_FLAG( vps->getCprmsAddPresentFlag(j), "cprms_add_present_flag[i]" );
+    }
+
+    WRITE_UVLC( vps->getNumSubLayerHrdMinus1(j), "num_sub_layer_hrd_minus1[i]" );
+
+    codeHrdParameters(vps->getBspHrd(j), i == 0 ? true : vps->getCprmsAddPresentFlag(j), vps->getNumSubLayerHrdMinus1(j));
+  }
+
+  if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 0 )
+  {
+    for( Int h = 1; h < vps->getNumOutputLayerSets(); h++ )
+    {
+      Int lsIdx = vps->getOutputLayerSetIdx( h );
+
+      WRITE_UVLC( vps->getNumSignalledPartitioningSchemes(h), "num_signalled_partitioning_schemes[h]");
+
+      for( Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h) + 1; j++ )
+      {
+        WRITE_UVLC( vps->getNumPartitionsInSchemeMinus1(h, j), "num_partitions_in_scheme_minus1[h][j]" );
+
+        for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++ )
+        {
+          for( Int r = 0; r < vps->getNumLayersInIdList( lsIdx ); r++ )
+          {
+            WRITE_FLAG( vps->getLayerIncludedInPartitionFlag(h, j, k, r), "layer_included_in_partition_flag[h][j][k][r]" );
+          }
+        }
+      }
+
+      for( Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++ )
+      {
+        for( Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++ )
+        {
+          WRITE_UVLC(vps->getNumBspSchedulesMinus1(h, i, t), "num_bsp_schedules_minus1[h][i][t]");
+
+          for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
+          {
+            for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
+            {
+              if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 1 )
+              {
+                Int numBits = 1;
+                while ((1 << numBits) < (vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams()))
+                {
+                  numBits++;
+                }
+
+                WRITE_CODE(vps->getBspHrdIdx(h, i, t, j, k), numBits, "bsp_comb_hrd_idx[h][i][t][j][k]");
+              }
+
+              WRITE_UVLC( vps->getBspSchedIdx(h, i, t, j, k), "bsp_comb_sched_idx[h][i][t][j][k]");
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
 #if CGS_3D_ASYMLUT
 Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 {
@@ -2489,11 +2557,10 @@ Void TEncCavlc::xCode3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 
   assert( pc3DAsymLUT->getResQuantBit() < 4 );
   WRITE_CODE( pc3DAsymLUT->getResQuantBit() , 2 , "cm_res_quant_bit" );
-#if R0300_CGS_RES_COEFF_CODING
+
   xFindDeltaBits( pc3DAsymLUT );
   assert(pc3DAsymLUT->getDeltaBits() >=1 && pc3DAsymLUT->getDeltaBits() <= 4);
   WRITE_CODE( pc3DAsymLUT->getDeltaBits()-1 , 2 , "cm_delta_bit" );
-#endif 
 
   if( pc3DAsymLUT->getCurOctantDepth() == 1 )
   {
@@ -2533,10 +2600,9 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
   }
   else
   {
-#if R0300_CGS_RES_COEFF_CODING
     Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
     nFLCbits = nFLCbits >= 0 ? nFLCbits : 0;
-#endif
+
     for( Int l = 0 ; l < nYPartNum ; l++ )
     {
 #if R0164_CGS_LUT_BUGFIX      
@@ -2553,15 +2619,9 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
         WRITE_FLAG( uiCodeVertex , "coded_vertex_flag" );
         if( uiCodeVertex )
         {
-#if R0300_CGS_RES_COEFF_CODING
           xWriteParam( sRes.Y, nFLCbits );
           xWriteParam( sRes.U, nFLCbits );
           xWriteParam( sRes.V, nFLCbits );
-#else
-          xWriteParam( sRes.Y );
-          xWriteParam( sRes.U );
-          xWriteParam( sRes.V );
-#endif
         }
       }
 #if R0164_CGS_LUT_BUGFIX_CHECK
@@ -2571,15 +2631,8 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
   }
 }
 
-#if R0300_CGS_RES_COEFF_CODING
 Void TEncCavlc::xWriteParam( Int param, UInt rParam)
-#else
-Void TEncCavlc::xWriteParam( Int param)
-#endif
 {
-#if !R0300_CGS_RES_COEFF_CODING
-  const UInt rParam = 7;
-#endif
   Int codeNumber = abs(param);
   WRITE_UVLC(codeNumber / (1 << rParam), "quotient");
   WRITE_CODE((codeNumber % (1 << rParam)), rParam, "remainder");
@@ -2587,7 +2640,6 @@ Void TEncCavlc::xWriteParam( Int param)
     WRITE_FLAG( param <0, "sign");
 }
 
-#if R0300_CGS_RES_COEFF_CODING
 Void TEncCavlc::xFindDeltaBits( TCom3DAsymLUT * pc3DAsymLUT )
 {
   Int nDeltaBits; 
@@ -2677,75 +2729,7 @@ Void TEncCavlc::xCheckParamBits( Int param, Int rParam, Int &nBits)
   if (abs(param))
     nBits++; 
 }
-#endif
-#endif
-
-Void TEncCavlc::codeVpsVuiBspHrdParams(TComVPS * const vps)
-{
-  WRITE_UVLC( vps->getVpsNumAddHrdParams(), "vps_num_add_hrd_params" );
-
-  for( Int i = vps->getNumHrdParameters(), j = 0; i < vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams(); i++, j++ ) // j = i - vps->getNumHrdParameters()
-  {
-    if( i > 0 )
-    {
-      WRITE_FLAG( vps->getCprmsAddPresentFlag(j), "cprms_add_present_flag[i]" );
-    }
-
-    WRITE_UVLC( vps->getNumSubLayerHrdMinus1(j), "num_sub_layer_hrd_minus1[i]" );
-
-    codeHrdParameters(vps->getBspHrd(j), i == 0 ? true : vps->getCprmsAddPresentFlag(j), vps->getNumSubLayerHrdMinus1(j));
-  }
-
-  if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 0 )
-  {
-    for( Int h = 1; h < vps->getNumOutputLayerSets(); h++ )
-    {
-      Int lsIdx = vps->getOutputLayerSetIdx( h );
-
-      WRITE_UVLC( vps->getNumSignalledPartitioningSchemes(h), "num_signalled_partitioning_schemes[h]");
-
-      for( Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h) + 1; j++ )
-      {
-        WRITE_UVLC( vps->getNumPartitionsInSchemeMinus1(h, j), "num_partitions_in_scheme_minus1[h][j]" );
-
-        for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, j); k++ )
-        {
-          for( Int r = 0; r < vps->getNumLayersInIdList( lsIdx ); r++ )
-          {
-            WRITE_FLAG( vps->getLayerIncludedInPartitionFlag(h, j, k, r), "layer_included_in_partition_flag[h][j][k][r]" );
-          }
-        }
-      }
-
-      for( Int i = 0; i < vps->getNumSignalledPartitioningSchemes(h) + 1; i++ )
-      {
-        for( Int t = 0; t <= vps->getMaxSLayersInLayerSetMinus1(lsIdx); t++ )
-        {
-          WRITE_UVLC(vps->getNumBspSchedulesMinus1(h, i, t), "num_bsp_schedules_minus1[h][i][t]");
-
-          for( Int j = 0; j <= vps->getNumBspSchedulesMinus1(h, i, t); j++ )
-          {
-            for( Int k = 0; k <= vps->getNumPartitionsInSchemeMinus1(h, i); k++ )
-            {
-              if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 1 )
-              {
-                Int numBits = 1;
-                while ((1 << numBits) < (vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams()))
-                {
-                  numBits++;
-                }
-
-                WRITE_CODE(vps->getBspHrdIdx(h, i, t, j, k), numBits, "bsp_comb_hrd_idx[h][i][t][j][k]");
-              }
-
-              WRITE_UVLC( vps->getBspSchedIdx(h, i, t, j, k), "bsp_comb_sched_idx[h][i][t][j][k]");
-            }
-          }
-        }
-      }
-    }
-  }
-}
+#endif //CGS_3D_ASYMLUT
 
 #endif //SVC_EXTENSION
 //! \}
