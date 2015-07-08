@@ -1894,9 +1894,6 @@ private:
   Int         m_iPOC;
   Int         m_iLastIDR;
   Int         m_iAssociatedIRAP;
-#if POC_RESET_IDC_ENCODER
-  Int         m_associatedIrapPocBeforeReset;
-#endif
   NalUnitType m_iAssociatedIRAPType;
   static Int  m_prevTid0POC;
   TComReferencePictureSet *m_pcRPS;
@@ -1984,6 +1981,7 @@ private:
   Bool       m_enableTMVPFlag;
 
 #if SVC_EXTENSION
+  Int         m_associatedIrapPocBeforeReset;
   Bool        m_firstSliceInPic;
   Bool        m_availableForTMVPRefFlag;
   UInt        m_layerId;
@@ -2011,12 +2009,8 @@ private:
   Bool        m_pocMsbValPresentFlag;
   Bool        m_pocMsbValNeeded;
   Int         m_pocResetDeltaPoc;
-#if POC_RESET_IDC_ENCODER
   Int         m_pocValueBeforeReset;
-#endif
-#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   Int         m_picOrderCntLsb;
-#endif
 #if Q0048_CGS_3D_ASYMLUT
   Int        m_nCGSOverWritePPS;  // for optimization, not output to bitstream
 #endif
@@ -2136,10 +2130,8 @@ public:
 #if POC_RESET_IDC_DECODER
   Void      setPrevTid0POC( Int x ) { m_prevTid0POC = x; }
 #endif
-#if POC_RESET_IDC_ENCODER
   Void      setAssociatedIrapPocBeforeReset(Int x) { m_associatedIrapPocBeforeReset = x; }
   Int       getAssociatedIrapPocBeforeReset(     ) { return m_associatedIrapPocBeforeReset; }
-#endif
 
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr = false, TComPic** ilpPic = NULL );
 #if Q0048_CGS_3D_ASYMLUT
@@ -2184,7 +2176,7 @@ public:
 
   Void setTLayerInfo( UInt uiTLayer );
   Void decodingMarking( TComList<TComPic*>& rcListPic, Int iGOPSIze, Int& iMaxRefPicNum );
-#if POC_RESET_IDC_ENCODER
+#if SVC_POC
   Void checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic, Bool usePocBeforeReset = false);
 #else
   Void checkLeadingPictureRestrictions( TComList<TComPic*>& rcListPic );
@@ -2371,17 +2363,14 @@ public:
   Bool      getRaslPicFlag      ();
   Bool      getRadlPicFlag      ();
 #endif
-#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
   Int       getPicOrderCntLsb() { return m_picOrderCntLsb; }
   Void      setPicOrderCntLsb(Int x) { m_picOrderCntLsb = x; }
-#endif
 
-#if POC_RESET_IDC_ENCODER
   Int       getPocValueBeforeReset ()                        { return m_pocValueBeforeReset; }
   Void      setPocValueBeforeReset (Int x)                   { m_pocValueBeforeReset = x ;   }
   Void      decrementRefPocValues(Int const decrementValue);
   Int       getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal );
-#endif
+
   Int       getReferenceLayerIdc( UInt refLayerId );
 
 #endif //SVC_EXTENSION

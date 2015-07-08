@@ -133,9 +133,7 @@ TComSlice::TComSlice()
 , m_pocMsbValRequiredFlag         ( false )
 , m_pocMsbValPresentFlag          ( false )
 , m_pocMsbValNeeded               ( false )
-#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
 , m_picOrderCntLsb (0)
-#endif
 #endif //SVC_EXTENSION
 {
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
@@ -196,6 +194,7 @@ Void TComSlice::initSlice()
   m_layerId = layerId;
   m_activeNumILRRefIdx        = 0;
   m_interLayerPredEnabledFlag = 0;
+  m_picOrderCntLsb = 0;
 #endif
 
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
@@ -225,9 +224,6 @@ Void TComSlice::initSlice()
   m_pocMsbVal                     = 0;
   m_pocMsbValRequiredFlag         = false;
   m_pocMsbValPresentFlag          = false;
-#if POC_RESET_IDC_DECODER || POC_RESET_IDC_ENCODER
-  m_picOrderCntLsb = 0;
-#endif
   m_pocMsbValNeeded  = false;
   m_pocResetDeltaPoc = 0;
 }
@@ -286,8 +282,8 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic, Int poc)
   TComPic*                      pcPic = *(iterPic);
   while ( iterPic != rcListPic.end() )
   {
-#if POC_RESET_IDC_ENCODER
-    if( (pcPic->getPOC() == poc) && (pcPic->getSlice(0)->isReferenced()) )
+#if SVC_EXTENSION
+    if( pcPic->getPOC() == poc && pcPic->getSlice(0)->isReferenced() )
 #else
     if(pcPic->getPOC() == poc)
 #endif
@@ -885,33 +881,27 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
       rpcPic = *(iterPic);
       rpcPic->setCurrSliceIdx(0);
 #if NO_CLRAS_OUTPUT_FLAG
-#if POC_RESET_IDC_ENCODER
-      if (noClrasOutputFlag)
+      if( noClrasOutputFlag )
       {
         rpcPic->getSlice(0)->setReferenced(false);  // all layers // TODO. This does not mark all layers
       }
       else
       {
-        if (rpcPic->getLayerId() == m_layerId) rpcPic->getSlice(0)->setReferenced(false);  // only current layer
+        if( rpcPic->getLayerId() == m_layerId )
+        {
+          rpcPic->getSlice(0)->setReferenced(false);  // only current layer
+        }
       }
-#else
-      if (noClrasOutputFlag)
-      {
-        if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);  // all layers
-      }
-      else
-      {
-        if (rpcPic->getPOC() != pocCurr && rpcPic->getLayerId() == m_layerId) rpcPic->getSlice(0)->setReferenced(false);  // only current layer
-      }
-#endif
 #else
       if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);
 #endif
       iterPic++;
     }
-#if POC_RESET_IDC_ENCODER
-    this->getPic()->getSlice(0)->setReferenced(true);   // Mark the current picture back as refererced.
+
+#if SVC_EXTENSION
+    m_pcPic->getSlice(0)->setReferenced(true);   // Mark the current picture back as refererced.
 #endif
+
     if ( getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP )
@@ -1140,7 +1130,7 @@ Bool TComSlice::isStepwiseTemporalLayerSwitchingPointCandidate(TComList<TComPic*
   return true;
 }
 
-#if POC_RESET_IDC_ENCODER
+#if SVC_POC
 Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic, Bool usePocBeforeReset)
 #else
 Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
@@ -1229,7 +1219,7 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
          nalUnitType == NAL_UNIT_CODED_SLICE_IDR_N_LP    ||
          nalUnitType == NAL_UNIT_CODED_SLICE_IDR_W_RADL)
       {
-#if POC_RESET_IDC_ENCODER
+#if SVC_POC
         if( usePocBeforeReset )
         {
           assert(rpcPic->getSlice(0)->getPocValueBeforeReset() < this->getPocValueBeforeReset());
@@ -1258,7 +1248,7 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
           // rpcPic must not be the IRAP picture
           if(this->getAssociatedIRAPPOC() != rpcPic->getPOC())
           {
-#if POC_RESET_IDC_ENCODER
+#if SVC_POC
             if( usePocBeforeReset )
             {
               assert(rpcPic->getSlice(0)->getPocValueBeforeReset() < this->getPocValueBeforeReset());
@@ -1286,7 +1276,7 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
         {
           // rpcPic is a picture that preceded the leading in decoding order since it exist in the DPB
           // rpcPic would violate the constraint if it was a trailing picture
-#if POC_RESET_IDC_ENCODER
+#if SVC_POC
           if( usePocBeforeReset )
           {
             assert(rpcPic->getPOC() <= this->getAssociatedIrapPocBeforeReset());
@@ -3846,7 +3836,7 @@ Bool TComSlice::getRadlPicFlag      ()
   || getNalUnitType() == NAL_UNIT_CODED_SLICE_RADL_N;
 }
 #endif
-#if POC_RESET_IDC_ENCODER
+
 Void TComSlice::decrementRefPocValues(Int const decrementValue)
 {
   for(Int listNum = 0; listNum < 2; listNum++)
@@ -3877,7 +3867,6 @@ Int TComSlice::getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal 
     return prevMsb;
   }
 }
-#endif
 
 Void TComSlice::setRefPicListModificationSvc()
 {

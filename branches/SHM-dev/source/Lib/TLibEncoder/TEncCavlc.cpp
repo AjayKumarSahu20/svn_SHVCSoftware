@@ -984,7 +984,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     if( !pcSlice->getIdrPicFlag() )
 #endif
     {
-#if SVC_EXTENSION && POC_RESET_IDC_ENCODER
+#if SVC_POC
       Int picOrderCntLSB;
       if( pcSlice->getPocResetIdc() == 2 )  // i.e. the LSB is reset
       {
