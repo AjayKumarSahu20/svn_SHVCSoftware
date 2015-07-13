@@ -1652,8 +1652,6 @@ Void TComTrQuant::applyForwardRDPCM( TComTU& rTu, const ComponentID compID, Pel*
   const Bool rotateResidual = rTu.isNonTransformedResidualRotated(compID);
   const UInt uiSizeMinus1   = (uiWidth * uiHeight) - 1;
 
-  Pel reconstructedResi[MAX_TU_SIZE * MAX_TU_SIZE];
-
   UInt uiX = 0;
   UInt uiY = 0;
 
@@ -1692,14 +1690,9 @@ Void TComTrQuant::applyForwardRDPCM( TComTU& rTu, const ComponentID compID, Pel*
 
       uiAbsSum += abs(pcCoeff[coefficientIndex]);
 
-      if (mode == RDPCM_OFF)
-      {
-        reconstructedResi[sampleIndex] = reconstructedDelta;
-      }
-      else
+      if (mode != RDPCM_OFF)
       {
         accumulatorValue += reconstructedDelta;
-        reconstructedResi[sampleIndex] = (Pel) Clip3<TCoeff>(pelMin, pelMax, accumulatorValue);
       }
     }
   }
