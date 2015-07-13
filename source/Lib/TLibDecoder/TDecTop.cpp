@@ -674,7 +674,7 @@ Void TDecTop::xActivateParameterSets()
     m_cCuDecoder.create ( sps->getMaxCUDepth(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getChromaFormatIdc() );
     m_cCuDecoder.init   ( &m_cEntropyDecoder, &m_cTrQuant, &m_cPrediction );
 #endif
-    m_cTrQuant.init     ( sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTrSize());
+    m_cTrQuant.init     ( sps->getMaxTrSize() );
 
     m_cSliceDecoder.create();
   }
