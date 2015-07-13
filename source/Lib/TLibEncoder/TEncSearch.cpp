@@ -2217,7 +2217,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
       Int   uiPreds[3] = {-1, -1, -1};
       Int   iMode = -1;
       Bool  skipFastHAD = false;
-      Int numCand = pcCU->getIntraDirPredictor( uiPartOffset, uiPreds, COMPONENT_Y, &iMode );
+      pcCU->getIntraDirPredictor( uiPartOffset, uiPreds, COMPONENT_Y, &iMode );
 
       if( m_pcEncCfg->getUseFastIntraScalable() && pcCU->getLayerId() > 0 )
       {
@@ -2291,12 +2291,9 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
       Int uiPreds[NUM_MOST_PROBABLE_MODES] = {-1, -1, -1};
 
       Int iMode = -1;
-      Int numCand = pcCU->getIntraDirPredictor( uiPartOffset, uiPreds, COMPONENT_Y, &iMode );
+      pcCU->getIntraDirPredictor( uiPartOffset, uiPreds, COMPONENT_Y, &iMode );
 #endif
-      if( iMode >= 0 )
-      {
-        numCand = iMode;
-      }
+      const Int numCand = ( iMode >= 0 ) ? iMode : Int(NUM_MOST_PROBABLE_MODES);      
 
       for( Int j=0; j < numCand; j++)
       {
