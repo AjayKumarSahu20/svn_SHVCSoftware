@@ -60,11 +60,12 @@ struct OutputNALUnit : public NALUnit
     NalUnitType nalUnitType,
     UInt temporalID = 0,
 #if SVC_EXTENSION
-    UInt     layerId = 0,
-#endif
+    UInt     layerId = 0)
+#else
     UInt reserved_zero_6bits = 0)
+#endif
 #if SVC_EXTENSION
-  : NALUnit(nalUnitType, temporalID, layerId, reserved_zero_6bits)
+  : NALUnit(nalUnitType, temporalID, layerId)
 #else
   : NALUnit(nalUnitType, temporalID, reserved_zero_6bits)
 #endif

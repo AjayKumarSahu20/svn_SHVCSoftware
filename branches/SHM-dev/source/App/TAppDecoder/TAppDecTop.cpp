@@ -234,19 +234,19 @@ Void TAppDecTop::decode()
       read(nalu, nalUnit);
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
 #if CONFORMANCE_BITSTREAM_MODE
-        (nalu.m_layerId > m_commonDecoderParams.getTargetLayerId()) )
+        (nalu.m_nuhLayerId > m_commonDecoderParams.getTargetLayerId()) )
 #else
-        (nalu.m_layerId > m_tgtLayerId) )
+        (nalu.m_nuhLayerId > m_tgtLayerId) )
 #endif
       {
         bNewPicture = false;
       }
       else
       {
-        bNewPicture = m_acTDecTop[nalu.m_layerId].decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_layerId], curLayerId, bNewPOC);
+        bNewPicture = m_acTDecTop[nalu.m_nuhLayerId].decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_nuhLayerId], curLayerId, bNewPOC);
 
 #if SVC_POC
-        if( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_layerId].getParseIdc() == 0) )
+        if( (bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0) )
 #else
         if (bNewPicture)
 #endif
@@ -266,7 +266,7 @@ Void TAppDecTop::decode()
 #endif
         }
 #if SVC_POC
-        else if(m_acTDecTop[nalu.m_layerId].getParseIdc() == 1) 
+        else if(m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 1) 
         {
           bitstreamFile.clear();
           // This is before third parse of the NAL unit, and 
@@ -282,11 +282,11 @@ Void TAppDecTop::decode()
     }
 
 #if SVC_POC
-    if( ( (bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
-        !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
+    if( ( (bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
+        !m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence() )
 #else
     if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS) &&
-        !m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence() )
+        !m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence() )
 #endif
     {
       // Set bitdepth for each layer when doing DBF
@@ -301,19 +301,19 @@ Void TAppDecTop::decode()
 
       if (nalu.m_nalUnitType == NAL_UNIT_EOS)
       {
-        m_acTDecTop[nalu.m_layerId].setFirstSliceInSequence(true);
+        m_acTDecTop[nalu.m_nuhLayerId].setFirstSliceInSequence(true);
       }
     }
     else if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) &&
-              m_acTDecTop[nalu.m_layerId].getFirstSliceInSequence () ) 
+              m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence () ) 
     {
-      m_acTDecTop[nalu.m_layerId].setFirstSliceInPicture (true);
+      m_acTDecTop[nalu.m_nuhLayerId].setFirstSliceInPicture (true);
     }
 
 #if SVC_POC
-    if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() == 0 )
+    if( bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0 )
     {
-      outputAllPictures( nalu.m_layerId, true );
+      outputAllPictures( nalu.m_nuhLayerId, true );
     }
 #endif
 
@@ -332,18 +332,18 @@ Void TAppDecTop::decode()
 #if ALIGNED_BUMPING
       Bool outputPicturesFlag = true;  
 
-      if( m_acTDecTop[nalu.m_layerId].getNoOutputPriorPicsFlag() )
+      if( m_acTDecTop[nalu.m_nuhLayerId].getNoOutputPriorPicsFlag() )
       {
         outputPicturesFlag = false;
       }
 
       if (nalu.m_nalUnitType == NAL_UNIT_EOS) // End of sequence
       {
-        flushAllPictures( nalu.m_layerId, outputPicturesFlag );       
+        flushAllPictures( nalu.m_nuhLayerId, outputPicturesFlag );       
       }
 
 #if SVC_POC
-      if( bNewPicture && m_acTDecTop[nalu.m_layerId].getParseIdc() != 0 )
+      if( bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() != 0 )
       // New picture, slice header parsed but picture not decoded
 #else
       if( bNewPicture ) // New picture, slice header parsed but picture not decoded
@@ -355,11 +355,11 @@ Void TAppDecTop::decode()
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_RADL
             || nalu.m_nalUnitType == NAL_UNIT_CODED_SLICE_BLA_W_LP   )
         {
-          flushAllPictures( nalu.m_layerId, outputPicturesFlag );
+          flushAllPictures( nalu.m_nuhLayerId, outputPicturesFlag );
         }
         else
         {
-          this->checkOutputBeforeDecoding( nalu.m_layerId );
+          this->checkOutputBeforeDecoding( nalu.m_nuhLayerId );
         }
       }
 
@@ -1241,14 +1241,14 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
     return true;
   }
 #if SVC_EXTENSION
-  if (nalu->m_layerId == 0 && (nalu->m_nalUnitType == NAL_UNIT_VPS || nalu->m_nalUnitType == NAL_UNIT_SPS || nalu->m_nalUnitType == NAL_UNIT_PPS || nalu->m_nalUnitType == NAL_UNIT_EOS))
+  if (nalu->m_nuhLayerId == 0 && (nalu->m_nalUnitType == NAL_UNIT_VPS || nalu->m_nalUnitType == NAL_UNIT_SPS || nalu->m_nalUnitType == NAL_UNIT_PPS || nalu->m_nalUnitType == NAL_UNIT_EOS))
   {
     return true;
   }
 #endif
   for (std::vector<Int>::iterator it = m_targetDecLayerIdSet.begin(); it != m_targetDecLayerIdSet.end(); it++)
   {
-    if ( nalu->m_reservedZero6Bits == (*it) )
+    if ( nalu->m_nuhLayerId == (*it) )
     {
       return true;
     }

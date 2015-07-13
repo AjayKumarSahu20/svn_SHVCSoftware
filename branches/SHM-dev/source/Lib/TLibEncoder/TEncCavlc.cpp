@@ -784,7 +784,7 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
   assert( pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1 );
 #else
   WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
-  WRITE_CODE( 0,                                    6,        "vps_reserved_zero_6bits" );
+  WRITE_CODE( 0,                                    6,        "vps_max_layers_minus1" );
 #endif
   WRITE_CODE( pcVPS->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1" );
   WRITE_FLAG( pcVPS->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag" );

@@ -1903,7 +1903,7 @@ Void TAppEncTop::encode()
       if( bEos )
       {
         OutputNALUnit nalu(NAL_UNIT_EOB);
-        nalu.m_layerId = 0;
+        nalu.m_nuhLayerId = 0;
 
         AccessUnit& accessUnit = outputAccessUnits.back();
         nalu.m_temporalId = 0;

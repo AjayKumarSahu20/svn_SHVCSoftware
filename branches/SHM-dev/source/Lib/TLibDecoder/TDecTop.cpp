@@ -722,7 +722,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
 {
 #if SVC_EXTENSION
-  m_apcSlicePilot->initSlice( nalu.m_layerId );
+  m_apcSlicePilot->initSlice( nalu.m_nuhLayerId );
   m_apcSlicePilot->setTLayer( nalu.m_temporalId );
 #else //SVC_EXTENSION
   m_apcSlicePilot->initSlice(); // the slice pilot is an object to prepare for a new slice
@@ -767,7 +767,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   // Following check should go wherever the VPS is activated
   if( !vps->getBaseLayerAvailableFlag() )
   {
-    assert( nalu.m_layerId != 0 );
+    assert( nalu.m_nuhLayerId != 0 );
     assert( vps->getNumAddLayerSets() > 0 );
 
     if( m_commonDecoderParams->getTargetOutputLayerSetIdx() >= 0 )
@@ -1511,8 +1511,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   m_pcPic->setTLayer(nalu.m_temporalId);
 
 #if SVC_EXTENSION
-  m_pcPic->setLayerId(nalu.m_layerId);
-  pcSlice->setLayerId(nalu.m_layerId);
+  m_pcPic->setLayerId(nalu.m_nuhLayerId);
+  pcSlice->setLayerId(nalu.m_nuhLayerId);
   pcSlice->setPic(m_pcPic);
 #endif
 
@@ -1927,13 +1927,21 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay, 
 Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
 {
+#if !SVC_EXTENSION
+  // ignore all NAL units of layers > 0
+  if (nalu.m_nuhLayerId > 0)
+  {
+    fprintf (stderr, "Warning: found NAL unit with nuh_layer_id equal to %d. Ignoring.\n", nalu.m_nuhLayerId);
+    return false;
+  }
+#endif
   // Initialize entropy decoder
   m_cEntropyDecoder.setEntropyDecoder (&m_cCavlcDecoder);
   m_cEntropyDecoder.setBitstream      (nalu.m_Bitstream);
 
 #if SVC_EXTENSION
   // ignore any NAL units with nuh_layer_id == 63
-  if( nalu.m_layerId == 63 )
+  if( nalu.m_nuhLayerId == 63 )
   {  
     return false;
   }
@@ -1942,7 +1950,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   {
     case NAL_UNIT_VPS:
 #if SVC_EXTENSION
-      assert( nalu.m_layerId == 0 ); // Non-conforming bitstream. The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
+      assert( nalu.m_nuhLayerId == 0 ); // Non-conforming bitstream. The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #endif
       xDecodeVPS(nalu.m_Bitstream->getFifo());
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
@@ -2040,7 +2048,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_EOB:
 #if SVC_EXTENSION
       //Check layer id of the nalu. if it is not 0, give a warning message.
-      if (nalu.m_layerId > 0)
+      if (nalu.m_nuhLayerId > 0)
       {
         printf( "\n\nThis bitstream is ended with EOB NALU that has layer id greater than 0\n" );
       }

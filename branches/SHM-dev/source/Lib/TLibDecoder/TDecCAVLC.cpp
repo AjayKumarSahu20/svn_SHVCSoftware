@@ -1005,7 +1005,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   assert( pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1 );
 #else
   READ_CODE( 2,  uiCode,  "vps_reserved_three_2bits" );           assert(uiCode == 3);
-  READ_CODE( 6,  uiCode,  "vps_reserved_zero_6bits" );            assert(uiCode == 0);
+  READ_CODE( 6,  uiCode,  "vps_max_layers_minus1" );
 #endif
   READ_CODE( 3,  uiCode,  "vps_max_sub_layers_minus1" );          pcVPS->setMaxTLayers( uiCode + 1 );    assert(uiCode+1 <= MAX_TLAYER);
   READ_FLAG(     uiCode,  "vps_temporal_id_nesting_flag" );       pcVPS->setTemporalNestingFlag( uiCode ? true:false );
