@@ -91,8 +91,7 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MAIN_444_INTRA    = 2308,
   MAIN_444_10_INTRA = 2310,
   MAIN_444_12_INTRA = 2312,
-  MAIN_444_16_INTRA = 2316,
-
+  MAIN_444_16_INTRA = 2316
 };
 
 
@@ -225,7 +224,6 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
     in>>entry.m_referencePics[i];
   }
   in>>entry.m_interRPSPrediction;
-#if AUTO_INTER_RPS
   if (entry.m_interRPSPrediction==1)
   {
     in>>entry.m_deltaRPS;
@@ -239,17 +237,6 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
   {
     in>>entry.m_deltaRPS;
   }
-#else
-  if (entry.m_interRPSPrediction)
-  {
-    in>>entry.m_deltaRPS;
-    in>>entry.m_numRefIdc;
-    for ( Int i = 0; i < entry.m_numRefIdc; i++ )
-    {
-      in>>entry.m_refIdc[i];
-    }
-  }
-#endif
   return in;
 }
 
@@ -2645,7 +2632,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       fclose(fpt);
     }
-  }  
+  }
 #endif
 
   if( m_masteringDisplay.colourVolumeSEIEnabled )
@@ -3374,7 +3361,7 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   memset( m_extraRPSs, 0, sizeof( m_extraRPSs ) );
 #else
-  m_extraRPSs=0;                                     
+  m_extraRPSs=0;                                    
 #endif
 
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
