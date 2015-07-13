@@ -2138,7 +2138,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
       {
         // For independent base layer rewriting
-        nalu.m_layerId = 0; 
+        nalu.m_nuhLayerId = 0; 
       }
 #else
       nalu = NALUnit(NAL_UNIT_SPS);
@@ -2162,7 +2162,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
       {
         // For independent base layer rewriting
-        nalu.m_layerId = 0;
+        nalu.m_nuhLayerId = 0;
       }
 #else
       nalu = NALUnit(NAL_UNIT_PPS);
