@@ -257,7 +257,7 @@ Void TEncTop::init(Bool isFieldCoding)
                   );
 
   // initialize encoder search class
-  m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, 0, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
+  m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
 
   m_iMaxRefPicNum = 0;
 
@@ -678,6 +678,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   // At this point, the SPS and PPS can be considered activated - they are copied to the new TComPic.
 
   TComSlice::sortPicList(m_cListPic);
+
 
   if (m_cListPic.size() >= (UInt)(m_iGOPSize + getMaxDecPicBuffering(MAX_TLAYER-1) + 2) )
   {
@@ -1102,6 +1103,7 @@ Void TEncTop::xInitPPS()
   m_cPPS.setLog2ParallelMergeLevelMinus2   (m_log2ParallelMergeLevelMinus2 );
   m_cPPS.setCabacInitPresentFlag(CABAC_INIT_PRESENT_FLAG);
   m_cPPS.setLoopFilterAcrossSlicesEnabledFlag( m_bLFCrossSliceBoundaryFlag );
+
 
   Int histogram[MAX_NUM_REF + 1];
   for( Int i = 0; i <= MAX_NUM_REF; i++ )
