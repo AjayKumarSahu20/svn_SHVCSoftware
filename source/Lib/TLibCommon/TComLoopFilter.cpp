@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -475,10 +475,22 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle ( TComDataCU* pCtu, DeblockEdgeD
         TComMv pcMvQ0 = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartQ);
         TComMv pcMvQ1 = pcCUQ->getCUMvField(REF_PIC_LIST_1)->getMv(uiPartQ);
 
-        if (piRefP0 == NULL) pcMvP0.setZero();
-        if (piRefP1 == NULL) pcMvP1.setZero();
-        if (piRefQ0 == NULL) pcMvQ0.setZero();
-        if (piRefQ1 == NULL) pcMvQ1.setZero();
+        if (piRefP0 == NULL)
+        {
+          pcMvP0.setZero();
+        }
+        if (piRefP1 == NULL)
+        {
+          pcMvP1.setZero();
+        }
+        if (piRefQ0 == NULL)
+        {
+          pcMvQ0.setZero();
+        }
+        if (piRefQ1 == NULL)
+        {
+          pcMvQ1.setZero();
+        }
 
         if ( ((piRefP0==piRefQ0)&&(piRefP1==piRefQ1)) || ((piRefP0==piRefQ1)&&(piRefP1==piRefQ0)) )
         {
@@ -527,8 +539,14 @@ Void TComLoopFilter::xGetBoundaryStrengthSingle ( TComDataCU* pCtu, DeblockEdgeD
         TComMv pcMvP0 = pcCUP->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartP);
         TComMv pcMvQ0 = pcCUQ->getCUMvField(REF_PIC_LIST_0)->getMv(uiPartQ);
 
-        if (piRefP0 == NULL) pcMvP0.setZero();
-        if (piRefQ0 == NULL) pcMvQ0.setZero();
+        if (piRefP0 == NULL)
+        {
+          pcMvP0.setZero();
+        }
+        if (piRefQ0 == NULL)
+        {
+          pcMvQ0.setZero();
+        }
 
         uiBs  = ((piRefP0 != piRefQ0) ||
                  (abs(pcMvQ0.getHor() - pcMvP0.getHor()) >= 4) ||
@@ -766,8 +784,14 @@ Void TComLoopFilter::xEdgeFilterChroma( TComDataCU* pcCU, UInt uiAbsZorderIdx, U
         iQP = ((iQP_P + iQP_Q + 1) >> 1) + chromaQPOffset;
         if (iQP >= chromaQPMappingTableSize)
         {
-          if (pcPicYuvRec->getChromaFormat()==CHROMA_420) iQP -=6;
-          else if (iQP>51) iQP=51;
+          if (pcPicYuvRec->getChromaFormat()==CHROMA_420)
+          {
+            iQP -=6;
+          }
+          else if (iQP>51)
+          {
+            iQP=51;
+          }
         }
         else if (iQP >= 0 )
         {

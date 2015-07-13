@@ -217,7 +217,10 @@ Void TComSlice::initSlice()
 
   m_bCheckLDC = false;
 
-  for (UInt component = 0; component < MAX_NUM_COMPONENT; component++) m_iSliceChromaQpDelta[component] = 0;
+  for (UInt component = 0; component < MAX_NUM_COMPONENT; component++)
+  {
+    m_iSliceChromaQpDelta[component] = 0;
+  }
 
   m_maxNumMergeCand = MRG_MAX_NUM_CANDS;
 
@@ -251,7 +254,10 @@ Void  TComSlice::sortPicList        (TComList<TComPic*>& rcListPic)
   for (Int i = 1; i < (Int)(rcListPic.size()); i++)
   {
     iterPicExtract = rcListPic.begin();
-    for (Int j = 0; j < i; j++) iterPicExtract++;
+    for (Int j = 0; j < i; j++)
+    {
+      iterPicExtract++;
+    }
     pcPicExtract = *(iterPicExtract);
     pcPicExtract->setCurrSliceIdx(0);
 
@@ -329,7 +335,7 @@ TComPic* TComSlice::xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, B
       {
         picPoc = picPoc & (pocCycle - 1);
       }
-      
+
       if (poc == picPoc)
       {
         if(pcPic->getIsLongTerm())
@@ -602,15 +608,14 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     }
 #endif //SVC_EXTENSION
 
-    for ( i=0; i<NumPocStCurr1; i++, cIdx++)
-    {
-      rpsCurrList0[cIdx] = RefPicSetStCurr1[i];
-    }
-    for ( i=0; i<NumPocLtCurr;  i++, cIdx++)
-    {
-      rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
-    } 
-
+  for ( i=0; i<NumPocStCurr1; i++, cIdx++)
+  {
+    rpsCurrList0[cIdx] = RefPicSetStCurr1[i];
+  }
+  for ( i=0; i<NumPocLtCurr;  i++, cIdx++)
+  {
+    rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
+  }
   assert(cIdx == numPocTotalCurr);
 
   if (m_eSliceType==B_SLICE)
@@ -892,7 +897,10 @@ Void TComSlice::decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComL
         }
       }
 #else
-      if (rpcPic->getPOC() != pocCurr) rpcPic->getSlice(0)->setReferenced(false);
+      if (rpcPic->getPOC() != pocCurr)
+      {
+        rpcPic->getSlice(0)->setReferenced(false);
+      }
 #endif
       iterPic++;
     }
@@ -990,7 +998,10 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 
   m_bCheckLDC             = pSrc->m_bCheckLDC;
   m_iSliceQpDelta        = pSrc->m_iSliceQpDelta;
-  for (UInt component = 0; component < MAX_NUM_COMPONENT; component++) m_iSliceChromaQpDelta[component] = pSrc->m_iSliceChromaQpDelta[component];
+  for (UInt component = 0; component < MAX_NUM_COMPONENT; component++)
+  {
+    m_iSliceChromaQpDelta[component] = pSrc->m_iSliceChromaQpDelta[component];
+  }
   for (i = 0; i < NUM_REF_PIC_LIST_01; i++)
   {
     for (j = 0; j < MAX_NUM_REF; j++)
@@ -2732,6 +2743,7 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
   fclose(fp);
   return false;
 }
+
 
 /** get default address of quantization matrix
  * \param sizeId size index

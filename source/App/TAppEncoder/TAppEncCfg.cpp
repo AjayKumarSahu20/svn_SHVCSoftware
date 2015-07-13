@@ -557,7 +557,10 @@ static inline istream& operator >> (istream &in, SMultiValueInput<UInt> &values)
       // soak up any whitespace and up to 1 comma.
       pStr=eptr;
       for(;isspace(*pStr);pStr++);
-      if (*pStr == ',') pStr++;
+      if (*pStr == ',')
+      {
+        pStr++;
+      }
       for(;isspace(*pStr);pStr++);
     }
   }
@@ -603,7 +606,10 @@ static inline istream& operator >> (istream &in, SMultiValueInput<Int> &values)
       // soak up any whitespace and up to 1 comma.
       pStr=eptr;
       for(;isspace(*pStr);pStr++);
-      if (*pStr == ',') pStr++;
+      if (*pStr == ',')
+      {
+        pStr++;
+      }
       for(;isspace(*pStr);pStr++);
     }
   }
@@ -649,7 +655,10 @@ static inline istream& operator >> (istream &in, SMultiValueInput<Bool> &values)
       // soak up any whitespace and up to 1 comma.
       pStr=eptr;
       for(;isspace(*pStr);pStr++);
-      if (*pStr == ',') pStr++;
+      if (*pStr == ',')
+      {
+        pStr++;
+      }
       for(;isspace(*pStr);pStr++);
     }
   }
@@ -672,9 +681,18 @@ automaticallySelectRExtProfile(const Bool bUsingGeneralRExtTools,
 {
   // Try to choose profile, according to table in Q1013.
   UInt trialBitDepthConstraint=maxBitDepth;
-  if (trialBitDepthConstraint<8) trialBitDepthConstraint=8;
-  else if (trialBitDepthConstraint==9 || trialBitDepthConstraint==11) trialBitDepthConstraint++;
-  else if (trialBitDepthConstraint>12) trialBitDepthConstraint=16;
+  if (trialBitDepthConstraint<8)
+  {
+    trialBitDepthConstraint=8;
+  }
+  else if (trialBitDepthConstraint==9 || trialBitDepthConstraint==11)
+  {
+    trialBitDepthConstraint++;
+  }
+  else if (trialBitDepthConstraint>12)
+  {
+    trialBitDepthConstraint=16;
+  }
 
   // both format and bit depth constraints are unspecified
   if (bUsingExtendedPrecision || trialBitDepthConstraint==16)
@@ -712,9 +730,18 @@ automaticallySelectRExtProfile(const Bool bUsingGeneralRExtTools,
   {
     bitDepthConstraint = trialBitDepthConstraint;
     chromaFormatConstraint = chromaFormat;
-    if (bUsingChromaQPAdjustment && chromaFormat == CHROMA_420) chromaFormatConstraint = CHROMA_422; // 4:2:0 cannot use the chroma qp tool.
-    if (chromaFormatConstraint == CHROMA_422 && bitDepthConstraint == 8) bitDepthConstraint = 10; // there is no 8-bit 4:2:2 profile.
-    if (chromaFormatConstraint == CHROMA_420 && !bIntraConstraintFlag) bitDepthConstraint = 12; // there is no 8 or 10-bit 4:2:0 inter RExt profile.
+    if (bUsingChromaQPAdjustment && chromaFormat == CHROMA_420)
+    {
+      chromaFormatConstraint = CHROMA_422; // 4:2:0 cannot use the chroma qp tool.
+    }
+    if (chromaFormatConstraint == CHROMA_422 && bitDepthConstraint == 8)
+    {
+      bitDepthConstraint = 10; // there is no 8-bit 4:2:2 profile.
+    }
+    if (chromaFormatConstraint == CHROMA_420 && !bIntraConstraintFlag)
+    {
+      bitDepthConstraint = 12; // there is no 8 or 10-bit 4:2:0 inter RExt profile.
+    }
   }
 }
 // ====================================================================================================================
@@ -1650,7 +1677,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif //SVC_EXTENSION
   ;
 
-  for(Int i=1; i<MAX_GOP+1; i++) {
+  for(Int i=1; i<MAX_GOP+1; i++)
+  {
     std::ostringstream cOSS;
     cOSS<<"Frame"<<i;
     opts.addOptions()(cOSS.str(), m_GOPList[i-1], GOPEntry());
@@ -1765,7 +1793,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_tileColumnWidth.resize(m_numTileColumnsMinus1);
       for(UInt i=0; i<cfg_ColumnWidth.values.size(); i++)
+      {
         m_tileColumnWidth[i]=cfg_ColumnWidth.values[i];
+      }
     }
   }
   else
@@ -1789,7 +1819,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     {
       m_tileRowHeight.resize(m_numTileRowsMinus1);
       for(UInt i=0; i<cfg_RowHeight.values.size(); i++)
+      {
         m_tileRowHeight[i]=cfg_RowHeight.values[i];
+      }
     }
   }
   else
@@ -1926,13 +1958,34 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #else
  /* rules for input, output and internal bitdepths as per help text */
-  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] == 0) { m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-  if (m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-  if (m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-  if (m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-  if (m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-  if (m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
+  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0)
+  {
+    m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] == 0)
+  {
+    m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0)
+  {
+    m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0)
+  {
+    m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0)
+  {
+    m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0)
+  {
+    m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_internalBitDepth   [CHANNEL_TYPE_LUMA  ];
+  }
+  if (m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0)
+  {
+    m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_internalBitDepth   [CHANNEL_TYPE_CHROMA];
+  }
 
   m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
   m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
@@ -1962,7 +2015,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   if (m_profile == Profile::HIGHTHROUGHPUTREXT )
   {
-    if (m_bitDepthConstraint == 0) m_bitDepthConstraint = 16;
+    if (m_bitDepthConstraint == 0)
+    {
+      m_bitDepthConstraint = 16;
+    }
     m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_444 : numberToChromaFormat(tmpConstraintChromaFormat);
   }
   else if (m_profile == Profile::MAINREXT)
@@ -2580,7 +2636,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       Int iPOC = 0;
       while ( iPOC < m_framesToBeEncoded )
       {
-        if ( fscanf(fpt, "%d", &iValue ) == EOF ) break;
+        if ( fscanf(fpt, "%d", &iValue ) == EOF )
+        {
+          break;
+        }
         m_aidQP[ iPOC ] = iValue;
         iPOC++;
       }
@@ -3193,14 +3252,18 @@ Void TAppEncCfg::xCheckParameter()
   {
     ui >>= 1;
     if( (ui & 1) == 1)
+    {
       xConfirmPara( ui != 1 , "Width should be 2^n");
+    }
   }
   ui = m_uiMaxCUHeight;
   while(ui)
   {
     ui >>= 1;
     if( (ui & 1) == 1)
+    {
       xConfirmPara( ui != 1 , "Height should be 2^n");
+    }
   }
 #endif
 
@@ -4006,7 +4069,8 @@ Void TAppEncCfg::xCheckParameter()
   if (m_kneeSEIEnabled && !m_kneeSEICancelFlag)
   {
     xConfirmPara( m_kneeSEINumKneePointsMinus1 < 0 || m_kneeSEINumKneePointsMinus1 > 998, "SEIKneeFunctionNumKneePointsMinus1 must be in the range of 0 to 998");
-    for ( UInt i=0; i<=m_kneeSEINumKneePointsMinus1; i++ ){
+    for ( UInt i=0; i<=m_kneeSEINumKneePointsMinus1; i++ )
+    {
       xConfirmPara( m_kneeSEIInputKneePoint[i] < 1 || m_kneeSEIInputKneePoint[i] > 999, "SEIKneeFunctionInputKneePointValue must be in the range of 1 to 999");
       xConfirmPara( m_kneeSEIOutputKneePoint[i] < 0 || m_kneeSEIOutputKneePoint[i] > 1000, "SEIKneeFunctionInputKneePointValue must be in the range of 0 to 1000");
       if ( i > 0 )
@@ -4242,7 +4306,10 @@ Void TAppEncCfg::xSetGlobal()
 
   // compute actual CU depth with respect to config depth and max transform size
   g_uiAddCUDepth  = 0;
-  while( (m_uiMaxCUWidth>>m_uiMaxCUDepth) > ( 1 << ( m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) ) g_uiAddCUDepth++;
+  while( (m_uiMaxCUWidth>>m_uiMaxCUDepth) > ( 1 << ( m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )
+  {
+    g_uiAddCUDepth++;
+  }
 
   g_uiAddCUDepth+=getMaxCUDepthOffset(m_chromaFormatIDC, m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
 
@@ -4260,9 +4327,7 @@ Void TAppEncCfg::xSetGlobal()
     g_bitDepth   [channelType] = m_internalBitDepth[channelType];
 #endif
     g_PCMBitDepth[channelType] = m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[channelType] : m_internalBitDepth[channelType];
-
-    if (m_useExtendedPrecision) g_maxTrDynamicRange[channelType] = std::max<Int>(15, (g_bitDepth[channelType] + 6));
-    else                        g_maxTrDynamicRange[channelType] = 15;
+    g_maxTrDynamicRange[channelType] = m_useExtendedPrecision? std::max<Int>(15, (g_bitDepth[channelType] + 6)) : 15;
   }
 
 }
@@ -4274,7 +4339,10 @@ const Char *profileToString(const Profile::Name profile)
 
   for (UInt profileIndex = 0; profileIndex < numberOfProfiles; profileIndex++)
   {
-    if (strToProfile[profileIndex].value == profile) return strToProfile[profileIndex].str;
+    if (strToProfile[profileIndex].value == profile)
+    {
+      return strToProfile[profileIndex].str;
+    }
   }
 
   //if we get here, we didn't find this profile in the list - so there is an error
@@ -4344,8 +4412,14 @@ Void TAppEncCfg::xPrintParameter()
     const UInt chromaFormatIdx = UInt(m_chromaFormatConstraint);
     const ExtendedProfileName validProfileName = (bitDepthIdx > 3 || chromaFormatIdx>3) ? NONE : validRExtProfileNames[intraIdx][bitDepthIdx][chromaFormatIdx];
     std::string rextSubProfile;
-    if (validProfileName!=NONE) rextSubProfile=enumToString(strToExtendedProfile, sizeof(strToExtendedProfile)/sizeof(*strToExtendedProfile), validProfileName);
-    if (rextSubProfile == "main_444_16") rextSubProfile="main_444_16 [NON STANDARD]";
+    if (validProfileName!=NONE)
+    {
+      rextSubProfile=enumToString(strToExtendedProfile, sizeof(strToExtendedProfile)/sizeof(*strToExtendedProfile), validProfileName);
+    }
+    if (rextSubProfile == "main_444_16")
+    {
+      rextSubProfile="main_444_16 [NON STANDARD]";
+    }
     printf("Profile                           : %s (%s)\n", profileToString(m_profile), (rextSubProfile.empty())?"INVALID REXT PROFILE":rextSubProfile.c_str() );
   }
   else
@@ -4510,7 +4584,9 @@ Void TAppEncCfg::xPrintParameter()
 Bool confirmPara(Bool bflag, const Char* message)
 {
   if (!bflag)
+  {
     return false;
+  }
 
   printf("Error: %s\n",message);
   return true;

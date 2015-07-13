@@ -55,7 +55,7 @@
 // Class definition
 // ====================================================================================================================
 #if !SVC_EXTENSION
-extern UInt g_saoMaxOffsetQVal[MAX_NUM_COMPONENT]; 
+extern UInt g_saoMaxOffsetQVal[MAX_NUM_COMPONENT];
 #endif
 
 template <typename T> Int sgn(T val)

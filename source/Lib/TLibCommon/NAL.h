@@ -52,7 +52,7 @@ struct NALUnit
   UInt        m_nuhLayerId;  ///< nuh_layer_id
 
   /** construct an NALunit structure with given header values. */
-NALUnit(
+  NALUnit(
     NalUnitType nalUnitType,
     Int         temporalId = 0,
     Int         nuhLayerId = 0)
@@ -86,7 +86,7 @@ NALUnit(
   }
   Bool isSei()
   {
-    return m_nalUnitType == NAL_UNIT_PREFIX_SEI 
+    return m_nalUnitType == NAL_UNIT_PREFIX_SEI
         || m_nalUnitType == NAL_UNIT_SUFFIX_SEI;
   }
 

@@ -435,7 +435,9 @@ Void fastForwardDst(TCoeff *block, TCoeff *coeff, Int shift)  // input block, ou
     {
       TCoeff result = 0;
       for (Int column = 0; column < 4; column++)
+      {
         result += c[column] * g_as_DST_MAT_4[TRANSFORM_FORWARD][row][column]; // use the defined matrix, rather than hard-wired numbers
+      }
 
       coeff[(row * 4) + i] = rightShift((result + rnd_factor), shift);
     }
@@ -461,7 +463,9 @@ Void fastInverseDst(TCoeff *tmp, TCoeff *block, Int shift, const TCoeff outputMi
 
       result = 0;
       for (Int row = 0; row < 4; row++)
+      {
         result += c[row] * g_as_DST_MAT_4[TRANSFORM_INVERSE][row][column]; // use the defined matrix, rather than hard-wired numbers
+      }
 
       result = Clip3( outputMinimum, outputMaximum, rightShift((result + rnd_factor), shift));
     }
@@ -861,7 +865,10 @@ Void xTrMxN(Int bitDepth, TCoeff *block, TCoeff *coeff, Int iWidth, Int iHeight,
         {
            fastForwardDst( block, tmp, shift_1st );
         }
-        else partialButterfly4 ( block, tmp, shift_1st, iHeight );
+        else
+        {
+          partialButterfly4 ( block, tmp, shift_1st, iHeight );
+        }
       }
       break;
 
@@ -880,7 +887,10 @@ Void xTrMxN(Int bitDepth, TCoeff *block, TCoeff *coeff, Int iWidth, Int iHeight,
         {
           fastForwardDst( tmp, coeff, shift_2nd );
         }
-        else partialButterfly4 ( tmp, coeff, shift_2nd, iWidth );
+        else
+        {
+          partialButterfly4 ( tmp, coeff, shift_2nd, iWidth );
+        }
       }
       break;
 
@@ -921,7 +931,10 @@ Void xITrMxN(Int bitDepth, TCoeff *coeff, TCoeff *block, Int iWidth, Int iHeight
         {
           fastInverseDst( coeff, tmp, shift_1st, clipMinimum, clipMaximum);
         }
-        else partialButterflyInverse4 ( coeff, tmp, shift_1st, iWidth, clipMinimum, clipMaximum);
+        else
+        {
+          partialButterflyInverse4 ( coeff, tmp, shift_1st, iWidth, clipMinimum, clipMaximum);
+        }
       }
       break;
 
@@ -942,7 +955,10 @@ Void xITrMxN(Int bitDepth, TCoeff *coeff, TCoeff *block, Int iWidth, Int iHeight
         {
           fastInverseDst( tmp, block, shift_2nd, std::numeric_limits<Pel>::min(), std::numeric_limits<Pel>::max() );
         }
-        else partialButterflyInverse4 ( tmp, block, shift_2nd, iHeight, std::numeric_limits<Pel>::min(), std::numeric_limits<Pel>::max());
+        else
+        {
+          partialButterflyInverse4 ( tmp, block, shift_2nd, iHeight, std::numeric_limits<Pel>::min(), std::numeric_limits<Pel>::max());
+        }
       }
       break;
 
@@ -1463,8 +1479,7 @@ Void TComTrQuant::invTransformNxN(      TComTU        &rTu,
 
       //------------------
 
-    }
-    while (subTURecurse.nextSection(rTu));
+    } while (subTURecurse.nextSection(rTu));
 
     //------------------------------------------------
 
@@ -1559,7 +1574,10 @@ Void TComTrQuant::invRecurTransformNxN( const ComponentID compID,
                                         TComYuv *pResidual,
                                         TComTU &rTu)
 {
-  if (!rTu.ProcessComponentSection(compID)) return;
+  if (!rTu.ProcessComponentSection(compID))
+  {
+    return;
+  }
 
   TComDataCU* pcCU = rTu.getCU();
   UInt absPartIdxTU = rTu.GetAbsPartIdxTU();
@@ -1591,7 +1609,9 @@ Void TComTrQuant::invRecurTransformNxN( const ComponentID compID,
 
 #ifdef DEBUG_STRING
       if (psDebug != 0)
+      {
         std::cout << (*psDebug);
+      }
 #endif
     }
 
@@ -1617,8 +1637,7 @@ Void TComTrQuant::invRecurTransformNxN( const ComponentID compID,
     do
     {
       invRecurTransformNxN( compID, pResidual, tuRecurseChild );
-    }
-    while (tuRecurseChild.nextSection(rTu));
+    } while (tuRecurseChild.nextSection(rTu));
   }
 }
 
@@ -1708,7 +1727,10 @@ Void TComTrQuant::rdpcmNxN   ( TComTU& rTu, const ComponentID compID, Pel* pcRes
       rdpcmMode = (uiChFinalMode == VER_IDX) ? RDPCM_VER : RDPCM_HOR;
       applyForwardRDPCM( rTu, compID, pcResidual, uiStride, cQP, pcCoeff, uiAbsSum, rdpcmMode );
     }
-    else rdpcmMode = RDPCM_OFF;
+    else
+    {
+      rdpcmMode = RDPCM_OFF;
+    }
   }
   else // not intra, need to select the best mode
   {
@@ -1838,10 +1860,12 @@ Void TComTrQuant::xT( const ComponentID compID, Bool useDST, Pel* piBlkResi, UIn
   TCoeff coeff[ MAX_TU_SIZE * MAX_TU_SIZE ];
 
   for (Int y = 0; y < iHeight; y++)
+  {
     for (Int x = 0; x < iWidth; x++)
     {
       block[(y * iWidth) + x] = piBlkResi[(y * uiStride) + x];
     }
+  }
 
   xTrMxN( g_bitDepth[toChannelType(compID)], block, coeff, iWidth, iHeight, useDST, g_maxTrDynamicRange[toChannelType(compID)] );
 
@@ -1881,10 +1905,12 @@ Void TComTrQuant::xIT( const ComponentID compID, Bool useDST, TCoeff* plCoef, Pe
 #endif
 
   for (Int y = 0; y < iHeight; y++)
+  {
     for (Int x = 0; x < iWidth; x++)
     {
       pResidual[(y * uiStride) + x] = Pel(block[(y * iWidth) + x]);
     }
+  }
 }
 
 /** Wrapper function between HM interface and core 4x4 transform skipping
@@ -2347,7 +2373,10 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
       {
         iScanPos = iCGScanPos*uiCGSize + iScanPosinCG;
 
-        if (iScanPos > iLastScanPos) continue;
+        if (iScanPos > iLastScanPos)
+        {
+          continue;
+        }
         UInt   uiBlkPos     = codingParameters.scan[iScanPos];
 
         if( piDstCoeff[ uiBlkPos ] )
@@ -2543,7 +2572,10 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
  */
 Int  TComTrQuant::calcPatternSigCtx( const UInt* sigCoeffGroupFlag, UInt uiCGPosX, UInt uiCGPosY, UInt widthInGroups, UInt heightInGroups )
 {
-  if ((widthInGroups <= 1) && (heightInGroups <= 1)) return 0;
+  if ((widthInGroups <= 1) && (heightInGroups <= 1))
+  {
+    return 0;
+  }
 
   const Bool rightAvailable = uiCGPosX < (widthInGroups  - 1);
   const Bool belowAvailable = uiCGPosY < (heightInGroups - 1);
@@ -2551,8 +2583,14 @@ Int  TComTrQuant::calcPatternSigCtx( const UInt* sigCoeffGroupFlag, UInt uiCGPos
   UInt sigRight = 0;
   UInt sigLower = 0;
 
-  if (rightAvailable) sigRight = ((sigCoeffGroupFlag[ (uiCGPosY * widthInGroups) + uiCGPosX + 1 ] != 0) ? 1 : 0);
-  if (belowAvailable) sigLower = ((sigCoeffGroupFlag[ (uiCGPosY + 1) * widthInGroups + uiCGPosX ] != 0) ? 1 : 0);
+  if (rightAvailable)
+  {
+    sigRight = ((sigCoeffGroupFlag[ (uiCGPosY * widthInGroups) + uiCGPosX + 1 ] != 0) ? 1 : 0);
+  }
+  if (belowAvailable)
+  {
+    sigLower = ((sigCoeffGroupFlag[ (uiCGPosY + 1) * widthInGroups + uiCGPosX ] != 0) ? 1 : 0);
+  }
 
   return sigRight + (sigLower << 1);
 }
@@ -2584,7 +2622,10 @@ Int TComTrQuant::getSigCtxInc    (       Int                        patternSigCt
   const UInt posY           = rasterPosition >> log2BlockWidth;
   const UInt posX           = rasterPosition - (posY << log2BlockWidth);
 
-  if ((posX + posY) == 0) return 0; //special case for the DC context variable
+  if ((posX + posY) == 0)
+  {
+    return 0; //special case for the DC context variable
+  }
 
   Int offset = MAX_INT;
 
@@ -2900,8 +2941,14 @@ UInt TComTrQuant::getSigCoeffGroupCtxInc  (const UInt*  uiSigCoeffGroupFlag,
   UInt sigRight = 0;
   UInt sigLower = 0;
 
-  if (uiCGPosX < (widthInGroups  - 1)) sigRight = ((uiSigCoeffGroupFlag[ (uiCGPosY * widthInGroups) + uiCGPosX + 1 ] != 0) ? 1 : 0);
-  if (uiCGPosY < (heightInGroups - 1)) sigLower = ((uiSigCoeffGroupFlag[ (uiCGPosY + 1) * widthInGroups + uiCGPosX ] != 0) ? 1 : 0);
+  if (uiCGPosX < (widthInGroups  - 1))
+  {
+    sigRight = ((uiSigCoeffGroupFlag[ (uiCGPosY * widthInGroups) + uiCGPosX + 1 ] != 0) ? 1 : 0);
+  }
+  if (uiCGPosY < (heightInGroups - 1))
+  {
+    sigLower = ((uiSigCoeffGroupFlag[ (uiCGPosY + 1) * widthInGroups + uiCGPosX ] != 0) ? 1 : 0);
+  }
 
   return ((sigRight + sigLower) != 0) ? 1 : 0;
 }
@@ -3151,9 +3198,18 @@ Void TComTrQuant::destroyScalingList()
     {
       for(UInt qp = 0; qp < SCALING_LIST_REM_NUM; qp++)
       {
-        if(m_quantCoef   [sizeId][listId][qp]) delete [] m_quantCoef   [sizeId][listId][qp];
-        if(m_dequantCoef [sizeId][listId][qp]) delete [] m_dequantCoef [sizeId][listId][qp];
-        if(m_errScale    [sizeId][listId][qp]) delete [] m_errScale    [sizeId][listId][qp];
+        if(m_quantCoef[sizeId][listId][qp])
+        {
+          delete [] m_quantCoef[sizeId][listId][qp];
+        }
+        if(m_dequantCoef[sizeId][listId][qp])
+        {
+          delete [] m_dequantCoef[sizeId][listId][qp];
+        }
+        if(m_errScale[sizeId][listId][qp])
+        {
+          delete [] m_errScale[sizeId][listId][qp];
+        }
       }
     }
   }

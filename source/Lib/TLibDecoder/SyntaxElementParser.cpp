@@ -62,7 +62,7 @@ Void  SyntaxElementParser::xReadCodeTr           (UInt length, UInt& rValue, con
   }
   else
   {
-    fprintf( g_hTrace, "%-50s u(%d) : %u\n", pSymbolName, length, rValue ); 
+    fprintf( g_hTrace, "%-50s u(%d) : %u\n", pSymbolName, length, rValue );
   }
   fflush ( g_hTrace );
 }

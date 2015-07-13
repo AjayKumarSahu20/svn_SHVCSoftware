@@ -570,7 +570,10 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
     m_acTEncTop[layer].setTimeCodeSEIEnabled                                ( m_timeCodeSEIEnabled );
     m_acTEncTop[layer].setNumberOfTimeSets                                  ( m_timeCodeSEINumTs );
-    for(Int i = 0; i < m_timeCodeSEINumTs; i++) { m_acTEncTop[layer].setTimeSet(m_timeSetArray[i], i); }
+    for(Int i = 0; i < m_timeCodeSEINumTs; i++)
+    { 
+      m_acTEncTop[layer].setTimeSet(m_timeSetArray[i], i);
+    }
     m_acTEncTop[layer].setKneeSEIEnabled                                    ( m_kneeSEIEnabled );
     m_acTEncTop[layer].setKneeSEIId                                         ( m_kneeSEIId );
     m_acTEncTop[layer].setKneeSEICancelFlag                                 ( m_kneeSEICancelFlag );
@@ -978,7 +981,10 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setTMCTSSEIEnabled                                   ( m_tmctsSEIEnabled );
   m_cTEncTop.setTimeCodeSEIEnabled                                ( m_timeCodeSEIEnabled );
   m_cTEncTop.setNumberOfTimeSets                                  ( m_timeCodeSEINumTs );
-  for(Int i = 0; i < m_timeCodeSEINumTs; i++) { m_cTEncTop.setTimeSet(m_timeSetArray[i], i); }
+  for(Int i = 0; i < m_timeCodeSEINumTs; i++)
+  {
+    m_cTEncTop.setTimeSet(m_timeSetArray[i], i);
+  }
   m_cTEncTop.setKneeSEIEnabled                                    ( m_kneeSEIEnabled );
   m_cTEncTop.setKneeSEIId                                         ( m_kneeSEIId );
   m_cTEncTop.setKneeSEICancelFlag                                 ( m_kneeSEICancelFlag );
@@ -1831,8 +1837,14 @@ Void TAppEncTop::encode()
         memcpy( g_auiRasterToPelY,  g_auiLayerRasterToPelY[layer],  sizeof( g_auiRasterToPelY ) );
 #endif
         // call encoding function for one frame
-        if ( m_isField ) m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP, m_isTopFieldFirst );
-        else             m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
+        if ( m_isField )
+        {
+          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP, m_isTopFieldFirst );
+        }
+        else
+        {
+          m_acTEncTop[layer].encode( flush ? 0 : pcPicYuvOrg[layer], snrCSC, m_acListPicYuvRec[layer], outputAccessUnits, iPicIdInGOP );
+        }
       }
     }
 #if R0247_SEI_ACTIVE
@@ -2092,8 +2104,14 @@ Void TAppEncTop::encode()
     }
 
     // call encoding function for one frame
-    if ( m_isField ) m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded, m_isTopFieldFirst );
-    else             m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+    if ( m_isField )
+    {
+      m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded, m_isTopFieldFirst );
+    }
+    else
+    {
+      m_cTEncTop.encode( bEos, flush ? 0 : pcPicYuvOrg, flush ? 0 : &cPicYuvTrueOrg, snrCSC, m_cListPicYuvRec, outputAccessUnits, iNumEncoded );
+    }
 
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )
