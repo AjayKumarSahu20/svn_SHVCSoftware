@@ -181,7 +181,10 @@ Void TDecGop::filterPicture(TComPic* pcPic)
 
   pcPic->compressMotion();
   Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
-  if (!pcSlice->isReferenced()) c += 32;
+  if (!pcSlice->isReferenced())
+  {
+    c += 32;
+  }
 
   //-- For time output for each slice
 #if SVC_EXTENSION

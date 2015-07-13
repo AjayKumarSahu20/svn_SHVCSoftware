@@ -119,10 +119,10 @@ public:
     FRAME_FIELD_INFO                     = 168,
 #endif
   };
-  
+
   SEI() {}
   virtual ~SEI() {}
-  
+
   static const Char *getSEIMessageString(SEI::PayloadType payloadType);
 
   virtual PayloadType payloadType() const = 0;
@@ -145,7 +145,7 @@ public:
   }
 
   UChar uuid_iso_iec_11578[ISO_IEC_11578_LEN];
-  UInt userDataLength;
+  UInt  userDataLength;
   UChar *userData;
 };
 
@@ -156,7 +156,7 @@ public:
 
   SEIDecodedPictureHash() {}
   virtual ~SEIDecodedPictureHash() {}
-  
+
   enum Method
   {
     MD5,
@@ -168,12 +168,12 @@ public:
   TComDigest m_digest;
 };
 
-class SEIActiveParameterSets : public SEI 
+class SEIActiveParameterSets : public SEI
 {
 public:
   PayloadType payloadType() const { return ACTIVE_PARAMETER_SETS; }
 
-  SEIActiveParameterSets() 
+  SEIActiveParameterSets()
     : activeVPSId            (0)
     , m_selfContainedCvsFlag (false)
     , m_noParameterSetUpdateFlag (false)
@@ -181,7 +181,7 @@ public:
   {}
   virtual ~SEIActiveParameterSets() {}
 
-  Int activeVPSId; 
+  Int activeVPSId;
   Bool m_selfContainedCvsFlag;
   Bool m_noParameterSetUpdateFlag;
   Int numSpsIdsMinus1;
@@ -526,7 +526,7 @@ typedef std::list<SEI*> SEIMessages;
 /// output a selection of SEI messages by payload type. Ownership stays in original message list.
 SEIMessages getSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
-/// remove a selection of SEI messages by payload type from the original list and return them in a new list. 
+/// remove a selection of SEI messages by payload type from the original list and return them in a new list.
 SEIMessages extractSeisByType(SEIMessages &seiList, SEI::PayloadType seiType);
 
 /// delete list of SEI messages (freeing the referenced objects)
@@ -537,9 +537,7 @@ class SEIScalableNesting : public SEI
 public:
   PayloadType payloadType() const { return SCALABLE_NESTING; }
 
-  SEIScalableNesting()
-    : m_callerOwnsSEIs(false)
-  {}
+  SEIScalableNesting() {}
   virtual ~SEIScalableNesting()
   {
     if (!m_callerOwnsSEIs)

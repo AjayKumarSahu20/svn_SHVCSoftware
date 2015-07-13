@@ -147,8 +147,10 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxWid
 
   m_saoBlkParams = new SAOBlkParam[m_numCtusInFrame];
 
+
   xInitTiles();
   xInitCtuTsRsAddrMaps();
+
 }
 
 Void TComPicSym::destroy()

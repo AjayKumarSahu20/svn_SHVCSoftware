@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -122,6 +122,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
 #if O0043_BEST_EFFORT_DECODING
   ("ForceDecodeBitDepth",       m_forceDecodeBitDepth,                 0U,         "Force the decoder to operate at a particular bit-depth (best effort decoding)")
 #endif
+  ("OutputDecodedSEIMessagesFilename",  m_outputDecodedSEIMessagesFilename,    string(""), "When non empty, output decoded SEI messages to the indicated file. If file is '-', then output to stdout\n")
 #if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfo,-cri", m_colourRemapSEIEnabled, false, "Control handling of Colour Remapping Information SEI messages\n"
                                               "\t1: apply colour remapping on decoded pictures if available in the bitstream\n"
@@ -248,6 +249,11 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
         }
       }
       fclose (targetDecLayerIdSetFile);
+      if ( m_targetDecLayerIdSet.size() > 0 && !isLayerIdZeroIncluded )
+      {
+        fprintf(stderr, "TargetDecLayerIdSet must contain LayerId=0, aborting" );
+        return false;
+      }
     }
     else
     {
