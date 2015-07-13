@@ -290,8 +290,8 @@ Void TEncCavlc::codePPS( const TComPPS* pcPPS )
               /* skip zero index */
               for (Int chromaQpAdjustmentIndex = 1; chromaQpAdjustmentIndex <= pcPPS->getChromaQpAdjTableSize(); chromaQpAdjustmentIndex++)
               {
-                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CbOffset,     "cb_qp_adjustnemt[i]");
-                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CrOffset,     "cr_qp_adjustnemt[i]");
+                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CbOffset,     "cb_qp_adjustment[i]");
+                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CrOffset,     "cr_qp_adjustment[i]");
               }
             }
 
@@ -832,7 +832,6 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
       WRITE_FLAG( pcVPS->getLayerIdIncludedFlag( opsIdx, i ) ? 1 : 0, "layer_id_included_flag[opsIdx][i]" );
     }
   }
-
   const TimingInfo *timingInfo = pcVPS->getTimingInfo();
   WRITE_FLAG(timingInfo->getTimingInfoPresentFlag(),          "vps_timing_info_present_flag");
   if(timingInfo->getTimingInfoPresentFlag())
@@ -882,7 +881,7 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
   WRITE_FLAG( 0,                     "vps_extension_flag" );
 #endif  
   //future extensions here..
-  
+
   return;
 }
 
@@ -1057,7 +1056,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
         }
         numLtrpInSH -= numLtrpInSPS;
         // check that either all long-term pictures are coded in SPS or in slice header (no mixing)
-        assert (numLtrpInSH==0 || numLtrpInSPS==0);
+        assert (numLtrpInSH==0 || numLtrpInSPS==0); 
 
         Int bitsForLtrpInSPS = 0;
         while (pcSlice->getSPS()->getNumLongTermRefPicSPS() > (1 << bitsForLtrpInSPS))
@@ -1117,7 +1116,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       }
       if (pcSlice->getSPS()->getTMVPFlagsPresent())
       {
-        WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enabled_flag" );
+        WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
       }
     }
 
@@ -1317,6 +1316,12 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       WRITE_FLAG(pcSlice->getLFCrossSliceBoundaryFlag()?1:0, "slice_loop_filter_across_slices_enabled_flag");
     }
   }
+#if !SVC_EXTENSION
+  if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
+  {
+    WRITE_UVLC(0,"slice_header_extension_length");
+  }
+#endif
 }
 
 Void TEncCavlc::codePTL( const TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1)
