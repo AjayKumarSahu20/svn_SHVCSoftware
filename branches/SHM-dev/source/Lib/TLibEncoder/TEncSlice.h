@@ -97,6 +97,7 @@ private:
   UInt                    m_uiSliceIdx;
   TEncSbac                m_lastSliceSegmentEndContextState;    ///< context storage for state at the end of the previous slice-segment (used for dependent slices only).
   TEncSbac                m_entropyCodingSyncContextState;      ///< context storate for state of contexts at the wavefront/WPP/entropy-coding-sync second CTU of tile-row
+  SliceType               m_encCABACTableIdx;
 
 #if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
   Void     setUpLambda(TComSlice* slice, Double dLambda, Int iQP, Int dpeth = -1);
@@ -119,12 +120,11 @@ public:
 
   /// preparation of slice encoding (reference marking, QP and lambda)
 #if SVC_EXTENSION
-  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField );
+  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, Bool isField );
   Void    estimateILWpParam   ( TComSlice* pcSlice );
 #else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField );
+                                Int iGOPid,   TComSlice*& rpcSlice, const TComSPS* pSPS, const TComPPS *pPPS, Bool isField );
 #endif
 
   Void    resetQP             ( TComPic* pic, Int sliceQP, Double lambda );
@@ -141,6 +141,8 @@ public:
   Void    xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UInt& boundingCtuTsAddr, TComPic* pcPic, const Bool encodingSlice );
   UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
   Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
+
+  SliceType getEncCABACTableIdx() const           { return m_encCABACTableIdx;        }
 
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );

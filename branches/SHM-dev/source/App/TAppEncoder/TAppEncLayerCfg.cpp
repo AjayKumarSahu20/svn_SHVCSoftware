@@ -183,7 +183,10 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  m_colourRemapSEIFileRoot = cfg_colourRemapSEIFileRoot.empty() ? NULL : strdup(cfg_colourRemapSEIFileRoot.c_str());
+  if( !cfg_colourRemapSEIFileRoot.empty() )
+  {
+    m_colourRemapSEIFileRoot = strdup(cfg_colourRemapSEIFileRoot.c_str());
+  }
 #endif
 
   // reading external dQP description from file
@@ -211,18 +214,12 @@ Void TAppEncLayerCfg::xPrintParameter()
 {
   printf("Input File                        : %s\n", m_cInputFile.c_str()  );
   printf("Reconstruction File               : %s\n", m_cReconFile.c_str()  );
-#if SVC_EXTENSION
   printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
-#else
-  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
-#endif
   printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
   printf("PTL index                         : %d\n", m_layerPTLIdx );
-#if SVC_EXTENSION
   printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("PCM sample bit depth              : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
-#endif
   std::cout << "Input ChromaFormatIDC             :";
 
   switch (m_InputChromaFormatIDC)
@@ -249,13 +246,12 @@ Void TAppEncLayerCfg::xPrintParameter()
     exit(1);
   }
   printf("\n");
-#if LAYER_CTB
   printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
   printf("Max RQT depth intra               : %d\n", m_uiQuadtreeTUMaxDepthIntra);
-#endif
   printf("QP                                : %5.2f\n", m_fQP );
+  printf("Max dQP signaling depth           : %d\n", m_iMaxCuDQPDepth);
   printf("Intra period                      : %d\n", m_iIntraPeriod );
 #if RC_SHVC_HARMONIZATION                    
   printf("RateControl                       : %d\n", m_RCEnableRateControl );
@@ -270,10 +266,10 @@ Void TAppEncLayerCfg::xPrintParameter()
   }
 #endif
   printf("WaveFrontSynchro                  : %d\n", m_waveFrontSynchro);
-  printf("WaveFrontSubstreams               : %d\n", m_iWaveFrontSubstreams);
-#if LAYER_CTB
+
+  const Int iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
+  printf("WaveFrontSubstreams               : %d\n", iWaveFrontSubstreams);
   printf("PCM                               : %d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
-#endif
 }
 
 Bool confirmPara(Bool bflag, const char* message);
@@ -302,18 +298,13 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       }
 
       // automatic padding to minimum CU size
-#if LAYER_CTB
       Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
-#else
-      Int minCuSize = m_cAppEncCfg->getMaxCUHeight() >> (m_cAppEncCfg->getMaxCUDepth() - 1);
-#endif
+
       if (m_iSourceWidth % minCuSize)
       {
         m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
         m_iSourceWidth  += m_confWinRight;
-#if SVC_EXTENSION
         m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
-#endif
       }
       if (m_iSourceHeight % minCuSize)
       {
@@ -324,9 +315,7 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
           m_iSourceHeightOrg += m_confWinBottom << 1;
           m_aiPad[1] = m_confWinBottom << 1;
         }
-#if SVC_EXTENSION
         m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
-#endif
       }
       break;
     }
@@ -343,10 +332,8 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
       m_iSourceHeight += m_aiPad[1];
       m_confWinRight  = m_aiPad[0];
       m_confWinBottom = m_aiPad[1];
-#if SVC_EXTENSION
       m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
       m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
-#endif
       break;
     }
   case 3:
@@ -387,15 +374,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   }
 
-#if LAYER_CTB
   UInt maxCUWidth = m_uiMaxCUWidth;
   UInt maxCUHeight = m_uiMaxCUHeight;
   UInt maxCUDepth = m_uiMaxCUDepth;
-#else
-  UInt maxCUWidth = m_cAppEncCfg->getMaxCUWidth();
-  UInt maxCUHeight = m_cAppEncCfg->getMaxCUHeight();
-  UInt maxCUDepth = m_cAppEncCfg->getMaxCUDepth();
-#endif
   bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
   // check range of parameters
@@ -408,16 +389,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
 
-#if SVC_EXTENSION
   xConfirmPara( m_iQP <  -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-#else
-  xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-#endif
 
-  m_iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + maxCUHeight - 1) / maxCUHeight : 1;
   xConfirmPara( m_waveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
-  xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
-  xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_waveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 
   //chekc parameters
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
@@ -426,14 +400,8 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
-#if !SVC_EXTENSION
-  xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
-#endif
+  xConfirmPara( m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                          "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
 
-#if LAYER_CTB  
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
@@ -466,7 +434,6 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     if( (ui & 1) == 1)
       xConfirmPara( ui != 1 , "Height should be 2^n");
   }
-#endif
 
 #undef xConfirmPara
   return check_failed;

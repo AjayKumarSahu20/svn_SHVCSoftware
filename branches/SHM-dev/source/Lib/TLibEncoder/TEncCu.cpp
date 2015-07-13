@@ -406,7 +406,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 
   const UInt numberValidComponents = rpcBestCU->getPic()->getNumberValidComponents();
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() )
+  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
   {
     Int idQP = m_pcEncCfg->getMaxDeltaQP();
 #if SVC_EXTENSION
@@ -600,7 +600,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           }
 
           //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-          if( pcPic->getSlice(0)->getSPS()->getAMPAcc(uiDepth) )
+          if(pcSlice->getSPS()->getUseAMP() && uiDepth < g_uiMaxCUDepth-g_uiAddCUDepth )
           {
 #if AMP_ENC_SPEEDUP
             Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
@@ -804,7 +804,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     xFillPCMBuffer(rpcBestCU, m_ppcOrigYuv[uiDepth]);
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() )
+  if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
   {
     Int idQP = m_pcEncCfg->getMaxDeltaQP();
 #if SVC_EXTENSION
@@ -815,7 +815,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     iMaxQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
 #endif    
   }
-  else if( (g_uiMaxCUWidth>>uiDepth) > rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() )
+  else if( (g_uiMaxCUWidth>>uiDepth) > (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
   {
     iMinQP = iBaseQP;
     iMaxQP = iBaseQP;
@@ -908,7 +908,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
       }
       rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
 
-      if( (g_uiMaxCUWidth>>uiDepth) == rpcTempCU->getSlice()->getPPS()->getMinCuDQPSize() && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+      if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && rpcTempCU->getSlice()->getPPS()->getUseDQP())
       {
         Bool hasResidual = false;
         for( UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx ++)
@@ -1078,12 +1078,12 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   if( ( ( uiDepth < pcCU->getDepth( uiAbsPartIdx ) ) && ( uiDepth < (g_uiMaxCUDepth-g_uiAddCUDepth) ) ) || bBoundary )
   {
     UInt uiQNumParts = ( pcPic->getNumPartitionsInCtu() >> (uiDepth<<1) )>>2;
-    if( (g_uiMaxCUWidth>>uiDepth) == pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
+    if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && pcCU->getSlice()->getPPS()->getUseDQP())
     {
       setdQPFlag(true);
     }
 
-    if( (g_uiMaxCUWidth>>uiDepth) == pcCU->getSlice()->getPPS()->getMinCuChromaQpAdjSize() && pcCU->getSlice()->getUseChromaQpAdj())
+    if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj())
     {
       setCodeChromaQpAdjFlag(true);
     }
@@ -1105,12 +1105,12 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
     return;
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize() && pcCU->getSlice()->getPPS()->getUseDQP())
+  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && pcCU->getSlice()->getPPS()->getUseDQP())
   {
     setdQPFlag(true);
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuChromaQpAdjSize() && pcCU->getSlice()->getUseChromaQpAdj())
+  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj())
   {
     setCodeChromaQpAdjFlag(true);
   }
@@ -1658,7 +1658,7 @@ Void TEncCu::xCheckDQP( TComDataCU* pcCU )
 {
   UInt uiDepth = pcCU->getDepth( 0 );
 
-  if( pcCU->getSlice()->getPPS()->getUseDQP() && (g_uiMaxCUWidth>>uiDepth) >= pcCU->getSlice()->getPPS()->getMinCuDQPSize() )
+  if( pcCU->getSlice()->getPPS()->getUseDQP() && (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
   {
     if ( pcCU->getQtRootCbf( 0) )
     {

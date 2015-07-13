@@ -406,7 +406,6 @@ Void TAppDecTop::decode()
   {
     streamYUV.close();
   }
-  pcBLPic.destroy();
 
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = layerIdxmin; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
@@ -704,11 +703,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
   Int numPicsNotYetDisplayed = 0;
   Int dpbFullness = 0;
-#if SVC_EXTENSION
-TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
-#else
-  TComSPS* activeSPS = m_cTDecTop.getActiveSPS();
-#endif
+  const TComSPS* activeSPS = &(pcListPic->front()->getPicSym()->getSPS());
   UInt numReorderPicsHighestTid;
   UInt maxDecPicBufferingHighestTid;
   UInt maxNrSublayers = activeSPS->getMaxTLayers();
@@ -780,7 +775,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
         if ( m_pchReconFile[layerId] )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
 
           Bool display = true;
@@ -814,7 +809,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
         if ( m_pchReconFile )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
 
           Bool display = true;
@@ -905,7 +900,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
         if( m_pchReconFile[layerId] )
         {
           const Window &conf = pcPic->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
 
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
@@ -923,7 +918,7 @@ TComSPS* activeSPS = m_acTDecTop[layerId].getActiveSPS();
         if ( m_pchReconFile )
         {
           const Window &conf    = pcPic->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
 
           m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
                                          m_outputColourSpaceConvert,
@@ -1033,7 +1028,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         if ( m_pchReconFile[layerId] )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();          
 
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
@@ -1052,7 +1047,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         if ( m_pchReconFile )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();
           m_cTVideoIOYuvReconFile.write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
                                          m_outputColourSpaceConvert,
@@ -1130,7 +1125,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         if ( m_pchReconFile[layerId] )
         {
           const Window &conf = pcPic->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
 
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
@@ -1148,7 +1143,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         if ( m_pchReconFile )
         {
           const Window &conf    = pcPic->getConformanceWindow();
-          const Window &defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
+          const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
 
           m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(),
                                          m_outputColourSpaceConvert,
@@ -1612,14 +1607,14 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
   listOfPocs.erase( listOfPocs.begin() );
 }
 
-TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit)
+const TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit)
 {
   Int targetOutputLsIdx = getCommonDecoderParams()->getTargetOutputLayerSetIdx();
-  TComVPS *vps = NULL;
+  const TComVPS *vps = NULL;
 
   if( targetOutputLsIdx == 0 )   // Only base layer is output
   {
-    TComSPS *sps = NULL;
+    const TComSPS *sps = NULL;
     assert( listOfPocsInEachLayer[0].size() != 0 );
     TComList<TComPic*>::iterator iterPic;
     Int j;
@@ -1703,6 +1698,9 @@ Void TAppDecTop::emptyUnusedPicturesNotNeededForOutput()
     while ( iterPic != pcListPic->end() )
     {
       TComPic *pic = *iterPic;
+
+      assert( pic->getPicSym() );
+
       if( !pic->getSlice(0)->isReferenced() && !pic->getOutputMark() )
       {
         // Emtpy the picture buffer
@@ -1742,7 +1740,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
                             , Bool notOutputCurrAu
                             )
 {
-  TComVPS *vps = NULL;
+  const TComVPS *vps = NULL;
   dpbStatus.init();
 
   for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )

@@ -84,7 +84,7 @@ public:
 #endif
     ) {}
 
-  Void  parseSliceHeader          ( TComSlice* /*pcSlice*/, ParameterSetManagerDecoder* /*parameterSetManager*/) {}
+  Void  parseSliceHeader          ( TComSlice* /*pcSlice*/, ParameterSetManager* /*parameterSetManager*/) {}
   Void  parseTerminatingBit       ( UInt& ruiBit );
   Void  parseRemainingBytes       ( Bool noTrailingBytesExpected);
   Void  parseMVPIdx               ( Int& riMVPIdx          );

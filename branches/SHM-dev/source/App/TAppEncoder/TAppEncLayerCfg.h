@@ -59,7 +59,8 @@ protected:
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
 
-#if LAYER_CTB
+  Int       m_iMaxCuDQPDepth;                                 ///< Max. depth for a minimum CuDQPSize (0:default)
+
   // coding unit (CU) definition
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
@@ -71,7 +72,6 @@ protected:
   
   UInt      m_uiQuadtreeTUMaxDepthInter;
   UInt      m_uiQuadtreeTUMaxDepthIntra;
-#endif
 
 #if RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
@@ -85,7 +85,6 @@ protected:
 
   Int       m_maxTidIlRefPicsPlus1;
   Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-  Int       m_iWaveFrontSubstreams;               ///< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)

@@ -63,26 +63,25 @@ class TEncEntropyIf
 {
 public:
   virtual Void  resetEntropy          ()                = 0;
-  virtual Void  determineCabacInitIdx ()                = 0;
+  virtual SliceType determineCabacInitIdx ()                = 0;
   virtual Void  setBitstream          ( TComBitIf* p )  = 0;
   virtual Void  setSlice              ( TComSlice* p )  = 0;
   virtual Void  resetBits             ()                = 0;
   virtual UInt  getNumberOfWrittenBits()                = 0;
 
-  virtual Void  codeVPS                 ( TComVPS* pcVPS )                                      = 0;
-  virtual Void  codeSPS                 ( TComSPS* pcSPS )                                      = 0;
-  virtual Void  codePPS                 ( TComPPS* pcPPS 
+  virtual Void  codeVPS                 ( const TComVPS* pcVPS )                                      = 0;
+  virtual Void  codeSPS                 ( const TComSPS* pcSPS )                                      = 0;
 #if CGS_3D_ASYMLUT
-    , TEnc3DAsymLUT * pc3DAsymLUT
+  virtual Void  codePPS                 ( const TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT )         = 0;
+#else
+  virtual Void  codePPS                 ( const TComPPS* pcPPS )                                      = 0;
 #endif
-    )                                      = 0;
   virtual Void  codeSliceHeader         ( TComSlice* pcSlice )                                  = 0;
 
   virtual Void  codeTilesWPPEntryPoint  ( TComSlice* pSlice )     = 0;
   virtual Void  codeTerminatingBit      ( UInt uilsLast )                                       = 0;
   virtual Void  codeSliceFinish         ()                                                      = 0;
-  virtual Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList ) = 0;
-  virtual Void codeScalingList   ( TComScalingList* scalingList )      = 0;
+  virtual Void  codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList ) = 0;
 
 public:
   virtual Void codeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx ) = 0;
@@ -139,7 +138,7 @@ public:
   Void    resetBits                 ()                        { m_pcEntropyCoderIf->resetBits();      }
   UInt    getNumberOfWrittenBits    ()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
   Void    resetEntropy              ()                        { m_pcEntropyCoderIf->resetEntropy();  }
-  Void    determineCabacInitIdx     ()                        { m_pcEntropyCoderIf->determineCabacInitIdx(); }
+  SliceType determineCabacInitIdx   ()                        { return m_pcEntropyCoderIf->determineCabacInitIdx(); }
 
   Void    encodeSliceHeader         ( TComSlice* pcSlice );
   Void    encodeTilesWPPEntryPoint( TComSlice* pSlice );
@@ -148,14 +147,14 @@ public:
   TEncEntropyIf*      m_pcEntropyCoderIf;
 
 public:
-  Void encodeVPS               ( TComVPS* pcVPS);
+  Void encodeVPS               ( const TComVPS* pcVPS);
   // SPS
-  Void encodeSPS               ( TComSPS* pcSPS );
-  Void encodePPS               ( TComPPS* pcPPS 
+  Void encodeSPS               ( const TComSPS* pcSPS );
 #if CGS_3D_ASYMLUT
-    , TEnc3DAsymLUT * pc3DAsymLUT
+  Void encodePPS               ( const TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT );
+#else
+  Void encodePPS               ( const TComPPS* pcPPS );
 #endif
-    );
   Void encodeSplitFlag         ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool bRD = false );
   Void encodeCUTransquantBypassFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );
   Void encodeSkipFlag          ( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );
@@ -182,8 +181,6 @@ public:
   Void encodeQtRootCbf         ( TComDataCU* pcCU, UInt uiAbsPartIdx );
   Void encodeQP                ( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );
   Void encodeChromaQpAdjustment ( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD = false );
-
-  Void encodeScalingList       ( TComScalingList* scalingList );
 
   Void encodeCrossComponentPrediction( TComTU &rTu, ComponentID compID );
 

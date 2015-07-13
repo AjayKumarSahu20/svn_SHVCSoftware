@@ -127,16 +127,19 @@ TEncPic::~TEncPic()
  */
 
 #if SVC_EXTENSION
-Void TEncPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
-                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual )
+Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual, const UInt layerId )
 {
-  TComPic::create( iWidth, iHeight, chromaFormat, uiMaxWidth, uiMaxHeight, uiMaxDepth,  
-                   conformanceWindow, defaultDisplayWindow, numReorderPics, pcSps, bIsVirtual );
+  TComPic::create( vps, sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth, bIsVirtual, layerId );
+
+  const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
+  const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
 #else
-Void TEncPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
-                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual )
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual )
 {
-  TComPic::create( iWidth, iHeight, chromaFormat, uiMaxWidth, uiMaxHeight, uiMaxDepth, conformanceWindow, defaultDisplayWindow, numReorderPics, bIsVirtual );
+  TComPic::create( sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth, bIsVirtual );
+
+  const Int iWidth  = sps.getPicWidthInLumaSamples();
+  const Int iHeight = sps.getPicHeightInLumaSamples();
 #endif
   m_uiMaxAQDepth = uiMaxAQDepth;
   if ( uiMaxAQDepth > 0 )

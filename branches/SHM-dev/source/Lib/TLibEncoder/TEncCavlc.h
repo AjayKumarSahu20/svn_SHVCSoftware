@@ -74,30 +74,30 @@ public:
 protected:
   TComSlice*    m_pcSlice;
 
-  Void codeShortTermRefPicSet              ( TComSPS* pcSPS, TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
+  Void codeShortTermRefPicSet              ( const TComReferencePictureSet* pcRPS, Bool calledFromSliceHeader, Int idx );
   Bool findMatchingLTRP ( TComSlice* pcSlice, UInt *ltrpsIndex, Int ltrpPOC, Bool usedFlag );
 
 public:
 
   Void  resetEntropy          ();
-  Void  determineCabacInitIdx  () {};
+  SliceType determineCabacInitIdx  () { assert(0); return I_SLICE; };
 
   Void  setBitstream          ( TComBitIf* p )  { m_pcBitIf = p;  }
   Void  setSlice              ( TComSlice* p )  { m_pcSlice = p;  }
   Void  resetBits             ()                { m_pcBitIf->resetBits(); }
   UInt  getNumberOfWrittenBits()                { return  m_pcBitIf->getNumberOfWrittenBits();  }
-  Void  codeVPS                 ( TComVPS* pcVPS );
-  Void  codeVUI                 ( TComVUI *pcVUI, TComSPS* pcSPS );
-  Void  codeSPS                 ( TComSPS* pcSPS );
-  Void  codePPS                 ( TComPPS* pcPPS 
+  Void  codeVPS                 ( const TComVPS* pcVPS );
+  Void  codeVUI                 ( const TComVUI *pcVUI, const TComSPS* pcSPS );
+  Void  codeSPS                 ( const TComSPS* pcSPS );
 #if CGS_3D_ASYMLUT
-    , TEnc3DAsymLUT * pc3DAsymLUT
+  Void  codePPS                 ( const TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT );
+#else
+  Void  codePPS                 ( const TComPPS* pcPPS );
 #endif
-    );
   Void  codeSliceHeader         ( TComSlice* pcSlice );
-  Void  codePTL                 ( TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
-  Void  codeProfileTier         ( ProfileTierLevel* ptl );
-  Void  codeHrdParameters       ( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
+  Void  codePTL                 ( const TComPTL* pcPTL, Bool profilePresentFlag, Int maxNumSubLayersMinus1);
+  Void  codeProfileTier         ( const ProfileTierLevel* ptl );
+  Void  codeHrdParameters       ( const TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 );
   Void  codeTilesWPPEntryPoint( TComSlice* pSlice );
   Void  codeTerminatingBit      ( UInt uilsLast );
   Void  codeSliceFinish         ();
@@ -145,21 +145,21 @@ public:
 
   Void xCodePredWeightTable          ( TComSlice* pcSlice );
 
-  Void codeScalingList  ( TComScalingList* scalingList );
-  Void xCodeScalingList ( TComScalingList* scalingList, UInt sizeId, UInt listId);
+  Void codeScalingList  ( const TComScalingList &scalingList );
+  Void xCodeScalingList ( const TComScalingList* scalingList, UInt sizeId, UInt listId);
   Void codeDFFlag       ( UInt uiCode, const Char *pSymbolName );
   Void codeDFSvlc       ( Int   iCode, const Char *pSymbolName );
 
   Void codeExplicitRdpcmMode( TComTU &rTu, const ComponentID compID );
 
 #if SVC_EXTENSION
-  Void  codeSliceHeaderExtn  ( TComSlice* slice, Int shBitsWrittenTillNow );
-  Void codeSPSExtension      ( TComSPS* pcSPS );
-  Void codeVPSExtension      ( TComVPS* pcVPS );
-  Void codeVPSVUI            ( TComVPS *vps   );
-  Void codeRepFormat         ( RepFormat *repFormat );
-  Void codeVpsDpbSizeTable   ( TComVPS *vps );
-  Void codeVpsVuiBspHrdParams( TComVPS * const );
+  Void codeSliceHeaderExtn   ( TComSlice* slice, Int shBitsWrittenTillNow );
+  Void codeSPSExtension      ( const TComSPS* sps );
+  Void codeVPSExtension      ( const TComVPS* vps );
+  Void codeVPSVUI            ( const TComVPS* vps );
+  Void codeRepFormat         ( const RepFormat *repFormat );
+  Void codeVpsDpbSizeTable   ( const TComVPS *vps );
+  Void codeVpsVuiBspHrdParams( const TComVPS * const );
 
 #if CGS_3D_ASYMLUT
 #if R0179_ENC_OPT_3DLUT_SIZE

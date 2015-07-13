@@ -192,7 +192,9 @@ protected:
 #endif
   Int       m_iMaxDeltaQP;                                    ///< max. |delta QP|
   UInt      m_uiDeltaQpRD;                                    ///< dQP range for multi-pass slice QP optimization
+#if !SVC_EXTENSION
   Int       m_iMaxCuDQPDepth;                                 ///< Max. depth for a minimum CuDQPSize (0:default)
+#endif
   Int       m_maxCUChromaQpAdjustmentDepth;
 
   Int       m_cbQpOffset;                                     ///< Chroma Cb QP Offset (0:default)
@@ -208,9 +210,9 @@ protected:
 
   Int       m_maxTempLayer;                                  ///< Max temporal layer
 
-#if !LAYER_CTB
   // coding unit (CU) definition
   // TODO: Remove MaxCUWidth/MaxCUHeight and replace with MaxCUSize.
+#if !SVC_EXTENSION
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
   UInt      m_uiMaxCUDepth;                                   ///< max. CU depth
@@ -286,11 +288,11 @@ protected:
   Int       m_numTileRowsMinus1;
   std::vector<Int> m_tileColumnWidth;
   std::vector<Int> m_tileRowHeight;
+
 #if !SVC_EXTENSION
   Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-  Int       m_iWaveFrontFlush; //< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
-  Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
 #endif
+
   Bool      m_bUseConstrainedIntraPred;                       ///< flag for using constrained intra prediction
 
   Int       m_decodedPictureHashSEIEnabled;                    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
@@ -452,14 +454,11 @@ protected:
 #endif
 #endif
   // internal member functions
-#if LAYER_CTB
-  Void  xSetGlobal      (UInt layerId);                       ///< set global variables
-#else
-  Void  xSetGlobal      ();                                   ///< set global variables
-#endif
 #if SVC_EXTENSION
+  Void  xSetGlobal      (UInt layerId);                       ///< set global variables
   Void  xCheckParameter (UInt layerIdx);                       ///< check validity of configuration values per layer
 #else
+  Void  xSetGlobal      ();                                   ///< set global variables
   Void  xCheckParameter ();                                   ///< check validity of configuration values
 #endif
   Void  xPrintParameter ();                                   ///< print configuration values
@@ -526,20 +525,19 @@ public:
   Bool  parseCfg  ( Int argc, Char* argv[] );                 ///< parse configuration file to fill member variables
   
 #if SVC_EXTENSION
-  Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
-  Int  getNumLayer()               {return m_numLayers;         }
-  Int  getGOPSize()                {return m_iGOPSize;          }
+  Int  getNumFrameToBeEncoded()                               { return m_framesToBeEncoded;                          }
+  Int  getNumLayer()                                          { return m_numLayers;                                  }
+  Int  getGOPSize()                                           { return m_iGOPSize;                                   }
 
-  UInt getInternalBitDepth(Int iLayer, ChannelType type)      {return m_acLayerCfg[iLayer].m_internalBitDepth[type]; }
-  Bool getPCMInputBitDepthFlag()                              {return m_bPCMInputBitDepthFlag;                       }
+  RepFormatCfg* getRepFormatCfg(Int i)                        { return &m_repFormatCfg[i];                           }
+  Bool getUsePCM()                                            { return m_usePCM;                                     }
+  UInt getPCMLog2MinSize  ()                                  { return  m_uiPCMLog2MinSize;                          }
 
-#if !LAYER_CTB
-  UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
-  UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
-  UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
-#endif
-  Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
-  Int  getWaveFrontSynchro(Int layerIdx)        { return m_acLayerCfg[layerIdx].m_waveFrontSynchro; }
+  UInt getInternalBitDepth(Int iLayer, ChannelType type)      { return m_acLayerCfg[iLayer].m_internalBitDepth[type];}
+  Bool getPCMInputBitDepthFlag()                              { return m_bPCMInputBitDepthFlag;                      }
+
+  Int  getDecodingRefreshType()                               { return m_iDecodingRefreshType;                       }
+  Int  getWaveFrontSynchro(Int layerIdx)                      { return m_acLayerCfg[layerIdx].m_waveFrontSynchro;    }
   Void getDirFilename(string& filename, string& dir, const string path);
 
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
@@ -548,12 +546,6 @@ public:
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, Int * const returnArray);
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
-
-  RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
-#if LAYER_CTB
-  Bool getUsePCM()                  { return m_usePCM;               }
-  UInt getPCMLog2MinSize  ()        { return  m_uiPCMLog2MinSize;    }
-#endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg
 

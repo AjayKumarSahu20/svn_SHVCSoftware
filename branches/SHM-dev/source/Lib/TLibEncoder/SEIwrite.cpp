@@ -54,9 +54,9 @@ Void  xTraceSEIMessageType(SEI::PayloadType payloadType)
 #endif
 
 #if O0164_MULTI_LAYER_HRD
-Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSeiPtr, const SEIBspNesting* bspNestingSeiPtr)
+Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSeiPtr, const SEIBspNesting* bspNestingSeiPtr)
 #else
-Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps)
+Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSPS *sps)
 #endif
 {
 #if SVC_EXTENSION
@@ -214,9 +214,9 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, TComSPS *sps
  * in bitstream bs.
  */
 #if O0164_MULTI_LAYER_HRD
-Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
 #else
-Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, TComSPS *sps)
+Void SEIWriter::writeSEImessage(TComBitIf& bs, const SEI& sei, const TComSPS *sps)
 #endif
 {
   /* calculate how large the payload data is */
@@ -340,9 +340,9 @@ Void SEIWriter::xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei)
 }
 
 #if SVC_EXTENSION
-Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps)
 {
-  TComHRD *hrd;
+  const TComHRD *hrd;
   if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -351,7 +351,7 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(Int i = 0; i < maxValues; i++)
     {
@@ -375,7 +375,7 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
   }
   else
   {
-    TComVUI *vui = sps->getVuiParameters();
+    const TComVUI *vui = sps->getVuiParameters();
     hrd = vui->getHrdParameters();
   }
 
@@ -391,9 +391,9 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
   }
 }
 #else
-Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSPS *sps)
+Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, const TComSPS *sps)
 {
-  TComVUI *vui = sps->getVuiParameters();
+  const TComVUI *vui = sps->getVuiParameters();
   WRITE_UVLC(sei.m_decodingUnitIdx, "decoding_unit_idx");
   if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
   {
@@ -408,14 +408,14 @@ Void SEIWriter::xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, TComSP
 #endif
 
 #if SVC_EXTENSION
-Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps)
 #else
-Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS *sps)
+Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TComSPS *sps)
 #endif
 {
   Int i, nalOrVcl;
 #if SVC_EXTENSION
-  TComHRD *hrd;
+  const TComHRD *hrd;
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -424,7 +424,7 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(i = 0; i < maxValues; i++)
     {
@@ -447,13 +447,13 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
   }
   else
   {
-    TComVUI *vui = sps->getVuiParameters();
+    const TComVUI *vui = sps->getVuiParameters();
     hrd = vui->getHrdParameters();
   }
   // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
 #else
-  TComVUI *vui = sps->getVuiParameters();
-  TComHRD *hrd = vui->getHrdParameters();
+  const TComVUI *vui = sps->getVuiParameters();
+  const TComHRD *hrd = vui->getHrdParameters();
 #endif
 
   WRITE_UVLC( sei.m_bpSeqParameterSetId, "bp_seq_parameter_set_id" );
@@ -494,15 +494,15 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, TComSPS 
 }
 
 #if SVC_EXTENSION
-Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps)
+Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps)
 #else
-Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sps)
+Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei, const TComSPS *sps)
 #endif
 {
   Int i;
 #if SVC_EXTENSION
-  TComHRD *hrd;    
-  TComVUI *vui = sps->getVuiParameters(); 
+  const TComHRD *hrd;    
+  const TComVUI *vui = sps->getVuiParameters(); 
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -511,7 +511,7 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(i = 0; i < maxValues; i++)
     {
@@ -542,8 +542,8 @@ Void SEIWriter::xWriteSEIPictureTiming(const SEIPictureTiming& sei,  TComSPS *sp
   }
   // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
 #else
-  TComVUI *vui = sps->getVuiParameters();
-  TComHRD *hrd = vui->getHrdParameters();
+  const TComVUI *vui = sps->getVuiParameters();
+  const TComHRD *hrd = vui->getHrdParameters();
 #endif
 
   if( vui->getFrameFieldInfoPresentFlag() )
@@ -751,9 +751,9 @@ Void SEIWriter::xWriteSEISOPDescription(const SEISOPDescription& sei)
 }
 
 #if O0164_MULTI_LAYER_HRD
-Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComVPS *vps, TComSPS *sps)
+Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, const TComVPS *vps, const TComSPS *sps)
 #else
-Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, TComSPS *sps)
+Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting& sei, const TComSPS *sps)
 #endif
 {
   WRITE_FLAG( sei.m_bitStreamSubsetFlag,             "bitstream_subset_flag"         );
@@ -1129,7 +1129,7 @@ Void SEIWriter::xWriteSEIFrameFieldInfo  (const SEIFrameFieldInfo &sei)
 #endif
 
 #if O0164_MULTI_LAYER_HRD
-Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei)
+Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting &nestingSei)
 {
   WRITE_UVLC( sei.m_bspIdx, "bsp_idx" );
 
@@ -1148,17 +1148,16 @@ Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, TCo
   }
 }
 
-Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)
+Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)
 {
   assert(vps->getVpsVuiPresentFlag());
 
-#if SVC_EXTENSION
   Int psIdx = bspNestingSei.m_seiPartitioningSchemeIdx;
   Int seiOlsIdx = bspNestingSei.m_seiOlsIdx;
   Int maxTemporalId = nestingSei.m_nestingMaxTemporalIdPlus1[0] - 1;
   Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
   std::vector<Int> hrdIdx(maxValues, 0);
-  std::vector<TComHRD *> hrdVec;
+  std::vector<const TComHRD*> hrdVec;
   std::vector<Int> syntaxElemLen(maxValues, 0);
   for(Int i = 0; i < maxValues; i++)
   {
@@ -1190,50 +1189,6 @@ Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &s
       WRITE_CODE( sei.m_vclInitialArrivalDelay[i], syntaxElemLen[i], "vcl_initial_arrival_delay[i]" );
     }
   }
-#else
-  UInt schedCombCnt = vps->getNumBspSchedCombinations(nestingSei.m_nestingOpIdx[0]);
-  UInt len;
-  UInt hrdIdx;
-
-  if (schedCombCnt > 0)
-  {
-    hrdIdx = vps->getBspCombHrdIdx(nestingSei.m_nestingOpIdx[0], 0, bspNestingSei.m_bspIdx);
-  }
-  else
-  {
-    hrdIdx = 0;
-  }
-
-  TComHRD *hrd = vps->getBspHrd(hrdIdx);
-
-  if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
-  {
-    len = hrd->getInitialCpbRemovalDelayLengthMinus1() + 1;
-  }
-  else
-  {
-    len = 23 + 1;
-  }
-
-  if (hrd->getNalHrdParametersPresentFlag())
-  {
-    for(UInt i = 0; i < schedCombCnt; i++)
-    {
-      WRITE_CODE( sei.m_nalInitialArrivalDelay[i], len, "nal_initial_arrival_delay" );
-    }
-  }
-#if BSP_INIT_ARRIVAL_SEI
-  if( hrd->getVclHrdParametersPresentFlag() )
-#else
-  else
-#endif
-  {
-    for(UInt i = 0; i < schedCombCnt; i++)
-    {
-      WRITE_CODE( sei.m_vclInitialArrivalDelay[i], len, "vcl_initial_arrival_delay" );
-    }
-  }
-#endif
 }
 
 Void SEIWriter::xCodeHrdParameters( TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1 )

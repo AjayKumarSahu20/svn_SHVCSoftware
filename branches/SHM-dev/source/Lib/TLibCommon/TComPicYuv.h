@@ -95,7 +95,7 @@ public:
   //  Memory management
   // ------------------------------------------------------------------------------------------------
 #if SVC_EXTENSION
-  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, Window* conformanceWindow = NULL);
+  Void  create      ( Int iPicWidth, Int iPicHeight, ChromaFormat chromaFormatIDC, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth, const Window* conformanceWindow = NULL);
 #else
   Void          create            (const Int iPicWidth,
                                    const Int iPicHeight,

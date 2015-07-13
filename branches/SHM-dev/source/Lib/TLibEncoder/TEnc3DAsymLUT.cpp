@@ -508,7 +508,7 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
 
   TComSlice * pSlice = pCurPic->getSlice(pCurPic->getCurrSliceIdx());
   UInt refLayerId = pSlice->getVPS()->getRefLayerId(pSlice->getLayerId(), refLayerIdc);
-  const Window &scalEL = pSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId); 
+  Window scalEL = pSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId); 
   TComPicYuv *pcRecPicBL = pSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
   // borders of down-sampled picture
   Int leftDS =  (scalEL.getWindowLeftOffset()*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16;

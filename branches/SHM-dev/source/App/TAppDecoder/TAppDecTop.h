@@ -124,7 +124,7 @@ protected:
   Void emptyUnusedPicturesNotNeededForOutput();
   Void markAllPicturesAsErased();
   Void markAllPicturesAsErased(Int layerIdx);
-  TComVPS* findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit);
+  const TComVPS* findDpbParametersFromVps(std::vector<Int> const &listOfPocs, std::vector<Int> const *listOfPocsInEachLayer, std::vector<Int> const *listOfPocsPositionInEachLayer, DpbStatus &maxDpbLimit);
 #endif
 };
 

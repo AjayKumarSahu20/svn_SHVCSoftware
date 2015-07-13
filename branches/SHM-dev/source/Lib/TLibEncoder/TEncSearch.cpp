@@ -3944,9 +3944,9 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
   // prediction pattern
 #if SVC_EXTENSION
   // Check WP for B-slices
-  if ( pcCU->getSlice()->getPPS()->getUseWP())
+  if( pcCU->getSlice()->testWeightPred() )
 #else
-  if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
+  if ( pcCU->getSlice()->testWeightPred() && pcCU->getSlice()->getSliceType()==P_SLICE )
 #endif
   {
     xPredInterBlk( COMPONENT_Y, pcCU, pcPicYuvRef, uiPartAddr, &cMvCand, iSizeX, iSizeY, pcTemplateCand, true );
@@ -3958,9 +3958,9 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
 
 #if SVC_EXTENSION
   // Check WP for B-slices
-  if( pcCU->getSlice()->getPPS()->getUseWP())
+  if ( pcCU->getSlice()->testWeightPred() )
 #else
-  if ( pcCU->getSlice()->getPPS()->getUseWP() && pcCU->getSlice()->getSliceType()==P_SLICE )
+  if ( pcCU->getSlice()->testWeightPred() && pcCU->getSlice()->getSliceType()==P_SLICE )
 #endif
   {
     xWeightedPredictionUni( pcCU, pcTemplateCand, uiPartAddr, iSizeX, iSizeY, eRefPicList, pcTemplateCand, iRefIdx );
@@ -5583,7 +5583,7 @@ Void TEncSearch::xSetResidualQTData( TComYuv* pcResi, Bool bSpatial, TComTU &rTu
   const UInt uiAbsPartIdx=rTu.GetAbsPartIdxTU();
   assert( pcCU->getDepth( 0 ) == pcCU->getDepth( uiAbsPartIdx ) );
   const UInt uiTrMode = pcCU->getTransformIdx( uiAbsPartIdx );
-  TComSPS *sps=pcCU->getSlice()->getSPS();
+  const TComSPS *sps=pcCU->getSlice()->getSPS();
 
   if( uiCurrTrMode == uiTrMode )
   {
@@ -5972,10 +5972,9 @@ Void  TEncSearch::setWpScalingDistParam( TComDataCU* pcCU, Int iRefIdx, RefPicLi
   }
 
   TComSlice       *pcSlice  = pcCU->getSlice();
-  TComPPS         *pps      = pcCU->getSlice()->getPPS();
   WPScalingParam  *wp0 , *wp1;
 
-  m_cDistParam.bApplyWeight = ( pcSlice->getSliceType()==P_SLICE && pps->getUseWP() ) || ( pcSlice->getSliceType()==B_SLICE && pps->getWPBiPred() ) ;
+  m_cDistParam.bApplyWeight = ( pcSlice->getSliceType()==P_SLICE && pcSlice->testWeightPred() ) || ( pcSlice->getSliceType()==B_SLICE && pcSlice->testWeightBiPred() ) ;
 
   if ( !m_cDistParam.bApplyWeight ) return;
 

@@ -74,7 +74,7 @@ public:
 
   //  Virtual list
   Void  resetEntropy           ();
-  Void  determineCabacInitIdx  ();
+  SliceType determineCabacInitIdx  ();
   Void  setBitstream           ( TComBitIf* p )  { m_pcBitIf = p; m_pcBinIf->init( p ); }
   Void  setSlice               ( TComSlice* p )  { m_pcSlice = p;                       }
 
@@ -86,13 +86,13 @@ public:
   UInt  getNumberOfWrittenBits ()                { return m_pcBinIf->getNumWrittenBits(); }
   //--SBAC RD
 
-  Void  codeVPS                ( TComVPS* pcVPS );
-  Void  codeSPS                ( TComSPS* pcSPS     );
-  Void  codePPS                ( TComPPS* pcPPS     
+  Void  codeVPS                ( const TComVPS* pcVPS );
+  Void  codeSPS                ( const TComSPS* pcSPS     );
 #if CGS_3D_ASYMLUT
-    , TEnc3DAsymLUT * pc3DAsymLUT
+  Void  codePPS                ( const TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT     );
+#else
+  Void  codePPS                ( const TComPPS* pcPPS     );
 #endif
-    );
   Void  codeSliceHeader        ( TComSlice* pcSlice );
   Void  codeTilesWPPEntryPoint ( TComSlice* pSlice );
   Void  codeTerminatingBit     ( UInt uilsLast      );
@@ -102,7 +102,6 @@ public:
   Void  codeSaoTypeIdx       ( UInt  uiCode);
   Void  codeSaoUflc          ( UInt uiLength, UInt  uiCode );
   Void  codeSAOSign          ( UInt  uiCode);  //<! code SAO offset sign
-  Void  codeScalingList      ( TComScalingList* /*scalingList*/     ){ assert (0);  return;};
 
 #if SVC_EXTENSION
   Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
