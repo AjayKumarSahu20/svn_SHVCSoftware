@@ -74,7 +74,7 @@ private:
   Int                     m_pocRandomAccess;   ///< POC number of the random access point (the first IDR or CRA picture)
 
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
-  ParameterSetManagerDecoder m_parameterSetManagerDecoder;  // storage for parameter sets
+  ParameterSetManager     m_parameterSetManager;  // storage for parameter sets
   TComSlice*              m_apcSlicePilot;
 
   SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
@@ -151,25 +151,25 @@ private:
   Int                     m_lastPocPeriodId;
   Int                     m_prevPicOrderCnt;
 #if CONFORMANCE_BITSTREAM_MODE
-  Bool m_confModeFlag;
-  std::vector<TComPic>   m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
+  Bool                    m_confModeFlag;
+  std::vector<TComPic>    m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
 #endif
-  Bool m_isOutputLayerFlag;
+  Bool                    m_isOutputLayerFlag;
 #endif //SVC_EXTENSION
 
 public:
 #if SVC_EXTENSION
-  static Bool                    m_checkPocRestrictionsForCurrAu;
-  static Int                     m_pocResetIdcOrCurrAu;
-  static Bool                    m_baseLayerIdrFlag;
-  static Bool                    m_baseLayerPicPresentFlag;
-  static Bool                    m_baseLayerIrapFlag;
-  static Bool                    m_nonBaseIdrPresentFlag;
-  static Int                     m_nonBaseIdrType;
-  static Bool                    m_picNonIdrWithRadlPresentFlag;
-  static Bool                    m_picNonIdrNoLpPresentFlag;
-  static Int                     m_crossLayerPocResetPeriodId;
-  static Int                     m_crossLayerPocResetIdc;
+  static Bool             m_checkPocRestrictionsForCurrAu;
+  static Int              m_pocResetIdcOrCurrAu;
+  static Bool             m_baseLayerIdrFlag;
+  static Bool             m_baseLayerPicPresentFlag;
+  static Bool             m_baseLayerIrapFlag;
+  static Bool             m_nonBaseIdrPresentFlag;
+  static Int              m_nonBaseIdrType;
+  static Bool             m_picNonIdrWithRadlPresentFlag;
+  static Bool             m_picNonIdrNoLpPresentFlag;
+  static Int              m_crossLayerPocResetPeriodId;
+  static Int              m_crossLayerPocResetIdc;
 #endif //SVC_EXTENSION
 
   TDecTop();
@@ -189,10 +189,6 @@ public:
   
   Void  deletePicBuffer();
 
-  
-  TComSPS* getActiveSPS() { return m_parameterSetManagerDecoder.getActiveSPS(); }
-
-
   Void  executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
   Void  checkNoOutputPriorPics (TComList<TComPic*>* rpcListPic);
 
@@ -209,7 +205,7 @@ public:
 #if SVC_EXTENSION
   Int       getParseIdc                     ()                              { return m_parseIdc;               }
   Void      setParseIdc                     (Int x)                         { m_parseIdc = x;                  }
-  Void      markAllPicsAsNoCurrAu           (TComVPS *vps);
+  Void      markAllPicsAsNoCurrAu           ( const TComVPS *vps );
 
   Int       getLastPocPeriodId              ()                              { return m_lastPocPeriodId;        }
   Void      setLastPocPeriodId              (Int x)                         { m_lastPocPeriodId = x;           }
@@ -239,7 +235,7 @@ public:
   Int       getNumMotionPredRefLayers       ()                              { return m_numMotionPredRefLayers;  }
   Void      setNumMotionPredRefLayers       (Int num)                       { m_numMotionPredRefLayers = num;   }
 
-  Void      setRefLayerParams( TComVPS* vps );
+  Void      setRefLayerParams( const TComVPS* vps );
 
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile )                                { m_pBLReconFile = pFile; }
@@ -250,51 +246,55 @@ public:
   Void                    setCommonDecoderParams(CommonDecoderParams* x)    { m_commonDecoderParams = x;    }
   Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
 
-  ParameterSetManagerDecoder* getParameterSetManager()                      { return &m_parameterSetManagerDecoder; }
+  ParameterSetManager* getParameterSetManager()                             { return &m_parameterSetManager; }
 
 #if CONFORMANCE_BITSTREAM_MODE
   std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
-  Bool const getConfModeFlag() { return m_confModeFlag; }
-  Void setConfModeFlag(Bool x) { m_confModeFlag = x; }
+  Bool      const getConfModeFlag() { return m_confModeFlag; }
+  Void      setConfModeFlag(Bool x) { m_confModeFlag = x; }
 #endif
 #endif //SVC_EXTENSION
 
 protected:
-  Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
-  Void  xCreateLostPicture (Int iLostPOC);
+#if SVC_EXTENSION
+  Void      xGetNewPicBuffer  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
+#else
+  Void      xGetNewPicBuffer  (const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
+#endif
+  Void      xCreateLostPicture (Int iLostPOC);
 
   Void      xActivateParameterSets();
 #if SVC_EXTENSION
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
-  Void      xSetSpatialEnhLayerFlag(TComSlice* slice, TComPic* pic);
+  Void      xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic* pic );
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
 #endif
-  Void      xDecodeVPS();
-  Void      xDecodeSPS();
+  Void      xDecodeVPS(const std::vector<UChar> *pNaluData);
+  Void      xDecodeSPS(const std::vector<UChar> *pNaluData);
 #if CGS_3D_ASYMLUT
-  Void      xDecodePPS( TCom3DAsymLUT * pc3DAsymLUT );
+  Void      xDecodePPS(const std::vector<UChar> *pNaluData, TCom3DAsymLUT *pc3DAsymLUT);
 #else
-  Void      xDecodePPS();
+  Void      xDecodePPS(const std::vector<UChar> *pNaluData);
 #endif
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
 
 #if SVC_EXTENSION
 #if NO_CLRAS_OUTPUT_FLAG
-  Int  getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
-  Void setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
-  Int  getLayerInitializedFlag()             { return m_layerInitializedFlag;}
-  Void setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
-  Int  getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
-  Void setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
+  Int       getNoClrasOutputFlag()                { return m_noClrasOutputFlag;}
+  Void      setNoClrasOutputFlag(Bool x)          { m_noClrasOutputFlag = x;   }
+  Int       getLayerInitializedFlag()             { return m_layerInitializedFlag;}
+  Void      setLayerInitializedFlag(Bool x)       { m_layerInitializedFlag = x;   }
+  Int       getFirstPicInLayerDecodedFlag()       { return m_firstPicInLayerDecodedFlag;}
+  Void      setFirstPicInLayerDecodedFlag(Bool x) { m_firstPicInLayerDecodedFlag = x;   }
 #endif
 #if CGS_3D_ASYMLUT
-  Void initAsymLut(TComSlice *pcSlice);
+  Void     initAsymLut(TComSlice *pcSlice);
 #endif
-  Void resetPocRestrictionCheckParameters();
-  Void xCheckLayerReset();
-  Void xSetNoRaslOutputFlag();
-  Void xSetLayerInitializedFlag();
+  Void     resetPocRestrictionCheckParameters();
+  Void     xCheckLayerReset();
+  Void     xSetNoRaslOutputFlag();
+  Void     xSetLayerInitializedFlag();
 #endif
 };// END CLASS DEFINITION TDecTop
 

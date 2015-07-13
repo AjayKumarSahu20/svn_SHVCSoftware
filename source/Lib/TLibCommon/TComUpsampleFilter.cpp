@@ -72,14 +72,14 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   Int heightEL  = pcUsPic->getHeight(COMPONENT_Y) - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride(COMPONENT_Y);
 
-  Int chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+  ChromaFormat chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
   Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
-  Bool phaseSetPresentFlag;
-  Int phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma;  
-  currSlice->getPPS()->getResamplingPhase( refLayerId, phaseSetPresentFlag, phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma );
 
-  if( !phaseSetPresentFlag )
+  const ResamplingPhase &resamplingPhase = currSlice->getPPS()->getResamplingPhase( refLayerId );
+  Int phaseVerChroma = resamplingPhase.phaseVerChroma;
+
+  if( !resamplingPhase.phasePresentFlag )
   {
     Int refRegionHeight = heightBL - windowRL.getWindowTopOffset() - windowRL.getWindowBottomOffset();
     phaseVerChroma = (4 * heightEL + (refRegionHeight >> 1)) / refRegionHeight - 4;
@@ -191,11 +191,11 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcBasePic->setBorderExtension(false);
     pcBasePic->extendPicBorder(); // extend the border.
 
-    Int   shiftX = 16;
-    Int   shiftY = 16;
+    Int shiftX = 16;
+    Int shiftY = 16;
 
-    Int phaseX = phaseHorLuma;
-    Int phaseY = phaseVerLuma;
+    Int phaseX = resamplingPhase.phaseHorLuma;
+    Int phaseY = resamplingPhase.phaseVerLuma;
     Int addX = ( ( phaseX * scaleX + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
     Int addY = ( ( phaseY * scaleY + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
     Int refOffsetX = windowRL.getWindowLeftOffset() << 4;
@@ -206,7 +206,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     widthEL  = pcUsPic->getWidth ( COMPONENT_Y );
     heightEL = pcUsPic->getHeight( COMPONENT_Y );
-
     widthBL  = pcBasePic->getWidth ( COMPONENT_Y );
     heightBL = min<Int>( pcBasePic->getHeight( COMPONENT_Y ), heightEL );
 
@@ -255,7 +254,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcTempPic->setHeight(heightEL);
 
     Int nShift = 20 - g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId];
-
     Int iOffset = 1 << (nShift - 1);
 
     for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y); j++ )
@@ -289,7 +287,6 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     widthEL  >>= 1;
     heightEL >>= 1;
-
     widthBL  >>= 1;
     heightBL >>= 1;
 
@@ -305,7 +302,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     shiftX = 16;
     shiftY = 16;
 
-    addX = ( ( phaseHorChroma * scaleX + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
+    addX = ( ( resamplingPhase.phaseHorChroma * scaleX + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
     addY = ( ( phaseVerChroma * scaleY + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
     Int refOffsetXC = (windowRL.getWindowLeftOffset() / xScal) << 4;
     Int refOffsetYC = (windowRL.getWindowTopOffset()  / yScal) << 4;

@@ -749,19 +749,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_aiPadY        [MAX_LAYERS];
   Int*    cfg_conformanceMode  [MAX_LAYERS];
   Bool*   cfg_useExtendedPrecision [MAX_LAYERS];
-#if LAYER_CTB
+
+  Int*    cfg_maxCuDQPDepth[MAX_LAYERS];
+
   // coding unit (CU) definition
-  UInt*      cfg_uiMaxCUWidth[MAX_LAYERS];                                   ///< max. CU width in pixel
-  UInt*      cfg_uiMaxCUHeight[MAX_LAYERS];                                  ///< max. CU height in pixel
-  UInt*      cfg_uiMaxCUDepth[MAX_LAYERS];                                   ///< max. CU depth
-  
+  UInt*   cfg_uiMaxCUWidth[MAX_LAYERS];                                   ///< max. CU width in pixel
+  UInt*   cfg_uiMaxCUHeight[MAX_LAYERS];                                  ///< max. CU height in pixel
+  UInt*   cfg_uiMaxCUDepth[MAX_LAYERS];                                   ///< max. CU depth
+
   // transfom unit (TU) definition
-  UInt*      cfg_uiQuadtreeTULog2MaxSize[MAX_LAYERS];
-  UInt*      cfg_uiQuadtreeTULog2MinSize[MAX_LAYERS];
+  UInt*   cfg_uiQuadtreeTULog2MaxSize[MAX_LAYERS];
+  UInt*   cfg_uiQuadtreeTULog2MinSize[MAX_LAYERS];
   
-  UInt*      cfg_uiQuadtreeTUMaxDepthInter[MAX_LAYERS];
-  UInt*      cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
-#endif
+  UInt*   cfg_uiQuadtreeTUMaxDepthInter[MAX_LAYERS];
+  UInt*   cfg_uiQuadtreeTUMaxDepthIntra[MAX_LAYERS];
+
 #if AUXILIARY_PICTURES
   Int*    cfg_auxId[MAX_LAYERS];
 #endif
@@ -859,7 +861,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_aiPadX[layer]               = &m_acLayerCfg[layer].m_aiPad[0];
     cfg_aiPadY[layer]               = &m_acLayerCfg[layer].m_aiPad[1];
     cfg_useExtendedPrecision[layer] = &m_acLayerCfg[layer].m_useExtendedPrecision;
-#if LAYER_CTB
+
+    cfg_maxCuDQPDepth[layer]        = &m_acLayerCfg[layer].m_iMaxCuDQPDepth;
+
     // coding unit (CU) definition
     cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
     cfg_uiMaxCUHeight[layer] = &m_acLayerCfg[layer].m_uiMaxCUHeight;
@@ -871,7 +875,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     cfg_uiQuadtreeTUMaxDepthInter[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter;
     cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra;
-#endif
 
     cfg_numSamplePredRefLayers  [layer] = &m_acLayerCfg[layer].m_numSamplePredRefLayers;
     cfg_samplePredRefLayerIdsPtr[layer] = &cfg_samplePredRefLayerIds[layer];
@@ -1200,6 +1203,20 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   
   ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_IDX_PLUS1, "Index of PTL for each layer")
   ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+
+  // Unit definition parameters
+  ("MaxCUWidth%d",                                    cfg_uiMaxCUWidth,                       64u, MAX_LAYERS, "Maximum CU width")
+  ("MaxCUHeight%d",                                   cfg_uiMaxCUHeight,                      64u, MAX_LAYERS, "Maximum CU height")
+  // todo: remove defaults from MaxCUSize
+  ("MaxCUSize%d,s",                                   cfg_uiMaxCUWidth,                       64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxCUSize%d,s",                                   cfg_uiMaxCUHeight,                      64u, MAX_LAYERS, "Maximum CU size")
+  ("MaxPartitionDepth%d,h%d",                         cfg_uiMaxCUDepth,                        4u, MAX_LAYERS, "CU depth")
+
+  ("QuadtreeTULog2MaxSize%d",                         cfg_uiQuadtreeTULog2MaxSize,             5u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
+  ("QuadtreeTULog2MinSize%d",                         cfg_uiQuadtreeTULog2MinSize,             2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
+                                                                                               
+  ("QuadtreeTUMaxDepthIntra%d",                       cfg_uiQuadtreeTUMaxDepthIntra,           3u, MAX_LAYERS, "Depth of TU tree for intra CUs")
+  ("QuadtreeTUMaxDepthInter%d",                       cfg_uiQuadtreeTUMaxDepthInter,           3u, MAX_LAYERS, "Depth of TU tree for inter CUs") 
 #else
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level",                                           m_level,                                    Level::NONE, "Level limit to be used, eg 5.1, or none")
@@ -1213,38 +1230,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("InterlacedSource",                                m_interlacedSourceFlag,                           false, "Indicate that source is interlaced")
   ("NonPackedSource",                                 m_nonPackedConstraintFlag,                        false, "Indicate that source does not contain frame packing")
   ("FrameOnly",                                       m_frameOnlyConstraintFlag,                        false, "Indicate that the bitstream contains only frames")
-#endif
 
-#if LAYER_CTB
-  // Unit definition parameters
-  ("MaxCUWidth%d",                                    cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU width")
-  ("MaxCUHeight%d",                                   cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU height")
-  // todo: remove defaults from MaxCUSize
-  ("MaxCUSize%d,s%d",                                 cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxCUSize%d,s%d",                                 cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxPartitionDepth%d,h%d",                         cfg_uiMaxCUDepth,              4u, MAX_LAYERS, "CU depth")
-  
-  ("QuadtreeTULog2MaxSize%d",                         cfg_uiQuadtreeTULog2MaxSize,   6u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
-  ("QuadtreeTULog2MinSize%d",                         cfg_uiQuadtreeTULog2MinSize,   2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
-  
-  ("QuadtreeTUMaxDepthIntra%d",                       cfg_uiQuadtreeTUMaxDepthIntra, 1u, MAX_LAYERS, "Depth of TU tree for intra CUs")
-  ("QuadtreeTUMaxDepthInter%d",                       cfg_uiQuadtreeTUMaxDepthInter, 2u, MAX_LAYERS, "Depth of TU tree for inter CUs")
-
-
-  // set the same CU realted settings across all the layers if config file parameters are not layer specific
-  ("MaxCUWidth",                                      cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU width")
-  ("MaxCUHeight",                                     cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU height")
-  // todo: remove defaults from MaxCUSize
-  ("MaxCUSize,s",                                     cfg_uiMaxCUWidth,             64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxCUSize,s",                                     cfg_uiMaxCUHeight,            64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxPartitionDepth,h",                             cfg_uiMaxCUDepth,              4u, MAX_LAYERS, "CU depth")
-  
-  ("QuadtreeTULog2MaxSize",                           cfg_uiQuadtreeTULog2MaxSize,   6u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
-  ("QuadtreeTULog2MinSize",                           cfg_uiQuadtreeTULog2MinSize,   2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
-  
-  ("QuadtreeTUMaxDepthIntra",                         cfg_uiQuadtreeTUMaxDepthIntra, 1u, MAX_LAYERS, "Depth of TU tree for intra CUs")
-  ("QuadtreeTUMaxDepthInter",                         cfg_uiQuadtreeTUMaxDepthInter, 2u, MAX_LAYERS, "Depth of TU tree for inter CUs")
-#else
   // Unit definition parameters
   ("MaxCUWidth",                                      m_uiMaxCUWidth,                                     64u)
   ("MaxCUHeight",                                     m_uiMaxCUHeight,                                    64u)
@@ -1302,7 +1288,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("DeltaQpRD,-dqr",                                  m_uiDeltaQpRD,                                       0u, "max dQp offset for slice")
   ("MaxDeltaQP,d",                                    m_iMaxDeltaQP,                                        0, "max dQp offset for block")
+#if SVC_EXTENSION
+  ("MaxCuDQPDepth%d,-dqd",                            cfg_maxCuDQPDepth,                        0, MAX_LAYERS, "max depth for a minimum CuDQP")
+#else
   ("MaxCuDQPDepth,-dqd",                              m_iMaxCuDQPDepth,                                     0, "max depth for a minimum CuDQP")
+#endif
   ("MaxCUChromaQpAdjustmentDepth",                    m_maxCUChromaQpAdjustmentDepth,                      -1, "Maximum depth for CU chroma Qp adjustment - set less than 0 to disable")
 
   ("CbQpOffset,-cbqpofs",                             m_cbQpOffset,                                         0, "Chroma Cb QP Offset")
@@ -1731,7 +1721,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #if Q0074_COLOUR_REMAPPING_SEI
-  m_colourRemapSEIFileRoot = cfg_colourRemapSEIFileRoot.empty() ? NULL : strdup(cfg_colourRemapSEIFileRoot.c_str());
+  if( !cfg_colourRemapSEIFileRoot.empty() )
+  {
+    m_colourRemapSEIFileRoot = strdup(cfg_colourRemapSEIFileRoot.c_str());
+  }
 #endif
 #endif //SVC_EXTENSION
 
@@ -2593,9 +2586,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       fclose(fpt);
     }
-  }
-  m_iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
+  }  
 #endif
+
   if( m_masteringDisplay.colourVolumeSEIEnabled )
   {
     for(UInt idx=0; idx<6; idx++)
@@ -2813,8 +2806,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
 
   // set global varibles
-#if LAYER_CTB
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+#if SVC_EXTENSION
+  for(Int layer = 0; layer < m_numLayers; layer++)
   {
     xSetGlobal(layer);
   }
@@ -3099,12 +3092,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_iSearchRange < 0 ,                                                        "Search Range must be more than 0" );
   xConfirmPara( m_bipredSearchRange < 0 ,                                                   "Search Range must be more than 0" );
   xConfirmPara( m_iMaxDeltaQP > 7,                                                          "Absolute Delta QP exceeds supported range (0 to 7)" );
-#if LAYER_CTB
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    xConfirmPara( m_iMaxCuDQPDepth > m_acLayerCfg[layer].m_uiMaxCUDepth - 1,                "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
-  }
-#else
+#if !SVC_EXTENSION  
   xConfirmPara( m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                          "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
 #endif
 
@@ -3119,19 +3107,13 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
-#endif
-#if !LAYER_CTB
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
   xConfirmPara( m_uiMaxCUHeight < 16,                                                       "Maximum partition height size should be larger than or equal to 16");
-#endif
-#if !SVC_EXTENSION
   xConfirmPara( (m_iSourceWidth  % (m_uiMaxCUWidth  >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame width must be a multiple of the minimum CU size");
   xConfirmPara( (m_iSourceHeight % (m_uiMaxCUHeight >> (m_uiMaxCUDepth-1)))!=0,             "Resulting coded frame height must be a multiple of the minimum CU size");
-#endif
-  
-#if !LAYER_CTB
+
   xConfirmPara( m_uiQuadtreeTULog2MinSize < 2,                                        "QuadtreeTULog2MinSize must be 2 or greater.");
   xConfirmPara( m_uiQuadtreeTULog2MaxSize > 5,                                        "QuadtreeTULog2MaxSize must be 5 or smaller.");
   xConfirmPara( m_uiQuadtreeTULog2MaxSize < m_uiQuadtreeTULog2MinSize,                "QuadtreeTULog2MaxSize must be greater than or equal to m_uiQuadtreeTULog2MinSize.");
@@ -3204,9 +3186,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_defDispWinTopOffset    % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Top default display window offset must be an integer multiple of the specified chroma subsampling");
     xConfirmPara( m_defDispWinBottomOffset % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Bottom default display window offset must be an integer multiple of the specified chroma subsampling");
   }
-#endif
 
-#if !LAYER_CTB
   // max CU width and height should be power of 2
   UInt ui = m_uiMaxCUWidth;
   while(ui)
@@ -3924,10 +3904,8 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
   Int m_iSourceWidth = m_acLayerCfg[layerIdx].m_iSourceWidth;
   Int m_iSourceHeight = m_acLayerCfg[layerIdx].m_iSourceHeight;
-#if LAYER_CTB
   Int m_uiMaxCUWidth = m_acLayerCfg[layerIdx].m_uiMaxCUWidth;
   Int m_uiMaxCUHeight = m_acLayerCfg[layerIdx].m_uiMaxCUHeight;
-#endif
 
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
   Int m_iWaveFrontSynchro = m_acLayerCfg[layerIdx].m_waveFrontSynchro;
@@ -4009,8 +3987,6 @@ Void TAppEncCfg::xCheckParameter()
   }
 #if !SVC_EXTENSION
   xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
-  xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
-  xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_iWaveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 #endif
 
   xConfirmPara( m_decodedPictureHashSEIEnabled<0 || m_decodedPictureHashSEIEnabled>3, "this hash type is not correct!\n");
@@ -4231,7 +4207,11 @@ Void TAppEncCfg::xSetGlobal(UInt layerId)
   g_uiPCMBitDepthChroma = -1;
 }
 #else
+#if SVC_EXTENSION
+Void TAppEncCfg::xSetGlobal(UInt layerId)
+#else
 Void TAppEncCfg::xSetGlobal()
+#endif
 {
 #if SVC_EXTENSION
   // Check for layerIdx equal to 0, it has to pe extended to other layers.
@@ -4243,6 +4223,20 @@ Void TAppEncCfg::xSetGlobal()
 #endif
 
   // set max CU width & height
+#if SVC_EXTENSION
+  g_uiMaxCUWidth  = m_acLayerCfg[layerId].m_uiMaxCUWidth;
+  g_uiMaxCUHeight = m_acLayerCfg[layerId].m_uiMaxCUHeight;
+
+  // compute actual CU depth with respect to config depth and max transform size
+  g_uiAddCUDepth  = 0;
+  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) ) g_uiAddCUDepth++;
+
+  g_uiAddCUDepth+=getMaxCUDepthOffset(m_chromaFormatIDC, m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
+
+  m_acLayerCfg[layerId].m_uiMaxCUDepth += g_uiAddCUDepth;
+  g_uiAddCUDepth++;
+  g_uiMaxCUDepth = m_acLayerCfg[layerId].m_uiMaxCUDepth;
+#else
   g_uiMaxCUWidth  = m_uiMaxCUWidth;
   g_uiMaxCUHeight = m_uiMaxCUHeight;
 
@@ -4255,6 +4249,7 @@ Void TAppEncCfg::xSetGlobal()
   m_uiMaxCUDepth += g_uiAddCUDepth;
   g_uiAddCUDepth++;
   g_uiMaxCUDepth = m_uiMaxCUDepth;
+#endif
 
   // set internal bit-depth and constants
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
@@ -4357,8 +4352,7 @@ Void TAppEncCfg::xPrintParameter()
   {
     printf("Profile                           : %s\n", profileToString(m_profile) );
   }
-#endif
-#if !LAYER_CTB
+
   printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
@@ -4372,8 +4366,8 @@ Void TAppEncCfg::xPrintParameter()
   printf("Decoding refresh type             : %d\n", m_iDecodingRefreshType );
 #if !SVC_EXTENSION
   printf("QP                                : %5.2f\n", m_fQP );
-#endif
   printf("Max dQP signaling depth           : %d\n", m_iMaxCuDQPDepth);
+#endif
 
   printf("Cb QP Offset                      : %d\n", m_cbQpOffset   );
   printf("Cr QP Offset                      : %d\n", m_crQpOffset);
@@ -4464,7 +4458,7 @@ Void TAppEncCfg::xPrintParameter()
   }
   printf("CIP:%d ", m_bUseConstrainedIntraPred);
   printf("SAO:%d ", (m_bUseSAO)?(1):(0));
-#if !LAYER_CTB
+#if !SVC_EXTENSION
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
 #endif
 
@@ -4481,8 +4475,9 @@ Void TAppEncCfg::xPrintParameter()
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);
 #if !SVC_EXTENSION
+  const Int iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
   printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
-          m_iWaveFrontSynchro, m_iWaveFrontSubstreams);
+          m_iWaveFrontSynchro, iWaveFrontSubstreams);
 #endif
   printf(" ScalingList:%d ", m_useScalingListId );
   printf("TMVPMode:%d ", m_TMVPModeId     );
@@ -4496,15 +4491,15 @@ Void TAppEncCfg::xPrintParameter()
   printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
+#if CGS_3D_ASYMLUT
+  printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d ", m_nCGSFlag, m_nCGSMaxOctantDepth, m_nCGSMaxYPartNumLog2, m_nCGSLUTBit );
+  printf("CGSAdaptC:%d ", m_nCGSAdaptiveChroma );
+#if R0179_ENC_OPT_3DLUT_SIZE
+  printf("CGSSizeRDO:%d ", m_nCGSLutSizeRDO );
+#endif
+#endif
 #else
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
-#endif
-#if CGS_3D_ASYMLUT
-  printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d " , m_nCGSFlag , m_nCGSMaxOctantDepth , m_nCGSMaxYPartNumLog2 , m_nCGSLUTBit );
-#endif
-  printf("CGSAdaptC:%d " , m_nCGSAdaptiveChroma );
-#if R0179_ENC_OPT_3DLUT_SIZE
-  printf("CGSSizeRDO:%d " , m_nCGSLutSizeRDO );
 #endif
 
   printf("\n\n");

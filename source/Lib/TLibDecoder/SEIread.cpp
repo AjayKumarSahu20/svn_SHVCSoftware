@@ -105,9 +105,9 @@ static inline Void output_sei_message_header(SEI &sei, std::ostream *pDecodedMes
  * unmarshal a single SEI message from bitstream bs
  */
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, const TComVPS *vps, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const NalUnitType nalUnitType, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   setBitstream(bs);
@@ -132,15 +132,15 @@ Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
 
 #if O0164_MULTI_LAYER_HRD
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream, const SEIScalableNesting *nestingSei, const SEIBspNesting *bspNestingSei)
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, const TComVPS *vps, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream, const SEIScalableNesting *nestingSei, const SEIBspNesting *bspNestingSei)
 #else
-Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps, std::ostream *pDecodedMessageOutputStream, const SEIScalableNesting *nestingSei)
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream, const SEIScalableNesting *nestingSei)
 #endif
 #else
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, const TComVPS *vps, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 #endif
 {
@@ -556,9 +556,9 @@ Void SEIReader::xParseSEIActiveParameterSets(SEIActiveParameterSets& sei, UInt p
 }
 
 #if SVC_EXTENSION
-Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps,std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payloadSize, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   UInt val;
@@ -567,7 +567,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
   sei.m_decodingUnitIdx = val;
 
 #if SVC_EXTENSION
-  TComHRD *hrd;
+  const TComHRD *hrd;
   if( bspNestingSei )   // If DU info SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -576,7 +576,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(Int i = 0; i < maxValues; i++)
     {
@@ -600,7 +600,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
   }
   else
   {
-    TComVUI *vui = sps->getVuiParameters();
+    const TComVUI *vui = sps->getVuiParameters();
     hrd = vui->getHrdParameters();
   }
 
@@ -620,7 +620,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
     sei.m_picSptDpbOutputDuDelay = val;
   }
 #else
-  TComVUI *vui = sps->getVuiParameters();  
+  const TComVUI *vui = sps->getVuiParameters(); 
 
   if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
   {
@@ -641,16 +641,16 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
 }
 
 #if SVC_EXTENSION
-Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSize, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   Int i, nalOrVcl;
   UInt code;
 
 #if SVC_EXTENSION
-  TComHRD *pHRD;
+  const TComHRD *pHRD;
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -659,7 +659,7 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(i = 0; i < maxValues; i++)
     {
@@ -682,13 +682,13 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
   }
   else
   {
-    TComVUI *vui = sps->getVuiParameters();
+    const TComVUI *vui = sps->getVuiParameters();
     pHRD = vui->getHrdParameters();
   }
   // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
 #else
-  TComVUI *pVUI = sps->getVuiParameters();
-  TComHRD *pHRD = pVUI->getHrdParameters();
+  const TComVUI *pVUI = sps->getVuiParameters();
+  const TComHRD *pHRD = pVUI->getHrdParameters();
 #endif
 
   output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
@@ -745,17 +745,17 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
 }
 
 #if SVC_EXTENSION
-Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   Int i;
   UInt code;
 
 #if SVC_EXTENSION
-  TComHRD *hrd;    
-  TComVUI *vui = sps->getVuiParameters(); 
+  const TComHRD *hrd;    
+  const TComVUI *vui = sps->getVuiParameters(); 
   if( bspNestingSei )   // If BP SEI contained inside a BSP nesting SEI message
   {
     assert( nestingSei );
@@ -764,7 +764,7 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, 
     Int maxTemporalId = nestingSei->m_nestingMaxTemporalIdPlus1[0] - 1;
     Int maxValues = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
     std::vector<Int> hrdIdx(maxValues, 0);
-    std::vector<TComHRD *> hrdVec;
+    std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
     for(i = 0; i < maxValues; i++)
     {
@@ -795,8 +795,8 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, 
   }
   // To be done: When contained in an BSP HRD SEI message, the hrd structure is to be chosen differently.
 #else
-  TComVUI *vui = sps->getVuiParameters();
-  TComHRD *hrd = vui->getHrdParameters();
+  const TComVUI *vui = sps->getVuiParameters();
+  const TComHRD *hrd = vui->getHrdParameters();
 #endif
   output_sei_message_header(sei, pDecodedMessageOutputStream, payloadSize);
 
@@ -1060,9 +1060,9 @@ Void SEIReader::xParseSEISOPDescription(SEISOPDescription &sei, UInt payloadSize
 }
 
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComVPS *vps, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, const TComVPS *vps, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIScalableNesting(SEIScalableNesting& sei, const NalUnitType nalUnitType, UInt payloadSize, const TComSPS *sps, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   UInt uiCode;
@@ -1422,7 +1422,7 @@ Void SEIReader::xParseSEIColourRemappingInfo(SEIColourRemappingInfo& sei, UInt /
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xParseSEILayersNotPresent(SEILayersNotPresent &sei, UInt payloadSize, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEILayersNotPresent(SEILayersNotPresent &sei, UInt payloadSize, const TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 {
   UInt uiCode;
   UInt i = 0;
@@ -1484,7 +1484,7 @@ Void SEIReader::xParseSEIInterLayerConstrainedTileSets (SEIInterLayerConstrained
 #endif
 
 #if SUB_BITSTREAM_PROPERTY_SEI
-Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei, TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei, const TComVPS *vps, std::ostream *pDecodedMessageOutputStream)
 {
   UInt uiCode;
   sei_read_code( pDecodedMessageOutputStream, 4, uiCode, "active_vps_id" );                      sei.m_activeVpsId = uiCode;
@@ -1509,9 +1509,9 @@ Void SEIReader::xParseSEISubBitstreamProperty(SEISubBitstreamProperty &sei, TCom
 
 #if O0164_MULTI_LAYER_HRD
 #if LAYERS_NOT_PRESENT_SEI
-Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream)
 #else
-Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUnitType, const TComSPS *sps, const SEIScalableNesting &nestingSei, std::ostream *pDecodedMessageOutputStream)
 #endif
 {
   UInt uiCode;
@@ -1536,18 +1536,17 @@ Void SEIReader::xParseSEIBspNesting(SEIBspNesting &sei, const NalUnitType nalUni
   }
 }
 
-Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TComVPS *vps, TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei, std::ostream *pDecodedMessageOutputStream)
+Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei, std::ostream *pDecodedMessageOutputStream)
 {
   assert(vps->getVpsVuiPresentFlag());
 
-#if SVC_EXTENSION
   UInt uiCode;
   Int psIdx         = bspNestingSei.m_seiPartitioningSchemeIdx;
   Int seiOlsIdx     = bspNestingSei.m_seiOlsIdx;
   Int maxTemporalId = nestingSei.m_nestingMaxTemporalIdPlus1[0];
   Int maxValues     = vps->getNumBspSchedulesMinus1(seiOlsIdx, psIdx, maxTemporalId) + 1;
   std::vector<Int> hrdIdx(0, maxValues);
-  std::vector<TComHRD *> hrdVec;
+  std::vector<const TComHRD*> hrdVec;
   std::vector<Int> syntaxElemLen;
   for(Int i = 0; i < maxValues; i++)
   {
@@ -1579,51 +1578,6 @@ Void SEIReader::xParseSEIBspInitialArrivalTime(SEIBspInitialArrivalTime &sei, TC
       sei_read_code( pDecodedMessageOutputStream, syntaxElemLen[i], uiCode, "vcl_initial_arrival_delay[i]" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
     }
   }
-#else
-  UInt schedCombCnt = vps->getNumBspSchedCombinations(nestingSei.m_nestingOpIdx[0]);
-  UInt len;
-  UInt hrdIdx;
-  UInt uiCode;
-
-  if (schedCombCnt > 0)
-  {
-    hrdIdx = vps->getBspCombHrdIdx(nestingSei.m_nestingOpIdx[0], 0, bspNestingSei.m_bspIdx);
-  }
-  else
-  {
-    hrdIdx = 0;
-  }
-
-  TComHRD *hrd = vps->getBspHrd(hrdIdx);
-
-  if (hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag())
-  {
-    len = hrd->getInitialCpbRemovalDelayLengthMinus1() + 1;
-  }
-  else
-  {
-    len = 23 + 1;
-  }
-
-  if (hrd->getNalHrdParametersPresentFlag())
-  {
-    for(UInt i = 0; i < schedCombCnt; i++)
-    {
-      sei_read_code( pDecodedMessageOutputStream, len, uiCode, "nal_initial_arrival_delay" ); sei.m_nalInitialArrivalDelay[i] = uiCode;
-    }
-  }
-#if BSP_INIT_ARRIVAL_SEI
-  if( hrd->getVclHrdParametersPresentFlag() )
-#else
-  else
-#endif
-  {
-    for(UInt i = 0; i < schedCombCnt; i++)
-    {
-      sei_read_code( pDecodedMessageOutputStream, len, uiCode, "vcl_initial_arrival_delay" ); sei.m_vclInitialArrivalDelay[i] = uiCode;
-    }
-  }
-#endif
 }
 
 Void SEIReader::xParseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt maxNumSubLayersMinus1, std::ostream *pDecodedMessageOutputStream)

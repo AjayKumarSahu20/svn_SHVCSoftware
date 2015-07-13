@@ -105,11 +105,9 @@ public:
   virtual ~TEncPic();
 
 #if SVC_EXTENSION
-  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,  
-                      Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual=false );
+  Void          create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual /* = false*/, const UInt layerId );
 #else  //SVC_EXTENSION
-  Void          create( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth,
-                          Window &conformanceWindow, Window &defaultDisplayWindow, Int *numReorderPics, Bool bIsVirtual = false );
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual /* = false*/ );
 #endif //SVC_EXTENSION
 
   virtual Void  destroy();

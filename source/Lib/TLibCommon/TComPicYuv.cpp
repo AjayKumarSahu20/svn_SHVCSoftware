@@ -76,7 +76,7 @@ TComPicYuv::~TComPicYuv()
 }
 
 #if SVC_EXTENSION
-Void TComPicYuv::create( const Int iPicWidth, const Int iPicHeight, const ChromaFormat chromaFormatIDC, const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth, Window* conformanceWindow )
+Void TComPicYuv::create( const Int iPicWidth, const Int iPicHeight, const ChromaFormat chromaFormatIDC, const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth, const Window* conformanceWindow )
 #else
 Void TComPicYuv::create( const Int  iPicWidth,    const  Int iPicHeight,    const ChromaFormat chromaFormatIDC,
                          const UInt uiMaxCUWidth, const UInt uiMaxCUHeight, const UInt uiMaxCUDepth )

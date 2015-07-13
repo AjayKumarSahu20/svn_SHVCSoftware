@@ -50,7 +50,7 @@
 ParameterSetMap<TComVPS> ParameterSetManager::m_vpsMap(MAX_NUM_VPS);
 ParameterSetMap<TComSPS> ParameterSetManager::m_spsMap(MAX_NUM_SPS);
 ParameterSetMap<TComPPS> ParameterSetManager::m_ppsMap(MAX_NUM_PPS);
-Int ParameterSetManager::m_activeVPSId = -1;
+TComVPS ParameterSetManager::m_activeVPS;
 #endif
 
 TComSlice::TComSlice()
@@ -109,13 +109,15 @@ TComSlice::TComSlice()
 , m_sliceBits                     ( 0 )
 , m_sliceSegmentBits              ( 0 )
 , m_bFinalized                    ( false )
+, m_bTestWeightPred               ( false )
+, m_bTestWeightBiPred             ( false )
 , m_substreamSizes                ( )
-, m_scalingList                   ( NULL )
 , m_cabacInitFlag                 ( false )
 , m_bLMvdL1Zero                   ( false )
 , m_temporalLayerNonReferenceFlag ( false )
 , m_LFCrossSliceBoundaryFlag      ( false )
 , m_enableTMVPFlag                ( true )
+, m_encCABACTableIdx              (I_SLICE)
 #if SVC_EXTENSION
 , m_firstSliceInPic               ( false )
 , m_availableForTMVPRefFlag       ( true )
@@ -189,10 +191,19 @@ Void TComSlice::initSlice()
 #endif
 {
 #if SVC_EXTENSION
-  m_layerId = layerId;
+  m_layerId                   = layerId;
   m_activeNumILRRefIdx        = 0;
   m_interLayerPredEnabledFlag = 0;
-  m_picOrderCntLsb = 0;
+  m_picOrderCntLsb            = 0;
+  m_pocResetIdc               = 0;
+  m_pocResetPeriodId          = 0;
+  m_fullPocResetFlag          = false;
+  m_pocLsbVal                 = 0;
+  m_pocMsbVal                 = 0;
+  m_pocMsbValRequiredFlag     = false;
+  m_pocMsbValPresentFlag      = false;
+  m_pocMsbValNeeded           = false;
+  m_pocResetDeltaPoc          = 0;
 #endif
 
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
@@ -215,18 +226,9 @@ Void TComSlice::initSlice()
   m_substreamSizes.clear();
   m_cabacInitFlag        = false;
   m_enableTMVPFlag = true;
-  m_pocResetIdc                   = 0;
-  m_pocResetPeriodId              = 0;
-  m_fullPocResetFlag              = false;
-  m_pocLsbVal                     = 0;
-  m_pocMsbVal                     = 0;
-  m_pocMsbValRequiredFlag         = false;
-  m_pocMsbValPresentFlag          = false;
-  m_pocMsbValNeeded  = false;
-  m_pocResetDeltaPoc = 0;
 }
 
-Bool TComSlice::getRapPicFlag()
+Bool TComSlice::getRapPicFlag() const
 {
   return getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
       || getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
@@ -676,7 +678,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   }
 }
 
-Int TComSlice::getNumRpsCurrTempList()
+Int TComSlice::getNumRpsCurrTempList() const
 {
   Int numRpsCurrTempList = 0;
 
@@ -751,7 +753,7 @@ Void TComSlice::checkColRefIdx(UInt curSliceIdx, TComPic* pic)
   }
 }
 
-Void TComSlice::checkCRA(TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic)
+Void TComSlice::checkCRA(const TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic)
 {
   for(Int i = 0; i < pReferencePictureSet->getNumberOfNegativePictures()+pReferencePictureSet->getNumberOfPositivePictures(); i++)
   {
@@ -1006,14 +1008,12 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 
   // access channel
 #if SVC_EXTENSION
-  m_pcVPS                = pSrc->m_pcVPS;
-  m_layerId              = pSrc->m_layerId;
+  m_pcVPS                      = pSrc->m_pcVPS;
+  m_layerId                    = pSrc->m_layerId;
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
 #endif
-  m_pcSPS                = pSrc->m_pcSPS;
-  m_pcPPS                = pSrc->m_pcPPS;
   m_pcRPS                = pSrc->m_pcRPS;
   m_iLastIDR             = pSrc->m_iLastIDR;
 
@@ -1063,12 +1063,13 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
     m_saoEnabledFlag[ch] = pSrc->m_saoEnabledFlag[ch];
   }
 
-  m_cabacInitFlag                = pSrc->m_cabacInitFlag;
+  m_cabacInitFlag                 = pSrc->m_cabacInitFlag;
 
-  m_bLMvdL1Zero = pSrc->m_bLMvdL1Zero;
-  m_LFCrossSliceBoundaryFlag = pSrc->m_LFCrossSliceBoundaryFlag;
+  m_bLMvdL1Zero                   = pSrc->m_bLMvdL1Zero;
+  m_LFCrossSliceBoundaryFlag      = pSrc->m_LFCrossSliceBoundaryFlag;
   m_enableTMVPFlag                = pSrc->m_enableTMVPFlag;
   m_maxNumMergeCand               = pSrc->m_maxNumMergeCand;
+  m_encCABACTableIdx              = pSrc->m_encCABACTableIdx;
 }
 
 
@@ -1333,7 +1334,7 @@ Void TComSlice::checkLeadingPictureRestrictions(TComList<TComPic*>& rcListPic)
 
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
-Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet)
+Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet)
 {
   TComPic* rpcPic;
   Int i, isReference;
@@ -1422,9 +1423,9 @@ Void TComSlice::applyReferencePictureSet( TComList<TComPic*>& rcListPic, TComRef
 /** Function for applying picture marking based on the Reference Picture Set in pReferencePictureSet.
 */
 #if ALLOW_RECOVERY_POINT_AS_RAP
-Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess, Bool bUseRecoveryPoint)
+Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess, Bool bUseRecoveryPoint)
 #else
-Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess)
+Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess)
 #endif
 {
 #if ALLOW_RECOVERY_POINT_AS_RAP
@@ -1654,9 +1655,9 @@ Int TComSlice::checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, T
 /** Function for constructing an explicit Reference Picture Set out of the available pictures in a referenced Reference Picture Set
 */
 #if ALLOW_RECOVERY_POINT_AS_RAP
-Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess, Bool bUseRecoveryPoint)
+Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess, Bool bUseRecoveryPoint)
 #else
-Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, TComReferencePictureSet *pReferencePictureSet, Bool isRAP)
+Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP)
 #endif
 {
   TComPic* rpcPic;
@@ -1772,7 +1773,7 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
   {
     Int rIdx =  this->getRPSidx() - pReferencePictureSet->getDeltaRIdxMinus1() - 1;
     Int deltaRPS = pReferencePictureSet->getDeltaRPS();
-    TComReferencePictureSet* pcRefRPS = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
+    const TComReferencePictureSet* pcRefRPS = this->getSPS()->getRPSList()->getReferencePictureSet(rIdx);
     Int iRefPics = pcRefRPS->getNumberOfPictures();
     Int iNewIdc=0;
     for(i=0; i<= iRefPics; i++)
@@ -1865,9 +1866,9 @@ Void  TComSlice::resetWpScaling()
 /** init WP table
  * \returns Void
  */
-Void  TComSlice::initWpScaling()
+Void  TComSlice::initWpScaling(const TComSPS *sps)
 {
-  const Bool bUseHighPrecisionPredictionWeighting = getSPS()->getUseHighPrecisionPredictionWeighting();
+  const Bool bUseHighPrecisionPredictionWeighting = sps->getUseHighPrecisionPredictionWeighting();
   for ( Int e=0 ; e<NUM_REF_PIC_LIST_01 ; e++ )
   {
     for ( Int i=0 ; i<MAX_NUM_REF ; i++ )
@@ -1903,9 +1904,9 @@ TComVPS::TComVPS()
 , m_uiMaxLayers               (  1)
 , m_bTemporalIdNestingFlag    (false)
 , m_numHrdParameters          (  0)
-, m_hrdParameters             (NULL)
-, m_hrdOpSetIdx               (NULL)
-, m_cprmsPresentFlag          (NULL)
+, m_hrdParameters             ()
+, m_hrdOpSetIdx               ()
+, m_cprmsPresentFlag          ()
 , m_baseLayerInternalFlag     (true)
 , m_baseLayerAvailableFlag    (true)
 , m_maxLayerId                (0)
@@ -2025,9 +2026,9 @@ TComVPS::TComVPS()
 , m_bTemporalIdNestingFlag    (false)
 , m_numHrdParameters          (  0)
 , m_maxNuhReservedZeroLayerId (  0)
-, m_hrdParameters             (NULL)
-, m_hrdOpSetIdx               (NULL)
-, m_cprmsPresentFlag          (NULL)
+, m_hrdParameters             ()
+, m_hrdOpSetIdx               ()
+, m_cprmsPresentFlag          ()
 {
 
   for( Int i = 0; i < MAX_TLAYER; i++)
@@ -2041,9 +2042,6 @@ TComVPS::TComVPS()
 
 TComVPS::~TComVPS()
 {
-  if( m_hrdParameters    != NULL )     delete[] m_hrdParameters;
-  if( m_hrdOpSetIdx      != NULL )     delete[] m_hrdOpSetIdx;
-  if( m_cprmsPresentFlag != NULL )     delete[] m_cprmsPresentFlag;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -2118,17 +2116,12 @@ TComSPS::TComSPS()
     m_useResidualDPCM[signallingModeIndex] = false;
   }
 
-  m_scalingList = new TComScalingList;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_usedByCurrPicLtSPSFlag, 0, sizeof(m_usedByCurrPicLtSPSFlag));
 }
 
 TComSPS::~TComSPS()
 {
-#if SVC_EXTENSION
-  if( !m_inferScalingListFlag )
-#endif
-  delete m_scalingList;
   m_RPSList.destroy();
 }
 
@@ -2260,11 +2253,8 @@ TComPPS::TComPPS()
 , m_useDQP                           (false)
 , m_bConstrainedIntraPred            (false)
 , m_bSliceChromaQpFlag               (false)
-, m_pcSPS                            (NULL)
 , m_uiMaxCuDQPDepth                  (0)
-, m_uiMinCuDQPSize                   (0)
 , m_MaxCuChromaQpAdjDepth            (0)
-, m_MinCuChromaQpAdjSize             (0)
 , m_ChromaQpAdjTableSize             (0)
 , m_chromaCbQpOffset                 (0)
 , m_chromaCrQpOffset                 (0)
@@ -2281,10 +2271,8 @@ TComPPS::TComPPS()
 , m_uniformSpacingFlag               (false)
 , m_numTileColumnsMinus1             (0)
 , m_numTileRowsMinus1                (0)
-, m_numSubstreams                    (1)
 , m_signHideFlag                     (false)
 , m_cabacInitPresentFlag             (false)
-, m_encCABACTableIdx                 (I_SLICE)
 , m_sliceHeaderExtensionPresentFlag  (false)
 , m_loopFilterAcrossSlicesEnabledFlag(false)
 , m_listsModificationPresentFlag     (0)
@@ -2304,7 +2292,6 @@ TComPPS::TComPPS()
 #endif
 #endif //SVC_EXTENSION
 {
-  m_scalingList = new TComScalingList;
   for(Int ch=0; ch<MAX_NUM_CHANNEL_TYPE; ch++)
   {
     m_saoOffsetBitShift[ch] = 0;
@@ -2315,20 +2302,11 @@ TComPPS::TComPPS()
 #if SVC_EXTENSION
   ::memset(m_scaledRefLayerOffsetPresentFlag,   0, sizeof(m_scaledRefLayerOffsetPresentFlag));
   ::memset(m_refRegionOffsetPresentFlag,   0, sizeof(m_refRegionOffsetPresentFlag));
-  ::memset(m_resamplePhaseSetPresentFlag,   0, sizeof(m_resamplePhaseSetPresentFlag));
-  ::memset(m_phaseHorLuma,   0, sizeof(m_phaseHorLuma));
-  ::memset(m_phaseVerLuma,   0, sizeof(m_phaseVerLuma));
-  ::memset(m_phaseHorChroma, 0, sizeof(m_phaseHorChroma));
-  ::memset(m_phaseVerChroma, 0, sizeof(m_phaseVerChroma));
 #endif //SVC_EXTENSION
 }
 
 TComPPS::~TComPPS()
 {
-#if SVC_EXTENSION
-  if( !m_inferScalingListFlag )
-#endif
-  delete m_scalingList;
 }
 
 TComReferencePictureSet::TComReferencePictureSet()
@@ -2370,22 +2348,22 @@ Void TComReferencePictureSet::setNumberOfPictures(Int numberOfPictures)
   m_numberOfPictures = numberOfPictures;
 }
 
-Int TComReferencePictureSet::getUsed(Int bufferNum)
+Int TComReferencePictureSet::getUsed(Int bufferNum) const
 {
   return m_used[bufferNum];
 }
 
-Int TComReferencePictureSet::getDeltaPOC(Int bufferNum)
+Int TComReferencePictureSet::getDeltaPOC(Int bufferNum) const
 {
   return m_deltaPOC[bufferNum];
 }
 
-Int TComReferencePictureSet::getNumberOfPictures()
+Int TComReferencePictureSet::getNumberOfPictures() const
 {
   return m_numberOfPictures;
 }
 
-Int TComReferencePictureSet::getPOC(Int bufferNum)
+Int TComReferencePictureSet::getPOC(Int bufferNum) const
 {
   return m_POC[bufferNum];
 }
@@ -2395,7 +2373,7 @@ Void TComReferencePictureSet::setPOC(Int bufferNum, Int POC)
   m_POC[bufferNum] = POC;
 }
 
-Bool TComReferencePictureSet::getCheckLTMSBPresent(Int bufferNum)
+Bool TComReferencePictureSet::getCheckLTMSBPresent(Int bufferNum) const
 {
   return m_bCheckLTMSB[bufferNum];
 }
@@ -2419,7 +2397,7 @@ Void TComReferencePictureSet::setRefIdc(Int bufferNum, Int refIdc)
  * \param uiBufferNum
  * \returns Int
  */
-Int  TComReferencePictureSet::getRefIdc(Int bufferNum)
+Int  TComReferencePictureSet::getRefIdc(Int bufferNum) const
 {
   return m_refIdc[bufferNum];
 }
@@ -2465,7 +2443,7 @@ Void TComReferencePictureSet::sortDeltaPOC()
  *  A "*" is added to the deltaPOC value if it is Used bu current.
  * \returns Void
  */
-Void TComReferencePictureSet::printDeltaPOC()
+Void TComReferencePictureSet::printDeltaPOC() const
 {
   printf("DeltaPOC = { ");
   for(Int j=0; j < getNumberOfPictures(); j++)
@@ -2483,48 +2461,6 @@ Void TComReferencePictureSet::printDeltaPOC()
   printf("}\n");
 }
 
-TComRPSList::TComRPSList()
-:m_referencePictureSets (NULL)
-{
-}
-
-TComRPSList::~TComRPSList()
-{
-}
-
-Void TComRPSList::create( Int numberOfReferencePictureSets)
-{
-  m_numberOfReferencePictureSets = numberOfReferencePictureSets;
-  m_referencePictureSets = new TComReferencePictureSet[numberOfReferencePictureSets];
-}
-
-Void TComRPSList::destroy()
-{
-  if (m_referencePictureSets)
-  {
-    delete [] m_referencePictureSets;
-  }
-  m_numberOfReferencePictureSets = 0;
-  m_referencePictureSets = NULL;
-}
-
-
-
-TComReferencePictureSet* TComRPSList::getReferencePictureSet(Int referencePictureSetNum)
-{
-  return &m_referencePictureSets[referencePictureSetNum];
-}
-
-Int TComRPSList::getNumberOfReferencePictureSets()
-{
-  return m_numberOfReferencePictureSets;
-}
-
-Void TComRPSList::setNumberOfReferencePictureSets(Int numberOfReferencePictureSets)
-{
-  m_numberOfReferencePictureSets = numberOfReferencePictureSets;
-}
-
 TComRefPicListModification::TComRefPicListModification()
 : m_refPicListModificationFlagL0 (false)
 , m_refPicListModificationFlagL1 (false)
@@ -2539,30 +2475,31 @@ TComRefPicListModification::~TComRefPicListModification()
 
 TComScalingList::TComScalingList()
 {
-  init();
-}
-
-TComScalingList::~TComScalingList()
-{
-  destroy();
+  for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
+  {
+    for(UInt listId = 0; listId < SCALING_LIST_NUM; listId++)
+    {
+      m_scalingListCoef[sizeId][listId].resize(min<Int>(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId]));
+    }
+  }
 }
 
 /** set default quantization matrix to array
 */
-Void TComSlice::setDefaultScalingList()
+Void TComScalingList::setDefaultScalingList()
 {
   for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
   {
     for(UInt listId=0;listId<SCALING_LIST_NUM;listId++)
     {
-      getScalingList()->processDefaultMatrix(sizeId, listId);
+      processDefaultMatrix(sizeId, listId);
     }
   }
 }
 /** check if use default quantization matrix
  * \returns true if use default quantization matrix in all size
 */
-Bool TComSlice::checkDefaultScalingList()
+Bool TComScalingList::checkDefaultScalingList()
 {
   UInt defaultCounter=0;
 
@@ -2570,8 +2507,8 @@ Bool TComSlice::checkDefaultScalingList()
   {
     for(UInt listId=0;listId<SCALING_LIST_NUM;listId++)
     {
-      if( !memcmp(getScalingList()->getScalingListAddress(sizeId,listId), getScalingList()->getScalingListDefaultAddress(sizeId, listId),sizeof(Int)*min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId])) // check value of matrix
-     && ((sizeId < SCALING_LIST_16x16) || (getScalingList()->getScalingListDC(sizeId,listId) == 16))) // check DC value
+      if( !memcmp(getScalingListAddress(sizeId,listId), getScalingListDefaultAddress(sizeId, listId),sizeof(Int)*min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId])) // check value of matrix
+     && ((sizeId < SCALING_LIST_16x16) || (getScalingListDC(sizeId,listId) == 16))) // check DC value
       {
         defaultCounter++;
       }
@@ -2589,6 +2526,24 @@ Bool TComSlice::checkDefaultScalingList()
 Void TComScalingList::processRefMatrix( UInt sizeId, UInt listId , UInt refListId )
 {
   ::memcpy(getScalingListAddress(sizeId, listId),((listId == refListId)? getScalingListDefaultAddress(sizeId, refListId): getScalingListAddress(sizeId, refListId)),sizeof(Int)*min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId]));
+}
+
+Void TComScalingList::checkPredMode(UInt sizeId, UInt listId)
+{
+  Int predListStep = (sizeId == SCALING_LIST_32x32? (SCALING_LIST_NUM/NUMBER_OF_PREDICTION_MODES) : 1); // if 32x32, skip over chroma entries.
+
+  for(Int predListIdx = (Int)listId ; predListIdx >= 0; predListIdx-=predListStep)
+  {
+    if( !memcmp(getScalingListAddress(sizeId,listId),((listId == predListIdx) ?
+      getScalingListDefaultAddress(sizeId, predListIdx): getScalingListAddress(sizeId, predListIdx)),sizeof(Int)*min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId])) // check value of matrix
+     && ((sizeId < SCALING_LIST_16x16) || (getScalingListDC(sizeId,listId) == getScalingListDC(sizeId,predListIdx)))) // check DC value
+    {
+      setRefMatrixId(sizeId, listId, predListIdx);
+      setScalingListPredModeFlag(sizeId, listId, false);
+      return;
+    }
+  }
+  setScalingListPredModeFlag(sizeId, listId, true);
 }
 
 /** parse syntax infomation
@@ -2778,32 +2733,6 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
   return false;
 }
 
-/** initialization process of quantization matrix array
- */
-Void TComScalingList::init()
-{
-  for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
-  {
-    for(UInt listId = 0; listId < SCALING_LIST_NUM; listId++)
-    {
-      m_scalingListCoef[sizeId][listId] = new Int [min(MAX_MATRIX_COEF_NUM,(Int)g_scalingListSize[sizeId])];
-    }
-  }
-}
-
-/** destroy quantization matrix array
- */
-Void TComScalingList::destroy()
-{
-  for(UInt sizeId = 0; sizeId < SCALING_LIST_SIZE_NUM; sizeId++)
-  {
-    for(UInt listId = 0; listId < SCALING_LIST_NUM; listId++)
-    {
-      if(m_scalingListCoef[sizeId][listId]) delete [] m_scalingListCoef[sizeId][listId];
-    }
-  }
-}
-
 /** get default address of quantization matrix
  * \param sizeId size index
  * \param listId list index
@@ -2859,17 +2788,19 @@ Void TComScalingList::checkDcOfMatrix()
 
 ParameterSetManager::ParameterSetManager()
 #if SVC_EXTENSION
-: m_activeSPSId(-1)
-, m_activePPSId(-1)
+: m_activeSPS()
 #else
 : m_vpsMap(MAX_NUM_VPS)
 , m_spsMap(MAX_NUM_SPS)
 , m_ppsMap(MAX_NUM_PPS)
-, m_activeVPSId(-1)
-, m_activeSPSId(-1)
-, m_activePPSId(-1)
+, m_activeVPS()
+, m_activeSPS()
 #endif
 {
+#if !SVC_EXTENSION
+  m_activeVPS.setVPSId(-1);
+#endif
+  m_activeSPS.setSPSId(-1);
 }
 
 
@@ -2885,10 +2816,11 @@ Bool ParameterSetManager::activateSPSWithSEI(Int spsId)
   if (sps)
   {
     Int vpsId = sps->getVPSId();
-    if (m_vpsMap.getPS(vpsId))
+    TComVPS *vps = m_vpsMap.getPS(vpsId);
+    if (vps)
     {
-      m_activeVPSId = vpsId;
-      m_activeSPSId = spsId;
+      m_activeVPS = *(vps);
+      m_activeSPS = *(sps);
       return true;
     }
     else
@@ -2911,7 +2843,7 @@ Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIRAP)
   if (pps)
   {
     Int spsId = pps->getSPSId();
-    if (!isIRAP && (spsId != m_activeSPSId))
+    if (!isIRAP && (spsId != m_activeSPS.getSPSId() ))
     {
       printf("Warning: tried to activate PPS referring to a inactive SPS at non-IDR.");
       return false;
@@ -2920,16 +2852,19 @@ Bool ParameterSetManager::activatePPS(Int ppsId, Bool isIRAP)
     if (sps)
     {
       Int vpsId = sps->getVPSId();
-      if (!isIRAP && (vpsId != m_activeVPSId))
+      if (!isIRAP && (vpsId != m_activeVPS.getVPSId() ))
       {
         printf("Warning: tried to activate PPS referring to a inactive VPS at non-IDR.");
         return false;
       }
-      if (m_vpsMap.getPS(vpsId))
+      TComVPS *vps =m_vpsMap.getPS(vpsId);
+      if (vps)
       {
-        m_activePPSId = ppsId;
-        m_activeVPSId = vpsId;
-        m_activeSPSId = spsId;
+        m_activeVPS = *(vps);
+        m_activeSPS = *(sps);
+#if SVC_EXTENSION
+        m_activePPS = *(pps);
+#endif
         return true;
       }
       else
@@ -2968,6 +2903,34 @@ TComPTL::TComPTL()
   ::memset(m_subLayerLevelPresentFlag,   0, sizeof(m_subLayerLevelPresentFlag  ));
 }
 
+Void calculateParameterSetChangedFlag(Bool &bChanged, const std::vector<UChar> *pOldData, const std::vector<UChar> *pNewData)
+{
+  if (!bChanged)
+  {
+    if ((pOldData==0 && pOldData!=0) || (pOldData!=0 && pOldData==0))
+    {
+      bChanged=true;
+    }
+    else if (pOldData!=0 && pOldData!=0)
+    {
+      // compare the two
+      if (pOldData->size() != pOldData->size())
+      {
+        bChanged=true;
+      }
+      else
+      {
+        const UChar *pNewDataArray=&(*pNewData)[0];
+        const UChar *pOldDataArray=&(*pOldData)[0];
+        if (memcmp(pOldDataArray, pNewDataArray, pOldData->size()))
+        {
+          bChanged=true;
+        }
+      }
+    }
+  }
+}
+
 #if SVC_EXTENSION
 Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
 {
@@ -2984,9 +2947,9 @@ Void ProfileTierLevel::copyProfileInfo(ProfileTierLevel *ptl)
   this->setFrameOnlyConstraintFlag( ptl->getFrameOnlyConstraintFlag());  
 }
 
-Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
+const Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId) const
 {
-  static Window win;
+  static const Window win;
 
   for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
@@ -2995,14 +2958,13 @@ Window& TComPPS::getScaledRefLayerWindowForLayer(Int layerId)
       return m_scaledRefLayerWindow[i];
     }
   }
-
-  win.resetWindow();  // scaled reference layer offsets are inferred to be zero when not present
+  
   return win;
 }
 
-Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
+const Window& TComPPS::getRefLayerWindowForLayer(Int layerId) const
 {
-  static Window win;
+  static const Window win;
 
   for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
@@ -3012,38 +2974,29 @@ Window& TComPPS::getRefLayerWindowForLayer(Int layerId)
     }
   }
 
-  win.resetWindow();  // reference region offsets are inferred to be zero when not present
   return win;
 }
 
-Bool TComPPS::hasZeroResamplingPhase(Int refLayerId)
+Bool TComPPS::hasZeroResamplingPhase(Int refLayerId) const
 {
-  Bool phaseSetPresentFlag;
-  Int phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma;
+  const ResamplingPhase &resamplingPhase = getResamplingPhase(refLayerId);
 
-  getResamplingPhase(refLayerId, phaseSetPresentFlag, phaseHorLuma, phaseVerLuma, phaseHorChroma, phaseVerChroma);
-
-  return ( phaseHorLuma == 0 && phaseHorChroma == 0 && phaseVerLuma == 0 && phaseVerChroma == 0);
+  return ( resamplingPhase.phaseHorLuma == 0 && resamplingPhase.phaseHorChroma == 0 && resamplingPhase.phaseVerLuma == 0 && resamplingPhase.phaseVerChroma == 0 );
 }
 
-Void TComPPS::getResamplingPhase(Int refLayerId, Bool& phaseSetPresentFlag, Int& phaseHorLuma, Int& phaseVerLuma, Int& phaseHorChroma, Int& phaseVerChroma)
+const ResamplingPhase& TComPPS::getResamplingPhase(Int refLayerId) const
 {
-  phaseSetPresentFlag = false;
-  phaseHorLuma = 0, phaseVerLuma = 0, phaseHorChroma = 0, phaseVerChroma = 0;
+  static const ResamplingPhase resamplingPhase;
 
   for( Int i = m_numRefLayerLocationOffsets-1; i >= 0; i-- )
   {
     if( refLayerId == m_refLocationOffsetLayerId[i] )
     {
-      phaseSetPresentFlag = m_resamplePhaseSetPresentFlag[i];
-      phaseHorLuma        = m_phaseHorLuma[i];
-      phaseVerLuma        = m_phaseVerLuma[i];
-      phaseHorChroma      = m_phaseHorChroma[i];
-      phaseVerChroma      = m_phaseVerChroma[i];
-
-      return;
+      return m_resamplingPhase[i];
     }
   }
+
+  return resamplingPhase;
 }
 
 Void TComVPS::deriveLayerIdListVariables()
@@ -3210,13 +3163,13 @@ Void TComVPS::deriveLayerIdListVariablesForAddLayerSets()
   }
 }
 
-Int TComVPS::getNumViews()
+Int TComVPS::getNumViews() const
 {
   Int numViews = 1; 
-  for( Int i = 0; i <= getMaxLayers() - 1; i++ )
+  for( Int i = 0; i < m_uiMaxLayers; i++ )
   {
-    Int lId = getLayerIdInNuh( i ); 
-    if ( i > 0 && ( getViewIndex( lId ) != getScalabilityId( i - 1, VIEW_ORDER_INDEX ) ) )
+    Int lId = m_layerIdInNuh[i]; 
+    if( i > 0 && ( getViewIndex( lId ) != getScalabilityId( i - 1, VIEW_ORDER_INDEX ) ) )
     {
       numViews++; 
     }    
@@ -3225,12 +3178,12 @@ Int TComVPS::getNumViews()
   return numViews;
 }
 
-Int TComVPS::getScalabilityId( Int layerIdInVps, ScalabilityType scalType )
+Int TComVPS::getScalabilityId( Int layerIdInVps, ScalabilityType scalType ) const
 {
   return getScalabilityMask( scalType ) ? getDimensionId( layerIdInVps, scalTypeToScalIdx( scalType ) ) : 0;
 }
 
-Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
+Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType ) const
 {
   assert( scalType >= 0 && scalType <= MAX_VPS_NUM_SCALABILITY_TYPES ); 
   assert( scalType == MAX_VPS_NUM_SCALABILITY_TYPES || getScalabilityMask( scalType ) );
@@ -3244,12 +3197,12 @@ Int TComVPS::scalTypeToScalIdx( ScalabilityType scalType )
   return scalIdx; 
 }
 
-Int TComVPS::getLayerIdcForOls( Int olsIdx, Int layerId )
+Int TComVPS::getLayerIdcForOls( Int olsIdx, Int layerId ) const
 {
   Int layerIdc = -1;
   UInt lsIdx = m_outputLayerSetIdx[olsIdx];
 
-  std::vector<Int>::iterator it = std::find( m_layerSetLayerIdList[lsIdx].begin(), m_layerSetLayerIdList[lsIdx].end(), layerId );
+  std::vector<Int>::const_iterator it = std::find( m_layerSetLayerIdList[lsIdx].begin(), m_layerSetLayerIdList[lsIdx].end(), layerId );
 
   if( it != m_layerSetLayerIdList[lsIdx].end() )
   {
@@ -3401,7 +3354,7 @@ Void TComVPS::deriveNecessaryLayerFlag()
   }
 }
 
-Void TComVPS::deriveNecessaryLayerFlag(Int const olsIdx)
+Void TComVPS::deriveNecessaryLayerFlag(const Int olsIdx)
 {
   Int lsIdx = m_outputLayerSetIdx[olsIdx];
   Int numLayersInLs = m_numLayerInIdList[lsIdx];
@@ -3454,7 +3407,7 @@ Void TComVPS::checkNecessaryLayerFlagCondition()
   }
 }
 
-Int TComVPS::calculateLenOfSyntaxElement( Int const numVal )
+Int TComVPS::calculateLenOfSyntaxElement( const Int numVal ) const
 {
   Int numBits = 1;
   while((1 << numBits) < numVal)
@@ -3479,15 +3432,36 @@ Void TComVPS::calculateMaxSLInLayerSets()
 
 UInt TComSlice::getPicWidthInLumaSamples()
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
+
+  if ( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
+    }
+    else
+    {
+      retVal = m_pcSPS->getPicWidthInLumaSamples();
+    }
+  }
+  else
+  {
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getPicWidthVpsInLumaSamples();
+  }
+
+  return retVal;
+}
+
+UInt TComVPS::getPicWidthInLumaSamples( const TComSPS* sps, const UInt layerId ) const
+{
+  UInt retVal;
 
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = vps->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
+      retVal = m_vpsRepFormat[layerId].getPicWidthVpsInLumaSamples();
     }
     else
     {
@@ -3496,7 +3470,7 @@ UInt TComSlice::getPicWidthInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getPicWidthVpsInLumaSamples();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getPicWidthVpsInLumaSamples();
   }
 
   return retVal;
@@ -3504,15 +3478,36 @@ UInt TComSlice::getPicWidthInLumaSamples()
 
 UInt TComSlice::getPicHeightInLumaSamples()
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
+
+  if ( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
+    }
+    else
+    {
+      retVal = m_pcSPS->getPicHeightInLumaSamples();
+    }
+  }
+  else
+  {
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getPicHeightVpsInLumaSamples();
+  }
+
+  return retVal;
+}
+
+UInt TComVPS::getPicHeightInLumaSamples( const TComSPS* sps, const UInt layerId ) const
+{
+  UInt retVal;
 
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = vps->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
+      retVal = m_vpsRepFormat[layerId].getPicHeightVpsInLumaSamples();
     }
     else
     {
@@ -3521,32 +3516,45 @@ UInt TComSlice::getPicHeightInLumaSamples()
   }
   else
   {
-    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getPicHeightVpsInLumaSamples();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getPicHeightVpsInLumaSamples();
   }
 
   return retVal;
 }
 
-#if AUXILIARY_PICTURES
 ChromaFormat TComSlice::getChromaFormatIdc()
-#else
-UInt TComSlice::getChromaFormatIdc()
-#endif
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
-#if AUXILIARY_PICTURES
   ChromaFormat retVal;
   UInt layerId = getLayerId();
-#else
-  UInt retVal, layerId = getLayerId();
-#endif
+
+  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
+    }
+    else
+    {
+      retVal = m_pcSPS->getChromaFormatIdc();
+    }
+  }
+  else
+  {
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getChromaFormatVpsIdc();
+  }
+
+  return retVal;
+}
+
+ChromaFormat TComVPS::getChromaFormatIdc( const TComSPS* sps, const UInt layerId ) const
+{
+  ChromaFormat retVal;
 
   if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = vps->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
+      retVal = m_vpsRepFormat[layerId].getChromaFormatVpsIdc();
     }
     else
     {
@@ -3555,7 +3563,7 @@ UInt TComSlice::getChromaFormatIdc()
   }
   else
   {
-    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getChromaFormatVpsIdc();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getChromaFormatVpsIdc();
   }
 
   return retVal;
@@ -3563,15 +3571,36 @@ UInt TComSlice::getChromaFormatIdc()
 
 UInt TComSlice::getBitDepthY()
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
+
+  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
+    }
+    else
+    {
+      retVal = m_pcSPS->getBitDepth(CHANNEL_TYPE_LUMA);
+    }
+  }
+  else
+  {
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVpsLuma();
+  }
+
+  return retVal;
+}
+
+UInt TComVPS::getBitDepthY( const TComSPS* sps, const UInt layerId ) const
+{
+  UInt retVal;
 
   if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
+      retVal = m_vpsRepFormat[layerId].getBitDepthVpsLuma();
     }
     else
     {
@@ -3580,7 +3609,7 @@ UInt TComSlice::getBitDepthY()
   }
   else
   {
-    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getBitDepthVpsLuma();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVpsLuma();
   }
 
   return retVal;
@@ -3588,15 +3617,36 @@ UInt TComSlice::getBitDepthY()
 
 UInt TComSlice::getBitDepthC()
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
   UInt retVal, layerId = getLayerId();
+
+  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
+    }
+    else
+    {
+      retVal = m_pcSPS->getBitDepth(CHANNEL_TYPE_CHROMA);
+    }
+  }
+  else
+  {
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVpsChroma();
+  }
+
+  return retVal;
+}
+
+UInt TComVPS::getBitDepthC( const TComSPS* sps, const UInt layerId ) const
+{
+  UInt retVal;
 
   if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = vps->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
+      retVal = m_vpsRepFormat[layerId].getBitDepthVpsChroma();
     }
     else
     {
@@ -3605,7 +3655,7 @@ UInt TComSlice::getBitDepthC()
   }
   else
   {
-    retVal = vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getBitDepthVpsChroma();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVpsChroma();
   }
 
   return retVal;
@@ -3621,17 +3671,32 @@ Int TComSlice::getQpBDOffsetC()
   return (getBitDepthC() - 8) * 6;
 }
 
-Window& TComSlice::getConformanceWindow()
+const Window& TComSlice::getConformanceWindow() const
 {
-  TComSPS *sps = getSPS();
-  TComVPS *vps = getVPS();
-  UInt layerId = getLayerId();
+  if ( m_layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
+  {
+    if( m_layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
+    {
+      return m_pcVPS->getVpsRepFormat(m_layerId)->getConformanceWindowVps();
+    }
+    else
+    {
+      return m_pcSPS->getConformanceWindow();
+    }
+  }
+  else
+  {
+    return m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(m_layerId)))->getConformanceWindowVps();
+  }
+}
 
+const Window& TComVPS::getConformanceWindow( const TComSPS* sps, const UInt layerId ) const
+{
   if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
   {
-    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      return vps->getVpsRepFormat(layerId)->getConformanceWindowVps();
+      return m_vpsRepFormat[layerId].getConformanceWindowVps();
     }
     else
     {
@@ -3640,7 +3705,7 @@ Window& TComSlice::getConformanceWindow()
   }
   else
   {
-    return vps->getVpsRepFormat(sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)))->getConformanceWindowVps();
+    return m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getConformanceWindowVps();
   }
 }
 

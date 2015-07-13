@@ -46,9 +46,6 @@
 
 WeightPredAnalysis::WeightPredAnalysis()
 {
-  m_weighted_pred_flag = false;
-  m_weighted_bipred_flag = false;
-
   for ( UInt lst =0 ; lst<NUM_REF_PIC_LIST_01 ; lst++ )
   {
     for ( Int iRefIdx=0 ; iRefIdx<MAX_NUM_REF ; iRefIdx++ )
@@ -120,30 +117,6 @@ Void WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *const slice)
   slice->setWpAcDcParam(weightACDCParam);
 }
 
-
-/** store weighted_pred_flag and weighted_bipred_idc values
- * \param weighted_pred_flag
- * \param weighted_bipred_idc
- * \returns Void
- */
-Void  WeightPredAnalysis::xStoreWPparam(const Bool weighted_pred_flag, const Bool weighted_bipred_flag)
-{
-  m_weighted_pred_flag   = weighted_pred_flag;
-  m_weighted_bipred_flag = weighted_bipred_flag;
-}
-
-
-/** restore weighted_pred_flag and weighted_bipred_idc values
- * \param TComSlice *slice
- * \returns Void
- */
-Void  WeightPredAnalysis::xRestoreWPparam(TComSlice *const slice)
-{
-  slice->getPPS()->setUseWP   (m_weighted_pred_flag);
-  slice->getPPS()->setWPBiPred(m_weighted_bipred_flag);
-}
-
-
 /** check weighted pred or non-weighted pred
  * \param TComSlice *slice
  * \returns Void
@@ -167,8 +140,8 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *const slice)
 
   if(iPresentCnt==0)
   {
-    slice->getPPS()->setUseWP(false);
-    slice->getPPS()->setWPBiPred(false);
+    slice->setTestWeightPred(false);
+    slice->setTestWeightBiPred(false);
 
     for ( UInt lst=0 ; lst<NUM_REF_PIC_LIST_01 ; lst++ )
     {
@@ -186,6 +159,11 @@ Void  WeightPredAnalysis::xCheckWPEnable(TComSlice *const slice)
       }
     }
     slice->setWpScaling( m_wp );
+  }
+  else
+  {
+    slice->setTestWeightPred(slice->getPPS()->getUseWP());
+    slice->setTestWeightBiPred(slice->getPPS()->getWPBiPred());
   }
 }
 
@@ -212,7 +190,8 @@ Void WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *const slice)
     }
   } while (validRangeFlag == false);
 
-  // selecting whether WP is used, or not
+  // selecting whether WP is used, or not (fast search)
+  // NOTE: This is not operating on a slice, but the entire picture.
   xSelectWP(slice, iDenom);
 
   slice->setWpScaling( m_wp );

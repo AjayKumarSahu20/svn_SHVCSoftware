@@ -49,7 +49,6 @@ TComPic::TComPic()
 : m_uiTLayer                              (0)
 , m_bUsedByCurr                           (false)
 , m_bIsLongTerm                           (false)
-, m_apcPicSym                             (NULL)
 , m_pcPicYuvPred                          (NULL)
 , m_pcPicYuvResi                          (NULL)
 , m_bReconstructed                        (false)
@@ -75,10 +74,16 @@ TComPic::~TComPic()
 {
 }
 #if SVC_EXTENSION
-Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
-                      Int *numReorderPics, TComSPS* pcSps, Bool bIsVirtual)
+Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, const UInt uiMaxWidth, const UInt uiMaxHeight, const UInt uiMaxDepth, const Bool bIsVirtual, const UInt layerId )
 {
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( chromaFormatIDC, iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+  const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
+  const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
+  const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
+  
+  const Window& conformanceWindow = vps.getConformanceWindow( &sps, layerId );
+
+  m_picSym.create( vps, sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth, layerId );
+
   if (!bIsVirtual)
   {
     m_apcPicYuv[PIC_YUV_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
@@ -92,9 +97,7 @@ Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UIn
     {
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth, &conformanceWindow );
     }
-  }
-
-  m_layerId = pcSps ? pcSps->getLayerId() : 0;
+  }   
 
   // there are no SEI messages associated with this picture initially
   if (m_SEIs.size() > 0)
@@ -102,26 +105,18 @@ Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UIn
     deleteSEIs (m_SEIs);
   }
   m_bUsedByCurr = false;
-
-  /* store conformance window parameters with picture */
-  m_conformanceWindow = conformanceWindow;
-  
-  /* store display window parameters with picture */
-  m_defaultDisplayWindow = defaultDisplayWindow;
-
-  /* store number of reorder pics with picture */
-  memcpy(m_numReorderPics, numReorderPics, MAX_TLAYER*sizeof(Int));
-
-  return;
 }
 #else
-Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, Window &conformanceWindow, Window &defaultDisplayWindow,
-                      Int *numReorderPics, Bool bIsVirtual)
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const UInt uiMaxWidth, const UInt uiMaxHeight, const UInt uiMaxDepth, const Bool bIsVirtual)
 {
-  m_apcPicSym     = new TComPicSym;  m_apcPicSym   ->create( chromaFormatIDC, iWidth, iHeight, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+  const ChromaFormat chromaFormatIDC=sps.getChromaFormatIdc();
+  const Int iWidth  = sps.getPicWidthInLumaSamples();
+  const Int iHeight = sps.getPicHeightInLumaSamples();
+
+  m_picSym.create( sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   if (!bIsVirtual)
   {
-    m_apcPicYuv[PIC_YUV_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
+    m_apcPicYuv[PIC_YUV_ORG    ]   = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG     ]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
     m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
   }
   m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxWidth, uiMaxHeight, uiMaxDepth );
@@ -132,28 +127,12 @@ Void TComPic::create( Int iWidth, Int iHeight, ChromaFormat chromaFormatIDC, UIn
     deleteSEIs (m_SEIs);
   }
   m_bUsedByCurr = false;
-
-  /* store conformance window parameters with picture */
-  m_conformanceWindow = conformanceWindow;
-
-  /* store display window parameters with picture */
-  m_defaultDisplayWindow = defaultDisplayWindow;
-
-  /* store number of reorder pics with picture */
-  memcpy(m_numReorderPics, numReorderPics, MAX_TLAYER*sizeof(Int));
-
-  return;
 }
 #endif
 
 Void TComPic::destroy()
 {
-  if (m_apcPicSym)
-  {
-    m_apcPicSym->destroy();
-    delete m_apcPicSym;
-    m_apcPicSym = NULL;
-  }
+  m_picSym.destroy();
 
   for(UInt i=0; i<NUM_PIC_YUV; i++)
   {
@@ -199,12 +178,13 @@ Bool  TComPic::getSAOMergeAvailability(Int currAddr, Int mergeAddr)
 UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRaster, TComSlice *pcSlice)
 {
   UInt subStrm;
+  const bool bWPPEnabled=pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag();
+  const TComPicSym &picSym            = *(getPicSym());
 
-  if (pcSlice->getPPS()->getNumSubstreams() > 1) // wavefronts, and possibly tiles being used.
+  if ((bWPPEnabled && picSym.getFrameHeightInCtus()>1) || (picSym.getNumTiles()>1)) // wavefronts, and possibly tiles being used.
   {
-    if (pcSlice->getPPS()->getEntropyCodingSyncEnabledFlag())
+    if (bWPPEnabled)
     {
-      const TComPicSym &picSym            = *(getPicSym());
       const UInt ctuRsAddr                = bAddressInRaster?ctuAddr : picSym.getCtuTsToRsAddrMap(ctuAddr);
       const UInt frameWidthInCtus         = picSym.getFrameWidthInCtus();
       const UInt tileIndex                = picSym.getTileIdxMap(ctuRsAddr);
@@ -219,7 +199,6 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
     }
     else
     {
-      const TComPicSym &picSym            = *(getPicSym());
       const UInt ctuRsAddr                = bAddressInRaster?ctuAddr : picSym.getCtuTsToRsAddrMap(ctuAddr);
       const UInt tileIndex                = picSym.getTileIdxMap(ctuRsAddr);
       subStrm=tileIndex;

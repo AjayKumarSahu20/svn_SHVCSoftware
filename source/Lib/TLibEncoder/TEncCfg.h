@@ -701,8 +701,6 @@ public:
   Void  xCheckGSParameters();
   Void  setWaveFrontSynchro(Int iWaveFrontSynchro)                   { m_iWaveFrontSynchro = iWaveFrontSynchro; }
   Int   getWaveFrontsynchro()                                        { return m_iWaveFrontSynchro; }
-  Void  setWaveFrontSubstreams(Int iWaveFrontSubstreams)             { m_iWaveFrontSubstreams = iWaveFrontSubstreams; }
-  Int   getWaveFrontSubstreams()                                     { return m_iWaveFrontSubstreams; }
   Void  setDecodedPictureHashSEIEnabled(Int b)                       { m_decodedPictureHashSEIEnabled = b; }
   Int   getDecodedPictureHashSEIEnabled()                            { return m_decodedPictureHashSEIEnabled; }
   Void  setBufferingPeriodSEIEnabled(Int b)                          { m_bufferingPeriodSEIEnabled = b; }

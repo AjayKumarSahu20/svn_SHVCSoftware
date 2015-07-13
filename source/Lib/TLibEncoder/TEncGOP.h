@@ -235,16 +235,16 @@ protected:
 
   Double xCalculateRVM();
 
-  SEIActiveParameterSets*           xCreateSEIActiveParameterSets (TComSPS *sps);
+  SEIActiveParameterSets*           xCreateSEIActiveParameterSets (const TComSPS *sps);
   SEIFramePacking*                  xCreateSEIFramePacking();
   SEISegmentedRectFramePacking*     xCreateSEISegmentedRectFramePacking();
   SEIDisplayOrientation*            xCreateSEIDisplayOrientation();
   SEIToneMappingInfo*               xCreateSEIToneMappingInfo();
-  SEITempMotionConstrainedTileSets* xCreateSEITempMotionConstrainedTileSets ();
+  SEITempMotionConstrainedTileSets* xCreateSEITempMotionConstrainedTileSets (const TComPPS *pps);
   SEIKneeFunctionInfo*              xCreateSEIKneeFunctionInfo();
   SEIChromaSamplingFilterHint*      xCreateSEIChromaSamplingFilterHint(Bool bChromaLocInfoPresent, Int iHorFilterIndex, Int iVerFilterIdc);
 
-  Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
+  Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, const TComSPS *sps, const TComPPS *pps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
   Void xResetNonNestedSEIPresentFlags()
   {
@@ -257,7 +257,7 @@ protected:
     m_nestedBufferingPeriodSEIPresentInAU    = false;
     m_nestedPictureTimingSEIPresentInAU      = false;
   }
-  Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
+  Void applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices );
 
 #if Q0074_COLOUR_REMAPPING_SEI
   Void  setCRISEIFile( Char* pch )       { m_colourRemapSEIFile = pch; }
@@ -289,17 +289,9 @@ protected:
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
   Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest);
   Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
-  inline Short  xClip( Short x , Int bitdepth );
+  inline Short xClip( Short x , Int bitdepth );
   Void initDs(Int iWidth, Int iHeight, Int iType);
-  Void filterImg(
-    Pel           *src,
-    Int           iSrcStride,
-    Pel           *dst,
-    Int           iDstStride,
-    Int           height1,  
-    Int           width1,  
-    Int           shift,
-    Int           plane);
+  Void filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, Int shift, Int plane);
 
   Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
   Void free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX);
