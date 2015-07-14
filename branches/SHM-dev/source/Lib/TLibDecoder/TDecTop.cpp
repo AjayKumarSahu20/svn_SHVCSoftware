@@ -2206,22 +2206,6 @@ Void TDecTop::xInitILRP(TComSlice *slice)
     g_uiMaxCUDepth  = sps->getMaxCUDepth();
     g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() );
 
-    Int  numReorderPics[MAX_TLAYER];
-
-    for( Int temporalLayer=0; temporalLayer < MAX_TLAYER; temporalLayer++ ) 
-    {
-      if( m_commonDecoderParams->getTargetOutputLayerSetIdx() == 0 )
-      {
-        assert( this->getLayerId() == 0 );
-        numReorderPics[temporalLayer] = sps->getNumReorderPics(temporalLayer);
-      }
-      else
-      {        
-        // SHM decoders will use DPB size table in the VPS to determine the number of reorder pictures.
-        numReorderPics[temporalLayer] = vps->getMaxVpsNumReorderPics( getCommonDecoderParams()->getTargetOutputLayerSetIdx() , temporalLayer);
-      }
-    }
-
     if (m_cIlpPic[0] == NULL)
     {
       for (Int j=0; j < m_numDirectRefLayers; j++)

@@ -42,13 +42,13 @@
 #include "TLibCommon/TComBitStream.h"
 #include "TLibCommon/TComSlice.h"
 #include "TLibCommon/TComPic.h"
-#include "TLibCommon/TComPrediction.h"
 #include "TLibCommon/TComSampleAdaptiveOffset.h"
 #include "TLibCommon/TComRectangle.h"
 
 class TDecSbac;
 class TDecCavlc;
 class ParameterSetManagerDecoder;
+class TComPrediction;
 #if CGS_3D_ASYMLUT
 class TCom3DAsymLUT;
 #endif
