@@ -1502,12 +1502,10 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
 Void TEncTop::xInitILRP()
 {
   RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
-  Int bitDepthY,bitDepthC,picWidth,picHeight;
+  Int bitDepthY,bitDepthC;
 
   bitDepthY   = repFormat->getBitDepthVpsLuma();
   bitDepthC   = repFormat->getBitDepthVpsChroma();
-  picWidth    = repFormat->getPicWidthVpsInLumaSamples();
-  picHeight   = repFormat->getPicHeightVpsInLumaSamples();
   
   if( m_layerId > 0 )
   {
