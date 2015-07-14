@@ -59,9 +59,9 @@
 
 #if SVC_EXTENSION
 #include <vector>
-#define NV_VERSION        "9.0 (HM-16.2)"                 ///< Current software version
+#define NV_VERSION        "9.0 (HM-16.3)"                 ///< Current software version
 #else
-#define NV_VERSION        "16.2"                ///< Current software version
+#define NV_VERSION        "16.3"                ///< Current software version
 #endif
 
 // ====================================================================================================================
