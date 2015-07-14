@@ -212,7 +212,7 @@ Void TEncCavlc::codePPS( const TComPPS* pcPPS )
       WRITE_FLAG( pcPPS->getLoopFilterAcrossTilesEnabledFlag()?1 : 0,          "loop_filter_across_tiles_enabled_flag");
     }
   }
-  WRITE_FLAG( pcPPS->getLoopFilterAcrossSlicesEnabledFlag()?1 : 0,        "loop_filter_across_slices_enabled_flag");
+  WRITE_FLAG( pcPPS->getLoopFilterAcrossSlicesEnabledFlag()?1 : 0,        "pps_loop_filter_across_slices_enabled_flag");
   WRITE_FLAG( pcPPS->getDeblockingFilterControlPresentFlag()?1 : 0,       "deblocking_filter_control_present_flag");
   if(pcPPS->getDeblockingFilterControlPresentFlag())
   {
@@ -262,9 +262,20 @@ Void TEncCavlc::codePPS( const TComPPS* pcPPS )
 
   if (pps_extension_present_flag)
   {
+#if ENC_DEC_TRACE || RExt__DECODER_DEBUG_BIT_STATISTICS
+    static const char *syntaxStrings[]={ "pps_range_extension_flag",
+                                         "pps_multilayer_extension_flag",
+                                         "pps_extension_6bits[0]",
+                                         "pps_extension_6bits[1]",
+                                         "pps_extension_6bits[2]",
+                                         "pps_extension_6bits[3]",
+                                         "pps_extension_6bits[4]",
+                                         "pps_extension_6bits[5]" };
+#endif
+
     for(Int i=0; i<NUM_PPS_EXTENSION_FLAGS; i++)
     {
-      WRITE_FLAG( pps_extension_flags[i]?1:0, "pps_extension_flag[]" );
+      WRITE_FLAG( pps_extension_flags[i]?1:0, syntaxStrings[i] );
     }
 
     for(Int i=0; i<NUM_PPS_EXTENSION_FLAGS; i++) // loop used so that the order is determined by the enum.
@@ -277,26 +288,26 @@ Void TEncCavlc::codePPS( const TComPPS* pcPPS )
 
             if (pcPPS->getUseTransformSkip())
             {
-              WRITE_UVLC( pcPPS->getTransformSkipLog2MaxSize()-2,                 "log2_transform_skip_max_size_minus2");
+              WRITE_UVLC( pcPPS->getTransformSkipLog2MaxSize()-2,                 "log2_max_transform_skip_block_size_minus2");
             }
 
-            WRITE_FLAG((pcPPS->getUseCrossComponentPrediction() ? 1 : 0),         "cross_component_prediction_flag" );
+            WRITE_FLAG((pcPPS->getUseCrossComponentPrediction() ? 1 : 0),         "cross_component_prediction_enabled_flag" );
 
-            WRITE_FLAG(UInt(pcPPS->getChromaQpAdjTableSize() > 0),                "chroma_qp_adjustment_enabled_flag" );
+            WRITE_FLAG(UInt(pcPPS->getChromaQpAdjTableSize() > 0),                "chroma_qp_offset_list_enabled_flag" );
             if (pcPPS->getChromaQpAdjTableSize() > 0)
             {
-              WRITE_UVLC(pcPPS->getMaxCuChromaQpAdjDepth(),                       "diff_cu_chroma_qp_adjustment_depth");
-              WRITE_UVLC(pcPPS->getChromaQpAdjTableSize() - 1,                    "chroma_qp_adjustment_table_size_minus1");
+              WRITE_UVLC(pcPPS->getMaxCuChromaQpAdjDepth(),                       "diff_cu_chroma_qp_offset_depth");
+              WRITE_UVLC(pcPPS->getChromaQpAdjTableSize() - 1,                    "chroma_qp_offset_list_len_minus1");
               /* skip zero index */
               for (Int chromaQpAdjustmentIndex = 1; chromaQpAdjustmentIndex <= pcPPS->getChromaQpAdjTableSize(); chromaQpAdjustmentIndex++)
               {
-                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CbOffset,     "cb_qp_adjustment[i]");
-                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CrOffset,     "cr_qp_adjustment[i]");
+                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CbOffset,     "cb_qp_offset_list[i]");
+                WRITE_SVLC(pcPPS->getChromaQpAdjTableAt(chromaQpAdjustmentIndex).u.comp.CrOffset,     "cr_qp_offset_list[i]");
               }
             }
 
-            WRITE_UVLC( pcPPS->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA),           "sao_luma_bit_shift"   );
-            WRITE_UVLC( pcPPS->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA),         "sao_chroma_bit_shift" );
+            WRITE_UVLC( pcPPS->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA),           "log2_sao_offset_scale_luma"   );
+            WRITE_UVLC( pcPPS->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA),         "log2_sao_offset_scale_chroma" );
             break;
 #if SVC_EXTENSION
           case PPS_EXT__MLAYER:
@@ -396,7 +407,7 @@ Void TEncCavlc::codeVUI( const TComVUI *pcVUI, const TComSPS* pcSPS )
     {
       WRITE_CODE(pcVUI->getColourPrimaries(), 8,                "colour_primaries");
       WRITE_CODE(pcVUI->getTransferCharacteristics(), 8,        "transfer_characteristics");
-      WRITE_CODE(pcVUI->getMatrixCoefficients(), 8,             "matrix_coefficients");
+      WRITE_CODE(pcVUI->getMatrixCoefficients(), 8,             "matrix_coeffs");
     }
   }
 
@@ -431,7 +442,7 @@ Void TEncCavlc::codeVUI( const TComVUI *pcVUI, const TComSPS* pcSPS )
     {
       WRITE_UVLC(timingInfo->getNumTicksPocDiffOneMinus1(),   "vui_num_ticks_poc_diff_one_minus1");
     }
-    WRITE_FLAG(pcVUI->getHrdParametersPresentFlag(),              "hrd_parameters_present_flag");
+    WRITE_FLAG(pcVUI->getHrdParametersPresentFlag(),              "vui_hrd_parameters_present_flag");
     if( pcVUI->getHrdParametersPresentFlag() )
     {
       codeHrdParameters(pcVUI->getHrdParameters(), 1, pcSPS->getMaxTLayers() - 1 );
@@ -446,7 +457,7 @@ Void TEncCavlc::codeVUI( const TComVUI *pcVUI, const TComSPS* pcSPS )
     WRITE_FLAG(pcVUI->getRestrictedRefPicListsFlag(),           "restricted_ref_pic_lists_flag");
     WRITE_UVLC(pcVUI->getMinSpatialSegmentationIdc(),           "min_spatial_segmentation_idc");
     WRITE_UVLC(pcVUI->getMaxBytesPerPicDenom(),                 "max_bytes_per_pic_denom");
-    WRITE_UVLC(pcVUI->getMaxBitsPerMinCuDenom(),                "max_bits_per_mincu_denom");
+    WRITE_UVLC(pcVUI->getMaxBitsPerMinCuDenom(),                "max_bits_per_min_cu_denom");
     WRITE_UVLC(pcVUI->getLog2MaxMvLengthHorizontal(),           "log2_max_mv_length_horizontal");
     WRITE_UVLC(pcVUI->getLog2MaxMvLengthVertical(),             "log2_max_mv_length_vertical");
   }
@@ -460,11 +471,11 @@ Void TEncCavlc::codeHrdParameters( const TComHRD *hrd, Bool commonInfPresentFlag
     WRITE_FLAG( hrd->getVclHrdParametersPresentFlag() ? 1 : 0 ,  "vcl_hrd_parameters_present_flag" );
     if( hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag() )
     {
-      WRITE_FLAG( hrd->getSubPicCpbParamsPresentFlag() ? 1 : 0,  "sub_pic_cpb_params_present_flag" );
+      WRITE_FLAG( hrd->getSubPicCpbParamsPresentFlag() ? 1 : 0,  "sub_pic_hrd_params_present_flag" );
       if( hrd->getSubPicCpbParamsPresentFlag() )
       {
         WRITE_CODE( hrd->getTickDivisorMinus2(), 8,              "tick_divisor_minus2" );
-        WRITE_CODE( hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_length_minus1" );
+        WRITE_CODE( hrd->getDuCpbRemovalDelayLengthMinus1(), 5,  "du_cpb_removal_delay_increment_length_minus1" );
         WRITE_FLAG( hrd->getSubPicCpbParamsInPicTimingSEIFlag() ? 1 : 0, "sub_pic_cpb_params_in_pic_timing_sei_flag" );
         WRITE_CODE( hrd->getDpbOutputDelayDuLengthMinus1(), 5,   "dpb_output_delay_du_length_minus1"  );
       }
@@ -551,7 +562,7 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
   if( V1CompatibleSPSFlag )
   {
 #endif
-  WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0,                             "sps_temporal_id_nesting_flag" );
+  WRITE_FLAG( pcSPS->getTemporalIdNestingFlag() ? 1 : 0, "sps_temporal_id_nesting_flag" );
   codePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
 #if SVC_EXTENSION
   }
@@ -619,7 +630,7 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
   for(UInt i=0; i <= pcSPS->getMaxTLayers()-1; i++)
   {
     WRITE_UVLC( pcSPS->getMaxDecPicBuffering(i) - 1,       "sps_max_dec_pic_buffering_minus1[i]" );
-    WRITE_UVLC( pcSPS->getNumReorderPics(i),               "sps_num_reorder_pics[i]" );
+    WRITE_UVLC( pcSPS->getNumReorderPics(i),               "sps_max_num_reorder_pics[i]" );
     WRITE_UVLC( pcSPS->getMaxLatencyIncrease(i),           "sps_max_latency_increase_plus1[i]" );
     if (!subLayerOrderingInfoPresentFlag)
     {
@@ -631,10 +642,10 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
 #endif
   assert( pcSPS->getMaxCUWidth() == pcSPS->getMaxCUHeight() );
 
-  WRITE_UVLC( pcSPS->getLog2MinCodingBlockSize() - 3,                                "log2_min_coding_block_size_minus3" );
-  WRITE_UVLC( pcSPS->getLog2DiffMaxMinCodingBlockSize(),                             "log2_diff_max_min_coding_block_size" );
-  WRITE_UVLC( pcSPS->getQuadtreeTULog2MinSize() - 2,                                 "log2_min_transform_block_size_minus2" );
-  WRITE_UVLC( pcSPS->getQuadtreeTULog2MaxSize() - pcSPS->getQuadtreeTULog2MinSize(), "log2_diff_max_min_transform_block_size" );
+  WRITE_UVLC( pcSPS->getLog2MinCodingBlockSize() - 3,                                "log2_min_luma_coding_block_size_minus3" );
+  WRITE_UVLC( pcSPS->getLog2DiffMaxMinCodingBlockSize(),                             "log2_diff_max_min_luma_coding_block_size" );
+  WRITE_UVLC( pcSPS->getQuadtreeTULog2MinSize() - 2,                                 "log2_min_luma_transform_block_size_minus2" );
+  WRITE_UVLC( pcSPS->getQuadtreeTULog2MaxSize() - pcSPS->getQuadtreeTULog2MinSize(), "log2_diff_max_min_luma_transform_block_size" );
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthInter() - 1,                               "max_transform_hierarchy_depth_inter" );
   WRITE_UVLC( pcSPS->getQuadtreeTUMaxDepthIntra() - 1,                               "max_transform_hierarchy_depth_intra" );
   WRITE_FLAG( pcSPS->getScalingListFlag() ? 1 : 0,                                   "scaling_list_enabled_flag" );
@@ -691,11 +702,11 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
   WRITE_FLAG( pcSPS->getLongTermRefsPresent() ? 1 : 0,         "long_term_ref_pics_present_flag" );
   if (pcSPS->getLongTermRefsPresent())
   {
-    WRITE_UVLC(pcSPS->getNumLongTermRefPicSPS(), "num_long_term_ref_pic_sps" );
+    WRITE_UVLC(pcSPS->getNumLongTermRefPicSPS(), "num_long_term_ref_pics_sps" );
     for (UInt k = 0; k < pcSPS->getNumLongTermRefPicSPS(); k++)
     {
       WRITE_CODE( pcSPS->getLtRefPicPocLsbSps(k), pcSPS->getBitsForPOC(), "lt_ref_pic_poc_lsb_sps");
-      WRITE_FLAG( pcSPS->getUsedByCurrPicLtSPSFlag(k), "used_by_curr_pic_lt_sps_flag");
+      WRITE_FLAG( pcSPS->getUsedByCurrPicLtSPSFlag(k), "used_by_curr_pic_lt_sps_flag[i]");
     }
   }
   WRITE_FLAG( pcSPS->getTMVPFlagsPresent()  ? 1 : 0,           "sps_temporal_mvp_enable_flag" );
@@ -737,9 +748,20 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
 
   if (sps_extension_present_flag)
   {
+#if ENC_DEC_TRACE || RExt__DECODER_DEBUG_BIT_STATISTICS
+    static const char *syntaxStrings[]={ "sps_range_extension_flag",
+                                         "sps_multilayer_extension_flag",
+                                         "sps_extension_6bits[0]",
+                                         "sps_extension_6bits[1]",
+                                         "sps_extension_6bits[2]",
+                                         "sps_extension_6bits[3]",
+                                         "sps_extension_6bits[4]",
+                                         "sps_extension_6bits[5]" };
+#endif
+
     for(Int i=0; i<NUM_SPS_EXTENSION_FLAGS; i++)
     {
-      WRITE_FLAG( sps_extension_flags[i]?1:0, "sps_extension_flag[]" );
+      WRITE_FLAG( sps_extension_flags[i]?1:0, syntaxStrings[i] );
     }
 
     for(Int i=0; i<NUM_SPS_EXTENSION_FLAGS; i++) // loop used so that the order is determined by the enum.
@@ -752,12 +774,12 @@ Void TEncCavlc::codeSPS( const TComSPS* pcSPS )
 
             WRITE_FLAG( (pcSPS->getUseResidualRotation() ? 1 : 0),                  "transform_skip_rotation_enabled_flag");
             WRITE_FLAG( (pcSPS->getUseSingleSignificanceMapContext() ? 1 : 0),      "transform_skip_context_enabled_flag");
-            WRITE_FLAG( (pcSPS->getUseResidualDPCM(RDPCM_SIGNAL_IMPLICIT) ? 1 : 0), "residual_dpcm_implicit_enabled_flag" );
-            WRITE_FLAG( (pcSPS->getUseResidualDPCM(RDPCM_SIGNAL_EXPLICIT) ? 1 : 0), "residual_dpcm_explicit_enabled_flag" );
+            WRITE_FLAG( (pcSPS->getUseResidualDPCM(RDPCM_SIGNAL_IMPLICIT) ? 1 : 0), "implicit_rdpcm_enabled_flag" );
+            WRITE_FLAG( (pcSPS->getUseResidualDPCM(RDPCM_SIGNAL_EXPLICIT) ? 1 : 0), "explicit_rdpcm_enabled_flag" );
             WRITE_FLAG( (pcSPS->getUseExtendedPrecision() ? 1 : 0),                 "extended_precision_processing_flag" );
             WRITE_FLAG( (pcSPS->getDisableIntraReferenceSmoothing() ? 1 : 0),       "intra_smoothing_disabled_flag" );
-            WRITE_FLAG( (pcSPS->getUseHighPrecisionPredictionWeighting() ? 1 : 0),  "high_precision_prediction_weighting_flag" );
-            WRITE_FLAG( (pcSPS->getUseGolombRiceParameterAdaptation() ? 1 : 0),     "golomb_rice_parameter_adaptation_flag" );
+            WRITE_FLAG( (pcSPS->getUseHighPrecisionPredictionWeighting() ? 1 : 0),  "high_precision_offsets_enabled_flag" );
+            WRITE_FLAG( (pcSPS->getUseGolombRiceParameterAdaptation() ? 1 : 0),     "persistent_rice_adaptation_enabled_flag" );
             WRITE_FLAG( (pcSPS->getAlignCABACBeforeBypass() ? 1 : 0),               "cabac_bypass_alignment_enabled_flag" );
             break;
 #if SVC_EXTENSION
@@ -783,20 +805,21 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
   WRITE_CODE( pcVPS->getMaxLayers() - 1,            6,        "vps_max_layers_minus1" );
   assert( pcVPS->getBaseLayerInternalFlag() || pcVPS->getMaxLayers() > 1 );
 #else
-  WRITE_CODE( 3,                                    2,        "vps_reserved_three_2bits" );
+  WRITE_FLAG(                                       1,        "vps_base_layer_internal_flag" );
+  WRITE_FLAG(                                       1,        "vps_base_layer_available_flag" );
   WRITE_CODE( 0,                                    6,        "vps_max_layers_minus1" );
 #endif
   WRITE_CODE( pcVPS->getMaxTLayers() - 1,           3,        "vps_max_sub_layers_minus1" );
   WRITE_FLAG( pcVPS->getTemporalNestingFlag(),                "vps_temporal_id_nesting_flag" );
   assert (pcVPS->getMaxTLayers()>1||pcVPS->getTemporalNestingFlag());
-  WRITE_CODE( 0xffff,                              16,        "vps_reserved_ffff_16bits" );
+  WRITE_CODE( 0xffff,                              16,        "vps_reserved_0xffff_16bits" );
   codePTL( pcVPS->getPTL(), true, pcVPS->getMaxTLayers() - 1 );
   const Bool subLayerOrderingInfoPresentFlag = 1;
   WRITE_FLAG(subLayerOrderingInfoPresentFlag,              "vps_sub_layer_ordering_info_present_flag");
   for(UInt i=0; i <= pcVPS->getMaxTLayers()-1; i++)
   {
     WRITE_UVLC( pcVPS->getMaxDecPicBuffering(i) - 1,       "vps_max_dec_pic_buffering_minus1[i]" );
-    WRITE_UVLC( pcVPS->getNumReorderPics(i),               "vps_num_reorder_pics[i]" );
+    WRITE_UVLC( pcVPS->getNumReorderPics(i),               "vps_max_num_reorder_pics[i]" );
     WRITE_UVLC( pcVPS->getMaxLatencyIncrease(i),           "vps_max_latency_increase_plus1[i]" );
     if (!subLayerOrderingInfoPresentFlag)
     {
@@ -819,8 +842,8 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
 #else
   assert( pcVPS->getNumHrdParameters() <= MAX_VPS_NUM_HRD_PARAMETERS );
   assert( pcVPS->getMaxNuhReservedZeroLayerId() < MAX_VPS_NUH_RESERVED_ZERO_LAYER_ID_PLUS1 );
-  WRITE_CODE( pcVPS->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_nuh_reserved_zero_layer_id" );
-  WRITE_UVLC( pcVPS->getMaxOpSets() - 1,                    "vps_max_op_sets_minus1" );
+  WRITE_CODE( pcVPS->getMaxNuhReservedZeroLayerId(), 6,     "vps_max_layer_id" );
+  WRITE_UVLC( pcVPS->getMaxOpSets() - 1,                    "vps_num_layer_sets_minus1" );
   for( UInt opsIdx = 1; opsIdx <= ( pcVPS->getMaxOpSets() - 1 ); opsIdx ++ )
   {
     // Operation point set
@@ -850,7 +873,7 @@ Void TEncCavlc::codeVPS( const TComVPS* pcVPS )
       for( UInt i = 0; i < pcVPS->getNumHrdParameters(); i ++ )
       {
         // Only applicable for version 1
-        WRITE_UVLC( pcVPS->getHrdOpSetIdx( i ),                "hrd_op_set_idx" );
+        WRITE_UVLC( pcVPS->getHrdOpSetIdx( i ),                "hrd_layer_set_idx" );
         if( i > 0 )
         {
           WRITE_FLAG( pcVPS->getCprmsPresentFlag( i ) ? 1 : 0, "cprms_present_flag[i]" );
@@ -957,8 +980,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #else //SVC_EXTENSION
     for (Int i = 0; i < pcSlice->getPPS()->getNumExtraSliceHeaderBits(); i++)
     {
-      assert(!!"slice_reserved_undetermined_flag[]");
-      WRITE_FLAG(0, "slice_reserved_undetermined_flag[]");
+      WRITE_FLAG(0, "slice_reserved_flag[]");
     }
 #endif //SVC_EXTENSION
 
@@ -988,7 +1010,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #else
       Int picOrderCntLSB = (pcSlice->getPOC()-pcSlice->getLastIDR()+(1<<pcSlice->getSPS()->getBitsForPOC())) & ((1<<pcSlice->getSPS()->getBitsForPOC())-1);
 #endif
-      WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "pic_order_cnt_lsb");
+      WRITE_CODE( picOrderCntLSB, pcSlice->getSPS()->getBitsForPOC(), "slice_pic_order_cnt_lsb");
 
 #if SVC_EXTENSION
     }
@@ -1116,7 +1138,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
       }
       if (pcSlice->getSPS()->getTMVPFlagsPresent())
       {
-        WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enable_flag" );
+        WRITE_FLAG( pcSlice->getEnableTMVPFlag() ? 1 : 0, "slice_temporal_mvp_enabled_flag" );
       }
     }
 
@@ -1277,18 +1299,18 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     {
       if (numberValidComponents > COMPONENT_Cb)
       {
-        WRITE_SVLC( pcSlice->getSliceChromaQpDelta(COMPONENT_Cb), "slice_qp_delta_cb" );
+        WRITE_SVLC( pcSlice->getSliceChromaQpDelta(COMPONENT_Cb), "slice_cb_qp_offset" );
       }
       if (numberValidComponents > COMPONENT_Cr)
       {
-        WRITE_SVLC( pcSlice->getSliceChromaQpDelta(COMPONENT_Cr), "slice_qp_delta_cr" );
+        WRITE_SVLC( pcSlice->getSliceChromaQpDelta(COMPONENT_Cr), "slice_cr_qp_offset" );
       }
       assert(numberValidComponents <= COMPONENT_Cr+1);
     }
 
     if (pcSlice->getPPS()->getChromaQpAdjTableSize() > 0)
     {
-      WRITE_FLAG(pcSlice->getUseChromaQpAdj(), "slice_chroma_qp_adjustment_enabled_flag");
+      WRITE_FLAG(pcSlice->getUseChromaQpAdj(), "cu_chroma_qp_offset_enabled_flag");
     }
 
     if (pcSlice->getPPS()->getDeblockingFilterControlPresentFlag())
@@ -1319,7 +1341,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #if !SVC_EXTENSION
   if(pcSlice->getPPS()->getSliceHeaderExtensionPresentFlag())
   {
-    WRITE_UVLC(0,"slice_header_extension_length");
+    WRITE_UVLC(0,"slice_segment_header_extension_length");
   }
 #endif
 }
@@ -1328,7 +1350,7 @@ Void TEncCavlc::codePTL( const TComPTL* pcPTL, Bool profilePresentFlag, Int maxN
 {
   if(profilePresentFlag)
   {
-    codeProfileTier(pcPTL->getGeneralPTL());    // general_...
+    codeProfileTier(pcPTL->getGeneralPTL(), false);    // general_...
   }
   WRITE_CODE( Int(pcPTL->getGeneralPTL()->getLevelIdc()), 8, "general_level_idc" );
 
@@ -1350,7 +1372,7 @@ Void TEncCavlc::codePTL( const TComPTL* pcPTL, Bool profilePresentFlag, Int maxN
   {
     if( pcPTL->getSubLayerProfilePresentFlag(i) )
     {
-      codeProfileTier(pcPTL->getSubLayerPTL(i));  // sub_layer_...
+      codeProfileTier(pcPTL->getSubLayerPTL(i), true);  // sub_layer_...
     }
     if( pcPTL->getSubLayerLevelPresentFlag(i) )
     {
@@ -1358,38 +1380,45 @@ Void TEncCavlc::codePTL( const TComPTL* pcPTL, Bool profilePresentFlag, Int maxN
     }
   }
 }
-Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl )
-{
-  WRITE_CODE( ptl->getProfileSpace(), 2 ,     "XXX_profile_space[]");
-  WRITE_FLAG( ptl->getTierFlag()==Level::HIGH, "XXX_tier_flag[]"    );
-#if SVC_EXTENSION
-  WRITE_CODE( (ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10) ? 7 : Int(ptl->getProfileIdc()), 5 ,  "XXX_profile_idc[]"  );
+
+#if ENC_DEC_TRACE || RExt__DECODER_DEBUG_BIT_STATISTICS
+Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl, const Bool bIsSubLayer )
+#define PTL_TRACE_TEXT(txt) bIsSubLayer?("sub_layer_" txt) : ("general_" txt)
 #else
-  WRITE_CODE( Int(ptl->getProfileIdc()), 5 ,  "XXX_profile_idc[]"  );
+Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl, const Bool /*bIsSubLayer*/ )
+#define PTL_TRACE_TEXT(txt) txt
+#endif
+{
+  WRITE_CODE( ptl->getProfileSpace(), 2 ,      PTL_TRACE_TEXT("profile_space"                   ));
+  WRITE_FLAG( ptl->getTierFlag()==Level::HIGH, PTL_TRACE_TEXT("tier_flag"                       ));
+#if SVC_EXTENSION
+  WRITE_CODE( (ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileIdc() == Profile::SCALABLEMAIN10) ? 7 : Int(ptl->getProfileIdc()), 5 ,  PTL_TRACE_TEXT("profile_idc")  );
+#else
+  WRITE_CODE( Int(ptl->getProfileIdc()), 5 ,   PTL_TRACE_TEXT("profile_idc"                     ));
 #endif
   for(Int j = 0; j < 32; j++)
   {
-    WRITE_FLAG( ptl->getProfileCompatibilityFlag(j), "XXX_profile_compatibility_flag[][j]");
+    WRITE_FLAG( ptl->getProfileCompatibilityFlag(j), PTL_TRACE_TEXT("profile_compatibility_flag[][j]" ));
   }
 
-  WRITE_FLAG(ptl->getProgressiveSourceFlag(),   "general_progressive_source_flag");
-  WRITE_FLAG(ptl->getInterlacedSourceFlag(),    "general_interlaced_source_flag");
-  WRITE_FLAG(ptl->getNonPackedConstraintFlag(), "general_non_packed_constraint_flag");
-  WRITE_FLAG(ptl->getFrameOnlyConstraintFlag(), "general_frame_only_constraint_flag");
+  WRITE_FLAG(ptl->getProgressiveSourceFlag(),   PTL_TRACE_TEXT("progressive_source_flag"         ));
+  WRITE_FLAG(ptl->getInterlacedSourceFlag(),    PTL_TRACE_TEXT("interlaced_source_flag"          ));
+  WRITE_FLAG(ptl->getNonPackedConstraintFlag(), PTL_TRACE_TEXT("non_packed_constraint_flag"      ));
+  WRITE_FLAG(ptl->getFrameOnlyConstraintFlag(), PTL_TRACE_TEXT("frame_only_constraint_flag"      ));
 
   if (ptl->getProfileIdc() == Profile::MAINREXT || ptl->getProfileIdc() == Profile::HIGHTHROUGHPUTREXT )
   {
     const UInt         bitDepthConstraint=ptl->getBitDepthConstraint();
-    WRITE_FLAG(bitDepthConstraint<=12, "general_max_12bit_constraint_flag");
-    WRITE_FLAG(bitDepthConstraint<=10, "general_max_10bit_constraint_flag");
-    WRITE_FLAG(bitDepthConstraint<= 8, "general_max_8bit_constraint_flag");
+    WRITE_FLAG(bitDepthConstraint<=12,          PTL_TRACE_TEXT("max_12bit_constraint_flag"       ));
+    WRITE_FLAG(bitDepthConstraint<=10,          PTL_TRACE_TEXT("max_10bit_constraint_flag"       ));
+    WRITE_FLAG(bitDepthConstraint<= 8,          PTL_TRACE_TEXT("max_8bit_constraint_flag"        ));
     const ChromaFormat chromaFmtConstraint=ptl->getChromaFormatConstraint();
-    WRITE_FLAG(chromaFmtConstraint==CHROMA_422||chromaFmtConstraint==CHROMA_420||chromaFmtConstraint==CHROMA_400, "general_max_422chroma_constraint_flag");
-    WRITE_FLAG(chromaFmtConstraint==CHROMA_420||chromaFmtConstraint==CHROMA_400,                                  "general_max_420chroma_constraint_flag");
-    WRITE_FLAG(chromaFmtConstraint==CHROMA_400,                                                                   "general_max_monochrome_constraint_flag");
-    WRITE_FLAG(ptl->getIntraConstraintFlag(),        "general_intra_constraint_flag");
-    WRITE_FLAG(0,                                    "general_one_picture_only_constraint_flag");
-    WRITE_FLAG(ptl->getLowerBitRateConstraintFlag(), "general_lower_bit_rate_constraint_flag");
+    WRITE_FLAG(chromaFmtConstraint==CHROMA_422||chromaFmtConstraint==CHROMA_420||chromaFmtConstraint==CHROMA_400, PTL_TRACE_TEXT("max_422chroma_constraint_flag" ));
+    WRITE_FLAG(chromaFmtConstraint==CHROMA_420||chromaFmtConstraint==CHROMA_400,                                  PTL_TRACE_TEXT("max_420chroma_constraint_flag" ));
+    WRITE_FLAG(chromaFmtConstraint==CHROMA_400,                                                                   PTL_TRACE_TEXT("max_monochrome_constraint_flag"));
+    WRITE_FLAG(ptl->getIntraConstraintFlag(),        PTL_TRACE_TEXT("intra_constraint_flag"           ));
+    WRITE_FLAG(0,                                    PTL_TRACE_TEXT("one_picture_only_constraint_flag"));
+    WRITE_FLAG(ptl->getLowerBitRateConstraintFlag(), PTL_TRACE_TEXT("lower_bit_rate_constraint_flag"  ));
 #if SVC_EXTENSION
     WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
   }
@@ -1410,30 +1439,20 @@ Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl )
   {
     WRITE_CODE(0, 32,  "general_reserved_zero_43bits");  WRITE_CODE(0, 11,  "general_reserved_zero_43bits");
   }
-
-  if( ( ptl->getProfileIdc() >= 1 && ptl->getProfileIdc() <= 5 ) || 
-      ptl->getProfileCompatibilityFlag(1) || ptl->getProfileCompatibilityFlag(2) || 
-      ptl->getProfileCompatibilityFlag(3) || ptl->getProfileCompatibilityFlag(4) || 
-      ptl->getProfileCompatibilityFlag(5)                                           )
-  {
-    WRITE_FLAG(false, "general_inbld_flag");
-  }
-  else
-  {
-    WRITE_FLAG(false, "general_reserved_zero_bit");
-  }
 #else
-    WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[0..15]");
-    WRITE_CODE(0 , 16, "XXX_reserved_zero_35bits[16..31]");
-    WRITE_CODE(0 ,  3, "XXX_reserved_zero_35bits[32..34]");
+    WRITE_CODE(0 , 16, PTL_TRACE_TEXT("reserved_zero_34bits[0..15]"     ));
+    WRITE_CODE(0 , 16, PTL_TRACE_TEXT("reserved_zero_34bits[16..31]"    ));
+    WRITE_CODE(0 ,  2, PTL_TRACE_TEXT("reserved_zero_34bits[32..33]"    ));
   }
   else
   {
-    WRITE_CODE(0x0000 , 16, "XXX_reserved_zero_44bits[0..15]");
-    WRITE_CODE(0x0000 , 16, "XXX_reserved_zero_44bits[16..31]");
-    WRITE_CODE(0x000  , 12, "XXX_reserved_zero_44bits[32..43]");
+    WRITE_CODE(0x0000 , 16, PTL_TRACE_TEXT("reserved_zero_43bits[0..15]"     ));
+    WRITE_CODE(0x0000 , 16, PTL_TRACE_TEXT("reserved_zero_43bits[16..31]"    ));
+    WRITE_CODE(0x000  , 12, PTL_TRACE_TEXT("reserved_zero_43bits[32..42]"    ));
   }
 #endif
+  WRITE_FLAG(false,   PTL_TRACE_TEXT("inbld_flag" ));
+#undef PTL_TRACE_TEXT
 }
 
 /**
@@ -1656,7 +1675,7 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
   }
   if(uiMode == 1)
   {
-    for ( Int iNumRef=0 ; iNumRef<iNbRef ; iNumRef++ )
+    for ( Int iNumRef=0 ; iNumRef<iNbRef ; iNumRef++ ) // loop over l0 and l1 syntax elements
     {
       RefPicList  eRefPicList = ( iNumRef ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
 
@@ -1668,17 +1687,17 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
         if ( !bDenomCoded )
         {
           Int iDeltaDenom;
-          WRITE_UVLC( wp[COMPONENT_Y].uiLog2WeightDenom, "luma_log2_weight_denom" );     // ue(v): luma_log2_weight_denom
+          WRITE_UVLC( wp[COMPONENT_Y].uiLog2WeightDenom, "luma_log2_weight_denom" );
 
           if( bChroma )
           {
             assert(wp[COMPONENT_Cb].uiLog2WeightDenom == wp[COMPONENT_Cr].uiLog2WeightDenom); // check the channel-type settings are consistent across components.
             iDeltaDenom = (wp[COMPONENT_Cb].uiLog2WeightDenom - wp[COMPONENT_Y].uiLog2WeightDenom);
-            WRITE_SVLC( iDeltaDenom, "delta_chroma_log2_weight_denom" );       // se(v): delta_chroma_log2_weight_denom
+            WRITE_SVLC( iDeltaDenom, "delta_chroma_log2_weight_denom" );
           }
           bDenomCoded = true;
         }
-        WRITE_FLAG( wp[COMPONENT_Y].bPresentFlag, "luma_weight_lX_flag" );               // u(1): luma_weight_lX_flag
+        WRITE_FLAG( wp[COMPONENT_Y].bPresentFlag, iNumRef==0?"luma_weight_l0_flag[i]":"luma_weight_l1_flag[i]" );
         uiTotalSignalledWeightFlags += wp[COMPONENT_Y].bPresentFlag;
       }
       if (bChroma)
@@ -1687,7 +1706,7 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
         {
           pcSlice->getWpScaling(eRefPicList, iRefIdx, wp);
           assert(wp[COMPONENT_Cb].bPresentFlag == wp[COMPONENT_Cr].bPresentFlag); // check the channel-type settings are consistent across components.
-          WRITE_FLAG( wp[COMPONENT_Cb].bPresentFlag, "chroma_weight_lX_flag" );           // u(1): chroma_weight_lX_flag
+          WRITE_FLAG( wp[COMPONENT_Cb].bPresentFlag, iNumRef==0?"chroma_weight_l0_flag[i]":"chroma_weight_l1_flag[i]" );
           uiTotalSignalledWeightFlags += 2*wp[COMPONENT_Cb].bPresentFlag;
         }
       }
@@ -1698,8 +1717,8 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
         if ( wp[COMPONENT_Y].bPresentFlag )
         {
           Int iDeltaWeight = (wp[COMPONENT_Y].iWeight - (1<<wp[COMPONENT_Y].uiLog2WeightDenom));
-          WRITE_SVLC( iDeltaWeight, "delta_luma_weight_lX" );                            // se(v): delta_luma_weight_lX
-          WRITE_SVLC( wp[COMPONENT_Y].iOffset, "luma_offset_lX" );                       // se(v): luma_offset_lX
+          WRITE_SVLC( iDeltaWeight, iNumRef==0?"delta_luma_weight_l0[i]":"delta_luma_weight_l1[i]" );
+          WRITE_SVLC( wp[COMPONENT_Y].iOffset, iNumRef==0?"luma_offset_l0[i]":"luma_offset_l1[i]" );
         }
 
         if ( bChroma )
@@ -1710,12 +1729,12 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
             {
               assert(wp[COMPONENT_Cb].uiLog2WeightDenom == wp[COMPONENT_Cr].uiLog2WeightDenom);
               Int iDeltaWeight = (wp[j].iWeight - (1<<wp[COMPONENT_Cb].uiLog2WeightDenom));
-              WRITE_SVLC( iDeltaWeight, "delta_chroma_weight_lX" );            // se(v): delta_chroma_weight_lX
+              WRITE_SVLC( iDeltaWeight, iNumRef==0?"delta_chroma_weight_l0[i]":"delta_chroma_weight_l1[i]" );
 
               Int range=pcSlice->getSPS()->getUseHighPrecisionPredictionWeighting() ? (1<<g_bitDepth[CHANNEL_TYPE_CHROMA])/2 : 128;
               Int pred = ( range - ( ( range*wp[j].iWeight)>>(wp[j].uiLog2WeightDenom) ) );
               Int iDeltaChroma = (wp[j].iOffset - pred);
-              WRITE_SVLC( iDeltaChroma, "delta_chroma_offset_lX" );            // se(v): delta_chroma_offset_lX
+              WRITE_SVLC( iDeltaChroma, iNumRef==0?"delta_chroma_offset_l0[i]":"delta_chroma_offset_l1[i]" );
             }
           }
         }
