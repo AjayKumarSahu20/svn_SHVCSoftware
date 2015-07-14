@@ -581,7 +581,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     }
 
     assert(numPicTotalCurr > 0);
-    // genral tier and level limit:
+    // general tier and level limit:
     assert(numPicTotalCurr <= 8);
 
     m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
@@ -2558,11 +2558,6 @@ Void TComScalingList::checkPredMode(UInt sizeId, UInt listId)
   }
   setScalingListPredModeFlag(sizeId, listId, true);
 }
-
-/** parse syntax infomation
- *  \param pchFile syntax infomation
- *  \returns false if successful
- */
 
 static Void outputScalingListHelp(std::ostream &os)
 {
