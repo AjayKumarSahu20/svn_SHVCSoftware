@@ -2294,8 +2294,8 @@ TComPPS::TComPPS()
   {
     m_saoOffsetBitShift[ch] = 0;
   }
-  m_ChromaQpAdjTable[0].u.comp.CbOffset = 0;
-  m_ChromaQpAdjTable[0].u.comp.CrOffset = 0;
+  m_ChromaQpAdjTableIncludingNullEntry[0].u.comp.CbOffset = 0; // Array includes entry [0] for the null offset used when cu_chroma_qp_offset_flag=0. This is initialised here and never subsequently changed.
+  m_ChromaQpAdjTableIncludingNullEntry[0].u.comp.CrOffset = 0;
 
 #if SVC_EXTENSION
   ::memset(m_scaledRefLayerOffsetPresentFlag,   0, sizeof(m_scaledRefLayerOffsetPresentFlag));
