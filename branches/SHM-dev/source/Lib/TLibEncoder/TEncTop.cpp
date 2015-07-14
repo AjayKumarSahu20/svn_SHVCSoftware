@@ -394,8 +394,10 @@ Void TEncTop::deletePicBuffer()
  .
  \param   flush               cause encoder to encode a partial GOP
  \param   pcPicYuvOrg         original YUV picture
+ \param   pcPicYuvTrueOrg     
+ \param   snrCSC
  \retval  rcListPicYuvRecOut  list of reconstruction YUV pictures
- \retval  rcListBitstreamOut  list of output bitstreams
+ \retval  accessUnitsOut      list of output access units
  \retval  iNumEncoded         number of encoded pictures
  */
 #if SVC_EXTENSION
