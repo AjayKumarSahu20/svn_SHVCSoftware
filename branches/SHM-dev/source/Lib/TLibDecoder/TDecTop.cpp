@@ -429,6 +429,15 @@ Void TDecTop::xActivateParameterSets()
       assert (0);
     }
 
+#if RExt__HIGH_BIT_DEPTH_SUPPORT==0
+    if (sps->getUseExtendedPrecision() || sps->getBitDepth(CHANNEL_TYPE_LUMA)>12 || sps->getBitDepth(CHANNEL_TYPE_CHROMA)>12 )
+    {
+      printf("High bit depth support must be enabled at compile-time in order to decode this bitstream\n");
+      assert (0);
+      exit(1);
+    }
+#endif
+
 #if SVC_EXTENSION
     // scaling list settings and checks
     TComVPS *vps = m_parameterSetManager.getVPS(sps->getVPSId());
