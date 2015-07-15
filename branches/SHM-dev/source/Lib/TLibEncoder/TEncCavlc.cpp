@@ -2099,7 +2099,7 @@ Void TEncCavlc::codeVPSExtension( const TComVPS *vps )
     {
       if( vps->getNecessaryLayerFlag(i, j) && (vps->getNumProfileTierLevel() - 1) > 0 )
       {
-        WRITE_CODE( vps->getProfileLevelTierIdx(i, j), numBitsForPtlIdx, "profile_level_tier_idx[i]" );
+        WRITE_CODE( vps->getProfileLevelTierIdx(i, j), numBitsForPtlIdx, "profile_tier_level_idx[i]" );
       }
     }
 
@@ -2171,11 +2171,11 @@ Void TEncCavlc::codeVPSExtension( const TComVPS *vps )
 
   WRITE_UVLC( vps->getDirectDepTypeLen()-2,                           "direct_dep_type_len_minus2");
 
-  WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "default_direct_dependency_flag");
+  WRITE_FLAG(vps->getDefaultDirectDependencyTypeFlag(), "direct_dependency_all_layers_flag");
 
   if( vps->getDefaultDirectDependencyTypeFlag() )
   {
-    WRITE_CODE( vps->getDefaultDirectDependencyType(), vps->getDirectDepTypeLen(), "default_direct_dependency_type" );
+    WRITE_CODE( vps->getDefaultDirectDependencyType(), vps->getDirectDepTypeLen(), "direct_dependency_all_layers_type" );
   }
   else
   {
