@@ -1139,7 +1139,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
       READ_FLAG( uiCode, "vps_extension_alignment_bit_equal_to_one"); assert(uiCode == 1);
     }
     parseVPSExtension(pcVPS);
-    READ_FLAG( uiCode, "vps_entension2_flag" );
+    READ_FLAG( uiCode, "vps_extension2_flag" );
     if(uiCode)
     {
       while ( xMoreRbspData() )
@@ -2229,8 +2229,12 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
 #endif
   }
   else
-  {
+  {  
+#if SVC_EXTENSION
+    READ_FLAG(    uiCode, PTL_TRACE_TEXT("inbld_flag"                      ));
+#else
     READ_FLAG(    uiCode, PTL_TRACE_TEXT("reserved_zero_bit"               ));
+#endif
   }
 #undef PTL_TRACE_TEXT
 }
@@ -3041,12 +3045,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   READ_UVLC( uiCode,           "direct_dep_type_len_minus2"); vps->setDirectDepTypeLen(uiCode+2);
 
-  READ_FLAG(uiCode, "default_direct_dependency_type_flag"); 
+  READ_FLAG(uiCode, "direct_dependency_all_layers_flag"); 
   vps->setDefaultDirectDependecyTypeFlag(uiCode == 1? true : false);
 
   if( vps->getDefaultDirectDependencyTypeFlag() )
   {
-    READ_CODE( vps->getDirectDepTypeLen(), uiCode, "default_direct_dependency_type" ); 
+    READ_CODE( vps->getDirectDepTypeLen(), uiCode, "direct_dependency_all_layers_type" ); 
     vps->setDefaultDirectDependecyType(uiCode);
   }
 

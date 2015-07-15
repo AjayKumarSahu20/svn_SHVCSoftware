@@ -957,11 +957,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       // New access unit; reset all variables related to POC reset restrictions
       resetPocRestrictionCheckParameters();
 
-      markAllPicsAsNoCurrAu(m_apcSlicePilot->getVPS());
+      markAllPicsAsNoCurrAu(vps);
 
       for( UInt i = 0; i < MAX_LAYERS; i++ )
       {
-        m_ppcTDecTop[m_apcSlicePilot->getVPS()->getLayerIdInNuh(i)]->m_pocDecrementedInDPBFlag = false;
+        m_ppcTDecTop[vps->getLayerIdInNuh(i)]->m_pocDecrementedInDPBFlag = false;
       }
     }
 
@@ -1055,7 +1055,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // 4. update value of POCLastDisplay
 
     //Do the reset stuff here
-    Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+    Int maxPocLsb = 1 << sps->getBitsForPOC();
     Int pocLsbVal;
     if( m_apcSlicePilot->getPocResetIdc() == 3 )
     {
@@ -1142,7 +1142,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Update value of POCLastDisplay
     iPOCLastDisplay -= deltaPocVal;
   }
-  Int maxPocLsb = 1 << m_apcSlicePilot->getSPS()->getBitsForPOC();
+  Int maxPocLsb = 1 << sps->getBitsForPOC();
   Int slicePicOrderCntLsb = m_apcSlicePilot->getPicOrderCntLsb();
 
   if( m_pocResettingFlag && (m_parseIdc == 1 || m_parseIdc == 2) )
