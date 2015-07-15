@@ -50,9 +50,9 @@ public:
   virtual ~SEIWriter() {};
 
 #if O0164_MULTI_LAYER_HRD
-  Void writeSEImessage(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
 #else
-  Void writeSEImessage(TComBitIf& bs, const SEI& sei, const TComSPS *sps);
+  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComSPS *sps);
 #endif
 
 protected:
@@ -109,7 +109,7 @@ protected:
   Void xWriteSEISubBitstreamProperty(const SEISubBitstreamProperty &sei);
 #endif
 #if Q0189_TMVP_CONSTRAINTS 
-Void xWriteSEITMVPConstraints(const SEITMVPConstrains &sei);
+  Void xWriteSEITMVPConstraints(const SEITMVPConstrains &sei);
 #endif
 #if Q0247_FRAME_FIELD_INFO
   Void xWriteSEIFrameFieldInfo(const SEIFrameFieldInfo &sei);

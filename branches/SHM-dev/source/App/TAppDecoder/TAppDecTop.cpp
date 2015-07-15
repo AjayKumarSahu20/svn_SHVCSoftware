@@ -1543,9 +1543,9 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         }
         this->setMetadataFileRefresh(false);
 
-        TComDigest recon_digest;
+        TComPictureHash recon_digest;
         Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest);
-        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), digestToString(recon_digest, numChar).c_str());
+        fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), hashToString(recon_digest, numChar).c_str());
         fclose(fptr);
       }
 #endif

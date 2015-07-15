@@ -443,7 +443,7 @@ protected:
   Bool                                m_overlayInfoPersistenceFlag;
 #endif
 #if Q0189_TMVP_CONSTRAINTS
-  Int       m_TMVPConstraintsSEIEnabled;
+  Int                                 m_TMVPConstraintsSEIEnabled;
 #endif
 #endif //SVC_EXTENSION
 #if Q0074_COLOUR_REMAPPING_SEI

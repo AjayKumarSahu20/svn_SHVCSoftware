@@ -52,6 +52,7 @@
 #include <limits.h>
 #endif
 
+#include <deque>
 using namespace std;
 
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
@@ -102,7 +103,6 @@ TEncGOP::TEncGOP()
   m_numLongTermRefPicSPS = 0;
   ::memset(m_ltRefPicPocLsbSps, 0, sizeof(m_ltRefPicPocLsbSps));
   ::memset(m_ltRefPicUsedByCurrPicFlag, 0, sizeof(m_ltRefPicUsedByCurrPicFlag));
-  m_cpbRemovalDelay   = 0;
   m_lastBPSEI         = 0;
   xResetNonNestedSEIPresentFlags();
   xResetNestedSEIPresentFlags();
@@ -122,13 +122,10 @@ TEncGOP::TEncGOP()
 #endif //SVC_EXTENSION
 
 #if Q0074_COLOUR_REMAPPING_SEI
-  for( Int c=0 ; c<3 ; c++)
-  {
-    m_colourRemapSEIPreLutCodedValue[c]   = NULL;
-    m_colourRemapSEIPreLutTargetValue[c]  = NULL;
-    m_colourRemapSEIPostLutCodedValue[c]  = NULL;
-    m_colourRemapSEIPostLutTargetValue[c] = NULL;
-  }
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue,   NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue,  NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue,  NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue, NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue));
 #endif
   return;
 }
@@ -175,6 +172,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 {
   m_pcEncTop     = pcTEncTop;
   m_pcCfg                = pcTEncTop;
+  m_seiEncoder.init(m_pcCfg, pcTEncTop, this);
   m_pcSliceEncoder       = pcTEncTop->getSliceEncoder();
   m_pcListPic            = pcTEncTop->getListPic();
 
@@ -215,501 +213,464 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 #endif //SVC_EXTENSION
 }
 
-SEIActiveParameterSets* TEncGOP::xCreateSEIActiveParameterSets (const TComSPS *sps)
+Int TEncGOP::xWriteVPS (AccessUnit &accessUnit, const TComVPS *vps)
 {
-  SEIActiveParameterSets *seiActiveParameterSets = new SEIActiveParameterSets();
-  seiActiveParameterSets->activeVPSId = m_pcCfg->getVPS()->getVPSId();
-  seiActiveParameterSets->m_selfContainedCvsFlag = false;
-  seiActiveParameterSets->m_noParameterSetUpdateFlag = false;  
-#if R0247_SEI_ACTIVE
-  seiActiveParameterSets->numSpsIdsMinus1 = m_pcCfg->getNumLayer()-1;
-  seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-  seiActiveParameterSets->layerSpsIdx.resize(seiActiveParameterSets->numSpsIdsMinus1+ 1);  
-  for (Int c=0; c <= seiActiveParameterSets->numSpsIdsMinus1; c++)
+  OutputNALUnit nalu(NAL_UNIT_VPS);
+  m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+  m_pcEntropyCoder->encodeVPS(vps);
+  writeRBSPTrailingBits(nalu.m_Bitstream);
+  accessUnit.push_back(new NALUnitEBSP(nalu));
+  return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
+}
+
+Int TEncGOP::xWriteSPS (AccessUnit &accessUnit, const TComSPS *sps)
+{
+#if SVC_EXTENSION
+  OutputNALUnit nalu(NAL_UNIT_SPS, 0, m_layerId);
+
+  if (m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0)
   {
-     seiActiveParameterSets->activeSeqParameterSetId[c] = c;
+    nalu.m_nuhLayerId = 0; // For independent base layer rewriting
   }
-  for (Int c=1; c <= seiActiveParameterSets->numSpsIdsMinus1; c++)
-  {
-     seiActiveParameterSets->layerSpsIdx[c] = c;
-  }
+
+  // dependency constraint
+  assert( sps->getLayerId() == 0 || sps->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, sps->getLayerId()) );
 #else
-  seiActiveParameterSets->numSpsIdsMinus1 = 0;
-  seiActiveParameterSets->activeSeqParameterSetId.resize(seiActiveParameterSets->numSpsIdsMinus1 + 1);
-  seiActiveParameterSets->activeSeqParameterSetId[0] = sps->getSPSId();
+  OutputNALUnit nalu(NAL_UNIT_SPS);
 #endif
-  return seiActiveParameterSets;
+  m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+  m_pcEntropyCoder->encodeSPS(sps);
+  writeRBSPTrailingBits(nalu.m_Bitstream);
+  accessUnit.push_back(new NALUnitEBSP(nalu));
+  return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
+
 }
 
-SEIFramePacking* TEncGOP::xCreateSEIFramePacking()
+Int TEncGOP::xWritePPS (AccessUnit &accessUnit, const TComPPS *pps)
 {
-  SEIFramePacking *seiFramePacking = new SEIFramePacking();
-  seiFramePacking->m_arrangementId = m_pcCfg->getFramePackingArrangementSEIId();
-  seiFramePacking->m_arrangementCancelFlag = 0;
-  seiFramePacking->m_arrangementType = m_pcCfg->getFramePackingArrangementSEIType();
-  assert((seiFramePacking->m_arrangementType > 2) && (seiFramePacking->m_arrangementType < 6) );
-  seiFramePacking->m_quincunxSamplingFlag = m_pcCfg->getFramePackingArrangementSEIQuincunx();
-  seiFramePacking->m_contentInterpretationType = m_pcCfg->getFramePackingArrangementSEIInterpretation();
-  seiFramePacking->m_spatialFlippingFlag = 0;
-  seiFramePacking->m_frame0FlippedFlag = 0;
-  seiFramePacking->m_fieldViewsFlag = (seiFramePacking->m_arrangementType == 2);
-  seiFramePacking->m_currentFrameIsFrame0Flag = ((seiFramePacking->m_arrangementType == 5) && (m_iNumPicCoded&1));
-  seiFramePacking->m_frame0SelfContainedFlag = 0;
-  seiFramePacking->m_frame1SelfContainedFlag = 0;
-  seiFramePacking->m_frame0GridPositionX = 0;
-  seiFramePacking->m_frame0GridPositionY = 0;
-  seiFramePacking->m_frame1GridPositionX = 0;
-  seiFramePacking->m_frame1GridPositionY = 0;
-  seiFramePacking->m_arrangementReservedByte = 0;
-  seiFramePacking->m_arrangementPersistenceFlag = true;
-  seiFramePacking->m_upsampledAspectRatio = 0;
-  return seiFramePacking;
-}
+#if SVC_EXTENSION
+  OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
 
-SEISegmentedRectFramePacking* TEncGOP::xCreateSEISegmentedRectFramePacking()
-{
-  SEISegmentedRectFramePacking *seiSegmentedRectFramePacking = new SEISegmentedRectFramePacking();
-  seiSegmentedRectFramePacking->m_arrangementCancelFlag = m_pcCfg->getSegmentedRectFramePackingArrangementSEICancel();
-  seiSegmentedRectFramePacking->m_contentInterpretationType = m_pcCfg->getSegmentedRectFramePackingArrangementSEIType();
-  seiSegmentedRectFramePacking->m_arrangementPersistenceFlag = m_pcCfg->getSegmentedRectFramePackingArrangementSEIPersistence();
-  return seiSegmentedRectFramePacking;
-}
-
-SEIDisplayOrientation* TEncGOP::xCreateSEIDisplayOrientation()
-{
-  SEIDisplayOrientation *seiDisplayOrientation = new SEIDisplayOrientation();
-  seiDisplayOrientation->cancelFlag = false;
-  seiDisplayOrientation->horFlip = false;
-  seiDisplayOrientation->verFlip = false;
-  seiDisplayOrientation->anticlockwiseRotation = m_pcCfg->getDisplayOrientationSEIAngle();
-  return seiDisplayOrientation;
-}
-SEIToneMappingInfo*  TEncGOP::xCreateSEIToneMappingInfo()
-{
-  SEIToneMappingInfo *seiToneMappingInfo = new SEIToneMappingInfo();
-  seiToneMappingInfo->m_toneMapId = m_pcCfg->getTMISEIToneMapId();
-  seiToneMappingInfo->m_toneMapCancelFlag = m_pcCfg->getTMISEIToneMapCancelFlag();
-  seiToneMappingInfo->m_toneMapPersistenceFlag = m_pcCfg->getTMISEIToneMapPersistenceFlag();
-
-  seiToneMappingInfo->m_codedDataBitDepth = m_pcCfg->getTMISEICodedDataBitDepth();
-  assert(seiToneMappingInfo->m_codedDataBitDepth >= 8 && seiToneMappingInfo->m_codedDataBitDepth <= 14);
-  seiToneMappingInfo->m_targetBitDepth = m_pcCfg->getTMISEITargetBitDepth();
-  assert(seiToneMappingInfo->m_targetBitDepth >= 1 && seiToneMappingInfo->m_targetBitDepth <= 17);
-  seiToneMappingInfo->m_modelId = m_pcCfg->getTMISEIModelID();
-  assert(seiToneMappingInfo->m_modelId >=0 &&seiToneMappingInfo->m_modelId<=4);
-
-  switch( seiToneMappingInfo->m_modelId)
+  if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
   {
-  case 0:
-    {
-      seiToneMappingInfo->m_minValue = m_pcCfg->getTMISEIMinValue();
-      seiToneMappingInfo->m_maxValue = m_pcCfg->getTMISEIMaxValue();
-      break;
-    }
-  case 1:
-    {
-      seiToneMappingInfo->m_sigmoidMidpoint = m_pcCfg->getTMISEISigmoidMidpoint();
-      seiToneMappingInfo->m_sigmoidWidth = m_pcCfg->getTMISEISigmoidWidth();
-      break;
-    }
-  case 2:
-    {
-      UInt num = 1u<<(seiToneMappingInfo->m_targetBitDepth);
-      seiToneMappingInfo->m_startOfCodedInterval.resize(num);
-      Int* ptmp = m_pcCfg->getTMISEIStartOfCodedInterva();
-      if(ptmp)
-      {
-        for(Int i=0; i<num;i++)
-        {
-          seiToneMappingInfo->m_startOfCodedInterval[i] = ptmp[i];
-        }
-      }
-      break;
-    }
-  case 3:
-    {
-      seiToneMappingInfo->m_numPivots = m_pcCfg->getTMISEINumPivots();
-      seiToneMappingInfo->m_codedPivotValue.resize(seiToneMappingInfo->m_numPivots);
-      seiToneMappingInfo->m_targetPivotValue.resize(seiToneMappingInfo->m_numPivots);
-      Int* ptmpcoded = m_pcCfg->getTMISEICodedPivotValue();
-      Int* ptmptarget = m_pcCfg->getTMISEITargetPivotValue();
-      if(ptmpcoded&&ptmptarget)
-      {
-        for(Int i=0; i<(seiToneMappingInfo->m_numPivots);i++)
-        {
-          seiToneMappingInfo->m_codedPivotValue[i]=ptmpcoded[i];
-          seiToneMappingInfo->m_targetPivotValue[i]=ptmptarget[i];
-         }
-       }
-       break;
-     }
-  case 4:
-     {
-       seiToneMappingInfo->m_cameraIsoSpeedIdc = m_pcCfg->getTMISEICameraIsoSpeedIdc();
-       seiToneMappingInfo->m_cameraIsoSpeedValue = m_pcCfg->getTMISEICameraIsoSpeedValue();
-       assert( seiToneMappingInfo->m_cameraIsoSpeedValue !=0 );
-       seiToneMappingInfo->m_exposureIndexIdc = m_pcCfg->getTMISEIExposurIndexIdc();
-       seiToneMappingInfo->m_exposureIndexValue = m_pcCfg->getTMISEIExposurIndexValue();
-       assert( seiToneMappingInfo->m_exposureIndexValue !=0 );
-       seiToneMappingInfo->m_exposureCompensationValueSignFlag = m_pcCfg->getTMISEIExposureCompensationValueSignFlag();
-       seiToneMappingInfo->m_exposureCompensationValueNumerator = m_pcCfg->getTMISEIExposureCompensationValueNumerator();
-       seiToneMappingInfo->m_exposureCompensationValueDenomIdc = m_pcCfg->getTMISEIExposureCompensationValueDenomIdc();
-       seiToneMappingInfo->m_refScreenLuminanceWhite = m_pcCfg->getTMISEIRefScreenLuminanceWhite();
-       seiToneMappingInfo->m_extendedRangeWhiteLevel = m_pcCfg->getTMISEIExtendedRangeWhiteLevel();
-       assert( seiToneMappingInfo->m_extendedRangeWhiteLevel >= 100 );
-       seiToneMappingInfo->m_nominalBlackLevelLumaCodeValue = m_pcCfg->getTMISEINominalBlackLevelLumaCodeValue();
-       seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue = m_pcCfg->getTMISEINominalWhiteLevelLumaCodeValue();
-       assert( seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue > seiToneMappingInfo->m_nominalBlackLevelLumaCodeValue );
-       seiToneMappingInfo->m_extendedWhiteLevelLumaCodeValue = m_pcCfg->getTMISEIExtendedWhiteLevelLumaCodeValue();
-       assert( seiToneMappingInfo->m_extendedWhiteLevelLumaCodeValue >= seiToneMappingInfo->m_nominalWhiteLevelLumaCodeValue );
-       break;
-    }
-  default:
-    {
-      assert(!"Undefined SEIToneMapModelId");
-      break;
-    }
+    // For independent base layer rewriting
+    nalu.m_nuhLayerId = 0;
   }
-  return seiToneMappingInfo;
+
+  // dependency constraint
+  assert( pps->getLayerId() == 0 || pps->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pps->getLayerId()) );
+#else
+  OutputNALUnit nalu(NAL_UNIT_PPS);
+#endif
+  m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
+#if SVC_EXTENSION && CGS_3D_ASYMLUT
+  m_pcEntropyCoder->encodePPS(pps, &m_Enc3DAsymLUTPPS);
+#else
+  m_pcEntropyCoder->encodePPS(pps);
+#endif
+  writeRBSPTrailingBits(nalu.m_Bitstream);
+  accessUnit.push_back(new NALUnitEBSP(nalu));
+  return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 }
 
-SEITempMotionConstrainedTileSets* TEncGOP::xCreateSEITempMotionConstrainedTileSets (const TComPPS *pps)
+
+Int TEncGOP::xWriteParameterSets (AccessUnit &accessUnit, TComSlice *slice)
 {
-  SEITempMotionConstrainedTileSets *sei = new SEITempMotionConstrainedTileSets();
-  if(pps->getTilesEnabledFlag())
+  Int actualTotalBits = 0;
+
+  actualTotalBits += xWriteVPS(accessUnit, m_pcEncTop->getVPS());
+  actualTotalBits += xWriteSPS(accessUnit, slice->getSPS());
+  actualTotalBits += xWritePPS(accessUnit, slice->getPPS());
+
+  return actualTotalBits;
+}
+
+// write SEI list into one NAL unit and add it to the Access unit at auPos
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteSEI (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteSEI (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComSPS *sps)
+#endif
+{
+  // don't do anything, if we get an empty list
+  if (seiMessages.empty())
   {
-    sei->m_mc_all_tiles_exact_sample_value_match_flag = false;
-    sei->m_each_tile_one_tile_set_flag                = false;
-    sei->m_limited_tile_set_display_flag              = false;
-    sei->setNumberOfTileSets((pps->getNumTileColumnsMinus1() + 1) * (pps->getNumTileRowsMinus1() + 1));
+    return;
+  }
+#if O0164_MULTI_LAYER_HRD
+  OutputNALUnit nalu(naluType, temporalId, sps->getLayerId());
+  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, vps, sps, nestingSei, bspNestingSei);
+#else
+  OutputNALUnit nalu(naluType, temporalId);
+  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, sps);
+#endif
+  writeRBSPTrailingBits(nalu.m_Bitstream);
+  auPos = accessUnit.insert(auPos, new NALUnitEBSP(nalu));
+  auPos++;
+}
 
-    for(Int i=0; i < sei->getNumberOfTileSets(); i++)
-    {
-      sei->tileSetData(i).m_mcts_id = i;  //depends the application;
-      sei->tileSetData(i).setNumberOfTileRects(1);
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteSEISeparately (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteSEISeparately (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComSPS *sps)
+#endif
+{
+  // don't do anything, if we get an empty list
+  if (seiMessages.empty())
+  {
+    return;
+  }
+  for (SEIMessages::const_iterator sei = seiMessages.begin(); sei!=seiMessages.end(); sei++ )
+  {
+    SEIMessages tmpMessages;
+    tmpMessages.push_back(*sei);
+#if O0164_MULTI_LAYER_HRD
+    OutputNALUnit nalu(naluType, temporalId, sps->getLayerId());
+    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, vps, sps, nestingSei, bspNestingSei);
+#else
+    OutputNALUnit nalu(naluType, temporalId);
+    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, sps);
+#endif
+    writeRBSPTrailingBits(nalu.m_Bitstream);
+    auPos = accessUnit.insert(auPos, new NALUnitEBSP(nalu));
+    auPos++;
+  }
+}
 
-      for(Int j=0; j<sei->tileSetData(i).getNumberOfTileRects(); j++)
-      {
-        sei->tileSetData(i).topLeftTileIndex(j)     = i+j;
-        sei->tileSetData(i).bottomRightTileIndex(j) = i+j;
-      }
-
-      sei->tileSetData(i).m_exact_sample_value_match_flag    = false;
-      sei->tileSetData(i).m_mcts_tier_level_idc_present_flag = false;
-    }
+Void TEncGOP::xClearSEIs(SEIMessages& seiMessages, Bool deleteMessages)
+{
+  if (deleteMessages)
+  {
+    deleteSEIs(seiMessages);
   }
   else
   {
-    assert(!"Tile is not enabled");
+    seiMessages.clear();
   }
-  return sei;
 }
 
-SEIKneeFunctionInfo* TEncGOP::xCreateSEIKneeFunctionInfo()
+// write SEI messages as separate NAL units ordered
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId,const TComVPS *vps, const TComSPS *sps, Bool testWrite, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, Bool testWrite)
+#endif
 {
-  SEIKneeFunctionInfo *seiKneeFunctionInfo = new SEIKneeFunctionInfo();
-  seiKneeFunctionInfo->m_kneeId = m_pcCfg->getKneeSEIId();
-  seiKneeFunctionInfo->m_kneeCancelFlag = m_pcCfg->getKneeSEICancelFlag();
-  if ( !seiKneeFunctionInfo->m_kneeCancelFlag )
-  {
-    seiKneeFunctionInfo->m_kneePersistenceFlag = m_pcCfg->getKneeSEIPersistenceFlag();
-    seiKneeFunctionInfo->m_kneeInputDrange = m_pcCfg->getKneeSEIInputDrange();
-    seiKneeFunctionInfo->m_kneeInputDispLuminance = m_pcCfg->getKneeSEIInputDispLuminance();
-    seiKneeFunctionInfo->m_kneeOutputDrange = m_pcCfg->getKneeSEIOutputDrange();
-    seiKneeFunctionInfo->m_kneeOutputDispLuminance = m_pcCfg->getKneeSEIOutputDispLuminance();
+  AccessUnit::iterator itNalu = accessUnit.begin();
 
-    seiKneeFunctionInfo->m_kneeNumKneePointsMinus1 = m_pcCfg->getKneeSEINumKneePointsMinus1();
-    Int* piInputKneePoint  = m_pcCfg->getKneeSEIInputKneePoint();
-    Int* piOutputKneePoint = m_pcCfg->getKneeSEIOutputKneePoint();
-    if(piInputKneePoint&&piOutputKneePoint)
-    {
-      seiKneeFunctionInfo->m_kneeInputKneePoint.resize(seiKneeFunctionInfo->m_kneeNumKneePointsMinus1+1);
-      seiKneeFunctionInfo->m_kneeOutputKneePoint.resize(seiKneeFunctionInfo->m_kneeNumKneePointsMinus1+1);
-      for(Int i=0; i<=seiKneeFunctionInfo->m_kneeNumKneePointsMinus1; i++)
-      {
-        seiKneeFunctionInfo->m_kneeInputKneePoint[i] = piInputKneePoint[i];
-        seiKneeFunctionInfo->m_kneeOutputKneePoint[i] = piOutputKneePoint[i];
-       }
-    }
+  while ( (itNalu!=accessUnit.end())&&
+    ( (*itNalu)->m_nalUnitType==NAL_UNIT_ACCESS_UNIT_DELIMITER 
+    || (*itNalu)->m_nalUnitType==NAL_UNIT_VPS
+    || (*itNalu)->m_nalUnitType==NAL_UNIT_SPS
+    || (*itNalu)->m_nalUnitType==NAL_UNIT_PPS
+    ))
+  {
+    itNalu++;
   }
-  return seiKneeFunctionInfo;
+
+  SEIMessages localMessages = seiMessages;
+  SEIMessages currentMessages;
+  
+#if ENC_DEC_TRACE
+  g_HLSTraceEnable = !testWrite;
+#endif
+  // The case that a specific SEI is not present is handled in xWriteSEI (empty list)
+
+  // Active parameter sets SEI must always be the first SEI
+  currentMessages = extractSeisByType(localMessages, SEI::ACTIVE_PARAMETER_SETS);
+  assert (currentMessages.size() <= 1);
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+  xClearSEIs(currentMessages, !testWrite);
+  
+  // Buffering period SEI must always be following active parameter sets
+  currentMessages = extractSeisByType(localMessages, SEI::BUFFERING_PERIOD);
+  assert (currentMessages.size() <= 1);
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+  xClearSEIs(currentMessages, !testWrite);
+
+  // Picture timing SEI must always be following buffering period
+  currentMessages = extractSeisByType(localMessages, SEI::PICTURE_TIMING);
+  assert (currentMessages.size() <= 1);
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+  xClearSEIs(currentMessages, !testWrite);
+
+  // Decoding unit info SEI must always be following picture timing
+  if (!duInfoSeiMessages.empty())
+  {
+    currentMessages.push_back(duInfoSeiMessages.front());
+    if (!testWrite)
+    {
+      duInfoSeiMessages.pop_front();
+    }
+#if O0164_MULTI_LAYER_HRD
+    xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+    xWriteSEI(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+    xClearSEIs(currentMessages, !testWrite);
+  }
+
+  // Scalable nesting SEI must always be the following DU info
+  currentMessages = extractSeisByType(localMessages, SEI::SCALABLE_NESTING);
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEISeparately(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEISeparately(NAL_UNIT_PREFIX_SEI, currentMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+  xClearSEIs(currentMessages, !testWrite);
+
+  // And finally everything else one by one
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEISeparately(NAL_UNIT_PREFIX_SEI, localMessages, accessUnit, itNalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEISeparately(NAL_UNIT_PREFIX_SEI, localMessages, accessUnit, itNalu, temporalId, sps);
+#endif
+  xClearSEIs(currentMessages, !testWrite);
+
+  if (!testWrite)
+  {
+    seiMessages.clear();
+  }
 }
 
-SEIChromaSamplingFilterHint* TEncGOP::xCreateSEIChromaSamplingFilterHint(Bool bChromaLocInfoPresent, Int iHorFilterIndex, Int iVerFilterIndex)
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteLeadingSEIMessages (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId,const TComVPS *vps, const TComSPS *sps, std::deque<DUData> &duData, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteLeadingSEIMessages (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, std::deque<DUData> &duData)
+#endif
 {
-  SEIChromaSamplingFilterHint *seiChromaSamplingFilterHint = new SEIChromaSamplingFilterHint();
-  seiChromaSamplingFilterHint->m_verChromaFilterIdc = iVerFilterIndex;
-  seiChromaSamplingFilterHint->m_horChromaFilterIdc = iHorFilterIndex;
-  seiChromaSamplingFilterHint->m_verFilteringProcessFlag = 1;
-  seiChromaSamplingFilterHint->m_targetFormatIdc = 3;
-  seiChromaSamplingFilterHint->m_perfectReconstructionFlag = false;
-  if(seiChromaSamplingFilterHint->m_verChromaFilterIdc == 1)
-  {
-    seiChromaSamplingFilterHint->m_numVerticalFilters = 1;
-    seiChromaSamplingFilterHint->m_verTapLengthMinus1 = (Int*)malloc(seiChromaSamplingFilterHint->m_numVerticalFilters * sizeof(Int));
-    seiChromaSamplingFilterHint->m_verFilterCoeff =    (Int**)malloc(seiChromaSamplingFilterHint->m_numVerticalFilters * sizeof(Int*));
-    for(Int i = 0; i < seiChromaSamplingFilterHint->m_numVerticalFilters; i ++)
-    {
-      seiChromaSamplingFilterHint->m_verTapLengthMinus1[i] = 0;
-      seiChromaSamplingFilterHint->m_verFilterCoeff[i] = (Int*)malloc(seiChromaSamplingFilterHint->m_verTapLengthMinus1[i] * sizeof(Int));
-      for(Int j = 0; j < seiChromaSamplingFilterHint->m_verTapLengthMinus1[i]; j ++)
-      {
-        seiChromaSamplingFilterHint->m_verFilterCoeff[i][j] = 0;
-      }
-    }
-  }
-  else
-  {
-    seiChromaSamplingFilterHint->m_numVerticalFilters = 0;
-    seiChromaSamplingFilterHint->m_verTapLengthMinus1 = NULL;
-    seiChromaSamplingFilterHint->m_verFilterCoeff = NULL;
-  }
-  if(seiChromaSamplingFilterHint->m_horChromaFilterIdc == 1)
-  {
-    seiChromaSamplingFilterHint->m_numHorizontalFilters = 1;
-    seiChromaSamplingFilterHint->m_horTapLengthMinus1 = (Int*)malloc(seiChromaSamplingFilterHint->m_numHorizontalFilters * sizeof(Int));
-    seiChromaSamplingFilterHint->m_horFilterCoeff = (Int**)malloc(seiChromaSamplingFilterHint->m_numHorizontalFilters * sizeof(Int*));
-    for(Int i = 0; i < seiChromaSamplingFilterHint->m_numHorizontalFilters; i ++)
-    {
-      seiChromaSamplingFilterHint->m_horTapLengthMinus1[i] = 0;
-      seiChromaSamplingFilterHint->m_horFilterCoeff[i] = (Int*)malloc(seiChromaSamplingFilterHint->m_horTapLengthMinus1[i] * sizeof(Int));
-      for(Int j = 0; j < seiChromaSamplingFilterHint->m_horTapLengthMinus1[i]; j ++)
-      {
-        seiChromaSamplingFilterHint->m_horFilterCoeff[i][j] = 0;
-      }
-    }
-  }
-  else
-  {
-    seiChromaSamplingFilterHint->m_numHorizontalFilters = 0;
-    seiChromaSamplingFilterHint->m_horTapLengthMinus1 = NULL;
-    seiChromaSamplingFilterHint->m_horFilterCoeff = NULL;
-  }
-  return seiChromaSamplingFilterHint;
+  AccessUnit testAU;
+  SEIMessages picTimingSEIs = getSeisByType(seiMessages, SEI::PICTURE_TIMING);
+  assert (picTimingSEIs.size() < 2);
+  SEIPictureTiming * picTiming = picTimingSEIs.empty() ? NULL : (SEIPictureTiming*) picTimingSEIs.front();
+
+  // test writing
+#if O0164_MULTI_LAYER_HRD
+  xWriteLeadingSEIOrdered(seiMessages, duInfoSeiMessages, testAU, temporalId, vps, sps, true, nestingSei, bspNestingSei);
+#else
+  xWriteLeadingSEIOrdered(seiMessages, duInfoSeiMessages, testAU, temporalId, sps, true);
+#endif
+  // update Timing and DU info SEI
+  xUpdateDuData(testAU, duData);
+  xUpdateTimingSEI(picTiming, duData, sps);
+  xUpdateDuInfoSEI(duInfoSeiMessages, picTiming);
+  // actual writing
+#if O0164_MULTI_LAYER_HRD
+  xWriteLeadingSEIOrdered(seiMessages, duInfoSeiMessages, accessUnit, temporalId, vps, sps, false, nestingSei, bspNestingSei);
+#else
+  xWriteLeadingSEIOrdered(seiMessages, duInfoSeiMessages, accessUnit, temporalId, sps, false);
+#endif
+
+  // testAU will automatically be cleaned up when losing scope
 }
 
-Void TEncGOP::xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, const TComSPS *sps, const TComPPS *pps)
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteTrailingSEIMessages (SEIMessages& seiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteTrailingSEIMessages (SEIMessages& seiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps)
+#endif
+{
+  // Note: using accessUnit.end() works only as long as this function is called after slice coding and before EOS/EOB NAL units
+  AccessUnit::iterator pos = accessUnit.end();
+#if O0164_MULTI_LAYER_HRD
+  xWriteSEISeparately(NAL_UNIT_SUFFIX_SEI, seiMessages, accessUnit, pos, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+  xWriteSEISeparately(NAL_UNIT_SUFFIX_SEI, seiMessages, accessUnit, pos, temporalId, sps);
+#endif
+}
+
+#if O0164_MULTI_LAYER_HRD
+Void TEncGOP::xWriteDuSEIMessages (SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *vps, const TComSPS *sps, std::deque<DUData> &duData, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+#else
+Void TEncGOP::xWriteDuSEIMessages (SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, std::deque<DUData> &duData)
+#endif
+{
+  const TComHRD *hrd = sps->getVuiParameters()->getHrdParameters();
+
+  if( m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag() )
+  {
+    Int naluIdx = 0;
+    AccessUnit::iterator nalu = accessUnit.begin();
+
+    // skip over first DU, we have a DU info SEI there already
+    while (naluIdx < duData[0].accumNalsDU && nalu!=accessUnit.end())
+    {
+      naluIdx++;
+      nalu++;
+    }
+
+    SEIMessages::iterator duSEI = duInfoSeiMessages.begin();
+    // loop over remaining DUs
+    for (Int duIdx = 1; duIdx < duData.size(); duIdx++)
+    {
+      if (duSEI == duInfoSeiMessages.end())
+      {
+        // if the number of generated SEIs matches the number of DUs, this should not happen
+        assert (false);
+        return;
+      }
+      // write the next SEI
+      SEIMessages tmpSEI;
+      tmpSEI.push_back(*duSEI);
+#if O0164_MULTI_LAYER_HRD
+      xWriteSEI(NAL_UNIT_PREFIX_SEI, tmpSEI, accessUnit, nalu, temporalId, vps, sps, nestingSei, bspNestingSei);
+#else
+      xWriteSEI(NAL_UNIT_PREFIX_SEI, tmpSEI, accessUnit, nalu, temporalId, sps);
+#endif
+      // nalu points to the position after the SEI, so we have to increase the index as well
+      naluIdx++;
+      while ((naluIdx < duData[duIdx].accumNalsDU) && nalu!=accessUnit.end())
+      {
+        naluIdx++;
+        nalu++;
+      }
+      duSEI++;
+    }
+  }
+  deleteSEIs(duInfoSeiMessages);
+}
+
+
+Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TComSPS *sps, const TComPPS *pps)
 {
   OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
 
-  if(m_pcCfg->getActiveParameterSetsSEIEnabled()
 #if R0247_SEI_ACTIVE
-    && m_layerId == 0
-#endif
-    )
-  {
-    SEIActiveParameterSets *sei = xCreateSEIActiveParameterSets (sps);
-
-    //nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
+  if(m_pcCfg->getActiveParameterSetsSEIEnabled() && m_layerId == 0 )
 #else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+  if(m_pcCfg->getActiveParameterSetsSEIEnabled())
 #endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+  {
+    SEIActiveParameterSets *sei = new SEIActiveParameterSets;
+    m_seiEncoder.initSEIActiveParameterSets (sei, m_pcCfg->getVPS(), sps);
+    seiMessages.push_back(sei);
     m_activeParameterSetSEIPresentInAU = true;
   }
 
   if(m_pcCfg->getFramePackingArrangementSEIEnabled())
   {
-    SEIFramePacking *sei = xCreateSEIFramePacking ();
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEIFramePacking *sei = new SEIFramePacking;
+    m_seiEncoder.initSEIFramePacking (sei, m_iNumPicCoded);
+    seiMessages.push_back(sei);
   }
+
   if(m_pcCfg->getSegmentedRectFramePackingArrangementSEIEnabled())
   {
-    SEISegmentedRectFramePacking *sei = xCreateSEISegmentedRectFramePacking ();
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEISegmentedRectFramePacking *sei = new SEISegmentedRectFramePacking;
+    m_seiEncoder.initSEISegmentedRectFramePacking(sei);
+    seiMessages.push_back(sei);
   }
+
   if (m_pcCfg->getDisplayOrientationSEIAngle())
   {
-    SEIDisplayOrientation *sei = xCreateSEIDisplayOrientation();
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEIDisplayOrientation *sei = new SEIDisplayOrientation;
+    m_seiEncoder.initSEIDisplayOrientation(sei);
+    seiMessages.push_back(sei);
   }
 
   if(m_pcCfg->getToneMappingInfoSEIEnabled())
   {
-    SEIToneMappingInfo *sei = xCreateSEIToneMappingInfo ();
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEIToneMappingInfo *sei = new SEIToneMappingInfo;
+    m_seiEncoder.initSEIToneMappingInfo (sei);
+    seiMessages.push_back(sei);
   }
 
   if(m_pcCfg->getTMCTSSEIEnabled())
   {
-    SEITempMotionConstrainedTileSets *sei_tmcts = xCreateSEITempMotionConstrainedTileSets (pps);
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei_tmcts, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei_tmcts, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei_tmcts;
+    SEITempMotionConstrainedTileSets *sei = new SEITempMotionConstrainedTileSets;
+    m_seiEncoder.initSEITempMotionConstrainedTileSets(sei, pps);
+    seiMessages.push_back(sei);
   }
 
   if(m_pcCfg->getTimeCodeSEIEnabled())
   {
-    SEITimeCode sei_time_code;
-    //  Set data as per command line options
-    sei_time_code.numClockTs = m_pcCfg->getNumberOfTimesets();
-    for(Int i = 0; i < sei_time_code.numClockTs; i++)
-    {
-      sei_time_code.timeSetArray[i] = m_pcCfg->getTimeSet(i);
-    }
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_time_code, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_time_code, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
+    SEITimeCode *seiTimeCode = new SEITimeCode;
+    m_seiEncoder.initSEITimeCode(seiTimeCode);
+    seiMessages.push_back(seiTimeCode);
   }
 
   if(m_pcCfg->getKneeSEIEnabled())
   {
-    SEIKneeFunctionInfo *sei = xCreateSEIKneeFunctionInfo();
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEIKneeFunctionInfo *sei = new SEIKneeFunctionInfo;
+    m_seiEncoder.initSEIKneeFunctionInfo(sei);
+    seiMessages.push_back(sei);
   }
     
   if(m_pcCfg->getMasteringDisplaySEI().colourVolumeSEIEnabled)
   {
     const TComSEIMasteringDisplay &seiCfg=m_pcCfg->getMasteringDisplaySEI();
-    SEIMasteringDisplayColourVolume mdcv;
-    mdcv.values = seiCfg;
-
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI);
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, mdcv, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, mdcv, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-      
+    SEIMasteringDisplayColourVolume *sei = new SEIMasteringDisplayColourVolume;
+    sei->values = seiCfg;
+    seiMessages.push_back(sei);
   }
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   if(m_pcCfg->getLayersNotPresentSEIEnabled())
   {
-    SEILayersNotPresent *sei = xCreateSEILayersNotPresent ();
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEILayersNotPresent *sei = new SEILayersNotPresent;
+    m_seiEncoder.initSEILayersNotPresent(sei);
+    seiMessages.push_back(sei);
   }
 #endif
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   if(m_pcCfg->getInterLayerConstrainedTileSetsSEIEnabled())
   {
-    SEIInterLayerConstrainedTileSets *sei = xCreateSEIInterLayerConstrainedTileSets ();
+    SEIInterLayerConstrainedTileSets *sei = new SEIInterLayerConstrainedTileSets;
+    m_seiEncoder.initSEIInterLayerConstrainedTileSets(sei);
 
-    nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    // nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, m_pcCfg->getNumLayer()-1); // For highest layer //ToDo(VS)
+    seiMessages.push_back(sei);
   }
 #endif
 
 #if P0123_ALPHA_CHANNEL_SEI
   if( m_pcCfg->getAlphaSEIEnabled() && m_pcEncTop->getVPS()->getScalabilityId(m_layerId, AUX_ID) && m_pcEncTop->getVPS()->getDimensionId(m_pcEncTop->getVPS()->getLayerIdxInVps(m_layerId), m_pcEncTop->getVPS()->getNumScalabilityTypes() - 1) == AUX_ALPHA )
   {
-    SEIAlphaChannelInfo *sei = xCreateSEIAlphaChannelInfo();
-    m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps);
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps);
-#endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+    SEIAlphaChannelInfo *sei = new SEIAlphaChannelInfo;
+    m_seiEncoder.initSEIAlphaChannelInfo(sei);
+    seiMessages.push_back(sei);
   }
 #endif
 
 #if Q0096_OVERLAY_SEI
   if(m_pcCfg->getOverlaySEIEnabled())
-  {    
-    SEIOverlayInfo *sei = xCreateSEIOverlayInfo();       
+  {
+    SEIOverlayInfo *sei = new SEIOverlayInfo;
+    m_seiEncoder.initSEIOverlayInfo(sei);
     m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), sps); 
-#else
-    m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, sps); 
+    seiMessages.push_back(sei);
+  }
 #endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
-    accessUnit.push_back(new NALUnitEBSP(nalu));
-    delete sei;
+#if O0164_MULTI_LAYER_HRD
+  if( m_layerId == 0 && m_pcEncTop->getVPS()->getVpsVuiBspHrdPresentFlag() )
+  {
+    TComVPS *vps = m_pcEncTop->getVPS();
+    for(Int i = 0; i < vps->getNumOutputLayerSets(); i++)
+    {
+      for(Int k = 0; k < vps->getNumSignalledPartitioningSchemes(i); k++)
+      {
+        for(Int l = 0; l < vps->getNumPartitionsInSchemeMinus1(i, k)+1; l++)
+        {
+          SEIScalableNesting *scalableBspNestingSei = new SEIScalableNesting;
+          m_seiEncoder.initBspNestingSEI(scalableBspNestingSei, vps, sps, i, k, l);
+          seiMessages.push_back(scalableBspNestingSei);
+        }
+      }
+    }
   }
 #endif
 #endif //SVC_EXTENSION
@@ -720,25 +681,25 @@ Void TEncGOP::freeColourCRI()
 {
   for( Int c=0 ; c<3 ; c++)
   {
-    if ( m_colourRemapSEIPreLutCodedValue[c] != NULL)
+    if ( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c] != NULL)
     {
-      delete[] m_colourRemapSEIPreLutCodedValue[c];
-      m_colourRemapSEIPreLutCodedValue[c] = NULL;
+      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c];
+      m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c] = NULL;
     }
-    if ( m_colourRemapSEIPreLutTargetValue[c] != NULL)
+    if ( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] != NULL)
     {
-      delete[] m_colourRemapSEIPreLutTargetValue[c];
-      m_colourRemapSEIPreLutTargetValue[c] = NULL;
+      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c];
+      m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] = NULL;
     }
-    if ( m_colourRemapSEIPostLutCodedValue[c] != NULL)
+    if ( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c] != NULL)
     {
-      delete[] m_colourRemapSEIPostLutCodedValue[c];
-      m_colourRemapSEIPostLutCodedValue[c] = NULL;
+      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c];
+      m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c] = NULL;
     }
-    if ( m_colourRemapSEIPostLutTargetValue[c] != NULL)
+    if ( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] != NULL)
     {
-      delete[] m_colourRemapSEIPostLutTargetValue[c];
-      m_colourRemapSEIPostLutTargetValue[c] = NULL;
+      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c];
+      m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] = NULL;
     }
   }
 }
@@ -746,69 +707,73 @@ Void TEncGOP::freeColourCRI()
 Int TEncGOP::readingCRIparameters(){
 
   // reading external Colour Remapping Information SEI message parameters from file
-  if( m_colourRemapSEIFile.c_str() )
+  if( m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str() )
   {
     FILE* fic;
     Int retval;
-    if((fic = fopen(m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
+    if((fic = fopen(m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
     {
       //fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile.c_str());
       //exit(EXIT_FAILURE);
       return (-1);
     }
     Int tempCode;
-    retval = fscanf( fic, "%d", &m_colourRemapSEIId );
-    retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
-    if( !m_colourRemapSEICancelFlag )
+    retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIId );
+    retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
+    if( !m_seiColourRemappingInfo.m_colourRemapSEICancelFlag )
     {
-      retval = fscanf( fic, "%d", &tempCode ); m_colourRemapSEIPersistenceFlag= tempCode ? 1 : 0;
-      retval = fscanf( fic, "%d", &tempCode); m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
-      if( m_colourRemapSEIVideoSignalInfoPresentFlag )
+      retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEIPersistenceFlag= tempCode ? 1 : 0;
+      retval = fscanf( fic, "%d", &tempCode); m_seiColourRemappingInfo.m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
+      if( m_seiColourRemappingInfo.m_colourRemapSEIVideoSignalInfoPresentFlag )
       {
-        retval = fscanf( fic, "%d", &tempCode  ); m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
-        retval = fscanf( fic, "%d", &m_colourRemapSEITransferFunction );
-        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoefficients );
+        retval = fscanf( fic, "%d", &tempCode  ); m_seiColourRemappingInfo.m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPrimaries );
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEITransferFunction );
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIMatrixCoefficients );
       }
 
-      retval = fscanf( fic, "%d", &m_colourRemapSEIInputBitDepth );
-      retval = fscanf( fic, "%d", &m_colourRemapSEIBitDepth );
+      retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth );
+      retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIBitDepth );
   
       for( Int c=0 ; c<3 ; c++ )
       {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutNumValMinus1[c] );
-        if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] );
+        if( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]>0 )
         {
-          m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          m_colourRemapSEIPreLutTargetValue[c] = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
+          m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<=m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
           {
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutTargetValue[c][i] );
+            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] );
           }
         }
       }
 
-      retval = fscanf( fic, "%d", &tempCode ); m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
-      if( m_colourRemapSEIMatrixPresentFlag )
+      retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
+      if( m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag )
       {
-        retval = fscanf( fic, "%d", &m_colourRemapSEILog2MatrixDenom );
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom );
         for( Int c=0 ; c<3 ; c++ )
+        {
           for( Int i=0 ; i<3 ; i++ )
-            retval = fscanf( fic, "%d", &m_colourRemapSEICoeffs[c][i] );
+          {
+            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] );
+          }
+        }
       }
 
       for( Int c=0 ; c<3 ; c++ )
       {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutNumValMinus1[c] );
-        if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] );
+        if( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]>0 )
         {
-          m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          m_colourRemapSEIPostLutTargetValue[c] = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
+          m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]+1];
+          for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
           {
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutTargetValue[c][i] );
+            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] );
+            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] );
           }
         }
       }
@@ -833,37 +798,433 @@ Void TEncGOP::xCheckParameter()
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmParameter(a,b) check_failed |= confirmParameter(a,b)
 
-  if ( m_colourRemapSEIFile.c_str() && !m_colourRemapSEICancelFlag )
+  if ( m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str() && !m_seiColourRemappingInfo.m_colourRemapSEICancelFlag )
   {
-    xConfirmParameter( m_colourRemapSEIInputBitDepth < 8 || m_colourRemapSEIInputBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
-    xConfirmParameter( m_colourRemapSEIBitDepth < 8 || (m_colourRemapSEIBitDepth > 16 && m_colourRemapSEIBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth < 8 || m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
+    xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIBitDepth < 8 || (m_seiColourRemappingInfo.m_colourRemapSEIBitDepth > 16 && m_seiColourRemappingInfo.m_colourRemapSEIBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
     for( Int c=0 ; c<3 ; c++)
     {
-      xConfirmParameter( m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
+      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
         {
-          xConfirmParameter( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_coded_data_bit_depth)-1, inclusive");
-          xConfirmParameter( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_coded_data_bit_depth)-1, inclusive");
+          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
         }
-      xConfirmParameter( m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
+      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
+      if( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]>0 )
+        for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
         {
-          xConfirmParameter( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
-          xConfirmParameter( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
+          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
         }
     }
-    if ( m_colourRemapSEIMatrixPresentFlag )
+    if ( m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag )
     {
-      xConfirmParameter( m_colourRemapSEILog2MatrixDenom < 0 || m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
+      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom < 0 || m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
       for( Int c=0 ; c<3 ; c++)
         for( Int i=0 ; i<3 ; i++)
-          xConfirmParameter( m_colourRemapSEICoeffs[c][i] < -32768 || m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
+          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] < -32768 || m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
     }
   }
 }
 #endif
+
+Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, TComSlice *slice)
+{
+  if( ( m_pcCfg->getBufferingPeriodSEIEnabled() ) && ( slice->getSliceType() == I_SLICE ) &&
+    ( slice->getSPS()->getVuiParametersPresentFlag() ) &&
+    ( ( slice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag() )
+    || ( slice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag() ) ) )
+  {
+    SEIBufferingPeriod *bufferingPeriodSEI = new SEIBufferingPeriod();
+    m_seiEncoder.initSEIBufferingPeriod(bufferingPeriodSEI, slice);
+    seiMessages.push_back(bufferingPeriodSEI);
+    m_bufferingPeriodSEIPresentInAU = true;
+
+    if (m_pcCfg->getScalableNestingSEIEnabled())
+    {
+      SEIBufferingPeriod *bufferingPeriodSEIcopy = new SEIBufferingPeriod();
+      bufferingPeriodSEI->copyTo(*bufferingPeriodSEIcopy);
+      nestedSeiMessages.push_back(bufferingPeriodSEIcopy);
+    }
+  }
+
+  if (picInGOP ==0 && m_pcCfg->getSOPDescriptionSEIEnabled() ) // write SOP description SEI (if enabled) at the beginning of GOP
+  {
+    SEISOPDescription* sopDescriptionSEI = new SEISOPDescription();
+    m_seiEncoder.initSEISOPDescription(sopDescriptionSEI, slice, picInGOP, m_iLastIDR, m_iGopSize);
+    seiMessages.push_back(sopDescriptionSEI);
+  }
+
+  if( ( m_pcEncTop->getRecoveryPointSEIEnabled() ) && ( slice->getSliceType() == I_SLICE ) )
+  {
+    if( m_pcEncTop->getGradualDecodingRefreshInfoEnabled() && !slice->getRapPicFlag() )
+    {
+      // Gradual decoding refresh SEI
+      SEIGradualDecodingRefreshInfo *gradualDecodingRefreshInfoSEI = new SEIGradualDecodingRefreshInfo();
+      gradualDecodingRefreshInfoSEI->m_gdrForegroundFlag = true; // Indicating all "foreground"
+      seiMessages.push_back(gradualDecodingRefreshInfoSEI);
+    }
+    // Recovery point SEI
+    SEIRecoveryPoint *recoveryPointSEI = new SEIRecoveryPoint();
+    m_seiEncoder.initSEIRecoveryPoint(recoveryPointSEI, slice);
+    seiMessages.push_back(recoveryPointSEI);
+
+#if ALLOW_RECOVERY_POINT_AS_RAP
+    if(m_pcCfg->getDecodingRefreshType() == 3)
+    {
+      m_iLastRecoveryPicPOC = slice->getPOC();
+    }
+#endif
+  }
+  if (m_pcCfg->getTemporalLevel0IndexSEIEnabled())
+  {
+    SEITemporalLevel0Index *temporalLevel0IndexSEI = new SEITemporalLevel0Index();
+    m_seiEncoder.initTemporalLevel0IndexSEI(temporalLevel0IndexSEI, slice);
+    seiMessages.push_back(temporalLevel0IndexSEI);
+  }
+
+  if(slice->getSPS()->getVuiParametersPresentFlag() && m_pcCfg->getChromaSamplingFilterHintEnabled() && ( slice->getSliceType() == I_SLICE ))
+  {
+    SEIChromaSamplingFilterHint *seiChromaSamplingFilterHint = new SEIChromaSamplingFilterHint;
+    m_seiEncoder.initSEIChromaSamplingFilterHint(seiChromaSamplingFilterHint, m_pcCfg->getChromaLocInfoPresentFlag(), m_pcCfg->getChromaSamplingHorFilterIdc(), m_pcCfg->getChromaSamplingVerFilterIdc());
+    seiMessages.push_back(seiChromaSamplingFilterHint);
+  }
+
+  if( m_pcEncTop->getNoDisplaySEITLayer() && ( slice->getTLayer() >= m_pcEncTop->getNoDisplaySEITLayer() ) )
+  {
+    SEINoDisplay *seiNoDisplay = new SEINoDisplay;
+    seiNoDisplay->m_noDisplay = true;
+    seiMessages.push_back(seiNoDisplay);
+  }
+
+#if Q0189_TMVP_CONSTRAINTS
+  if( m_pcEncTop->getTMVPConstraintsSEIEnabled() == 1 && (m_pcEncTop->getTMVPModeId() == 1 || m_pcEncTop->getTMVPModeId() == 2) &&
+    slice->getLayerId() > 0 && (slice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_W_RADL || slice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_N_LP))
+  {
+    SEITMVPConstrains *seiTMVPConstrains = new SEITMVPConstrains;
+    seiTMVPConstrains->no_intra_layer_col_pic_flag = 1;
+    seiTMVPConstrains->prev_pics_not_used_flag = 1;
+    seiMessages.push_back(seiTMVPConstrains);
+  }
+#endif
+#if Q0247_FRAME_FIELD_INFO
+  if( slice->getLayerId()> 0 && ( (m_pcCfg->getProgressiveSourceFlag() && m_pcCfg->getInterlacedSourceFlag()) || m_pcCfg->getFrameFieldInfoPresentFlag()))
+  {
+    Bool isField = slice->getPic()->isField();
+    SEIFrameFieldInfo *seiFFInfo = new SEIFrameFieldInfo;
+    seiFFInfo->m_ffinfo_picStruct = (isField && slice->getPic()->isTopField())? 1 : isField? 2 : 0;
+    seiMessages.push_back(seiFFInfo);
+  }
+#endif
+#if Q0074_COLOUR_REMAPPING_SEI
+    // insert one CRI by picture (if the file exist)   
+    freeColourCRI();
+
+    // building the CRI file name with poc num in suffix "_poc.txt"
+    char suffix[10];
+    sprintf(suffix, "_%d.txt",  slice->getPOC());
+    string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
+    colourRemapSEIFileWithPoc.append(suffix);
+    setCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
+  
+    Int ret = readingCRIparameters();
+
+    if(ret != -1 && m_pcCfg->getCRISEIFileRoot())
+    {
+      // check validity of input parameters
+      xCheckParameter();
+
+      SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo;
+      m_seiEncoder.initSEIColourRemappingInfo(seiColourRemappingInfo, &m_seiColourRemappingInfo);
+      seiMessages.push_back(seiColourRemappingInfo);
+    }
+#endif
+}
+
+Void TEncGOP::xCreateScalableNestingSEI (SEIMessages& seiMessages, SEIMessages& nestedSeiMessages)
+{
+  SEIMessages tmpMessages;
+  while (!nestedSeiMessages.empty())
+  {
+    SEI* sei=nestedSeiMessages.front();
+    nestedSeiMessages.pop_front();
+    tmpMessages.push_back(sei);
+    SEIScalableNesting *nestingSEI = new SEIScalableNesting();
+    m_seiEncoder.initSEIScalableNesting(nestingSEI, tmpMessages);
+    seiMessages.push_back(nestingSEI);
+    tmpMessages.clear();
+  }
+}
+
+Void TEncGOP::xCreatePictureTimingSEI  (Int IRAPGOPid, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, TComSlice *slice, Bool isField, std::deque<DUData> &duData)
+{
+  Int picSptDpbOutputDuDelay = 0;
+  SEIPictureTiming *pictureTimingSEI = new SEIPictureTiming();
+
+  const TComVUI *vui = slice->getSPS()->getVuiParameters();
+  const TComHRD *hrd = vui->getHrdParameters();
+
+  // update decoding unit parameters
+  if( ( m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled() ) &&
+    ( slice->getSPS()->getVuiParametersPresentFlag() ) &&
+    (  hrd->getNalHrdParametersPresentFlag() || hrd->getVclHrdParametersPresentFlag() ) )
+  {
+    // DU parameters
+    if( hrd->getSubPicCpbParamsPresentFlag() )
+    {
+      UInt numDU = (UInt) duData.size();
+      pictureTimingSEI->m_numDecodingUnitsMinus1     = ( numDU - 1 );
+      pictureTimingSEI->m_duCommonCpbRemovalDelayFlag = false;
+      pictureTimingSEI->m_numNalusInDuMinus1.resize( numDU );
+      pictureTimingSEI->m_duCpbRemovalDelayMinus1.resize( numDU );
+    }
+    pictureTimingSEI->m_auCpbRemovalDelay = std::min<Int>(std::max<Int>(1, m_totalCoded - m_lastBPSEI), static_cast<Int>(pow(2, static_cast<Double>(hrd->getCpbRemovalDelayLengthMinus1()+1)))); // Syntax element signalled as minus, hence the .
+    pictureTimingSEI->m_picDpbOutputDelay = slice->getSPS()->getNumReorderPics(slice->getSPS()->getMaxTLayers()-1) + slice->getPOC() - m_totalCoded;
+#if EFFICIENT_FIELD_IRAP
+    if(IRAPGOPid > 0 && IRAPGOPid < m_iGopSize)
+    {
+      // if pictures have been swapped there is likely one more picture delay on their tid. Very rough approximation
+      pictureTimingSEI->m_picDpbOutputDelay ++;
+    }
+#endif
+    Int factor = hrd->getTickDivisorMinus2() + 2;
+    pictureTimingSEI->m_picDpbOutputDuDelay = factor * pictureTimingSEI->m_picDpbOutputDelay;
+    if( m_pcCfg->getDecodingUnitInfoSEIEnabled() )
+    {
+      picSptDpbOutputDuDelay = factor * pictureTimingSEI->m_picDpbOutputDelay;
+    }
+    if (m_bufferingPeriodSEIPresentInAU)
+    {
+      m_lastBPSEI = m_totalCoded;
+    }
+
+    if( hrd->getSubPicCpbParamsPresentFlag() )
+    {
+      Int i;
+      UInt64 ui64Tmp;
+      UInt uiPrev = 0;
+      UInt numDU = ( pictureTimingSEI->m_numDecodingUnitsMinus1 + 1 );
+      std::vector<UInt> &rDuCpbRemovalDelayMinus1 = pictureTimingSEI->m_duCpbRemovalDelayMinus1;
+      UInt maxDiff = ( hrd->getTickDivisorMinus2() + 2 ) - 1;
+
+      for( i = 0; i < numDU; i ++ )
+      {
+        pictureTimingSEI->m_numNalusInDuMinus1[ i ]       = ( i == 0 ) ? ( duData[i].accumNalsDU - 1 ) : ( duData[i].accumNalsDU- duData[i-1].accumNalsDU - 1 );
+      }
+
+      if( numDU == 1 )
+      {
+        rDuCpbRemovalDelayMinus1[ 0 ] = 0; /* don't care */
+      }
+      else
+      {
+        rDuCpbRemovalDelayMinus1[ numDU - 1 ] = 0;/* by definition */
+        UInt tmp = 0;
+        UInt accum = 0;
+
+        for( i = ( numDU - 2 ); i >= 0; i -- )
+        {
+          ui64Tmp = ( ( ( duData[numDU - 1].accumBitsDU  - duData[i].accumBitsDU ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
+          if( (UInt)ui64Tmp > maxDiff )
+          {
+            tmp ++;
+          }
+        }
+        uiPrev = 0;
+
+        UInt flag = 0;
+        for( i = ( numDU - 2 ); i >= 0; i -- )
+        {
+          flag = 0;
+          ui64Tmp = ( ( ( duData[numDU - 1].accumBitsDU  - duData[i].accumBitsDU ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
+
+          if( (UInt)ui64Tmp > maxDiff )
+          {
+            if(uiPrev >= maxDiff - tmp)
+            {
+              ui64Tmp = uiPrev + 1;
+              flag = 1;
+            }
+            else                            ui64Tmp = maxDiff - tmp + 1;
+          }
+          rDuCpbRemovalDelayMinus1[ i ] = (UInt)ui64Tmp - uiPrev - 1;
+          if( (Int)rDuCpbRemovalDelayMinus1[ i ] < 0 )
+          {
+            rDuCpbRemovalDelayMinus1[ i ] = 0;
+          }
+          else if (tmp > 0 && flag == 1)
+          {
+            tmp --;
+          }
+          accum += rDuCpbRemovalDelayMinus1[ i ] + 1;
+          uiPrev = accum;
+        }
+      }
+    }
+    
+    if( m_pcCfg->getPictureTimingSEIEnabled() )
+    {
+      pictureTimingSEI->m_picStruct = (isField && slice->getPic()->isTopField())? 1 : isField? 2 : 0;
+      seiMessages.push_back(pictureTimingSEI);
+      m_pictureTimingSEIPresentInAU = true;
+
+      if ( m_pcCfg->getScalableNestingSEIEnabled() ) // put picture timing SEI into scalable nesting SEI
+      {
+        if (m_pcCfg->getScalableNestingSEIEnabled())
+        {
+          SEIPictureTiming *pictureTimingSEIcopy = new SEIPictureTiming();
+          pictureTimingSEI->copyTo(*pictureTimingSEIcopy);
+          nestedSeiMessages.push_back(pictureTimingSEIcopy);
+        }
+        m_nestedPictureTimingSEIPresentInAU = true;
+      }
+    }
+
+    if( m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag() )
+    {
+      for( Int i = 0; i < ( pictureTimingSEI->m_numDecodingUnitsMinus1 + 1 ); i ++ )
+      {
+        SEIDecodingUnitInfo *duInfoSEI = new SEIDecodingUnitInfo();
+        duInfoSEI->m_decodingUnitIdx = i;
+        duInfoSEI->m_duSptCpbRemovalDelay = pictureTimingSEI->m_duCpbRemovalDelayMinus1[i] + 1;
+        duInfoSEI->m_dpbOutputDuDelayPresentFlag = false;
+        duInfoSEI->m_picSptDpbOutputDuDelay = picSptDpbOutputDuDelay;
+
+        duInfoSeiMessages.push_back(duInfoSEI);
+      }
+    }
+  }
+}
+
+Void TEncGOP::xUpdateDuData(AccessUnit &testAU, std::deque<DUData> &duData)
+{
+  if (duData.empty())
+  {
+    return;
+  }
+  // fix first 
+  UInt numNalUnits = (UInt)testAU.size();
+  UInt numRBSPBytes = 0;
+  for (AccessUnit::const_iterator it = testAU.begin(); it != testAU.end(); it++)
+  {
+    numRBSPBytes += UInt((*it)->m_nalUnitData.str().size());
+  }
+  duData[0].accumBitsDU += ( numRBSPBytes << 3 );
+  duData[0].accumNalsDU += numNalUnits;
+
+  // adapt cumulative sums for all following DUs
+  // and add one DU info SEI, if enabled
+  for (Int i=1; i<duData.size(); i++)
+  {
+    if (m_pcCfg->getDecodingUnitInfoSEIEnabled())
+    {
+      numNalUnits  += 1;
+      numRBSPBytes += ( 5 << 3 );
+    }
+    duData[i].accumBitsDU += numRBSPBytes; // probably around 5 bytes
+    duData[i].accumNalsDU += numNalUnits;
+  }
+
+  // The last DU may have a trailing SEI
+  if (m_pcCfg->getDecodedPictureHashSEIEnabled())
+  {
+    duData.back().accumBitsDU += ( 20 << 3 ); // probably around 20 bytes - should be further adjusted, e.g. by type
+    duData.back().accumNalsDU += 1;
+  }
+
+}
+Void TEncGOP::xUpdateTimingSEI(SEIPictureTiming *pictureTimingSEI, std::deque<DUData> &duData, const TComSPS *sps)
+{
+  if (!pictureTimingSEI)
+  {
+    return;
+  }
+  const TComVUI *vui = sps->getVuiParameters();
+  const TComHRD *hrd = vui->getHrdParameters();
+  if( hrd->getSubPicCpbParamsPresentFlag() )
+  {
+    Int i;
+    UInt64 ui64Tmp;
+    UInt uiPrev = 0;
+    UInt numDU = ( pictureTimingSEI->m_numDecodingUnitsMinus1 + 1 );
+    std::vector<UInt> &rDuCpbRemovalDelayMinus1 = pictureTimingSEI->m_duCpbRemovalDelayMinus1;
+    UInt maxDiff = ( hrd->getTickDivisorMinus2() + 2 ) - 1;
+
+    for( i = 0; i < numDU; i ++ )
+    {
+      pictureTimingSEI->m_numNalusInDuMinus1[ i ]       = ( i == 0 ) ? ( duData[i].accumNalsDU - 1 ) : ( duData[i].accumNalsDU- duData[i-1].accumNalsDU - 1 );
+    }
+
+    if( numDU == 1 )
+    {
+      rDuCpbRemovalDelayMinus1[ 0 ] = 0; /* don't care */
+    }
+    else
+    {
+      rDuCpbRemovalDelayMinus1[ numDU - 1 ] = 0;/* by definition */
+      UInt tmp = 0;
+      UInt accum = 0;
+
+      for( i = ( numDU - 2 ); i >= 0; i -- )
+      {
+        ui64Tmp = ( ( ( duData[numDU - 1].accumBitsDU  - duData[i].accumBitsDU ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
+        if( (UInt)ui64Tmp > maxDiff )
+        {
+          tmp ++;
+        }
+      }
+      uiPrev = 0;
+
+      UInt flag = 0;
+      for( i = ( numDU - 2 ); i >= 0; i -- )
+      {
+        flag = 0;
+        ui64Tmp = ( ( ( duData[numDU - 1].accumBitsDU  - duData[i].accumBitsDU ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
+
+        if( (UInt)ui64Tmp > maxDiff )
+        {
+          if(uiPrev >= maxDiff - tmp)
+          {
+            ui64Tmp = uiPrev + 1;
+            flag = 1;
+          }
+          else                            ui64Tmp = maxDiff - tmp + 1;
+        }
+        rDuCpbRemovalDelayMinus1[ i ] = (UInt)ui64Tmp - uiPrev - 1;
+        if( (Int)rDuCpbRemovalDelayMinus1[ i ] < 0 )
+        {
+          rDuCpbRemovalDelayMinus1[ i ] = 0;
+        }
+        else if (tmp > 0 && flag == 1)
+        {
+          tmp --;
+        }
+        accum += rDuCpbRemovalDelayMinus1[ i ] + 1;
+        uiPrev = accum;
+      }
+    }
+  }
+}
+Void TEncGOP::xUpdateDuInfoSEI(SEIMessages &duInfoSeiMessages, SEIPictureTiming *pictureTimingSEI)
+{
+  if (duInfoSeiMessages.empty() || (pictureTimingSEI == NULL))
+  {
+    return;
+  }
+
+  Int i=0;
+
+  for (SEIMessages::iterator du = duInfoSeiMessages.begin(); du!= duInfoSeiMessages.end(); du++)
+  {
+    SEIDecodingUnitInfo *duInfoSEI = (SEIDecodingUnitInfo*) (*du);
+    duInfoSEI->m_decodingUnitIdx = i;
+    duInfoSEI->m_duSptCpbRemovalDelay = pictureTimingSEI->m_duCpbRemovalDelayMinus1[i] + 1;
+    duInfoSEI->m_dpbOutputDuDelayPresentFlag = false;
+    i++;
+  }
+}
 
 // ====================================================================================================================
 // Public member functions
@@ -890,23 +1251,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut, isField );
 
   m_iNumPicCoded = 0;
-  SEIPictureTiming pictureTimingSEI;
-  Bool writeSOP = m_pcCfg->getSOPDescriptionSEIEnabled();
-
-  // Initialize Scalable Nesting SEI with single layer values
-  SEIScalableNesting scalableNestingSEI;
-  scalableNestingSEI.m_bitStreamSubsetFlag           = 1;      // If the nested SEI messages are picture buffereing SEI mesages, picure timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
-  scalableNestingSEI.m_nestingOpFlag                 = 0;
-  scalableNestingSEI.m_nestingNumOpsMinus1           = 0;      //nesting_num_ops_minus1
-  scalableNestingSEI.m_allLayersFlag                 = 0;
-  scalableNestingSEI.m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1;  //nesting_no_op_max_temporal_id_plus1
-  scalableNestingSEI.m_nestingNumLayersMinus1        = 1 - 1;  //nesting_num_layers_minus1
-  scalableNestingSEI.m_nestingLayerId[0]             = 0;
-  scalableNestingSEI.m_callerOwnsSEIs                = true;
-
-  Int picSptDpbOutputDuDelay = 0;
-  UInt *accumBitsDU = NULL;
-  UInt *accumNalsDU = NULL;
+  SEIMessages leadingSeiMessages;
+  SEIMessages nestedSeiMessages;
+  SEIMessages duInfoSeiMessages;
+  SEIMessages trailingSeiMessages;
+  std::deque<DUData> duData;
   SEIDecodingUnitInfo decodingUnitInfoSEI;
 
 #if EFFICIENT_FIELD_IRAP
@@ -2091,6 +2440,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #endif
 
+    duData.clear();
     pcSlice = pcPic->getSlice(0);
 
     // SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas
@@ -2112,125 +2462,18 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     // Set entropy coder
     m_pcEntropyCoder->setEntropyCoder   ( m_pcCavlcCoder, pcSlice );
 
-    // write various header sets.
     if ( m_bSeqFirst )
     {
-#if SVC_EXTENSION
-      OutputNALUnit nalu( NAL_UNIT_VPS, 0, 0 ); // The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
-#if AVC_BASE
-      if( ( m_layerId > 0 && m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) || ( m_layerId == 0 && !m_pcEncTop->getVPS()->getNonHEVCBaseLayerFlag() ) )
-#else
-      if( m_layerId == 0 )
-#endif
-      {
-        //The following code also calculates the VPS VUI offset
-#else
-      OutputNALUnit nalu(NAL_UNIT_VPS);
-#endif
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      m_pcEntropyCoder->encodeVPS(m_pcEncTop->getVPS());
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-      actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-#if SVC_EXTENSION
-      }
-#endif
+      // write various parameter sets
+      actualTotalBits += xWriteParameterSets(accessUnit, pcSlice);
 
-#if SVC_EXTENSION
-      nalu = NALUnit(NAL_UNIT_SPS, 0, m_layerId);
-
-      if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
-      {
-        // For independent base layer rewriting
-        nalu.m_nuhLayerId = 0; 
-      }
-#else
-      nalu = NALUnit(NAL_UNIT_SPS);
-#endif
-
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      
-#if SVC_EXTENSION
-      // dependency constraint
-      assert( pcSlice->getSPS()->getLayerId() == 0 || pcSlice->getSPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getSPS()->getLayerId()) );
-#endif
-
-      m_pcEntropyCoder->encodeSPS(pcSlice->getSPS());
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-      actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-
-#if SVC_EXTENSION
-      nalu = NALUnit(NAL_UNIT_PPS, 0, m_layerId);
-
-      if( m_pcEncTop->getVPS()->getNumDirectRefLayers(m_layerId) == 0 && m_pcEncTop->getVPS()->getNumAddLayerSets() > 0 )
-      {
-        // For independent base layer rewriting
-        nalu.m_nuhLayerId = 0;
-      }
-#else
-      nalu = NALUnit(NAL_UNIT_PPS);
-#endif
-
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-#if SVC_EXTENSION
-      // dependency constraint
-      assert( pcSlice->getPPS()->getLayerId() == 0 || pcSlice->getPPS()->getLayerId() == m_layerId || m_pcEncTop->getVPS()->getRecursiveRefLayerFlag(m_layerId, pcSlice->getPPS()->getLayerId()) );
-#endif
-#if SVC_EXTENSION && CGS_3D_ASYMLUT
-      m_pcEntropyCoder->encodePPS(pcSlice->getPPS(), &m_Enc3DAsymLUTPPS);
-#else
-      m_pcEntropyCoder->encodePPS(pcSlice->getPPS());
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-      actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
-
-      xCreateLeadingSEIMessages(accessUnit, pcSlice->getSPS(), pcSlice->getPPS());
-
-#if O0164_MULTI_LAYER_HRD
-      if (pcSlice->getLayerId() == 0 && m_pcEncTop->getVPS()->getVpsVuiBspHrdPresentFlag())
-      {
-        Int j;
-        TComVPS *vps = m_pcEncTop->getVPS();
-
-        for( Int i = 0; i < vps->getNumOutputLayerSets(); i++ )
-        {
-          for( Int k = 0; k < vps->getNumSignalledPartitioningSchemes(i); k++ )
-          {
-            for( Int l = 0; l < vps->getNumPartitionsInSchemeMinus1(i, k)+1; l++ )
-            {
-              nalu = NALUnit(NAL_UNIT_PREFIX_SEI, 0, 1);
-              m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-              m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-              SEIScalableNesting *scalableBspNestingSei = xCreateBspNestingSEI(pcSlice, i, k, l);
-              m_seiWriter.writeSEImessage(nalu.m_Bitstream, *scalableBspNestingSei, m_pcEncTop->getVPS(), pcSlice->getSPS());
-              writeRBSPTrailingBits(nalu.m_Bitstream);
-
-              UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-              UInt offsetPosition = m_activeParameterSetSEIPresentInAU 
-                + m_bufferingPeriodSEIPresentInAU 
-                + m_pictureTimingSEIPresentInAU
-                + m_nestedPictureTimingSEIPresentInAU;  // Insert SEI after APS, BP and PT SEI
-
-              AccessUnit::iterator it;
-
-              for( j = 0, it = accessUnit.begin(); j < seiPositionInAu + offsetPosition; j++ )
-              {
-                it++;
-              }
-
-              accessUnit.insert(it, new NALUnitEBSP(nalu));
-            }
-          }
-        }
-      }
-#endif
+      // create prefix SEI messages at the beginning of the sequence
+      leadingSeiMessages.clear();
+      xCreateIRAPLeadingSEIMessages(leadingSeiMessages, pcSlice->getSPS(), pcSlice->getPPS());
 
       m_bSeqFirst = false;
     }
-#if CGS_3D_ASYMLUT
+#if SVC_EXTENSION && CGS_3D_ASYMLUT
     else if( m_pcCfg->getCGSFlag() && pcSlice->getLayerId() && pcSlice->getCGSOverWritePPS() )
     {
       OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
@@ -2241,344 +2484,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #endif
 
-    if (writeSOP) // write SOP description SEI (if enabled) at the beginning of GOP
-    {
-      Int SOPcurrPOC = pocCurr;
-
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-      SEISOPDescription SOPDescriptionSEI;
-      SOPDescriptionSEI.m_sopSeqParameterSetId = pcSlice->getSPS()->getSPSId();
-
-      UInt i = 0;
-      UInt prevEntryId = iGOPid;
-      for (Int j = iGOPid; j < m_iGopSize; j++)
-      {
-        Int deltaPOC = m_pcCfg->getGOPEntry(j).m_POC - m_pcCfg->getGOPEntry(prevEntryId).m_POC;
-        if ((SOPcurrPOC + deltaPOC) < m_pcCfg->getFramesToBeEncoded())
-        {
-          SOPcurrPOC += deltaPOC;
-          SOPDescriptionSEI.m_sopDescVclNaluType[i] = getNalUnitType(SOPcurrPOC, m_iLastIDR, isField);
-          SOPDescriptionSEI.m_sopDescTemporalId[i] = m_pcCfg->getGOPEntry(j).m_temporalId;
-          SOPDescriptionSEI.m_sopDescStRpsIdx[i] = m_pcEncTop->getReferencePictureSetIdxForSOP(pcSlice, SOPcurrPOC, j);
-          SOPDescriptionSEI.m_sopDescPocDelta[i] = deltaPOC;
-
-          prevEntryId = j;
-          i++;
-        }
-      }
-
-      SOPDescriptionSEI.m_numPicsInSopMinus1 = i - 1;
-
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, SOPDescriptionSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, SOPDescriptionSEI, pcSlice->getSPS());
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-
-      writeSOP = false;
-    }
-#if Q0189_TMVP_CONSTRAINTS
-   if( m_pcEncTop->getTMVPConstraintsSEIEnabled() == 1 &&
-      (m_pcEncTop->getTMVPModeId() == 1 || m_pcEncTop->getTMVPModeId() == 2) &&
-      pcSlice->getLayerId() >0 && 
-      (pcSlice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_W_RADL || pcSlice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_N_LP))
-   {
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-      SEITMVPConstrains seiTMVPConstrains;
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      seiTMVPConstrains.no_intra_layer_col_pic_flag = 1;
-      seiTMVPConstrains.prev_pics_not_used_flag = 1;
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiTMVPConstrains, m_pcEncTop->getVPS(), pcSlice->getSPS() );
-#else
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiTMVPConstrains, pcSlice->getSPS() );
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-   }
-#endif
-#if Q0247_FRAME_FIELD_INFO
-    if(  pcSlice->getLayerId()> 0 &&
-     ( (m_pcCfg->getProgressiveSourceFlag() && m_pcCfg->getInterlacedSourceFlag()) || m_pcCfg->getFrameFieldInfoPresentFlag()))
-    {
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-      SEIFrameFieldInfo seiFFInfo;
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      seiFFInfo.m_ffinfo_picStruct = (isField && pcSlice->getPic()->isTopField())? 1 : isField? 2 : 0;
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiFFInfo, m_pcEncTop->getVPS(), pcSlice->getSPS() );
-#else
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiFFInfo, pcSlice->getSPS() );
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-    }
-#endif
-
-    if( ( m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled() ) &&
-        ( pcSlice->getSPS()->getVuiParametersPresentFlag() ) &&
-        ( ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag() )
-       || ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag() ) ) )
-    {
-      if( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getSubPicCpbParamsPresentFlag() )
-      {
-        UInt numDU = pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNumDU();
-        pictureTimingSEI.m_numDecodingUnitsMinus1     = ( numDU - 1 );
-        pictureTimingSEI.m_duCommonCpbRemovalDelayFlag = false;
-
-        if( pictureTimingSEI.m_numNalusInDuMinus1 == NULL )
-        {
-          pictureTimingSEI.m_numNalusInDuMinus1       = new UInt[ numDU ];
-        }
-        if( pictureTimingSEI.m_duCpbRemovalDelayMinus1  == NULL )
-        {
-          pictureTimingSEI.m_duCpbRemovalDelayMinus1  = new UInt[ numDU ];
-        }
-        if( accumBitsDU == NULL )
-        {
-          accumBitsDU                                  = new UInt[ numDU ];
-        }
-        if( accumNalsDU == NULL )
-        {
-          accumNalsDU                                  = new UInt[ numDU ];
-        }
-      }
-      pictureTimingSEI.m_auCpbRemovalDelay = std::min<Int>(std::max<Int>(1, m_totalCoded - m_lastBPSEI), static_cast<Int>(pow(2, static_cast<Double>(pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getCpbRemovalDelayLengthMinus1()+1)))); // Syntax element signalled as minus, hence the .
-#if SVC_EXTENSION
-      pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pocCurr - m_totalCoded;
-#else
-      pictureTimingSEI.m_picDpbOutputDelay = pcSlice->getSPS()->getNumReorderPics(pcSlice->getSPS()->getMaxTLayers()-1) + pcSlice->getPOC() - m_totalCoded;
-#endif
-#if EFFICIENT_FIELD_IRAP
-      if(IRAPGOPid > 0 && IRAPGOPid < m_iGopSize)
-      {
-        // if pictures have been swapped there is likely one more picture delay on their tid. Very rough approximation
-        pictureTimingSEI.m_picDpbOutputDelay ++;
-      }
-#endif
-      Int factor = pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2;
-      pictureTimingSEI.m_picDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
-      if( m_pcCfg->getDecodingUnitInfoSEIEnabled() )
-      {
-        picSptDpbOutputDuDelay = factor * pictureTimingSEI.m_picDpbOutputDelay;
-      }
-    }
-
-    if( ( m_pcCfg->getBufferingPeriodSEIEnabled() ) && ( pcSlice->getSliceType() == I_SLICE ) &&
-        ( pcSlice->getSPS()->getVuiParametersPresentFlag() ) &&
-        ( ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag() )
-       || ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag() ) ) )
-    {
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-      SEIBufferingPeriod sei_buffering_period;
-
-      UInt uiInitialCpbRemovalDelay = (90000/2);                      // 0.5 sec
-      sei_buffering_period.m_initialCpbRemovalDelay      [0][0]     = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialCpbRemovalDelayOffset[0][0]     = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialCpbRemovalDelay      [0][1]     = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialCpbRemovalDelayOffset[0][1]     = uiInitialCpbRemovalDelay;
-
-      Double dTmp = (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick() / (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
-
-      UInt uiTmp = (UInt)( dTmp * 90000.0 );
-      uiInitialCpbRemovalDelay -= uiTmp;
-      uiInitialCpbRemovalDelay -= uiTmp / ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2 );
-      sei_buffering_period.m_initialAltCpbRemovalDelay      [0][0]  = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialAltCpbRemovalDelayOffset[0][0]  = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialAltCpbRemovalDelay      [0][1]  = uiInitialCpbRemovalDelay;
-      sei_buffering_period.m_initialAltCpbRemovalDelayOffset[0][1]  = uiInitialCpbRemovalDelay;
-
-      sei_buffering_period.m_rapCpbParamsPresentFlag              = 0;
-      //for the concatenation, it can be set to one during splicing.
-      sei_buffering_period.m_concatenationFlag = 0;
-      //since the temporal layer HRD is not ready, we assumed it is fixed
-      sei_buffering_period.m_auCpbRemovalDelayDelta = 1;
-
-      sei_buffering_period.m_cpbDelayOffset = 0;
-      sei_buffering_period.m_dpbDelayOffset = 0;
-
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_buffering_period, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_buffering_period, pcSlice->getSPS());
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-
-      {
-        UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-        UInt offsetPosition = m_activeParameterSetSEIPresentInAU;   // Insert BP SEI after APS SEI
-        AccessUnit::iterator it = accessUnit.begin();
-        for(Int j = 0; j < seiPositionInAu + offsetPosition; j++)
-        {
-          it++;
-        }
-        accessUnit.insert(it, new NALUnitEBSP(nalu));
-        m_bufferingPeriodSEIPresentInAU = true;
-      }
-
-      if (m_pcCfg->getScalableNestingSEIEnabled())
-      {
-        OutputNALUnit naluTmp(NAL_UNIT_PREFIX_SEI);
-        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-        m_pcEntropyCoder->setBitstream(&naluTmp.m_Bitstream);
-        scalableNestingSEI.m_nestedSEIs.clear();
-        scalableNestingSEI.m_nestedSEIs.push_back(&sei_buffering_period);
-#if O0164_MULTI_LAYER_HRD
-        m_seiWriter.writeSEImessage( naluTmp.m_Bitstream, scalableNestingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-        m_seiWriter.writeSEImessage( naluTmp.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
-#endif
-        writeRBSPTrailingBits(naluTmp.m_Bitstream);
-        UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-        UInt offsetPosition = m_activeParameterSetSEIPresentInAU + m_bufferingPeriodSEIPresentInAU + m_pictureTimingSEIPresentInAU;   // Insert BP SEI after non-nested APS, BP and PT SEIs
-        AccessUnit::iterator it = accessUnit.begin();
-        for(Int j = 0; j < seiPositionInAu + offsetPosition; j++)
-        {
-          it++;
-        }
-        accessUnit.insert(it, new NALUnitEBSP(naluTmp));
-        m_nestedBufferingPeriodSEIPresentInAU = true;
-      }
-
-      m_lastBPSEI = m_totalCoded;
-      m_cpbRemovalDelay = 0;
-    }
-    m_cpbRemovalDelay ++;
-
-    if(pcSlice->getSPS()->getVuiParametersPresentFlag() && m_pcCfg->getChromaSamplingFilterHintEnabled() && ( pcSlice->getSliceType() == I_SLICE ))
-    {
-      SEIChromaSamplingFilterHint *seiChromaSamplingFilterHint = xCreateSEIChromaSamplingFilterHint(m_pcCfg->getChromaLocInfoPresentFlag(), m_pcCfg->getChromaSamplingHorFilterIdc(), m_pcCfg->getChromaSamplingVerFilterIdc());
-
-      OutputNALUnit naluTmp(NAL_UNIT_PREFIX_SEI); 
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&naluTmp.m_Bitstream);
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage(naluTmp.m_Bitstream, *seiChromaSamplingFilterHint, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-      m_seiWriter.writeSEImessage(naluTmp.m_Bitstream, *seiChromaSamplingFilterHint, pcSlice->getSPS()); 
-#endif
-      writeRBSPTrailingBits(naluTmp.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(naluTmp));
-      delete seiChromaSamplingFilterHint;
-    }
-
-    if( ( m_pcEncTop->getRecoveryPointSEIEnabled() ) && ( pcSlice->getSliceType() == I_SLICE ) )
-    {
-      if( m_pcEncTop->getGradualDecodingRefreshInfoEnabled() && !pcSlice->getRapPicFlag() )
-      {
-        // Gradual decoding refresh SEI
-        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-        SEIGradualDecodingRefreshInfo seiGradualDecodingRefreshInfo;
-        seiGradualDecodingRefreshInfo.m_gdrForegroundFlag = true; // Indicating all "foreground"
-
-#if O0164_MULTI_LAYER_HRD
-        m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiGradualDecodingRefreshInfo, m_pcEncTop->getVPS(), pcSlice->getSPS() );
-#else
-        m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiGradualDecodingRefreshInfo, pcSlice->getSPS() );
-#endif
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-      }
-    // Recovery point SEI
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-      SEIRecoveryPoint sei_recovery_point;
-      sei_recovery_point.m_recoveryPocCnt    = 0;
-#if SVC_EXTENSION
-      sei_recovery_point.m_exactMatchingFlag = ( pocCurr == 0 ) ? (true) : (false);
-#else
-      sei_recovery_point.m_exactMatchingFlag = ( pcSlice->getPOC() == 0 ) ? (true) : (false);
-#endif
-      sei_recovery_point.m_brokenLinkFlag    = false;
-#if ALLOW_RECOVERY_POINT_AS_RAP
-      if(m_pcCfg->getDecodingRefreshType() == 3)
-      {
-        m_iLastRecoveryPicPOC = pocCurr;
-      }
-#endif
-
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_recovery_point, m_pcEncTop->getVPS(), pcSlice->getSPS() );
-#else
-      m_seiWriter.writeSEImessage( nalu.m_Bitstream, sei_recovery_point, pcSlice->getSPS() );
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-    }
-
-    if( m_pcEncTop->getNoDisplaySEITLayer() )
-    {
-      if( pcSlice->getTLayer() >= m_pcEncTop->getNoDisplaySEITLayer() )
-      {
-        // No display SEI
-        OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-        m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-
-        SEINoDisplay seiNoDisplay;
-        seiNoDisplay.m_noDisplay = true;
-
-#if O0164_MULTI_LAYER_HRD
-        m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiNoDisplay, m_pcEncTop->getVPS(), pcSlice->getSPS() );
-#else
-        m_seiWriter.writeSEImessage( nalu.m_Bitstream, seiNoDisplay, pcSlice->getSPS() );
-#endif
-        writeRBSPTrailingBits(nalu.m_Bitstream);
-        accessUnit.push_back(new NALUnitEBSP(nalu));
-      }
-    }
-
-    // insert one CRI by picture (if the file exist) 
-#if Q0074_COLOUR_REMAPPING_SEI
-  
-    freeColourCRI();
-
-    // building the CRI file name with poc num in suffix "_poc.txt"
-    char suffix[10];
-    sprintf(suffix, "_%d.txt",  pcSlice->getPOC());
-    string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
-    colourRemapSEIFileWithPoc.append(suffix);
-    setCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
-  
-    Int ret = readingCRIparameters();
-
-    if(ret != -1 && m_pcCfg->getCRISEIFileRoot())
-    {
-      // check validity of input parameters
-      xCheckParameter();
-
-      SEIColourRemappingInfo *sei = xCreateSEIColourRemappingInfo ();
-#if SVC_EXTENSION
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, 0, pcSlice->getSPS()->getLayerId());  // SEI-CRI is applied per layer
-#else
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-#endif
-      m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-#if SVC_EXTENSION
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, m_pcEncTop->getVPS(), pcSlice->getSPS() ); 
-#else
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, *sei, pcSlice->getSPS() ); 
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-      accessUnit.push_back(new NALUnitEBSP(nalu));
-      delete sei;
-    }
-#endif
+    // create prefix SEI associated with a picture
+    xCreatePerPictureSEIMessages(iGOPid, leadingSeiMessages, nestedSeiMessages, pcSlice);
 
     /* use the main bitstream buffer for storing the marshalled picture */
     m_pcEntropyCoder->setBitstream(NULL);
@@ -2752,15 +2659,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         UInt numRBSPBytes = 0;
         for (AccessUnit::const_iterator it = accessUnit.begin(); it != accessUnit.end(); it++)
         {
-          UInt numRBSPBytes_nal = UInt((*it)->m_nalUnitData.str().size());
-          if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-          {
-            numRBSPBytes += numRBSPBytes_nal;
-            numNalus ++;
-          }
+          numRBSPBytes += UInt((*it)->m_nalUnitData.str().size());
+          numNalus ++;
         }
-        accumBitsDU[ pcSlice->getSliceIdx() ] = ( numRBSPBytes << 3 );
-        accumNalsDU[ pcSlice->getSliceIdx() ] = numNalus;   // SEI not counted for bit count; hence shouldn't be counted for # of NALUs - only for consistency
+        duData.push_back(DUData());
+        duData.back().accumBitsDU = ( numRBSPBytes << 3 );
+        duData.back().accumNalsDU = numNalus;
       }
     } // end iteration over slices
 
@@ -2791,12 +2695,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           const std::size_t numberOfAdditionalCabacZeroBytes=numberOfAdditionalCabacZeroWords*3;
           if (m_pcCfg->getCabacZeroWordPaddingEnabled())
           {
-            std::vector<Char> zeroBytesPadding((size_t)numberOfAdditionalCabacZeroBytes, Char(0));
+            std::vector<Char> zeroBytesPadding(numberOfAdditionalCabacZeroBytes, Char(0));
             for(std::size_t i=0; i<numberOfAdditionalCabacZeroWords; i++)
             {
               zeroBytesPadding[i*3+2]=3;  // 00 00 03
             }
-            accessUnit.back()->m_nalUnitData.write(&(zeroBytesPadding[0]), (size_t)numberOfAdditionalCabacZeroBytes);
+            accessUnit.back()->m_nalUnitData.write(&(zeroBytesPadding[0]), numberOfAdditionalCabacZeroBytes);
             printf("Adding %d bytes of padding\n", UInt(numberOfAdditionalCabacZeroWords*3));
           }
           else
@@ -2815,74 +2719,17 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     std::string digestStr;
     if (m_pcCfg->getDecodedPictureHashSEIEnabled())
     {
-      /* calculate MD5sum for entire reconstructed picture */
-      SEIDecodedPictureHash sei_recon_picture_digest;
-      if(m_pcCfg->getDecodedPictureHashSEIEnabled() == 1)
-      {
-        sei_recon_picture_digest.method = SEIDecodedPictureHash::MD5;
-        UInt numChar=calcMD5(*pcPic->getPicYuvRec(), sei_recon_picture_digest.m_digest);
-        digestStr = digestToString(sei_recon_picture_digest.m_digest, numChar);
-      }
-      else if(m_pcCfg->getDecodedPictureHashSEIEnabled() == 2)
-      {
-        sei_recon_picture_digest.method = SEIDecodedPictureHash::CRC;
-        UInt numChar=calcCRC(*pcPic->getPicYuvRec(), sei_recon_picture_digest.m_digest);
-        digestStr = digestToString(sei_recon_picture_digest.m_digest, numChar);
-      }
-      else if(m_pcCfg->getDecodedPictureHashSEIEnabled() == 3)
-      {
-        sei_recon_picture_digest.method = SEIDecodedPictureHash::CHECKSUM;
-        UInt numChar=calcChecksum(*pcPic->getPicYuvRec(), sei_recon_picture_digest.m_digest);
-        digestStr = digestToString(sei_recon_picture_digest.m_digest, numChar);
-      }
-
-#if SVC_EXTENSION
-      OutputNALUnit nalu(NAL_UNIT_SUFFIX_SEI, pcSlice->getTLayer(), m_layerId);
-#else
-      OutputNALUnit nalu(NAL_UNIT_SUFFIX_SEI, pcSlice->getTLayer());
-#endif
-
-      /* write the SEI messages */
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-#if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recon_picture_digest, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_recon_picture_digest, pcSlice->getSPS());
-#endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-
-      accessUnit.insert(accessUnit.end(), new NALUnitEBSP(nalu));
+      SEIDecodedPictureHash *decodedPictureHashSei = new SEIDecodedPictureHash();
+      m_seiEncoder.initDecodedPictureHashSEI(decodedPictureHashSei, pcPic, digestStr);
+      trailingSeiMessages.push_back(decodedPictureHashSei);
     }
-    if (m_pcCfg->getTemporalLevel0IndexSEIEnabled())
-    {
-      SEITemporalLevel0Index sei_temporal_level0_index;
-      if (pcSlice->getRapPicFlag())
-      {
-        m_tl0Idx = 0;
-        m_rapIdx = (m_rapIdx + 1) & 0xFF;
-      }
-      else
-      {
-        m_tl0Idx = (m_tl0Idx + (pcSlice->getTLayer() ? 0 : 1)) & 0xFF;
-      }
-      sei_temporal_level0_index.tl0Idx = m_tl0Idx;
-      sei_temporal_level0_index.rapIdx = m_rapIdx;
 
-      OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI);
-
-      /* write the SEI messages */
-      m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
 #if O0164_MULTI_LAYER_HRD
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_temporal_level0_index, m_pcEncTop->getVPS(), pcSlice->getSPS());
+    xWriteTrailingSEIMessages(trailingSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS());
 #else
-      m_seiWriter.writeSEImessage(nalu.m_Bitstream, sei_temporal_level0_index, pcSlice->getSPS());      
+    xWriteTrailingSEIMessages(trailingSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS());
 #endif
-      writeRBSPTrailingBits(nalu.m_Bitstream);
-
-      /* insert the SEI message NALUnit before any Slice NALUnits */
-      AccessUnit::iterator it = find_if(accessUnit.begin(), accessUnit.end(), mem_fun(&NALUnit::isSlice));
-      accessUnit.insert(it, new NALUnitEBSP(nalu));
-    }
+    trailingSeiMessages.clear();
 
     m_pcCfg->setEncodedFlag(iGOPid, true);
     xCalculateAddPSNR( pcPic, pcPic->getPicYuvRec(), accessUnit, dEncTime, snr_conversion, printFrameMSE );
@@ -2988,193 +2835,22 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 
-    if( ( m_pcCfg->getPictureTimingSEIEnabled() || m_pcCfg->getDecodingUnitInfoSEIEnabled() ) &&
-        ( pcSlice->getSPS()->getVuiParametersPresentFlag() ) &&
-        ( ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getNalHrdParametersPresentFlag() )
-        || ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getVclHrdParametersPresentFlag() ) ) )
+    xCreatePictureTimingSEI(IRAPGOPid, leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, accessUnit, pcSlice, isField, duData);
+    if (m_pcCfg->getScalableNestingSEIEnabled())
     {
-      const TComVUI *vui = pcSlice->getSPS()->getVuiParameters();
-      const TComHRD *hrd = vui->getHrdParameters();
-
-      if( hrd->getSubPicCpbParamsPresentFlag() )
-      {
-        Int i;
-        UInt64 ui64Tmp;
-        UInt uiPrev = 0;
-        UInt numDU = ( pictureTimingSEI.m_numDecodingUnitsMinus1 + 1 );
-        UInt *pCRD = &pictureTimingSEI.m_duCpbRemovalDelayMinus1[0];
-        UInt maxDiff = ( hrd->getTickDivisorMinus2() + 2 ) - 1;
-
-        for( i = 0; i < numDU; i ++ )
-        {
-          pictureTimingSEI.m_numNalusInDuMinus1[ i ]       = ( i == 0 ) ? ( accumNalsDU[ i ] - 1 ) : ( accumNalsDU[ i ] - accumNalsDU[ i - 1] - 1 );
-        }
-
-        if( numDU == 1 )
-        {
-          pCRD[ 0 ] = 0; /* don't care */
-        }
-        else
-        {
-          pCRD[ numDU - 1 ] = 0;/* by definition */
-          UInt tmp = 0;
-          UInt accum = 0;
-
-          for( i = ( numDU - 2 ); i >= 0; i -- )
-          {
-            ui64Tmp = ( ( ( accumBitsDU[ numDU - 1 ]  - accumBitsDU[ i ] ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
-            if( (UInt)ui64Tmp > maxDiff )
-            {
-              tmp ++;
-            }
-          }
-          uiPrev = 0;
-
-          UInt flag = 0;
-          for( i = ( numDU - 2 ); i >= 0; i -- )
-          {
-            flag = 0;
-            ui64Tmp = ( ( ( accumBitsDU[ numDU - 1 ]  - accumBitsDU[ i ] ) * ( vui->getTimingInfo()->getTimeScale() / vui->getTimingInfo()->getNumUnitsInTick() ) * ( hrd->getTickDivisorMinus2() + 2 ) ) / ( m_pcCfg->getTargetBitrate() ) );
-
-            if( (UInt)ui64Tmp > maxDiff )
-            {
-              if(uiPrev >= maxDiff - tmp)
-              {
-                ui64Tmp = uiPrev + 1;
-                flag = 1;
-              }
-              else
-              {
-                ui64Tmp = maxDiff - tmp + 1;
-              }
-            }
-            pCRD[ i ] = (UInt)ui64Tmp - uiPrev - 1;
-            if( (Int)pCRD[ i ] < 0 )
-            {
-              pCRD[ i ] = 0;
-            }
-            else if (tmp > 0 && flag == 1)
-            {
-              tmp --;
-            }
-            accum += pCRD[ i ] + 1;
-            uiPrev = accum;
-          }
-        }
-      }
-
-      if( m_pcCfg->getPictureTimingSEIEnabled() )
-      {
-        {
-          OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
-          m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-          pictureTimingSEI.m_picStruct = (isField && pcSlice->getPic()->isTopField())? 1 : isField? 2 : 0;
-#if O0164_MULTI_LAYER_HRD
-          m_seiWriter.writeSEImessage(nalu.m_Bitstream, pictureTimingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-          m_seiWriter.writeSEImessage(nalu.m_Bitstream, pictureTimingSEI, pcSlice->getSPS());
-#endif
-          writeRBSPTrailingBits(nalu.m_Bitstream);
-          UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-          UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-                                    + m_bufferingPeriodSEIPresentInAU;    // Insert PT SEI after APS and BP SEI
-          AccessUnit::iterator it = accessUnit.begin();
-          for(Int j = 0; j < seiPositionInAu + offsetPosition; j++)
-          {
-            it++;
-          }
-          accessUnit.insert(it, new NALUnitEBSP(nalu));
-          m_pictureTimingSEIPresentInAU = true;
-        }
-
-        if ( m_pcCfg->getScalableNestingSEIEnabled() ) // put picture timing SEI into scalable nesting SEI
-        {
-          OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
-          m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-          scalableNestingSEI.m_nestedSEIs.clear();
-          scalableNestingSEI.m_nestedSEIs.push_back(&pictureTimingSEI);
-#if O0164_MULTI_LAYER_HRD
-          m_seiWriter.writeSEImessage(nalu.m_Bitstream, scalableNestingSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-          m_seiWriter.writeSEImessage(nalu.m_Bitstream, scalableNestingSEI, pcSlice->getSPS());
-#endif
-          writeRBSPTrailingBits(nalu.m_Bitstream);
-          UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-          UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-            + m_bufferingPeriodSEIPresentInAU + m_pictureTimingSEIPresentInAU + m_nestedBufferingPeriodSEIPresentInAU;    // Insert PT SEI after APS and BP SEI
-          AccessUnit::iterator it = accessUnit.begin();
-          for(Int j = 0; j < seiPositionInAu + offsetPosition; j++)
-          {
-            it++;
-          }
-          accessUnit.insert(it, new NALUnitEBSP(nalu));
-          m_nestedPictureTimingSEIPresentInAU = true;
-        }
-      }
-
-      if( m_pcCfg->getDecodingUnitInfoSEIEnabled() && hrd->getSubPicCpbParamsPresentFlag() )
-      {
-        m_pcEntropyCoder->setEntropyCoder(m_pcCavlcCoder, pcSlice);
-        for( Int i = 0; i < ( pictureTimingSEI.m_numDecodingUnitsMinus1 + 1 ); i ++ )
-        {
-          OutputNALUnit nalu(NAL_UNIT_PREFIX_SEI, pcSlice->getTLayer());
-
-          SEIDecodingUnitInfo tempSEI;
-          tempSEI.m_decodingUnitIdx = i;
-          tempSEI.m_duSptCpbRemovalDelay = pictureTimingSEI.m_duCpbRemovalDelayMinus1[i] + 1;
-          tempSEI.m_dpbOutputDuDelayPresentFlag = false;
-          tempSEI.m_picSptDpbOutputDuDelay = picSptDpbOutputDuDelay;
-
-          // Insert the first one in the right location, before the first slice
-          if(i == 0)
-          {
-            // Insert before the first slice.
-#if O0164_MULTI_LAYER_HRD
-            m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-            m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, pcSlice->getSPS());
-#endif
-            writeRBSPTrailingBits(nalu.m_Bitstream);
-
-            UInt seiPositionInAu = xGetFirstSeiLocation(accessUnit);
-            UInt offsetPosition = m_activeParameterSetSEIPresentInAU
-                                  + m_bufferingPeriodSEIPresentInAU
-                                  + m_pictureTimingSEIPresentInAU;  // Insert DU info SEI after APS, BP and PT SEI
-            AccessUnit::iterator it = accessUnit.begin();
-            for(Int j = 0; j < seiPositionInAu + offsetPosition; j++)
-            {
-              it++;
-            }
-            accessUnit.insert(it, new NALUnitEBSP(nalu));
-          }
-          else
-          {
-            // For the second decoding unit onwards we know how many NALUs are present
-            AccessUnit::iterator it = accessUnit.begin();
-            for (Int ctr = 0; it != accessUnit.end(); it++)
-            {
-              if(ctr == accumNalsDU[ i - 1 ])
-              {
-                // Insert before the first slice.
-#if O0164_MULTI_LAYER_HRD
-                m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, m_pcEncTop->getVPS(), pcSlice->getSPS());
-#else
-                m_seiWriter.writeSEImessage(nalu.m_Bitstream, tempSEI, pcSlice->getSPS());
-#endif
-                writeRBSPTrailingBits(nalu.m_Bitstream);
-
-                accessUnit.insert(it, new NALUnitEBSP(nalu));
-                break;
-              }
-              if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
-              {
-                ctr++;
-              }
-            }
-          }
-        }
-      }
+      xCreateScalableNestingSEI (leadingSeiMessages, nestedSeiMessages);
     }
+#if O0164_MULTI_LAYER_HRD
+    xWriteLeadingSEIMessages(leadingSeiMessages, duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS(), duData);
+#else
+    xWriteLeadingSEIMessages(leadingSeiMessages, duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS(), duData);
+#endif
+    leadingSeiMessages.clear();
+#if O0164_MULTI_LAYER_HRD
+    xWriteDuSEIMessages(duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS(), duData);
+#else
+    xWriteDuSEIMessages(duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS(), duData);
+#endif
 
 #if SVC_EXTENSION
     m_prevPicHasEos = false;
@@ -3250,15 +2926,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   } // iGOPid-loop
 
   delete pcBitstreamRedirect;
-
-  if( accumBitsDU != NULL)
-  {
-    delete accumBitsDU;
-  }
-  if( accumNalsDU != NULL)
-  {
-    delete accumNalsDU;
-  }
 
 #if SVC_EXTENSION
   assert ( m_iNumPicCoded <= 1 );
@@ -3997,25 +3664,6 @@ Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice, TComList<TComPic*
   }
 }
 
-/** Function for finding the position to insert the first of APS and non-nested BP, PT, DU info SEI messages.
- * \param accessUnit Access Unit of the current picture
- * This function finds the position to insert the first of APS and non-nested BP, PT, DU info SEI messages.
- */
-Int TEncGOP::xGetFirstSeiLocation(AccessUnit &accessUnit)
-{
-  // Find the location of the first SEI message
-  Int seiStartPos = 0;
-  for(AccessUnit::iterator it = accessUnit.begin(); it != accessUnit.end(); it++, seiStartPos++)
-  {
-     if ((*it)->isSei() || (*it)->isVcl())
-     {
-       break;
-     }
-  }
-  //  assert(it != accessUnit.end());  // Triggers with some legit configurations
-  return seiStartPos;
-}
-
 Void TEncGOP::applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices )
 {
   TComPicYuv* pcPicYuvRec = pcPic->getPicYuvRec();
@@ -4140,224 +3788,8 @@ Void TEncGOP::applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices )
   free(rowSAD);
 }
 
-#if P0123_ALPHA_CHANNEL_SEI
-SEIAlphaChannelInfo* TEncGOP::xCreateSEIAlphaChannelInfo()
-{
-  SEIAlphaChannelInfo *sei = new SEIAlphaChannelInfo();
-  sei->m_alphaChannelCancelFlag = m_pcCfg->getAlphaCancelFlag();
-  if(!sei->m_alphaChannelCancelFlag)
-  {
-    sei->m_alphaChannelUseIdc = m_pcCfg->getAlphaUseIdc();
-    sei->m_alphaChannelBitDepthMinus8 = m_pcCfg->getAlphaBitDepthMinus8();
-    sei->m_alphaTransparentValue = m_pcCfg->getAlphaTransparentValue();
-    sei->m_alphaOpaqueValue = m_pcCfg->getAlphaOpaqueValue();
-    sei->m_alphaChannelIncrFlag = m_pcCfg->getAlphaIncrementFlag();
-    sei->m_alphaChannelClipFlag = m_pcCfg->getAlphaClipFlag();
-    sei->m_alphaChannelClipTypeFlag = m_pcCfg->getAlphaClipTypeFlag();
-  }
-  return sei;
-}
-#endif
-#if Q0096_OVERLAY_SEI
-SEIOverlayInfo* TEncGOP::xCreateSEIOverlayInfo()
-{  
-  SEIOverlayInfo *sei = new SEIOverlayInfo();  
-  sei->m_overlayInfoCancelFlag = m_pcCfg->getOverlaySEICancelFlag();    
-  if ( !sei->m_overlayInfoCancelFlag )
-  {
-    sei->m_overlayContentAuxIdMinus128          = m_pcCfg->getOverlaySEIContentAuxIdMinus128(); 
-    sei->m_overlayLabelAuxIdMinus128            = m_pcCfg->getOverlaySEILabelAuxIdMinus128();  
-    sei->m_overlayAlphaAuxIdMinus128            = m_pcCfg->getOverlaySEIAlphaAuxIdMinus128(); 
-    sei->m_overlayElementLabelValueLengthMinus8 = m_pcCfg->getOverlaySEIElementLabelValueLengthMinus8(); 
-    sei->m_numOverlaysMinus1                    = m_pcCfg->getOverlaySEINumOverlaysMinus1();     
-    sei->m_overlayIdx                           = m_pcCfg->getOverlaySEIIdx();            
-    sei->m_languageOverlayPresentFlag           = m_pcCfg->getOverlaySEILanguagePresentFlag();
-    sei->m_overlayContentLayerId                = m_pcCfg->getOverlaySEIContentLayerId();   
-    sei->m_overlayLabelPresentFlag              = m_pcCfg->getOverlaySEILabelPresentFlag();   
-    sei->m_overlayLabelLayerId                  = m_pcCfg->getOverlaySEILabelLayerId();   
-    sei->m_overlayAlphaPresentFlag              = m_pcCfg->getOverlaySEIAlphaPresentFlag();   
-    sei->m_overlayAlphaLayerId                  = m_pcCfg->getOverlaySEIAlphaLayerId();   
-    sei->m_numOverlayElementsMinus1             = m_pcCfg->getOverlaySEINumElementsMinus1();
-    sei->m_overlayElementLabelMin               = m_pcCfg->getOverlaySEIElementLabelMin();
-    sei->m_overlayElementLabelMax               = m_pcCfg->getOverlaySEIElementLabelMax();    
-    sei->m_overlayLanguage.resize               ( sei->m_numOverlaysMinus1+1, NULL );
-    sei->m_overlayLanguageLength.resize         ( sei->m_numOverlaysMinus1+1 );
-    sei->m_overlayName.resize                   ( sei->m_numOverlaysMinus1+1, NULL );
-    sei->m_overlayNameLength.resize             ( sei->m_numOverlaysMinus1+1 );
-    sei->m_overlayElementName.resize            ( sei->m_numOverlaysMinus1+1 );
-    sei->m_overlayElementNameLength.resize      ( sei->m_numOverlaysMinus1+1 );  
-
-    Int i,j;
-    string strTmp;
-    Int nBytes;
-    assert( m_pcCfg->getOverlaySEILanguage().size()    == sei->m_numOverlaysMinus1+1 );
-    assert( m_pcCfg->getOverlaySEIName().size()        == sei->m_numOverlaysMinus1+1 );
-    assert( m_pcCfg->getOverlaySEIElementName().size() == sei->m_numOverlaysMinus1+1 );
-    
-    for ( i=0 ; i<=sei->m_numOverlaysMinus1; i++ )
-    {      
-      //language tag
-      if ( sei->m_languageOverlayPresentFlag[i] )
-      {                
-        strTmp = m_pcCfg->getOverlaySEILanguage()[i];
-        nBytes = (Int)m_pcCfg->getOverlaySEILanguage()[i].size();        
-        assert( nBytes>0 );
-        sei->m_overlayLanguage[i] = new UChar[nBytes];
-        memcpy(sei->m_overlayLanguage[i], strTmp.c_str(), nBytes);        
-        sei->m_overlayLanguageLength[i] = nBytes;        
-      }
-
-      //overlay name
-      strTmp = m_pcCfg->getOverlaySEIName()[i];
-      nBytes = (Int)m_pcCfg->getOverlaySEIName()[i].size();        
-      assert( nBytes>0 );
-      sei->m_overlayName[i] = new UChar[nBytes];      
-      memcpy(sei->m_overlayName[i], strTmp.c_str(), nBytes);        
-      sei->m_overlayNameLength[i] = nBytes;
-
-      //overlay element names
-      if ( sei->m_overlayLabelPresentFlag[i] )
-      {        
-        sei->m_overlayElementName[i].resize( sei->m_numOverlayElementsMinus1[i]+1, NULL );
-        sei->m_overlayElementNameLength[i].resize( sei->m_numOverlayElementsMinus1[i]+1 );
-        assert( m_pcCfg->getOverlaySEIElementName()[i].size() == sei->m_numOverlayElementsMinus1[i]+1 );        
-        for ( j=0 ; j<=sei->m_numOverlayElementsMinus1[i] ; j++)
-        {
-          strTmp = m_pcCfg->getOverlaySEIElementName()[i][j];
-          nBytes = (Int)m_pcCfg->getOverlaySEIElementName()[i][j].size();        
-          assert( nBytes>0 );
-          sei->m_overlayElementName[i][j] = new UChar[nBytes];
-          memcpy(sei->m_overlayElementName[i][j], strTmp.c_str(), nBytes);        
-          sei->m_overlayElementNameLength[i][j] = nBytes;
-        }
-      }
-    }
-  sei->m_overlayInfoPersistenceFlag = true;
-  }
-  return sei;
-}
-#endif
-
-#if Q0074_COLOUR_REMAPPING_SEI
-SEIColourRemappingInfo*  TEncGOP::xCreateSEIColourRemappingInfo()
-{
-  SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo();
-  seiColourRemappingInfo->m_colourRemapId         = m_colourRemapSEIId;
-  seiColourRemappingInfo->m_colourRemapCancelFlag = m_colourRemapSEICancelFlag;
-  printf("xCreateSEIColourRemappingInfo - m_colourRemapId = %d m_colourRemapCancelFlag = %d \n",seiColourRemappingInfo->m_colourRemapId, seiColourRemappingInfo->m_colourRemapCancelFlag); 
-
-  if( !seiColourRemappingInfo->m_colourRemapCancelFlag )
-  {
-    seiColourRemappingInfo->m_colourRemapPersistenceFlag            = m_colourRemapSEIPersistenceFlag;
-    seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag = m_colourRemapSEIVideoSignalInfoPresentFlag;
-    if( seiColourRemappingInfo->m_colourRemapVideoSignalInfoPresentFlag )
-    {
-      seiColourRemappingInfo->m_colourRemapFullRangeFlag           = m_colourRemapSEIFullRangeFlag;
-      seiColourRemappingInfo->m_colourRemapPrimaries               = m_colourRemapSEIPrimaries;
-      seiColourRemappingInfo->m_colourRemapTransferFunction        = m_colourRemapSEITransferFunction;
-      seiColourRemappingInfo->m_colourRemapMatrixCoefficients      = m_colourRemapSEIMatrixCoefficients;
-    }
-    seiColourRemappingInfo->m_colourRemapInputBitDepth             = m_colourRemapSEIInputBitDepth;
-    seiColourRemappingInfo->m_colourRemapBitDepth                  = m_colourRemapSEIBitDepth;
-    for( Int c=0 ; c<3 ; c++ )
-    {
-      seiColourRemappingInfo->m_preLutNumValMinus1[c] = m_colourRemapSEIPreLutNumValMinus1[c];
-      if( seiColourRemappingInfo->m_preLutNumValMinus1[c]>0 )
-      {
-        seiColourRemappingInfo->m_preLutCodedValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
-        seiColourRemappingInfo->m_preLutTargetValue[c].resize(seiColourRemappingInfo->m_preLutNumValMinus1[c]+1);
-        for( Int i=0 ; i<=seiColourRemappingInfo->m_preLutNumValMinus1[c] ; i++)
-        {
-          seiColourRemappingInfo->m_preLutCodedValue[c][i]  = m_colourRemapSEIPreLutCodedValue[c][i];
-          seiColourRemappingInfo->m_preLutTargetValue[c][i] = m_colourRemapSEIPreLutTargetValue[c][i];
-        }
-      }
-    }
-    seiColourRemappingInfo->m_colourRemapMatrixPresentFlag = m_colourRemapSEIMatrixPresentFlag;
-    if( seiColourRemappingInfo->m_colourRemapMatrixPresentFlag )
-    {
-      seiColourRemappingInfo->m_log2MatrixDenom = m_colourRemapSEILog2MatrixDenom;
-      for( Int c=0 ; c<3 ; c++ )
-        for( Int i=0 ; i<3 ; i++ )
-          seiColourRemappingInfo->m_colourRemapCoeffs[c][i] = m_colourRemapSEICoeffs[c][i];
-    }
-    for( Int c=0 ; c<3 ; c++ )
-    {
-      seiColourRemappingInfo->m_postLutNumValMinus1[c] = m_colourRemapSEIPostLutNumValMinus1[c];
-      if( seiColourRemappingInfo->m_postLutNumValMinus1[c]>0 )
-      {
-        seiColourRemappingInfo->m_postLutCodedValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
-        seiColourRemappingInfo->m_postLutTargetValue[c].resize(seiColourRemappingInfo->m_postLutNumValMinus1[c]+1);
-        for( Int i=0 ; i<=seiColourRemappingInfo->m_postLutNumValMinus1[c] ; i++)
-        {
-          seiColourRemappingInfo->m_postLutCodedValue[c][i]  = m_colourRemapSEIPostLutCodedValue[c][i];
-          seiColourRemappingInfo->m_postLutTargetValue[c][i] = m_colourRemapSEIPostLutTargetValue[c][i];
-        }
-      }
-    }
-  }
-  return seiColourRemappingInfo;
-}
-#endif
-
 #if SVC_EXTENSION
-#if LAYERS_NOT_PRESENT_SEI
-SEILayersNotPresent* TEncGOP::xCreateSEILayersNotPresent ()
-{
-  UInt i = 0;
-  SEILayersNotPresent *seiLayersNotPresent = new SEILayersNotPresent(); 
-  seiLayersNotPresent->m_activeVpsId = m_pcCfg->getVPS()->getVPSId(); 
-  seiLayersNotPresent->m_vpsMaxLayers = m_pcCfg->getVPS()->getMaxLayers();
-  for ( ; i < seiLayersNotPresent->m_vpsMaxLayers; i++)
-  {
-    seiLayersNotPresent->m_layerNotPresentFlag[i] = true; 
-  }
-  for ( ; i < MAX_LAYERS; i++)
-  {
-    seiLayersNotPresent->m_layerNotPresentFlag[i] = false; 
-  }
-  return seiLayersNotPresent;
-}
-#endif
-
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-SEIInterLayerConstrainedTileSets* TEncGOP::xCreateSEIInterLayerConstrainedTileSets()
-{
-  SEIInterLayerConstrainedTileSets *seiInterLayerConstrainedTileSets = new SEIInterLayerConstrainedTileSets();
-  seiInterLayerConstrainedTileSets->m_ilAllTilesExactSampleValueMatchFlag = false;
-  seiInterLayerConstrainedTileSets->m_ilOneTilePerTileSetFlag = false;
-  if (!seiInterLayerConstrainedTileSets->m_ilOneTilePerTileSetFlag)
-  {
-    seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 = m_pcCfg->getIlNumSetsInMessage() - 1;
-    if (seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1)
-    {
-      seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag = m_pcCfg->getSkippedTileSetPresentFlag();
-    }
-    else
-    {
-      seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag = false;
-    }
-    seiInterLayerConstrainedTileSets->m_ilNumSetsInMessageMinus1 += seiInterLayerConstrainedTileSets->m_skippedTileSetPresentFlag ? 1 : 0;
-    for (UInt i = 0; i < m_pcCfg->getIlNumSetsInMessage(); i++)
-    {
-      seiInterLayerConstrainedTileSets->m_ilctsId[i] = i;
-      seiInterLayerConstrainedTileSets->m_ilNumTileRectsInSetMinus1[i] = 0;
-      for( UInt j = 0; j <= seiInterLayerConstrainedTileSets->m_ilNumTileRectsInSetMinus1[i]; j++)
-      {
-        seiInterLayerConstrainedTileSets->m_ilTopLeftTileIndex[i][j]     = m_pcCfg->getTopLeftTileIndex(i);
-        seiInterLayerConstrainedTileSets->m_ilBottomRightTileIndex[i][j] = m_pcCfg->getBottomRightTileIndex(i);
-      }
-      seiInterLayerConstrainedTileSets->m_ilcIdc[i] = m_pcCfg->getIlcIdc(i);
-      if (seiInterLayerConstrainedTileSets->m_ilAllTilesExactSampleValueMatchFlag)
-      {
-        seiInterLayerConstrainedTileSets->m_ilExactSampleValueMatchFlag[i] = false;
-      }
-    }
-  }
-
-  return seiInterLayerConstrainedTileSets;
-}
-
 Void TEncGOP::xBuildTileSetsMap(TComPicSym* picSym)
 {
   Int numCUs = picSym->getFrameWidthInCtus() * picSym->getFrameHeightInCtus();
@@ -4669,76 +4101,6 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
     assert(0);
   }
 }
-
-#if O0164_MULTI_LAYER_HRD
-SEIScalableNesting* TEncGOP::xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx)
-{
-  SEIScalableNesting *seiScalableNesting = new SEIScalableNesting();
-  SEIBspInitialArrivalTime *seiBspInitialArrivalTime = new SEIBspInitialArrivalTime();
-  SEIBspNesting *seiBspNesting = new SEIBspNesting();
-  SEIBufferingPeriod *seiBufferingPeriod = new SEIBufferingPeriod();
-
-  // Scalable nesting SEI
-
-  seiScalableNesting->m_bitStreamSubsetFlag           = 1;      // If the nested SEI messages are picture buffereing SEI mesages, picure timing SEI messages or sub-picture timing SEI messages, bitstream_subset_flag shall be equal to 1
-  seiScalableNesting->m_nestingOpFlag                 = 1;
-  seiScalableNesting->m_defaultOpFlag                 = 0;
-  seiScalableNesting->m_nestingNumOpsMinus1           = 0;      //nesting_num_ops_minus1
-  seiScalableNesting->m_nestingOpIdx[0]               = pcSlice->getVPS()->getOutputLayerSetIdx(olsIdx);
-  seiScalableNesting->m_nestingMaxTemporalIdPlus1[0]  = 6 + 1;
-  seiScalableNesting->m_allLayersFlag                 = 0;
-  seiScalableNesting->m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1;  //nesting_no_op_max_temporal_id_plus1
-  seiScalableNesting->m_nestingNumLayersMinus1        = 1 - 1;  //nesting_num_layers_minus1
-  seiScalableNesting->m_nestingLayerId[0]             = 0;
-  seiScalableNesting->m_callerOwnsSEIs                = true;
-
-  // Bitstream partition nesting SEI
-
-  seiBspNesting->m_bspIdx = 0;
-  seiBspNesting->m_callerOwnsSEIs = true;
-
-  // Buffering period SEI
-
-  UInt uiInitialCpbRemovalDelay = (90000/2);                      // 0.5 sec
-  seiBufferingPeriod->m_initialCpbRemovalDelay      [0][0]     = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialCpbRemovalDelayOffset[0][0]     = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialCpbRemovalDelay      [0][1]     = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialCpbRemovalDelayOffset[0][1]     = uiInitialCpbRemovalDelay;
-
-  Double dTmp = (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getNumUnitsInTick() / (Double)pcSlice->getSPS()->getVuiParameters()->getTimingInfo()->getTimeScale();
-
-  UInt uiTmp = (UInt)( dTmp * 90000.0 ); 
-  uiInitialCpbRemovalDelay -= uiTmp;
-  uiInitialCpbRemovalDelay -= uiTmp / ( pcSlice->getSPS()->getVuiParameters()->getHrdParameters()->getTickDivisorMinus2() + 2 );
-  seiBufferingPeriod->m_initialAltCpbRemovalDelay      [0][0]  = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialAltCpbRemovalDelayOffset[0][0]  = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialAltCpbRemovalDelay      [0][1]  = uiInitialCpbRemovalDelay;
-  seiBufferingPeriod->m_initialAltCpbRemovalDelayOffset[0][1]  = uiInitialCpbRemovalDelay;
-
-  seiBufferingPeriod->m_rapCpbParamsPresentFlag              = 0;
-  //for the concatenation, it can be set to one during splicing.
-  seiBufferingPeriod->m_concatenationFlag = 0;
-  //since the temporal layer HRD is not ready, we assumed it is fixed
-  seiBufferingPeriod->m_auCpbRemovalDelayDelta = 1;
-  seiBufferingPeriod->m_cpbDelayOffset = 0;
-  seiBufferingPeriod->m_dpbDelayOffset = 0;
-
-  // Intial arrival time SEI message
-
-  seiBspInitialArrivalTime->m_nalInitialArrivalDelay[0] = 0;
-  seiBspInitialArrivalTime->m_vclInitialArrivalDelay[0] = 0;
-
-
-  seiBspNesting->m_nestedSEIs.push_back(seiBufferingPeriod);
-  seiBspNesting->m_nestedSEIs.push_back(seiBspInitialArrivalTime);
-  seiBspNesting->m_bspIdx = bspIdx;
-  seiBspNesting->m_seiOlsIdx = olsIdx;
-  seiBspNesting->m_seiPartitioningSchemeIdx = partitioningSchemeIdx;
-  seiScalableNesting->m_nestedSEIs.push_back(seiBspNesting); // BSP nesting SEI is contained in scalable nesting SEI
-
-  return seiScalableNesting;
-}
-#endif
 
 #if CGS_3D_ASYMLUT
 Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS )
