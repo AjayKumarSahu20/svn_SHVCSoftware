@@ -53,6 +53,7 @@
 #include "TEncCavlc.h"
 #include "TEncSbac.h"
 #include "SEIwrite.h"
+#include "SEIEncoder.h"
 #if CGS_3D_ASYMLUT
 #include "TEnc3DAsymLUT.h"
 #endif
@@ -72,6 +73,17 @@ class TEncTop;
 
 class TEncGOP
 {
+  class DUData
+  {
+  public:
+    DUData()
+    :accumBitsDU(0)
+    ,accumNalsDU(0) {};
+
+    Int accumBitsDU;
+    Int accumNalsDU;
+  };
+
 private:
   //  Data
   Bool                    m_bLongtermTestPictureHasBeenCoded;
@@ -87,28 +99,6 @@ private:
   Int                     m_iLastRecoveryPicPOC;
 #endif
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  string                  m_colourRemapSEIFile;
-  Int                     m_colourRemapSEIId;
-  Bool                    m_colourRemapSEICancelFlag;
-  Bool                    m_colourRemapSEIPersistenceFlag;
-  Bool                    m_colourRemapSEIVideoSignalInfoPresentFlag;
-  Bool                    m_colourRemapSEIFullRangeFlag;
-  Int                     m_colourRemapSEIPrimaries;
-  Int                     m_colourRemapSEITransferFunction;
-  Int                     m_colourRemapSEIMatrixCoefficients;
-  Int                     m_colourRemapSEIInputBitDepth;
-  Int                     m_colourRemapSEIBitDepth;
-  Int                     m_colourRemapSEIPreLutNumValMinus1[3];
-  Int*                    m_colourRemapSEIPreLutCodedValue[3];
-  Int*                    m_colourRemapSEIPreLutTargetValue[3];
-  Bool                    m_colourRemapSEIMatrixPresentFlag;
-  Int                     m_colourRemapSEILog2MatrixDenom;
-  Int                     m_colourRemapSEICoeffs[3][3];
-  Int                     m_colourRemapSEIPostLutNumValMinus1[3];
-  Int*                    m_colourRemapSEIPostLutCodedValue[3];
-  Int*                    m_colourRemapSEIPostLutTargetValue[3];
-#endif
   //  Access channel
   TEncTop*                m_pcEncTop;
   TEncCfg*                m_pcCfg;
@@ -138,15 +128,16 @@ private:
   std::vector<Int> m_vRVM_RP;
   UInt                    m_lastBPSEI;
   UInt                    m_totalCoded;
-  UInt                    m_cpbRemovalDelay;
-  UInt                    m_tl0Idx;
-  UInt                    m_rapIdx;
   Bool                    m_activeParameterSetSEIPresentInAU;
   Bool                    m_bufferingPeriodSEIPresentInAU;
   Bool                    m_pictureTimingSEIPresentInAU;
   Bool                    m_nestedBufferingPeriodSEIPresentInAU;
   Bool                    m_nestedPictureTimingSEIPresentInAU;
+  SEIEncoder              m_seiEncoder;
 
+#if Q0074_COLOUR_REMAPPING_SEI
+  TComSEIColourRemappingInfo m_seiColourRemappingInfo;  
+#endif
 #if SVC_EXTENSION
   Int                     m_pocCraWithoutReset;
   Int                     m_associatedIrapPocBeforeReset;
@@ -235,17 +226,39 @@ protected:
 
   Double xCalculateRVM();
 
-  SEIActiveParameterSets*           xCreateSEIActiveParameterSets (const TComSPS *sps);
-  SEIFramePacking*                  xCreateSEIFramePacking();
-  SEISegmentedRectFramePacking*     xCreateSEISegmentedRectFramePacking();
-  SEIDisplayOrientation*            xCreateSEIDisplayOrientation();
-  SEIToneMappingInfo*               xCreateSEIToneMappingInfo();
-  SEITempMotionConstrainedTileSets* xCreateSEITempMotionConstrainedTileSets (const TComPPS *pps);
-  SEIKneeFunctionInfo*              xCreateSEIKneeFunctionInfo();
-  SEIChromaSamplingFilterHint*      xCreateSEIChromaSamplingFilterHint(Bool bChromaLocInfoPresent, Int iHorFilterIndex, Int iVerFilterIdc);
+  Void xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TComSPS *sps, const TComPPS *pps);
+  Void xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, TComSlice *slice);
+  Void xCreatePictureTimingSEI  (Int IRAPGOPid, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, TComSlice *slice, Bool isField, std::deque<DUData> &duData);
+  Void xUpdateDuData(AccessUnit &testAU, std::deque<DUData> &duData);
+  Void xUpdateTimingSEI(SEIPictureTiming *pictureTimingSEI, std::deque<DUData> &duData, const TComSPS *sps);
+  Void xUpdateDuInfoSEI(SEIMessages &duInfoSeiMessages, SEIPictureTiming *pictureTimingSEI);
 
-  Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, const TComSPS *sps, const TComPPS *pps);
-  Int xGetFirstSeiLocation (AccessUnit &accessUnit);
+  Void xCreateScalableNestingSEI (SEIMessages& seiMessages, SEIMessages& nestedSeiMessages);
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteSEI (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void xWriteSEISeparately (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+#else
+  Void xWriteSEI (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComSPS *sps);
+  Void xWriteSEISeparately (NalUnitType naluType, SEIMessages& seiMessages, AccessUnit &accessUnit, AccessUnit::iterator &auPos, Int temporalId, const TComSPS *sps);
+#endif
+  Void xClearSEIs(SEIMessages& seiMessages, Bool deleteMessages);
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *vps, const TComSPS *sps, Bool testWrite, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void xWriteLeadingSEIMessages  (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *vps, const TComSPS *sps, std::deque<DUData> &duData, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void xWriteTrailingSEIMessages (SEIMessages& seiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void xWriteDuSEIMessages       (SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComVPS *sps, const TComSPS *vps, std::deque<DUData> &duData, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+#else
+  Void xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, Bool testWrite);
+  Void xWriteLeadingSEIMessages  (SEIMessages& seiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, std::deque<DUData> &duData);
+  Void xWriteTrailingSEIMessages (SEIMessages& seiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps);
+  Void xWriteDuSEIMessages       (SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, Int temporalId, const TComSPS *sps, std::deque<DUData> &duData);
+#endif
+
+  Int xWriteVPS (AccessUnit &accessUnit, const TComVPS *vps);
+  Int xWriteSPS (AccessUnit &accessUnit, const TComSPS *sps);
+  Int xWritePPS (AccessUnit &accessUnit, const TComPPS *pps);
+  Int xWriteParameterSets (AccessUnit &accessUnit, TComSlice *slice);
+
   Void xResetNonNestedSEIPresentFlags()
   {
     m_activeParameterSetSEIPresentInAU = false;
@@ -260,30 +273,16 @@ protected:
   Void applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices );
 
 #if Q0074_COLOUR_REMAPPING_SEI
-  Void  setCRISEIFile( Char* pch )       { m_colourRemapSEIFile = pch; }
+  TComSEIColourRemappingInfo* xGetSEIColourRemappingInfo()  { return &m_seiColourRemappingInfo; }
+  Void  setCRISEIFile( Char* pch )       { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
 
   Void freeColourCRI();
   Int  readingCRIparameters();
   Void xCheckParameter();
-
-  SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
 #endif
 #if SVC_EXTENSION
-#if LAYERS_NOT_PRESENT_SEI
-  SEILayersNotPresent*    xCreateSEILayersNotPresent ();
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xBuildTileSetsMap(TComPicSym* picSym);
-  SEIInterLayerConstrainedTileSets* xCreateSEIInterLayerConstrainedTileSets();
-#endif
-#if O0164_MULTI_LAYER_HRD
-  SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice, Int olsIdx, Int partitioningSchemeIdx, Int bspIdx);
-#endif
-#if P0123_ALPHA_CHANNEL_SEI
-  SEIAlphaChannelInfo* xCreateSEIAlphaChannelInfo();
-#endif
-#if Q0096_OVERLAY_SEI
-  SEIOverlayInfo* xCreateSEIOverlayInfo();
 #endif
 #if CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );

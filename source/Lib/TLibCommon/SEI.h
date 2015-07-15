@@ -165,7 +165,7 @@ public:
     RESERVED,
   } method;
 
-  TComDigest m_digest;
+  TComPictureHash m_pictureHash;
 };
 
 class SEIActiveParameterSets : public SEI
@@ -195,6 +195,7 @@ class SEIBufferingPeriod : public SEI
 {
 public:
   PayloadType payloadType() const { return BUFFERING_PERIOD; }
+  void copyTo (SEIBufferingPeriod& target);
 
   SEIBufferingPeriod()
   : m_bpSeqParameterSetId (0)
@@ -232,25 +233,16 @@ class SEIPictureTiming : public SEI
 {
 public:
   PayloadType payloadType() const { return PICTURE_TIMING; }
+  void copyTo (SEIPictureTiming& target);
 
   SEIPictureTiming()
   : m_picStruct               (0)
   , m_sourceScanType          (0)
   , m_duplicateFlag           (false)
   , m_picDpbOutputDuDelay     (0)
-  , m_numNalusInDuMinus1      (NULL)
-  , m_duCpbRemovalDelayMinus1 (NULL)
   {}
   virtual ~SEIPictureTiming()
   {
-    if( m_numNalusInDuMinus1 != NULL )
-    {
-      delete m_numNalusInDuMinus1;
-    }
-    if( m_duCpbRemovalDelayMinus1  != NULL )
-    {
-      delete m_duCpbRemovalDelayMinus1;
-    }
   }
 
   UInt  m_picStruct;
@@ -263,8 +255,8 @@ public:
   UInt  m_numDecodingUnitsMinus1;
   Bool  m_duCommonCpbRemovalDelayFlag;
   UInt  m_duCommonCpbRemovalDelayMinus1;
-  UInt* m_numNalusInDuMinus1;
-  UInt* m_duCpbRemovalDelayMinus1;
+  std::vector<UInt> m_numNalusInDuMinus1;
+  std::vector<UInt> m_duCpbRemovalDelayMinus1;
 };
 
 class SEIDecodingUnitInfo : public SEI
@@ -713,6 +705,30 @@ public:
 #endif
 
 #if Q0074_COLOUR_REMAPPING_SEI
+struct TComSEIColourRemappingInfo
+{
+  std::string             m_colourRemapSEIFile;
+  Int                     m_colourRemapSEIId;
+  Bool                    m_colourRemapSEICancelFlag;
+  Bool                    m_colourRemapSEIPersistenceFlag;
+  Bool                    m_colourRemapSEIVideoSignalInfoPresentFlag;
+  Bool                    m_colourRemapSEIFullRangeFlag;
+  Int                     m_colourRemapSEIPrimaries;
+  Int                     m_colourRemapSEITransferFunction;
+  Int                     m_colourRemapSEIMatrixCoefficients;
+  Int                     m_colourRemapSEIInputBitDepth;
+  Int                     m_colourRemapSEIBitDepth;
+  Int                     m_colourRemapSEIPreLutNumValMinus1[3];
+  Int*                    m_colourRemapSEIPreLutCodedValue[3];
+  Int*                    m_colourRemapSEIPreLutTargetValue[3];
+  Bool                    m_colourRemapSEIMatrixPresentFlag;
+  Int                     m_colourRemapSEILog2MatrixDenom;
+  Int                     m_colourRemapSEICoeffs[3][3];
+  Int                     m_colourRemapSEIPostLutNumValMinus1[3];
+  Int*                    m_colourRemapSEIPostLutCodedValue[3];
+  Int*                    m_colourRemapSEIPostLutTargetValue[3];
+};
+
 class SEIColourRemappingInfo : public SEI
 {
 public:

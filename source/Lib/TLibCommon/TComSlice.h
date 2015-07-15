@@ -309,7 +309,6 @@ private:
   UInt m_initialCpbRemovalDelayLengthMinus1;
   UInt m_cpbRemovalDelayLengthMinus1;
   UInt m_dpbOutputDelayLengthMinus1;
-  UInt m_numDU;
   HrdSubLayerInfo m_HRD[MAX_TLAYER];
 
 public:
@@ -395,8 +394,6 @@ public:
   Void    setCbrFlag( Int layer, Int cpbcnt, Int nalOrVcl, Bool value )              { m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl] = value;            }
   Bool    getCbrFlag( Int layer, Int cpbcnt, Int nalOrVcl ) const                    { return m_HRD[layer].cbrFlag[cpbcnt][nalOrVcl];             }
 
-  Void    setNumDU( UInt value )                                                     { m_numDU = value;                                           }
-  UInt    getNumDU( ) const                                                          { return m_numDU;                                            }
   Bool    getCpbDpbDelaysPresentFlag( ) const                      { return getNalHrdParametersPresentFlag() || getVclHrdParametersPresentFlag(); }
 
 #if SVC_EXTENSION
@@ -1204,7 +1201,7 @@ public:
     , m_maxBitsPerMinCuDenom              (1)
     , m_log2MaxMvLengthHorizontal         (15)
     , m_log2MaxMvLengthVertical           (15)
- {}
+  {}
 
   virtual           ~TComVUI() {}
 
@@ -1524,7 +1521,6 @@ public:
   Void                   setScalingListFlag( Bool b )                                                    { m_scalingListEnabledFlag  = b;                                       }
   Bool                   getScalingListPresentFlag() const                                               { return m_scalingListPresentFlag;                                     }
   Void                   setScalingListPresentFlag( Bool b )                                             { m_scalingListPresentFlag  = b;                                       }
-
   Void                   setScalingList( TComScalingList *scalingList);
   TComScalingList&       getScalingList()                                                                { return m_scalingList;                                                }
   const TComScalingList& getScalingList() const                                                          { return m_scalingList;                                                }
@@ -1540,8 +1536,7 @@ public:
   Void                   setVuiParametersPresentFlag(Bool b)                                             { m_vuiParametersPresentFlag = b;                                      }
   TComVUI*               getVuiParameters()                                                              { return &m_vuiParameters;                                             }
   const TComVUI*         getVuiParameters() const                                                        { return &m_vuiParameters;                                             }
-  Void                   setHrdParameters( UInt frameRate, UInt numDU, UInt bitRate, Bool randomAccess );
-
+  Void                   setHrdParameters( UInt frameRate, Bool useSubCpbParams, UInt bitRate, Bool randomAccess );
   const TComPTL*         getPTL() const                                                                  { return &m_pcPTL;                                                     }
   TComPTL*               getPTL()                                                                        { return &m_pcPTL;                                                     }
 
@@ -1570,6 +1565,7 @@ public:
 #endif //SVC_EXTENSION
 };
 
+
 /// Reference Picture Lists class
 
 class TComRefPicListModification
@@ -1596,7 +1592,6 @@ public:
   UInt    getRefPicSetIdxL1(UInt idx) const              { assert(idx<REF_PIC_LIST_NUM_IDX); return m_RefPicSetIdxL1[idx];         }
   Void    setRefPicSetIdxL1(UInt idx, UInt refPicSetIdx) { assert(idx<REF_PIC_LIST_NUM_IDX); m_RefPicSetIdxL1[idx] = refPicSetIdx; }
 };
-
 
 /// PPS class
 class TComPPS
@@ -1802,7 +1797,6 @@ public:
   Int                    getDeblockingFilterTcOffsetDiv2() const                          { return m_deblockingFilterTcOffsetDiv2;        } //!< get tc offset for deblocking filter
   Bool                   getScalingListPresentFlag() const                                { return m_scalingListPresentFlag;              }
   Void                   setScalingListPresentFlag( Bool b )                              { m_scalingListPresentFlag  = b;                }
-
   TComScalingList&       getScalingList()                                                 { return m_scalingList;                         }
   const TComScalingList& getScalingList() const                                           { return m_scalingList;                         }
   Bool                   getListsModificationPresentFlag() const                          { return m_listsModificationPresentFlag;        }
@@ -2397,6 +2391,7 @@ protected:
   TComPic*                    xGetRefPic        (TComList<TComPic*>& rcListPic, Int poc);
   TComPic*                    xGetLongTermRefPic(TComList<TComPic*>& rcListPic, Int poc, Bool pocHasMsb);
 };// END CLASS DEFINITION TComSlice
+
 
 Void calculateParameterSetChangedFlag(Bool &bChanged, const std::vector<UChar> *pOldData, const std::vector<UChar> *pNewData);
 

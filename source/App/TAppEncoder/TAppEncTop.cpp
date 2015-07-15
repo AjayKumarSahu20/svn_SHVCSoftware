@@ -1603,7 +1603,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       {
         numDU ++;
       }
-      vps->getBspHrd(i)->setNumDU( numDU );
+      //vps->getBspHrd(i)->setNumDU( numDU );
       vps->setBspHrdParameters( i, pcCfgLayer->getFrameRate(), numDU, pcCfgLayer->getTargetBitrate(), ( pcCfgLayer->getIntraPeriod() > 0 ) );
     }
 

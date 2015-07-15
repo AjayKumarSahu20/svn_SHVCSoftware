@@ -340,62 +340,62 @@ Void SEIReader::xReadSEImessage(SEIMessages& seis, const NalUnitType nalUnitType
       break;
 #endif
 #if SUB_BITSTREAM_PROPERTY_SEI
-   case SEI::SUB_BITSTREAM_PROPERTY:
-     sei = new SEISubBitstreamProperty;
-     xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei, vps, pDecodedMessageOutputStream);
-     break;
+    case SEI::SUB_BITSTREAM_PROPERTY:
+      sei = new SEISubBitstreamProperty;
+      xParseSEISubBitstreamProperty((SEISubBitstreamProperty&) *sei, vps, pDecodedMessageOutputStream);
+      break;
 #endif
 #if O0164_MULTI_LAYER_HRD
-   case SEI::BSP_NESTING:
-     sei = new SEIBspNesting;
+    case SEI::BSP_NESTING:
+      sei = new SEIBspNesting;
 #if LAYERS_NOT_PRESENT_SEI
-     xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, vps, sps, *nestingSei, pDecodedMessageOutputStream);
+      xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, vps, sps, *nestingSei, pDecodedMessageOutputStream);
 #else
-     xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, sps, *nestingSei, pDecodedMessageOutputStream);
+      xParseSEIBspNesting((SEIBspNesting&) *sei, nalUnitType, sps, *nestingSei, pDecodedMessageOutputStream);
 #endif
-     break;
-   case SEI::BSP_INITIAL_ARRIVAL_TIME:
-     sei = new SEIBspInitialArrivalTime;
-     xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei, pDecodedMessageOutputStream);
-     break;
+      break;
+    case SEI::BSP_INITIAL_ARRIVAL_TIME:
+      sei = new SEIBspInitialArrivalTime;
+      xParseSEIBspInitialArrivalTime((SEIBspInitialArrivalTime&) *sei, vps, sps, *nestingSei, *bspNestingSei, pDecodedMessageOutputStream);
+      break;
 #endif
 #if Q0189_TMVP_CONSTRAINTS
-   case SEI::TMVP_CONSTRAINTS:
-     sei =  new SEITMVPConstrains;
-     xParseSEITMVPConstraints((SEITMVPConstrains&) *sei, payloadSize, pDecodedMessageOutputStream);
-     break;
+    case SEI::TMVP_CONSTRAINTS:
+      sei =  new SEITMVPConstrains;
+      xParseSEITMVPConstraints((SEITMVPConstrains&) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
 #endif
 #if Q0247_FRAME_FIELD_INFO
-   case SEI::FRAME_FIELD_INFO:
-     sei =  new SEIFrameFieldInfo;
-     xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize, pDecodedMessageOutputStream);
-     break;
+    case SEI::FRAME_FIELD_INFO:
+      sei =  new SEIFrameFieldInfo;
+      xParseSEIFrameFieldInfo    ((SEIFrameFieldInfo&) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
 #endif
 #if P0123_ALPHA_CHANNEL_SEI
-   case SEI::ALPHA_CHANNEL_INFO:
-     sei = new SEIAlphaChannelInfo;
-     xParseSEIAlphaChannelInfo((SEIAlphaChannelInfo &) *sei, payloadSize, pDecodedMessageOutputStream);
-     break;
+    case SEI::ALPHA_CHANNEL_INFO:
+      sei = new SEIAlphaChannelInfo;
+      xParseSEIAlphaChannelInfo((SEIAlphaChannelInfo &) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
 #endif
 #if Q0096_OVERLAY_SEI
-   case SEI::OVERLAY_INFO:
-     sei = new SEIOverlayInfo;
-     xParseSEIOverlayInfo((SEIOverlayInfo&) *sei, payloadSize, pDecodedMessageOutputStream);
-     break;
+    case SEI::OVERLAY_INFO:
+      sei = new SEIOverlayInfo;
+      xParseSEIOverlayInfo((SEIOverlayInfo&) *sei, payloadSize, pDecodedMessageOutputStream);
+      break;
 #endif
 #endif //SVC_EXTENSION
-   default:
-     for (UInt i = 0; i < payloadSize; i++)
-     {
-       UInt seiByte;
-       sei_read_code (NULL, 8, seiByte, "unknown prefix SEI payload byte");
-     }
-     printf ("Unknown prefix SEI message (payloadType = %d) was found!\n", payloadType);
-     if (pDecodedMessageOutputStream)
-     {
-       (*pDecodedMessageOutputStream) << "Unknown prefix SEI message (payloadType = " << payloadType << ") was found!\n";
-     }
-     break;
+    default:
+      for (UInt i = 0; i < payloadSize; i++)
+      {
+        UInt seiByte;
+        sei_read_code (NULL, 8, seiByte, "unknown prefix SEI payload byte");
+      }
+      printf ("Unknown prefix SEI message (payloadType = %d) was found!\n", payloadType);
+      if (pDecodedMessageOutputStream)
+      {
+        (*pDecodedMessageOutputStream) << "Unknown prefix SEI message (payloadType = " << payloadType << ") was found!\n";
+      }
+      break;
     }
   }
   else
@@ -538,11 +538,11 @@ Void SEIReader::xParseSEIDecodedPictureHash(SEIDecodedPictureHash& sei, UInt pay
     (*pDecodedMessageOutputStream) << "  " << std::setw(55) << traceString << ": " << std::hex << std::setfill('0');
   }
 
-  sei.m_digest.hash.clear();
+  sei.m_pictureHash.hash.clear();
   for(;bytesRead < payloadSize; bytesRead++)
   {
     sei_read_code( NULL, 8, val, traceString);
-    sei.m_digest.hash.push_back((UChar)val);
+    sei.m_pictureHash.hash.push_back((UChar)val);
     if (pDecodedMessageOutputStream)
     {
       (*pDecodedMessageOutputStream) << std::setw(2) << val;
@@ -857,16 +857,8 @@ Void SEIReader::xParseSEIPictureTiming(SEIPictureTiming& sei, UInt payloadSize, 
         sei_read_code( pDecodedMessageOutputStream, ( hrd->getDuCpbRemovalDelayLengthMinus1() + 1 ), code, "du_common_cpb_removal_delay_increment_minus1" );
         sei.m_duCommonCpbRemovalDelayMinus1 = code;
       }
-      if( sei.m_numNalusInDuMinus1 != NULL )
-      {
-        delete sei.m_numNalusInDuMinus1;
-      }
-      sei.m_numNalusInDuMinus1 = new UInt[ ( sei.m_numDecodingUnitsMinus1 + 1 ) ];
-      if( sei.m_duCpbRemovalDelayMinus1  != NULL )
-      {
-        delete sei.m_duCpbRemovalDelayMinus1;
-      }
-      sei.m_duCpbRemovalDelayMinus1  = new UInt[ ( sei.m_numDecodingUnitsMinus1 + 1 ) ];
+      sei.m_numNalusInDuMinus1.resize(sei.m_numDecodingUnitsMinus1 + 1 );
+      sei.m_duCpbRemovalDelayMinus1.resize( sei.m_numDecodingUnitsMinus1 + 1 );
 
       for( i = 0; i <= sei.m_numDecodingUnitsMinus1; i ++ )
       {
