@@ -899,8 +899,6 @@ Void TEncTop::xInitSPS()
 
   m_cSPS.setTMVPFlagsPresent((getTMVPModeId() == 2 || getTMVPModeId() == 1));
 
-  m_cSPS.setTMVPFlagsPresent(false);
-
   m_cSPS.setMaxTrSize   ( 1 << m_uiQuadtreeTULog2MaxSize );
   
   m_cSPS.setUseAMP ( m_useAMP );
