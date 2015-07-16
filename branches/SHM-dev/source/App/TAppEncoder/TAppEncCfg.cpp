@@ -4279,7 +4279,10 @@ Void TAppEncCfg::xSetGlobal()
 
   // compute actual CU depth with respect to config depth and max transform size
   g_uiAddCUDepth  = 0;
-  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) ) g_uiAddCUDepth++;
+  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )
+  {
+    g_uiAddCUDepth++;
+  }
 
   g_uiAddCUDepth+=getMaxCUDepthOffset(m_chromaFormatIDC, m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
 
@@ -4312,9 +4315,7 @@ Void TAppEncCfg::xSetGlobal()
 #else
     g_bitDepth   [channelType] = m_internalBitDepth[channelType];
 #endif
-    g_maxTrDynamicRange[channelType] = m_useExtendedPrecision? std::max<Int>(15, (g_bitDepth[channelType] + 6)) : 15;
   }
-
 }
 #endif
 

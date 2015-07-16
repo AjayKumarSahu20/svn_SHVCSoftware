@@ -274,13 +274,17 @@ Void TEncTop::xInitScalingLists()
 {
   // Initialise scaling lists
   // The encoder will only use the SPS scaling lists. The PPS will never be marked present.
-
+  const Int maxLog2TrDynamicRange[MAX_NUM_CHANNEL_TYPE] =
+  {
+      m_cSPS.getMaxLog2TrDynamicRange(CHANNEL_TYPE_LUMA),
+      m_cSPS.getMaxLog2TrDynamicRange(CHANNEL_TYPE_CHROMA)
+  };
   if(getUseScalingListId() == SCALING_LIST_OFF)
   {
 #if SVC_EXTENSION
-    getTrQuant()->setFlatScalingList(m_cVPS.getChromaFormatIdc(&m_cSPS, m_layerId));
+    getTrQuant()->setFlatScalingList(m_cVPS.getChromaFormatIdc(&m_cSPS, m_layerId), maxLog2TrDynamicRange);
 #else
-    getTrQuant()->setFlatScalingList(m_cSPS.getChromaFormatIdc());
+    getTrQuant()->setFlatScalingList(m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange);
 #endif
     getTrQuant()->setUseScalingList(false);
     m_cSPS.setScalingListPresentFlag(false);
@@ -300,7 +304,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc() );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange );
     }
     else
     {
@@ -308,7 +312,8 @@ Void TEncTop::xInitScalingLists()
     m_cSPS.getScalingList().setDefaultScalingList ();
     m_cSPS.setScalingListPresentFlag(false);
     m_cPPS.setScalingListPresentFlag(false);
-    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc());
+
+    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange);
 #if SVC_EXTENSION
     }
 #endif
@@ -328,7 +333,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc() );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange );
     }
     else
     {
@@ -343,7 +348,7 @@ Void TEncTop::xInitScalingLists()
     m_cSPS.getScalingList().checkDcOfMatrix();
     m_cSPS.setScalingListPresentFlag(m_cSPS.getScalingList().checkDefaultScalingList());
     m_cPPS.setScalingListPresentFlag(false);
-    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc());
+    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange);
 #if SVC_EXTENSION
     }
 #endif
