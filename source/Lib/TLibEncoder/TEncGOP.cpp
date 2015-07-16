@@ -48,17 +48,19 @@
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
-
 #include <deque>
+
+#if SVC_EXTENSION
+#include <limits.h>
+Bool TEncGOP::m_signalledVPS = false;
+#endif
+
 using namespace std;
 
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
 Bool g_bFinalEncode = false;
 #endif
 
-#if SVC_EXTENSION
-Bool TEncGOP::m_signalledVPS = false;
-#endif
 
 //! \ingroup TLibEncoder
 //! \{
