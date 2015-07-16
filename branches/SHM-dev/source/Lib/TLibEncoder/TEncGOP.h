@@ -163,6 +163,7 @@ private:
   Int   m_lastPocPeriodId;
   Bool  m_noRaslOutputFlag;
   Bool  m_prevPicHasEos;
+  static Bool m_signalledVPS;
 #endif
   
 public:
