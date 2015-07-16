@@ -108,8 +108,8 @@ protected:
   Int       m_phaseVerChroma[MAX_LAYERS];
   Bool      m_resamplePhaseSetPresentFlag [MAX_LAYERS];
 
-  Int       m_inputBitDepth   [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of input file
-  Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file
+  Int       m_inputBitDepth[MAX_NUM_CHANNEL_TYPE];            ///< bit-depth of input file
+  Int       m_outputBitDepth[MAX_NUM_CHANNEL_TYPE];           ///< bit-depth of output file
   Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
   UInt      m_saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];

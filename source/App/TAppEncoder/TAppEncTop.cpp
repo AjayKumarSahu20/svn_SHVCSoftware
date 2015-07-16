@@ -219,9 +219,6 @@ Void TAppEncTop::xInitLibCfg()
     g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-    g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-    g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
     // Set this to be used in Upsampling filter in function "TComUpsampleFilter::upsampleBasePic"
     g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_acLayerCfg[layer].m_layerId]   = g_bitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_acLayerCfg[layer].m_layerId] = g_bitDepth[CHANNEL_TYPE_CHROMA];
@@ -474,6 +471,11 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseConstrainedIntraPred                          ( m_bUseConstrainedIntraPred );
     m_acTEncTop[layer].setPCMLog2MinSize                                   ( m_uiPCMLog2MinSize);
     m_acTEncTop[layer].setUsePCM                                           ( m_usePCM );
+
+    for( UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++ )
+    {
+      m_acTEncTop[layer].setPCMBitDepth                                      ((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_MSBExtendedBitDepth[channelType] : m_acLayerCfg[layer].m_internalBitDepth[channelType]);
+    }
     m_acTEncTop[layer].setPCMLog2MaxSize                                   ( m_pcmLog2MaxSize);
     m_acTEncTop[layer].setMaxNumMergeCand                                  ( m_maxNumMergeCand );
 
@@ -897,6 +899,19 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseConstrainedIntraPred                           ( m_bUseConstrainedIntraPred );
   m_cTEncTop.setPCMLog2MinSize                                    ( m_uiPCMLog2MinSize);
   m_cTEncTop.setUsePCM                                            ( m_usePCM );
+
+  // set internal bit-depth and constants
+  for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
+  {
+//#if O0043_BEST_EFFORT_DECODING
+    //g_bitDepthInStream[channelType] = g_bitDepth[channelType] = m_internalBitDepth[channelType];
+//#else
+    //g_bitDepth   [channelType] = m_internalBitDepth[channelType];
+//#endif
+    m_cTEncTop.setPCMBitDepth((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[channelType] : m_internalBitDepth[channelType]);
+    //g_maxTrDynamicRange[channelType] = m_useExtendedPrecision? std::max<Int>(15, (g_bitDepth[channelType] + 6)) : 15;
+  }
+
   m_cTEncTop.setPCMLog2MaxSize                                    ( m_pcmLog2MaxSize);
   m_cTEncTop.setMaxNumMergeCand                                   ( m_maxNumMergeCand );
 
@@ -1082,7 +1097,6 @@ Void TAppEncTop::xCreateLib()
     for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-      g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
     }
 
 #if LAYER_CTB
@@ -1182,7 +1196,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-      g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
     }
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -1223,9 +1236,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
         g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
         vps->setLayerIdIncludedFlag(true, setId, layerId);
       }
     }
@@ -1242,9 +1252,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         UInt layerId = vps->getLayerIdInNuh(layerIdx);
         g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
         g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
-        g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA]   : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
         if (layerId <= setId)
         {
@@ -1698,9 +1705,6 @@ Void TAppEncTop::encode()
     g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
     g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
-    g_PCMBitDepth[CHANNEL_TYPE_LUMA]   = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-    g_PCMBitDepth[CHANNEL_TYPE_CHROMA] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
     // allocate original YUV buffer
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
@@ -1738,7 +1742,6 @@ Void TAppEncTop::encode()
         for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-          g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         }
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -1823,7 +1826,6 @@ Void TAppEncTop::encode()
         for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
         {
           g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-          g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
         }
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
@@ -1896,7 +1898,6 @@ Void TAppEncTop::encode()
       for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
       {
         g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-        g_PCMBitDepth[channelTypeIndex] = m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_inputBitDepth[channelTypeIndex] : m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
       }
 
       // write bistream to file if necessary

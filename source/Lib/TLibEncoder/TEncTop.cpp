@@ -900,7 +900,7 @@ Void TEncTop::xInitSPS()
   m_cSPS.setTMVPFlagsPresent((getTMVPModeId() == 2 || getTMVPModeId() == 1));
 
   m_cSPS.setMaxTrSize   ( 1 << m_uiQuadtreeTULog2MaxSize );
-  
+
   m_cSPS.setUseAMP ( m_useAMP );
 
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
@@ -912,7 +912,7 @@ Void TEncTop::xInitSPS()
     m_cSPS.setBitDepth    (ChannelType(channelType), g_bitDepth[channelType]            );
     m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (g_bitDepth[channelType] - 8)));
 #endif
-    m_cSPS.setPCMBitDepth (ChannelType(channelType), g_PCMBitDepth[channelType]         );
+    m_cSPS.setPCMBitDepth (ChannelType(channelType), m_PCMBitDepth[channelType]         );
   }
 
   m_cSPS.setUseExtendedPrecision(m_useExtendedPrecision);
