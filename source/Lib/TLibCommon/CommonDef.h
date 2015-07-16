@@ -50,6 +50,12 @@
 #endif // _MSC_VER > 1000
 #include "TypeDef.h"
 
+#ifdef _MSC_VER
+#if _MSC_VER <= 1500
+inline Int64 abs (Int64 x) { return _abs64(x); };
+#endif
+#endif
+
 //! \ingroup TLibCommon
 //! \{
 
@@ -59,9 +65,9 @@
 
 #if SVC_EXTENSION
 #include <vector>
-#define NV_VERSION        "9.0 (HM-16.3)"                 ///< Current software version
+#define NV_VERSION        "9.0 (HM-16.3)"        ///< Current SHM software version
 #else
-#define NV_VERSION        "16.3"                ///< Current software version
+#define NV_VERSION        "16.3"                 ///< Current software version
 #endif
 
 // ====================================================================================================================
