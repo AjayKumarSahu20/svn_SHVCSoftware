@@ -250,9 +250,9 @@ public:
   ParameterSetManager* getParameterSetManager()                             { return &m_parameterSetManager; }
 
 #if CONFORMANCE_BITSTREAM_MODE
-  std::vector<TComPic>* getConfListPic() {return &m_confListPic; }
-  Bool      const getConfModeFlag() { return m_confModeFlag; }
-  Void      setConfModeFlag(Bool x) { m_confModeFlag = x; }
+  std::vector<TComPic>* getConfListPic() { return &m_confListPic; }
+  Bool      getConfModeFlag() const      { return m_confModeFlag; }
+  Void      setConfModeFlag(Bool x)      { m_confModeFlag = x;    }
 #endif
 #endif //SVC_EXTENSION
 

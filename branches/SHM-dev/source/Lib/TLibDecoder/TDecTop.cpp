@@ -1320,7 +1320,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         UInt64 uiPos = (UInt64) pcSlice->getPOC() * uiWidth * uiHeight * 3 / 2;
         if( is16bit )
         {
-            uiPos <<= 1;
+          uiPos <<= 1;
         }
 
         pFile->seekg((UInt)uiPos, ios::beg );
