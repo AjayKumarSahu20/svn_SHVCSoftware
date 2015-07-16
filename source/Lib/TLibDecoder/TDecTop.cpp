@@ -1317,7 +1317,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         Int len = uiWidth * (is16bit ? 2 : 1);
         UChar *buf = new UChar[len];
 
-        UInt64 uiPos = (UInt64) m_apcSlicePilot->getPOC() * uiWidth * uiHeight * 3 / 2;
+        UInt64 uiPos = (UInt64) pcSlice->getPOC() * uiWidth * uiHeight * 3 / 2;
         if( is16bit )
         {
             uiPos <<= 1;
@@ -1409,7 +1409,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 #endif
 
-    if ( m_layerId == 0 && m_apcSlicePilot->getRapPicFlag() && getNoClrasOutputFlag() )
+    if ( m_layerId == 0 && pcSlice->getRapPicFlag() && getNoClrasOutputFlag() )
     {
       for (UInt i = 0; i < vps->getMaxLayers(); i++)
       {
@@ -1424,20 +1424,20 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_POC
     m_pcPic->setCurrAuFlag( true );
 
-    if( m_pcPic->getLayerId() > 0 && m_apcSlicePilot->isIDR() && !m_nonBaseIdrPresentFlag )
+    if( m_pcPic->getLayerId() > 0 && pcSlice->isIDR() && !m_nonBaseIdrPresentFlag )
     {
       // IDR picture with nuh_layer_id > 0 present
       m_nonBaseIdrPresentFlag = true;
-      m_nonBaseIdrType = (m_apcSlicePilot->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL);
+      m_nonBaseIdrType = (pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL);
     }
     else
     {
-      if( m_apcSlicePilot->getNalUnitType() != NAL_UNIT_CODED_SLICE_IDR_W_RADL )
+      if( pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_IDR_W_RADL )
       {
         // Picture with nal_unit_type not equal IDR_W_RADL present
         m_picNonIdrWithRadlPresentFlag = true;
       }
-      if( m_apcSlicePilot->getNalUnitType() != NAL_UNIT_CODED_SLICE_IDR_N_LP )
+      if( pcSlice->getNalUnitType() != NAL_UNIT_CODED_SLICE_IDR_N_LP )
       {
         // Picture with nal_unit_type not equal IDR_N_LP present
         m_picNonIdrNoLpPresentFlag = true;
@@ -1446,17 +1446,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     if( !m_checkPocRestrictionsForCurrAu )  // Will be true for the first slice/picture of the AU
     {
       m_checkPocRestrictionsForCurrAu = true;
-      m_pocResetIdcOrCurrAu = m_apcSlicePilot->getPocResetIdc();
+      m_pocResetIdcOrCurrAu = pcSlice->getPocResetIdc();
       if( m_pcPic->getLayerId() == 0 )
       {
         // Base layer picture is present
         m_baseLayerPicPresentFlag = true;
-        if( m_apcSlicePilot->isIRAP() )
+        if( pcSlice->isIRAP() )
         {
           // Base layer picture is IRAP
           m_baseLayerIrapFlag = true;
         }
-        if( m_apcSlicePilot->isIDR() )
+        if( pcSlice->isIDR() )
         {
           // Base layer picture is IDR
           m_baseLayerIdrFlag = true;
@@ -1468,7 +1468,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
             /* When the picture with nuh_layer_id equal to 0 in an access unit is not an IDR picture 
             and vps_base_layer_internal_flag is equal to 1, the value of poc_reset_idc shall not be equal to 2 
             for any picture in the access unit. */
-            assert( m_apcSlicePilot->getPocResetIdc() != 2 );
+            assert( pcSlice->getPocResetIdc() != 2 );
           }
         }
       }
@@ -1476,22 +1476,22 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     else
     {
       // The value of poc_reset_idc of all coded pictures that are present in the bitstream in an access unit shall be the same.
-      assert( m_pocResetIdcOrCurrAu == m_apcSlicePilot->getPocResetIdc() );
+      assert( m_pocResetIdcOrCurrAu == pcSlice->getPocResetIdc() );
 
       /* When the picture in an access unit with nuh_layer_id equal to 0 is an IRAP picture and vps_base_layer_internal_flag is equal to 1 
       and there is at least one other picture in the same access unit that is not an IRAP picture, 
       the value of poc_reset_idc shall be equal to 1 or 2 for all pictures in the access unit. */
-      if( m_baseLayerPicPresentFlag && m_baseLayerIrapFlag && !m_apcSlicePilot->isIRAP() && vps->getBaseLayerInternalFlag() )
+      if( m_baseLayerPicPresentFlag && m_baseLayerIrapFlag && !pcSlice->isIRAP() && vps->getBaseLayerInternalFlag() )
       {
-        assert( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 );
+        assert( pcSlice->getPocResetIdc() == 1 || pcSlice->getPocResetIdc() == 2 );
       }
 
       /* When the picture with nuh_layer_id equal to 0 in an access unit is an IDR picture and 
       vps_base_layer_internal_flag is equal to 1 and there is at least one non-IDR picture in the same access unit, 
       the value of poc_reset_idc shall be equal to 2 for all pictures in the access unit. */
-      if( m_baseLayerPicPresentFlag && m_baseLayerIdrFlag && !m_apcSlicePilot->isIDR() && vps->getBaseLayerInternalFlag() )
+      if( m_baseLayerPicPresentFlag && m_baseLayerIdrFlag && !pcSlice->isIDR() && vps->getBaseLayerInternalFlag() )
       {
-        assert( m_apcSlicePilot->getPocResetIdc() == 2 );
+        assert( pcSlice->getPocResetIdc() == 2 );
       }
 
       /* When there is at least one picture that has nuh_layer_id greater than 0 and that is an IDR picture 
@@ -1503,7 +1503,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
             ( m_nonBaseIdrType == 0 && m_picNonIdrNoLpPresentFlag )
         ))
       {
-        assert( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 );
+        assert( pcSlice->getPocResetIdc() == 1 || pcSlice->getPocResetIdc() == 2 );
       }
     }
 #endif
