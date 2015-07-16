@@ -57,11 +57,6 @@ Bool TEncGOP::m_signalledVPS = false;
 
 using namespace std;
 
-#if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
-Bool g_bFinalEncode = false;
-#endif
-
-
 //! \ingroup TLibEncoder
 //! \{
 
@@ -2604,20 +2599,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       pcSlice->setFinalized(true);
 
-#if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
-      g_bFinalEncode = true;
-#endif
-
       pcSlice->clearSubstreamSizes(  );
       {
         UInt numBinsCoded = 0;
         m_pcSliceEncoder->encodeSlice(pcPic, &(substreamsOut[0]), numBinsCoded);
         binCountsInNalUnits+=numBinsCoded;
       }
-
-#if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
-      g_bFinalEncode = false;
-#endif
 
       {
         // Construct the final bitstream by concatenating substreams.
