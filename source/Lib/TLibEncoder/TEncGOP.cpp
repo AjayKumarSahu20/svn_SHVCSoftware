@@ -48,15 +48,16 @@
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
-#if SVC_EXTENSION
-#include <limits.h>
-#endif
 
 #include <deque>
 using namespace std;
 
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
 Bool g_bFinalEncode = false;
+#endif
+
+#if SVC_EXTENSION
+Bool TEncGOP::m_signalledVPS = false;
 #endif
 
 //! \ingroup TLibEncoder
@@ -215,6 +216,13 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 
 Int TEncGOP::xWriteVPS (AccessUnit &accessUnit, const TComVPS *vps)
 {
+#if SVC_EXTENSION
+  if( m_signalledVPS )
+  {
+    return 0;
+  }
+  m_signalledVPS = true;
+#endif
   OutputNALUnit nalu(NAL_UNIT_VPS);
   m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
   m_pcEntropyCoder->encodeVPS(vps);
