@@ -4077,14 +4077,14 @@ Void TAppEncCfg::xCheckParameter()
 #if Q0096_OVERLAY_SEI
   if( m_overlaySEIEnabled && !m_overlayInfoCancelFlag )
   {
-    xConfirmPara( m_overlayContentAuxIdMinus128 < 0 || m_overlayContentAuxIdMinus128 > 31, "SEIOverlayContentAuxIdMinus128 must be in the range of 0 to 31");
-    xConfirmPara( m_overlayLabelAuxIdMinus128 < 0 || m_overlayLabelAuxIdMinus128 > 31, "SEIOverlayLabelAuxIdMinus128 must be in the range of 0 to 31");
-    xConfirmPara( m_overlayAlphaAuxIdMinus128 < 0 || m_overlayAlphaAuxIdMinus128 > 31, "SEIOverlayAlphaAuxIdMinus128 must be in the range of 0 to 31");
-    xConfirmPara( m_numOverlaysMinus1 < 0 || m_numOverlaysMinus1 > 15, "SEIOverlayNumOverlaysMinus1 must be in the range of 0 to 15");
+    xConfirmPara( m_overlayContentAuxIdMinus128 > 31, "SEIOverlayContentAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayLabelAuxIdMinus128 > 31, "SEIOverlayLabelAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_overlayAlphaAuxIdMinus128 > 31, "SEIOverlayAlphaAuxIdMinus128 must be in the range of 0 to 31");
+    xConfirmPara( m_numOverlaysMinus1 > 15, "SEIOverlayNumOverlaysMinus1 must be in the range of 0 to 15");
     for (Int i=0 ; i<=m_numOverlaysMinus1 ; i++ )
     {
-      xConfirmPara( m_overlayIdx[i] < 0 || m_overlayIdx[i] > 255, "SEIOverlayIdx must be in the range of 0 to 255");
-      xConfirmPara( m_numOverlayElementsMinus1[i] < 0 || m_numOverlayElementsMinus1[i] > 255, "SEIOverlayNumElementsMinus1 must be in the range of 0 to 255");
+      xConfirmPara( m_overlayIdx[i] > 255, "SEIOverlayIdx must be in the range of 0 to 255");
+      xConfirmPara( m_numOverlayElementsMinus1[i] > 255, "SEIOverlayNumElementsMinus1 must be in the range of 0 to 255");
     }
   }
 #endif
