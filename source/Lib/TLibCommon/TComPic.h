@@ -98,9 +98,9 @@ public:
   virtual ~TComPic();
 
 #if SVC_EXTENSION
-  Void          create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, const UInt uiMaxWidth, const UInt uiMaxHeight, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/, const UInt layerId );
+  Void          create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/, const UInt layerId );
 #else
-  Void          create( const TComSPS &sps, const TComPPS &pps, const UInt uiMaxWidth, const UInt uiMaxHeight, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/ );
+  Void          create( const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/ );
 #endif
 
   virtual Void  destroy();
@@ -120,7 +120,6 @@ public:
   Int           getPOC() const        { return  m_picSym.getSlice(m_uiCurrSliceIdx)->getPOC();  }
   TComDataCU*   getCtu( UInt ctuRsAddr )           { return  m_picSym.getCtu( ctuRsAddr ); }
   const TComDataCU* getCtu( UInt ctuRsAddr ) const { return  m_picSym.getCtu( ctuRsAddr ); }
-
 
   TComPicYuv*   getPicYuvOrg()        { return  m_apcPicYuv[PIC_YUV_ORG]; }
   TComPicYuv*   getPicYuvRec()        { return  m_apcPicYuv[PIC_YUV_REC]; }
@@ -185,26 +184,26 @@ public:
   const SEIMessages& getSEIs() const { return m_SEIs; }
 
 #if SVC_EXTENSION
-  Void          setLayerId (UInt layerId)   { m_layerId = layerId; }
-  UInt          getLayerId ()               { return m_layerId; }
-  UInt          getLayerIdx()               { return getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId); }
-  Bool          isSpatialEnhLayer(UInt refLayerIdc)             { return m_bSpatialEnhLayer[refLayerIdc]; }
-  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b) { m_bSpatialEnhLayer[refLayerIdc] = b; }
-  Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p) { m_pcFullPelBaseRec[refLayerIdc] = p; }
-  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)  { return  m_pcFullPelBaseRec[refLayerIdc];  }
-  Bool          isILR( UInt currLayerId )   { return ( m_bIsLongTerm && m_layerId < currLayerId ); }
-  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc]; }
-  Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;    }
-  Void          copyUpsampledMvField  ( UInt refLayerIdc, TComPic* pcPicBase );
-  Void          initUpsampledMvField  ();
+  Void          setLayerId(UInt layerId)                                    { m_layerId = layerId;                                       }
+  UInt          getLayerId()                                                { return m_layerId;                                          }
+  UInt          getLayerIdx()                                               { return getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId); }
+  Bool          isSpatialEnhLayer(UInt refLayerIdc)                         { return m_bSpatialEnhLayer[refLayerIdc];                    }
+  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b)           { m_bSpatialEnhLayer[refLayerIdc] = b;                       }
+  Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p)       { m_pcFullPelBaseRec[refLayerIdc] = p;                       }
+  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)                      { return  m_pcFullPelBaseRec[refLayerIdc];                   }
+  Bool          isILR( UInt currLayerId )                                   { return ( m_bIsLongTerm && m_layerId < currLayerId );       }
+  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc];       }
+  Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;          }
+  Void          copyUpsampledMvField(UInt refLayerIdc);
+  Void          initUpsampledMvField();
   Bool          checkSameRefInfo();
   Void          copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
 #if CGS_3D_ASYMLUT
-  Void          setFrameBit( Int n )  { m_nFrameBit = n;    }
-  Int           getFrameBit()         { return m_nFrameBit; }
+  Void          setFrameBit( Int n )                                        { m_nFrameBit = n;     }
+  Int           getFrameBit()                                               { return m_nFrameBit;  }
 #endif
-  Bool          isCurrAu() { return m_currAuFlag; }
-  Void          setCurrAuFlag(Bool x) {m_currAuFlag = x; }
+  Bool          isCurrAu()                                                  { return m_currAuFlag; }
+  Void          setCurrAuFlag(Bool x)                                       { m_currAuFlag = x;    }
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TComPic
 

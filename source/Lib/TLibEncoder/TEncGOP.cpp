@@ -209,10 +209,11 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
 
     m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, bitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
     m_Enc3DAsymLUTPPS.create( m_pcCfg->getCGSMaxOctantDepth(), prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, prevBitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
+
     if(!m_pColorMappedPic)
     {
       m_pColorMappedPic = new TComPicYuv;
-      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), m_ppcTEncTop[0]->getChromaFormatIDC(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), m_ppcTEncTop[0]->getChromaFormatIDC(), pcTEncTop->getSPS()->getMaxCUWidth(), pcTEncTop->getSPS()->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
     }
   }
 #endif
@@ -3161,7 +3162,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   TComPicYuv cscd;
   if (conversion!=IPCOLOURSPACE_UNCHANGED)
   {
-    cscd.create(pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), pcPicD->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+    cscd.create(pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), pcPicD->getChromaFormat(), pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), 0, false);
 #if SVC_EXTENSION
     TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, pcPic->getSlice(0)->getBitDepths().recon, false);
 #else
@@ -3384,7 +3385,7 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
     for(UInt fieldNum=0; fieldNum<2; fieldNum++)
     {
       TComPicYuv &reconField=*(apcPicRecFields[fieldNum]);
-      cscd[fieldNum].create(reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), reconField.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
+      cscd[fieldNum].create(reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), reconField.getChromaFormat(), reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), 0, false);
 #if SVC_EXTENSION
       TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, pcPicOrgFirstField->getSlice(0)->getBitDepths().recon, false);
 #else

@@ -371,6 +371,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 {
   TComPic* pcPic = rpcBestCU->getPic();
   DEBUG_STRING_NEW(sDebug)
+  const TComPPS &pps=*(rpcTempCU->getSlice()->getPPS());
+  const TComSPS &sps=*(rpcTempCU->getSlice()->getSPS());
+  const UInt maxCUWidth = sps.getMaxCUWidth();
 
   // get Original YUV data from picture
   m_ppcOrigYuv[uiDepth]->copyFromPicYuv( pcPic->getPicYuvOrg(), rpcBestCU->getCtuRsAddr(), rpcBestCU->getZorderIdxInCtu() );
@@ -395,15 +398,15 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 
   const UInt numberValidComponents = rpcBestCU->getPic()->getNumberValidComponents();
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
+  if( (maxCUWidth>>uiDepth) >= (maxCUWidth >> ( pps.getMaxCuDQPDepth())) ) // TODO: tidy expression
   {
     Int idQP = m_pcEncCfg->getMaxDeltaQP();
 #if SVC_EXTENSION
     iMinQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
     iMaxQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
 #else
-    iMinQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
-    iMaxQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
+    iMinQP = Clip3( -sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
+    iMaxQP = Clip3( -sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
 #endif
   }
   else
@@ -422,7 +425,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 
   const Int lowestQP = iMinQP; // For TQB, use this QP which is the lowest non TQB QP tested (rather than QP'=0) - that way delta QPs are smaller, and TQB can be tested at all CU levels.
 
-  if ( (rpcTempCU->getSlice()->getPPS()->getTransquantBypassEnableFlag()) )
+  if ( (pps.getTransquantBypassEnableFlag()) )
   {
     isAddLowestQP = true; // mark that the first iteration is to cost TQB mode.
     iMinQP = iMinQP - 1;  // increase loop variable range by 1, to allow testing of TQB mode along with other QPs
@@ -438,8 +441,8 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
   if ( ( uiRPelX < rpcBestCU->getSlice()->getPicWidthInLumaSamples() ) &&
        ( uiBPelY < rpcBestCU->getSlice()->getPicHeightInLumaSamples() ) )
 #else
-  if ( ( uiRPelX < rpcBestCU->getSlice()->getSPS()->getPicWidthInLumaSamples() ) &&
-       ( uiBPelY < rpcBestCU->getSlice()->getSPS()->getPicHeightInLumaSamples() ) )
+  if ( ( uiRPelX < sps.getPicWidthInLumaSamples() ) &&
+       ( uiBPelY < sps.getPicHeightInLumaSamples() ) )
 #endif
   {
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
@@ -491,9 +494,9 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         /* To exercise the current code, the index used for adjustment is based on
          * block position
          */
-        Int lgMinCuSize = pcSlice->getSPS()->getLog2MinCodingBlockSize() +
-                          std::max<Int>(0, pcSlice->getSPS()->getLog2DiffMaxMinCodingBlockSize()-Int(pcSlice->getPPS()->getMaxCuChromaQpAdjDepth()));
-        m_ChromaQpAdjIdc = ((uiLPelX >> lgMinCuSize) + (uiTPelY >> lgMinCuSize)) % (pcSlice->getPPS()->getChromaQpAdjTableSize() + 1);
+        Int lgMinCuSize = sps.getLog2MinCodingBlockSize() +
+                          std::max<Int>(0, sps.getLog2DiffMaxMinCodingBlockSize()-Int(pps.getMaxCuChromaQpAdjDepth()));
+        m_ChromaQpAdjIdc = ((uiLPelX >> lgMinCuSize) + (uiTPelY >> lgMinCuSize)) % (pps.getChromaQpAdjTableSize() + 1);
       }
 
       rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
@@ -590,7 +593,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           }
 
           //! Try AMP (SIZE_2NxnU, SIZE_2NxnD, SIZE_nLx2N, SIZE_nRx2N)
-          if(pcSlice->getSPS()->getUseAMP() && uiDepth < g_uiMaxCUDepth-g_uiAddCUDepth )
+          if(sps.getUseAMP() && uiDepth < g_uiMaxCUDepth-g_uiAddCUDepth )
           {
 #if AMP_ENC_SPEEDUP
             Bool bTestAMP_Hor = false, bTestAMP_Ver = false;
@@ -719,7 +722,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
           rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
           if( uiDepth == g_uiMaxCUDepth - g_uiAddCUDepth )
           {
-            if( rpcTempCU->getWidth(0) > ( 1 << rpcTempCU->getSlice()->getSPS()->getQuadtreeTULog2MinSize() ) )
+            if( rpcTempCU->getWidth(0) > ( 1 << sps.getQuadtreeTULog2MinSize() ) )
             {
               Double tmpIntraCost;
               xCheckRDCostIntra( rpcBestCU, rpcTempCU, tmpIntraCost, SIZE_NxN DEBUG_STRING_PASS_INTO(sDebug)   );
@@ -730,14 +733,14 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
         }
 
         // test PCM
-        if(pcPic->getSlice(0)->getSPS()->getUsePCM()
-          && rpcTempCU->getWidth(0) <= (1<<pcPic->getSlice(0)->getSPS()->getPCMLog2MaxSize())
-          && rpcTempCU->getWidth(0) >= (1<<pcPic->getSlice(0)->getSPS()->getPCMLog2MinSize()) )
+        if(sps.getUsePCM()
+          && rpcTempCU->getWidth(0) <= (1<<sps.getPCMLog2MaxSize())
+          && rpcTempCU->getWidth(0) >= (1<<sps.getPCMLog2MinSize()) )
         {
 #if SVC_EXTENSION
           UInt uiRawBits = getTotalBits(rpcBestCU->getWidth(0), rpcBestCU->getHeight(0), rpcBestCU->getPic()->getChromaFormat(), pcPic->getSlice(0)->getBitDepths().recon);
 #else
-          UInt uiRawBits = getTotalBits(rpcBestCU->getWidth(0), rpcBestCU->getHeight(0), rpcBestCU->getPic()->getChromaFormat(), pcPic->getSlice(0)->getSPS()->getBitDepths().recon);
+          UInt uiRawBits = getTotalBits(rpcBestCU->getWidth(0), rpcBestCU->getHeight(0), rpcBestCU->getPic()->getChromaFormat(), sps.getBitDepths().recon);
 #endif
           UInt uiBestBits = rpcBestCU->getTotalBits();
           if((uiBestBits > uiRawBits) || (rpcBestCU->getTotalCost() > m_pcRdCost->calcRdCost(uiRawBits, 0)))
@@ -798,18 +801,18 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
     xFillPCMBuffer(rpcBestCU, m_ppcOrigYuv[uiDepth]);
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
+  if( (maxCUWidth>>uiDepth) == (maxCUWidth >> ( pps.getMaxCuDQPDepth())) ) // TODO: tidy expression
   {
     Int idQP = m_pcEncCfg->getMaxDeltaQP();
 #if SVC_EXTENSION
     iMinQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
     iMaxQP = Clip3( -rpcTempCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
 #else
-    iMinQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
-    iMaxQP = Clip3( -rpcTempCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
+    iMinQP = Clip3( -sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP-idQP );
+    iMaxQP = Clip3( -sps.getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, iBaseQP+idQP );
 #endif    
   }
-  else if( (g_uiMaxCUWidth>>uiDepth) > (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
+  else if( (maxCUWidth>>uiDepth) > (maxCUWidth >> ( pps.getMaxCuDQPDepth())) ) // TODO: tidy expression
   {
     iMinQP = iBaseQP;
     iMaxQP = iBaseQP;
@@ -854,7 +857,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
 #if SVC_EXTENSION
         if( ( pcSubBestPartCU->getCUPelX() < pcSlice->getPicWidthInLumaSamples() ) && ( pcSubBestPartCU->getCUPelY() < pcSlice->getPicHeightInLumaSamples() ) )
 #else
-        if( ( pcSubBestPartCU->getCUPelX() < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( pcSubBestPartCU->getCUPelY() < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+        if( ( pcSubBestPartCU->getCUPelX() < sps.getPicWidthInLumaSamples() ) && ( pcSubBestPartCU->getCUPelY() < sps.getPicHeightInLumaSamples() ) )
 #endif
         {
           if ( 0 == uiPartUnitIdx) //initialize RD with previous depth buffer
@@ -902,7 +905,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, UInt u
       }
       rpcTempCU->getTotalCost()  = m_pcRdCost->calcRdCost( rpcTempCU->getTotalBits(), rpcTempCU->getTotalDistortion() );
 
-      if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( rpcTempCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && rpcTempCU->getSlice()->getPPS()->getUseDQP())
+      if( (maxCUWidth>>uiDepth) == (maxCUWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
       {
         Bool hasResidual = false;
         for( UInt uiBlkIdx = 0; uiBlkIdx < rpcTempCU->getTotalNumPart(); uiBlkIdx ++)
@@ -1044,15 +1047,20 @@ Int TEncCu::xComputeQP( TComDataCU* pcCU, UInt uiDepth )
  */
 Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 {
-  TComPic* pcPic = pcCU->getPic();
+        TComPic   *const pcPic   = pcCU->getPic();
+        TComSlice *const pcSlice = pcCU->getSlice();
+  const TComSPS   &sps =*(pcSlice->getSPS());
+  const TComPPS   &pps =*(pcSlice->getPPS());
 
-  Bool bBoundary = false;
-  UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
-  UInt uiRPelX   = uiLPelX + (g_uiMaxCUWidth>>uiDepth)  - 1;
-  UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
-  UInt uiBPelY   = uiTPelY + (g_uiMaxCUHeight>>uiDepth) - 1;
+  const UInt maxCUWidth  = sps.getMaxCUWidth();
+  const UInt maxCUHeight = sps.getMaxCUHeight();
 
-  TComSlice * pcSlice = pcCU->getPic()->getSlice(pcCU->getPic()->getCurrSliceIdx());
+        Bool bBoundary = false;
+        UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
+  const UInt uiRPelX   = uiLPelX + (maxCUWidth>>uiDepth)  - 1;
+        UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
+  const UInt uiBPelY   = uiTPelY + (maxCUHeight>>uiDepth) - 1;
+
 #if HIGHER_LAYER_IRAP_SKIP_FLAG
   if (m_pcEncCfg->getSkipPictureAtArcSwitch() && m_pcEncCfg->getAdaptiveResolutionChange() > 0 && pcSlice->getLayerId() == 1 && pcSlice->getPOC() == m_pcEncCfg->getAdaptiveResolutionChange())
   {
@@ -1063,7 +1071,7 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 #if SVC_EXTENSION
   if( ( uiRPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples() ) )
 #else
-  if( ( uiRPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+  if( ( uiRPelX < sps.getPicWidthInLumaSamples() ) && ( uiBPelY < sps.getPicHeightInLumaSamples() ) )
 #endif
   {
     m_pcEntropyCoder->encodeSplitFlag( pcCU, uiAbsPartIdx, uiDepth );
@@ -1076,12 +1084,12 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   if( ( ( uiDepth < pcCU->getDepth( uiAbsPartIdx ) ) && ( uiDepth < (g_uiMaxCUDepth-g_uiAddCUDepth) ) ) || bBoundary )
   {
     UInt uiQNumParts = ( pcPic->getNumPartitionsInCtu() >> (uiDepth<<1) )>>2;
-    if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && pcCU->getSlice()->getPPS()->getUseDQP())
+    if( (maxCUWidth>>uiDepth) == (maxCUWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
     {
       setdQPFlag(true);
     }
 
-    if( (g_uiMaxCUWidth>>uiDepth) == (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj())
+    if( (maxCUWidth>>uiDepth) == (maxCUWidth >> ( pps.getMaxCuChromaQpAdjDepth())) && pcSlice->getUseChromaQpAdj()) // TODO: tidy expression
     {
       setCodeChromaQpAdjFlag(true);
     }
@@ -1094,7 +1102,7 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 #if SVC_EXTENSION
       if( ( uiLPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getPicHeightInLumaSamples() ) )
 #else
-      if( ( uiLPelX < pcSlice->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
+      if( ( uiLPelX < sps.getPicWidthInLumaSamples() ) && ( uiTPelY < sps.getPicHeightInLumaSamples() ) )
 #endif
       {
         xEncodeCU( pcCU, uiAbsPartIdx, uiDepth+1 );
@@ -1103,22 +1111,22 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
     return;
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) && pcCU->getSlice()->getPPS()->getUseDQP())
+  if( (maxCUWidth>>uiDepth) >= (maxCUWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
   {
     setdQPFlag(true);
   }
 
-  if( (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj())
+  if( (maxCUWidth>>uiDepth) >= (maxCUWidth >> ( pps.getMaxCuChromaQpAdjDepth())) && pcSlice->getUseChromaQpAdj()) // TODO: tidy expression
   {
     setCodeChromaQpAdjFlag(true);
   }
 
-  if (pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag())
+  if (pps.getTransquantBypassEnableFlag())
   {
     m_pcEntropyCoder->encodeCUTransquantBypassFlag( pcCU, uiAbsPartIdx );
   }
 
-  if( !pcCU->getSlice()->isIntra() )
+  if( !pcSlice->isIntra() )
   {
     m_pcEntropyCoder->encodeSkipFlag( pcCU, uiAbsPartIdx );
   }
@@ -1638,7 +1646,9 @@ Void TEncCu::xCheckDQP( TComDataCU* pcCU )
 {
   UInt uiDepth = pcCU->getDepth( 0 );
 
-  if( pcCU->getSlice()->getPPS()->getUseDQP() && (g_uiMaxCUWidth>>uiDepth) >= (g_uiMaxCUWidth >> ( pcCU->getSlice()->getPPS()->getMaxCuDQPDepth())) )
+  const TComPPS &pps = *(pcCU->getSlice()->getPPS());
+  const TComSPS &sps = *(pcCU->getSlice()->getSPS());
+  if ( pps.getUseDQP() && (sps.getMaxCUWidth()>>uiDepth) >= (sps.getMaxCUWidth() >> ( pps.getMaxCuDQPDepth())) ) // TODO: tidy expression
   {
     if ( pcCU->getQtRootCbf( 0) )
     {
@@ -1754,8 +1764,9 @@ Void TEncCu::xCtuCollectARLStats(TComDataCU* pCtu )
 
   TCoeff* pCoeffY = pCtu->getCoeff(COMPONENT_Y);
   TCoeff* pArlCoeffY = pCtu->getArlCoeff(COMPONENT_Y);
+  const TComSPS &sps = *(pCtu->getSlice()->getSPS());
 
-  UInt uiMinCUWidth = g_uiMaxCUWidth >> g_uiMaxCUDepth;
+  const UInt uiMinCUWidth = sps.getMaxCUWidth() >> g_uiMaxCUDepth;
   UInt uiMinNumCoeffInCU = 1 << uiMinCUWidth;
 
   memset( cSum, 0, sizeof( Double )*(LEVEL_RANGE+1) );

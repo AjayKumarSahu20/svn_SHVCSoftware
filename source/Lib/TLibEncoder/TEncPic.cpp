@@ -127,19 +127,22 @@ TEncPic::~TEncPic()
 
 #if SVC_EXTENSION
 // * \param vps reference to used VPS
-Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual, const UInt layerId )
+Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual, const UInt layerId )
 {
-  TComPic::create( vps, sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth, bIsVirtual, layerId );
+  TComPic::create( vps, sps, pps, uiMaxDepth, bIsVirtual, layerId );
 
   const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
   const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
 #else
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual )
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual )
 {
-  TComPic::create( sps, pps, uiMaxWidth, uiMaxHeight, uiMaxDepth, bIsVirtual );
-  const Int iWidth  = sps.getPicWidthInLumaSamples();
-  const Int iHeight = sps.getPicHeightInLumaSamples();
+  TComPic::create( sps, pps, uiMaxDepth, bIsVirtual );
+  const Int  iWidth      = sps.getPicWidthInLumaSamples();
+  const Int  iHeight     = sps.getPicHeightInLumaSamples();
 #endif
+
+  const UInt uiMaxWidth  = sps.getMaxCUWidth();
+  const UInt uiMaxHeight = sps.getMaxCUHeight();
   m_uiMaxAQDepth = uiMaxAQDepth;
   if ( uiMaxAQDepth > 0 )
   {
