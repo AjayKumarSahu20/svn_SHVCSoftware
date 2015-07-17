@@ -511,7 +511,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                              (scalEL.getWindowBottomOffset() == 0 ) 
                             );
 
-        Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
+        Bool sameBitDepths = ( getBitDepth(CHANNEL_TYPE_LUMA) == ilpPic[refLayerIdc]->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA) ) && ( getBitDepth(CHANNEL_TYPE_CHROMA) == ilpPic[refLayerIdc]->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) );
 
         // motion resampling constraint
         // Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction
@@ -1820,12 +1820,6 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
   this->setRPSidx(-1);
 }
 
-//! get AC and DC values for weighted pred
-Void  TComSlice::getWpAcDcParam(WPACDCParam *&wp)
-{
-  wp = m_weightACDCParam;
-}
-
 //! init AC and DC values for weighted pred
 Void  TComSlice::initWpAcDcParam()
 {
@@ -1881,7 +1875,11 @@ Void  TComSlice::initWpScaling(const TComSPS *sps)
           pwp->iOffset = 0;
         }
 
-        const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (g_bitDepth[toChannelType(ComponentID(yuv))]-8));
+#if SVC_EXTENSION
+        const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (getBitDepth(toChannelType(ComponentID(yuv)))-8));
+#else
+        const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (sps->getBitDepth(toChannelType(ComponentID(yuv)))-8));
+#endif
 
         pwp->w      = pwp->iWeight;
         pwp->o      = pwp->iOffset * offsetScalingFactor; //NOTE: This value of the ".o" variable is never used - .o is set immediately before it gets used
@@ -2097,8 +2095,11 @@ TComSPS::TComSPS()
 {
   for(Int ch=0; ch<MAX_NUM_CHANNEL_TYPE; ch++)
   {
-    m_uiBitDepth   [ch] = 8;
-    m_uiPCMBitDepth[ch] = 8;
+    m_bitDepths.recon[ch] = 8;
+#if O0043_BEST_EFFORT_DECODING
+    m_bitDepths.stream[ch] = 8;
+#endif
+    m_pcmBitDepths[ch] = 8;
     m_qpBDOffset   [ch] = 0;
   }
 
@@ -3559,7 +3560,17 @@ ChromaFormat TComVPS::getChromaFormatIdc( const TComSPS* sps, const UInt layerId
   return retVal;
 }
 
-UInt TComSlice::getBitDepthY()
+BitDepths& TComSlice::getBitDepths()
+{
+  static BitDepths bitDepths;
+
+  bitDepths.recon[CHANNEL_TYPE_LUMA] = getBitDepth(CHANNEL_TYPE_LUMA);
+  bitDepths.recon[CHANNEL_TYPE_CHROMA] = getBitDepth(CHANNEL_TYPE_CHROMA);
+
+  return bitDepths;
+}
+
+UInt TComSlice::getBitDepth(ChannelType type) const
 {
   UInt retVal, layerId = getLayerId();
 
@@ -3567,22 +3578,22 @@ UInt TComSlice::getBitDepthY()
   {
     if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
     {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVpsLuma();
+      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVps(type);
     }
     else
     {
-      retVal = m_pcSPS->getBitDepth(CHANNEL_TYPE_LUMA);
+      retVal = m_pcSPS->getBitDepth(type);
     }
   }
   else
   {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVpsLuma();
+    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVps(type);
   }
 
   return retVal;
 }
 
-UInt TComVPS::getBitDepthY( const TComSPS* sps, const UInt layerId ) const
+UInt TComVPS::getBitDepth( ChannelType type, const TComSPS* sps, const UInt layerId ) const
 {
   UInt retVal;
 
@@ -3590,75 +3601,25 @@ UInt TComVPS::getBitDepthY( const TComSPS* sps, const UInt layerId ) const
   {
     if( layerId == 0 && m_nonHEVCBaseLayerFlag )
     {
-      retVal = m_vpsRepFormat[layerId].getBitDepthVpsLuma();
+      retVal = m_vpsRepFormat[layerId].getBitDepthVps(type);
     }
     else
     {
-      retVal = sps->getBitDepth(CHANNEL_TYPE_LUMA);
+      retVal = sps->getBitDepth(type);
     }
   }
   else
   {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVpsLuma();
+    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVps(type);
   }
 
   return retVal;
 }
 
-UInt TComSlice::getBitDepthC()
+const BitDepths& TComVPS::getBitDepths( const TComSPS* sps, const UInt layerId ) const
 {
-  UInt retVal, layerId = getLayerId();
-
-  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVpsChroma();
-    }
-    else
-    {
-      retVal = m_pcSPS->getBitDepth(CHANNEL_TYPE_CHROMA);
-    }
-  }
-  else
-  {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVpsChroma();
-  }
-
-  return retVal;
-}
-
-UInt TComVPS::getBitDepthC( const TComSPS* sps, const UInt layerId ) const
-{
-  UInt retVal;
-
-  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      retVal = m_vpsRepFormat[layerId].getBitDepthVpsChroma();
-    }
-    else
-    {
-      retVal = sps->getBitDepth(CHANNEL_TYPE_CHROMA);
-    }
-  }
-  else
-  {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVpsChroma();
-  }
-
-  return retVal;
-}
-
-Int TComSlice::getQpBDOffsetY()
-{
-  return (getBitDepthY() - 8) * 6;
-}
-
-Int TComSlice::getQpBDOffsetC()
-{
-  return (getBitDepthC() - 8) * 6;
+  static const BitDepths bitDepths( getBitDepth(CHANNEL_TYPE_LUMA, sps, layerId), getBitDepth(CHANNEL_TYPE_CHROMA, sps, layerId) );
+  return bitDepths;
 }
 
 const Window& TComSlice::getConformanceWindow() const
@@ -3781,6 +3742,9 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
 
       // assign PPS to ILRP to be used for reference location offsets
       pcIlpPic[refLayerIdc]->getSlice(0)->setPPS( m_pcPic->getSlice(0)->getPPS() );
+
+      // assign SPS to ILRP to be used for obtaining bit depth
+      pcIlpPic[refLayerIdc]->getSlice(0)->setSPS( m_pcPic->getSlice(0)->getSPS() );
 
       // assing VPS to ILRP to be used for deriving layerIdx
       pcIlpPic[refLayerIdc]->getSlice(0)->setVPS( m_pcPic->getSlice(0)->getVPS() );

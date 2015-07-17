@@ -4307,16 +4307,6 @@ Void TAppEncCfg::xSetGlobal()
   g_uiAddCUDepth++;
   g_uiMaxCUDepth = m_uiMaxCUDepth;
 #endif
-
-  // set internal bit-depth and constants
-  for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
-  {
-#if O0043_BEST_EFFORT_DECODING
-    g_bitDepthInStream[channelType] = g_bitDepth[channelType] = m_internalBitDepth[channelType];
-#else
-    g_bitDepth   [channelType] = m_internalBitDepth[channelType];
-#endif
-  }
 }
 #endif
 
@@ -4488,7 +4478,7 @@ Void TAppEncCfg::xPrintParameter()
 
   printf("TOOL CFG: ");
 #if !SVC_EXTENSION
-  printf("IBD:%d ", ((g_bitDepth[CHANNEL_TYPE_LUMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]) || (g_bitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
+  printf("IBD:%d ", ((m_internalBitDepth[CHANNEL_TYPE_LUMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]) || (m_internalBitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
 #endif
   printf("HAD:%d ", m_bUseHADME           );
   printf("RDQ:%d ", m_useRDOQ            );

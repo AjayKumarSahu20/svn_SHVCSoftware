@@ -197,10 +197,18 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     if (pcTEncTop->getNumActiveRefLayers() > 0)
     {
       prevLayerIdx = pcTEncTop->getPredLayerIdx( pcTEncTop->getNumActiveRefLayers() - 1);
-      prevLayerId  = pcTEncTop->getRefLayerId(prevLayerIdx);
+      prevLayerId  = pcTEncTop->getRefLayerId(prevLayerIdx);      
     }
-    m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthLayer[CHANNEL_TYPE_LUMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcTEncTop->getLayerId()] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
-    m_Enc3DAsymLUTPPS.create(   m_pcCfg->getCGSMaxOctantDepth() , g_bitDepthLayer[CHANNEL_TYPE_LUMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][prevLayerId] , g_bitDepthLayer[CHANNEL_TYPE_LUMA][pcTEncTop->getLayerId()] , g_bitDepthLayer[CHANNEL_TYPE_CHROMA][pcTEncTop->getLayerId()] , m_pcCfg->getCGSMaxYPartNumLog2() /*, m_pcCfg->getCGSPhaseAlignment()*/ );
+
+    const TComVPS *vps = pcTEncTop->getVPS();
+
+    const Int bitDepthLuma = vps->getBitDepth(CHANNEL_TYPE_LUMA, pcTEncTop->getSPS(), pcTEncTop->getLayerId());
+    const Int bitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, pcTEncTop->getSPS(), pcTEncTop->getLayerId());
+    const Int prevBitDepthLuma = vps->getBitDepth(CHANNEL_TYPE_LUMA, m_ppcTEncTop[prevLayerIdx]->getSPS(), prevLayerId);
+    const Int prevBitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, m_ppcTEncTop[prevLayerIdx]->getSPS(), prevLayerId);
+
+    m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, bitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
+    m_Enc3DAsymLUTPPS.create( m_pcCfg->getCGSMaxOctantDepth(), prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, prevBitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
     if(!m_pColorMappedPic)
     {
       m_pColorMappedPic = new TComPicYuv;
@@ -1482,10 +1490,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcPic->setCurrSliceIdx(0);
 #if SVC_EXTENSION
     pcPic->setLayerId( m_layerId );
-    m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, isField );
-#else
-    m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, &(pcPic->getPicSym()->getSPS()), &(pcPic->getPicSym()->getPPS()), isField );
 #endif
+    m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, isField );
 
     //Set Frame/Field coding
     pcSlice->getPic()->setField(isField);
@@ -1677,7 +1683,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if( g_posScalingFactor[refLayerIdc][0] < (1<<16) || g_posScalingFactor[refLayerIdc][1] < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
             //downsampling
-            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
+            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths());
             
             m_Enc3DAsymLUTPPS.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
             m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
@@ -1708,7 +1714,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           // check for the sample prediction picture type
           if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )
           {
-            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec() );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0 )->getBitDepth(CHANNEL_TYPE_LUMA), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) );
           }
         }
         else
@@ -2363,7 +2369,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
 
 #if SVC_EXTENSION
-      sliceQP = Clip3( -pcSlice->getQpBDOffsetY(), MAX_QP, sliceQP );
+      sliceQP = Clip3( -pcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, sliceQP );
 #else
       sliceQP = Clip3( -pcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, sliceQP );
 #endif
@@ -2667,18 +2673,23 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     // cabac_zero_words processing
     {
+#if !SVC_EXTENSION
+      const TComSPS &sps=*(pcSlice->getSPS());
+#endif
       const Int log2subWidthCxsubHeightC = (pcPic->getComponentScaleX(COMPONENT_Cb)+pcPic->getComponentScaleY(COMPONENT_Cb));
       const Int minCuWidth  = pcPic->getMinCUWidth();
       const Int minCuHeight = pcPic->getMinCUHeight();
 #if SVC_EXTENSION
       const Int paddedWidth = ((pcSlice->getPicWidthInLumaSamples()  + minCuWidth  - 1) / minCuWidth) * minCuWidth;
       const Int paddedHeight= ((pcSlice->getPicHeightInLumaSamples() + minCuHeight - 1) / minCuHeight) * minCuHeight;
+      const Int rawBits = paddedWidth * paddedHeight *
+                             (pcSlice->getBitDepth(CHANNEL_TYPE_LUMA) + 2*(pcSlice->getBitDepth(CHANNEL_TYPE_CHROMA)>>log2subWidthCxsubHeightC));
 #else
       const Int paddedWidth = ((pcSlice->getSPS()->getPicWidthInLumaSamples()  + minCuWidth  - 1) / minCuWidth) * minCuWidth;
       const Int paddedHeight= ((pcSlice->getSPS()->getPicHeightInLumaSamples() + minCuHeight - 1) / minCuHeight) * minCuHeight;
-#endif
       const Int rawBits = paddedWidth * paddedHeight *
-                             (g_bitDepth[CHANNEL_TYPE_LUMA] + 2*(g_bitDepth[CHANNEL_TYPE_CHROMA]>>log2subWidthCxsubHeightC));
+                             (sps.getBitDepth(CHANNEL_TYPE_LUMA) + 2*(sps.getBitDepth(CHANNEL_TYPE_CHROMA)>>log2subWidthCxsubHeightC));
+#endif
       const std::size_t threshold = (32/3)*numBytesInVclNalUnits + (rawBits/32);
       if (binCountsInNalUnits >= threshold)
       {
@@ -2717,7 +2728,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if (m_pcCfg->getDecodedPictureHashSEIEnabled())
     {
       SEIDecodedPictureHash *decodedPictureHashSei = new SEIDecodedPictureHash();
-      m_seiEncoder.initDecodedPictureHashSEI(decodedPictureHashSei, pcPic, digestStr);
+#if SVC_EXTENSION
+      m_seiEncoder.initDecodedPictureHashSEI(decodedPictureHashSei, pcPic, digestStr, pcSlice->getBitDepths());
+#else
+      m_seiEncoder.initDecodedPictureHashSEI(decodedPictureHashSei, pcPic, digestStr, pcSlice->getSPS()->getBitDepths());
+#endif
       trailingSeiMessages.push_back(decodedPictureHashSei);
     }
 
@@ -2932,7 +2947,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 }
 
 #if !SVC_EXTENSION
-Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE)
+Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths)
 {
   assert (uiNumAllPicCoded == m_gcAnalyzeAll.getNumPic());
 
@@ -2947,16 +2962,16 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool pr
 
   //-- all
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
-  m_gcAnalyzeAll.printOut('a', chFmt, printMSEBasedSNR, printSequenceMSE);
+  m_gcAnalyzeAll.printOut('a', chFmt, printMSEBasedSNR, printSequenceMSE, bitDepths);
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
-  m_gcAnalyzeI.printOut('i', chFmt, printMSEBasedSNR, printSequenceMSE);
+  m_gcAnalyzeI.printOut('i', chFmt, printMSEBasedSNR, printSequenceMSE, bitDepths);
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
-  m_gcAnalyzeP.printOut('p', chFmt, printMSEBasedSNR, printSequenceMSE);
+  m_gcAnalyzeP.printOut('p', chFmt, printMSEBasedSNR, printSequenceMSE, bitDepths);
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
-  m_gcAnalyzeB.printOut('b', chFmt, printMSEBasedSNR, printSequenceMSE);
+  m_gcAnalyzeB.printOut('b', chFmt, printMSEBasedSNR, printSequenceMSE, bitDepths);
 
 #if _SUMMARY_OUT_
   m_gcAnalyzeAll.printSummary(chFmt, printSequenceMSE);
@@ -2975,7 +2990,7 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool pr
     // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
     printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-    m_gcAnalyzeAll_in.printOut('a', chFmt, printMSEBasedSNR, printSequenceMSE);
+    m_gcAnalyzeAll_in.printOut('a', chFmt, printMSEBasedSNR, printSequenceMSE, bitDepths);
 
 #if _SUMMARY_OUT_
     m_gcAnalyzeAll_in.printSummary(chFmt, printSequenceMSE);
@@ -2994,7 +3009,11 @@ Void TEncGOP::preLoopFilterPicAll( TComPic* pcPic, UInt64& ruiDist )
 
   if (!bCalcDist)
   {
-    ruiDist = xFindDistortionFrame(pcPic->getPicYuvOrg(), pcPic->getPicYuvRec());
+#if SVC_EXTENSION
+    ruiDist = xFindDistortionFrame(pcPic->getPicYuvOrg(), pcPic->getPicYuvRec(), pcPic->getSlice(0)->getBitDepths());
+#else
+    ruiDist = xFindDistortionFrame(pcPic->getPicYuvOrg(), pcPic->getPicYuvRec(), pcPic->getPicSym()->getSPS().getBitDepths());
+#endif
   }
 }
 
@@ -3065,7 +3084,7 @@ Void TEncGOP::xGetBuffer( TComList<TComPic*>&      rcListPic,
   return;
 }
 
-UInt64 TEncGOP::xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1)
+UInt64 TEncGOP::xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1, const BitDepths &bitDepths)
 {
   UInt64  uiTotalDiff = 0;
 
@@ -3074,7 +3093,7 @@ UInt64 TEncGOP::xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1)
     const ComponentID ch=ComponentID(chan);
     Pel*  pSrc0   = pcPic0 ->getAddr(ch);
     Pel*  pSrc1   = pcPic1 ->getAddr(ch);
-    UInt  uiShift     = 2 * DISTORTION_PRECISION_ADJUSTMENT(g_bitDepth[toChannelType(ch)]-8);
+    UInt  uiShift     = 2 * DISTORTION_PRECISION_ADJUSTMENT(bitDepths.recon[toChannelType(ch)]-8);
 
     const Int   iStride = pcPic0->getStride(ch);
     const Int   iWidth  = pcPic0->getWidth(ch);
@@ -3143,7 +3162,11 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   if (conversion!=IPCOLOURSPACE_UNCHANGED)
   {
     cscd.create(pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), pcPicD->getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
-    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, g_bitDepth, false);
+#if SVC_EXTENSION
+    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, pcPic->getSlice(0)->getBitDepths().recon, false);
+#else
+    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, pcPic->getPicSym()->getSPS().getBitDepths().recon, false);
+#endif
   }
   TComPicYuv &picd=(conversion==IPCOLOURSPACE_UNCHANGED)?*pcPicD : cscd;
 
@@ -3173,7 +3196,11 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       pOrg += iStride;
       pRec += iStride;
     }
-    const Int maxval = 255 << (g_bitDepth[toChannelType(ch)] - 8);
+#if SVC_EXTENSION
+    const Int maxval = 255 << (pcPic->getSlice(0)->getBitDepth(toChannelType(ch)) - 8);
+#else
+    const Int maxval = 255 << (pcPic->getPicSym()->getSPS().getBitDepth(toChannelType(ch)) - 8);
+#endif
     const Double fRefValue = (Double) maxval * maxval * iSize;
     dPSNR[ch]         = ( uiSSDtemp ? 10.0 * log10( fRefValue / (Double)uiSSDtemp ) : 999.99 );
     MSEyuvframe[ch]   = (Double)uiSSDtemp/(iSize);
@@ -3339,6 +3366,9 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
                                            TComPicYuv* pcPicRecFirstField, TComPicYuv* pcPicRecSecondField,
                                            const AccessUnit& accessUnit, Double dEncTime, const InputColourSpaceConversion conversion, const Bool printFrameMSE )
 {
+#if !SVC_EXTENSION
+  const TComSPS &sps=pcPicOrgFirstField->getPicSym()->getSPS();
+#endif
   Double  dPSNR[MAX_NUM_COMPONENT];
   TComPic    *apcPicOrgFields[2]={pcPicOrgFirstField, pcPicOrgSecondField};
   TComPicYuv *apcPicRecFields[2]={pcPicRecFirstField, pcPicRecSecondField};
@@ -3355,7 +3385,11 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
     {
       TComPicYuv &reconField=*(apcPicRecFields[fieldNum]);
       cscd[fieldNum].create(reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), reconField.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth);
-      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, g_bitDepth, false);
+#if SVC_EXTENSION
+      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, pcPicOrgFirstField->getSlice(0)->getBitDepths().recon, false);
+#else
+      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, sps.getBitDepths().recon, false);
+#endif
       apcPicRecFields[fieldNum]=cscd+fieldNum;
     }
   }
@@ -3399,7 +3433,11 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
         pRec += iStride;
       }
     }
-    const Int maxval = 255 << (g_bitDepth[toChannelType(ch)] - 8);
+#if SVC_EXTENSION
+    const Int maxval = 255 << (pcPicOrgFirstField->getSlice(0)->getBitDepth(toChannelType(ch)) - 8);
+#else
+    const Int maxval = 255 << (sps.getBitDepth(toChannelType(ch)) - 8);
+#endif
     const Double fRefValue = (Double) maxval * maxval * iSize*2;
     dPSNR[ch]         = ( uiSSDtemp ? 10.0 * log10( fRefValue / (Double)uiSSDtemp ) : 999.99 );
     MSEyuvframe[ch]   = (Double)uiSSDtemp/(iSize*2);
@@ -3683,7 +3721,12 @@ Void TEncGOP::applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices )
   Pel p0, p1, p2, q0, q1, q2;
 
   Int qp = pcPic->getSlice(0)->getSliceQp();
-  Int bitdepthScale = 1 << (g_bitDepth[CHANNEL_TYPE_LUMA]-8);
+#if SVC_EXTENSION
+  const Int bitDepthLuma=pcPic->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA);
+#else
+  const Int bitDepthLuma=pcPic->getSlice(0)->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA);
+#endif
+  Int bitdepthScale = 1 << (bitDepthLuma-8);
   Int beta = TComLoopFilter::getBeta( qp ) * bitdepthScale;
   const Int thr2 = (beta>>2);
   const Int thr1 = 2*bitdepthScale;
@@ -3756,7 +3799,7 @@ Void TEncGOP::applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices )
   rowSADsum /= picWidth;
 
   UInt64 avgSAD = ((colSADsum + rowSADsum)>>1);
-  avgSAD >>= (g_bitDepth[CHANNEL_TYPE_LUMA]-8);
+  avgSAD >>= (bitDepthLuma-8);
 
   if ( avgSAD > 2048 )
   {
@@ -4167,27 +4210,23 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt re
   }
 }
 
-Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest)
+Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth)
 {
-  Int inputBitDepth  = g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId];
-  Int outputBitDepth = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId];
+  pcYuvSrc->setBorderExtension(false);
+  pcYuvSrc->extendPicBorder   (); // extend the border.
+  pcYuvSrc->setBorderExtension(false);
+
+  Int iWidth  = pcYuvSrc->getWidth(COMPONENT_Y);
+  Int iHeight = pcYuvSrc->getHeight(COMPONENT_Y); 
+
+  if(!m_temp)
   {
-    pcYuvSrc->setBorderExtension(false);
-    pcYuvSrc->extendPicBorder   (); // extend the border.
-    pcYuvSrc->setBorderExtension(false);
-
-    Int iWidth  = pcYuvSrc->getWidth(COMPONENT_Y);
-    Int iHeight = pcYuvSrc->getHeight(COMPONENT_Y); 
-
-    if(!m_temp)
-    {
-      initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1);
-    }
-
-    filterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    inputBitDepth-outputBitDepth, 0);
-    filterImg(pcYuvSrc->getAddr(COMPONENT_Cb), pcYuvSrc->getStride(COMPONENT_Cb), pcYuvDest->getAddr(COMPONENT_Cb), pcYuvDest->getStride(COMPONENT_Cb), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 1);
-    filterImg(pcYuvSrc->getAddr(COMPONENT_Cr), pcYuvSrc->getStride(COMPONENT_Cr), pcYuvDest->getAddr(COMPONENT_Cr), pcYuvDest->getStride(COMPONENT_Cr), iHeight>>1, iWidth>>1, inputBitDepth-outputBitDepth, 2);  
+    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1);
   }
+
+  filterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    bitDepth, 0);
+  filterImg(pcYuvSrc->getAddr(COMPONENT_Cb), pcYuvSrc->getStride(COMPONENT_Cb), pcYuvDest->getAddr(COMPONENT_Cb), pcYuvDest->getStride(COMPONENT_Cb), iHeight>>1, iWidth>>1, bitDepth, 1);
+  filterImg(pcYuvSrc->getAddr(COMPONENT_Cr), pcYuvSrc->getStride(COMPONENT_Cr), pcYuvDest->getAddr(COMPONENT_Cr), pcYuvDest->getStride(COMPONENT_Cr), iHeight>>1, iWidth>>1, bitDepth, 2);  
 }
 const Int TEncGOP::m_phase_filter_0_t0[4][13]={
   {0,  2,  -3,  -9,   6,  39,  58,  39,   6,  -9,  -3,  2,  0},  
@@ -4228,15 +4267,7 @@ __attribute__((optimize("no-tree-vectorize")))
 #endif
 #endif
 #endif
-Void TEncGOP::filterImg(
-    Pel           *src,
-    Int           iSrcStride,
-    Pel           *dst,
-    Int           iDstStride,
-    Int           height1,  
-    Int           width1,  
-    Int           shift,
-    Int           plane)
+Void TEncGOP::filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, Int plane )
 {
   Int length = m_iTap;
   Int height2,width2;
@@ -4247,9 +4278,10 @@ Void TEncGOP::filterImg(
   Pel *p_src, *p_dst;
   Pel *p_src_line, *p_dst_line;
   Int **p_temp, *p_tmp;
+  Int shift = bitDepth.recon[CHANNEL_TYPE_LUMA] - bitDepth.recon[CHANNEL_TYPE_CHROMA];
   Int shift2 = 2*7+shift;
   Int shift_round = (1 << (shift2 - 1));
-  Int iMax = (1<<(g_bitDepth[CHANNEL_TYPE_LUMA]-shift))-1;
+  Int iMax = (1<<(bitDepth.recon[CHANNEL_TYPE_LUMA]-shift))-1;
   height2 = (height1 * m_iM) / m_iN;
   width2  = (width1  * m_iM) / m_iN;
 

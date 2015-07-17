@@ -214,9 +214,8 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 
     for ( Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(eRefPicList); refIdxTemp++ )
     {
-      WPACDCParam *currWeightACDCParam, *refWeightACDCParam;
-      slice->getWpAcDcParam(currWeightACDCParam);
-      slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
+      WPACDCParam *currWeightACDCParam = slice->getWpAcDcParam(); 
+      WPACDCParam *refWeightACDCParam  = slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam();
 
 #if SVC_EXTENSION
       UInt currLayerId = slice->getLayerId();
@@ -225,15 +224,20 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 
       if( validILRPic )
       {
-        refWeightACDCParam = (WPACDCParam *)g_refWeightACDCParam;
+        refWeightACDCParam = slice->getWpAcDcParam();
       }
 #endif
 
       for ( Int comp = 0; comp < numComp; comp++ )
       {
         const ComponentID compID        = ComponentID(comp);
-        const Int         range         = bUseHighPrecisionWeighting ? (1<<g_bitDepth[toChannelType(compID)])/2 : 128;
-        const Int         realLog2Denom = log2Denom + (bUseHighPrecisionWeighting ? RExt__PREDICTION_WEIGHTING_ANALYSIS_DC_PRECISION : (g_bitDepth[toChannelType(compID)] - 8));
+#if SVC_EXTENSION
+        const Int         bitDepth      = slice->getBitDepth(toChannelType(compID));
+#else
+        const Int         bitDepth      = slice->getSPS()->getBitDepth(toChannelType(compID));
+#endif
+        const Int         range         = bUseHighPrecisionWeighting ? (1<<bitDepth)/2 : 128;
+        const Int         realLog2Denom = log2Denom + (bUseHighPrecisionWeighting ? RExt__PREDICTION_WEIGHTING_ANALYSIS_DC_PRECISION : (bitDepth - 8));
         const Int         realOffset    = ((Int)1<<(realLog2Denom-1));
 
         // current frame
@@ -248,9 +252,13 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
         {
           refAC = ( refAC * currWeightACDCParam[comp].iSamples ) /refWeightACDCParam[comp].iSamples;
 
+          const Int bitDepthLuma = slice->getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int refBitDepthLuma  = slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int delta = bitDepthLuma - refBitDepthLuma;
+
           // jonint upsampling bitshift
-          refAC <<= (g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId]);
-          refDC <<= (g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId]);
+          refAC <<= delta;
+          refDC <<= delta;
         }
 #else
         const Int64 refDC  = refWeightACDCParam[comp].iDC;
@@ -344,7 +352,11 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *const slice, const Int log2Denom)
         const Int          iRefStride = slice->getRefPic(eRefPicList, iRefIdxTemp)->getPicYuvRec()->getStride(compID);
         const Int          iWidth     = pPic->getWidth(compID);
         const Int          iHeight    = pPic->getHeight(compID);
-        const Int          bitDepth   = g_bitDepth[toChannelType(compID)];
+#if SVC_EXTENSION
+        const Int          bitDepth   = slice->getBitDepth(toChannelType(compID));
+#else
+        const Int          bitDepth   = slice->getSPS()->getBitDepth(toChannelType(compID));
+#endif
 
         // calculate SAD costs with/without wp for luma
         iSADWP   += xCalcSADvalueWP(bitDepth, pOrg, pRef, iWidth, iHeight, iOrgStride, iRefStride, log2Denom, m_wp[iRefList][iRefIdxTemp][compID].iWeight, m_wp[iRefList][iRefIdxTemp][compID].iOffset, useHighPrecisionPredictionWeighting);

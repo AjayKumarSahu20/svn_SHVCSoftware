@@ -180,11 +180,10 @@ Void TDecTop::init()
 #endif
 #if SVC_EXTENSION
   m_cGopDecoder.init( m_ppcTDecTop, &m_cEntropyDecoder, &m_cSbacDecoder, &m_cBinCABAC, &m_cCavlcDecoder, &m_cSliceDecoder, &m_cLoopFilter, &m_cSAO);
-  m_cSliceDecoder.init( &m_cEntropyDecoder, &m_cCuDecoder, m_cSAO.getSaoMaxOffsetQVal() );
 #else
   m_cGopDecoder.init( &m_cEntropyDecoder, &m_cSbacDecoder, &m_cBinCABAC, &m_cCavlcDecoder, &m_cSliceDecoder, &m_cLoopFilter, &m_cSAO);
-  m_cSliceDecoder.init( &m_cEntropyDecoder, &m_cCuDecoder );
 #endif
+  m_cSliceDecoder.init( &m_cEntropyDecoder, &m_cCuDecoder );
   m_cEntropyDecoder.init(&m_cPrediction);
 }
 
@@ -498,9 +497,6 @@ Void TDecTop::xActivateParameterSets()
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
-
-        g_bitDepthLayer[CHANNEL_TYPE_LUMA][0] = repFormat->getBitDepthVpsLuma();
-        g_bitDepthLayer[CHANNEL_TYPE_CHROMA][0] = repFormat->getBitDepthVpsChroma();
       }
     }
 #endif
@@ -576,14 +572,6 @@ Void TDecTop::xActivateParameterSets()
 #endif //SVC_EXTENSION
 
     // TODO: remove the use of the following globals:
-    for (UInt channel = 0; channel < MAX_NUM_CHANNEL_TYPE; channel++)
-    {
-#if SVC_EXTENSION
-      g_bitDepth[channel] = isLuma(ChannelType(channel)) ? vps->getBitDepthY(sps, m_apcSlicePilot->getLayerId()) : vps->getBitDepthC(sps, m_apcSlicePilot->getLayerId());
-#else
-      g_bitDepth[channel] = sps->getBitDepth(ChannelType(channel));
-#endif      
-    }
     g_uiMaxCUWidth  = sps->getMaxCUWidth();
     g_uiMaxCUHeight = sps->getMaxCUHeight();
     g_uiMaxCUDepth  = sps->getMaxCUDepth();
@@ -1309,7 +1297,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
       if( pFile->good() )
       {
-        Bool is16bit  = g_bitDepthLayer[CHANNEL_TYPE_LUMA][0] > 8 || g_bitDepthLayer[CHANNEL_TYPE_CHROMA][0] > 8;
+        Bool is16bit  = pBLPic->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA) > 8 || pBLPic->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) > 8;
         UInt uiWidth  = pBLPic->getPicYuvRec()->getWidth(COMPONENT_Y);
         UInt uiHeight = pBLPic->getPicYuvRec()->getHeight(COMPONENT_Y);
 
@@ -1603,17 +1591,17 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
         if( pcSlice->getPPS()->getCGSFlag() && m_c3DAsymLUTPPS.isRefLayer( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) ) )
         {
-          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepthY() == m_c3DAsymLUTPPS.getInputBitDepthY() );
-          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepthC() == m_c3DAsymLUTPPS.getInputBitDepthC() );
-          assert( pcSlice->getBitDepthY() >= m_c3DAsymLUTPPS.getOutputBitDepthY() );
-          assert( pcSlice->getBitDepthY() >= m_c3DAsymLUTPPS.getOutputBitDepthC() );
+          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepth(CHANNEL_TYPE_LUMA) == m_c3DAsymLUTPPS.getInputBitDepthY() );
+          assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepth(CHANNEL_TYPE_CHROMA) == m_c3DAsymLUTPPS.getInputBitDepthC() );
+          assert( pcSlice->getBitDepth(CHANNEL_TYPE_LUMA) >= m_c3DAsymLUTPPS.getOutputBitDepthY() );
+          assert( pcSlice->getBitDepth(CHANNEL_TYPE_LUMA) >= m_c3DAsymLUTPPS.getOutputBitDepthC() );
 
           if( !m_pColorMappedPic )
           {
             initAsymLut(pcSlice->getBaseColPic(refLayerIdc)->getSlice(0));
           }
 
-          m_c3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(),  m_pColorMappedPic );
+          m_c3DAsymLUTPPS.colorMapping( pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec(), m_pColorMappedPic );
           pBaseColRec = m_pColorMappedPic;
         }
 #endif
@@ -1623,7 +1611,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
           // check for the sample prediction picture type
           if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )
           {
-            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, m_pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, m_pcPic->getPicYuvRec());
+            m_cPrediction.upsampleBasePic( pcSlice, refLayerIdc, m_pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, m_pcPic->getPicYuvRec(), pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepth(CHANNEL_TYPE_LUMA), pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getBitDepth(CHANNEL_TYPE_CHROMA));
           }
         }
         else
@@ -1803,9 +1791,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->getSPS()->getMaxLog2TrDynamicRange(CHANNEL_TYPE_CHROMA)
     };
 #if SVC_EXTENSION
-    m_cTrQuant.setFlatScalingList(pcSlice->getChromaFormatIdc(), maxLog2TrDynamicRange);
+    m_cTrQuant.setFlatScalingList(pcSlice->getChromaFormatIdc(), maxLog2TrDynamicRange, pcSlice->getBitDepths());
 #else
-    m_cTrQuant.setFlatScalingList(pcSlice->getSPS()->getChromaFormatIdc(), maxLog2TrDynamicRange);
+    m_cTrQuant.setFlatScalingList(pcSlice->getSPS()->getChromaFormatIdc(), maxLog2TrDynamicRange, pcSlice->getSPS()->getBitDepths());
 #endif
     m_cTrQuant.setUseScalingList(false);
   }
@@ -2209,14 +2197,8 @@ Void TDecTop::xInitILRP(TComSlice *slice)
   const TComVPS* vps  = slice->getVPS();
   const TComSPS* sps  = slice->getSPS();
 
-  Int bitDepthY   = slice->getBitDepthY();
-  Int bitDepthC   = slice->getBitDepthC();
-
   if( m_layerId > 0 )
   {
-
-    g_bitDepth[CHANNEL_TYPE_LUMA]     = bitDepthY;
-    g_bitDepth[CHANNEL_TYPE_CHROMA]   = bitDepthC;
     g_uiMaxCUWidth  = sps->getMaxCUWidth();
     g_uiMaxCUHeight = sps->getMaxCUHeight();
     g_uiMaxCUDepth  = sps->getMaxCUDepth();
@@ -2558,10 +2540,14 @@ Void TDecTop::xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, c
     Bool zeroPhase = pps.hasZeroResamplingPhase(vps.getRefLayerId(m_layerId, i));
 
     TDecTop *pcTDecTopBase = (TDecTop *)getRefLayerDec( i );
-    TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec(); 
+    TComPicYuv* pcPicYuvRecBase = (*(pcTDecTopBase->getListPic()->begin()))->getPicYuvRec();
 
-    UInt refLayerId = vps.getRefLayerId(m_layerId, i);
-    Bool sameBitDepths = ( g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] ) && ( g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_layerId] == g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] );
+    const Int bitDepthLuma = vps.getBitDepth(CHANNEL_TYPE_LUMA, &sps, m_layerId);
+    const Int bitDepthChroma = vps.getBitDepth(CHANNEL_TYPE_CHROMA, &sps, m_layerId);
+    const Int refBitDepthLuma = (*(pcTDecTopBase->getListPic()->begin()))->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA);
+    const Int refBitDepthChroma = (*(pcTDecTopBase->getListPic()->begin()))->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA);
+    
+    Bool sameBitDepths = ( bitDepthLuma == refBitDepthLuma ) && ( bitDepthChroma == refBitDepthChroma );
 
     if( pcPicYuvRecBase->getWidth(COMPONENT_Y) == vps.getPicWidthInLumaSamples(&sps, m_layerId) && pcPicYuvRecBase->getHeight(COMPONENT_Y) == vps.getPicHeightInLumaSamples(&sps, m_layerId) && equalOffsets && zeroPhase )
     {

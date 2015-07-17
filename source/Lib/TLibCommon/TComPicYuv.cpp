@@ -255,7 +255,7 @@ Void TComPicYuv::extendPicBorder ()
 
 
 // NOTE: This function is never called, but may be useful for developers.
-Void TComPicYuv::dump (const Char* pFileName, Bool bAdd) const
+Void TComPicYuv::dump (const Char* pFileName, const BitDepths &bitDepths, Bool bAdd) const
 {
   FILE* pFile;
   if (!bAdd)
@@ -271,7 +271,7 @@ Void TComPicYuv::dump (const Char* pFileName, Bool bAdd) const
   for(Int chan = 0; chan < getNumberValidComponents(); chan++)
   {
     const ComponentID  ch     = ComponentID(chan);
-    const Int          shift  = g_bitDepth[toChannelType(ch)] - 8;
+    const Int          shift  = bitDepths.recon[toChannelType(ch)] - 8;
     const Int          offset = (shift>0)?(1<<(shift-1)):0;
     const Pel         *pi     = getAddr(ch);
     const Int          stride = getStride(ch);
@@ -306,7 +306,7 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
 
   if( bitDepth == 8 )
   {
-    dump( pFileName, bAdd );
+    dump( pFileName, bitDepth, bAdd );
     return;
   }
 
@@ -337,9 +337,9 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
 }
 
 #if AUXILIARY_PICTURES
-Void TComPicYuv::convertToMonochrome()
+Void TComPicYuv::convertToMonochrome(Int bitDepthChroma)
 {
-  Pel grayVal = (1 << (g_bitDepth[CHANNEL_TYPE_CHROMA] - 1));
+  Pel grayVal = (1 << (bitDepthChroma - 1));
 
   for( UInt comp = 1; comp < getNumberValidComponents(); comp++ )
   {

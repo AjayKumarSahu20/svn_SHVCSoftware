@@ -56,7 +56,7 @@
 //! \{
 
 #if Q0074_COLOUR_REMAPPING_SEI
-static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* colourRemappingInfoSEI, UInt layerId=0 );
+static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* colourRemappingInfoSEI, const BitDepths& bitDpeths, UInt layerId=0 );
 static std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Remapping Information SEI
 static SEIColourRemappingInfo *seiColourRemappingInfoPrevious=NULL ;
 #endif
@@ -289,10 +289,6 @@ Void TAppDecTop::decode()
         !m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence() )
 #endif
     {
-      // Set bitdepth for each layer when doing DBF
-      g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][curLayerId];
-      g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][curLayerId];
-
       if (!loopFiltered[curLayerId] || bitstreamFile)
       {
         m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
@@ -321,14 +317,15 @@ Void TAppDecTop::decode()
     {
       if ( m_pchReconFile[curLayerId] && !openedReconFile[curLayerId] )
       {
+        const BitDepths &bitDepths=pcListPic->front()->getSlice(0)->getBitDepths(); // use bit depths of first reconstructed picture.
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
         {
           if (m_outputBitDepth[channelType] == 0)
           {
-            m_outputBitDepth[channelType] = g_bitDepth[channelType];
+            m_outputBitDepth[channelType] = bitDepths.recon[channelType];
           }
         }
-        m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepth, m_outputBitDepth, g_bitDepth ); // write mode
+        m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
 
         openedReconFile[curLayerId] = true;
       }
@@ -540,15 +537,16 @@ Void TAppDecTop::decode()
     {
       if ( m_pchReconFile && !openedReconFile )
       {
+        const BitDepths &bitDepths=pcListPic->front()->getPicSym()->getSPS().getBitDepths(); // use bit depths of first reconstructed picture.
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
         {
           if (m_outputBitDepth[channelType] == 0)
           {
-            m_outputBitDepth[channelType] = g_bitDepth[channelType];
+            m_outputBitDepth[channelType] = bitDepths.recon[channelType];
           }
         }
 
-        m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepth, m_outputBitDepth, g_bitDepth ); // write mode
+        m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
         openedReconFile = true;
       }
       // write reconstruction to file
@@ -1297,21 +1295,21 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
       if (seiColourRemappingInfo)
       {
         //printf ("\n\nColour Remapping is applied to POC : %d and LayerId : %d ",pic->getPOC(), pic->getLayerId());
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfo
 #if SVC_EXTENSION
-       , pic->getLayerId()
+        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfo, pic->getSlice(0)->getBitDepths(), pic->getLayerId());
+#else
+        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfo, pic->getSlice(0)->getBitDepths());
 #endif
-        );
       }
       else  // using the last CRI SEI received
       {
         const SEIColourRemappingInfo *seiColourRemappingInfoCopy;
         seiColourRemappingInfoCopy = seiColourRemappingInfoPrevious;
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfoCopy
 #if SVC_EXTENSION
-        , pic->getLayerId()
+        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfoCopy, pic->getSlice(0)->getBitDepths(), pic->getLayerId());
+#else
+        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfoCopy, pic->getSlice(0)->getBitDepths());
 #endif
-        );
       }
 
       // save the last CRI SEI received
@@ -1544,7 +1542,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         this->setMetadataFileRefresh(false);
 
         TComPictureHash recon_digest;
-        Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest);
+        Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest, pic->getSlice(0)->getBitDepths());
         fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), hashToString(recon_digest, numChar).c_str());
         fclose(fptr);
       }
@@ -1569,12 +1567,15 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       // Write all pictures to the file.
       if( this->getDecodedYuvLayerRefresh(layerId) )
       {
-        m_outputBitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepth[CHANNEL_TYPE_LUMA]   = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerId];
-        m_outputBitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepth[CHANNEL_TYPE_CHROMA] = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerId];
-
         char tempFileName[256];
         strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerId ).c_str());
-        m_confReconFile[layerId].open(tempFileName, true, m_outputBitDepth, m_outputBitDepth, g_bitDepth ); // write mode
+
+        const TComVPS *vps = m_acTDecTop->getLayerDec(layerId)->getParameterSetManager()->getActiveVPS();
+        const TComSPS *sps = m_acTDecTop->getLayerDec(layerId)->getParameterSetManager()->getActiveSPS();
+        const BitDepths &bitDpeths = vps->getBitDepths(sps, layerId);
+        Int bitDepth[] = {bitDpeths.recon[CHANNEL_TYPE_LUMA], bitDpeths.recon[CHANNEL_TYPE_CHROMA]};
+
+        m_confReconFile[layerId].open(tempFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepth ); // write mode
         this->setDecodedYuvLayerRefresh( layerId, false );
       }
 
@@ -1844,11 +1845,11 @@ Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
 #endif //ALIGNED_BUMPING
 
 #if Q0074_COLOUR_REMAPPING_SEI
-Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI )
+Void xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI )
 {
   for ( Int c=0 ; c<3 ; c++ )
   {  
-    Int bitDepth = c ? bitDepthC : bitDepthY ;
+    Int bitDepth = bitDepths.recon[toChannelType(ComponentID(c))];
     preLut[c].resize(1 << bitDepth);
     postLut[c].resize(1 << pCriSEI->m_colourRemapBitDepth);
     
@@ -1901,7 +1902,7 @@ Void xInitColourRemappingLut( const Int bitDepthY, const Int bitDepthC, std::vec
   }
 }
 
-static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId )
+static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, const BitDepths& bitDpeths, UInt layerId )
 {  
   if( !storeCriSEI.size() )
 #if SVC_EXTENSION
@@ -1939,18 +1940,9 @@ static void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
     YUVOut[1] = picColourRemapped.getAddr(COMPONENT_Cb);
     YUVOut[2] = picColourRemapped.getAddr(COMPONENT_Cr);
 
-#if SVC_EXTENSION
-    Int bitDepthY = g_bitDepthLayer[CHANNEL_TYPE_LUMA][layerId];
-    Int bitDepthC = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][layerId];
-
-#else
-    Int bitDepthY = g_bitDepth[CHANNEL_TYPE_LUMA];
-    Int bitDepthC = g_bitDepth[CHANNEL_TYPE_CHROMA];
-#endif
-
     std::vector<Int> preLut[3];
     std::vector<Int> postLut[3];
-    xInitColourRemappingLut( bitDepthY, bitDepthC, preLut, postLut, &storeCriSEI[layerId] );
+    xInitColourRemappingLut( bitDpeths, preLut, postLut, &storeCriSEI[layerId] );
     
     Int roundingOffset = (storeCriSEI[layerId].m_log2MatrixDenom==0) ? 0 : (1 << (storeCriSEI[layerId].m_log2MatrixDenom - 1));
 

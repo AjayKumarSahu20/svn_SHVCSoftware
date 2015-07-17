@@ -76,11 +76,7 @@ public:
   TDecSlice();
   virtual ~TDecSlice();
   
-#if SVC_EXTENSION  
-  Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder, UInt* saoMaxOffsetQVal );
-#else
   Void  init              ( TDecEntropy* pcEntropyDecoder, TDecCu* pcMbDecoder );
-#endif
   Void  create            ();
   Void  destroy           ();
 

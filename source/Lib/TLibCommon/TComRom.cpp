@@ -540,15 +540,6 @@ const UChar g_chroma422IntraAngleMappingTable[NUM_INTRA_MODE] =
   { 0, 1, 2, 2, 2, 2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 23, 24, 24, 25, 25, 26, 27, 27, 28, 28, 29, 29, 30, 31, DM_CHROMA_IDX};
 
 // ====================================================================================================================
-// Bit-depth
-// ====================================================================================================================
-
-Int g_bitDepth   [MAX_NUM_CHANNEL_TYPE] = {8, 8};
-#if O0043_BEST_EFFORT_DECODING
-Int g_bitDepthInStream   [MAX_NUM_CHANNEL_TYPE] = {8, 8}; // In the encoder, this is the same as g_bitDepth. In the decoder, this can vary from g_bitDepth if the decoder is forced to use 'best-effort decoding' at a particular bit-depth.
-#endif
-
-// ====================================================================================================================
 // Misc.
 // ====================================================================================================================
 
@@ -680,8 +671,6 @@ UInt g_scalingListSizeX  [SCALING_LIST_SIZE_NUM] = { 4, 8, 16,  32};
 UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; 
 UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
 #endif
-Int  g_bitDepthLayer[MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
-void * g_refWeightACDCParam; // type=wpACDCParam
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
 

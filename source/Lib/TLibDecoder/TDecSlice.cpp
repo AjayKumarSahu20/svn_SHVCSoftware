@@ -60,20 +60,11 @@ Void TDecSlice::destroy()
 {
 }
 
-#if SVC_EXTENSION
-Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder, UInt* saoMaxOffsetQVal)
-{
-  m_pcEntropyDecoder  = pcEntropyDecoder;
-  m_pcCuDecoder       = pcCuDecoder;
-  m_saoMaxOffsetQVal  = saoMaxOffsetQVal;
-}
-#else
 Void TDecSlice::init(TDecEntropy* pcEntropyDecoder, TDecCu* pcCuDecoder)
 {
   m_pcEntropyDecoder  = pcEntropyDecoder;
   m_pcCuDecoder       = pcCuDecoder;
 }
-#endif
 
 Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic* pcPic, TDecSbac* pcSbacDecoder)
 {
@@ -210,10 +201,10 @@ Void TDecSlice::decompressSlice(TComInputBitstream** ppcSubstreams, TComPic* pcP
           aboveMergeAvail = pcPic->getSAOMergeAvailability(ctuRsAddr, ctuRsAddr-frameWidthInCtus);
         }
 #if SVC_EXTENSION
-        pcSbacDecoder->parseSAOBlkParam( saoblkParam, m_saoMaxOffsetQVal, sliceEnabled, leftMergeAvail, aboveMergeAvail);
+        pcSbacDecoder->parseSAOBlkParam( saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail, pcSlice->getBitDepths());
 #else
-        pcSbacDecoder->parseSAOBlkParam( saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail);
-#endif      
+        pcSbacDecoder->parseSAOBlkParam( saoblkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail, pcSlice->getSPS()->getBitDepths());
+#endif
       }
     }
 

@@ -103,24 +103,16 @@ public:
   Void  codeSaoUflc          ( UInt uiLength, UInt  uiCode );
   Void  codeSAOSign          ( UInt  uiCode);  //<! code SAO offset sign
 
+  Void codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, const Int channelBitDepth);
+  Void codeSAOBlkParam(SAOBlkParam& saoBlkParam, const BitDepths &bitDepths
+                    , Bool* sliceEnabled
+                    , Bool leftMergeAvail
+                    , Bool aboveMergeAvail
+                    , Bool onlyEstMergeInfo = false
+                    );
+
 #if SVC_EXTENSION
   Void  codeSliceHeaderExtn     ( TComSlice* pSlice, Int shBitsWrittenTillNow );
-  Void  codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal);
-  Void  codeSAOBlkParam(SAOBlkParam& saoBlkParam
-                    , UInt* saoMaxOffsetQVal
-                    , Bool* sliceEnabled
-                    , Bool leftMergeAvail
-                    , Bool aboveMergeAvail
-                    , Bool onlyEstMergeInfo = false
-                    );
-#else
-  Void codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled);
-  Void codeSAOBlkParam(SAOBlkParam& saoBlkParam
-                    , Bool* sliceEnabled
-                    , Bool leftMergeAvail
-                    , Bool aboveMergeAvail
-                    , Bool onlyEstMergeInfo = false
-                    );
 #endif  
 
 private:

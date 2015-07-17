@@ -885,7 +885,7 @@ Void TEncSbac::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
   
 #if SVC_EXTENSION  
-  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffsetY();
+  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA);
 #else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
 #endif
@@ -1607,11 +1607,8 @@ Void TEncSbac::codeSaoTypeIdx       ( UInt uiCode)
     m_pcBinIf->encodeBinEP( uiCode == 1 ? 0 : 1 );
   }
 }
-#if SVC_EXTENSION
-Void TEncSbac::codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, UInt* saoMaxOffsetQVal)
-#else
-Void TEncSbac::codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled)
-#endif
+
+Void TEncSbac::codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool sliceEnabled, const Int channelBitDepth)
 {
   UInt uiSymbol;
   if(!sliceEnabled)
@@ -1657,13 +1654,10 @@ Void TEncSbac::codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool
       k++;
     }
 
+    const Int  maxOffsetQVal = TComSampleAdaptiveOffset::getMaxOffsetQVal(channelBitDepth);
     for(Int i=0; i< 4; i++)
     {
-#if SVC_EXTENSION
-      codeSaoMaxUvlc((offset[i]<0)?(-offset[i]):(offset[i]),  saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
-#else
-      codeSaoMaxUvlc((offset[i]<0)?(-offset[i]):(offset[i]),  g_saoMaxOffsetQVal[compIdx] ); //sao_offset_abs
-#endif
+      codeSaoMaxUvlc((offset[i]<0)?(-offset[i]):(offset[i]),  maxOffsetQVal ); //sao_offset_abs
     }
 
 
@@ -1692,10 +1686,7 @@ Void TEncSbac::codeSAOOffsetParam(ComponentID compIdx, SAOOffset& ctbParam, Bool
 }
 
 
-Void TEncSbac::codeSAOBlkParam(SAOBlkParam& saoBlkParam
-#if SVC_EXTENSION
-                              , UInt* saoMaxOffsetQVal
-#endif
+Void TEncSbac::codeSAOBlkParam(SAOBlkParam& saoBlkParam, const BitDepths &bitDepths
                               , Bool* sliceEnabled
                               , Bool leftMergeAvail
                               , Bool aboveMergeAvail
@@ -1727,11 +1718,7 @@ Void TEncSbac::codeSAOBlkParam(SAOBlkParam& saoBlkParam
   {
     for(Int compIdx=0; compIdx < MAX_NUM_COMPONENT; compIdx++)
     {
-#if SVC_EXTENSION
-      codeSAOOffsetParam(ComponentID(compIdx), saoBlkParam[compIdx], sliceEnabled[compIdx], saoMaxOffsetQVal);
-#else
-      codeSAOOffsetParam(ComponentID(compIdx), saoBlkParam[compIdx], sliceEnabled[compIdx]);
-#endif
+      codeSAOOffsetParam(ComponentID(compIdx), saoBlkParam[compIdx], sliceEnabled[compIdx], bitDepths.recon[toChannelType(ComponentID(compIdx))]);
     }
   }
 }

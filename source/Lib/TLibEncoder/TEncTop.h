@@ -115,7 +115,7 @@ private:
   static Int              m_iSPSIdCnt;                    ///< next Id number for SPS    
   static Int              m_iPPSIdCnt;                    ///< next Id number for PPS    
   TEncTop**               m_ppcTEncTop;
-  TEncTop*                getLayerEnc(UInt layerIdx)       { return m_ppcTEncTop[layerIdx]; }
+  TEncTop*                getLayerEnc(UInt layerIdx)      { return m_ppcTEncTop[layerIdx]; }
   TComPic*                m_cIlpPic[MAX_NUM_REF];                    ///<  Inter layer Prediction picture =  upsampled picture 
   Bool                    m_bMFMEnabledFlag;
   UInt                    m_numRefLayerLocationOffsets;
@@ -275,7 +275,7 @@ public:
                TComList<TComPicYuv*>& rcListPicYuvRecOut,
                std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded, Bool isTff);
 
-  Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField, m_printMSEBasedSequencePSNR, m_printSequenceMSE); }
+  Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField, m_printMSEBasedSequencePSNR, m_printSequenceMSE, m_cSPS.getBitDepths()); }
 #endif //#if SVC_EXTENSION
 };
 
