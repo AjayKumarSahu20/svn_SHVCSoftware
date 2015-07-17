@@ -498,7 +498,11 @@ Void TDecCu::xReconInter( TComDataCU* pcCU, UInt uiDepth )
   // clip for only non-zero cbp case
   if  ( pcCU->getQtRootCbf( 0) )
   {
-    m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ) );
+#if SVC_EXTENSION
+    m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ), pcCU->getSlice()->getBitDepths() );
+#else
+    m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ), pcCU->getSlice()->getSPS()->getBitDepths() );
+#endif
   }
   else
   {
@@ -641,10 +645,14 @@ TDecCu::xIntraRecBlk(       TComYuv*    pcRecoYuv,
   }
 #endif
 
-#if O0043_BEST_EFFORT_DECODING
-  const Int bitDepthDelta = g_bitDepthInStream[toChannelType(compID)] - g_bitDepth[toChannelType(compID)];
+#if SVC_EXTENSION
+  const Int clipbd = pcCU->getSlice()->getBitDepth(toChannelType(compID));
+#else
+  const Int clipbd = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
 #endif
-  const Int clipbd = g_bitDepth[toChannelType(compID)];
+#if O0043_BEST_EFFORT_DECODING
+  const Int bitDepthDelta = pcCU->getSlice()->getSPS()->getStreamBitDepth(toChannelType(compID)) - clipbd;
+#endif
 
   if( useCrossComponentPrediction )
   {
@@ -824,7 +832,11 @@ Void TDecCu::xDecodePCMTexture( TComDataCU* pcCU, const UInt uiPartIdx, const Pe
 {
         Pel* piPicReco         = pcCU->getPic()->getPicYuvRec()->getAddr(compID, pcCU->getCtuRsAddr(), pcCU->getZorderIdxInCtu()+uiPartIdx);
   const UInt uiPicStride       = pcCU->getPic()->getPicYuvRec()->getStride(compID);
-  const UInt uiPcmLeftShiftBit = g_bitDepth[toChannelType(compID)] - pcCU->getSlice()->getSPS()->getPCMBitDepth(toChannelType(compID));
+#if SVC_EXTENSION
+  const UInt uiPcmLeftShiftBit = pcCU->getSlice()->getBitDepth(toChannelType(compID)) - pcCU->getSlice()->getSPS()->getPCMBitDepth(toChannelType(compID));
+#else
+  const UInt uiPcmLeftShiftBit = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID)) - pcCU->getSlice()->getSPS()->getPCMBitDepth(toChannelType(compID));
+#endif
 
   for(UInt uiY = 0; uiY < uiHeight; uiY++ )
   {

@@ -41,7 +41,7 @@ private:
 public:
   TComUpsampleFilter(void);
   ~TComUpsampleFilter(void);
-  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic );
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Int refBitDepthLuma, const Int refBitDepthChroma );
 
 };
 

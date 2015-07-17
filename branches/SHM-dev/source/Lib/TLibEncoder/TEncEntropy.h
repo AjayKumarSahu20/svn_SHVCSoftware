@@ -113,12 +113,7 @@ public:
   virtual Void codeChromaQpAdjustment( TComDataCU* pcCU, UInt uiAbsPartIdx ) = 0;
   virtual Void codeCoeffNxN      ( TComTU &rTu, TCoeff* pcCoef, const ComponentID compID ) = 0;
   virtual Void codeTransformSkipFlags ( TComTU &rTu, ComponentID component ) = 0;
-#if SVC_EXTENSION
-  virtual Void codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
-  virtual Void codeSAOBlkParam   (SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
-#else
-  virtual Void codeSAOBlkParam   (SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
-#endif
+  virtual Void codeSAOBlkParam   (SAOBlkParam& saoBlkParam, const BitDepths &bitDepths, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail, Bool onlyEstMergeInfo = false)    =0;
   virtual Void estBit               (estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, ChannelType chType) = 0;
 
   virtual Void codeDFFlag (UInt uiCode, const Char *pSymbolName) = 0;
@@ -127,6 +122,10 @@ public:
   virtual Void codeExplicitRdpcmMode ( TComTU &rTu, const ComponentID compID ) = 0;
 
   virtual ~TEncEntropyIf() {}
+
+#if SVC_EXTENSION
+  virtual Void codeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow )     = 0;
+#endif
 };
 
 /// entropy encoder class
@@ -193,14 +192,14 @@ public:
   Void encodeCoeffNxN         ( TComTU &rTu, TCoeff* pcCoef, const ComponentID compID );
 
   Void estimateBit             ( estBitsSbacStruct* pcEstBitsSbac, Int width, Int height, ChannelType chType );
-#if SVC_EXTENSION
-  Void encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
-  Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, UInt* saoMaxOffsetQVal, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, saoMaxOffsetQVal, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
-#else
-  Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
-#endif
+
+  Void encodeSAOBlkParam(SAOBlkParam& saoBlkParam, const BitDepths &bitDepths, Bool* sliceEnabled, Bool leftMergeAvail, Bool aboveMergeAvail){m_pcEntropyCoderIf->codeSAOBlkParam(saoBlkParam, bitDepths, sliceEnabled, leftMergeAvail, aboveMergeAvail, false);}
+
   static Int countNonZeroCoeffs( TCoeff* pcCoef, UInt uiSize );
 
+#if SVC_EXTENSION
+  Void encodeSliceHeaderExtn( TComSlice* pSlice, Int shBitsWrittenTillNow );
+#endif
 };// END CLASS DEFINITION TEncEntropy
 
 //! \}

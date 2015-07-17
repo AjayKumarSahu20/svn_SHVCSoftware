@@ -50,7 +50,7 @@ TComUpsampleFilter::~TComUpsampleFilter(void)
 {
 }
 
-Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic )
+Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Int refBitDepthLuma, const Int refBitDepthChroma )
 {
   assert ( NTAPS_US_LUMA == 8 );
   assert ( NTAPS_US_CHROMA == 4 );
@@ -62,6 +62,9 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
   const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
   const Window &windowRL = currSlice->getPPS()->getRefLayerWindowForLayer(refLayerId);
+
+  Int bitDepthLuma = currSlice->getBitDepth(CHANNEL_TYPE_LUMA);
+  Int bitDepthChroma = currSlice->getBitDepth(CHANNEL_TYPE_CHROMA);
 
   //========== Y component upsampling ===========
   Int widthBL   = pcBasePic->getWidth (COMPONENT_Y);
@@ -114,12 +117,12 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     piSrcY = piSrcBufY;
     piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
 
-    Int shift = g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId];
+    Int shift = bitDepthLuma - refBitDepthLuma;
 
 #if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
-      shift = g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthY();
+      shift = bitDepthLuma - currSlice->getPPS()->getCGSOutputBitDepthY();
     }
     assert( shift >= 0 );
 #endif
@@ -150,12 +153,12 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
     piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
 
-    shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId];
+    shift = bitDepthChroma - refBitDepthChroma;
 
 #if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
-      shift = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId] - currSlice->getPPS()->getCGSOutputBitDepthC();
+      shift = currSlice->getBitDepth(CHANNEL_TYPE_CHROMA) - currSlice->getPPS()->getCGSOutputBitDepthC();
     }
 #endif
 
@@ -217,7 +220,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     Int rlClipB = heightBL - 1 + (NTAPS_US_LUMA>>1);
 
     // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
-    Int shift1 = g_bitDepthLayer[CHANNEL_TYPE_LUMA][refLayerId] - 8;
+    Int shift1 = refBitDepthLuma - 8;
 
 #if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
@@ -253,7 +256,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL);
 
-    Int nShift = 20 - g_bitDepthLayer[CHANNEL_TYPE_LUMA][currLayerId];
+    Int nShift = 20 - bitDepthLuma;
     Int iOffset = 1 << (nShift - 1);
 
     for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y); j++ )
@@ -272,7 +275,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
       for( i = pcTempPic->getWidth(COMPONENT_Y); i > 0; i-- )
       {
-        *piDstY = Clip( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift), CHANNEL_TYPE_LUMA );
+        *piDstY = ClipBD( (sumLumaVer(piSrcY, coeff, strideEL) + iOffset) >> (nShift), bitDepthLuma );
         piSrcY++;
         piDstY++;
       }
@@ -317,7 +320,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     heightBL  = min<Int>( pcBasePic->getHeight(COMPONENT_Y) >> 1, heightEL );
 
     // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
-    shift1 = g_bitDepthLayer[CHANNEL_TYPE_CHROMA][refLayerId] - 8;
+    shift1 = refBitDepthChroma - 8;
 
 #if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
@@ -359,7 +362,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     pcTempPic->extendPicBorder   (); // extend the border.
     pcTempPic->setHeight(heightEL << 1);
 
-    nShift = 20 - g_bitDepthLayer[CHANNEL_TYPE_CHROMA][currLayerId];
+    nShift = 20 - bitDepthChroma;
 
     iOffset = 1 << (nShift - 1);
 
@@ -383,8 +386,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
       for( i = pcTempPic->getWidth(COMPONENT_Y) >> 1; i > 0; i-- )
       {
-        *piDstU = Clip( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift), CHANNEL_TYPE_CHROMA );
-        *piDstV = Clip( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift), CHANNEL_TYPE_CHROMA );
+        *piDstU = ClipBD( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift), bitDepthChroma );
+        *piDstV = ClipBD( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift), bitDepthChroma );
         piSrcU++;
         piSrcV++;
         piDstU++;

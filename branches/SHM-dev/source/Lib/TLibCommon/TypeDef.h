@@ -841,6 +841,27 @@ private:
 };
 
 
+struct BitDepths
+{
+#if O0043_BEST_EFFORT_DECODING
+  Int recon[MAX_NUM_CHANNEL_TYPE]; ///< the bit depth used for reconstructing the video
+  Int stream[MAX_NUM_CHANNEL_TYPE];///< the bit depth used indicated in the SPS
+#else
+  Int recon[MAX_NUM_CHANNEL_TYPE]; ///< the bit depth as indicated in the SPS
+#endif
+
+#if SVC_EXTENSION
+  BitDepths()
+  {
+  }
+  BitDepths(Int bitDepthY, Int bitDepthC)
+  {
+    recon[CHANNEL_TYPE_LUMA] = bitDepthY;
+    recon[CHANNEL_TYPE_CHROMA] = bitDepthC;
+  }
+#endif
+};
+
 /// parameters for deblocking filter
 typedef struct _LFCUParam
 {

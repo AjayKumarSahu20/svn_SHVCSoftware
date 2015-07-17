@@ -95,6 +95,9 @@ protected:
   Void  xDestroyDecLib    (); ///< destroy internal classes
   Void  xInitDecLib       (); ///< initialize decoder class
   
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void  xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI );
+#endif
 #if SVC_EXTENSION
   Void  xWriteOutput      ( TComList<TComPic*>* pcListPic, UInt layerId, UInt tId ); ///< write YUV to file
   Void  xFlushOutput      ( TComList<TComPic*>* pcListPic, UInt layerId ); ///< flush all remaining decoded pictures to file

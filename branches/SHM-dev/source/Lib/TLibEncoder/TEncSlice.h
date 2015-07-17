@@ -119,14 +119,8 @@ public:
   Void    init                ( TEncTop* pcEncTop );
 
   /// preparation of slice encoding (reference marking, QP and lambda)
-#if SVC_EXTENSION
-  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, Bool isField );
-  Void    estimateILWpParam   ( TComSlice* pcSlice );
-#else
   Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, const TComSPS* pSPS, const TComPPS *pPPS, Bool isField );
-#endif
-
+                                Int iGOPid,   TComSlice*& rpcSlice, Bool isField );
   Void    resetQP             ( TComPic* pic, Int sliceQP, Double lambda );
   // compress and encode slice
   Void    precompressSlice    ( TComPic* pcPic                                     );      ///< precompress slice for multi-loop opt.
@@ -143,6 +137,10 @@ public:
   Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
 
   SliceType getEncCABACTableIdx() const           { return m_encCABACTableIdx;        }
+
+#if SVC_EXTENSION
+  Void    estimateILWpParam   ( TComSlice* pcSlice );
+#endif
 
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );

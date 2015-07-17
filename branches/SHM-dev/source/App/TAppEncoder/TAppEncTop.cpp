@@ -216,13 +216,6 @@ Void TAppEncTop::xInitLibCfg()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //1
-    g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-    g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
-    // Set this to be used in Upsampling filter in function "TComUpsampleFilter::upsampleBasePic"
-    g_bitDepthLayer[CHANNEL_TYPE_LUMA][m_acLayerCfg[layer].m_layerId]   = g_bitDepth[CHANNEL_TYPE_LUMA];
-    g_bitDepthLayer[CHANNEL_TYPE_CHROMA][m_acLayerCfg[layer].m_layerId] = g_bitDepth[CHANNEL_TYPE_CHROMA];
-
     m_acTEncTop[layer].setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
     
     Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
@@ -474,7 +467,8 @@ Void TAppEncTop::xInitLibCfg()
 
     for( UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++ )
     {
-      m_acTEncTop[layer].setPCMBitDepth                                      ((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_MSBExtendedBitDepth[channelType] : m_acLayerCfg[layer].m_internalBitDepth[channelType]);
+      m_acTEncTop[layer].setBitDepth                                       ((ChannelType)channelType, m_acLayerCfg[layer].m_internalBitDepth[channelType]);
+      m_acTEncTop[layer].setPCMBitDepth                                    ((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_acLayerCfg[layer].m_MSBExtendedBitDepth[channelType] : m_acLayerCfg[layer].m_internalBitDepth[channelType]);
     }
     m_acTEncTop[layer].setPCMLog2MaxSize                                   ( m_pcmLog2MaxSize);
     m_acTEncTop[layer].setMaxNumMergeCand                                  ( m_maxNumMergeCand );
@@ -903,11 +897,7 @@ Void TAppEncTop::xInitLibCfg()
   // set internal bit-depth and constants
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
   {
-//#if O0043_BEST_EFFORT_DECODING
-    //g_bitDepthInStream[channelType] = g_bitDepth[channelType] = m_internalBitDepth[channelType];
-//#else
-    //g_bitDepth   [channelType] = m_internalBitDepth[channelType];
-//#endif
+    m_cTEncTop.setBitDepth((ChannelType)channelType, m_internalBitDepth[channelType]);
     m_cTEncTop.setPCMBitDepth((ChannelType)channelType, m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[channelType] : m_internalBitDepth[channelType]);
   }
 
@@ -1093,11 +1083,6 @@ Void TAppEncTop::xCreateLib()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //2
-    for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
-    {
-      g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-    }
-
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
     g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1192,10 +1177,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //3
-    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
-    {
-      g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-    }
 #if LAYER_CTB
     g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
     g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1232,9 +1213,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
         Int layerId = m_layerSetLayerIdList[setId][i];
         Int layerIdx = vps->getLayerIdxInVps(m_layerSetLayerIdList[setId][i]);
         //4
-        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
         vps->setLayerIdIncludedFlag(true, setId, layerId);
       }
     }
@@ -1249,8 +1227,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       {
         //4
         UInt layerId = vps->getLayerIdInNuh(layerIdx);
-        g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-        g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
 
         if (layerId <= setId)
         {
@@ -1701,9 +1677,6 @@ Void TAppEncTop::encode()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //5
-    g_bitDepth[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-    g_bitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-
     // allocate original YUV buffer
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
@@ -1738,10 +1711,6 @@ Void TAppEncTop::encode()
       for(UInt layer=0; layer<m_numLayers; layer++)
       {
         //6
-        for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
-        {
-          g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-        }
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
         g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1758,7 +1727,7 @@ Void TAppEncTop::encode()
 #if AUXILIARY_PICTURES
         if( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 || (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
         {
-          pcPicYuvOrg[layer]->convertToMonochrome();
+          pcPicYuvOrg[layer]->convertToMonochrome(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
         }
 #endif
 
@@ -1822,10 +1791,6 @@ Void TAppEncTop::encode()
       for( UInt layer=0; layer<m_numLayers; layer++ )
       {
         //7
-        for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
-        {
-          g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-        }
 #if LAYER_CTB
         g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
         g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
@@ -1894,11 +1859,6 @@ Void TAppEncTop::encode()
     for( UInt layer=0; layer<m_numLayers; layer++ )
     {
       //8
-      for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
-      {
-        g_bitDepth[channelTypeIndex]    = m_acLayerCfg[layer].m_internalBitDepth[channelTypeIndex];
-      }
-
       // write bistream to file if necessary
       iNumEncoded = m_acTEncTop[layer].getNumPicRcvd();
       if ( iNumEncoded > 0 )
@@ -1982,38 +1942,48 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeAll[layer].printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
+    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+    m_gcAnalyzeAll[layer].printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeI[layer].printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
+    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+    m_gcAnalyzeI[layer].printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeP[layer].printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
+    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+    m_gcAnalyzeP[layer].printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_gcAnalyzeB[layer].printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
+    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+    m_gcAnalyzeB[layer].printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   if(isField)
   {
     for(layer = 0; layer < m_numLayers; layer++)
     {
+      const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
       //-- interlaced summary
       m_gcAnalyzeAll_in.setFrmRate( m_acLayerCfg[layer].getFrameRate());
       m_gcAnalyzeAll_in.setBits(m_gcAnalyzeB[layer].getBits());
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-      m_gcAnalyzeAll_in.printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, layer);
+      m_gcAnalyzeAll_in.printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
 #if _SUMMARY_OUT_
       m_gcAnalyzeAll_in.printSummaryOutInterlaced();

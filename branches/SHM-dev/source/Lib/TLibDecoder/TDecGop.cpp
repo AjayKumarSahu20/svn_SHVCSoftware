@@ -62,7 +62,7 @@ Bool pocCompareFunction( const TComPic &pic1, const TComPic &pic2 )
 
 //! \ingroup TLibDecoder
 //! \{
-static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI);
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths);
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
@@ -245,7 +245,11 @@ Void TDecGop::filterPicture(TComPic* pcPic)
     {
       printf ("Warning: Got multiple decoded picture hash SEI messages. Using first.");
     }
-    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash);
+#if SVC_EXTENSION
+    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getBitDepths());
+#else
+    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getSPS()->getBitDepths());
+#endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
   if( this->getLayerDec(pcPic->getLayerId())->getConfModeFlag() )
@@ -274,7 +278,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
  *            ***ERROR*** - calculated hash does not match the SEI message
  *            unk         - no SEI message was available for comparison
  */
-static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI)
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths)
 {
   /* calculate MD5sum for entire reconstructed picture */
   TComPictureHash recon_digest;
@@ -288,19 +292,19 @@ static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
       case SEIDecodedPictureHash::MD5:
         {
           hashType = "MD5";
-          numChar = calcMD5(pic, recon_digest);
+          numChar = calcMD5(pic, recon_digest, bitDepths);
           break;
         }
       case SEIDecodedPictureHash::CRC:
         {
           hashType = "CRC";
-          numChar = calcCRC(pic, recon_digest);
+          numChar = calcCRC(pic, recon_digest, bitDepths);
           break;
         }
       case SEIDecodedPictureHash::CHECKSUM:
         {
           hashType = "Checksum";
-          numChar = calcChecksum(pic, recon_digest);
+          numChar = calcChecksum(pic, recon_digest, bitDepths);
           break;
         }
       default:

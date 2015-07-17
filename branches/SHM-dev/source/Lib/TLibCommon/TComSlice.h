@@ -562,7 +562,7 @@ public:
   Int  getBitDepthVpsChroma() const                           { return m_bitDepthVpsChroma;                                      }
   Void setBitDepthVpsChroma(Int x)                            { m_bitDepthVpsChroma = x;                                         }
 
-  Int  getBitDepthVps(ChannelType type)                       { return isLuma(type) ? m_bitDepthVpsLuma : m_bitDepthVpsChroma;   }
+  Int  getBitDepthVps(ChannelType type) const                 { return isLuma(type) ? m_bitDepthVpsLuma : m_bitDepthVpsChroma;   }
 
   Window& getConformanceWindowVps()                           { return m_conformanceWindowVps;                                   }
   const Window& getConformanceWindowVps() const               { return m_conformanceWindowVps;                                   }
@@ -1128,8 +1128,8 @@ public:
   ChromaFormat      getChromaFormatIdc( const TComSPS* sps, const UInt layerId ) const;
   UInt              getPicHeightInLumaSamples( const TComSPS* sps, const UInt layerId ) const;
   UInt              getPicWidthInLumaSamples( const TComSPS* sps, const UInt layerId ) const;
-  UInt              getBitDepthY( const TComSPS* sps, const UInt layerId ) const;
-  UInt              getBitDepthC( const TComSPS* sps, const UInt layerId ) const;
+  UInt              getBitDepth( ChannelType type, const TComSPS* sps, const UInt layerId ) const;
+  const BitDepths&  getBitDepths( const TComSPS* sps, const UInt layerId ) const;
   const Window&     getConformanceWindow( const TComSPS* sps, const UInt layerId ) const;
 #endif //SVC_EXTENSION
 };
@@ -1303,6 +1303,7 @@ public:
   const TimingInfo* getTimingInfo() const                                  { return &m_timingInfo;                          }
 };
 
+
 /// SPS class
 class TComSPS
 {
@@ -1341,7 +1342,7 @@ private:
   Bool             m_useAMP;
 
   // Parameter
-  Int              m_uiBitDepth[MAX_NUM_CHANNEL_TYPE];
+  BitDepths        m_bitDepths;
   Int              m_qpBDOffset[MAX_NUM_CHANNEL_TYPE];
   Bool             m_useExtendedPrecision;
   Bool             m_useHighPrecisionPredictionWeighting;
@@ -1350,7 +1351,7 @@ private:
   Bool             m_useGolombRiceParameterAdaptation;
   Bool             m_alignCABACBeforeBypass;
   Bool             m_useResidualDPCM[NUMBER_OF_RDPCM_SIGNALLING_MODES];
-  UInt             m_uiPCMBitDepth[MAX_NUM_CHANNEL_TYPE];
+  Int              m_pcmBitDepths[MAX_NUM_CHANNEL_TYPE];
   Bool             m_bPCMFilterDisableFlag;
   Bool             m_disableIntraReferenceSmoothing;
 
@@ -1477,11 +1478,16 @@ public:
   UInt                   getMaxTrSize() const                                                            { return  m_uiMaxTrSize;                                               }
 
   // Bit-depth
-  Int                    getBitDepth(ChannelType type) const                                             { return m_uiBitDepth[type];                                           }
-  Void                   setBitDepth(ChannelType type, Int u )                                           { m_uiBitDepth[type] = u;                                              }
-  Int                    getMaxLog2TrDynamicRange(ChannelType channelType) const                         { return getUseExtendedPrecision() ? std::max<Int>(15, Int(m_uiBitDepth[channelType] + 6)) : 15; }
+  Int                    getBitDepth(ChannelType type) const                                             { return m_bitDepths.recon[type];                                      }
+  Void                   setBitDepth(ChannelType type, Int u )                                           { m_bitDepths.recon[type] = u;                                         }
+#if O0043_BEST_EFFORT_DECODING
+  Int                    getStreamBitDepth(ChannelType type) const                                       { return m_bitDepths.stream[type];                                     }
+  Void                   setStreamBitDepth(ChannelType type, Int u )                                     { m_bitDepths.stream[type] = u;                                        }
+#endif
+  const BitDepths&       getBitDepths() const                                                            { return m_bitDepths;                                                  }
+  Int                    getMaxLog2TrDynamicRange(ChannelType channelType) const                         { return getUseExtendedPrecision() ? std::max<Int>(15, Int(m_bitDepths.recon[channelType] + 6)) : 15; }
 
-  Int                    getDifferentialLumaChromaBitDepth() const                                       { return Int(m_uiBitDepth[CHANNEL_TYPE_LUMA]) - Int(m_uiBitDepth[CHANNEL_TYPE_CHROMA]); }
+  Int                    getDifferentialLumaChromaBitDepth() const                                       { return Int(m_bitDepths.recon[CHANNEL_TYPE_LUMA]) - Int(m_bitDepths.recon[CHANNEL_TYPE_CHROMA]); }
   Int                    getQpBDOffset(ChannelType type) const                                           { return m_qpBDOffset[type];                                           }
   Void                   setQpBDOffset(ChannelType type, Int i)                                          { m_qpBDOffset[type] = i;                                              }
   Bool                   getUseExtendedPrecision() const                                                 { return m_useExtendedPrecision;                                       }
@@ -1512,8 +1518,8 @@ public:
 
   Bool                   getTemporalIdNestingFlag() const                                                { return m_bTemporalIdNestingFlag;                                     }
   Void                   setTemporalIdNestingFlag( Bool bValue )                                         { m_bTemporalIdNestingFlag = bValue;                                   }
-  UInt                   getPCMBitDepth(ChannelType type) const                                          { return m_uiPCMBitDepth[type];                                        }
-  Void                   setPCMBitDepth(ChannelType type, UInt u)                                        { m_uiPCMBitDepth[type] = u;                                           }
+  UInt                   getPCMBitDepth(ChannelType type) const                                          { return m_pcmBitDepths[type];                                         }
+  Void                   setPCMBitDepth(ChannelType type, UInt u)                                        { m_pcmBitDepths[type] = u;                                            }
   Void                   setPCMFilterDisableFlag( Bool bValue )                                          { m_bPCMFilterDisableFlag = bValue;                                    }
   Bool                   getPCMFilterDisableFlag() const                                                 { return m_bPCMFilterDisableFlag;                                      }
   Void                   setDisableIntraReferenceSmoothing(Bool bValue)                                  { m_disableIntraReferenceSmoothing=bValue;                             }
@@ -2259,7 +2265,8 @@ public:
     memcpy(m_weightACDCParam, wp, sizeof(WPACDCParam)*MAX_NUM_COMPONENT);
   }
 
-  Void                        getWpAcDcParam( WPACDCParam *&wp );
+  WPACDCParam*                getWpAcDcParam()                                       { return &m_weightACDCParam[0]; }
+
   Void                        initWpAcDcParam();
 
   Void                        clearSubstreamSizes( )                                 { return m_substreamSizes.clear();                              }
@@ -2292,7 +2299,7 @@ public:
   TComPic*                    getBaseColPic( TComList<TComPic*>& rcListPic );
 
   Void                        setLayerId(UInt layerId)                               { m_layerId = layerId;                                          }
-  UInt                        getLayerId()                                           { return m_layerId;                                             }
+  UInt                        getLayerId() const                                     { return m_layerId;                                             }
   UInt                        getLayerIdx()                                          { return m_pcVPS->getLayerIdxInVps(m_layerId);                  }
 
   Void                        setFullPelBaseRec( UInt refLayerIdc, TComPicYuv* p)    { m_pcFullPelBaseRec[refLayerIdc] = p;                          }
@@ -2346,10 +2353,9 @@ public:
   UInt                        getPicWidthInLumaSamples();
   UInt                        getPicHeightInLumaSamples();
   ChromaFormat                getChromaFormatIdc();
-  UInt                        getBitDepthY();
-  UInt                        getBitDepthC();
-  Int                         getQpBDOffsetY();
-  Int                         getQpBDOffsetC();
+  UInt                        getBitDepth(ChannelType type) const;
+  BitDepths&                  getBitDepths();
+  Int                         getQpBDOffset(ChannelType type) const                  { return (getBitDepth(type) - 8) * 6;                           }
 
   const Window&               getConformanceWindow() const;
 
