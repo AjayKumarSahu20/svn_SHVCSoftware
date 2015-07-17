@@ -491,7 +491,6 @@ Void TDecTop::xActivateParameterSets()
       if( m_layerId > 0 && pBLPic->getPicYuvRec() == NULL )
       {
         UInt refLayerId = 0;
-        const RepFormat* repFormat = vps->getVpsRepFormat( vps->getVpsRepFormatIdx(refLayerId) );
 
         pBLPic->create( *vps, *sps, *pps, sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), true, refLayerId);
 

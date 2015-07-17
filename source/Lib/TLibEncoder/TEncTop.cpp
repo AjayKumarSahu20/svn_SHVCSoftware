@@ -956,6 +956,9 @@ Void TEncTop::xInitSPS()
 
   for (Int i = 0; i < min(m_cSPS.getMaxTLayers(),(UInt) MAX_TLAYER); i++ )
   {
+#if SVC_EXTENSION
+    assert( i < MAX_TLAYER );
+#endif
     m_cSPS.setMaxDecPicBuffering(m_maxDecPicBuffering[i], i);
     m_cSPS.setNumReorderPics(m_numReorderPics[i], i);
   }
@@ -1499,8 +1502,6 @@ TEncTop* TEncTop::getRefLayerEnc( UInt refLayerIdx )
 
 Void TEncTop::xInitILRP()
 {
-  RepFormat *repFormat = m_cVPS.getVpsRepFormat( m_cSPS.getUpdateRepFormatFlag() ? m_cSPS.getUpdateRepFormatIndex() : m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps(m_layerId) ) );
-  
   if( m_layerId > 0 )
   {
     g_uiMaxCUWidth  = m_cSPS.getMaxCUWidth();
