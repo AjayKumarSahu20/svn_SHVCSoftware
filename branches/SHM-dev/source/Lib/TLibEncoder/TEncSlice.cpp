@@ -242,8 +242,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNum
   rpcSlice->setSliceBits(0);
   rpcSlice->setPic( pcPic );
 #if SVC_EXTENSION
-  const TComPPS* pPPS = &pcPic->getPicSym()->getPPS();
-
   UInt layerId = pcPic->getLayerId();
   rpcSlice->initSlice( layerId );
 #else

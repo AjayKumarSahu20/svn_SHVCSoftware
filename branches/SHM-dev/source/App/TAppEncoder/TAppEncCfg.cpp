@@ -4267,9 +4267,6 @@ Void TAppEncCfg::xSetGlobal()
 #if SVC_EXTENSION
   // Check for layerIdx equal to 0, it has to pe extended to other layers.
   UInt layerIdx = 0;
-  Bool m_useExtendedPrecision = m_acLayerCfg[layerIdx].m_useExtendedPrecision;
-  Int m_internalBitDepth[]    = {m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};
   ChromaFormat m_chromaFormatIDC = m_acLayerCfg[layerIdx].m_chromaFormatIDC;
 #endif
 

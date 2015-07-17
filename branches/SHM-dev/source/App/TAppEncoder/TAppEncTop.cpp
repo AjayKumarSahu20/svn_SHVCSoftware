@@ -1210,10 +1210,8 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     {
       for( i = 0; i < m_numLayerInIdList[setId]; i++ )
       {
-        Int layerId = m_layerSetLayerIdList[setId][i];
-        Int layerIdx = vps->getLayerIdxInVps(m_layerSetLayerIdList[setId][i]);
         //4
-        vps->setLayerIdIncludedFlag(true, setId, layerId);
+        vps->setLayerIdIncludedFlag(true, setId, m_layerSetLayerIdList[setId][i]);
       }
     }
   }

@@ -111,10 +111,6 @@ QpParam::QpParam(const TComDataCU &cu, const ComponentID compID)
     chromaQpOffset += cu.getSlice()->getPPS()->getChromaQpAdjTableAt(cu.getChromaQpAdj(0)).u.offset[Int(compID)-1];
   }
 
-#if SVC_EXTENSION
-  TComSlice* slice = const_cast<TComSlice*> (cu.getSlice());
-#endif
-
   *this = QpParam(cu.getQP( 0 ),
                   toChannelType(compID),
 #if SVC_EXTENSION
