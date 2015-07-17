@@ -109,13 +109,14 @@ Void TComPrediction::initAdiPatternChType( TComTU &rTu, Bool& bAbove, Bool& bLef
   const ChannelType chType    = toChannelType(compID);
 
   TComDataCU *pcCU=rTu.getCU();
+  const TComSPS &sps = *(pcCU->getSlice()->getSPS());
   const UInt uiZorderIdxInPart=rTu.GetAbsPartIdxTU();
   const UInt uiTuWidth        = rTu.getRect(compID).width;
   const UInt uiTuHeight       = rTu.getRect(compID).height;
   const UInt uiTuWidth2       = uiTuWidth  << 1;
   const UInt uiTuHeight2      = uiTuHeight << 1;
 
-  const Int  iBaseUnitSize    = g_uiMaxCUWidth >> g_uiMaxCUDepth;
+  const Int  iBaseUnitSize    = sps.getMaxCUWidth() >> g_uiMaxCUDepth;
   const Int  iUnitWidth       = iBaseUnitSize  >> pcCU->getPic()->getPicYuvRec()->getComponentScaleX(compID);
   const Int  iUnitHeight      = iBaseUnitSize  >> pcCU->getPic()->getPicYuvRec()->getComponentScaleY(compID);
   const Int  iTUWidthInUnits  = uiTuWidth  / iUnitWidth;
@@ -125,7 +126,7 @@ Void TComPrediction::initAdiPatternChType( TComTU &rTu, Bool& bAbove, Bool& bLef
 #if SVC_EXTENSION
   const Int  bitDepthForChannel = pcCU->getSlice()->getBitDepth(chType);
 #else
-  const Int  bitDepthForChannel = pcCU->getSlice()->getSPS()->getBitDepth(chType);
+  const Int  bitDepthForChannel = sps.getBitDepth(chType);
 #endif
 
   assert(iTUHeightInUnits > 0 && iTUWidthInUnits > 0);
@@ -163,7 +164,7 @@ Void TComPrediction::initAdiPatternChType( TComTU &rTu, Bool& bAbove, Bool& bLef
     Pel *piAdiTemp   = m_piYuvExt[compID][PRED_BUF_UNFILTERED];
     Pel *piRoiOrigin = pcCU->getPic()->getPicYuvRec()->getAddr(compID, pcCU->getCtuRsAddr(), pcCU->getZorderIdxInCtu()+uiZorderIdxInPart);
 #if O0043_BEST_EFFORT_DECODING
-    const Int  bitDepthForChannelInStream = pcCU->getSlice()->getSPS()->getStreamBitDepth(chType);
+    const Int  bitDepthForChannelInStream = sps.getStreamBitDepth(chType);
     fillReferenceSamples (bitDepthForChannelInStream, bitDepthForChannelInStream - bitDepthForChannel, pcCU, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor,  iUnitWidth, iUnitHeight, iAboveUnits, iLeftUnits,
 #else
     fillReferenceSamples (bitDepthForChannel, pcCU, piRoiOrigin, piAdiTemp, bNeighborFlags, iNumIntraNeighbor,  iUnitWidth, iUnitHeight, iAboveUnits, iLeftUnits,
@@ -201,7 +202,7 @@ Void TComPrediction::initAdiPatternChType( TComTU &rTu, Bool& bAbove, Bool& bLef
 
       //------------------------------------------------
 
-      Bool useStrongIntraSmoothing = isLuma(chType) && pcCU->getSlice()->getSPS()->getUseStrongIntraSmoothing();
+      Bool useStrongIntraSmoothing = isLuma(chType) && sps.getUseStrongIntraSmoothing();
 
       const Pel bottomLeft = piAdiTemp[stride * uiTuHeight2];
       const Pel topLeft    = piAdiTemp[0];

@@ -144,7 +144,9 @@ protected:
                                                  // TODO: We need to have a common sliding mechanism used by both the encoder and decoder
 
   Int       m_maxTempLayer;                      ///< Max temporal layer
-  Bool m_useAMP;
+  Bool      m_useAMP;
+  UInt      m_maxCUWidth;
+  UInt      m_maxCUHeight;
   //======= Transform =============
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
@@ -510,6 +512,9 @@ public:
 
   Int       getMaxTempLayer                 ()                              { return m_maxTempLayer;              } 
   Void      setMaxTempLayer                 ( Int maxTempLayer )            { m_maxTempLayer = maxTempLayer;      }
+  Void      setMaxCUWidth                   ( UInt  u )      { m_maxCUWidth  = u; }
+  Void      setMaxCUHeight                  ( UInt  u )      { m_maxCUHeight = u; }
+
   //======== Transform =============
   Void      setQuadtreeTULog2MaxSize        ( UInt  u )      { m_uiQuadtreeTULog2MaxSize = u; }
   Void      setQuadtreeTULog2MinSize        ( UInt  u )      { m_uiQuadtreeTULog2MinSize = u; }
@@ -969,7 +974,6 @@ public:
 #if Q0189_TMVP_CONSTRAINTS
   Void  setTMVPConstraintsSEIEnabled(Int b)                  { m_TMVPConstraintsSEIEnabled = b; }
   Int   getTMVPConstraintsSEIEnabled()                       {  return m_TMVPConstraintsSEIEnabled; }
-
 #endif
 #if P0123_ALPHA_CHANNEL_SEI
   Void  setAlphaSEIEnabled(Bool b)                           { m_alphaSEIEnabled       = b; }

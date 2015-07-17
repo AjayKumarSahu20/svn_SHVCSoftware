@@ -193,7 +193,7 @@ public:
   TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
   
 #if !SVC_EXTENSION
-  Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE );
+  Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths );
 #endif
   Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist );
 

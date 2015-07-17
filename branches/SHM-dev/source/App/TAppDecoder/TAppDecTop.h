@@ -72,15 +72,20 @@ private:
 #endif
   
   // for output control  
+  std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.
+
 #if SVC_EXTENSION
 #if CONFORMANCE_BITSTREAM_MODE
-  TVideoIOYuv                      m_confReconFile[63];        ///< decode YUV files
+  TVideoIOYuv                     m_confReconFile[63];        ///< decode YUV files
 #endif 
   Int                             m_aiPOCLastDisplay [MAX_LAYERS]; ///< last POC in display order
 #else
   Int                             m_iPOCLastDisplay;              ///< last POC in display order
 #endif
-  std::ofstream                   m_seiMessageFileStream;         ///< Used for outputing SEI messages.  
+#if Q0074_COLOUR_REMAPPING_SEI
+  std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Remapping Information SEI
+  SEIColourRemappingInfo *seiColourRemappingInfoPrevious;
+#endif
 
 public:
   TAppDecTop();
@@ -97,6 +102,7 @@ protected:
   
 #if Q0074_COLOUR_REMAPPING_SEI
   Void  xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI );
+  Void  xApplyColourRemapping( const TComSPS *sps, TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId = 0 );
 #endif
 #if SVC_EXTENSION
   Void  xWriteOutput      ( TComList<TComPic*>* pcListPic, UInt layerId, UInt tId ); ///< write YUV to file

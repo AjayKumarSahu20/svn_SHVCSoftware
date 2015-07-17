@@ -55,18 +55,15 @@
 //! \ingroup TAppDecoder
 //! \{
 
-#if Q0074_COLOUR_REMAPPING_SEI
-static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* colourRemappingInfoSEI, const BitDepths& bitDpeths, UInt layerId=0 );
-static std::vector<SEIColourRemappingInfo> storeCriSEI; //Persistent Colour Remapping Information SEI
-static SEIColourRemappingInfo *seiColourRemappingInfoPrevious=NULL ;
-#endif
-
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
 #if SVC_EXTENSION
 TAppDecTop::TAppDecTop()
+#if Q0074_COLOUR_REMAPPING_SEI
+: seiColourRemappingInfoPrevious(NULL)
+#endif
 {
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
@@ -77,6 +74,9 @@ TAppDecTop::TAppDecTop()
 #else
 TAppDecTop::TAppDecTop()
 : m_iPOCLastDisplay(-MAX_INT)
+#if Q0074_COLOUR_REMAPPING_SEI
+, seiColourRemappingInfoPrevious(NULL)
+#endif
 {
 }
 #endif
@@ -938,19 +938,21 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
         {
           SEIMessages colourRemappingInfo = getSeisByType(pcPic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
           const SEIColourRemappingInfo *seiColourRemappingInfo = ( colourRemappingInfo.size() > 0 ) ? (SEIColourRemappingInfo*) *(colourRemappingInfo.begin()) : NULL;
+          const TComSPS *sps = pcPic->getSlice(0)->getSPS();
+
           if (colourRemappingInfo.size() > 1)
           {
             printf ("Warning: Got multiple Colour Remapping Information SEI messages. Using first.");
           }
           if (seiColourRemappingInfo)
           {
-            applyColourRemapping(*pcPic->getPicYuvRec(), seiColourRemappingInfo);
+            xApplyColourRemapping(sps, *pcPic->getPicYuvRec(), seiColourRemappingInfo);
           }
           else  // using the last CRI SEI received
           {
             const SEIColourRemappingInfo *seiColourRemappingInfoCopy;
             seiColourRemappingInfoCopy = seiColourRemappingInfoPrevious;
-            applyColourRemapping(*pcPic->getPicYuvRec(), seiColourRemappingInfoCopy);
+            xApplyColourRemapping(sps, *pcPic->getPicYuvRec(), seiColourRemappingInfoCopy);
           }
 
           // save the last CRI SEI received
@@ -1163,19 +1165,21 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         {
           SEIMessages colourRemappingInfo = getSeisByType(pcPic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
           const SEIColourRemappingInfo *seiColourRemappingInfo = ( colourRemappingInfo.size() > 0 ) ? (SEIColourRemappingInfo*) *(colourRemappingInfo.begin()) : NULL;
+          const TComSPS *sps = pcPic->getSlice(0)->getSPS();
+
           if (colourRemappingInfo.size() > 1)
           {
             printf ("Warning: Got multiple Colour Remapping Information SEI messages. Using first.");
           }
           if (seiColourRemappingInfo)
           {
-            applyColourRemapping(*pcPic->getPicYuvRec(), seiColourRemappingInfo);
+            xApplyColourRemapping( sps, *pcPic->getPicYuvRec(), seiColourRemappingInfo );
           }
           else  // using the last CRI SEI received
           {
             const SEIColourRemappingInfo *seiColourRemappingInfoCopy;
             seiColourRemappingInfoCopy = seiColourRemappingInfoPrevious;
-            applyColourRemapping(*pcPic->getPicYuvRec(), seiColourRemappingInfoCopy);
+            xApplyColourRemapping( sps, *pcPic->getPicYuvRec(), seiColourRemappingInfoCopy );
           }
 
           // save the last CRI SEI received
@@ -1285,8 +1289,10 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
 #if Q0074_COLOUR_REMAPPING_SEI
     if( m_colourRemapSEIEnabled )
     {
+      const TComSPS *sps = pic->getSlice(0)->getSPS();
       SEIMessages colourRemappingInfo = getSeisByType(pic->getSEIs(), SEI::COLOUR_REMAPPING_INFO );
       const SEIColourRemappingInfo *seiColourRemappingInfo = ( colourRemappingInfo.size() > 0 ) ? (SEIColourRemappingInfo*) *(colourRemappingInfo.begin()) : NULL;
+
       if (colourRemappingInfo.size() > 1)
       {
         printf ("Warning: Got multiple Colour Remapping Information SEI messages. Using first.");
@@ -1295,21 +1301,13 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
       if (seiColourRemappingInfo)
       {
         //printf ("\n\nColour Remapping is applied to POC : %d and LayerId : %d ",pic->getPOC(), pic->getLayerId());
-#if SVC_EXTENSION
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfo, pic->getSlice(0)->getBitDepths(), pic->getLayerId());
-#else
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfo, pic->getSlice(0)->getBitDepths());
-#endif
+        xApplyColourRemapping( sps, *pic->getPicYuvRec(), seiColourRemappingInfo, pic->getLayerId() );
       }
       else  // using the last CRI SEI received
       {
         const SEIColourRemappingInfo *seiColourRemappingInfoCopy;
         seiColourRemappingInfoCopy = seiColourRemappingInfoPrevious;
-#if SVC_EXTENSION
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfoCopy, pic->getSlice(0)->getBitDepths(), pic->getLayerId());
-#else
-        applyColourRemapping(*pic->getPicYuvRec(), seiColourRemappingInfoCopy, pic->getSlice(0)->getBitDepths());
-#endif
+        xApplyColourRemapping( sps, *pic->getPicYuvRec(), seiColourRemappingInfoCopy, pic->getLayerId() );
       }
 
       // save the last CRI SEI received
@@ -1845,7 +1843,7 @@ Void TAppDecTop::outputAllPictures(Int layerId, Bool notOutputCurrPic)
 #endif //ALIGNED_BUMPING
 
 #if Q0074_COLOUR_REMAPPING_SEI
-Void xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI )
+Void TAppDecTop::xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preLut)[3], std::vector<Int>(&postLut)[3], const SEIColourRemappingInfo* const pCriSEI )
 {
   for ( Int c=0 ; c<3 ; c++ )
   {  
@@ -1902,17 +1900,23 @@ Void xInitColourRemappingLut( const BitDepths &bitDepths, std::vector<Int>(&preL
   }
 }
 
-static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, const BitDepths& bitDpeths, UInt layerId )
-{  
+Void TAppDecTop::xApplyColourRemapping( const TComSPS *sps, TComPicYuv& pic, const SEIColourRemappingInfo* pCriSEI, UInt layerId )
+{
+  const BitDepths& bitDpeths = sps->getBitDepths();
+
   if( !storeCriSEI.size() )
+  {
 #if SVC_EXTENSION
     storeCriSEI.resize(MAX_LAYERS);
 #else
     storeCriSEI.resize(1);
 #endif
+  }
 
   if ( pCriSEI ) //if a CRI SEI has just been retrieved, keep it in memory (persistence management)
+  {
     storeCriSEI[layerId] = *pCriSEI;
+  }
 
   if( !storeCriSEI[layerId].m_colourRemapCancelFlag && pCriSEI) 
   {
@@ -1927,14 +1931,15 @@ static Void applyColourRemapping(TComPicYuv& pic, const SEIColourRemappingInfo* 
     YUVIn[2] = pic.getAddr(COMPONENT_Cr);
     
     TComPicYuv picColourRemapped;
+
 #if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
 #else
-    picColourRemapped.create( pic.getWidth(), pic.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+    picColourRemapped.create( pic.getWidth(), pic.getHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
 #endif
 #else
-    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true );
 #endif 
     YUVOut[0] = picColourRemapped.getAddr(COMPONENT_Y);
     YUVOut[1] = picColourRemapped.getAddr(COMPONENT_Cb);

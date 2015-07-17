@@ -3869,7 +3869,7 @@ Void TAppEncCfg::xCheckParameter()
 #endif 
 
   m_maxTempLayer = 1;
-  for(Int i=0; i<m_iGOPSize; i++) 
+  for(Int i=0; i<m_iGOPSize; i++)
   {
     if(m_GOPList[i].m_temporalId >= m_maxTempLayer)
     {
@@ -4272,9 +4272,6 @@ Void TAppEncCfg::xSetGlobal()
 
   // set max CU width & height
 #if SVC_EXTENSION
-  g_uiMaxCUWidth  = m_acLayerCfg[layerId].m_uiMaxCUWidth;
-  g_uiMaxCUHeight = m_acLayerCfg[layerId].m_uiMaxCUHeight;
-
   // compute actual CU depth with respect to config depth and max transform size
   g_uiAddCUDepth  = 0;
   while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )
@@ -4288,9 +4285,6 @@ Void TAppEncCfg::xSetGlobal()
   g_uiAddCUDepth++;
   g_uiMaxCUDepth = m_acLayerCfg[layerId].m_uiMaxCUDepth;
 #else
-  g_uiMaxCUWidth  = m_uiMaxCUWidth;
-  g_uiMaxCUHeight = m_uiMaxCUHeight;
-
   // compute actual CU depth with respect to config depth and max transform size
   g_uiAddCUDepth  = 0;
   while( (m_uiMaxCUWidth>>m_uiMaxCUDepth) > ( 1 << ( m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )

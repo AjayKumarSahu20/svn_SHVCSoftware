@@ -3789,7 +3789,7 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
           }
         }
 
-        pcIlpPic[refLayerIdc]->copyUpsampledMvField( refLayerIdc, m_pcBaseColPic[refLayerIdc] );
+        pcIlpPic[refLayerIdc]->copyUpsampledMvField(refLayerIdc);
       }
       else
       {

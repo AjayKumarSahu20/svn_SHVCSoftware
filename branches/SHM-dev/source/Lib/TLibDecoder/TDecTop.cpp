@@ -253,9 +253,9 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
       xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
     }
 
-    rpcPic->create( vps, sps, pps, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true, m_layerId);
+    rpcPic->create( vps, sps, pps, g_uiMaxCUDepth, true, m_layerId);
 #else //SVC_EXTENSION
-    rpcPic->create ( sps, pps, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+    rpcPic->create ( sps, pps, g_uiMaxCUDepth, true);
 #endif //SVC_EXTENSION
     
     m_cListPic.pushBack( rpcPic );
@@ -302,9 +302,9 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
   }
 
-  rpcPic->create( vps, sps, pps, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true, m_layerId);
+  rpcPic->create( vps, sps, pps, g_uiMaxCUDepth, true, m_layerId);
 #else  //SVC_EXTENSION
-  rpcPic->create ( sps, pps, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
+  rpcPic->create ( sps, pps, g_uiMaxCUDepth, true);
 #endif //SVC_EXTENSION
 }
 
@@ -492,7 +492,7 @@ Void TDecTop::xActivateParameterSets()
       {
         UInt refLayerId = 0;
 
-        pBLPic->create( *vps, *sps, *pps, sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), true, refLayerId);
+        pBLPic->create( *vps, *sps, *pps, sps->getMaxCUDepth(), true, refLayerId);
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
@@ -571,8 +571,6 @@ Void TDecTop::xActivateParameterSets()
 #endif //SVC_EXTENSION
 
     // TODO: remove the use of the following globals:
-    g_uiMaxCUWidth  = sps->getMaxCUWidth();
-    g_uiMaxCUHeight = sps->getMaxCUHeight();
     g_uiMaxCUDepth  = sps->getMaxCUDepth();
 #if SVC_EXTENSION
     g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() + (Int)getMaxCUDepthOffset(vps->getChromaFormatIdc(sps, m_apcSlicePilot->getLayerId()), sps->getQuadtreeTULog2MinSize()));
@@ -612,6 +610,7 @@ Void TDecTop::xActivateParameterSets()
 #endif
     m_cLoopFilter.create( sps->getMaxCUDepth() );
     m_cPrediction.initTempBuff(sps->getChromaFormatIdc());
+
 
     Bool isField = false;
     Bool isTopField = false;
@@ -701,14 +700,14 @@ Void TDecTop::xActivateParameterSets()
     }
 
     // Check if any new SEI has arrived
-    if(!m_SEIs.empty())
-    {
-      // Currently only decoding Unit SEI message occurring between VCL NALUs copied
-      SEIMessages &picSEI = m_pcPic->getSEIs();
-      SEIMessages decodingUnitInfos = extractSeisByType (m_SEIs, SEI::DECODING_UNIT_INFO);
-      picSEI.insert(picSEI.end(), decodingUnitInfos.begin(), decodingUnitInfos.end());
-      deleteSEIs(m_SEIs);
-    }
+     if(!m_SEIs.empty())
+     {
+       // Currently only decoding Unit SEI message occurring between VCL NALUs copied
+       SEIMessages &picSEI = m_pcPic->getSEIs();
+       SEIMessages decodingUnitInfos = extractSeisByType (m_SEIs, SEI::DECODING_UNIT_INFO);
+       picSEI.insert(picSEI.end(), decodingUnitInfos.begin(), decodingUnitInfos.end());
+       deleteSEIs(m_SEIs);
+     }
   }
 
 }
@@ -2198,8 +2197,6 @@ Void TDecTop::xInitILRP(TComSlice *slice)
 
   if( m_layerId > 0 )
   {
-    g_uiMaxCUWidth  = sps->getMaxCUWidth();
-    g_uiMaxCUHeight = sps->getMaxCUHeight();
     g_uiMaxCUDepth  = sps->getMaxCUDepth();
     g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() );
 
@@ -2209,7 +2206,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
         m_cIlpPic[j] = new  TComPic;
 
-        m_cIlpPic[j]->create(*vps, *sps, *slice->getPPS(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true, m_layerId);
+        m_cIlpPic[j]->create(*vps, *sps, *slice->getPPS(), g_uiMaxCUDepth, true, m_layerId);
 
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
@@ -2388,7 +2385,7 @@ Void TDecTop::initAsymLut(TComSlice *pcSlice)
       Int picWidth    = pcSlice->getPicWidthInLumaSamples();
       Int picHeight   = pcSlice->getPicHeightInLumaSamples();
       m_pColorMappedPic = new TComPicYuv;
-      m_pColorMappedPic->create( picWidth, picHeight, pcSlice->getChromaFormatIdc()/*CHROMA_420*/, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, NULL );
+      m_pColorMappedPic->create( picWidth, picHeight, pcSlice->getChromaFormatIdc()/*CHROMA_420*/, pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
     }
   }
 }

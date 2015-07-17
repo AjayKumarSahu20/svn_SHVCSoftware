@@ -137,6 +137,8 @@ public:
             Int           iSearchRange,
             Int           bipredSearchRange,
             Int           iFastSearch,
+            const UInt    maxCUWidth,
+            const UInt    maxCUHeight,
             TEncEntropy*  pcEntropyCoder,
             TComRdCost*   pcRdCost,
             TEncSbac***   pppcRDSbacCoder,

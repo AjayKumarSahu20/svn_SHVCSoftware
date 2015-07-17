@@ -86,8 +86,6 @@ private:
   UInt          m_frameWidthInCtus;
   UInt          m_frameHeightInCtus;
 
-  UInt          m_uiMaxCUWidth;
-  UInt          m_uiMaxCUHeight;
   UInt          m_uiMinCUWidth;
   UInt          m_uiMinCUHeight;
 
@@ -98,9 +96,6 @@ private:
   UInt          m_numCtusInFrame;
 
   std::deque<TComSlice*> m_apSlices;
-
-  TComSlice**   m_apcTComSlice;
-  UInt          m_uiNumAllocatedSlice;
   TComDataCU**  m_pictureCtuArray;        ///< array of CU data.
 
   Int           m_numTileColumnsMinus1;
@@ -132,12 +127,12 @@ private:
 
 public:
 #if SVC_EXTENSION
-  Void               create  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth, const UInt layerId );
+  Void               create  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId );
 #if CGS_3D_ASYMLUT
   TComPPS*           getPPSToUpdate()                                      { return &m_pps; }
 #endif
 #else
-  Void               create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
+  Void               create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth );
 #endif
   Void               destroy ();
 
