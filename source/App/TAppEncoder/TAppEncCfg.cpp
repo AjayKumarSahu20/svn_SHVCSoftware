@@ -2851,14 +2851,30 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   xCheckParameter();
 #endif
 
-  // set global varibles
+  // compute actual CU depth with respect to config depth and max transform size
 #if SVC_EXTENSION
-  for(Int layer = 0; layer < m_numLayers; layer++)
+  for(Int layerIdx = 0; layerIdx < m_numLayers; layerIdx++)
   {
-    xSetGlobal(layer);
+    UInt uiAddCUDepth  = 0;
+    while( (m_acLayerCfg[layerIdx].m_uiMaxCUWidth>>m_acLayerCfg[layerIdx].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize + uiAddCUDepth )  ) )
+    {
+      uiAddCUDepth++;
+    }
+
+    m_acLayerCfg[layerIdx].m_uiMaxTotalCUDepth = m_acLayerCfg[layerIdx].m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_acLayerCfg[layerIdx].m_chromaFormatIDC, m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
+    uiAddCUDepth++;
+    m_acLayerCfg[layerIdx].m_uiLog2DiffMaxMinCodingBlockSize = m_acLayerCfg[layerIdx].m_uiMaxCUDepth - 1;
   }
-#else
-  xSetGlobal();
+#else  
+  UInt uiAddCUDepth  = 0;
+  while( (m_uiMaxCUWidth>>m_uiMaxCUDepth) > ( 1 << ( m_uiQuadtreeTULog2MinSize + uiAddCUDepth )  ) )
+  {
+    uiAddCUDepth++;
+  }
+
+  m_uiMaxTotalCUDepth = m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_chromaFormatIDC, m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
+  uiAddCUDepth++;
+  m_uiLog2DiffMaxMinCodingBlockSize = m_uiMaxCUDepth - 1;
 #endif
   
   // print-out parameters
@@ -4233,74 +4249,6 @@ Void TAppEncCfg::xCheckParameter()
   }
 }
 
-/** \todo use of global variables should be removed later
- */
-#if LAYER_CTB
-Void TAppEncCfg::xSetGlobal(UInt layerId)
-{
-  // set max CU width & height
-  g_auiLayerMaxCUWidth[layerId]  = m_acLayerCfg[layerId].m_uiMaxCUWidth;
-  g_auiLayerMaxCUHeight[layerId] = m_acLayerCfg[layerId].m_uiMaxCUHeight;
-  
-  // compute actual CU depth with respect to config depth and max transform size
-  g_auiLayerAddCUDepth[layerId]  = 0;
-  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_auiLayerAddCUDepth[layerId] )  ) ) g_auiLayerAddCUDepth[layerId]++;
-  
-  m_acLayerCfg[layerId].m_uiMaxCUDepth += g_auiLayerAddCUDepth[layerId];
-  g_auiLayerAddCUDepth[layerId]++;
-  g_auiLayerMaxCUDepth[layerId] = m_acLayerCfg[layerId].m_uiMaxCUDepth;
-  
-  // set internal bit-depth to constant value to make sure to be updated later
-  g_bitDepthY = -1;
-  g_bitDepthC = -1;
-  
-  g_uiPCMBitDepthLuma = -1;
-  g_uiPCMBitDepthChroma = -1;
-}
-#else
-#if SVC_EXTENSION
-Void TAppEncCfg::xSetGlobal(UInt layerId)
-#else
-Void TAppEncCfg::xSetGlobal()
-#endif
-{
-#if SVC_EXTENSION
-  // Check for layerIdx equal to 0, it has to pe extended to other layers.
-  UInt layerIdx = 0;
-  ChromaFormat m_chromaFormatIDC = m_acLayerCfg[layerIdx].m_chromaFormatIDC;
-#endif
-
-  // set max CU width & height
-#if SVC_EXTENSION
-  // compute actual CU depth with respect to config depth and max transform size
-  g_uiAddCUDepth  = 0;
-  while( (m_acLayerCfg[layerId].m_uiMaxCUWidth>>m_acLayerCfg[layerId].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )
-  {
-    g_uiAddCUDepth++;
-  }
-
-  g_uiAddCUDepth+=getMaxCUDepthOffset(m_chromaFormatIDC, m_acLayerCfg[layerId].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
-
-  m_acLayerCfg[layerId].m_uiMaxCUDepth += g_uiAddCUDepth;
-  g_uiAddCUDepth++;
-  g_uiMaxCUDepth = m_acLayerCfg[layerId].m_uiMaxCUDepth;
-#else
-  // compute actual CU depth with respect to config depth and max transform size
-  g_uiAddCUDepth  = 0;
-  while( (m_uiMaxCUWidth>>m_uiMaxCUDepth) > ( 1 << ( m_uiQuadtreeTULog2MinSize + g_uiAddCUDepth )  ) )
-  {
-    g_uiAddCUDepth++;
-  }
-
-  g_uiAddCUDepth+=getMaxCUDepthOffset(m_chromaFormatIDC, m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
-
-  m_uiMaxCUDepth += g_uiAddCUDepth;
-  g_uiAddCUDepth++;
-  g_uiMaxCUDepth = m_uiMaxCUDepth;
-#endif
-}
-#endif
-
 const Char *profileToString(const Profile::Name profile)
 {
   static const UInt numberOfProfiles = sizeof(strToProfile)/sizeof(*strToProfile);
@@ -4394,8 +4342,7 @@ Void TAppEncCfg::xPrintParameter()
   {
     printf("Profile                           : %s\n", profileToString(m_profile) );
   }
-
-  printf("CU size / depth                   : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
+  printf("CU size / depth / total-depth     : %d / %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth, m_uiMaxTotalCUDepth );
   printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
   printf("Max RQT depth intra               : %d\n", m_uiQuadtreeTUMaxDepthIntra);

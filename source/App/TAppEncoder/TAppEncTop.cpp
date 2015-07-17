@@ -437,6 +437,8 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setRDpenalty                                        ( m_rdPenalty );
     m_acTEncTop[layer].setMaxCUWidth                                       ( m_acLayerCfg[layer].m_uiMaxCUWidth );
     m_acTEncTop[layer].setMaxCUHeight                                      ( m_acLayerCfg[layer].m_uiMaxCUHeight );
+    m_acTEncTop[layer].setMaxTotalCUDepth                                  ( m_acLayerCfg[layer].m_uiMaxTotalCUDepth );
+    m_acTEncTop[layer].setLog2DiffMaxMinCodingBlockSize                    ( m_acLayerCfg[layer].m_uiLog2DiffMaxMinCodingBlockSize );
 
     m_acTEncTop[layer].setQuadtreeTULog2MaxSize                            ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize );
     m_acTEncTop[layer].setQuadtreeTULog2MinSize                            ( m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize );
@@ -867,6 +869,8 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setRDpenalty                                         ( m_rdPenalty );
   m_cTEncTop.setMaxCUWidth                                        ( m_uiMaxCUWidth );
   m_cTEncTop.setMaxCUHeight                                       ( m_uiMaxCUHeight );
+  m_cTEncTop.setMaxTotalCUDepth                                   ( m_uiMaxTotalCUDepth );
+  m_cTEncTop.setLog2DiffMaxMinCodingBlockSize                     ( m_uiLog2DiffMaxMinCodingBlockSize );
   m_cTEncTop.setQuadtreeTULog2MaxSize                             ( m_uiQuadtreeTULog2MaxSize );
   m_cTEncTop.setQuadtreeTULog2MinSize                             ( m_uiQuadtreeTULog2MinSize );
   m_cTEncTop.setQuadtreeTUMaxDepthInter                           ( m_uiQuadtreeTUMaxDepthInter );
@@ -1683,13 +1687,13 @@ Void TAppEncTop::encode()
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
     {
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, true, NULL );
-      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, true, NULL );
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxTotalCUDepth, true, NULL );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeightOrg(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxTotalCUDepth, true, NULL );
     }
     else
     {
-      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, true, NULL );
-      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, true, NULL );
+      pcPicYuvOrg[layer]->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxTotalCUDepth, true, NULL );
+      acPicYuvTrueOrg[layer].create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxTotalCUDepth, true, NULL );
     }
   }
 
@@ -2033,13 +2037,13 @@ Void TAppEncTop::encode()
   // allocate original YUV buffer
   if( m_isField )
   {
-    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, true );
-  cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, true);
+    pcPicYuvOrg->create  ( m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeightOrg, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true);
   }
   else
   {
-    pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, true );
-  cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, true );
+    pcPicYuvOrg->create  ( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
+    cPicYuvTrueOrg.create(m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
   }
 
   while ( !bEos )
@@ -2128,7 +2132,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxCUDepth, true, NULL );
+    rpcPicYuvRec->create( m_acLayerCfg[layer].getSourceWidth(), m_acLayerCfg[layer].getSourceHeight(), m_acLayerCfg[layer].getChromaFormatIDC(), m_acLayerCfg[layer].m_uiMaxCUWidth, m_acLayerCfg[layer].m_uiMaxCUHeight, m_acLayerCfg[layer].m_uiMaxTotalCUDepth, true, NULL );
   }
   m_acListPicYuvRec[layer].pushBack( rpcPicYuvRec );
 }
@@ -2258,7 +2262,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-    rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth, true );
+    rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxTotalCUDepth, true );
 
   }
   m_cListPicYuvRec.pushBack( rpcPicYuvRec );

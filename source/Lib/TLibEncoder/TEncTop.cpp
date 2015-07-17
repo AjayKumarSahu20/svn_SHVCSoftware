@@ -116,11 +116,11 @@ Void TEncTop::create ()
 #else
   m_cGOPEncoder.        create( );
 #endif
-  m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, g_uiMaxCUDepth );
-  m_cCuEncoder.         create( g_uiMaxCUDepth, m_maxCUWidth, m_maxCUHeight, m_chromaFormatIDC );
+  m_cSliceEncoder.      create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, m_maxTotalCUDepth );
+  m_cCuEncoder.         create( m_maxTotalCUDepth, m_maxCUWidth, m_maxCUHeight, m_chromaFormatIDC );
   if (m_bUseSAO)
   {
-    m_cEncSAO.create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, g_uiMaxCUDepth, m_saoOffsetBitShift[CHANNEL_TYPE_LUMA], m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] );
+    m_cEncSAO.create( getSourceWidth(), getSourceHeight(), m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, m_maxTotalCUDepth, m_saoOffsetBitShift[CHANNEL_TYPE_LUMA], m_saoOffsetBitShift[CHANNEL_TYPE_CHROMA] );
 #if SAO_ENCODE_ALLOW_USE_PREDEBLOCK
     m_cEncSAO.createEncData(getSaoCtuBoundary());
 #else
@@ -134,7 +134,7 @@ Void TEncTop::create ()
   }
 #endif
 
-  m_cLoopFilter.create( g_uiMaxCUDepth );
+  m_cLoopFilter.create( m_maxTotalCUDepth );
 
   if ( m_RCEnableRateControl )
   {
@@ -142,14 +142,14 @@ Void TEncTop::create ()
         m_maxCUWidth, m_maxCUHeight, m_RCKeepHierarchicalBit, m_RCUseLCUSeparateModel, m_GOPList );
   }
 
-  m_pppcRDSbacCoder = new TEncSbac** [g_uiMaxCUDepth+1];
+  m_pppcRDSbacCoder = new TEncSbac** [m_maxTotalCUDepth+1];
 #if FAST_BIT_EST
-  m_pppcBinCoderCABAC = new TEncBinCABACCounter** [g_uiMaxCUDepth+1];
+  m_pppcBinCoderCABAC = new TEncBinCABACCounter** [m_maxTotalCUDepth+1];
 #else
-  m_pppcBinCoderCABAC = new TEncBinCABAC** [g_uiMaxCUDepth+1];
+  m_pppcBinCoderCABAC = new TEncBinCABAC** [m_maxTotalCUDepth+1];
 #endif
 
-  for ( Int iDepth = 0; iDepth < g_uiMaxCUDepth+1; iDepth++ )
+  for ( Int iDepth = 0; iDepth < m_maxTotalCUDepth+1; iDepth++ )
   {
     m_pppcRDSbacCoder[iDepth] = new TEncSbac* [CI_NUM];
 #if FAST_BIT_EST
@@ -189,7 +189,7 @@ Void TEncTop::destroy ()
   m_cLoopFilter.        destroy();
   m_cRateCtrl.          destroy();
   Int iDepth;
-  for ( iDepth = 0; iDepth < g_uiMaxCUDepth+1; iDepth++ )
+  for ( iDepth = 0; iDepth < m_maxTotalCUDepth+1; iDepth++ )
   {
     for (Int iCIIdx = 0; iCIIdx < CI_NUM; iCIIdx ++ )
     {
@@ -198,7 +198,7 @@ Void TEncTop::destroy ()
     }
   }
 
-  for ( iDepth = 0; iDepth < g_uiMaxCUDepth+1; iDepth++ )
+  for ( iDepth = 0; iDepth < m_maxTotalCUDepth+1; iDepth++ )
   {
     delete [] m_pppcRDSbacCoder[iDepth];
     delete [] m_pppcBinCoderCABAC[iDepth];
@@ -257,7 +257,7 @@ Void TEncTop::init(Bool isFieldCoding)
                   );
 
   // initialize encoder search class
-  m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, m_maxCUWidth, m_maxCUHeight, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
+  m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_bipredSearchRange, m_iFastSearch, m_maxCUWidth, m_maxCUHeight, m_maxTotalCUDepth, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
 
   m_iMaxRefPicNum = 0;
 
@@ -578,7 +578,7 @@ Void TEncTop::encode( TComPicYuv* pcPicYuvOrg, const InputColourSpaceConversion 
         else
         {
           rpcPicYuvRec = new TComPicYuv;
-          rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, g_uiMaxCUDepth, true);
+          rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, m_maxTotalCUDepth, true);
         }
         rcListPicYuvRecOut.pushBack( rpcPicYuvRec );
       }
@@ -619,7 +619,7 @@ Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTr
         else
         {
           rpcPicYuvRec = new TComPicYuv;
-          rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, g_uiMaxCUDepth, true);
+          rpcPicYuvRec->create( m_iSourceWidth, m_iSourceHeight, m_chromaFormatIDC, m_maxCUWidth, m_maxCUHeight, m_maxTotalCUDepth, true);
         }
         rcListPicYuvRecOut.pushBack( rpcPicYuvRec );
       }
@@ -749,9 +749,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         }
       }
 
-      pcEPic->create( m_cVPS, m_cSPS, m_cPPS, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1, false, m_layerId);
+      pcEPic->create( m_cVPS, m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, false, m_layerId);
 #else  //SVC_EXTENSION
-      pcEPic->create( m_cSPS, m_cPPS, g_uiMaxCUDepth, m_cPPS.getMaxCuDQPDepth()+1, false);
+      pcEPic->create( m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, false);
 #endif //SVC_EXTENSION
       rpcPic = pcEPic;
     }
@@ -799,9 +799,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         }
       }
 
-      rpcPic->create( m_cVPS, m_cSPS, m_cPPS, g_uiMaxCUDepth, false, m_layerId );
+      rpcPic->create( m_cVPS, m_cSPS, m_cPPS, false, m_layerId );
 #else  //SVC_EXTENSION
-      rpcPic->create( m_cSPS, m_cPPS, g_uiMaxCUDepth, false );
+      rpcPic->create( m_cSPS, m_cPPS, false );
 #endif //SVC_EXTENSION
     }
 
@@ -883,15 +883,16 @@ Void TEncTop::xInitSPS()
   /* XXX: may be a good idea to refactor the above into a function
    * that chooses the actual compatibility based upon options */
 
-  m_cSPS.setPicWidthInLumaSamples         ( m_iSourceWidth      );
-  m_cSPS.setPicHeightInLumaSamples        ( m_iSourceHeight     );
-  m_cSPS.setConformanceWindow             ( m_conformanceWindow );
-  m_cSPS.setMaxCUWidth    ( m_maxCUWidth      );
-  m_cSPS.setMaxCUHeight   ( m_maxCUHeight     );
-  m_cSPS.setMaxCUDepth    ( g_uiMaxCUDepth      );
+  m_cSPS.setPicWidthInLumaSamples  ( m_iSourceWidth      );
+  m_cSPS.setPicHeightInLumaSamples ( m_iSourceHeight     );
+  m_cSPS.setConformanceWindow      ( m_conformanceWindow );
+  m_cSPS.setMaxCUWidth             ( m_maxCUWidth        );
+  m_cSPS.setMaxCUHeight            ( m_maxCUHeight       );
+  m_cSPS.setMaxTotalCUDepth        ( m_maxTotalCUDepth   );
   m_cSPS.setChromaFormatIdc( m_chromaFormatIDC);
+  m_cSPS.setLog2DiffMaxMinCodingBlockSize(m_log2DiffMaxMinCodingBlockSize);
 
-  Int minCUSize = m_cSPS.getMaxCUWidth() >> ( m_cSPS.getMaxCUDepth()-g_uiAddCUDepth );
+  Int minCUSize = m_cSPS.getMaxCUWidth() >> ( m_cSPS.getLog2DiffMaxMinCodingBlockSize() );
   Int log2MinCUSize = 0;
   while(minCUSize > 1)
   {
@@ -900,7 +901,7 @@ Void TEncTop::xInitSPS()
   }
 
   m_cSPS.setLog2MinCodingBlockSize(log2MinCUSize);
-  m_cSPS.setLog2DiffMaxMinCodingBlockSize(m_cSPS.getMaxCUDepth()-g_uiAddCUDepth-getMaxCUDepthOffset(m_cSPS.getChromaFormatIdc(), m_cSPS.getQuadtreeTULog2MinSize()));
+  
 #if SVC_EXTENSION
   m_cSPS.setSPSId         ( m_iSPSIdCnt       );
 #endif
@@ -923,12 +924,13 @@ Void TEncTop::xInitSPS()
   for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
   {
 #if SVC_EXTENSION
-    m_cSPS.setBitDepth    (ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType))            );
-    m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) - 8)));
+    m_cSPS.setBitDepth    (ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType))            );    
 #if O0043_BEST_EFFORT_DECODING
-    m_cSPS.setStreamBitDepth(ChannelType(channelType), m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) );
+    m_cSPS.setStreamBitDepth(ChannelType(channelType), m_bitDepth[channelType] );
 #endif
+    m_cSPS.setQpBDOffset  (ChannelType(channelType), (6 * (m_cVPS.getVpsRepFormat( m_cVPS.getVpsRepFormatIdx( m_cVPS.getLayerIdxInVps( m_layerId ) ) )->getBitDepthVps(ChannelType(channelType)) - 8)));
 #else
+    m_cSPS.setBitDepth      (ChannelType(channelType), m_bitDepth[channelType] );
 #if O0043_BEST_EFFORT_DECODING
     m_cSPS.setStreamBitDepth(ChannelType(channelType), m_bitDepth[channelType] );
 #endif
@@ -1504,15 +1506,12 @@ Void TEncTop::xInitILRP()
 {
   if( m_layerId > 0 )
   {
-    g_uiMaxCUDepth  = m_cSPS.getMaxCUDepth();
-    g_uiAddCUDepth  = max (0, m_cSPS.getLog2MinCodingBlockSize() - (Int)m_cSPS.getQuadtreeTULog2MinSize() );
-
-    if (m_cIlpPic[0] == NULL)
+    if( m_cIlpPic[0] == NULL )
     {
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new TComPic;
-        m_cIlpPic[j]->create(m_cVPS, m_cSPS, m_cPPS, g_uiMaxCUDepth, true, m_layerId);
+        m_cIlpPic[j]->create(m_cVPS, m_cSPS, m_cPPS, true, m_layerId);
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
           m_cIlpPic[j]->getPicSym()->getCtu(i)->initCtu(m_cIlpPic[j], i);

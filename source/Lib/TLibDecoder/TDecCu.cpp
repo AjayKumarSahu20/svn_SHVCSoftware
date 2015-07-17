@@ -234,17 +234,16 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
   {
     bBoundary = true;
   }
-
-  if( ( ( uiDepth < pcCU->getDepth( uiAbsPartIdx ) ) && ( uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth ) ) || bBoundary )
+  if( ( ( uiDepth < pcCU->getDepth( uiAbsPartIdx ) ) && ( uiDepth < sps.getLog2DiffMaxMinCodingBlockSize() ) ) || bBoundary )
   {
     UInt uiIdx = uiAbsPartIdx;
-    if( (maxCuWidth>>uiDepth) == (maxCuWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
+    if( uiDepth == pps.getMaxCuDQPDepth() && pps.getUseDQP())
     {
       setdQPFlag(true);
       pcCU->setQPSubParts( pcCU->getRefQP(uiAbsPartIdx), uiAbsPartIdx, uiDepth ); // set QP to default QP
     }
 
-    if( (maxCuWidth>>uiDepth) == (maxCuWidth >> ( pps.getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj() ) // TODO: tidy expression
+    if( uiDepth == pps.getMaxCuChromaQpAdjDepth() && pcCU->getSlice()->getUseChromaQpAdj() )
     {
       setIsChromaQpAdjCoded(true);
     }
@@ -269,7 +268,7 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
 
       uiIdx += uiQNumParts;
     }
-    if( (maxCuWidth>>uiDepth) == (maxCuWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
+    if( uiDepth == pps.getMaxCuDQPDepth() && pps.getUseDQP())
     {
       if ( getdQPFlag() )
       {
@@ -280,13 +279,13 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
     return;
   }
 
-  if( (maxCuWidth>>uiDepth) >= (maxCuWidth >> ( pps.getMaxCuDQPDepth())) && pps.getUseDQP()) // TODO: tidy expression
+  if( uiDepth <= pps.getMaxCuDQPDepth() && pps.getUseDQP())
   {
     setdQPFlag(true);
     pcCU->setQPSubParts( pcCU->getRefQP(uiAbsPartIdx), uiAbsPartIdx, uiDepth ); // set QP to default QP
   }
 
-  if( (maxCuWidth>>uiDepth) >= (maxCuWidth >> ( pps.getMaxCuChromaQpAdjDepth())) && pcCU->getSlice()->getUseChromaQpAdj() ) // TODO: tidy expression
+  if( uiDepth <= pps.getMaxCuChromaQpAdjDepth() && pcCU->getSlice()->getUseChromaQpAdj() )
   {
     setIsChromaQpAdjCoded(true);
   }
@@ -415,7 +414,7 @@ Void TDecCu::xDecompressCU( TComDataCU* pCtu, UInt uiAbsPartIdx,  UInt uiDepth )
     bBoundary = true;
   }
 
-  if( ( ( uiDepth < pCtu->getDepth( uiAbsPartIdx ) ) && ( uiDepth < g_uiMaxCUDepth - g_uiAddCUDepth ) ) || bBoundary )
+  if( ( ( uiDepth < pCtu->getDepth( uiAbsPartIdx ) ) && ( uiDepth < sps.getLog2DiffMaxMinCodingBlockSize() ) ) || bBoundary )
   {
     UInt uiNextDepth = uiDepth + 1;
     UInt uiQNumParts = pCtu->getTotalNumPart() >> (uiNextDepth<<1);
@@ -568,7 +567,8 @@ TDecCu::xIntraRecBlk(       TComYuv*    pcRecoYuv,
   }
 
   const UInt uiChPredMode  = pcCU->getIntraDir( toChannelType(compID), uiAbsPartIdx );
-  const UInt uiChCodedMode = (uiChPredMode==DM_CHROMA_IDX && !bIsLuma) ? pcCU->getIntraDir(CHANNEL_TYPE_LUMA, getChromasCorrespondingPULumaIdx(uiAbsPartIdx, chFmt)) : uiChPredMode;
+  const UInt partsPerMinCU = 1<<(2*(sps.getMaxTotalCUDepth() - sps.getLog2DiffMaxMinCodingBlockSize()));
+  const UInt uiChCodedMode = (uiChPredMode==DM_CHROMA_IDX && !bIsLuma) ? pcCU->getIntraDir(CHANNEL_TYPE_LUMA, getChromasCorrespondingPULumaIdx(uiAbsPartIdx, chFmt, partsPerMinCU)) : uiChPredMode;
   const UInt uiChFinalMode = ((chFmt == CHROMA_422)       && !bIsLuma) ? g_chroma422IntraAngleMappingTable[uiChCodedMode] : uiChCodedMode;
 
   //===== init availability pattern =====

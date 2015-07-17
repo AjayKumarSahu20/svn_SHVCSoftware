@@ -74,13 +74,14 @@ TComPic::~TComPic()
 {
 }
 #if SVC_EXTENSION
-Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual, const UInt layerId )
+Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const UInt layerId )
 {
   const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
-  const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
-  const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
-  const UInt uiMaxCuWidth  = sps.getMaxCUWidth();
-  const UInt uiMaxCuHeight = sps.getMaxCUHeight();
+  const Int          iWidth          = vps.getPicWidthInLumaSamples(&sps, layerId);
+  const Int          iHeight         = vps.getPicHeightInLumaSamples(&sps, layerId);
+  const UInt         uiMaxCuWidth    = sps.getMaxCUWidth();
+  const UInt         uiMaxCuHeight   = sps.getMaxCUHeight();
+  const UInt         uiMaxDepth      = sps.getMaxTotalCUDepth();
   
   const Window& conformanceWindow = vps.getConformanceWindow( &sps, layerId );
 
@@ -109,13 +110,14 @@ Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps
   m_bUsedByCurr = false;
 }
 #else
-Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual)
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual)
 {
-  const ChromaFormat chromaFormatIDC=sps.getChromaFormatIdc();
-  const Int  iWidth        = sps.getPicWidthInLumaSamples();
-  const Int  iHeight       = sps.getPicHeightInLumaSamples();
-  const UInt uiMaxCuWidth  = sps.getMaxCUWidth();
-  const UInt uiMaxCuHeight = sps.getMaxCUHeight();
+  const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
+  const Int          iWidth          = sps.getPicWidthInLumaSamples();
+  const Int          iHeight         = sps.getPicHeightInLumaSamples();
+  const UInt         uiMaxCuWidth    = sps.getMaxCUWidth();
+  const UInt         uiMaxCuHeight   = sps.getMaxCUHeight();
+  const UInt         uiMaxDepth      = sps.getMaxTotalCUDepth();
 
   m_picSym.create( sps, pps, uiMaxDepth );
   if (!bIsVirtual)
@@ -261,10 +263,12 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
 
 Void TComPic::copyUpsampledMvField(UInt refLayerIdc)
 {
-  UInt numPartitions = 1<<(g_uiMaxCUDepth<<1);
-  UInt widthMinPU    = getSlice(0)->getSPS()->getMaxCUWidth()  / (1<<g_uiMaxCUDepth);
-  UInt heightMinPU   = getSlice(0)->getSPS()->getMaxCUHeight() / (1<<g_uiMaxCUDepth);
-  Int  unitNum       = max( 1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
+  const TComSPS *sps       = getSlice(0)->getSPS();
+  const UInt uiMaxDepth    = sps->getMaxTotalCUDepth();
+  const UInt numPartitions = 1<<(uiMaxDepth<<1);
+  const UInt widthMinPU    = sps->getMaxCUWidth()  / (1<<uiMaxDepth);
+  const UInt heightMinPU   = sps->getMaxCUHeight() / (1<<uiMaxDepth);
+  const Int  unitNum       = max( 1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
 
   for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
   {
@@ -313,7 +317,9 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc)
 
 Void TComPic::initUpsampledMvField()
 {
-  UInt uiNumPartitions   = 1<<(g_uiMaxCUDepth<<1);
+  const TComSPS *sps         = getSlice(0)->getSPS();
+  const UInt uiMaxDepth      = sps->getMaxTotalCUDepth();
+  const UInt uiNumPartitions = 1<<(uiMaxDepth<<1);
 
   for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
   {

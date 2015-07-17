@@ -201,9 +201,10 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     }
 
     const TComVPS *vps = pcTEncTop->getVPS();
+    const TComSPS *sps = pcTEncTop->getSPS();
 
-    const Int bitDepthLuma = vps->getBitDepth(CHANNEL_TYPE_LUMA, pcTEncTop->getSPS(), pcTEncTop->getLayerId());
-    const Int bitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, pcTEncTop->getSPS(), pcTEncTop->getLayerId());
+    const Int bitDepthLuma = vps->getBitDepth(CHANNEL_TYPE_LUMA, sps, pcTEncTop->getLayerId());
+    const Int bitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, sps, pcTEncTop->getLayerId());
     const Int prevBitDepthLuma = vps->getBitDepth(CHANNEL_TYPE_LUMA, m_ppcTEncTop[prevLayerIdx]->getSPS(), prevLayerId);
     const Int prevBitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, m_ppcTEncTop[prevLayerIdx]->getSPS(), prevLayerId);
 
@@ -213,7 +214,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     if(!m_pColorMappedPic)
     {
       m_pColorMappedPic = new TComPicYuv;
-      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), m_ppcTEncTop[0]->getChromaFormatIDC(), pcTEncTop->getSPS()->getMaxCUWidth(), pcTEncTop->getSPS()->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
+      m_pColorMappedPic->create( m_ppcTEncTop[0]->getSourceWidth(), m_ppcTEncTop[0]->getSourceHeight(), m_ppcTEncTop[0]->getChromaFormatIDC(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), true, NULL );
     }
   }
 #endif
