@@ -1934,12 +1934,12 @@ Void TAppDecTop::xApplyColourRemapping( const TComSPS *sps, TComPicYuv& pic, con
 
 #if SVC_EXTENSION
 #if AUXILIARY_PICTURES
-    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), true, NULL );
 #else
-    picColourRemapped.create( pic.getWidth(), pic.getHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
+    picColourRemapped.create( pic.getWidth(), pic.getHeight(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), true, NULL );
 #endif
 #else
-    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), g_uiMaxCUDepth, true );
+    picColourRemapped.create( pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), pic.getChromaFormat(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), true );
 #endif 
     YUVOut[0] = picColourRemapped.getAddr(COMPONENT_Y);
     YUVOut[1] = picColourRemapped.getAddr(COMPONENT_Cb);

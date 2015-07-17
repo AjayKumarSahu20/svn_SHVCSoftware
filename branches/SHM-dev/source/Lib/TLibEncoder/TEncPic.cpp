@@ -118,33 +118,30 @@ TEncPic::~TEncPic()
 /** Initialize member variables
  * \param sps reference to used SPS
  * \param pps reference to used PPS
- * \param uiMaxWidth Maximum CU width
- * \param uiMaxHeight Maximum CU height
- * \param uiMaxDepth Maximum CU depth
- * \param uiMaxAQDepth Maximum depth of unit block for assigning QP adaptive to local image characteristics
+ * \param uiMaxAdaptiveQPDepth Maximum depth of unit block for assigning QP adaptive to local image characteristics
  * \param bIsVirtual
  */
 
 #if SVC_EXTENSION
 // * \param vps reference to used VPS
-Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual, const UInt layerId )
+Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const UInt layerId )
 {
-  TComPic::create( vps, sps, pps, uiMaxDepth, bIsVirtual, layerId );
+  TComPic::create( vps, sps, pps, bIsVirtual, layerId );
 
   const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
   const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
 #else
-Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, UInt uiMaxAQDepth, Bool bIsVirtual )
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
 {
-  TComPic::create( sps, pps, uiMaxDepth, bIsVirtual );
+  TComPic::create( sps, pps, bIsVirtual );
   const Int  iWidth      = sps.getPicWidthInLumaSamples();
   const Int  iHeight     = sps.getPicHeightInLumaSamples();
 #endif
 
   const UInt uiMaxWidth  = sps.getMaxCUWidth();
   const UInt uiMaxHeight = sps.getMaxCUHeight();
-  m_uiMaxAQDepth = uiMaxAQDepth;
-  if ( uiMaxAQDepth > 0 )
+  m_uiMaxAQDepth = uiMaxAdaptiveQPDepth;
+  if ( uiMaxAdaptiveQPDepth > 0 )
   {
     m_acAQLayer = new TEncPicQPAdaptationLayer[ m_uiMaxAQDepth ];
     for (UInt d = 0; d < m_uiMaxAQDepth; d++)

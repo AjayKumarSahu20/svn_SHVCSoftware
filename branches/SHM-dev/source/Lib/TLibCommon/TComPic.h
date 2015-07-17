@@ -98,9 +98,9 @@ public:
   virtual ~TComPic();
 
 #if SVC_EXTENSION
-  Void          create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/, const UInt layerId );
+  Void          create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/, const UInt layerId );
 #else
-  Void          create( const TComSPS &sps, const TComPPS &pps, const UInt uiMaxDepth, const Bool bIsVirtual /*= false*/ );
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/ );
 #endif
 
   virtual Void  destroy();

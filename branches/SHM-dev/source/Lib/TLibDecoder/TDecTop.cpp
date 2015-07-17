@@ -253,9 +253,9 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
       xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
     }
 
-    rpcPic->create( vps, sps, pps, g_uiMaxCUDepth, true, m_layerId);
+    rpcPic->create( vps, sps, pps, true, m_layerId);
 #else //SVC_EXTENSION
-    rpcPic->create ( sps, pps, g_uiMaxCUDepth, true);
+    rpcPic->create ( sps, pps, true);
 #endif //SVC_EXTENSION
     
     m_cListPic.pushBack( rpcPic );
@@ -302,9 +302,9 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
   }
 
-  rpcPic->create( vps, sps, pps, g_uiMaxCUDepth, true, m_layerId);
+  rpcPic->create( vps, sps, pps, true, m_layerId);
 #else  //SVC_EXTENSION
-  rpcPic->create ( sps, pps, g_uiMaxCUDepth, true);
+  rpcPic->create ( sps, pps, true);
 #endif //SVC_EXTENSION
 }
 
@@ -492,7 +492,7 @@ Void TDecTop::xActivateParameterSets()
       {
         UInt refLayerId = 0;
 
-        pBLPic->create( *vps, *sps, *pps, sps->getMaxCUDepth(), true, refLayerId);
+        pBLPic->create( *vps, *sps, *pps, true, refLayerId);
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
@@ -570,13 +570,9 @@ Void TDecTop::xActivateParameterSets()
     }
 #endif //SVC_EXTENSION
 
-    // TODO: remove the use of the following globals:
-    g_uiMaxCUDepth  = sps->getMaxCUDepth();
-#if SVC_EXTENSION
-    g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() + (Int)getMaxCUDepthOffset(vps->getChromaFormatIdc(sps, m_apcSlicePilot->getLayerId()), sps->getQuadtreeTULog2MinSize()));
-#else
-    g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() + (Int)getMaxCUDepthOffset(sps->getChromaFormatIdc(), sps->getQuadtreeTULog2MinSize()));
-#endif
+    // NOTE: globals were set up here originally. You can now use:
+    // g_uiMaxCUDepth = sps->getMaxTotalCUDepth();
+    // g_uiAddCUDepth = sps->getMaxTotalCUDepth() - sps->getLog2DiffMaxMinCodingBlockSize()
 
     //  Get a new picture buffer. This will also set up m_pcPic, and therefore give us a SPS and PPS pointer that we can use.
 #if SVC_EXTENSION
@@ -604,11 +600,11 @@ Void TDecTop::xActivateParameterSets()
 
     // Initialise the various objects for the new set of settings
 #if SVC_EXTENSION
-    m_cSAO.create( pSlice->getPicWidthInLumaSamples(), pSlice->getPicHeightInLumaSamples(), pSlice->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), pps->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA), pps->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA) );
+    m_cSAO.create( pSlice->getPicWidthInLumaSamples(), pSlice->getPicHeightInLumaSamples(), pSlice->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), pps->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA), pps->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA) );
 #else
-    m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxCUDepth(), pps->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA), pps->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA) );
+    m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), pps->getSaoOffsetBitShift(CHANNEL_TYPE_LUMA), pps->getSaoOffsetBitShift(CHANNEL_TYPE_CHROMA) );
 #endif
-    m_cLoopFilter.create( sps->getMaxCUDepth() );
+    m_cLoopFilter.create( sps->getMaxTotalCUDepth() );
     m_cPrediction.initTempBuff(sps->getChromaFormatIdc());
 
 
@@ -665,10 +661,10 @@ Void TDecTop::xActivateParameterSets()
 
     // Recursive structure
 #if SVC_EXTENSION
-    m_cCuDecoder.create ( sps->getMaxCUDepth(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), pSlice->getChromaFormatIdc() );
+    m_cCuDecoder.create ( sps->getMaxTotalCUDepth(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), pSlice->getChromaFormatIdc() );
     m_cCuDecoder.init   ( m_ppcTDecTop, &m_cEntropyDecoder, &m_cTrQuant, &m_cPrediction, m_layerId );
 #else
-    m_cCuDecoder.create ( sps->getMaxCUDepth(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getChromaFormatIdc() );
+    m_cCuDecoder.create ( sps->getMaxTotalCUDepth(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getChromaFormatIdc() );
     m_cCuDecoder.init   ( &m_cEntropyDecoder, &m_cTrQuant, &m_cPrediction );
 #endif
     m_cTrQuant.init     ( sps->getMaxTrSize() );
@@ -2197,16 +2193,13 @@ Void TDecTop::xInitILRP(TComSlice *slice)
 
   if( m_layerId > 0 )
   {
-    g_uiMaxCUDepth  = sps->getMaxCUDepth();
-    g_uiAddCUDepth  = max (0, sps->getLog2MinCodingBlockSize() - (Int)sps->getQuadtreeTULog2MinSize() );
-
     if (m_cIlpPic[0] == NULL)
     {
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new  TComPic;
 
-        m_cIlpPic[j]->create(*vps, *sps, *slice->getPPS(), g_uiMaxCUDepth, true, m_layerId);
+        m_cIlpPic[j]->create(*vps, *sps, *slice->getPPS(), true, m_layerId);
 
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
@@ -2378,14 +2371,12 @@ Void TDecTop::markAllPicsAsNoCurrAu( const TComVPS *vps )
 #if CGS_3D_ASYMLUT
 Void TDecTop::initAsymLut(TComSlice *pcSlice)
 {
-  if(m_layerId>0)
+  if( m_layerId > 0 )
   {
-    if(!m_pColorMappedPic)
+    if( !m_pColorMappedPic )
     {
-      Int picWidth    = pcSlice->getPicWidthInLumaSamples();
-      Int picHeight   = pcSlice->getPicHeightInLumaSamples();
       m_pColorMappedPic = new TComPicYuv;
-      m_pColorMappedPic->create( picWidth, picHeight, pcSlice->getChromaFormatIdc()/*CHROMA_420*/, pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getMaxCUHeight(), g_uiMaxCUDepth, true, NULL );
+      m_pColorMappedPic->create( pcSlice->getPicWidthInLumaSamples(), pcSlice->getPicHeightInLumaSamples(), pcSlice->getChromaFormatIdc()/*CHROMA_420*/, pcSlice->getSPS()->getMaxCUWidth(), pcSlice->getSPS()->getMaxCUHeight(), pcSlice->getSPS()->getMaxTotalCUDepth(), true, NULL );
     }
   }
 }
