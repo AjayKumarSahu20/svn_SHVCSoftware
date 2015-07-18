@@ -2048,12 +2048,6 @@ public:
   Void                        setPPS( const TComPPS* pcPPS )                         { m_pcPPS = pcPPS; m_iPPSId = (pcPPS) ? pcPPS->getPPSId() : -1; }
   const TComPPS*              getPPS() const                                         { return m_pcPPS;                                               }
 
-#if ADAPTIVE_QP_SELECTION
-  Void                        setTrQuant( TComTrQuant* pcTrQuant )                   { m_pcTrQuant = pcTrQuant;                                      }
-  TComTrQuant*                getTrQuant()                                           { return m_pcTrQuant;                                           }
-  const TComTrQuant*          getTrQuant() const                                     { return m_pcTrQuant;                                           }
-#endif
-
   Void                        setPPSId( Int PPSId )                                  { m_iPPSId = PPSId;                                             }
   Int                         getPPSId() const                                       { return m_iPPSId;                                              }
   Void                        setPicOutputFlag( Bool b   )                           { m_PicOutputFlag = b;                                          }

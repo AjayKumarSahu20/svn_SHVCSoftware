@@ -62,10 +62,9 @@ class TEnc3DAsymLUT;
 class TEncEntropyIf
 {
 public:
-  virtual Void  resetEntropy          ()                = 0;
-  virtual SliceType determineCabacInitIdx ()                = 0;
+  virtual Void  resetEntropy          (const TComSlice *pSlice)                = 0;
+  virtual SliceType determineCabacInitIdx (const TComSlice *pSlice)                = 0;
   virtual Void  setBitstream          ( TComBitIf* p )  = 0;
-  virtual Void  setSlice              ( TComSlice* p )  = 0;
   virtual Void  resetBits             ()                = 0;
   virtual UInt  getNumberOfWrittenBits()                = 0;
 
@@ -132,12 +131,12 @@ public:
 class TEncEntropy
 {
 public:
-  Void    setEntropyCoder           ( TEncEntropyIf* e, TComSlice* pcSlice );
+  Void    setEntropyCoder           ( TEncEntropyIf* e );
   Void    setBitstream              ( TComBitIf* p )          { m_pcEntropyCoderIf->setBitstream(p);  }
   Void    resetBits                 ()                        { m_pcEntropyCoderIf->resetBits();      }
   UInt    getNumberOfWrittenBits    ()                        { return m_pcEntropyCoderIf->getNumberOfWrittenBits(); }
-  Void    resetEntropy              ()                        { m_pcEntropyCoderIf->resetEntropy();  }
-  SliceType determineCabacInitIdx   ()                        { return m_pcEntropyCoderIf->determineCabacInitIdx(); }
+  Void    resetEntropy              (const TComSlice *pSlice) { m_pcEntropyCoderIf->resetEntropy(pSlice);  }
+  SliceType determineCabacInitIdx   (const TComSlice *pSlice) { return m_pcEntropyCoderIf->determineCabacInitIdx(pSlice); }
 
   Void    encodeSliceHeader         ( TComSlice* pcSlice );
   Void    encodeTilesWPPEntryPoint( TComSlice* pSlice );

@@ -104,7 +104,7 @@ private:
 #else
   Void     setUpLambda(TComSlice* slice, const Double dLambda, Int iQP);
 #endif
-  Void     calculateBoundingCtuTsAddrForSlice(UInt &startCtuTSAddrSlice, UInt &boundingCtuTSAddrSlice, Bool &haveReachedTileBoundary, TComPic* pcPic, const Bool encodingSlice, const Int sliceMode, const Int sliceArgument, const UInt uiSliceCurEndCtuTSAddr);
+  Void     calculateBoundingCtuTsAddrForSlice(UInt &startCtuTSAddrSlice, UInt &boundingCtuTSAddrSlice, Bool &haveReachedTileBoundary, TComPic* pcPic, const Int sliceMode, const Int sliceArgument, const UInt uiSliceCurEndCtuTSAddr);
 
 #if SVC_EXTENSION
   TEncTop**               m_ppcTEncTop;
@@ -132,7 +132,7 @@ public:
   Void    setSearchRange      ( TComSlice* pcSlice  );                                  ///< set ME range adaptively
 
   TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                        ///< CU encoder
-  Void    xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UInt& boundingCtuTsAddr, TComPic* pcPic, const Bool encodingSlice );
+  Void    xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UInt& boundingCtuTsAddr, TComPic* pcPic );
   UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
   Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
 
@@ -145,11 +145,9 @@ public:
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
 
-#if SVC_EXTENSION
-#if JCTVC_M0259_LAMBDAREFINEMENT
+#if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
   Double  xCalEnhLambdaFactor( Double deltaQP , Double beta );
 #endif
-#endif //SVC_EXTENSION
 };
 
 //! \}
