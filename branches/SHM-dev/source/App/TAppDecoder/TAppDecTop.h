@@ -94,6 +94,24 @@ public:
   Void  create            (); ///< create internal members
   Void  destroy           (); ///< destroy internal members
   Void  decode            (); ///< main decoding function
+#if SVC_EXTENSION
+  UInt  getNumberOfChecksumErrorsDetected() const
+  { 
+    UInt sum = 0;
+
+    for( UInt layerId = 0; layerId < MAX_NUM_LAYER_IDS; layerId++ )
+    {
+      if( m_apcTDecTop[layerId] )
+      {
+        sum += m_apcTDecTop[layerId]->getNumberOfChecksumErrorsDetected();
+      }
+    }
+
+    return sum;
+  }
+#else
+  UInt  getNumberOfChecksumErrorsDetected() const { return m_cTDecTop.getNumberOfChecksumErrorsDetected(); }
+#endif
 
 protected:
   Void  xCreateDecLib     (); ///< create internal classes

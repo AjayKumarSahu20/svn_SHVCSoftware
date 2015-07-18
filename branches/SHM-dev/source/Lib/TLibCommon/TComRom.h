@@ -84,7 +84,7 @@ extern       UInt   g_auiRasterToPelY[ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 
 Void         initRasterToPelXY ( UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxDepth );
 
-extern       UInt g_auiPUOffset[NUMBER_OF_PART_SIZES];
+extern const UInt g_auiPUOffset[NUMBER_OF_PART_SIZES];
 
 #define QUANT_SHIFT                14 // Q(4) = 2^14
 #define IQUANT_SHIFT                6
@@ -99,8 +99,8 @@ extern       UInt g_auiPUOffset[NUMBER_OF_PART_SIZES];
 #define SHIFT_INV_1ST               7 // Shift after first inverse transform stage
 #define SHIFT_INV_2ND              12 // Shift after second inverse transform stage
 
-extern Int g_quantScales[SCALING_LIST_REM_NUM];             // Q(QP%6)
-extern Int g_invQuantScales[SCALING_LIST_REM_NUM];          // IQ(QP%6)
+extern const Int g_quantScales[SCALING_LIST_REM_NUM];             // Q(QP%6)
+extern const Int g_invQuantScales[SCALING_LIST_REM_NUM];          // IQ(QP%6)
 
 #if RExt__HIGH_PRECISION_FORWARD_TRANSFORM
 static const Int g_transformMatrixShift[TRANSFORM_NUMBER_OF_DIRECTIONS] = { 14, 6 };
@@ -206,13 +206,13 @@ extern UInt64 g_nSymbolCounter;
 extern const Char *MatrixType[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
 extern const Char *MatrixType_DC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
 
-extern Int g_quantTSDefault4x4[4*4];
-extern Int g_quantIntraDefault8x8[8*8];
-extern Int g_quantInterDefault8x8[8*8];
+extern const Int g_quantTSDefault4x4[4*4];
+extern const Int g_quantIntraDefault8x8[8*8];
+extern const Int g_quantInterDefault8x8[8*8];
 
-extern UInt g_scalingListSize [SCALING_LIST_SIZE_NUM];
-extern UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
-extern UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
+extern const UInt g_scalingListSize [SCALING_LIST_SIZE_NUM];
+extern const UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
+extern const UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
 
 #if SVC_EXTENSION
 #if FAST_INTRA_SHVC
@@ -223,10 +223,6 @@ extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
 std::string NaluToStr( NalUnitType nalu );
 #if LAYER_CTB
-extern       UInt g_auiLayerMaxCUWidth[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUHeight[MAX_LAYERS];
-extern       UInt g_auiLayerMaxCUDepth[MAX_LAYERS];
-extern       UInt g_auiLayerAddCUDepth[MAX_LAYERS];
 extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];

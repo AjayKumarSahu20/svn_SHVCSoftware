@@ -136,7 +136,7 @@ public:
   }
 
 #if SVC_EXTENSION
-  Void    printOut ( Char cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layer )
+  Void    printOut ( Char cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layer = 0 )
 #else
   Void    printOut ( Char cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths )
 #endif
@@ -450,17 +450,10 @@ public:
   }
 };
 
-#if SVC_EXTENSION
-extern TEncAnalyze             m_gcAnalyzeAll [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeI [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeP [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeB [MAX_LAYERS];
-#else
 extern TEncAnalyze             m_gcAnalyzeAll;
 extern TEncAnalyze             m_gcAnalyzeI;
 extern TEncAnalyze             m_gcAnalyzeP;
 extern TEncAnalyze             m_gcAnalyzeB;
-#endif
 
 extern TEncAnalyze             m_gcAnalyzeAll_in;
 

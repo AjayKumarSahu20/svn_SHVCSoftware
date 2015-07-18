@@ -120,6 +120,8 @@ private:
 #endif
   std::ostream           *m_pDecodedSEIOutputStream;
 
+  Bool                    m_warningMessageSkipPicture;
+
 #if SVC_EXTENSION
   Bool                    m_isLastNALWasEos;
   Bool                    m_lastPicHasEos;
@@ -190,6 +192,7 @@ public:
   
   Void  deletePicBuffer();
 
+  
   Void  executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic);
   Void  checkNoOutputPriorPics (TComList<TComPic*>* rpcListPic);
 
@@ -202,6 +205,7 @@ public:
   Void  setForceDecodeBitDepth(UInt bitDepth) { m_forceDecodeBitDepth = bitDepth; }
 #endif
   Void  setDecodedSEIMessageOutputStream(std::ostream *pOpStream) { m_pDecodedSEIOutputStream = pOpStream; }
+  UInt  getNumberOfChecksumErrorsDetected() const { return m_cGopDecoder.getNumberOfChecksumErrorsDetected(); }
 
 #if SVC_EXTENSION
   Int       getParseIdc                     ()                              { return m_parseIdc;               }
@@ -258,11 +262,11 @@ public:
 
 protected:
 #if SVC_EXTENSION
-  Void      xGetNewPicBuffer  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
+  Void  xGetNewPicBuffer  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
 #else
-  Void      xGetNewPicBuffer  (const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
+  Void  xGetNewPicBuffer  (const TComSPS &sps, const TComPPS &pps, TComPic*& rpcPic, const UInt temporalLayer);
 #endif
-  Void      xCreateLostPicture (Int iLostPOC);
+  Void  xCreateLostPicture (Int iLostPOC);
 
   Void      xActivateParameterSets();
 #if SVC_EXTENSION

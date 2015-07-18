@@ -2917,7 +2917,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #endif
 }
 
-#if !SVC_EXTENSION
 Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths)
 {
   assert (uiNumAllPicCoded == m_gcAnalyzeAll.getNumPic());
@@ -2970,7 +2969,6 @@ Void TEncGOP::printOutSummary(UInt uiNumAllPicCoded, Bool isField, const Bool pr
 
   printf("\nRVM: %.3lf\n" , xCalculateRVM());
 }
-#endif
 
 Void TEncGOP::preLoopFilterPicAll( TComPic* pcPic, UInt64& ruiDist )
 {
@@ -3266,22 +3264,6 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   m_vRVM_RP.push_back( uibits );
 
   //===== add PSNR =====
-#if SVC_EXTENSION
-  m_gcAnalyzeAll[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
-  TComSlice*  pcSlice = pcPic->getSlice(0);
-  if (pcSlice->isIntra())
-  {
-    m_gcAnalyzeI[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
-  }
-  if (pcSlice->isInterP())
-  {
-    m_gcAnalyzeP[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
-  }
-  if (pcSlice->isInterB())
-  {
-    m_gcAnalyzeB[pcPic->getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId)].addResult (dPSNR, (Double)uibits, MSEyuvframe);
-  }
-#else
   m_gcAnalyzeAll.addResult (dPSNR, (Double)uibits, MSEyuvframe);
   TComSlice*  pcSlice = pcPic->getSlice(0);
   if (pcSlice->isIntra())
@@ -3296,7 +3278,6 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   {
     m_gcAnalyzeB.addResult (dPSNR, (Double)uibits, MSEyuvframe);
   }
-#endif
 
   Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced())

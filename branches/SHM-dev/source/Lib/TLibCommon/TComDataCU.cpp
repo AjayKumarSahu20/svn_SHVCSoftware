@@ -3462,10 +3462,6 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
     iPelY = pelY + 8;
   }
 
-#if !LAYER_CTB
-  UInt uiMinUnitSize = m_pcPic->getMinCUWidth();
-#endif
-
   Int leftStartL = m_pcSlice->getPPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowLeftOffset();
   Int topStartL  = m_pcSlice->getPPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
 
