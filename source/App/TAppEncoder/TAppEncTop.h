@@ -99,7 +99,7 @@ protected:
 #if SVC_EXTENSION
   Void xWriteRecon(UInt layer, Int iNumEncoded);
   Void xWriteStream(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits);
-  Void printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE);
+  Void printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE);  
 #else
   Void xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, const std::list<AccessUnit>& accessUnits); ///< write bitstream to file
   Void printChromaFormat();

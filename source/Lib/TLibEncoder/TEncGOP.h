@@ -85,6 +85,13 @@ class TEncGOP
   };
 
 private:
+
+  TEncAnalyze             m_gcAnalyzeAll;
+  TEncAnalyze             m_gcAnalyzeI;
+  TEncAnalyze             m_gcAnalyzeP;
+  TEncAnalyze             m_gcAnalyzeB;
+
+  TEncAnalyze             m_gcAnalyzeAll_in;
   //  Data
   Bool                    m_bLongtermTestPictureHasBeenCoded;
   Bool                    m_bLongtermTestPictureHasBeenCoded2;
@@ -192,9 +199,7 @@ public:
 
   TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
   
-#if !SVC_EXTENSION
   Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths );
-#endif
   Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist );
 
   TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
@@ -203,11 +208,18 @@ public:
 
 #if SVC_EXTENSION
   Void  determinePocResetIdc( Int const pocCurr, TComSlice *const slice);
-  Int   getIntraRefreshInterval()  { return m_pcCfg->getIntraPeriod(); }
-  Int   getIntraRefreshType()      { return m_pcCfg->getDecodingRefreshType(); }  
-  Int   getLastPocPeriodId()      { return m_lastPocPeriodId; }
-  Void  setLastPocPeriodId(Int x) { m_lastPocPeriodId = x;    }
+  Int   getIntraRefreshInterval()   { return m_pcCfg->getIntraPeriod(); }
+  Int   getIntraRefreshType()       { return m_pcCfg->getDecodingRefreshType(); }  
+  Int   getLastPocPeriodId()        { return m_lastPocPeriodId; }
+  Void  setLastPocPeriodId(Int x)   { m_lastPocPeriodId = x;    }
   Void  updatePocValuesOfPics( Int const pocCurr, TComSlice *const slice);
+
+  TEncAnalyze* getAnalyzeAll()      { return &m_gcAnalyzeAll;  }
+  TEncAnalyze* getAnalyzeI()        { return &m_gcAnalyzeI;    }
+  TEncAnalyze* getAnalyzeP()        { return &m_gcAnalyzeP;    }
+  TEncAnalyze* getAnalyzeB()        { return &m_gcAnalyzeB;    }
+  TEncAnalyze* getAnalyzeAllin()    { return &m_gcAnalyzeAll_in; }
+  Double       calculateRVM()       { return xCalculateRVM();    }
 #endif
 
 protected:

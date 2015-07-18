@@ -1091,12 +1091,6 @@ Void TAppEncTop::xCreateLib()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     //2
-#if LAYER_CTB
-    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-#endif
     // Video I/O
     m_acTVideoIOYuvInputFile[layer].open( (Char *)m_acLayerCfg[layer].getInputFile().c_str(),  false, m_acLayerCfg[layer].m_inputBitDepth, m_acLayerCfg[layer].m_MSBExtendedBitDepth, m_acLayerCfg[layer].m_internalBitDepth );  // read  mode
     m_acTVideoIOYuvInputFile[layer].skipFrames(m_FrameSkip, m_acLayerCfg[layer].getSourceWidth() - m_acLayerCfg[layer].getPad()[0], m_acLayerCfg[layer].getSourceHeight() - m_acLayerCfg[layer].getPad()[1], m_acLayerCfg[layer].m_InputChromaFormatIDC);
@@ -1186,11 +1180,6 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     //3
 #if LAYER_CTB
-    g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-    g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-    g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-    g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-
     memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
     memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
     memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
@@ -1788,11 +1777,6 @@ Void TAppEncTop::encode()
       {
         //7
 #if LAYER_CTB
-        g_uiMaxCUWidth  = g_auiLayerMaxCUWidth[layer];
-        g_uiMaxCUHeight = g_auiLayerMaxCUHeight[layer];
-        g_uiMaxCUDepth  = g_auiLayerMaxCUDepth[layer];
-        g_uiAddCUDepth  = g_auiLayerAddCUDepth[layer];
-
         memcpy( g_auiZscanToRaster, g_auiLayerZscanToRaster[layer], sizeof( g_auiZscanToRaster ) );
         memcpy( g_auiRasterToZscan, g_auiLayerRasterToZscan[layer], sizeof( g_auiRasterToZscan ) );
         memcpy( g_auiRasterToPelX,  g_auiLayerRasterToPelX[layer],  sizeof( g_auiRasterToPelX ) );
@@ -1914,83 +1898,91 @@ Void TAppEncTop::encode()
 Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE)
 {
   UInt layer;
+  const TComVPS *vps = m_apcTEncTop[0]->getVPS();
+  const Int rateMultiplier = isField ? 2 : 1;
 
   // set frame rate
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    if(isField)
-    {
-      m_gcAnalyzeAll[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2);
-      m_gcAnalyzeI[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
-      m_gcAnalyzeP[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
-      m_gcAnalyzeB[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() * 2 );
-    }
-    else
-    {
-      m_gcAnalyzeAll[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate());
-      m_gcAnalyzeI[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
-      m_gcAnalyzeP[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
-      m_gcAnalyzeB[layer].setFrmRate( m_acLayerCfg[layer].getFrameRate() );
-    }
+    UInt layerId = vps->getLayerIdInNuh(layer);
+    m_apcTEncTop[layerId]->getAnalyzeAll()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layerId]->getAnalyzeI()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layerId]->getAnalyzeP()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layerId]->getAnalyzeB()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
   }
 
   //-- all
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-
-    m_gcAnalyzeAll[layer].printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);    
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-
-    m_gcAnalyzeI[layer].printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-
-    m_gcAnalyzeP[layer].printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-
-    m_gcAnalyzeB[layer].printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
+
+#if _SUMMARY_OUT_
+  for( layer = 0; layer < m_numLayers; layer++ )
+  {
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printSummary(chFmt, printSequenceMSE);
+  }
+#endif
+#if _SUMMARY_PIC_
+  for( layer = 0; layer < m_numLayers; layer++ )
+  {
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printSummary(chFmt, printSequenceMSE,'I');
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printSummary(chFmt, printSequenceMSE,'P');
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printSummary(chFmt, printSequenceMSE,'B');
+  }
+#endif
 
   if(isField)
   {
     for(layer = 0; layer < m_numLayers; layer++)
     {
       const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+      TEncAnalyze *analyze = m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAllin();
 
       //-- interlaced summary
-      m_gcAnalyzeAll_in.setFrmRate( m_acLayerCfg[layer].getFrameRate());
-      m_gcAnalyzeAll_in.setBits(m_gcAnalyzeB[layer].getBits());
+      analyze->setFrmRate( m_acLayerCfg[layer].getFrameRate());
+      analyze->setBits(m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->getBits());
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-      m_gcAnalyzeAll_in.printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+      analyze->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
 #if _SUMMARY_OUT_
-      m_gcAnalyzeAll_in.printSummaryOutInterlaced();
+      analyze->printSummary(chFmt, printSequenceMSE);
 #endif
     }
-  }
+  }   
 
   printf("\n");
-  //printf("\nRVM: %.3lf\n" , xCalculateRVM());
+  for( layer = 0; layer < m_numLayers; layer++ )
+  {
+    printf("RVM[L%d]: %.3lf\n", layer, m_apcTEncTop[vps->getLayerIdInNuh(layer)]->calculateRVM());
+  }
+  printf("\n");
 }
-
 #else
 // ====================================================================================================================
 // Public member functions

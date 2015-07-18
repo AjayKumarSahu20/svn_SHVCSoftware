@@ -262,6 +262,13 @@ public:
   Bool      getPocDecrementedInDPBFlag()                      { return m_pocDecrementedInDPBFlag; }
   Void      setCurrPocMsb(Int poc)                            { m_currPocMsb = poc;  }
   Int       getCurrPocMsb()                                   { return m_currPocMsb; }
+
+  TEncAnalyze* getAnalyzeAll()                                { return m_cGOPEncoder.getAnalyzeAll();   }
+  TEncAnalyze* getAnalyzeI()                                  { return m_cGOPEncoder.getAnalyzeI();     }
+  TEncAnalyze* getAnalyzeP()                                  { return m_cGOPEncoder.getAnalyzeP();     }
+  TEncAnalyze* getAnalyzeB()                                  { return m_cGOPEncoder.getAnalyzeB();     }
+  TEncAnalyze* getAnalyzeAllin()                              { return m_cGOPEncoder.getAnalyzeAllin(); }
+  Double       calculateRVM()                                 { return m_cGOPEncoder.calculateRVM();    }
 #else //SVC_EXTENSION
   Void encode( Bool bEos,
                TComPicYuv* pcPicYuvOrg,
@@ -274,9 +281,9 @@ public:
                TComPicYuv* pcPicYuvTrueOrg, const InputColourSpaceConversion snrCSC, // used for SNR calculations. Picture in original colour space.
                TComList<TComPicYuv*>& rcListPicYuvRecOut,
                std::list<AccessUnit>& accessUnitsOut, Int& iNumEncoded, Bool isTff);
+#endif //#if SVC_EXTENSION
 
   Void printSummary(Bool isField) { m_cGOPEncoder.printOutSummary (m_uiNumAllPicCoded, isField, m_printMSEBasedSequencePSNR, m_printSequenceMSE, m_cSPS.getBitDepths()); }
-#endif //#if SVC_EXTENSION
 };
 
 //! \}

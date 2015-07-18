@@ -103,7 +103,7 @@ private:
   Int   m_nDeltaBits;
 
   SCuboid *** m_pCuboid;
-  const static Int m_nVertexIdxOffset[4][3];
+  static const Int m_nVertexIdxOffset[4][3];
   std::vector<UInt> m_vRefLayerId;
 
   Int   m_nAdaptCThresholdU;

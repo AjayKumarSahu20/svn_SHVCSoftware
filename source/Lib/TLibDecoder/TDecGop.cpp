@@ -51,8 +51,6 @@
 
 #include <time.h>
 
-extern Bool g_md5_mismatch; ///< top level flag to signal when there is a decode problem
-
 #if CONFORMANCE_BITSTREAM_MODE
 Bool pocCompareFunction( const TComPic &pic1, const TComPic &pic2 )
 {
@@ -62,12 +60,13 @@ Bool pocCompareFunction( const TComPic &pic1, const TComPic &pic2 )
 
 //! \ingroup TLibDecoder
 //! \{
-static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths);
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths, UInt &numChecksumErrors);
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
 
 TDecGop::TDecGop()
+ : m_numberOfChecksumErrorsDetected(0)
 {
   m_dDecTime = 0;
 }
@@ -113,7 +112,9 @@ Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
   m_pcCavlcDecoder        = pcCavlcDecoder;
   m_pcSliceDecoder        = pcSliceDecoder;
   m_pcLoopFilter          = pcLoopFilter;
-  m_pcSAO  = pcSAO;
+  m_pcSAO                 = pcSAO;
+  m_numberOfChecksumErrorsDetected = 0;
+
 #if SVC_EXTENSION   
   m_ppcTDecTop            = ppcDecTop;
 #endif
@@ -246,9 +247,9 @@ Void TDecGop::filterPicture(TComPic* pcPic)
       printf ("Warning: Got multiple decoded picture hash SEI messages. Using first.");
     }
 #if SVC_EXTENSION
-    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getBitDepths());
+    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getBitDepths(), m_numberOfChecksumErrorsDetected);
 #else
-    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getSPS()->getBitDepths());
+    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getSPS()->getBitDepths(), m_numberOfChecksumErrorsDetected);
 #endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
@@ -278,7 +279,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
  *            ***ERROR*** - calculated hash does not match the SEI message
  *            unk         - no SEI message was available for comparison
  */
-static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths)
+static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash* pictureHashSEI, const BitDepths &bitDepths, UInt &numChecksumErrors)
 {
   /* calculate MD5sum for entire reconstructed picture */
   TComPictureHash recon_digest;
@@ -333,7 +334,7 @@ static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
 
   if (mismatch)
   {
-    g_md5_mismatch = true;
+    numChecksumErrors++;
     printf("[rx%s:%s] ", hashType, hashToString(pictureHashSEI->m_pictureHash, numChar).c_str());
   }
 }

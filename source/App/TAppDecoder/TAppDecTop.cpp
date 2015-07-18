@@ -65,6 +65,8 @@ TAppDecTop::TAppDecTop()
 : seiColourRemappingInfoPrevious(NULL)
 #endif
 {
+  memset( m_apcTDecTop, NULL, sizeof(m_apcTDecTop) );
+
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
     m_aiPOCLastDisplay[layer]  = -MAX_INT;
