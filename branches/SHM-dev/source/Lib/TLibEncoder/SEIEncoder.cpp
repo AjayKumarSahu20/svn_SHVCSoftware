@@ -709,12 +709,9 @@ Void SEIEncoder::initBspNestingSEI(SEIScalableNesting *seiScalableNesting, const
   seiScalableNesting->m_nestingNoOpMaxTemporalIdPlus1 = 6 + 1;  //nesting_no_op_max_temporal_id_plus1
   seiScalableNesting->m_nestingNumLayersMinus1        = 1 - 1;  //nesting_num_layers_minus1
   seiScalableNesting->m_nestingLayerId[0]             = 0;
-  seiScalableNesting->m_callerOwnsSEIs                = true;
 
   // Bitstream partition nesting SEI
-
   seiBspNesting->m_bspIdx = 0;
-  seiBspNesting->m_callerOwnsSEIs = true;
 
   // Buffering period SEI
 

@@ -1302,7 +1302,7 @@ Bool TComTrQuant::xNeedRDOQ( TComTU &rTu, TCoeff * pSrc, const ComponentID compI
   // QBits will be OK for any internal bit depth as the reduction in transform shift is balanced by an increase in Qp_per due to QpBDOffset
 
   // iAdd is different from the iAdd used in normal quantization
-  const Int iAdd   = (compID == COMPONENT_Y ? 171 : 256) << (iQBits-9);  
+  const Int iAdd   = (compID == COMPONENT_Y ? 171 : 256) << (iQBits-9);
 
   for( Int uiBlockPos = 0; uiBlockPos < uiWidth*uiHeight; uiBlockPos++ )
   {
@@ -2319,7 +2319,7 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
         {
           uiLevel              = xGetCodedLevel( pdCostCoeff[ iScanPos ], pdCostCoeff0[ iScanPos ], pdCostSig[ iScanPos ],
                                                   lLevelDouble, uiMaxAbsLevel, significanceMapContextOffset, uiOneCtx, uiAbsCtx, uiGoRiceParam,
-                                                  c1Idx, c2Idx, iQBits, errorScale, 1, extendedPrecision, channelType
+                                                  c1Idx, c2Idx, iQBits, errorScale, 1, extendedPrecision, maxLog2TrDynamicRange
                                                   );
         }
         else
@@ -2328,7 +2328,7 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
 
           uiLevel              = xGetCodedLevel( pdCostCoeff[ iScanPos ], pdCostCoeff0[ iScanPos ], pdCostSig[ iScanPos ],
                                                   lLevelDouble, uiMaxAbsLevel, uiCtxSig, uiOneCtx, uiAbsCtx, uiGoRiceParam,
-                                                  c1Idx, c2Idx, iQBits, errorScale, 0, extendedPrecision, channelType
+                                                  c1Idx, c2Idx, iQBits, errorScale, 0, extendedPrecision, maxLog2TrDynamicRange
                                                   );
 
           sigRateDelta[ uiBlkPos ] = m_pcEstBitsSbac->significantBits[ uiCtxSig ][ 1 ] - m_pcEstBitsSbac->significantBits[ uiCtxSig ][ 0 ];
@@ -2338,9 +2338,9 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
 
         if( uiLevel > 0 )
         {
-          Int rateNow = xGetICRate( uiLevel, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, channelType );
-          rateIncUp   [ uiBlkPos ] = xGetICRate( uiLevel+1, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, channelType ) - rateNow;
-          rateIncDown [ uiBlkPos ] = xGetICRate( uiLevel-1, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, channelType ) - rateNow;
+          Int rateNow = xGetICRate( uiLevel, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, maxLog2TrDynamicRange );
+          rateIncUp   [ uiBlkPos ] = xGetICRate( uiLevel+1, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, maxLog2TrDynamicRange ) - rateNow;
+          rateIncDown [ uiBlkPos ] = xGetICRate( uiLevel-1, uiOneCtx, uiAbsCtx, uiGoRiceParam, c1Idx, c2Idx, extendedPrecision, maxLog2TrDynamicRange ) - rateNow;
         }
         else // uiLevel == 0
         {
@@ -2878,7 +2878,7 @@ __inline UInt TComTrQuant::xGetCodedLevel ( Double&          rd64CodedCost,
                                             Double           errorScale,
                                             Bool             bLast,
                                             Bool             useLimitedPrefixLength,
-                                            ChannelType      channelType
+                                            const Int        maxLog2TrDynamicRange
                                             ) const
 {
   Double dCurrCostSig   = 0;
@@ -2907,7 +2907,7 @@ __inline UInt TComTrQuant::xGetCodedLevel ( Double&          rd64CodedCost,
   for( Int uiAbsLevel  = uiMaxAbsLevel; uiAbsLevel >= uiMinAbsLevel ; uiAbsLevel-- )
   {
     Double dErr         = Double( lLevelDouble  - ( Intermediate_Int(uiAbsLevel) << iQBits ) );
-    Double dCurrCost    = dErr * dErr * errorScale + xGetICost( xGetICRate( uiAbsLevel, ui16CtxNumOne, ui16CtxNumAbs, ui16AbsGoRice, c1Idx, c2Idx, useLimitedPrefixLength, channelType ) );
+    Double dCurrCost    = dErr * dErr * errorScale + xGetICost( xGetICRate( uiAbsLevel, ui16CtxNumOne, ui16CtxNumAbs, ui16AbsGoRice, c1Idx, c2Idx, useLimitedPrefixLength, maxLog2TrDynamicRange ) );
     dCurrCost          += dCurrCostSig;
 
     if( dCurrCost < rd64CodedCost )
