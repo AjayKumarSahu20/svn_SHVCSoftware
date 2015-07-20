@@ -1949,15 +1949,15 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
 #if _SUMMARY_OUT_
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printSummary(chFmt, printSequenceMSE);
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printSummary(chFmt, printSequenceMSE, bitDepths);
   }
 #endif
 #if _SUMMARY_PIC_
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printSummary(chFmt, printSequenceMSE,'I');
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printSummary(chFmt, printSequenceMSE,'P');
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printSummary(chFmt, printSequenceMSE,'B');
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printSummary(chFmt, printSequenceMSE, bitDepths, 'I');
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printSummary(chFmt, printSequenceMSE, bitDepths, 'P');
+    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printSummary(chFmt, printSequenceMSE, bitDepths, 'B');
   }
 #endif
 
@@ -1977,7 +1977,7 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
       analyze->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
 #if _SUMMARY_OUT_
-      analyze->printSummary(chFmt, printSequenceMSE);
+      analyze->printSummary(chFmt, printSequenceMSE, bitDepths);
 #endif
     }
   }   
