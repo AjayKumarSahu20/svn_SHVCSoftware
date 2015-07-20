@@ -434,6 +434,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setdQPs                                             ( m_acLayerCfg[layer].getdQPs() );
     m_acTEncTop[layer].setUseRDOQ                                          ( m_useRDOQ     );
     m_acTEncTop[layer].setUseRDOQTS                                        ( m_useRDOQTS   );
+#if T0196_SELECTIVE_RDOQ
+    m_acTEncTop[layer].setUseSelectiveRDOQ                                 ( m_useSelectiveRDOQ );
+#endif
     m_acTEncTop[layer].setRDpenalty                                        ( m_rdPenalty );
     m_acTEncTop[layer].setMaxCUWidth                                       ( m_acLayerCfg[layer].m_uiMaxCUWidth );
     m_acTEncTop[layer].setMaxCUHeight                                      ( m_acLayerCfg[layer].m_uiMaxCUHeight );
@@ -866,6 +869,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setdQPs                                              ( m_aidQP        );
   m_cTEncTop.setUseRDOQ                                           ( m_useRDOQ     );
   m_cTEncTop.setUseRDOQTS                                         ( m_useRDOQTS   );
+#if T0196_SELECTIVE_RDOQ
+  m_cTEncTop.setUseSelectiveRDOQ                                  ( m_useSelectiveRDOQ );
+#endif
   m_cTEncTop.setRDpenalty                                         ( m_rdPenalty );
   m_cTEncTop.setMaxCUWidth                                        ( m_uiMaxCUWidth );
   m_cTEncTop.setMaxCUHeight                                       ( m_uiMaxCUHeight );
