@@ -105,6 +105,7 @@ private:
 #if !SVC_EXTENSION
   Int                     m_prevPOC;
 #endif
+  Int                     m_prevTid0POC;
   Bool                    m_bFirstSliceInPicture;
 #if !SVC_EXTENSION
   Bool                    m_bFirstSliceInSequence;
@@ -283,6 +284,8 @@ protected:
   Void      xDecodePPS(const std::vector<UChar> *pNaluData);
 #endif
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
+  Void      xUpdatePreviousTid0POC( TComSlice *pSlice ) { if ((pSlice->getTLayer()==0) && (pSlice->isReferenceNalu() && (pSlice->getNalUnitType()!=NAL_UNIT_CODED_SLICE_RASL_R)&& (pSlice->getNalUnitType()!=NAL_UNIT_CODED_SLICE_RADL_R))) { m_prevTid0POC=pSlice->getPOC(); } }
+
 
 #if SVC_EXTENSION
 #if NO_CLRAS_OUTPUT_FLAG

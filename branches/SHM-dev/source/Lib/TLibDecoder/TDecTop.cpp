@@ -81,6 +81,7 @@ TDecTop::TDecTop()
 #if !SVC_EXTENSION
   m_prevPOC                = MAX_INT;
 #endif
+  m_prevTid0POC            = 0;
   m_bFirstSliceInPicture    = true;
 #if !SVC_EXTENSION
   m_bFirstSliceInSequence   = true;
@@ -398,6 +399,7 @@ Void TDecTop::xCreateLostPicture(Int iLostPoc)
   }
   cFillPic->getSlice(0)->setReferenced(true);
   cFillPic->getSlice(0)->setPOC(iLostPoc);
+  xUpdatePreviousTid0POC(cFillPic->getSlice(0));
   cFillPic->setReconMark(true);
   cFillPic->setOutputMark(true);
   if(m_pocRandomAccess == MAX_INT)
@@ -748,7 +750,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   const UInt64 originalSymbolCount = g_nSymbolCounter;
 #endif
 
-  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManager);
+  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot, &m_parameterSetManager, m_prevTid0POC);
 
 #if SVC_EXTENSION
   const TComPPS *pps = m_parameterSetManager.getPPS(m_apcSlicePilot->getPPSId());
@@ -840,9 +842,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     Int iMaxPOClsb = 1 << sps->getBitsForPOC();
     m_apcSlicePilot->setPOC( m_apcSlicePilot->getPOC() & (iMaxPOClsb - 1) );
+    xUpdatePreviousTid0POC(m_apcSlicePilot);
   }
 
   // Skip pictures due to random access
+
   if (isRandomAccessSkipPicture(iSkipFrame, iPOCLastDisplay))
   {
     m_prevSliceSkipped = true;
