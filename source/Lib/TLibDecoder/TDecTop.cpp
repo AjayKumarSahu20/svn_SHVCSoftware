@@ -1775,11 +1775,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     {
       scalingList.setDefaultScalingList();
     }
-#if SVC_EXTENSION
-    m_cTrQuant.setScalingListDec(scalingList, pcSlice->getChromaFormatIdc());
-#else
-    m_cTrQuant.setScalingListDec(scalingList, pcSlice->getSPS()->getChromaFormatIdc());
-#endif
+    m_cTrQuant.setScalingListDec(scalingList);
     m_cTrQuant.setUseScalingList(true);
   }
   else
@@ -1790,9 +1786,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         pcSlice->getSPS()->getMaxLog2TrDynamicRange(CHANNEL_TYPE_CHROMA)
     };
 #if SVC_EXTENSION
-    m_cTrQuant.setFlatScalingList(pcSlice->getChromaFormatIdc(), maxLog2TrDynamicRange, pcSlice->getBitDepths());
+    m_cTrQuant.setFlatScalingList(maxLog2TrDynamicRange, pcSlice->getBitDepths());
 #else
-    m_cTrQuant.setFlatScalingList(pcSlice->getSPS()->getChromaFormatIdc(), maxLog2TrDynamicRange, pcSlice->getSPS()->getBitDepths());
+    m_cTrQuant.setFlatScalingList(maxLog2TrDynamicRange, pcSlice->getSPS()->getBitDepths());
 #endif
     m_cTrQuant.setUseScalingList(false);
   }

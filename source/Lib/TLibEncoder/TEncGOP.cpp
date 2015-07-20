@@ -903,7 +903,7 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
   if(slice->getSPS()->getVuiParametersPresentFlag() && m_pcCfg->getChromaSamplingFilterHintEnabled() && ( slice->getSliceType() == I_SLICE ))
   {
     SEIChromaSamplingFilterHint *seiChromaSamplingFilterHint = new SEIChromaSamplingFilterHint;
-    m_seiEncoder.initSEIChromaSamplingFilterHint(seiChromaSamplingFilterHint, m_pcCfg->getChromaLocInfoPresentFlag(), m_pcCfg->getChromaSamplingHorFilterIdc(), m_pcCfg->getChromaSamplingVerFilterIdc());
+    m_seiEncoder.initSEIChromaSamplingFilterHint(seiChromaSamplingFilterHint, m_pcCfg->getChromaSamplingHorFilterIdc(), m_pcCfg->getChromaSamplingVerFilterIdc());
     seiMessages.push_back(seiChromaSamplingFilterHint);
   }
 
@@ -973,7 +973,7 @@ Void TEncGOP::xCreateScalableNestingSEI (SEIMessages& seiMessages, SEIMessages& 
   }
 }
 
-Void TEncGOP::xCreatePictureTimingSEI  (Int IRAPGOPid, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, SEIMessages& duInfoSeiMessages, AccessUnit &accessUnit, TComSlice *slice, Bool isField, std::deque<DUData> &duData)
+Void TEncGOP::xCreatePictureTimingSEI  (Int IRAPGOPid, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, SEIMessages& duInfoSeiMessages, TComSlice *slice, Bool isField, std::deque<DUData> &duData)
 {
   Int picSptDpbOutputDuDelay = 0;
   SEIPictureTiming *pictureTimingSEI = new SEIPictureTiming();
@@ -1499,7 +1499,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   pcBitstreamRedirect = new TComOutputBitstream;
   AccessUnit::iterator  itLocationToPushSliceHeaderNALU; // used to store location where NALU containing slice header is to be inserted
 
-  xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut, isField );
+  xInitGOP( iPOCLast, iNumPicRcvd, isField );
 
   m_iNumPicCoded = 0;
   SEIMessages leadingSeiMessages;
@@ -1593,10 +1593,12 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     pcPic->allocateNewSlice();
     m_pcSliceEncoder->setSliceIdx(0);
     pcPic->setCurrSliceIdx(0);
+
 #if SVC_EXTENSION
     pcPic->setLayerId( m_layerId );
 #endif
-    m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iNumPicRcvd, iGOPid, pcSlice, isField );
+
+    m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, pocCurr, iGOPid, pcSlice, isField );
 
     //Set Frame/Field coding
     pcSlice->getPic()->setField(isField);
@@ -2841,9 +2843,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 
 #if EFFICIENT_FIELD_IRAP
-    xCreatePictureTimingSEI(effFieldIRAPMap.GetIRAPGOPid(), leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, accessUnit, pcSlice, isField, duData);
+    xCreatePictureTimingSEI(effFieldIRAPMap.GetIRAPGOPid(), leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, pcSlice, isField, duData);
 #else
-    xCreatePictureTimingSEI(0, leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, accessUnit, pcSlice, isField, duData);
+    xCreatePictureTimingSEI(0, leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, pcSlice, isField, duData);
 #endif
     if (m_pcCfg->getScalableNestingSEIEnabled())
     {
@@ -2991,7 +2993,7 @@ Void TEncGOP::preLoopFilterPicAll( TComPic* pcPic, UInt64& ruiDist )
 // ====================================================================================================================
 
 
-Void TEncGOP::xInitGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Bool isField )
+Void TEncGOP::xInitGOP( Int iPOCLast, Int iNumPicRcvd, Bool isField )
 {
   assert( iNumPicRcvd > 0 );
   //  Exception for the first frames
@@ -3175,11 +3177,11 @@ Void TEncGOP::xCalculateAddPSNRs( const Bool isField, const Bool isFieldTopField
 
       if( (pcPic->isTopField() && isFieldTopFieldFirst) || (!pcPic->isTopField() && !isFieldTopFieldFirst))
       {
-        xCalculateInterlacedAddPSNR(pcPic, correspondingFieldPic, pcPic->getPicYuvRec(), correspondingFieldPic->getPicYuvRec(), accessUnit, dEncTime, snr_conversion, printFrameMSE );
+        xCalculateInterlacedAddPSNR(pcPic, correspondingFieldPic, pcPic->getPicYuvRec(), correspondingFieldPic->getPicYuvRec(), snr_conversion, printFrameMSE );
       }
       else
       {
-        xCalculateInterlacedAddPSNR(correspondingFieldPic, pcPic, correspondingFieldPic->getPicYuvRec(), pcPic->getPicYuvRec(), accessUnit, dEncTime, snr_conversion, printFrameMSE );
+        xCalculateInterlacedAddPSNR(correspondingFieldPic, pcPic, correspondingFieldPic->getPicYuvRec(), pcPic->getPicYuvRec(), snr_conversion, printFrameMSE );
       }
     }
   }
@@ -3198,11 +3200,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   if (conversion!=IPCOLOURSPACE_UNCHANGED)
   {
     cscd.create(pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), pcPicD->getChromaFormat(), pcPicD->getWidth(COMPONENT_Y), pcPicD->getHeight(COMPONENT_Y), 0, false);
-#if SVC_EXTENSION
-    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, pcPic->getSlice(0)->getBitDepths().recon, false);
-#else
-    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, pcPic->getPicSym()->getSPS().getBitDepths().recon, false);
-#endif
+    TVideoIOYuv::ColourSpaceConvert(*pcPicD, cscd, conversion, false);
   }
   TComPicYuv &picd=(conversion==IPCOLOURSPACE_UNCHANGED)?*pcPicD : cscd;
 
@@ -3383,7 +3381,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 
 Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic* pcPicOrgSecondField,
                                            TComPicYuv* pcPicRecFirstField, TComPicYuv* pcPicRecSecondField,
-                                           const AccessUnit& accessUnit, Double dEncTime, const InputColourSpaceConversion conversion, const Bool printFrameMSE )
+                                           const InputColourSpaceConversion conversion, const Bool printFrameMSE )
 {
 #if !SVC_EXTENSION
   const TComSPS &sps=pcPicOrgFirstField->getPicSym()->getSPS();
@@ -3404,11 +3402,7 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
     {
       TComPicYuv &reconField=*(apcPicRecFields[fieldNum]);
       cscd[fieldNum].create(reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), reconField.getChromaFormat(), reconField.getWidth(COMPONENT_Y), reconField.getHeight(COMPONENT_Y), 0, false);
-#if SVC_EXTENSION
-      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, pcPicOrgFirstField->getSlice(0)->getBitDepths().recon, false);
-#else
-      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, sps.getBitDepths().recon, false);
-#endif
+      TVideoIOYuv::ColourSpaceConvert(reconField, cscd[fieldNum], conversion, false);
       apcPicRecFields[fieldNum]=cscd+fieldNum;
     }
   }

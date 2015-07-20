@@ -103,7 +103,7 @@ static inline Void output_sei_message_header(SEI &sei, std::ostream *pDecodedMes
   if (pDecodedMessageOutputStream)
   {
     std::string seiMessageHdr(SEI::getSEIMessageString(sei.payloadType())); seiMessageHdr+=" SEI message";
-    (*pDecodedMessageOutputStream) << std::setfill('-') << std::setw(seiMessageHdr.size()) << "-" << std::setfill(' ') << "\n" << seiMessageHdr << "\n";
+    (*pDecodedMessageOutputStream) << std::setfill('-') << std::setw(seiMessageHdr.size()) << "-" << std::setfill(' ') << "\n" << seiMessageHdr << " (" << payloadSize << " bytes)"<< "\n";
   }
 }
 
@@ -646,8 +646,7 @@ Void SEIReader::xParseSEIDecodingUnitInfo(SEIDecodingUnitInfo& sei, UInt payload
     sei.m_picSptDpbOutputDuDelay = val;
   }
 #else
-  const TComVUI *vui = sps->getVuiParameters(); 
-
+  const TComVUI *vui = sps->getVuiParameters();
   if(vui->getHrdParameters()->getSubPicCpbParamsInPicTimingSEIFlag())
   {
     sei_read_code( pDecodedMessageOutputStream, ( vui->getHrdParameters()->getDuCpbRemovalDelayLengthMinus1() + 1 ), val, "du_spt_cpb_removal_delay_increment");

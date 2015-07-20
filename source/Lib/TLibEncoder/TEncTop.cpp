@@ -285,9 +285,9 @@ Void TEncTop::xInitScalingLists()
   if(getUseScalingListId() == SCALING_LIST_OFF)
   {
 #if SVC_EXTENSION
-    getTrQuant()->setFlatScalingList( m_cVPS.getChromaFormatIdc(&m_cSPS, m_layerId), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
+    getTrQuant()->setFlatScalingList( maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
 #else
-    getTrQuant()->setFlatScalingList(m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
+    getTrQuant()->setFlatScalingList(maxLog2TrDynamicRange, m_cSPS.getBitDepths());
 #endif
     getTrQuant()->setUseScalingList(false);
     m_cSPS.setScalingListPresentFlag(false);
@@ -307,7 +307,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
     }
     else
     {
@@ -316,7 +316,11 @@ Void TEncTop::xInitScalingLists()
     m_cSPS.setScalingListPresentFlag(false);
     m_cPPS.setScalingListPresentFlag(false);
 
-    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
+#if SVC_EXTENSION
+    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId));
+#else
+    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
+#endif
 #if SVC_EXTENSION
     }
 #endif
@@ -336,7 +340,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
     }
     else
     {
@@ -351,7 +355,7 @@ Void TEncTop::xInitScalingLists()
     m_cSPS.getScalingList().checkDcOfMatrix();
     m_cSPS.setScalingListPresentFlag(m_cSPS.getScalingList().checkDefaultScalingList());
     m_cPPS.setScalingListPresentFlag(false);
-    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), m_cSPS.getChromaFormatIdc(), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
+    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
 #if SVC_EXTENSION
     }
 #endif
@@ -1387,7 +1391,7 @@ Void TEncTop::selectReferencePictureSet(TComSlice* slice, Int POCCurr, Int GOPid
   slice->getRPS()->setNumberOfPictures(slice->getRPS()->getNumberOfNegativePictures()+slice->getRPS()->getNumberOfPositivePictures());
 }
 
-Int TEncTop::getReferencePictureSetIdxForSOP(TComSlice* slice, Int POCCurr, Int GOPid )
+Int TEncTop::getReferencePictureSetIdxForSOP(Int POCCurr, Int GOPid )
 {
   Int rpsIdx = GOPid;
 

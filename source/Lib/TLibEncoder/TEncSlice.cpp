@@ -235,7 +235,7 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
  \param isField       true for field coding
  */
 
-Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd, Int iGOPid, TComSlice*& rpcSlice, Bool isField )
+Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iGOPid, TComSlice*& rpcSlice, Bool isField )
 {
   Double dQP;
   Double dLambda;
@@ -1241,7 +1241,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
 }
 
 Void TEncSlice::calculateBoundingCtuTsAddrForSlice(UInt &startCtuTSAddrSlice, UInt &boundingCtuTSAddrSlice, Bool &haveReachedTileBoundary,
-                                                   TComPic* pcPic, const Int sliceMode, const Int sliceArgument, const UInt sliceCurEndCtuTSAddr)
+                                                   TComPic* pcPic, const Int sliceMode, const Int sliceArgument)
 {
   TComSlice* pcSlice = pcPic->getSlice(getSliceIdx());
   const UInt numberOfCtusInFrame = pcPic->getNumberOfCtusInFrame();
@@ -1342,7 +1342,7 @@ Void TEncSlice::xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UIn
   Bool haveReachedTileBoundarySlice  = false;
   UInt boundingCtuTsAddrSlice;
   calculateBoundingCtuTsAddrForSlice(startCtuTsAddrSlice, boundingCtuTsAddrSlice, haveReachedTileBoundarySlice, pcPic,
-                                     m_pcCfg->getSliceMode(), m_pcCfg->getSliceArgument(), pcSlice->getSliceCurEndCtuTsAddr());
+                                     m_pcCfg->getSliceMode(), m_pcCfg->getSliceArgument());
   pcSlice->setSliceCurEndCtuTsAddr(   boundingCtuTsAddrSlice );
   pcSlice->setSliceCurStartCtuTsAddr( startCtuTsAddrSlice    );
 
@@ -1351,7 +1351,7 @@ Void TEncSlice::xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UIn
   Bool haveReachedTileBoundarySliceSegment = false;
   UInt boundingCtuTsAddrSliceSegment;
   calculateBoundingCtuTsAddrForSlice(startCtuTsAddrSliceSegment, boundingCtuTsAddrSliceSegment, haveReachedTileBoundarySliceSegment, pcPic,
-                                     m_pcCfg->getSliceSegmentMode(), m_pcCfg->getSliceSegmentArgument(), pcSlice->getSliceSegmentCurEndCtuTsAddr());
+                                     m_pcCfg->getSliceSegmentMode(), m_pcCfg->getSliceSegmentArgument());
   if (boundingCtuTsAddrSliceSegment>boundingCtuTsAddrSlice)
   {
     boundingCtuTsAddrSliceSegment = boundingCtuTsAddrSlice;
