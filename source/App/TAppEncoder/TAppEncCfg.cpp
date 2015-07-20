@@ -1023,6 +1023,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   SMultiValueInput<Bool> cfg_timeCodeSeiHoursFlag            (0,  1, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetLength     (0, 31, 0, MAX_TIMECODE_SEI_SETS);
   SMultiValueInput<Int>  cfg_timeCodeSeiTimeOffsetValue      (std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max(), 0, MAX_TIMECODE_SEI_SETS);
+  Int warnUnknowParameter = 0;
 
 #if Q0096_OVERLAY_SEI
   const Int CFG_MAX_OVERLAYS = 3;
@@ -1044,6 +1045,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   opts.addOptions()
   ("help",                                            do_help,                                          false, "this help text")
   ("c",    po::parseConfigFile, "configuration file name")
+  ("WarnUnknowParameter,w",                           warnUnknowParameter,                                  0, "warn for unknown configuration parameters instead of failing")
 
   // File, I/O and source parameters
 #if SVC_EXTENSION
@@ -1687,7 +1689,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif 
 
   po::setDefaults(opts);
-  const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
+  po::ErrorReporter err;
+  const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv, err);
 
 #if SVC_EXTENSION
   for (Int i=1; i<MAX_LAYERS; i++)
@@ -1719,6 +1722,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     /* argc == 1: no options have been specified */
     po::doHelp(cout, opts);
     return false;
+  }
+
+  if (err.is_errored)
+  {
+    if (!warnUnknowParameter)
+    {
+      /* error report has already been printed on stderr */
+      return false;
+    }
   }
 
   /*
