@@ -1167,7 +1167,7 @@ Void TDecCavlc::parseVPS(TComVPS* pcVPS)
   return;
 }
 
-Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *parameterSetManager)
+Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *parameterSetManager, const Int prevTid0POC)
 {
   UInt  uiCode;
   Int   iCode;
@@ -1323,7 +1323,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
 #else
       Int iPOClsb = uiCode;
 #endif
-      Int iPrevPOC = pcSlice->getPrevTid0POC();
+      Int iPrevPOC = prevTid0POC;
       Int iMaxPOClsb = 1<< sps->getBitsForPOC();
       Int iPrevPOClsb = iPrevPOC & (iMaxPOClsb - 1);
       Int iPrevPOCmsb = iPrevPOC-iPrevPOClsb;
