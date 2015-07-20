@@ -75,19 +75,24 @@ TComPicYuv::~TComPicYuv()
 {
 }
 
-Void TComPicYuv::create ( const Int iPicWidth,
-                          const Int iPicHeight,
-                          const ChromaFormat chromaFormatIDC,
-                          const UInt uiMaxCUWidth,  ///< used for generating offsets to CUs. Can use iPicWidth if no offsets are required
-                          const UInt uiMaxCUHeight, ///< used for generating offsets to CUs. Can use iPicHeight if no offsets are required
-                          const UInt uiMaxCUDepth,  ///< used for generating offsets to CUs. Can use 0 if no offsets are required
+
+
+
+Void TComPicYuv::create ( const Int iPicWidth,                ///< picture width
+                          const Int iPicHeight,               ///< picture height
+                          const ChromaFormat chromaFormatIDC, ///< chroma format
+                          const UInt uiMaxCUWidth,            ///< used for generating offsets to CUs. Can use iPicWidth if no offsets are required
+                          const UInt uiMaxCUHeight,           ///< used for generating offsets to CUs. Can use iPicHeight if no offsets are required
+                          const UInt uiMaxCUDepth,            ///< used for generating offsets to CUs. Can use 0 if no offsets are required
 #if SVC_EXTENSION
                           const Bool bUseMargin,     ///< if true, then a margin of uiMaxCUWidth+16 and uiMaxCUHeight+16 is created around the image.
                           const Window* conformanceWindow)
 #else
-                          const Bool bUseMargin)    ///< if true, then a margin of uiMaxCUWidth+16 and uiMaxCUHeight+16 is created around the image.
+                          const Bool bUseMargin)              ///< if true, then a margin of uiMaxCUWidth+16 and uiMaxCUHeight+16 is created around the image.
 #endif
+
 {
+
 #if SVC_EXTENSION
   if(conformanceWindow != NULL)
   {
@@ -98,7 +103,7 @@ Void TComPicYuv::create ( const Int iPicWidth,
   m_iPicWidth         = iPicWidth;
   m_iPicHeight        = iPicHeight;
   m_chromaFormatIDC   = chromaFormatIDC;
-  m_iMarginX          = (bUseMargin?uiMaxCUWidth:0) + 16; // for 16-byte alignment
+  m_iMarginX          = (bUseMargin?uiMaxCUWidth:0) + 16;   // for 16-byte alignment
   m_iMarginY          = (bUseMargin?uiMaxCUHeight:0) + 16;  // margin for 8-tap filter and infinite padding
   m_bIsBorderExtended = false;
 
