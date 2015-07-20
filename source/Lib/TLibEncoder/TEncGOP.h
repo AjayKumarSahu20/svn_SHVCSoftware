@@ -135,11 +135,7 @@ private:
   std::vector<Int> m_vRVM_RP;
   UInt                    m_lastBPSEI;
   UInt                    m_totalCoded;
-  Bool                    m_activeParameterSetSEIPresentInAU;
   Bool                    m_bufferingPeriodSEIPresentInAU;
-  Bool                    m_pictureTimingSEIPresentInAU;
-  Bool                    m_nestedBufferingPeriodSEIPresentInAU;
-  Bool                    m_nestedPictureTimingSEIPresentInAU;
   SEIEncoder              m_seiEncoder;
 
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -273,17 +269,6 @@ protected:
   Int xWritePPS (AccessUnit &accessUnit, const TComPPS *pps);
   Int xWriteParameterSets (AccessUnit &accessUnit, TComSlice *slice);
 
-  Void xResetNonNestedSEIPresentFlags()
-  {
-    m_activeParameterSetSEIPresentInAU = false;
-    m_bufferingPeriodSEIPresentInAU    = false;
-    m_pictureTimingSEIPresentInAU      = false;
-  }
-  Void xResetNestedSEIPresentFlags()
-  {
-    m_nestedBufferingPeriodSEIPresentInAU    = false;
-    m_nestedPictureTimingSEIPresentInAU      = false;
-  }
   Void applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices );
 
 #if Q0074_COLOUR_REMAPPING_SEI
