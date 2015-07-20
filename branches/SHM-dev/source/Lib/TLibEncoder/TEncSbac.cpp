@@ -220,35 +220,35 @@ SliceType TEncSbac::determineCabacInitIdx(const TComSlice *pSlice)
   }
 }
 
-Void TEncSbac::codeVPS( const TComVPS* pcVPS )
+Void TEncSbac::codeVPS( const TComVPS* /*pcVPS*/ )
 {
   assert (0);
   return;
 }
 
-Void TEncSbac::codeSPS( const TComSPS* pcSPS )
+Void TEncSbac::codeSPS( const TComSPS* /*pcSPS*/ )
 {
   assert (0);
   return;
 }
 
 #if CGS_3D_ASYMLUT
-Void TEncSbac::codePPS( const TComPPS* pcPPS, TEnc3DAsymLUT * pc3DAsymLUT )
+Void TEncSbac::codePPS( const TComPPS* /*pcPPS*/, TEnc3DAsymLUT * pc3DAsymLUT )
 #else
-Void TEncSbac::codePPS( const TComPPS* pcPPS )
+Void TEncSbac::codePPS( const TComPPS* /*pcPPS*/ )
 #endif
 {
   assert (0);
   return;
 }
 
-Void TEncSbac::codeSliceHeader( TComSlice* pcSlice )
+Void TEncSbac::codeSliceHeader( TComSlice* /*pcSlice*/ )
 {
   assert (0);
   return;
 }
 
-Void TEncSbac::codeTilesWPPEntryPoint( TComSlice* pSlice )
+Void TEncSbac::codeTilesWPPEntryPoint( TComSlice* /*pSlice*/ )
 {
   assert (0);
   return;
@@ -1102,7 +1102,7 @@ Void TEncSbac::codeQtCbfZero( TComTU & rTu, const ChannelType chType )
   m_pcBinIf->encodeBin( uiCbf , m_cCUQtCbfSCModel.get( 0, chType, uiCtx ) );
 }
 
-Void TEncSbac::codeQtRootCbfZero( TComDataCU* pcCU )
+Void TEncSbac::codeQtRootCbfZero( )
 {
   // this function is only used to estimate the bits when cbf is 0
   // and will never be called when writing the bistream. do not need to write log

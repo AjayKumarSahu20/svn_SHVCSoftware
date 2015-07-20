@@ -1172,7 +1172,7 @@ Void TEncSearch::xIntraCodingTUBlock(       TComYuv*    pcOrgYuv,
   if( default0Save1Load2 != 2 )
 #endif
   {
-    const Bool bUseFilteredPredictions=TComPrediction::filteringIntraReferenceSamples(compID, uiChFinalMode, uiWidth, uiHeight, chFmt, pcCU->getSlice()->getSPS()->getDisableIntraReferenceSmoothing());
+    const Bool bUseFilteredPredictions=TComPrediction::filteringIntraReferenceSamples(compID, uiChFinalMode, uiWidth, uiHeight, chFmt, sps.getDisableIntraReferenceSmoothing());
 
     initAdiPatternChType( rTu, bAboveAvail, bLeftAvail, compID, bUseFilteredPredictions DEBUG_STRING_PASS_INTO(sDebug) );
 
@@ -2332,7 +2332,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
         UInt   iModeBits = 0;
 
         // NB xModeBitsIntra will not affect the mode for chroma that may have already been pre-estimated.
-        iModeBits+=xModeBitsIntra( pcCU, uiMode, uiPartOffset, uiDepth, uiInitTrDepth, CHANNEL_TYPE_LUMA );
+        iModeBits+=xModeBitsIntra( pcCU, uiMode, uiPartOffset, uiDepth, CHANNEL_TYPE_LUMA );
 
         Double cost      = (Double)uiSad + (Double)iModeBits * sqrtLambdaForFirstPass;
 
@@ -3622,7 +3622,7 @@ Void TEncSearch::xEstimateMvPredAMVP( TComDataCU* pcCU, TComYuv* pcOrgYuv, UInt 
 
     if(pcCU->getSlice()->getMvdL1ZeroFlag() && eRefPicList==REF_PIC_LIST_1)
     {
-      (*puiDistBiP) = xGetTemplateCost( pcCU, uiPartIdx, uiPartAddr, pcOrgYuv, &m_cYuvPredTemp, rcMvPred, 0, AMVP_MAX_NUM_CANDS, eRefPicList, iRefIdx, iRoiWidth, iRoiHeight);
+      (*puiDistBiP) = xGetTemplateCost( pcCU, uiPartAddr, pcOrgYuv, &m_cYuvPredTemp, rcMvPred, 0, AMVP_MAX_NUM_CANDS, eRefPicList, iRefIdx, iRoiWidth, iRoiHeight);
     }
     return;
   }
@@ -3639,7 +3639,7 @@ Void TEncSearch::xEstimateMvPredAMVP( TComDataCU* pcCU, TComYuv* pcOrgYuv, UInt 
   for ( i = 0 ; i < pcAMVPInfo->iN; i++)
   {
     Distortion uiTmpCost;
-    uiTmpCost = xGetTemplateCost( pcCU, uiPartIdx, uiPartAddr, pcOrgYuv, &m_cYuvPredTemp, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, eRefPicList, iRefIdx, iRoiWidth, iRoiHeight);
+    uiTmpCost = xGetTemplateCost( pcCU, uiPartAddr, pcOrgYuv, &m_cYuvPredTemp, pcAMVPInfo->m_acMvCand[i], i, AMVP_MAX_NUM_CANDS, eRefPicList, iRefIdx, iRoiWidth, iRoiHeight);
     if ( uiBestCost > uiTmpCost )
     {
       uiBestCost = uiTmpCost;
@@ -3797,7 +3797,6 @@ Void TEncSearch::xCheckBestMVP ( TComDataCU* pcCU, RefPicList eRefPicList, TComM
 
 
 Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
-                                         UInt        uiPartIdx,
                                          UInt        uiPartAddr,
                                          TComYuv*    pcOrgYuv,
                                          TComYuv*    pcTemplateCand,
@@ -3972,7 +3971,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   }
   else    //non ILR reference pic
 #endif
-  xPatternSearchFracDIF( bIsLosslessCoded, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost ,bBi );
+  xPatternSearchFracDIF( bIsLosslessCoded, pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost );  
 
   m_pcRdCost->setCostScale( 0 );
   rcMv <<= 2;
@@ -4471,8 +4470,7 @@ Void TEncSearch::xPatternSearchFracDIF(
                                        TComMv*      pcMvInt,
                                        TComMv&      rcMvHalf,
                                        TComMv&      rcMvQter,
-                                       Distortion&  ruiCost,
-                                       Bool         biPred
+                                       Distortion&  ruiCost
                                       )
 {
   //  Reference pattern initialization (integer scale)
@@ -4485,7 +4483,7 @@ Void TEncSearch::xPatternSearchFracDIF(
                           pcPatternKey->getBitDepthY());
 
   //  Half-pel refinement
-  xExtDIFUpSamplingH ( &cPatternRoi, biPred );
+  xExtDIFUpSamplingH ( &cPatternRoi );
 
   rcMvHalf = *pcMvInt;   rcMvHalf <<= 1;    // for mv-cost
   TComMv baseRefMv(0, 0);
@@ -4493,7 +4491,7 @@ Void TEncSearch::xPatternSearchFracDIF(
 
   m_pcRdCost->setCostScale( 0 );
 
-  xExtDIFUpSamplingQ ( &cPatternRoi, rcMvHalf, biPred );
+  xExtDIFUpSamplingQ ( &cPatternRoi, rcMvHalf );
   baseRefMv = rcMvHalf;
   baseRefMv <<= 1;
 
@@ -4592,7 +4590,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   // The costs at this point do not include header bits.
 
   m_pcEntropyCoder->resetBits();
-  m_pcEntropyCoder->encodeQtRootCbfZero( pcCU );
+  m_pcEntropyCoder->encodeQtRootCbfZero( );
   const UInt   zeroResiBits = m_pcEntropyCoder->getNumberOfWrittenBits();
   const Double zeroCost     = (pcCU->isLosslessCoded( 0 )) ? (nonZeroCost+1) : (m_pcRdCost->calcRdCost( zeroResiBits, zeroDistortion ));
 
@@ -4625,7 +4623,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   m_pcRDGoOnSbacCoder->load( m_pppcRDSbacCoder[pcCU->getDepth(0)][CI_CURR_BEST] );
 
   UInt finalBits = 0;
-  xAddSymbolBitsInter( pcCU, 0, 0, finalBits );
+  xAddSymbolBitsInter( pcCU, finalBits );
   // we've now encoded the pcCU, and so have a valid bit cost
 
   if ( !pcCU->getQtRootCbf( 0 ) )
@@ -5457,7 +5455,7 @@ Void TEncSearch::xSetInterResidualQTData( TComYuv* pcResi, Bool bSpatial, TComTU
 
 
 
-UInt TEncSearch::xModeBitsIntra( TComDataCU* pcCU, UInt uiMode, UInt uiPartOffset, UInt uiDepth, UInt uiInitTrDepth, const ChannelType chType )
+UInt TEncSearch::xModeBitsIntra( TComDataCU* pcCU, UInt uiMode, UInt uiPartOffset, UInt uiDepth, const ChannelType chType )
 {
   // Reload only contexts required for coding intra mode information
   m_pcRDGoOnSbacCoder->loadIntraDirMode( m_pppcRDSbacCoder[uiDepth][CI_CURR_BEST], chType );
@@ -5525,7 +5523,7 @@ UInt TEncSearch::xUpdateCandList( UInt uiMode, Double uiCost, UInt uiFastCandNum
  * \param ruiBits
  * \returns Void
  */
-Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt uiQp, UInt uiTrMode, UInt& ruiBits )
+Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt& ruiBits )
 {
   if(pcCU->getMergeFlag( 0 ) && pcCU->getPartitionSize( 0 ) == SIZE_2Nx2N && !pcCU->getQtRootCbf( 0 ))
   {
@@ -5573,7 +5571,7 @@ Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt uiQp, UInt uiTrMod
  * \param pattern Reference picture ROI
  * \param biPred    Flag indicating whether block is for biprediction
  */
-Void TEncSearch::xExtDIFUpSamplingH( TComPattern* pattern, Bool biPred )
+Void TEncSearch::xExtDIFUpSamplingH( TComPattern* pattern )
 {
   Int width      = pattern->getROIYWidth();
   Int height     = pattern->getROIYHeight();
@@ -5620,7 +5618,7 @@ Void TEncSearch::xExtDIFUpSamplingH( TComPattern* pattern, Bool biPred )
  * \param halfPelRef Half-pel mv
  * \param biPred     Flag indicating whether block is for biprediction
  */
-Void TEncSearch::xExtDIFUpSamplingQ( TComPattern* pattern, TComMv halfPelRef, Bool biPred )
+Void TEncSearch::xExtDIFUpSamplingQ( TComPattern* pattern, TComMv halfPelRef )
 {
   Int width      = pattern->getROIYWidth();
   Int height     = pattern->getROIYHeight();
