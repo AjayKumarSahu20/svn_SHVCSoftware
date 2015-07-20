@@ -1302,8 +1302,7 @@ Bool TComTrQuant::xNeedRDOQ( TComTU &rTu, TCoeff * pSrc, const ComponentID compI
   // QBits will be OK for any internal bit depth as the reduction in transform shift is balanced by an increase in Qp_per due to QpBDOffset
 
   // iAdd is different from the iAdd used in normal quantization
-  const Int iAdd   = (compID == COMPONENT_Y ? 171 : 256) << (iQBits-9);
-  const Int qBits8 = iQBits - 8;
+  const Int iAdd   = (compID == COMPONENT_Y ? 171 : 256) << (iQBits-9);  
 
   for( Int uiBlockPos = 0; uiBlockPos < uiWidth*uiHeight; uiBlockPos++ )
   {
