@@ -405,6 +405,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setDeblockingFilterMetric                           ( m_DeblockingFilterMetric );
 
     //====== Motion search ========
+    m_acTEncTop[layer].setDisableIntraPUsInInterSlices                     ( m_bDisableIntraPUsInInterSlices );
     m_acTEncTop[layer].setFastSearch                                       ( m_iFastSearch  );
     m_acTEncTop[layer].setSearchRange                                      ( m_iSearchRange );
     m_acTEncTop[layer].setBipredSearchRange                                ( m_bipredSearchRange );
@@ -841,6 +842,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setDeblockingFilterMetric                            ( m_DeblockingFilterMetric );
 
   //====== Motion search ========
+  m_cTEncTop.setDisableIntraPUsInInterSlices                      ( m_bDisableIntraPUsInInterSlices );
   m_cTEncTop.setFastSearch                                        ( m_iFastSearch  );
   m_cTEncTop.setSearchRange                                       ( m_iSearchRange );
   m_cTEncTop.setBipredSearchRange                                 ( m_bipredSearchRange );
