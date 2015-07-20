@@ -209,7 +209,7 @@ Void TEncGOP::init ( TEncTop* pcTEncTop )
     const Int prevBitDepthChroma = vps->getBitDepth(CHANNEL_TYPE_CHROMA, m_ppcTEncTop[prevLayerIdx]->getSPS(), prevLayerId);
 
     m_Enc3DAsymLUTPicUpdate.create( m_pcCfg->getCGSMaxOctantDepth() , prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, bitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
-    m_Enc3DAsymLUTPPS.create( m_pcCfg->getCGSMaxOctantDepth(), prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, prevBitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
+    m_Enc3DAsymLUTPPS.create( m_pcCfg->getCGSMaxOctantDepth(), prevBitDepthLuma, prevBitDepthChroma, bitDepthLuma, bitDepthChroma , m_pcCfg->getCGSMaxYPartNumLog2() );
 
     if(!m_pColorMappedPic)
     {
@@ -1819,7 +1819,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           // check for the sample prediction picture type
           if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )
           {
-            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0 )->getBitDepth(CHANNEL_TYPE_LUMA), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) );
+            m_pcPredSearch->upsampleBasePic( pcSlice, refLayerIdc, pcPic->getFullPelBaseRec(refLayerIdc), pBaseColRec, pcPic->getPicYuvRec(), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA), pcSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) );
           }
         }
         else
