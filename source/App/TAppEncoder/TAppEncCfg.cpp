@@ -1324,6 +1324,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
   ("RDOQ",                                            m_useRDOQ,                                         true)
   ("RDOQTS",                                          m_useRDOQTS,                                       true)
+#if T0196_SELECTIVE_RDOQ
+  ("SelectiveRDOQ",                                   m_useSelectiveRDOQ,                               false, "Enable selective RDOQ")
+#endif
   ("RDpenalty",                                       m_rdPenalty,                                          0,  "RD-penalty for 32x32 TU for intra in non-intra slices. 0:disabled  1:RD-penalty  2:maximum RD-penalty")
 
   // Deblocking filter parameters
