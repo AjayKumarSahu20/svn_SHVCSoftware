@@ -530,12 +530,10 @@ public:
   PayloadType payloadType() const { return SCALABLE_NESTING; }
 
   SEIScalableNesting() {}
+
   virtual ~SEIScalableNesting()
   {
-    if (!m_callerOwnsSEIs)
-    {
-      deleteSEIs(m_nestedSEIs);
-    }
+    deleteSEIs(m_nestedSEIs);
   }
 
   Bool  m_bitStreamSubsetFlag;
@@ -550,7 +548,6 @@ public:
   UInt  m_nestingNumLayersMinus1;                    //value valid if m_nestingOpFlag == 0 and m_allLayersFlag == 0
   UChar m_nestingLayerId[MAX_NESTING_NUM_LAYER];     //value valid if m_nestingOpFlag == 0 and m_allLayersFlag == 0. This can e.g. be a static array of 64 UChar values
 
-  Bool  m_callerOwnsSEIs;
   SEIMessages m_nestedSEIs;
 };
 
