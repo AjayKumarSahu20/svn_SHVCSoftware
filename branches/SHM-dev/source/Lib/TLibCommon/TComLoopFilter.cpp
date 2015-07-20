@@ -846,6 +846,7 @@ Void TComLoopFilter::xEdgeFilterChroma( TComDataCU* const pcCU, const UInt uiAbs
  \param iThrCut         threshold value for weak filter decision
  \param bFilterSecondP  decision weak filter/no filter for partP
  \param bFilterSecondQ  decision weak filter/no filter for partQ
+ \param bitDepthLuma    luma bit depth
 */
 __inline Void TComLoopFilter::xPelFilterLuma( Pel* piSrc, Int iOffset, Int tc, Bool sw, Bool bPartPNoFilter, Bool bPartQNoFilter, Int iThrCut, Bool bFilterSecondP, Bool bFilterSecondQ, const Int bitDepthLuma)
 {
@@ -916,6 +917,7 @@ __inline Void TComLoopFilter::xPelFilterLuma( Pel* piSrc, Int iOffset, Int tc, B
  \param tc              tc value
  \param bPartPNoFilter  indicator to disable filtering on partP
  \param bPartQNoFilter  indicator to disable filtering on partQ
+ \param bitDepthChroma  chroma bit depth
  */
 __inline Void TComLoopFilter::xPelFilterChroma( Pel* piSrc, Int iOffset, Int tc, Bool bPartPNoFilter, Bool bPartQNoFilter, const Int bitDepthChroma)
 {
