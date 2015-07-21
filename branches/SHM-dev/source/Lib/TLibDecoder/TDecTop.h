@@ -55,7 +55,7 @@
 #include "TDecCAVLC.h"
 #include "SEIread.h"
 
-struct InputNALUnit;
+class InputNALUnit;
 
 //! \ingroup TLibDecoder
 //! \{
@@ -78,7 +78,7 @@ private:
   ParameterSetManager     m_parameterSetManager;  // storage for parameter sets
   TComSlice*              m_apcSlicePilot;
 
-  SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices
+  SEIMessages             m_SEIs; ///< List of SEI messages that have been received before the first slice and between slices, excluding prefix SEIs...
 
   // functional classes
   TComPrediction          m_cPrediction;
@@ -122,6 +122,8 @@ private:
   std::ostream           *m_pDecodedSEIOutputStream;
 
   Bool                    m_warningMessageSkipPicture;
+
+  std::list<InputNALUnit*> m_prefixSEINALUs; /// Buffered up prefix SEI NAL Units.
 
 #if SVC_EXTENSION
   Bool                    m_isLastNALWasEos;
@@ -276,15 +278,17 @@ protected:
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
 #endif
-  Void      xDecodeVPS(const std::vector<UChar> *pNaluData);
-  Void      xDecodeSPS(const std::vector<UChar> *pNaluData);
+  Void      xDecodeVPS(const std::vector<UChar> &naluData);
+  Void      xDecodeSPS(const std::vector<UChar> &naluData);  
 #if CGS_3D_ASYMLUT
-  Void      xDecodePPS(const std::vector<UChar> *pNaluData, TCom3DAsymLUT *pc3DAsymLUT);
+  Void      xDecodePPS(const std::vector<UChar> &naluData, TCom3DAsymLUT *pc3DAsymLUT);
 #else
-  Void      xDecodePPS(const std::vector<UChar> *pNaluData);
+  Void      xDecodePPS(const std::vector<UChar> &naluData);
 #endif
   Void      xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType );
   Void      xUpdatePreviousTid0POC( TComSlice *pSlice ) { if ((pSlice->getTLayer()==0) && (pSlice->isReferenceNalu() && (pSlice->getNalUnitType()!=NAL_UNIT_CODED_SLICE_RASL_R)&& (pSlice->getNalUnitType()!=NAL_UNIT_CODED_SLICE_RADL_R))) { m_prevTid0POC=pSlice->getPOC(); } }
+  Void      xParsePrefixSEImessages();
+  Void      xParsePrefixSEIsForUnknownVCLNal();
 
 
 #if SVC_EXTENSION
