@@ -111,7 +111,7 @@ Void WeightPredAnalysis::xCalcACDCParamSlice(TComSlice *const slice)
       }
     }
 
-    const Int fixedBitShift = (slice->getSPS()->getUseHighPrecisionPredictionWeighting())?RExt__PREDICTION_WEIGHTING_ANALYSIS_DC_PRECISION:0;
+    const Int fixedBitShift = (slice->getSPS()->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag())?RExt__PREDICTION_WEIGHTING_ANALYSIS_DC_PRECISION:0;
     weightACDCParam[compID].iDC = (((iOrgDC<<fixedBitShift)+(iSample>>1)) / iSample);
     weightACDCParam[compID].iAC = iOrgAC;
 #if SVC_EXTENSION
@@ -203,7 +203,7 @@ Void WeightPredAnalysis::xEstimateWPParamSlice(TComSlice *const slice)
 Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int log2Denom)
 {
   const Int  numComp                    = slice->getPic()->getPicYuvOrg()->getNumberValidComponents();
-  const Bool bUseHighPrecisionWeighting = slice->getSPS()->getUseHighPrecisionPredictionWeighting();
+  const Bool bUseHighPrecisionWeighting = slice->getSPS()->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag();
   const Int numPredDir                  = slice->isInterP() ? 1 : 2;
 
   assert (numPredDir <= Int(NUM_REF_PIC_LIST_01));
@@ -214,8 +214,9 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 
     for ( Int refIdxTemp = 0; refIdxTemp < slice->getNumRefIdx(eRefPicList); refIdxTemp++ )
     {
-      WPACDCParam *currWeightACDCParam = slice->getWpAcDcParam(); 
-      WPACDCParam *refWeightACDCParam  = slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam();
+      WPACDCParam *currWeightACDCParam, *refWeightACDCParam;
+      slice->getWpAcDcParam(currWeightACDCParam);
+      slice->getRefPic(eRefPicList, refIdxTemp)->getSlice(0)->getWpAcDcParam(refWeightACDCParam);
 
 #if SVC_EXTENSION
       UInt currLayerId = slice->getLayerId();
@@ -224,7 +225,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 
       if( validILRPic )
       {
-        refWeightACDCParam = slice->getWpAcDcParam();
+        slice->getWpAcDcParam(refWeightACDCParam);
       }
 #endif
 
@@ -331,7 +332,7 @@ Bool WeightPredAnalysis::xSelectWP(TComSlice *const slice, const Int log2Denom)
         TComPicYuv *const pPic                                = slice->getPic()->getPicYuvOrg();
   const Int               iDefaultWeight                      = ((Int)1<<log2Denom);
   const Int               iNumPredDir                         = slice->isInterP() ? 1 : 2;
-  const Bool              useHighPrecisionPredictionWeighting = slice->getSPS()->getUseHighPrecisionPredictionWeighting();
+  const Bool              useHighPrecisionPredictionWeighting = slice->getSPS()->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag();
 
   assert (iNumPredDir <= Int(NUM_REF_PIC_LIST_01));
 
