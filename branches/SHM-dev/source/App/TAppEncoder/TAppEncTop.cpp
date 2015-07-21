@@ -471,6 +471,7 @@ Void TAppEncTop::xInitLibCfg()
       m_acTEncTop[layer].setRdpcmEnabledFlag                               ( RDPCMSignallingMode(signallingModeIndex), m_rdpcmEnabledFlag[signallingModeIndex]);
     }
     m_acTEncTop[layer].setUseConstrainedIntraPred                          ( m_bUseConstrainedIntraPred );
+    m_acTEncTop[layer].setFastUDIUseMPMEnabled                             ( m_bFastUDIUseMPMEnabled );
     m_acTEncTop[layer].setPCMLog2MinSize                                   ( m_uiPCMLog2MinSize);
     m_acTEncTop[layer].setUsePCM                                           ( m_usePCM );
 
@@ -910,6 +911,7 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setRdpcmEnabledFlag                                ( RDPCMSignallingMode(signallingModeIndex), m_rdpcmEnabledFlag[signallingModeIndex]);
   }
   m_cTEncTop.setUseConstrainedIntraPred                           ( m_bUseConstrainedIntraPred );
+  m_cTEncTop.setFastUDIUseMPMEnabled                              ( m_bFastUDIUseMPMEnabled );
   m_cTEncTop.setPCMLog2MinSize                                    ( m_uiPCMLog2MinSize);
   m_cTEncTop.setUsePCM                                            ( m_usePCM );
 
