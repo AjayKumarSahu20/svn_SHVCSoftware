@@ -62,11 +62,48 @@ Int   TDecTop::m_crossLayerPocResetIdc               = -1;
 //! \{
 
 TDecTop::TDecTop()
-  : m_pDecodedSEIOutputStream(NULL),
-    m_warningMessageSkipPicture(false)
+  : m_iMaxRefPicNum(0)
+  , m_associatedIRAPType(NAL_UNIT_INVALID)
+  , m_pocCRA(0)
+  , m_pocRandomAccess(MAX_INT)
+  , m_cListPic()
+  , m_parameterSetManager()
+  , m_apcSlicePilot(NULL)
+  , m_SEIs()
+  , m_cPrediction()
+  , m_cTrQuant()
+  , m_cGopDecoder()
+  , m_cSliceDecoder()
+  , m_cCuDecoder()
+  , m_cEntropyDecoder()
+  , m_cCavlcDecoder()
+  , m_cSbacDecoder()
+  , m_cBinCABAC()
+  , m_seiReader()
+  , m_cLoopFilter()
+  , m_cSAO()
+  , m_pcPic(NULL)
+#if !SVC_EXTENSION
+  , m_prevPOC(MAX_INT)
+#endif
+  , m_prevTid0POC(0)
+  , m_bFirstSliceInPicture(true)
+#if !SVC_EXTENSION
+  , m_bFirstSliceInSequence(true)
+#endif
+  , m_prevSliceSkipped(false)
+  , m_skippedPOC(0)
+  , m_bFirstSliceInBitstream(true)
+  , m_lastPOCNoOutputPriorPics(-1)
+  , m_isNoOutputPriorPics(false)
+  , m_craNoRaslOutputFlag(false)
+#if O0043_BEST_EFFORT_DECODING
+  , m_forceDecodeBitDepth(8)
+#endif
+  , m_pDecodedSEIOutputStream(NULL)
+  , m_warningMessageSkipPicture(false)
+  , m_prefixSEINALUs()
 {
-  m_pcPic = 0;
-  m_iMaxRefPicNum = 0;
 #if ENC_DEC_TRACE
   if (g_hTrace == NULL)
   {
@@ -75,23 +112,6 @@ TDecTop::TDecTop()
   g_bJustDoIt = g_bEncDecTraceDisable;
   g_nSymbolCounter = 0;
 #endif
-  m_associatedIRAPType = NAL_UNIT_INVALID;
-  m_pocCRA = 0;
-  m_pocRandomAccess = MAX_INT;
-#if !SVC_EXTENSION
-  m_prevPOC                = MAX_INT;
-#endif
-  m_prevTid0POC            = 0;
-  m_bFirstSliceInPicture    = true;
-#if !SVC_EXTENSION
-  m_bFirstSliceInSequence   = true;
-#endif
-  m_prevSliceSkipped = false;
-  m_skippedPOC = 0;
-  m_bFirstSliceInBitstream  = true;
-  m_lastPOCNoOutputPriorPics = -1;
-  m_craNoRaslOutputFlag = false;
-  m_isNoOutputPriorPics = false;
 
 #if SVC_EXTENSION 
   m_layerId = 0;
@@ -132,6 +152,11 @@ TDecTop::~TDecTop()
     fclose( g_hTrace );
   }
 #endif
+  while (!m_prefixSEINALUs.empty())
+  {
+    delete m_prefixSEINALUs.front();
+    m_prefixSEINALUs.pop_front();
+  }
 #if CGS_3D_ASYMLUT
   if(m_pColorMappedPic)
   {
@@ -431,6 +456,8 @@ Void TDecTop::xActivateParameterSets()
       assert (0);
     }
 
+    xParsePrefixSEImessages();
+
 #if RExt__HIGH_BIT_DEPTH_SUPPORT==0
     if (sps->getSpsRangeExtension().getExtendedPrecisionProcessingFlag() || sps->getBitDepth(CHANNEL_TYPE_LUMA)>12 || sps->getBitDepth(CHANNEL_TYPE_CHROMA)>12 )
     {
@@ -698,6 +725,8 @@ Void TDecTop::xActivateParameterSets()
       exit(1);
     }
 
+    xParsePrefixSEImessages();
+
     // Check if any new SEI has arrived
      if(!m_SEIs.empty())
      {
@@ -708,7 +737,41 @@ Void TDecTop::xActivateParameterSets()
        deleteSEIs(m_SEIs);
      }
   }
+}
 
+
+Void TDecTop::xParsePrefixSEIsForUnknownVCLNal()
+{
+  while (!m_prefixSEINALUs.empty())
+  {
+    // do nothing?
+    printf("Discarding Prefix SEI associated with unknown VCL NAL unit.\n");
+    delete m_prefixSEINALUs.front();
+  }
+  // TODO: discard following suffix SEIs as well?
+}
+
+
+Void TDecTop::xParsePrefixSEImessages()
+{
+#if SVC_EXTENSION
+    if (m_prevSliceSkipped) // No need to decode SEI messages of a skipped access unit
+    {
+      return;
+    }
+#endif
+
+  while (!m_prefixSEINALUs.empty())
+  {
+    InputNALUnit &nalu=*m_prefixSEINALUs.front();
+#if LAYERS_NOT_PRESENT_SEI
+    m_seiReader.parseSEImessage( &(nalu.getBitstream()), m_SEIs, nalu.m_nalUnitType, m_parameterSetManager.getActiveVPS(), m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
+#else
+    m_seiReader.parseSEImessage( &(nalu.getBitstream()), m_SEIs, nalu.m_nalUnitType, m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
+#endif
+    delete m_prefixSEINALUs.front();
+    m_prefixSEINALUs.pop_front();
+  }
 }
 
 #if SVC_EXTENSION
@@ -782,6 +845,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   {
     m_apcSlicePilot->setPOC(m_skippedPOC);
   }
+
+  xUpdatePreviousTid0POC(m_apcSlicePilot);
 
   m_apcSlicePilot->setAssociatedIRAPPOC(m_pocCRA);
   m_apcSlicePilot->setAssociatedIRAPType(m_associatedIRAPType);
@@ -1794,7 +1859,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   }
 
   //  Decode a picture
-  m_cGopDecoder.decompressSlice(nalu.m_Bitstream, m_pcPic);
+  m_cGopDecoder.decompressSlice(&(nalu.getBitstream()), m_pcPic);
 
 #if SVC_EXTENSION
   setFirstPicInLayerDecodedFlag(true);
@@ -1807,12 +1872,12 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   return false;
 }
 
-Void TDecTop::xDecodeVPS(const std::vector<UChar> *pNaluData)
+Void TDecTop::xDecodeVPS(const std::vector<UChar> &naluData)
 {
   TComVPS* vps = new TComVPS();
 
   m_cEntropyDecoder.decodeVPS( vps );
-  m_parameterSetManager.storeVPS(vps, pNaluData);
+  m_parameterSetManager.storeVPS(vps, naluData);
 #if SVC_EXTENSION
   checkValueOfTargetOutputLayerSetIdx(vps);
 
@@ -1836,7 +1901,7 @@ Void TDecTop::xDecodeVPS(const std::vector<UChar> *pNaluData)
 #endif
 }
 
-Void TDecTop::xDecodeSPS(const std::vector<UChar> *pNaluData)
+Void TDecTop::xDecodeSPS(const std::vector<UChar> &naluData)
 {
   TComSPS* sps = new TComSPS();
 #if O0043_BEST_EFFORT_DECODING
@@ -1846,13 +1911,13 @@ Void TDecTop::xDecodeSPS(const std::vector<UChar> *pNaluData)
   sps->setLayerId(m_layerId);
 #endif
   m_cEntropyDecoder.decodeSPS( sps );
-  m_parameterSetManager.storeSPS(sps, pNaluData);
+  m_parameterSetManager.storeSPS(sps, naluData);
 }
 
 #if CGS_3D_ASYMLUT
-Void TDecTop::xDecodePPS( const std::vector<UChar> *pNaluData, TCom3DAsymLUT * pc3DAsymLUT )
+Void TDecTop::xDecodePPS( const std::vector<UChar> &naluData, TCom3DAsymLUT * pc3DAsymLUT )
 #else
-Void TDecTop::xDecodePPS(const std::vector<UChar> *pNaluData)
+Void TDecTop::xDecodePPS(const std::vector<UChar> &naluData)
 #endif
 {
   TComPPS* pps = new TComPPS();
@@ -1865,59 +1930,7 @@ Void TDecTop::xDecodePPS(const std::vector<UChar> *pNaluData)
 #else
   m_cEntropyDecoder.decodePPS( pps );
 #endif
-  m_parameterSetManager.storePPS( pps, pNaluData);
-}
-
-Void TDecTop::xDecodeSEI( TComInputBitstream* bs, const NalUnitType nalUnitType )
-{
-  if(nalUnitType == NAL_UNIT_SUFFIX_SEI)
-  {
-#if SVC_EXTENSION
-    if (m_prevSliceSkipped) // No need to decode SEI messages of a skipped access unit
-    {
-      return;
-    }
-#endif
-#if LAYERS_NOT_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManager.getActiveVPS(), m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream  );
-#else
-    m_seiReader.parseSEImessage( bs, m_pcPic->getSEIs(), nalUnitType, m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
-#endif
-  }
-  else
-  {
-#if LAYERS_NOT_PRESENT_SEI
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManager.getActiveVPS(), m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream  );
-#else
-    m_seiReader.parseSEImessage( bs, m_SEIs, nalUnitType, m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
-#endif
-    SEIMessages activeParamSets = getSeisByType(m_SEIs, SEI::ACTIVE_PARAMETER_SETS);
-    if (activeParamSets.size()>0)
-    {
-      SEIActiveParameterSets *seiAps = (SEIActiveParameterSets*)(*activeParamSets.begin());
-#if R0247_SEI_ACTIVE
-      assert(seiAps->activeSeqParameterSetId.size()>0);
-      if( !getLayerDec(0)->m_parameterSetManager.activateSPSWithSEI( seiAps->activeSeqParameterSetId[0] ) )
-      {
-        printf ("Warning SPS activation with Active parameter set SEI failed");
-      }
-      for (Int c=1 ; c <= seiAps->numSpsIdsMinus1; c++)
-      {
-        Int layerIdx = seiAps->layerSpsIdx[c];
-        if( !getLayerDec(layerIdx)->m_parameterSetManager.activateSPSWithSEI( seiAps->activeSeqParameterSetId[layerIdx] ) )
-        {
-          printf ("Warning SPS activation with Active parameter set SEI failed");
-        }
-      }
-#else
-      assert(seiAps->activeSeqParameterSetId.size()>0);
-      if (! m_parameterSetManager.activateSPSWithSEI(seiAps->activeSeqParameterSetId[0] ))
-      {
-        printf ("Warning SPS activation with Active parameter set SEI failed");
-      }
-#endif
-    }
-  }
+  m_parameterSetManager.storePPS( pps, naluData);
 }
 
 #if SVC_EXTENSION
@@ -1936,7 +1949,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #endif
   // Initialize entropy decoder
   m_cEntropyDecoder.setEntropyDecoder (&m_cCavlcDecoder);
-  m_cEntropyDecoder.setBitstream      (nalu.m_Bitstream);
+  m_cEntropyDecoder.setBitstream      (&(nalu.getBitstream()));
 
 #if SVC_EXTENSION
   // ignore any NAL units with nuh_layer_id == 63
@@ -1951,9 +1964,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #if SVC_EXTENSION
       assert( nalu.m_nuhLayerId == 0 ); // Non-conforming bitstream. The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #endif
-      xDecodeVPS(nalu.m_Bitstream->getFifo());
+      xDecodeVPS(nalu.getBitstream().getFifo());
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS,nalu.m_Bitstream->readByteAlignment(),0);
+      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(), 0);
 #endif
 #if SVC_EXTENSION
       m_isLastNALWasEos = false;    
@@ -1961,24 +1974,28 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_SPS:
-      xDecodeSPS(nalu.m_Bitstream->getFifo());
+      xDecodeSPS(nalu.getBitstream().getFifo());
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS,nalu.m_Bitstream->readByteAlignment(),0);
+      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(), 0);
 #endif
       return false;
 
     case NAL_UNIT_PPS:
 #if CGS_3D_ASYMLUT
-      xDecodePPS( nalu.m_Bitstream->getFifo(), &m_c3DAsymLUTPPS );
+      xDecodePPS( nalu.getBitstream().getFifo(), &m_c3DAsymLUTPPS );
 #else
-      xDecodePPS(nalu.m_Bitstream->getFifo());
+      xDecodePPS(nalu.getBitstream().getFifo());
 #endif
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS,nalu.m_Bitstream->readByteAlignment(),0);
+      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(),0);
 #endif
       return false;
 
     case NAL_UNIT_PREFIX_SEI:
+      // Buffer up prefix SEI messages until SPS of associated VCL is known.
+      m_prefixSEINALUs.push_back(new InputNALUnit(nalu));
+      return false;
+
     case NAL_UNIT_SUFFIX_SEI:
 #if SVC_EXTENSION
       if( nalu.m_nalUnitType == NAL_UNIT_SUFFIX_SEI )
@@ -1986,7 +2003,18 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
         assert( m_isLastNALWasEos == false );
       }
 #endif
-      xDecodeSEI( nalu.m_Bitstream, nalu.m_nalUnitType );
+      if (m_pcPic)
+      {
+#if SVC_EXTENSION
+        m_seiReader.parseSEImessage( &(nalu.getBitstream()), m_pcPic->getSEIs(), nalu.m_nalUnitType, m_parameterSetManager.getActiveVPS(), m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
+#else
+        m_seiReader.parseSEImessage( &(nalu.getBitstream()), m_pcPic->getSEIs(), nalu.m_nalUnitType, m_parameterSetManager.getActiveSPS(), m_pDecodedSEIOutputStream );
+#endif
+      }
+      else
+      {
+        printf ("Note: received suffix SEI but no picture currently active.\n");
+      }
       return false;
 
     case NAL_UNIT_CODED_SLICE_TRAIL_R:
@@ -2078,6 +2106,9 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_RESERVED_VCL29:
     case NAL_UNIT_RESERVED_VCL30:
     case NAL_UNIT_RESERVED_VCL31:
+      printf ("Note: found reserved VCL NAL unit.\n");
+      xParsePrefixSEIsForUnknownVCLNal();
+      return false;
 
     case NAL_UNIT_RESERVED_NVCL41:
     case NAL_UNIT_RESERVED_NVCL42:
