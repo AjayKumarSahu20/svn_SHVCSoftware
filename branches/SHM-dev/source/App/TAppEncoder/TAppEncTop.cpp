@@ -472,6 +472,7 @@ Void TAppEncTop::xInitLibCfg()
     }
     m_acTEncTop[layer].setUseConstrainedIntraPred                          ( m_bUseConstrainedIntraPred );
     m_acTEncTop[layer].setFastUDIUseMPMEnabled                             ( m_bFastUDIUseMPMEnabled );
+    m_acTEncTop[layer].setFastMEForGenBLowDelayEnabled                     ( m_bFastMEForGenBLowDelayEnabled );
     m_acTEncTop[layer].setPCMLog2MinSize                                   ( m_uiPCMLog2MinSize);
     m_acTEncTop[layer].setUsePCM                                           ( m_usePCM );
 
@@ -912,6 +913,7 @@ Void TAppEncTop::xInitLibCfg()
   }
   m_cTEncTop.setUseConstrainedIntraPred                           ( m_bUseConstrainedIntraPred );
   m_cTEncTop.setFastUDIUseMPMEnabled                              ( m_bFastUDIUseMPMEnabled );
+  m_cTEncTop.setFastMEForGenBLowDelayEnabled                      ( m_bFastMEForGenBLowDelayEnabled );
   m_cTEncTop.setPCMLog2MinSize                                    ( m_uiPCMLog2MinSize);
   m_cTEncTop.setUsePCM                                            ( m_usePCM );
 
