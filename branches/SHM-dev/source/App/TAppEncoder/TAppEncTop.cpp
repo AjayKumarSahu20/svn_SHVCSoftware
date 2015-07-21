@@ -473,7 +473,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setUseConstrainedIntraPred                          ( m_bUseConstrainedIntraPred );
     m_acTEncTop[layer].setFastUDIUseMPMEnabled                             ( m_bFastUDIUseMPMEnabled );
     m_acTEncTop[layer].setFastMEForGenBLowDelayEnabled                     ( m_bFastMEForGenBLowDelayEnabled );
-    m_acTEncTop[layer]..setUseBLambdaForNonKeyLowDelayPictures             ( m_bUseBLambdaForNonKeyLowDelayPictures );
+    m_acTEncTop[layer].setUseBLambdaForNonKeyLowDelayPictures              ( m_bUseBLambdaForNonKeyLowDelayPictures );
     m_acTEncTop[layer].setPCMLog2MinSize                                   ( m_uiPCMLog2MinSize);
     m_acTEncTop[layer].setUsePCM                                           ( m_usePCM );
 
@@ -518,6 +518,7 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setLFCrossSliceBoundaryFlag                          ( m_bLFCrossSliceBoundaryFlag );
     m_acTEncTop[layer].setUseSAO                                            ( m_bUseSAO );
+    m_acTEncTop[layer].setTestSAODisableAtPictureLevel                      ( m_bTestSAODisableAtPictureLevel );
     m_acTEncTop[layer].setMaxNumOffsetsPerPic                               ( m_maxNumOffsetsPerPic );
 
     m_acTEncTop[layer].setSaoCtuBoundary                                    ( m_saoCtuBoundary );
@@ -951,6 +952,7 @@ Void TAppEncTop::xInitLibCfg()
   }
   m_cTEncTop.setLFCrossSliceBoundaryFlag                          ( m_bLFCrossSliceBoundaryFlag );
   m_cTEncTop.setUseSAO                                            ( m_bUseSAO );
+  m_cTEncTop.setTestSAODisableAtPictureLevel                      ( m_bTestSAODisableAtPictureLevel );
   m_cTEncTop.setMaxNumOffsetsPerPic                               ( m_maxNumOffsetsPerPic);
 
   m_cTEncTop.setSaoCtuBoundary                                    ( m_saoCtuBoundary);
