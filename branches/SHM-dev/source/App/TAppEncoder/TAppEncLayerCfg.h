@@ -87,6 +87,7 @@ protected:
 
   Int       m_maxTidIlRefPicsPlus1;
   Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
+  Int       m_waveFrontFlush;                     ///< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
@@ -114,9 +115,9 @@ protected:
   Int       m_outputBitDepth[MAX_NUM_CHANNEL_TYPE];           ///< bit-depth of output file
   Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
-  UInt      m_saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];
-  Bool      m_useExtendedPrecision;
-  Bool      m_useHighPrecisionPredictionWeighting;
+  UInt      m_log2SaoOffsetScale[MAX_NUM_CHANNEL_TYPE];
+  Bool      m_extendedPrecisionProcessingFlag;
+  Bool      m_highPrecisionOffsetsEnabledFlag;
 
   Int       m_repFormatIdx;
 #if Q0074_COLOUR_REMAPPING_SEI
