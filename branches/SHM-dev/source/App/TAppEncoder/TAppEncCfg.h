@@ -101,6 +101,7 @@ protected:
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
   Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
+  Bool      m_bHarmonizeGopFirstFieldCoupleEnabled;
 
 #if !SVC_EXTENSION
   Int       m_conformanceWindowMode;
