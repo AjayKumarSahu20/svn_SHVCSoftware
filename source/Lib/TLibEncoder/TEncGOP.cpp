@@ -451,7 +451,7 @@ Void TEncGOP::xWriteLeadingSEIOrdered (SEIMessages& seiMessages, SEIMessages& du
 #else
   xWriteSEISeparately(NAL_UNIT_PREFIX_SEI, localMessages, accessUnit, itNalu, temporalId, sps);
 #endif
-  xClearSEIs(currentMessages, !testWrite);
+  xClearSEIs(localMessages, !testWrite);
 
   if (!testWrite)
   {
@@ -503,6 +503,7 @@ Void TEncGOP::xWriteTrailingSEIMessages (SEIMessages& seiMessages, AccessUnit &a
 #else
   xWriteSEISeparately(NAL_UNIT_SUFFIX_SEI, seiMessages, accessUnit, pos, temporalId, sps);
 #endif
+  deleteSEIs(seiMessages);
 }
 
 #if O0164_MULTI_LAYER_HRD
@@ -1706,8 +1707,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setInterLayerPredEnabledFlag(false);
       pcSlice->setMFMEnabledFlag(false);
     }
-#endif //SVC_EXTENSION
-
+#endif //SVC_EXTENSION    
     pcSlice->setLastIDR(m_iLastIDR);
     pcSlice->setSliceIdx(0);
     //set default slice level flag to the same as SPS level flag
@@ -2574,7 +2574,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       actualTotalBits += xWriteParameterSets(accessUnit, pcSlice);
 
       // create prefix SEI messages at the beginning of the sequence
-      leadingSeiMessages.clear();
+      assert(leadingSeiMessages.empty());
       xCreateIRAPLeadingSEIMessages(leadingSeiMessages, pcSlice->getSPS(), pcSlice->getPPS());
 
       m_bSeqFirst = false;
@@ -2793,7 +2793,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #else
     xWriteTrailingSEIMessages(trailingSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS());
 #endif
-    trailingSeiMessages.clear();
 
     m_pcCfg->setEncodedFlag(iGOPid, true);
 
@@ -2849,13 +2848,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #if O0164_MULTI_LAYER_HRD
     xWriteLeadingSEIMessages(leadingSeiMessages, duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS(), duData);
-#else
-    xWriteLeadingSEIMessages(leadingSeiMessages, duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS(), duData);
-#endif
-    leadingSeiMessages.clear();
-#if O0164_MULTI_LAYER_HRD
     xWriteDuSEIMessages(duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS(), duData);
 #else
+    xWriteLeadingSEIMessages(leadingSeiMessages, duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS(), duData);
     xWriteDuSEIMessages(duInfoSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS(), duData);
 #endif
 
