@@ -719,6 +719,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setLog2MaxMvLengthVertical               ( m_log2MaxMvLengthVertical );
     m_acTEncTop[layer].setElRapSliceTypeB                       (layer == 0? 0 : m_elRapSliceBEnabled);
     m_acTEncTop[layer].setEfficientFieldIRAPEnabled             ( m_bEfficientFieldIRAPEnabled );
+    m_acTEncTop[layer].setHarmonizeGopFirstFieldCoupleEnabled   ( m_bHarmonizeGopFirstFieldCoupleEnabled );
 
     if( layer > 0 )
     {
@@ -1094,6 +1095,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setLog2MaxMvLengthHorizontal                         ( m_log2MaxMvLengthHorizontal );
   m_cTEncTop.setLog2MaxMvLengthVertical                           ( m_log2MaxMvLengthVertical );
   m_cTEncTop.setEfficientFieldIRAPEnabled                         ( m_bEfficientFieldIRAPEnabled );
+  m_cTEncTop.setHarmonizeGopFirstFieldCoupleEnabled               ( m_bHarmonizeGopFirstFieldCoupleEnabled );
 }
 #endif //SVC_EXTENSION
 
