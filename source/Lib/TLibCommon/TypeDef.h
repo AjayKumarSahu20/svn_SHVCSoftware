@@ -247,8 +247,6 @@ enum AuxType
 #error
 #endif
 
-#define VERBOSE_RATE 0 ///< Print additional rate information in encoder
-
 #define AMVP_DECIMATION_FACTOR                            4
 
 #define SCAN_SET_SIZE                                    16
@@ -278,8 +276,6 @@ enum AuxType
 #define MDCS_ANGLE_LIMIT                                  4         ///< (default 4) 0 = Horizontal/vertical only, 1 = Horizontal/vertical +/- 1, 2 = Horizontal/vertical +/- 2 etc...
 #define MDCS_MAXIMUM_WIDTH                                8         ///< (default 8) (measured in pixels) TUs with width greater than this can only use diagonal scan
 #define MDCS_MAXIMUM_HEIGHT                               8         ///< (default 8) (measured in pixels) TUs with height greater than this can only use diagonal scan
-
-#define FAST_UDI_USE_MPM 1
 
 #define RDO_WITHOUT_DQP_BITS                              0           ///< Disable counting dQP bits in RDO-based mode decision
 

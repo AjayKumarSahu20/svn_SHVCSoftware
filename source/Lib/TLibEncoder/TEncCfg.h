@@ -381,6 +381,7 @@ protected:
 
   std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.
   std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
+  UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
 
 #if SVC_EXTENSION
   UInt      m_layerId;   
@@ -1027,6 +1028,8 @@ public:
   const std::string& getSummaryOutFilename() const                   { return m_summaryOutFilename; }
   Void      setSummaryPicFilenameBase(const std::string &s)          { m_summaryPicFilenameBase = s; }
   const std::string& getSummaryPicFilenameBase() const               { return m_summaryPicFilenameBase; }
+  Void      setSummaryVerboseness(UInt v)                            { m_summaryVerboseness = v; }
+  UInt      getSummaryVerboseness( ) const                           { return m_summaryVerboseness; }
 
 #if Q0189_TMVP_CONSTRAINTS
   Void  setTMVPConstraintsSEIEnabled(Int b)                  { m_TMVPConstraintsSEIEnabled = b; }

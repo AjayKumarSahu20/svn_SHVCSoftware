@@ -442,6 +442,7 @@ protected:
 
   std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.
   std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
+  UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
 
 #if LAYERS_NOT_PRESENT_SEI
   Int       m_layersNotPresentSEIEnabled;

@@ -727,6 +727,7 @@ Void TAppEncTop::xInitLibCfg()
 
     m_acTEncTop[layer].setSummaryOutFilename                    ( m_summaryOutFilename );
     m_acTEncTop[layer].setSummaryPicFilenameBase                ( m_summaryPicFilenameBase );
+    m_acTEncTop[layer].setSummaryVerboseness                    ( m_summaryVerboseness );
 
     if( layer > 0 )
     {
@@ -1110,6 +1111,7 @@ Void TAppEncTop::xInitLibCfg()
 
   m_cTEncTop.setSummaryOutFilename                                ( m_summaryOutFilename );
   m_cTEncTop.setSummaryPicFilenameBase                            ( m_summaryPicFilenameBase );
+  m_cTEncTop.setSummaryVerboseness                                ( m_summaryVerboseness );
 }
 #endif //SVC_EXTENSION
 
@@ -2436,9 +2438,10 @@ Void TAppEncTop::printRateSummary()
   Double time = (Double) m_iFrameRcvd / m_iFrameRate;
 #endif
   printf("Bytes written to file: %u (%.3f kbps)\n", m_totalBytes, 0.008 * m_totalBytes / time);
-#if VERBOSE_RATE
-  printf("Bytes for SPS/PPS/Slice (Incl. Annex B): %u (%.3f kbps)\n", m_essentialBytes, 0.008 * m_essentialBytes / time);
-#endif
+  if (m_summaryVerboseness > 0)
+  {
+    printf("Bytes for SPS/PPS/Slice (Incl. Annex B): %u (%.3f kbps)\n", m_essentialBytes, 0.008 * m_essentialBytes / time);
+  }
 }
 
 #if !SVC_EXTENSION
