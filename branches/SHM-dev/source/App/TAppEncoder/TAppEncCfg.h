@@ -85,9 +85,6 @@ protected:
   std::vector<Int>                m_outputLayerSetIdx;
   std::vector<Int>                m_numOutputLayersInOutputLayerSet;
   std::vector< std::vector<Int> > m_listOfOutputLayers;
-  Bool      m_isField;                                        ///< enable field coding
-  Bool      m_isTopFieldFirst;
-  Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -100,11 +97,12 @@ protected:
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
 
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
-
+#endif
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
   Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
 
+#if !SVC_EXTENSION
   Int       m_conformanceWindowMode;
   Int       m_confWinLeft;
   Int       m_confWinRight;
@@ -278,6 +276,7 @@ protected:
   Int       m_iSearchRange;                                   ///< ME search range
   Int       m_bipredSearchRange;                              ///< ME search range for bipred refinement
   Bool      m_bClipForBiPredMeEnabled;                        ///< Enables clipping for Bi-Pred ME.
+  Bool      m_bFastMEAssumingSmootherMVEnabled;               ///< Enables fast ME assuming a smoother MV.
   Bool      m_bUseFastEnc;                                    ///< flag for using fast encoder setting
   Bool      m_bUseEarlyCU;                                    ///< flag for using Early CU setting
   Bool      m_useFastDecisionForMerge;                        ///< flag for using Fast Decision Merge RD-Cost
