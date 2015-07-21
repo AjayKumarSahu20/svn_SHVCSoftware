@@ -1202,6 +1202,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   //Field coding parameters
   ("FieldCoding",                                     m_isField,                                        false, "Signals if it's a field based coding")
   ("TopFieldFirst, Tff",                              m_isTopFieldFirst,                                false, "In case of field based coding, signals whether if it's a top field first or not")
+  ("EfficientFieldIRAPEnabled",                       m_bEfficientFieldIRAPEnabled,                      true, "Enable to code fields in a specific, potentially more efficient, order.")
 
   // Profile and level
 #if SVC_EXTENSION

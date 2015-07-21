@@ -87,6 +87,7 @@ protected:
   std::vector< std::vector<Int> > m_listOfOutputLayers;
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
+  Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
 #else
   Char*     m_pchInputFile;                                   ///< source file name
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
@@ -102,6 +103,7 @@ protected:
 
   Bool      m_isField;                                        ///< enable field coding
   Bool      m_isTopFieldFirst;
+  Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
 
   Int       m_conformanceWindowMode;
   Int       m_confWinLeft;

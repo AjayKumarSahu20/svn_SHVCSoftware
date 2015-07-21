@@ -488,6 +488,15 @@ public:
   Int  getWindowBottomOffset() const  { return m_enabledFlag ? m_winBottomOffset: 0;   }
   Void setWindowBottomOffset(Int val) { m_winBottomOffset = val; m_enabledFlag = true; }
 
+  Void setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
+  {
+    m_enabledFlag     = true;
+    m_winLeftOffset   = offsetLeft;
+    m_winRightOffset  = offsetLRight;
+    m_winTopOffset    = offsetLTop;
+    m_winBottomOffset = offsetLBottom;
+  }
+
 #if SVC_EXTENSION
   Bool hasEqualOffset(const Window& ref) const
   {
@@ -498,15 +507,9 @@ public:
   }
 #endif
 
- Void setWindow(Int offsetLeft, Int offsetLRight, Int offsetLTop, Int offsetLBottom)
-  {
-    m_enabledFlag     = true;
-    m_winLeftOffset   = offsetLeft;
-    m_winRightOffset  = offsetLRight;
-    m_winTopOffset    = offsetLTop;
-    m_winBottomOffset = offsetLBottom;
-  }
 };
+
+
 
 #if SVC_EXTENSION
 struct ResamplingPhase
@@ -2218,9 +2221,9 @@ public:
   Void                        checkCRA(const TComReferencePictureSet *pReferencePictureSet, Int& pocCRA, NalUnitType& associatedIRAPType, TComList<TComPic *>& rcListPic);
 #if NO_CLRAS_OUTPUT_FLAG
   Void                        decodingRefreshMarking( TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag, UInt smallestLayerId = 0 );
-  Void                        decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, Bool noClrasOutputFlag);
+  Void                        decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, const bool bEfficientFieldIRAPEnabled, Bool noClrasOutputFlag);
 #else
-  Void                        decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic);
+  Void                        decodingRefreshMarking(Int& pocCRA, Bool& bRefreshPending, TComList<TComPic*>& rcListPic, const bool bEfficientFieldIRAPEnabled);
 #endif
   Void                        setSliceType( SliceType e )                            { m_eSliceType        = e;                                      }
   Void                        setSliceQp( Int i )                                    { m_iSliceQp          = i;                                      }
@@ -2305,10 +2308,10 @@ public:
   Bool                        isStepwiseTemporalLayerSwitchingPointCandidate( TComList<TComPic*>& rcListPic );
 #if ALLOW_RECOVERY_POINT_AS_RAP
   Int                         checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0, Bool bUseRecoveryPoint = false);
-  Void                        createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess = 0, Bool bUseRecoveryPoint = false);
+  Void                        createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP, Int pocRandomAccess, Bool bUseRecoveryPoint, const Bool bEfficientFieldIRAPEnabled);
 #else
   Int                         checkThatAllRefPicsAreAvailable( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool printErrors, Int pocRandomAccess = 0);
-  Void                        createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP);
+  Void                        createExplicitReferencePictureSetFromReference( TComList<TComPic*>& rcListPic, const TComReferencePictureSet *pReferencePictureSet, Bool isRAP, const Bool bEfficientFieldIRAPEnabled);
 #endif
   Void                        setMaxNumMergeCand(UInt val )                          { m_maxNumMergeCand = val;                                      }
   UInt                        getMaxNumMergeCand() const                             { return m_maxNumMergeCand;                                     }
