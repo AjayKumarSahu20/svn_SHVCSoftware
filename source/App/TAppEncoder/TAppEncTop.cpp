@@ -409,6 +409,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setSearchRange                                      ( m_iSearchRange );
     m_acTEncTop[layer].setBipredSearchRange                                ( m_bipredSearchRange );
     m_acTEncTop[layer].setClipForBiPredMeEnabled                           ( m_bClipForBiPredMeEnabled );
+    m_acTEncTop[layer].setFastMEAssumingSmootherMVEnabled                  ( m_bFastMEAssumingSmootherMVEnabled );
 
     //====== Quality control ========
     m_acTEncTop[layer].setMaxDeltaQP                                       ( m_iMaxDeltaQP  );
@@ -847,6 +848,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setSearchRange                                       ( m_iSearchRange );
   m_cTEncTop.setBipredSearchRange                                 ( m_bipredSearchRange );
   m_cTEncTop.setClipForBiPredMeEnabled                            ( m_bClipForBiPredMeEnabled );
+  m_cTEncTop.setFastMEAssumingSmootherMVEnabled                   ( m_bFastMEAssumingSmootherMVEnabled );
 
   //====== Quality control ========
   m_cTEncTop.setMaxDeltaQP                                        ( m_iMaxDeltaQP  );
