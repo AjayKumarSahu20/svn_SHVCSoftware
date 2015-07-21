@@ -400,8 +400,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setLoopFilterDisable                                ( m_bLoopFilterDisable       );
     m_acTEncTop[layer].setLoopFilterOffsetInPPS                            ( m_loopFilterOffsetInPPS );
     m_acTEncTop[layer].setLoopFilterBetaOffset                             ( m_loopFilterBetaOffsetDiv2  );
-    m_acTEncTop[layer].setLoopFilterTcOffset                               ( m_loopFilterTcOffsetDiv2    );
-    m_acTEncTop[layer].setDeblockingFilterControlPresent                   ( m_DeblockingFilterControlPresent);
+    m_acTEncTop[layer].setLoopFilterTcOffset                               ( m_loopFilterTcOffsetDiv2    );    
     m_acTEncTop[layer].setDeblockingFilterMetric                           ( m_DeblockingFilterMetric );
 
     //====== Motion search ========
@@ -838,7 +837,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setLoopFilterOffsetInPPS                             ( m_loopFilterOffsetInPPS );
   m_cTEncTop.setLoopFilterBetaOffset                              ( m_loopFilterBetaOffsetDiv2  );
   m_cTEncTop.setLoopFilterTcOffset                                ( m_loopFilterTcOffsetDiv2    );
-  m_cTEncTop.setDeblockingFilterControlPresent                    ( m_DeblockingFilterControlPresent);
   m_cTEncTop.setDeblockingFilterMetric                            ( m_DeblockingFilterMetric );
 
   //====== Motion search ========
