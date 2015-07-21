@@ -2405,12 +2405,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
     pcPic->getSlice(pcSlice->getSliceIdx())->setMvdL1ZeroFlag(pcSlice->getMvdL1ZeroFlag());
 
+
     Double lambda            = 0.0;
     Int actualHeadBits       = 0;
     Int actualTotalBits      = 0;
     Int estimatedBits        = 0;
     Int tmpBitsBeforeWriting = 0;
-    if ( m_pcCfg->getUseRateCtrl() )
+    if ( m_pcCfg->getUseRateCtrl() ) // TODO: does this work with multiple slices and slice-segments?
     {
       Int frameLevel = m_pcRateCtrl->getRCSeq()->getGOPID2Level( iGOPid );
       if ( pcPic->getSlice(0)->getSliceType() == I_SLICE )
@@ -2437,7 +2438,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
       else if ( frameLevel == 0 )   // intra case, but use the model
       {
-        m_pcSliceEncoder->calCostSliceI(pcPic);
+        m_pcSliceEncoder->calCostSliceI(pcPic); // TODO: This only analyses the first slice segment - what about the others?
 
         if ( m_pcCfg->getIntraPeriod() != 1 )   // do not refine allocated bits for all intra case
         {
@@ -2504,7 +2505,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       for(UInt nextCtuTsAddr = 0; nextCtuTsAddr < numberOfCtusInFrame; )
       {
         m_pcSliceEncoder->precompressSlice( pcPic );
-        m_pcSliceEncoder->compressSlice   ( pcPic );
+        m_pcSliceEncoder->compressSlice   ( pcPic, false );
 
         const UInt curSliceSegmentEnd = pcSlice->getSliceSegmentCurEndCtuTsAddr();
         if (curSliceSegmentEnd < numberOfCtusInFrame)
