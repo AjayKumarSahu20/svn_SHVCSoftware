@@ -914,7 +914,8 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(),
+            NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
         }
 
         // update POC of display order
@@ -930,7 +931,8 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
                                          conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                          conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
                                          conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                         conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+                                         conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                         NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
         }
 
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -1137,11 +1139,13 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
-            conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
-            conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
-            conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset() );
+          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+                                                   m_outputColourSpaceConvert,
+                                                   conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
+                                                   conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
+                                                   conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
+                                                   conf.getWindowBottomOffset()*yScal + defDisp.getWindowBottomOffset(),            
+                                                   NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
         }
 
         // update POC of display order
@@ -1157,7 +1161,8 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
                                          conf.getWindowLeftOffset() + defDisp.getWindowLeftOffset(),
                                          conf.getWindowRightOffset() + defDisp.getWindowRightOffset(),
                                          conf.getWindowTopOffset() + defDisp.getWindowTopOffset(),
-                                         conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset() );
+                                         conf.getWindowBottomOffset() + defDisp.getWindowBottomOffset(),
+                                         NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
         }
 
 #if Q0074_COLOUR_REMAPPING_SEI

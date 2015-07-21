@@ -1713,7 +1713,7 @@ Void TAppEncTop::encode()
         xGetBuffer(pcPicYuvRec, layer);
 
         // read input YUV file
-        m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_acLayerCfg[layer].getPad(), m_acLayerCfg[layer].getInputChromaFormat() );
+        m_acTVideoIOYuvInputFile[layer].read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_acLayerCfg[layer].getPad(), m_acLayerCfg[layer].getInputChromaFormat(), m_bClipInputVideoToRec709Range );
 
 #if AUXILIARY_PICTURES
         if( m_acLayerCfg[layer].getChromaFormatIDC() == CHROMA_400 || (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_acLayerCfg[layer].getAuxId() == AUX_ALPHA || m_acLayerCfg[layer].getAuxId() == AUX_DEPTH)) )
@@ -2050,7 +2050,7 @@ Void TAppEncTop::encode()
     xGetBuffer(pcPicYuvRec);
 
     // read input YUV file
-    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_aiPad, m_InputChromaFormatIDC );
+    m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, &cPicYuvTrueOrg, ipCSC, m_aiPad, m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
 
     // increase number of received frames
     m_iFrameRcvd++;
@@ -2199,13 +2199,9 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
       if( !m_acLayerCfg[layer].getReconFile().empty() && pcPicYuvRec->isReconstructed() )
       {
-#if SVC_EXTENSION
         m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft() * xScal, m_acLayerCfg[layer].getConfWinRight() * xScal,
-          m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal );
-#else
-        m_acTVideoIOYuvReconFile[layer].write( pcPicYuvRec, ipCSC, m_acLayerCfg[layer].getConfWinLeft(), m_acLayerCfg[layer].getConfWinRight(),
-          m_acLayerCfg[layer].getConfWinTop(), m_acLayerCfg[layer].getConfWinBottom() );
-#endif
+          m_acLayerCfg[layer].getConfWinTop() * yScal, m_acLayerCfg[layer].getConfWinBottom() * yScal,
+          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
       }
     }
   }
@@ -2339,7 +2335,8 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
       if (m_pchReconFile)
       {
-        m_cTVideoIOYuvReconFile.write( pcPicYuvRec, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
+        m_cTVideoIOYuvReconFile.write( pcPicYuvRec, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom,
+            NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
       }
 
       const AccessUnit& au = *(iterBitstream++);
