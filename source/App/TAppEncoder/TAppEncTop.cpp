@@ -725,6 +725,9 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setEfficientFieldIRAPEnabled             ( m_bEfficientFieldIRAPEnabled );
     m_acTEncTop[layer].setHarmonizeGopFirstFieldCoupleEnabled   ( m_bHarmonizeGopFirstFieldCoupleEnabled );
 
+    m_acTEncTop[layer].setSummaryOutFilename                    ( m_summaryOutFilename );
+    m_acTEncTop[layer].setSummaryPicFilenameBase                ( m_summaryPicFilenameBase );
+
     if( layer > 0 )
     {
 #if AUXILIARY_PICTURES
@@ -1104,6 +1107,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setLog2MaxMvLengthVertical                           ( m_log2MaxMvLengthVertical );
   m_cTEncTop.setEfficientFieldIRAPEnabled                         ( m_bEfficientFieldIRAPEnabled );
   m_cTEncTop.setHarmonizeGopFirstFieldCoupleEnabled               ( m_bHarmonizeGopFirstFieldCoupleEnabled );
+
+  m_cTEncTop.setSummaryOutFilename                                ( m_summaryOutFilename );
+  m_cTEncTop.setSummaryPicFilenameBase                            ( m_summaryPicFilenameBase );
 }
 #endif //SVC_EXTENSION
 
@@ -1966,39 +1972,53 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
     m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
-#if _SUMMARY_OUT_
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printSummary(chFmt, printSequenceMSE, bitDepths);
+    const UInt layerId = vps->getLayerIdInNuh(layer);
+
+    if (!m_apcTEncTop[layerId]->getSummaryOutFilename().empty())
+    {
+      const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+      m_apcTEncTop[layerId]->getAnalyzeAll()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryOutFilename());
+    }
   }
-#endif
-#if _SUMMARY_PIC_
+
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printSummary(chFmt, printSequenceMSE, bitDepths, 'I');
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printSummary(chFmt, printSequenceMSE, bitDepths, 'P');
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printSummary(chFmt, printSequenceMSE, bitDepths, 'B');
+    const UInt layerId = vps->getLayerIdInNuh(layer);
+
+    if (!m_apcTEncTop[layerId]->getSummaryPicFilenameBase().empty())
+    {
+      const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
+
+      m_apcTEncTop[layerId]->getAnalyzeI()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"I.txt");
+      m_apcTEncTop[layerId]->getAnalyzeP()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"P.txt");
+      m_apcTEncTop[layerId]->getAnalyzeB()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"B.txt");
+    }
   }
-#endif
 
   if(isField)
   {
     for(layer = 0; layer < m_numLayers; layer++)
     {
+      const UInt layerId = vps->getLayerIdInNuh(layer);
+
       const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-      TEncAnalyze *analyze = m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAllin();
+      TEncAnalyze *analyze = m_apcTEncTop[layerId]->getAnalyzeAllin();
 
       //-- interlaced summary
       analyze->setFrmRate( m_acLayerCfg[layer].getFrameRate());
-      analyze->setBits(m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->getBits());
+      analyze->setBits(m_apcTEncTop[layerId]->getAnalyzeB()->getBits());
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
       analyze->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
-#if _SUMMARY_OUT_
-      analyze->printSummary(chFmt, printSequenceMSE, bitDepths);
-#endif
+      if (!m_apcTEncTop[layerId]->getSummaryOutFilename().empty())
+      {
+        analyze->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryOutFilename());
+      }
     }
   }   
 
