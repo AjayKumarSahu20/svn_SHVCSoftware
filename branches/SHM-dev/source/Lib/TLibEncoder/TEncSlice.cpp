@@ -305,10 +305,8 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iGOP
   SliceType eSliceType;
 
   eSliceType=B_SLICE;
-#if EFFICIENT_FIELD_IRAP
-  if(!(isField && pocLast == 1))
+  if(!(isField && pocLast == 1) || !m_pcCfg->getEfficientFieldIRAPEnabled())
   {
-#endif // EFFICIENT_FIELD_IRAP
 #if ALLOW_RECOVERY_POINT_AS_RAP
     if(m_pcCfg->getDecodingRefreshType() == 3)
     {
@@ -321,9 +319,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iGOP
 #if ALLOW_RECOVERY_POINT_AS_RAP
     }
 #endif
-#if EFFICIENT_FIELD_IRAP
   }
-#endif
 
   rpcSlice->setSliceType    ( eSliceType );
 
@@ -455,10 +451,8 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iGOP
 #if HB_LAMBDA_FOR_LDC
   // restore original slice type
 
-#if EFFICIENT_FIELD_IRAP
-  if(!(isField && pocLast == 1))
+  if(!(isField && pocLast == 1) || !m_pcCfg->getEfficientFieldIRAPEnabled())
   {
-#endif // EFFICIENT_FIELD_IRAP
 #if ALLOW_RECOVERY_POINT_AS_RAP
     if(m_pcCfg->getDecodingRefreshType() == 3)
     {
@@ -471,9 +465,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int pocLast, Int pocCurr, Int iGOP
 #if ALLOW_RECOVERY_POINT_AS_RAP
     }
 #endif
-#if EFFICIENT_FIELD_IRAP
   }
-#endif // EFFICIENT_FIELD_IRAP
 
 #if SVC_EXTENSION
   if( m_pcCfg->getLayerId() > 0 && m_pcCfg->getNumActiveRefLayers() > 0 )
