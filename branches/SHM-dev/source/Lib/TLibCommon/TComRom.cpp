@@ -50,6 +50,71 @@
 //! \ingroup TLibCommon
 //! \{
 
+const Char* nalUnitTypeToString(NalUnitType type)
+{
+#if SVC_EXTENSION
+  switch (type)
+  {
+  case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "TRAIL_R";
+  case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "TRAIL_N";
+  case NAL_UNIT_CODED_SLICE_TSA_R:      return "TSA_R";
+  case NAL_UNIT_CODED_SLICE_TSA_N:      return "TSA_N";
+  case NAL_UNIT_CODED_SLICE_STSA_R:     return "STSA_R";
+  case NAL_UNIT_CODED_SLICE_STSA_N:     return "STSA_N";
+  case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "BLA_W_LP";
+  case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
+  case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "BLA_N_LP";
+  case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
+  case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "IDR_N_LP";
+  case NAL_UNIT_CODED_SLICE_CRA:        return "CRA";
+  case NAL_UNIT_CODED_SLICE_RADL_R:     return "RADL_R";
+  case NAL_UNIT_CODED_SLICE_RADL_N:     return "RADL_N";
+  case NAL_UNIT_CODED_SLICE_RASL_R:     return "RASL_R";
+  case NAL_UNIT_CODED_SLICE_RASL_N:     return "RASL_N";
+  case NAL_UNIT_VPS:                    return "VPS";
+  case NAL_UNIT_SPS:                    return "SPS";
+  case NAL_UNIT_PPS:                    return "PPS";
+  case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "AUD";
+  case NAL_UNIT_EOS:                    return "EOS";
+  case NAL_UNIT_EOB:                    return "EOB";
+  case NAL_UNIT_FILLER_DATA:            return "FILLER";
+  case NAL_UNIT_PREFIX_SEI:             return "Prefix SEI";
+  case NAL_UNIT_SUFFIX_SEI:             return "Suffix SEI";
+  default:                              return "UNK";
+  }
+#else
+switch (type)
+  {
+    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "   TRAIL_R";
+    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "   TRAIL_N";
+    case NAL_UNIT_CODED_SLICE_TSA_R:      return "     TSA_R";
+    case NAL_UNIT_CODED_SLICE_TSA_N:      return "     TSA_N";
+    case NAL_UNIT_CODED_SLICE_STSA_R:     return "    STSA_R";
+    case NAL_UNIT_CODED_SLICE_STSA_N:     return "    STSA_N";
+    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "  BLA_W_LP";
+    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
+    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "  BLA_N_LP";
+    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
+    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "  IDR_N_LP";
+    case NAL_UNIT_CODED_SLICE_CRA:        return "       CRA";
+    case NAL_UNIT_CODED_SLICE_RADL_R:     return "    RADL_R";
+    case NAL_UNIT_CODED_SLICE_RADL_N:     return "    RADL_N";
+    case NAL_UNIT_CODED_SLICE_RASL_R:     return "    RASL_R";
+    case NAL_UNIT_CODED_SLICE_RASL_N:     return "    RASL_N";
+    case NAL_UNIT_VPS:                    return "       VPS";
+    case NAL_UNIT_SPS:                    return "       SPS";
+    case NAL_UNIT_PPS:                    return "       PPS";
+    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "       AUD";
+    case NAL_UNIT_EOS:                    return "       EOS";
+    case NAL_UNIT_EOB:                    return "       EOB";
+    case NAL_UNIT_FILLER_DATA:            return "    FILLER";
+    case NAL_UNIT_PREFIX_SEI:             return "       SEI";
+    case NAL_UNIT_SUFFIX_SEI:             return "       SEI";
+    default:                              return "       UNK";
+  }
+#endif
+}
+
 class ScanGenerator
 {
 private:
@@ -666,39 +731,6 @@ UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,2
 #endif
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
-
-std::string NaluToStr( NalUnitType type )
-{
-  switch (type)
-  {
-    case NAL_UNIT_CODED_SLICE_TRAIL_R:    return "   TRAIL_R";
-    case NAL_UNIT_CODED_SLICE_TRAIL_N:    return "   TRAIL_N";
-    case NAL_UNIT_CODED_SLICE_TSA_R:      return "     TSA_R";
-    case NAL_UNIT_CODED_SLICE_TSA_N:      return "     TSA_N";
-    case NAL_UNIT_CODED_SLICE_STSA_R:     return "    STSA_R";
-    case NAL_UNIT_CODED_SLICE_STSA_N:     return "    STSA_N";
-    case NAL_UNIT_CODED_SLICE_BLA_W_LP:   return "  BLA_W_LP";
-    case NAL_UNIT_CODED_SLICE_BLA_W_RADL: return "BLA_W_RADL";
-    case NAL_UNIT_CODED_SLICE_BLA_N_LP:   return "  BLA_N_LP";
-    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: return "IDR_W_RADL";
-    case NAL_UNIT_CODED_SLICE_IDR_N_LP:   return "  IDR_N_LP";
-    case NAL_UNIT_CODED_SLICE_CRA:        return "       CRA";
-    case NAL_UNIT_CODED_SLICE_RADL_R:     return "    RADL_R";
-    case NAL_UNIT_CODED_SLICE_RADL_N:     return "    RADL_N";
-    case NAL_UNIT_CODED_SLICE_RASL_R:     return "    RASL_R";
-    case NAL_UNIT_CODED_SLICE_RASL_N:     return "    RASL_N";
-    case NAL_UNIT_VPS:                    return "       VPS";
-    case NAL_UNIT_SPS:                    return "       SPS";
-    case NAL_UNIT_PPS:                    return "       PPS";
-    case NAL_UNIT_ACCESS_UNIT_DELIMITER:  return "       AUD";
-    case NAL_UNIT_EOS:                    return "       EOS";
-    case NAL_UNIT_EOB:                    return "       EOB";
-    case NAL_UNIT_FILLER_DATA:            return "    FILLER";
-    case NAL_UNIT_PREFIX_SEI:             return "       SEI";
-    case NAL_UNIT_SUFFIX_SEI:             return "       SEI";
-    default:                              return "       UNK";
-  }
-}
 #if LAYER_CTB
 UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];

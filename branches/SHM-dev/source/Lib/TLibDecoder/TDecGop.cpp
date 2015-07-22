@@ -192,7 +192,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
                                                     pcPic->getLayerId(),
                                                     pcSlice->getTLayer(),
                                                     c,
-                                                    NaluToStr( pcSlice->getNalUnitType() ).data(),
+                                                    nalUnitTypeToString( pcSlice->getNalUnitType() ),
                                                     pcSlice->getSliceQp() );
 #else
   printf("POC %4d TId: %1d ( %c-SLICE, QP%3d ) ", pcSlice->getPOC(),
