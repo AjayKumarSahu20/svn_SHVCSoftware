@@ -169,7 +169,6 @@ extern const Int g_quantInterDefault8x8[8*8];
 
 extern const UInt g_scalingListSize [SCALING_LIST_SIZE_NUM];
 extern const UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
-extern const UInt g_scalingListNum  [SCALING_LIST_SIZE_NUM];
 
 #if SVC_EXTENSION
 #if FAST_INTRA_SHVC
