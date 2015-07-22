@@ -71,6 +71,18 @@ int main(int argc, char* argv[])
   // parse configuration
   try
   {
+#if SVC_EXTENSION
+    // parse number of layers first to allocate memory in the buffers
+    if(!cTAppEncTop.parseCfgNumLayersAndInit( argc, argv ))
+    {
+      cTAppEncTop.destroy();
+#if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
+      EnvVar::printEnvVar();
+#endif
+      return 1;
+    }
+#endif
+
     if(!cTAppEncTop.parseCfg( argc, argv ))
     {
       cTAppEncTop.destroy();

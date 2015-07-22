@@ -91,17 +91,17 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
   ("help",                      do_help,                               false,      "this help text")
   ("BitstreamFile,b",           cfg_BitstreamFile,                     string(""), "bitstream input file name")
 #if SVC_EXTENSION
-  ("ReconFileL%d,-o%d",   cfg_ReconFile,   string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
-                                                     "YUV writing is skipped if omitted")
+  ("ReconFileL%d,-o%d",                   cfg_ReconFile,   string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
+                                                                                   "YUV writing is skipped if omitted")
 #if AVC_BASE
-  ("BLReconFile,-ibl",    cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
+  ("BLReconFile,-ibl",                               cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
 #endif
-  ("TargetLayerId,-lid", targetLayerId, -1, "Target layer id")
-  ("LayerNum,-ls", layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
-  ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
+  ("TargetLayerId,-lid",                                        targetLayerId, -1, "Target layer id")
+  ("LayerNum,-ls",                                    layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
+  ("OutpuLayerSetIdx,-olsidx",                                         olsIdx, -1, "Index of output layer set to be decoded.")
 #if CONFORMANCE_BITSTREAM_MODE
-  ("ConformanceBitstremMode,-confMode", m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
-  ("ConformanceMetadataPrefix,-confPrefix", cfg_confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
+  ("ConformanceBitstremMode,-confMode",                     m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
+  ("ConformanceMetadataPrefix,           -confPrefix", cfg_confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
 #endif
 #else
   ("ReconFile,o",               cfg_ReconFile,                         string(""), "reconstructed YUV output file name\n"

@@ -293,6 +293,9 @@ namespace df
 
       if (!found)
       {
+#if 1 //SVC_EXTENSION
+        if( error_reporter.verbose )
+#endif
         error_reporter.error(where())
           << "Unknown option `" << name << "' (value:`" << value << "')\n";
         return false;
