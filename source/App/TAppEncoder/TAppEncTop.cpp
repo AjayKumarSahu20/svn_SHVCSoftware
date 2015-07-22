@@ -1942,11 +1942,10 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   // set frame rate
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    UInt layerId = vps->getLayerIdInNuh(layer);
-    m_apcTEncTop[layerId]->getAnalyzeAll()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layerId]->getAnalyzeI()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layerId]->getAnalyzeP()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layerId]->getAnalyzeB()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeAll()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeI()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeP()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeB()->setFrmRate( m_acLayerCfg[layer].getFrameRate() * rateMultiplier );
   }
 
   //-- all
@@ -1954,53 +1953,49 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);    
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeAll()->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeAll()->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeI()->printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeI()->printOut('i', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeP()->printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeP()->printOut('p', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[vps->getLayerIdInNuh(layer)]->getAnalyzeB()->printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeB()->printOut('b', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    const UInt layerId = vps->getLayerIdInNuh(layer);
-
-    if (!m_apcTEncTop[layerId]->getSummaryOutFilename().empty())
+    if (!m_apcTEncTop[layer]->getSummaryOutFilename().empty())
     {
       const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
 
-      m_apcTEncTop[layerId]->getAnalyzeAll()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryOutFilename());
+      m_apcTEncTop[layer]->getAnalyzeAll()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
     }
   }
 
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    const UInt layerId = vps->getLayerIdInNuh(layer);
-
-    if (!m_apcTEncTop[layerId]->getSummaryPicFilenameBase().empty())
+    if (!m_apcTEncTop[layer]->getSummaryPicFilenameBase().empty())
     {
       const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
 
-      m_apcTEncTop[layerId]->getAnalyzeI()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"I.txt");
-      m_apcTEncTop[layerId]->getAnalyzeP()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"P.txt");
-      m_apcTEncTop[layerId]->getAnalyzeB()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryPicFilenameBase()+"B.txt");
+      m_apcTEncTop[layer]->getAnalyzeI()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"I.txt");
+      m_apcTEncTop[layer]->getAnalyzeP()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"P.txt");
+      m_apcTEncTop[layer]->getAnalyzeB()->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"B.txt");
     }
   }
 
@@ -2008,22 +2003,20 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   {
     for(layer = 0; layer < m_numLayers; layer++)
     {
-      const UInt layerId = vps->getLayerIdInNuh(layer);
-
       const BitDepths bitDepths(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-      TEncAnalyze *analyze = m_apcTEncTop[layerId]->getAnalyzeAllin();
+      TEncAnalyze *analyze = m_apcTEncTop[layer]->getAnalyzeAllin();
 
       //-- interlaced summary
       analyze->setFrmRate( m_acLayerCfg[layer].getFrameRate());
-      analyze->setBits(m_apcTEncTop[layerId]->getAnalyzeB()->getBits());
+      analyze->setBits(m_apcTEncTop[layer]->getAnalyzeB()->getBits());
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
       analyze->printOut('a', m_acLayerCfg[layer].getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
-      if (!m_apcTEncTop[layerId]->getSummaryOutFilename().empty())
+      if (!m_apcTEncTop[layer]->getSummaryOutFilename().empty())
       {
-        analyze->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layerId]->getSummaryOutFilename());
+        analyze->printSummary(m_acLayerCfg[layer].getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
       }
     }
   }   
@@ -2031,7 +2024,7 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   printf("\n");
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    printf("RVM[L%d]: %.3lf\n", layer, m_apcTEncTop[vps->getLayerIdInNuh(layer)]->calculateRVM());
+    printf("RVM[L%d]: %.3lf\n", layer, m_apcTEncTop[layer]->calculateRVM());
   }
   printf("\n");
 }
