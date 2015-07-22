@@ -41,7 +41,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include "TypeDef.h"
+#include "CommonDef.h"
 #include "TCom3DAsymLUT.h"
 #include "TComPicYuv.h"
 

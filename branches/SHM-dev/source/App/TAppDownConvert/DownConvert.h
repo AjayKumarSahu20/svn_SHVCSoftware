@@ -39,7 +39,7 @@
 #define ESS_NONE      0
 
 #include <cassert>
-#include "../../Lib/TLibCommon/TypeDef.h"
+#include "../../Lib/TLibCommon/CommonDef.h"
 
 #ifndef  gMax
 #define  gMax(x,y)   ((x)>(y)?(x):(y))

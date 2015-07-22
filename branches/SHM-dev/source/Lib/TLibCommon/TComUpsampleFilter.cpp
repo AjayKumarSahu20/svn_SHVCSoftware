@@ -1,4 +1,4 @@
-#include "TypeDef.h"
+#include "CommonDef.h"
 #if SVC_EXTENSION
 #include "TComUpsampleFilter.h"
 
