@@ -1635,6 +1635,8 @@ Void TComSlice::createExplicitReferencePictureSetFromReference( TComList<TComPic
   Int nrOfNegativePictures = 0;
   Int nrOfPositivePictures = 0;
   TComReferencePictureSet* pcRPS = this->getLocalRPS();
+  (*pcRPS)=TComReferencePictureSet();
+
   Bool irapIsInRPS = false; // Used when bEfficientFieldIRAPEnabled==true
 #if SVC_POC
   Bool pocsAdjusted = false;

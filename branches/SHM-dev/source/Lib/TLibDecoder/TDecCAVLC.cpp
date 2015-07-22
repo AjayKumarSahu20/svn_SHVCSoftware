@@ -1318,10 +1318,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
     {
       pcSlice->setPOC(0);
       TComReferencePictureSet* rps = pcSlice->getLocalRPS();
-      rps->setNumberOfNegativePictures(0);
-      rps->setNumberOfPositivePictures(0);
-      rps->setNumberOfLongtermPictures(0);
-      rps->setNumberOfPictures(0);
+      (*rps)=TComReferencePictureSet();
       pcSlice->setRPS(rps);
     }
 
@@ -1377,6 +1374,8 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
 #endif
       TComReferencePictureSet* rps;
       rps = pcSlice->getLocalRPS();
+      (*rps)=TComReferencePictureSet();
+
       pcSlice->setRPS(rps);
       READ_FLAG( uiCode, "short_term_ref_pic_set_sps_flag" );
       if(uiCode == 0) // use short-term reference picture set explicitly signalled in slice header
@@ -1527,10 +1526,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
       {
         // In the case of BLA picture types, rps data is read from slice header but ignored
         rps = pcSlice->getLocalRPS();
-        rps->setNumberOfNegativePictures(0);
-        rps->setNumberOfPositivePictures(0);
-        rps->setNumberOfLongtermPictures(0);
-        rps->setNumberOfPictures(0);
+        (*rps)=TComReferencePictureSet();
         pcSlice->setRPS(rps);
       }
       if (sps->getTMVPFlagsPresent())
