@@ -1925,7 +1925,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_pocCraWithoutReset = m_pocCRA + m_pcEncTop->getPocAdjustmentValue();
 #endif
     m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
-    pcSlice->getRPS()->setNumberOfLongtermPictures(0);
+//    pcSlice->getRPS()->setNumberOfLongtermPictures(0);
     if (!m_pcCfg->getEfficientFieldIRAPEnabled())
     {
       if ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
@@ -3543,11 +3543,13 @@ Void TEncGOP::xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstre
 // and among the pictures with the same lsb, it arranges them in increasing delta_poc_msb_cycle_lt value
 Void TEncGOP::arrangeLongtermPicturesInRPS(TComSlice *pcSlice, TComList<TComPic*>& rcListPic)
 {
-  TComReferencePictureSet *rps = pcSlice->getRPS();
-  if(!rps->getNumberOfLongtermPictures())
+  if(pcSlice->getRPS()->getNumberOfLongtermPictures() == 0)
   {
     return;
   }
+  // we can only modify the local RPS!
+  assert (pcSlice->getRPSidx()==-1);
+  TComReferencePictureSet *rps = pcSlice->getLocalRPS();
 
   // Arrange long-term reference pictures in the correct order of LSB and MSB,
   // and assign values for pocLSBLT and MSB present flag
@@ -4012,7 +4014,7 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
             for( Int i = dpbPic->getNumAllocatedSlice() - 1; i >= 0; i-- )
             {
               TComSlice *dpbPicSlice = dpbPic->getSlice( i );
-              TComReferencePictureSet *dpbPicRps = dpbPicSlice->getRPS();
+              TComReferencePictureSet *dpbPicRps = dpbPicSlice->getLocalRPS();
 
               // Decrement POC of slice
               dpbPicSlice->setPOC( dpbPicSlice->getPOC() - deltaPocVal );
@@ -4022,6 +4024,8 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
               {
                 dpbPicRps->setPOC( j, dpbPicRps->getPOC(j) - deltaPocVal );
               }
+              
+              dpbPicSlice->setRPS(dpbPicRps);
 
               // Decrement value of refPOC
               dpbPicSlice->decrementRefPocValues( deltaPocVal );

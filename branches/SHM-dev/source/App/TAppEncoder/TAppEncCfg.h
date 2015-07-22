@@ -63,11 +63,6 @@ protected:
   Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
-  Char*     m_pBitstreamFile;                                 ///< output bitstream file
-  Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
-  // source specification
-  UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
-  Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
   Int       m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
 #endif
@@ -87,12 +82,18 @@ protected:
   std::vector< std::vector<Int> > m_listOfOutputLayers;
 #else
   Char*     m_pchInputFile;                                   ///< source file name
+#endif
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
+#if !SVC_EXTENSION
   Char*     m_pchReconFile;                                   ///< output reconstruction file
+#endif
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
   // source specification
+#if !SVC_EXTENSION
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
+#endif
   UInt      m_FrameSkip;                                   ///< number of skipped frames from the beginning
+#if !SVC_EXTENSION
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
 
@@ -109,7 +110,9 @@ protected:
   Int       m_confWinRight;
   Int       m_confWinTop;
   Int       m_confWinBottom;
+#endif
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
+#if !SVC_EXTENSION
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
   InputColourSpaceConversion m_inputColourSpaceConvert;       ///< colour space conversion to apply to input video
