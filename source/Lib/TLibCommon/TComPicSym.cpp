@@ -64,7 +64,9 @@ TComPicSym::TComPicSym()
 ,m_puiTileIdxMap(NULL)
 ,m_ctuRsToTsAddrMap(NULL)
 ,m_saoBlkParams(NULL)
+#if ADAPTIVE_QP_SELECTION
 ,m_pParentARLBuffer(NULL)
+#endif
 #if SVC_EXTENSION
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
 , m_piTileSetIdxMap(NULL)
@@ -194,8 +196,10 @@ Void TComPicSym::destroy()
     delete[] m_saoBlkParams; m_saoBlkParams = NULL;
   }
 
+#if ADAPTIVE_QP_SELECTION
   delete [] m_pParentARLBuffer;
   m_pParentARLBuffer = NULL;
+#endif
 }
 
 Void TComPicSym::allocateNewSlice()
