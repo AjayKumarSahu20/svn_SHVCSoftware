@@ -2069,8 +2069,13 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_ACCESS_UNIT_DELIMITER:
-      // TODO: process AU delimiter
-      return false;
+      {
+        AUDReader audReader;
+        UInt picType;
+        audReader.parseAccessUnitDelimiter(&(nalu.getBitstream()),picType);
+        printf ("Note: found NAL_UNIT_ACCESS_UNIT_DELIMITER\n");
+        return false;
+      }
 
     case NAL_UNIT_EOB:
 #if SVC_EXTENSION
@@ -2083,10 +2088,16 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       return false;
 
     case NAL_UNIT_FILLER_DATA:
+      {
+        FDReader fdReader;
+        UInt size;
+        fdReader.parseFillerData(&(nalu.getBitstream()),size);
+        printf ("Note: found NAL_UNIT_FILLER_DATA with %u bytes payload.\n", size);
 #if SVC_EXTENSION
-      assert( m_isLastNALWasEos == false );
+        assert( m_isLastNALWasEos == false );
 #endif
-      return false;
+        return false;
+      }
 
     case NAL_UNIT_RESERVED_VCL_N10:
     case NAL_UNIT_RESERVED_VCL_R11:
