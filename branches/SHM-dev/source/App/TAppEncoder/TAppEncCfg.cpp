@@ -2914,8 +2914,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       uiAddCUDepth++;
     }
 
-    m_acLayerCfg[layerIdx].m_uiMaxTotalCUDepth = m_acLayerCfg[layerIdx].m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_acLayerCfg[layerIdx].m_chromaFormatIDC, m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
-    uiAddCUDepth++;
+    m_acLayerCfg[layerIdx].m_uiMaxTotalCUDepth = m_acLayerCfg[layerIdx].m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_acLayerCfg[layerIdx].m_chromaFormatIDC, m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.    
     m_acLayerCfg[layerIdx].m_uiLog2DiffMaxMinCodingBlockSize = m_acLayerCfg[layerIdx].m_uiMaxCUDepth - 1;
   }
 #else  
@@ -2926,7 +2925,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   m_uiMaxTotalCUDepth = m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_chromaFormatIDC, m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.
-  uiAddCUDepth++;
   m_uiLog2DiffMaxMinCodingBlockSize = m_uiMaxCUDepth - 1;
 #endif
   
