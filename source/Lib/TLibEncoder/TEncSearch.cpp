@@ -4896,12 +4896,12 @@ Void TEncSearch::xEstimateInterResidualQT( TComYuv    *pcResi,
 
                   nonCoeffDist = m_pcRdCost->getDistPart( channelBitDepth, m_pcQTTempTComYuv[uiQTTempAccessLayer].getAddrPix( compID, tuCompRect.x0, tuCompRect.y0 ),
                                                           m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride( compID ), pcResi->getAddrPix( compID, tuCompRect.x0, tuCompRect.y0 ),
-                                                          pcResi->getStride(compID), tuCompRect.width, tuCompRect.height, compID); // initialized with zero residual destortion
+                                                          pcResi->getStride(compID), tuCompRect.width, tuCompRect.height, compID); // initialized with zero residual distortion
                 }
                 else
                 {
                   nonCoeffDist = m_pcRdCost->getDistPart( channelBitDepth, m_pTempPel, tuCompRect.width, pcResi->getAddrPix( compID, tuCompRect.x0, tuCompRect.y0 ),
-                                                          pcResi->getStride(compID), tuCompRect.width, tuCompRect.height, compID); // initialized with zero residual destortion
+                                                          pcResi->getStride(compID), tuCompRect.width, tuCompRect.height, compID); // initialized with zero residual distortion
                 }
 
                 m_pcEntropyCoder->encodeQtCbfZero( TUIterator, toChannelType(compID) );
@@ -4917,7 +4917,7 @@ Void TEncSearch::xEstimateInterResidualQT( TComYuv    *pcResi,
 
               if((puiZeroDist != NULL) && isFirstMode)
               {
-                *puiZeroDist += nonCoeffDist; // initialized with zero residual destortion
+                *puiZeroDist += nonCoeffDist; // initialized with zero residual distortion
               }
 
               DEBUG_STRING_NEW(sSingleStringTest)
