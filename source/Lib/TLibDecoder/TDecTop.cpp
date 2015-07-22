@@ -1161,7 +1161,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
             {
 
               TComSlice *slice = dpbPic->getSlice(i);
-              TComReferencePictureSet *rps = slice->getRPS();
+              TComReferencePictureSet *rps = slice->getLocalRPS();
               slice->setPOC( slice->getPOC() - deltaPocVal );
 
               // Also adjust the POC value stored in the RPS of each such slice
@@ -1169,6 +1169,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
               {
                 rps->setPOC( j, rps->getPOC(j) - deltaPocVal );
               }
+
+              slice->setRPS(rps);
+
               // Also adjust the value of refPOC
               for(Int k = 0; k < 2; k++)  // For List 0 and List 1
               {

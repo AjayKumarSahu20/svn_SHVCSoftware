@@ -1679,10 +1679,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if SVC_EXTENSION
 Void TAppEncTop::encode()
 {
-  fstream bitstreamFile(m_pBitstreamFile, fstream::binary | fstream::out);
+  fstream bitstreamFile(m_pchBitstreamFile, fstream::binary | fstream::out);
   if (!bitstreamFile)
   {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_pBitstreamFile);
+    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_pchBitstreamFile);
     exit(EXIT_FAILURE);
   }
 

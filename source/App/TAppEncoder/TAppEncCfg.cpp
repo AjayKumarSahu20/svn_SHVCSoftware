@@ -108,7 +108,7 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
 
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
-: m_pBitstreamFile()
+: m_pchBitstreamFile()
 #if AVC_BASE
 , m_nonHEVCBaseLayerFlag(0)
 #endif
@@ -147,13 +147,7 @@ TAppEncCfg::TAppEncCfg()
 
 TAppEncCfg::~TAppEncCfg()
 {
-#if SVC_EXTENSION
-  if( m_pBitstreamFile )
-  {
-    free(m_pBitstreamFile);
-    m_pBitstreamFile = NULL;
-  }
-#else  
+#if !SVC_EXTENSION
   if ( m_aidQP )
   {
     delete[] m_aidQP;
@@ -175,8 +169,8 @@ TAppEncCfg::~TAppEncCfg()
   }
 
   free(m_pchInputFile);
-  free(m_pchBitstreamFile);
 #endif
+  free(m_pchBitstreamFile);
 #if !SVC_EXTENSION  
   free(m_pchReconFile);
   free(m_pchdQPFile);
@@ -1771,10 +1765,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     *cfg_InputFile[0] = cfg_BLInputFile;
   }
 #endif
-  m_pBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
 #else //SVC_EXTENSION
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
+#endif
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
+#if !SVC_EXTENSION
   m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -4340,7 +4335,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
-  printf("Bitstream      File               : %s\n", m_pBitstreamFile      );
+  printf("Bitstream      File               : %s\n", m_pchBitstreamFile      );
 #else //SVC_EXTENSION
   printf("\n");
   printf("Input          File                    : %s\n", m_pchInputFile          );
