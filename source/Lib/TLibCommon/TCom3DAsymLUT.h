@@ -39,7 +39,7 @@
 #ifndef __TCOM3DASYMLUT__
 #define __TCOM3DASYMLUT__
 
-#include "TypeDef.h"
+#include "CommonDef.h"
 
 #if CGS_3D_ASYMLUT
 #include <cassert>

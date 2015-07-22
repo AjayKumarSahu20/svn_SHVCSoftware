@@ -37,7 +37,7 @@
 #ifndef __WEIGHTPREDANALYSIS__
 #define __WEIGHTPREDANALYSIS__
 
-#include "../TLibCommon/TypeDef.h"
+#include "../TLibCommon/CommonDef.h"
 #include "../TLibCommon/TComSlice.h"
 #include "TEncCavlc.h"
 
@@ -45,7 +45,7 @@ class  WeightPredAnalysis
 {
 private:
 
-  // member variables  
+  // member variables
   WPScalingParam  m_wp[NUM_REF_PIC_LIST_01][MAX_NUM_REF][MAX_NUM_COMPONENT];
 
   // member functions
