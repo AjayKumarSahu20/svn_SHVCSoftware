@@ -202,6 +202,7 @@ class ProfileTierLevel
   UInt              m_bitDepthConstraintValue;
   ChromaFormat      m_chromaFormatConstraintValue;
   Bool              m_intraConstraintFlag;
+  Bool              m_onePictureOnlyConstraintFlag;
   Bool              m_lowerBitRateConstraintFlag;
 
 public:
@@ -242,6 +243,9 @@ public:
 
   Bool          getIntraConstraintFlag() const              { return m_intraConstraintFlag;         }
   Void          setIntraConstraintFlag(Bool b)              { m_intraConstraintFlag = b;            }
+
+  Bool          getOnePictureOnlyConstraintFlag() const     { return m_onePictureOnlyConstraintFlag;}
+  Void          setOnePictureOnlyConstraintFlag(Bool b)     { m_onePictureOnlyConstraintFlag = b;   }
 
   Bool          getLowerBitRateConstraintFlag() const       { return m_lowerBitRateConstraintFlag;  }
   Void          setLowerBitRateConstraintFlag(Bool b)       { m_lowerBitRateConstraintFlag = b;     }

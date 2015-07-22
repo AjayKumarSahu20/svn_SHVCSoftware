@@ -228,6 +228,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setBitDepthConstraintValue                         ( m_acLayerCfg[layer].m_bitDepthConstraint );
     m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
     m_acTEncTop[layer].setIntraConstraintFlag                             ( m_acLayerCfg[layer].m_intraConstraintFlag );
+    m_acTEncTop[layer].setOnePictureOnlyConstraintFlag                    ( m_onePictureOnlyConstraintFlag );
     m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_acLayerCfg[layer].m_lowerBitRateConstraintFlag );
 
     m_acTEncTop[layer].setPrintMSEBasedSequencePSNR                       ( m_printMSEBasedSequencePSNR);
@@ -808,6 +809,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setBitDepthConstraintValue                           ( m_bitDepthConstraint );
   m_cTEncTop.setChromaFormatConstraintValue                       ( m_chromaFormatConstraint );
   m_cTEncTop.setIntraConstraintFlag                               ( m_intraConstraintFlag );
+  m_cTEncTop.setOnePictureOnlyConstraintFlag                      ( m_onePictureOnlyConstraintFlag );
   m_cTEncTop.setLowerBitRateConstraintFlag                        ( m_lowerBitRateConstraintFlag );
 
   m_cTEncTop.setPrintMSEBasedSequencePSNR                         ( m_printMSEBasedSequencePSNR);
