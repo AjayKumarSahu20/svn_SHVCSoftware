@@ -48,6 +48,7 @@ protected:
   UInt      m_bitDepthConstraint;
   Bool      m_intraConstraintFlag;
   Bool      m_lowerBitRateConstraintFlag;
+  Bool      m_onePictureOnlyConstraintFlag;
 #if AUXILIARY_PICTURES
   Int       m_auxId;
 #endif

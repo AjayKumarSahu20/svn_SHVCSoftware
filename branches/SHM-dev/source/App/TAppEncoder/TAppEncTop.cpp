@@ -228,7 +228,7 @@ Void TAppEncTop::xInitLibCfg()
     m_acTEncTop[layer].setBitDepthConstraintValue                         ( m_acLayerCfg[layer].m_bitDepthConstraint );
     m_acTEncTop[layer].setChromaFormatConstraintValue                     ( m_acLayerCfg[layer].m_chromaFormatConstraint );
     m_acTEncTop[layer].setIntraConstraintFlag                             ( m_acLayerCfg[layer].m_intraConstraintFlag );
-    m_acTEncTop[layer].setOnePictureOnlyConstraintFlag                    ( m_onePictureOnlyConstraintFlag );
+    m_acTEncTop[layer].setOnePictureOnlyConstraintFlag                    ( m_acLayerCfg[layer].m_onePictureOnlyConstraintFlag );
     m_acTEncTop[layer].setLowerBitRateConstraintFlag                      ( m_acLayerCfg[layer].m_lowerBitRateConstraintFlag );
 
     m_acTEncTop[layer].setPrintMSEBasedSequencePSNR                       ( m_printMSEBasedSequencePSNR);

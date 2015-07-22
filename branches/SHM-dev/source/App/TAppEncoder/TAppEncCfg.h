@@ -146,13 +146,11 @@ protected:
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
   Level::Name   m_level;
-#endif
   UInt          m_bitDepthConstraint;
   ChromaFormat  m_chromaFormatConstraint;
   Bool          m_intraConstraintFlag;
   Bool          m_onePictureOnlyConstraintFlag;
   Bool          m_lowerBitRateConstraintFlag;
-#if !SVC_EXTENSION
   Bool m_progressiveSourceFlag;
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;

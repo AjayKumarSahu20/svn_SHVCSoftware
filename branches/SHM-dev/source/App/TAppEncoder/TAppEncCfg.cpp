@@ -998,6 +998,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string inputColourSpaceConvert;
 #if SVC_EXTENSION
   ExtendedProfileName extendedProfile[MAX_NUM_LAYER_IDS + 1];
+
+  UInt tmpBitDepthConstraint;
+  Bool tmpIntraConstraintFlag, tmpOnePictureOnlyConstraintFlag, tmpLowerBitRateConstraintFlag;
 #else
   ExtendedProfileName extendedProfile;
 #endif
@@ -1225,13 +1228,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("Profile%d",                                       extendedProfile,          NONE, (MAX_NUM_LAYER_IDS + 1),  "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level%d",                                         m_levelList,       Level::NONE, (MAX_NUM_LAYER_IDS + 1), "Level limit to be used, eg 5.1, or none")
   ("Tier%d",                                          m_levelTierList,   Level::MAIN, (MAX_NUM_LAYER_IDS + 1), "Tier to use for interpretation of --Level (main or high only)")
-#endif
-  ("MaxBitDepthConstraint",                           m_bitDepthConstraint,                                0u, "Bit depth to use for profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
+
+  ("MaxBitDepthConstraint",                           tmpBitDepthConstraint,                               0u, "Bit depth to use for profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
   ("MaxChromaFormatConstraint",                       tmpConstraintChromaFormat,                            0, "Chroma-format to use for the profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
-  ("IntraConstraintFlag",                             m_intraConstraintFlag,                            false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
-  ("OnePictureOnlyConstraintFlag",                    m_onePictureOnlyConstraintFlag,                   false, "Value of general_one_picture_only_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
-  ("LowerBitRateConstraintFlag",                      m_lowerBitRateConstraintFlag,                      true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
-#if SVC_EXTENSION
+  ("IntraConstraintFlag",                             tmpIntraConstraintFlag,                           false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
+  ("OnePictureOnlyConstraintFlag",                    tmpOnePictureOnlyConstraintFlag,                  false, "Value of general_one_picture_only_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
+  ("LowerBitRateConstraintFlag",                      tmpLowerBitRateConstraintFlag,                      true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
+
   ("ProfileCompatibility%d",                          m_profileCompatibility, Profile::NONE, (MAX_NUM_LAYER_IDS + 1), "Compatible profile to be used when encoding")
   ("ProgressiveSource%d",                             m_progressiveSourceFlagList,   false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is progressive")
   ("InterlacedSource%d",                              m_interlacedSourceFlagList,    false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is interlaced")
@@ -1258,6 +1261,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level",                                           m_level,                                    Level::NONE, "Level limit to be used, eg 5.1, or none")
   ("Tier",                                            m_levelTier,                                Level::MAIN, "Tier to use for interpretation of --Level (main or high only)")  
+
+  ("MaxBitDepthConstraint",                           m_bitDepthConstraint,                                0u, "Bit depth to use for profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
+  ("MaxChromaFormatConstraint",                       tmpConstraintChromaFormat,                            0, "Chroma-format to use for the profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
+  ("IntraConstraintFlag",                             m_intraConstraintFlag,                            false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
+  ("OnePictureOnlyConstraintFlag",                    m_onePictureOnlyConstraintFlag,                   false, "Value of general_one_picture_only_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
+  ("LowerBitRateConstraintFlag",                      m_lowerBitRateConstraintFlag,                      true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
 
   ("ProgressiveSource",                               m_progressiveSourceFlag,                          false, "Indicate that source is progressive")
   ("InterlacedSource",                                m_interlacedSourceFlag,                           false, "Indicate that source is interlaced")
@@ -1896,9 +1905,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
 
-    m_acLayerCfg[layer].m_bitDepthConstraint = m_bitDepthConstraint;
-    m_acLayerCfg[layer].m_intraConstraintFlag = m_intraConstraintFlag;
-    m_acLayerCfg[layer].m_lowerBitRateConstraintFlag = m_lowerBitRateConstraintFlag;    
+    m_acLayerCfg[layer].m_bitDepthConstraint = tmpBitDepthConstraint;
+    m_acLayerCfg[layer].m_intraConstraintFlag = tmpIntraConstraintFlag;
+    m_acLayerCfg[layer].m_lowerBitRateConstraintFlag = tmpLowerBitRateConstraintFlag;    
 
     for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
     {
@@ -2956,10 +2965,11 @@ Void TAppEncCfg::xCheckParameter(UInt layerIdx)
   m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA];
 
   Int layerPTLIdx = m_acLayerCfg[layerIdx].m_layerPTLIdx;
-  Profile::Name m_profile           = m_profileList[layerPTLIdx];
-  UInt m_bitDepthConstraint         = m_acLayerCfg[layerIdx].m_bitDepthConstraint;
-  Bool m_intraConstraintFlag        = m_acLayerCfg[layerIdx].m_intraConstraintFlag;
-  Bool m_lowerBitRateConstraintFlag = m_acLayerCfg[layerIdx].m_lowerBitRateConstraintFlag;
+  Profile::Name m_profile             = m_profileList[layerPTLIdx];
+  UInt m_bitDepthConstraint           = m_acLayerCfg[layerIdx].m_bitDepthConstraint;
+  Bool m_intraConstraintFlag          = m_acLayerCfg[layerIdx].m_intraConstraintFlag;
+  Bool m_lowerBitRateConstraintFlag   = m_acLayerCfg[layerIdx].m_lowerBitRateConstraintFlag;
+  Bool m_onePictureOnlyConstraintFlag = m_acLayerCfg[layerIdx].m_onePictureOnlyConstraintFlag;
 #else
 Void TAppEncCfg::xCheckParameter()
 {
