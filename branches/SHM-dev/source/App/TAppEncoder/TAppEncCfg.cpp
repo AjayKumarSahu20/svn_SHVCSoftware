@@ -1276,11 +1276,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   ("IntraPeriod,-ip",                                 m_iIntraPeriod,                                      -1, "Intra period in frames, (-1: only first frame)")
 #endif
-#if ALLOW_RECOVERY_POINT_AS_RAP
   ("DecodingRefreshType,-dr",                         m_iDecodingRefreshType,                               0, "Intra refresh type (0:none 1:CRA 2:IDR 3:RecPointSEI)")
-#else
-  ("DecodingRefreshType,-dr",                         m_iDecodingRefreshType,                               0, "Intra refresh type (0:none 1:CRA 2:IDR)")
-#endif
   ("GOPSize,g",                                       m_iGOPSize,                                           1, "GOP size of temporal structure")
 
   // motion search options
@@ -3110,15 +3106,11 @@ Void TAppEncCfg::xCheckParameter()
 #if !SVC_EXTENSION 
   xConfirmPara( (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0" );
 #endif
-#if ALLOW_RECOVERY_POINT_AS_RAP
   xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 3,                   "Decoding Refresh Type must be comprised between 0 and 3 included" );
   if(m_iDecodingRefreshType == 3)
   {
     xConfirmPara( !m_recoveryPointSEIEnabled,                                               "When using RecoveryPointSEI messages as RA points, recoveryPointSEI must be enabled" );
   }
-#else
-  xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 2,                   "Decoding Refresh Type must be equal to 0, 1 or 2" );
-#endif
 
   if (m_isField)
   {
