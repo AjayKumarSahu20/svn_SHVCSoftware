@@ -1925,7 +1925,6 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_pocCraWithoutReset = m_pocCRA + m_pcEncTop->getPocAdjustmentValue();
 #endif
     m_pcEncTop->selectReferencePictureSet(pcSlice, pocCurr, iGOPid);
-//    pcSlice->getRPS()->setNumberOfLongtermPictures(0);
     if (!m_pcCfg->getEfficientFieldIRAPEnabled())
     {
       if ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
