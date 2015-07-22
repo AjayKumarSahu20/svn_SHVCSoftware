@@ -124,6 +124,7 @@ protected:
   UInt              m_bitDepthConstraintValue;
   ChromaFormat      m_chromaFormatConstraintValue;
   Bool              m_intraConstraintFlag;
+  Bool              m_onePictureOnlyConstraintFlag;
   Bool              m_lowerBitRateConstraintFlag;
 
   //====== Coding Structure ========
@@ -1015,6 +1016,9 @@ public:
   Bool         getIntraConstraintFlag() const                        { return m_intraConstraintFlag; }
   Void         setIntraConstraintFlag(Bool b)                        { m_intraConstraintFlag=b; }
 
+  Bool         getOnePictureOnlyConstraintFlag() const               { return m_onePictureOnlyConstraintFlag; }
+  Void         setOnePictureOnlyConstraintFlag(Bool b)               { m_onePictureOnlyConstraintFlag=b; }
+
   Bool         getLowerBitRateConstraintFlag() const                 { return m_lowerBitRateConstraintFlag; }
   Void         setLowerBitRateConstraintFlag(Bool b)                 { m_lowerBitRateConstraintFlag=b; }
   Bool      getChromaSamplingFilterHintEnabled()                     { return m_chromaSamplingFilterHintEnabled;}
@@ -1028,6 +1032,7 @@ public:
   const std::string& getSummaryOutFilename() const                   { return m_summaryOutFilename; }
   Void      setSummaryPicFilenameBase(const std::string &s)          { m_summaryPicFilenameBase = s; }
   const std::string& getSummaryPicFilenameBase() const               { return m_summaryPicFilenameBase; }
+
   Void      setSummaryVerboseness(UInt v)                            { m_summaryVerboseness = v; }
   UInt      getSummaryVerboseness( ) const                           { return m_summaryVerboseness; }
 
