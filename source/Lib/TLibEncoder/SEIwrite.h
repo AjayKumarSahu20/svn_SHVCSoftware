@@ -50,9 +50,9 @@ public:
   virtual ~SEIWriter() {};
 
 #if O0164_MULTI_LAYER_HRD
-  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
+  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComVPS *vps, const TComSPS *sps, Bool isNested, const SEIScalableNesting* nestingSei=NULL, const SEIBspNesting* bspNestingSei=NULL);
 #else
-  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComSPS *sps);
+  Void writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComSPS *sps, Bool isNested);
 #endif
 
 protected:
@@ -63,13 +63,15 @@ protected:
 #endif
   Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
   Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
-  Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
 #if SVC_EXTENSION
   Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps);
   Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps);
   Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei, const TComVPS *vps);
 #else
   Void xWriteSEIDecodingUnitInfo(const SEIDecodingUnitInfo& sei, const TComSPS *sps);
+#endif
+  Void xWriteSEIDecodedPictureHash(const SEIDecodedPictureHash& sei);
+#if !SVC_EXTENSION
   Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TComSPS *sps);
   Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, const TComSPS *sps);
 #endif

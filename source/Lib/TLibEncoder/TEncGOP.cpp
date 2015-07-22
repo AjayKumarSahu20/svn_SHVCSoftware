@@ -230,7 +230,6 @@ Int TEncGOP::xWriteVPS (AccessUnit &accessUnit, const TComVPS *vps)
   OutputNALUnit nalu(NAL_UNIT_VPS);
   m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
   m_pcEntropyCoder->encodeVPS(vps);
-  writeRBSPTrailingBits(nalu.m_Bitstream);
   accessUnit.push_back(new NALUnitEBSP(nalu));
   return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 }
@@ -252,7 +251,6 @@ Int TEncGOP::xWriteSPS (AccessUnit &accessUnit, const TComSPS *sps)
 #endif
   m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
   m_pcEntropyCoder->encodeSPS(sps);
-  writeRBSPTrailingBits(nalu.m_Bitstream);
   accessUnit.push_back(new NALUnitEBSP(nalu));
   return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 
@@ -279,8 +277,7 @@ Int TEncGOP::xWritePPS (AccessUnit &accessUnit, const TComPPS *pps)
   m_pcEntropyCoder->encodePPS(pps, &m_Enc3DAsymLUTPPS);
 #else
   m_pcEntropyCoder->encodePPS(pps);
-#endif
-  writeRBSPTrailingBits(nalu.m_Bitstream);
+#endif  
   accessUnit.push_back(new NALUnitEBSP(nalu));
   return (Int)(accessUnit.back()->m_nalUnitData.str().size()) * 8;
 }
@@ -311,12 +308,11 @@ Void TEncGOP::xWriteSEI (NalUnitType naluType, SEIMessages& seiMessages, AccessU
   }
 #if O0164_MULTI_LAYER_HRD
   OutputNALUnit nalu(naluType, temporalId, sps->getLayerId());
-  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, vps, sps, nestingSei, bspNestingSei);
+  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, vps, sps, false, nestingSei, bspNestingSei);
 #else
   OutputNALUnit nalu(naluType, temporalId);
-  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, sps);
-#endif
-  writeRBSPTrailingBits(nalu.m_Bitstream);
+  m_seiWriter.writeSEImessages(nalu.m_Bitstream, seiMessages, sps, false);
+#endif  
   auPos = accessUnit.insert(auPos, new NALUnitEBSP(nalu));
   auPos++;
 }
@@ -338,12 +334,11 @@ Void TEncGOP::xWriteSEISeparately (NalUnitType naluType, SEIMessages& seiMessage
     tmpMessages.push_back(*sei);
 #if O0164_MULTI_LAYER_HRD
     OutputNALUnit nalu(naluType, temporalId, sps->getLayerId());
-    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, vps, sps, nestingSei, bspNestingSei);
+    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, vps, sps, false, nestingSei, bspNestingSei);
 #else
     OutputNALUnit nalu(naluType, temporalId);
-    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, sps);
+    m_seiWriter.writeSEImessages(nalu.m_Bitstream, tmpMessages, sps, false);
 #endif
-    writeRBSPTrailingBits(nalu.m_Bitstream);
     auPos = accessUnit.insert(auPos, new NALUnitEBSP(nalu));
     auPos++;
   }
@@ -2576,8 +2571,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      m_pcEntropyCoder->encodePPS(pcSlice->getPPS() , &m_Enc3DAsymLUTPPS );
-      writeRBSPTrailingBits(nalu.m_Bitstream);
+      m_pcEntropyCoder->encodePPS(pcSlice->getPPS() , &m_Enc3DAsymLUTPPS );      
       accessUnit.push_back(new NALUnitEBSP(nalu));
     }
 #endif
