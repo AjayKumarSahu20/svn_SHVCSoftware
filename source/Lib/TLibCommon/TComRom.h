@@ -158,6 +158,8 @@ extern UInt64 g_nSymbolCounter;
 
 #endif
 
+const Char* nalUnitTypeToString(NalUnitType type);
+
 extern const Char *MatrixType[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
 extern const Char *MatrixType_DC[SCALING_LIST_SIZE_NUM][SCALING_LIST_NUM];
 
@@ -176,7 +178,6 @@ extern UInt g_predefSetIntraModes[NUM_INTRA_MODE-1];
 #endif
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
-std::string NaluToStr( NalUnitType nalu );
 #if LAYER_CTB
 extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
