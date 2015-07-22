@@ -37,9 +37,6 @@
 
 #include "NALread.h"
 #include "TDecTop.h"
-#if RExt__DECODER_DEBUG_BIT_STATISTICS
-#include "TLibCommon/TComCodingStatistics.h"
-#endif
 
 #if SVC_EXTENSION
 UInt  TDecTop::m_prevPOC = MAX_UINT;
@@ -1965,9 +1962,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       assert( nalu.m_nuhLayerId == 0 ); // Non-conforming bitstream. The value of nuh_layer_id of VPS NAL unit shall be equal to 0.
 #endif
       xDecodeVPS(nalu.getBitstream().getFifo());
-#if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(), 0);
-#endif
 #if SVC_EXTENSION
       m_isLastNALWasEos = false;    
 #endif
@@ -1975,9 +1969,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 
     case NAL_UNIT_SPS:
       xDecodeSPS(nalu.getBitstream().getFifo());
-#if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(), 0);
-#endif
       return false;
 
     case NAL_UNIT_PPS:
@@ -1985,9 +1976,6 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
       xDecodePPS( nalu.getBitstream().getFifo(), &m_c3DAsymLUTPPS );
 #else
       xDecodePPS(nalu.getBitstream().getFifo());
-#endif
-#if RExt__DECODER_DEBUG_BIT_STATISTICS
-      TComCodingStatistics::IncrementStatisticEP(STATS__BYTE_ALIGNMENT_BITS, nalu.getBitstream().readByteAlignment(),0);
 #endif
       return false;
 
