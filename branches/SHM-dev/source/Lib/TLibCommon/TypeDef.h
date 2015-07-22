@@ -162,7 +162,6 @@ enum AuxType
 // ====================================================================================================================
 
 #define DECODER_CHECK_SUBSTREAM_AND_SLICE_TRAILING_BYTES  1
-#define SAO_ENCODE_ALLOW_USE_PREDEBLOCK                   1
 #define T0196_SELECTIVE_RDOQ                              1 ///< selective RDOQ
 
 // ====================================================================================================================
