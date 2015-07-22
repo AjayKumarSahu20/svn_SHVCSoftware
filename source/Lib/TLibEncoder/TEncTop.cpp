@@ -742,9 +742,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #if CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
 #endif
-#if LAYER_CTB
-            || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
-#endif
             )
           {
             pcEPic->setSpatialEnhLayerFlag( i, true );
@@ -791,9 +788,6 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
             || !zeroPhase
 #if CGS_3D_ASYMLUT
             || m_cPPS.getCGSFlag() > 0
-#endif
-#if LAYER_CTB
-            || pcEncTopBase->getSPS()->getMaxCUWidth() != m_cSPS.getMaxCUWidth() || pcEncTopBase->getSPS()->getMaxCUHeight() != m_cSPS.getMaxCUHeight() || pcEncTopBase->getSPS()->getMaxCUDepth() != m_cSPS.getMaxCUDepth()
 #endif
             )
           {

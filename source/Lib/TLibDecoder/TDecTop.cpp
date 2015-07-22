@@ -39,20 +39,20 @@
 #include "TDecTop.h"
 
 #if SVC_EXTENSION
-UInt  TDecTop::m_prevPOC = MAX_UINT;
-UInt  TDecTop::m_uiPrevLayerId = MAX_UINT;
-Bool  TDecTop::m_bFirstSliceInSequence = true;
-Bool  TDecTop::m_checkPocRestrictionsForCurrAu       = false;
-Int   TDecTop::m_pocResetIdcOrCurrAu                 = -1;
-Bool  TDecTop::m_baseLayerIdrFlag                    = false;
-Bool  TDecTop::m_baseLayerPicPresentFlag             = false;
-Bool  TDecTop::m_baseLayerIrapFlag                   = false;
-Bool  TDecTop::m_nonBaseIdrPresentFlag               = false;
-Int   TDecTop::m_nonBaseIdrType                      = -1;
-Bool  TDecTop::m_picNonIdrWithRadlPresentFlag        = false;
-Bool  TDecTop::m_picNonIdrNoLpPresentFlag            = false;
-Int   TDecTop::m_crossLayerPocResetPeriodId          = -1;
-Int   TDecTop::m_crossLayerPocResetIdc               = -1;
+UInt  TDecTop::m_prevPOC                       = MAX_UINT;
+UInt  TDecTop::m_uiPrevLayerId                 = MAX_UINT;
+Bool  TDecTop::m_bFirstSliceInSequence         = true;
+Bool  TDecTop::m_checkPocRestrictionsForCurrAu = false;
+Int   TDecTop::m_pocResetIdcOrCurrAu           = -1;
+Bool  TDecTop::m_baseLayerIdrFlag              = false;
+Bool  TDecTop::m_baseLayerPicPresentFlag       = false;
+Bool  TDecTop::m_baseLayerIrapFlag             = false;
+Bool  TDecTop::m_nonBaseIdrPresentFlag         = false;
+Int   TDecTop::m_nonBaseIdrType                = -1;
+Bool  TDecTop::m_picNonIdrWithRadlPresentFlag  = false;
+Bool  TDecTop::m_picNonIdrNoLpPresentFlag      = false;
+Int   TDecTop::m_crossLayerPocResetPeriodId    = -1;
+Int   TDecTop::m_crossLayerPocResetIdc         = -1;
 #endif
 
 //! \ingroup TLibDecoder
@@ -2577,9 +2577,6 @@ Void TDecTop::xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, c
     if( !pic->equalPictureSizeAndOffsetFlag(i) || !sameBitDepths 
 #if CGS_3D_ASYMLUT
       || pps.getCGSFlag() > 0
-#endif
-#if LAYER_CTB
-      || pcTDecTopBase->getActiveSPS()->getMaxCUWidth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUWidth() || pcTDecTopBase->getActiveSPS()->getMaxCUHeight() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUHeight() || pcTDecTopBase->getActiveSPS()->getMaxCUDepth() != m_ppcTDecTop[m_layerId]->getActiveSPS()->getMaxCUDepth()
 #endif
       )
     {

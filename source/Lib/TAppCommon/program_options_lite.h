@@ -65,11 +65,19 @@ namespace df
 
     struct ErrorReporter
     {
-      ErrorReporter() : is_errored(0) {}
+      ErrorReporter()
+      : is_errored(0)
+#if 1 //SVC_EXTENSION
+      , verbose(true)
+#endif
+      {}
       virtual ~ErrorReporter() {}
       virtual std::ostream& error(const std::string& where);
       virtual std::ostream& warn(const std::string& where);
       bool is_errored;
+#if 1 //SVC_EXTENSION
+      bool verbose;
+#endif
     };
 
     extern ErrorReporter default_error_reporter;

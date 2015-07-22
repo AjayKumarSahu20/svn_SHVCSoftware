@@ -121,10 +121,7 @@ TAppEncCfg::TAppEncCfg()
 , m_scalingListFile()
 , m_elRapSliceBEnabled(0)
 {
-  for(UInt layer=0; layer<MAX_LAYERS; layer++)
-  {
-    m_acLayerCfg[layer].setAppEncCfg(this);
-  }
+  memset( m_apcLayerCfg, NULL, sizeof(m_apcLayerCfg) );
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
 }
 #else
@@ -185,22 +182,27 @@ Void TAppEncCfg::create()
 Void TAppEncCfg::destroy()
 {
 #if SVC_EXTENSION
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  for( Int layer = 0; layer < m_numLayers; layer++ )
   {
-    if( m_acLayerCfg[layer].m_numSamplePredRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numSamplePredRefLayers > 0 )
     {
-      delete [] m_acLayerCfg[layer].m_samplePredRefLayerIds;
-      m_acLayerCfg[layer].m_samplePredRefLayerIds = NULL;
+      delete [] m_apcLayerCfg[layer]->m_samplePredRefLayerIds;
+      m_apcLayerCfg[layer]->m_samplePredRefLayerIds = NULL;
     }
-    if( m_acLayerCfg[layer].m_numMotionPredRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numMotionPredRefLayers > 0 )
     {
-      delete [] m_acLayerCfg[layer].m_motionPredRefLayerIds;
-      m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
+      delete [] m_apcLayerCfg[layer]->m_motionPredRefLayerIds;
+      m_apcLayerCfg[layer]->m_motionPredRefLayerIds = NULL;
     }
-    if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numActiveRefLayers > 0 )
     {
-      delete [] m_acLayerCfg[layer].m_predLayerIds;
-      m_acLayerCfg[layer].m_predLayerIds = NULL;
+      delete [] m_apcLayerCfg[layer]->m_predLayerIds;
+      m_apcLayerCfg[layer]->m_predLayerIds = NULL;
+    }
+    if( m_apcLayerCfg[layer] )
+    {
+      delete m_apcLayerCfg[layer];
+      m_apcLayerCfg[layer] = NULL;
     }
   }
 #endif
@@ -751,6 +753,40 @@ automaticallySelectRExtProfile(const Bool bUsingGeneralRExtTools,
 // Public member functions
 // ====================================================================================================================
 
+#if SVC_EXTENSION
+/** \param  argc        number of arguments
+    \param  argv        array of arguments
+    \retval             true when success
+ */
+Bool TAppEncCfg::parseCfgNumLayersAndInit( Int argc, Char* argv[] )
+{
+  po::Options opts;
+  opts.addOptions()
+  ("c",    po::parseConfigFile, "configuration file name")
+  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")
+  ;
+
+  po::setDefaults(opts);
+  po::ErrorReporter err;
+  err.verbose = false;
+  po::scanArgv(opts, argc, (const Char**) argv, err);
+
+  if( m_numLayers <= 0 )
+  {
+    printf("Wrong number of layers %d\n", m_numLayers);
+    return false;
+  }
+
+  for( Int layer = 0; layer < m_numLayers; layer++ )
+  {
+    m_apcLayerCfg[layer] = new TAppEncLayerCfg;
+    m_apcLayerCfg[layer]->setAppEncCfg(this);
+  }
+
+  return true;
+}
+#endif
+
 /** \param  argc        number of arguments
     \param  argv        array of arguments
     \retval             true when success
@@ -865,53 +901,53 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
   Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_IDX_PLUS1];
 
-  for( UInt layer = 0; layer < MAX_LAYERS; layer++ )
+  for( UInt layer = 0; layer < m_numLayers; layer++ )
   {
-    cfg_InputFile[layer]    = &m_acLayerCfg[layer].m_cInputFile;
-    cfg_ReconFile[layer]    = &m_acLayerCfg[layer].m_cReconFile;
-    cfg_fQP[layer]          = &m_acLayerCfg[layer].m_fQP;
+    cfg_InputFile[layer]    = &m_apcLayerCfg[layer]->m_cInputFile;
+    cfg_ReconFile[layer]    = &m_apcLayerCfg[layer]->m_cReconFile;
+    cfg_fQP[layer]          = &m_apcLayerCfg[layer]->m_fQP;
 #if Q0074_COLOUR_REMAPPING_SEI
-    cfg_colourRemapSEIFileRoot[layer] = &m_acLayerCfg[layer].m_colourRemapSEIFileRoot;
+    cfg_colourRemapSEIFileRoot[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
 #endif
-    cfg_repFormatIdx[layer]         = &m_acLayerCfg[layer].m_repFormatIdx;
-    cfg_layerId[layer]              = &m_acLayerCfg[layer].m_layerId;
-    cfg_SourceWidth[layer]          = &m_acLayerCfg[layer].m_iSourceWidth;
-    cfg_SourceHeight[layer]         = &m_acLayerCfg[layer].m_iSourceHeight;
-    cfg_FrameRate[layer]            = &m_acLayerCfg[layer].m_iFrameRate; 
-    cfg_IntraPeriod[layer]          = &m_acLayerCfg[layer].m_iIntraPeriod; 
-    cfg_conformanceMode[layer]      = &m_acLayerCfg[layer].m_conformanceMode;
-    cfg_confWinLeft[layer]          = &m_acLayerCfg[layer].m_confWinLeft;
-    cfg_confWinRight[layer]         = &m_acLayerCfg[layer].m_confWinRight;
-    cfg_confWinTop[layer]           = &m_acLayerCfg[layer].m_confWinTop;
-    cfg_confWinBottom[layer]        = &m_acLayerCfg[layer].m_confWinBottom;
-    cfg_aiPadX[layer]               = &m_acLayerCfg[layer].m_aiPad[0];
-    cfg_aiPadY[layer]               = &m_acLayerCfg[layer].m_aiPad[1];
-    cfg_useExtendedPrecision[layer] = &m_acLayerCfg[layer].m_extendedPrecisionProcessingFlag;
+    cfg_repFormatIdx[layer]         = &m_apcLayerCfg[layer]->m_repFormatIdx;
+    cfg_layerId[layer]              = &m_apcLayerCfg[layer]->m_layerId;
+    cfg_SourceWidth[layer]          = &m_apcLayerCfg[layer]->m_iSourceWidth;
+    cfg_SourceHeight[layer]         = &m_apcLayerCfg[layer]->m_iSourceHeight;
+    cfg_FrameRate[layer]            = &m_apcLayerCfg[layer]->m_iFrameRate; 
+    cfg_IntraPeriod[layer]          = &m_apcLayerCfg[layer]->m_iIntraPeriod; 
+    cfg_conformanceMode[layer]      = &m_apcLayerCfg[layer]->m_conformanceMode;
+    cfg_confWinLeft[layer]          = &m_apcLayerCfg[layer]->m_confWinLeft;
+    cfg_confWinRight[layer]         = &m_apcLayerCfg[layer]->m_confWinRight;
+    cfg_confWinTop[layer]           = &m_apcLayerCfg[layer]->m_confWinTop;
+    cfg_confWinBottom[layer]        = &m_apcLayerCfg[layer]->m_confWinBottom;
+    cfg_aiPadX[layer]               = &m_apcLayerCfg[layer]->m_aiPad[0];
+    cfg_aiPadY[layer]               = &m_apcLayerCfg[layer]->m_aiPad[1];
+    cfg_useExtendedPrecision[layer] = &m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag;
 
-    cfg_maxCuDQPDepth[layer]        = &m_acLayerCfg[layer].m_iMaxCuDQPDepth;
+    cfg_maxCuDQPDepth[layer]        = &m_apcLayerCfg[layer]->m_iMaxCuDQPDepth;
 
     // coding unit (CU) definition
-    cfg_uiMaxCUWidth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUWidth;
-    cfg_uiMaxCUHeight[layer] = &m_acLayerCfg[layer].m_uiMaxCUHeight;
-    cfg_uiMaxCUDepth[layer]  = &m_acLayerCfg[layer].m_uiMaxCUDepth;
+    cfg_uiMaxCUWidth[layer]  = &m_apcLayerCfg[layer]->m_uiMaxCUWidth;
+    cfg_uiMaxCUHeight[layer] = &m_apcLayerCfg[layer]->m_uiMaxCUHeight;
+    cfg_uiMaxCUDepth[layer]  = &m_apcLayerCfg[layer]->m_uiMaxCUDepth;
 
     // transfom unit (TU) definition.
-    cfg_uiQuadtreeTULog2MaxSize[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTULog2MaxSize;
-    cfg_uiQuadtreeTULog2MinSize[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTULog2MinSize;
+    cfg_uiQuadtreeTULog2MaxSize[layer] = &m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MaxSize;
+    cfg_uiQuadtreeTULog2MinSize[layer] = &m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MinSize;
 
-    cfg_uiQuadtreeTUMaxDepthInter[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthInter;
-    cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_acLayerCfg[layer].m_uiQuadtreeTUMaxDepthIntra;
+    cfg_uiQuadtreeTUMaxDepthInter[layer] = &m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthInter;
+    cfg_uiQuadtreeTUMaxDepthIntra[layer] = &m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthIntra;
 
-    cfg_numSamplePredRefLayers  [layer] = &m_acLayerCfg[layer].m_numSamplePredRefLayers;
+    cfg_numSamplePredRefLayers  [layer] = &m_apcLayerCfg[layer]->m_numSamplePredRefLayers;
     cfg_samplePredRefLayerIdsPtr[layer] = &cfg_samplePredRefLayerIds[layer];
-    cfg_numMotionPredRefLayers  [layer] = &m_acLayerCfg[layer].m_numMotionPredRefLayers;
+    cfg_numMotionPredRefLayers  [layer] = &m_apcLayerCfg[layer]->m_numMotionPredRefLayers;
     cfg_motionPredRefLayerIdsPtr[layer] = &cfg_motionPredRefLayerIds[layer];
-    cfg_numActiveRefLayers  [layer] = &m_acLayerCfg[layer].m_numActiveRefLayers;
+    cfg_numActiveRefLayers  [layer] = &m_apcLayerCfg[layer]->m_numActiveRefLayers;
     cfg_predLayerIdsPtr     [layer] = &cfg_predLayerIds[layer];
 
-    cfg_numRefLayerLocationOffsets [layer] = &m_acLayerCfg[layer].m_numRefLayerLocationOffsets;
-    cfg_waveFrontSynchro[layer]  = &m_acLayerCfg[layer].m_waveFrontSynchro;
-    for(Int i = 0; i < MAX_LAYERS; i++)
+    cfg_numRefLayerLocationOffsets [layer] = &m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets;
+    cfg_waveFrontSynchro[layer]  = &m_apcLayerCfg[layer]->m_waveFrontSynchro;
+    for(Int i = 0; i < m_numLayers; i++)
     {
       cfg_refLocationOffsetLayerIdPtr  [layer] = &cfg_refLocationOffsetLayerId[layer];
       cfg_scaledRefLayerLeftOffsetPtr  [layer] = &cfg_scaledRefLayerLeftOffset[layer];
@@ -931,29 +967,29 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       cfg_phaseVerChromaPtr [layer] = &cfg_phaseVerChroma [layer];
     }
 #if RC_SHVC_HARMONIZATION
-    cfg_RCEnableRateControl[layer]   = &m_acLayerCfg[layer].m_RCEnableRateControl;
-    cfg_RCTargetBitRate[layer]       = &m_acLayerCfg[layer].m_RCTargetBitrate;
-    cfg_RCKeepHierarchicalBit[layer] = &m_acLayerCfg[layer].m_RCKeepHierarchicalBit;
-    cfg_RCLCULevelRC[layer]          = &m_acLayerCfg[layer].m_RCLCULevelRC;
-    cfg_RCUseLCUSeparateModel[layer] = &m_acLayerCfg[layer].m_RCUseLCUSeparateModel;
-    cfg_RCInitialQP[layer]           = &m_acLayerCfg[layer].m_RCInitialQP;
-    cfg_RCForceIntraQP[layer]        = &m_acLayerCfg[layer].m_RCForceIntraQP;
+    cfg_RCEnableRateControl[layer]   = &m_apcLayerCfg[layer]->m_RCEnableRateControl;
+    cfg_RCTargetBitRate[layer]       = &m_apcLayerCfg[layer]->m_RCTargetBitrate;
+    cfg_RCKeepHierarchicalBit[layer] = &m_apcLayerCfg[layer]->m_RCKeepHierarchicalBit;
+    cfg_RCLCULevelRC[layer]          = &m_apcLayerCfg[layer]->m_RCLCULevelRC;
+    cfg_RCUseLCUSeparateModel[layer] = &m_apcLayerCfg[layer]->m_RCUseLCUSeparateModel;
+    cfg_RCInitialQP[layer]           = &m_apcLayerCfg[layer]->m_RCInitialQP;
+    cfg_RCForceIntraQP[layer]        = &m_apcLayerCfg[layer]->m_RCForceIntraQP;
 #endif
 
-    cfg_InputBitDepth   [CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_LUMA];
-    cfg_InternalBitDepth[CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA];
-    cfg_OutputBitDepth  [CHANNEL_TYPE_LUMA][layer] = &m_acLayerCfg[layer].m_outputBitDepth[CHANNEL_TYPE_LUMA];
-    cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA];
-    cfg_InputBitDepth   [CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_inputBitDepth[CHANNEL_TYPE_CHROMA];
-    cfg_OutputBitDepth  [CHANNEL_TYPE_CHROMA][layer] = &m_acLayerCfg[layer].m_outputBitDepth[CHANNEL_TYPE_CHROMA];
+    cfg_InputBitDepth   [CHANNEL_TYPE_LUMA][layer] = &m_apcLayerCfg[layer]->m_inputBitDepth[CHANNEL_TYPE_LUMA];
+    cfg_InternalBitDepth[CHANNEL_TYPE_LUMA][layer] = &m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA];
+    cfg_OutputBitDepth  [CHANNEL_TYPE_LUMA][layer] = &m_apcLayerCfg[layer]->m_outputBitDepth[CHANNEL_TYPE_LUMA];
+    cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA][layer] = &m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA];
+    cfg_InputBitDepth   [CHANNEL_TYPE_CHROMA][layer] = &m_apcLayerCfg[layer]->m_inputBitDepth[CHANNEL_TYPE_CHROMA];
+    cfg_OutputBitDepth  [CHANNEL_TYPE_CHROMA][layer] = &m_apcLayerCfg[layer]->m_outputBitDepth[CHANNEL_TYPE_CHROMA];
 
-    cfg_maxTidIlRefPicsPlus1[layer] = &m_acLayerCfg[layer].m_maxTidIlRefPicsPlus1;
+    cfg_maxTidIlRefPicsPlus1[layer] = &m_apcLayerCfg[layer]->m_maxTidIlRefPicsPlus1;
 #if AUXILIARY_PICTURES
-    cfg_auxId[layer]                = &m_acLayerCfg[layer].m_auxId; 
+    cfg_auxId[layer]                = &m_apcLayerCfg[layer]->m_auxId; 
 #endif
-    cfg_layerSwitchOffBegin[layer]  = &m_acLayerCfg[layer].m_layerSwitchOffBegin;
-    cfg_layerSwitchOffEnd[layer]    = &m_acLayerCfg[layer].m_layerSwitchOffEnd;
-    cfg_layerPTLIdx[layer]          = &m_acLayerCfg[layer].m_layerPTLIdx; 
+    cfg_layerSwitchOffBegin[layer]  = &m_apcLayerCfg[layer]->m_layerSwitchOffBegin;
+    cfg_layerSwitchOffEnd[layer]    = &m_apcLayerCfg[layer]->m_layerSwitchOffEnd;
+    cfg_layerPTLIdx[layer]          = &m_apcLayerCfg[layer]->m_layerPTLIdx; 
   }
 
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -1063,103 +1099,103 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   // File, I/O and source parameters
 #if SVC_EXTENSION
-  ("InputFile%d,-i%d",                              cfg_InputFile,                      string(""), MAX_LAYERS, "original YUV input file name for layer %d")
-  ("ReconFile%d,-o%d",                              cfg_ReconFile,                      string(""), MAX_LAYERS, "reconstruction YUV input file name for layer %d")
-  ("LayerConfig%d,-lc%d",                           cfg_LayerCfgFile,                   string(""), MAX_LAYERS, "layer %d configuration file name")
-  ("SourceWidth%d,-wdt%d",                          cfg_SourceWidth,                             0, MAX_LAYERS, "Source picture width for layer %d")
-  ("SourceHeight%d,-hgt%d",                         cfg_SourceHeight,                            0, MAX_LAYERS, "Source picture height for layer %d")
-  ("FrameRate%d,-fr%d",                             cfg_FrameRate,                               0, MAX_LAYERS, "Frame rate for layer %d")
-  ("LambdaModifier%d,-LM%d",                        m_adLambdaModifier,                Double(1.0), MAX_TLAYER, "Lambda modifier for temporal layer %d")
-  ("RepFormatIdx%d",                                cfg_repFormatIdx,                           -1, MAX_LAYERS, "Index to the representation format structure used from the VPS")
-  ("LayerId%d",                                     cfg_layerId,                                -1, MAX_LAYERS,  "Layer id")
+  ("InputFile%d,-i%d",                              cfg_InputFile,                    string(""), m_numLayers, "original YUV input file name for layer %d")
+  ("ReconFile%d,-o%d",                              cfg_ReconFile,                    string(""), m_numLayers, "reconstruction YUV input file name for layer %d")
+  ("LayerConfig%d,-lc%d",                           cfg_LayerCfgFile,                 string(""), m_numLayers, "layer %d configuration file name")
+  ("SourceWidth%d,-wdt%d",                          cfg_SourceWidth,                           0, m_numLayers, "Source picture width for layer %d")
+  ("SourceHeight%d,-hgt%d",                         cfg_SourceHeight,                          0, m_numLayers, "Source picture height for layer %d")
+  ("FrameRate%d,-fr%d",                             cfg_FrameRate,                             0, m_numLayers, "Frame rate for layer %d")
+  ("LambdaModifier%d,-LM%d",                        m_adLambdaModifier,               Double(1.0), MAX_TLAYER, "Lambda modifier for temporal layer %d")
+  ("RepFormatIdx%d",                                cfg_repFormatIdx,                         -1, m_numLayers, "Index to the representation format structure used from the VPS")
+  ("LayerId%d",                                     cfg_layerId,                              -1, m_numLayers,  "Layer id")
 
-  ("NumSamplePredRefLayers%d",                      cfg_numSamplePredRefLayers,                 -1, MAX_LAYERS, "Number of sample prediction reference layers")
-  ("SamplePredRefLayerIds%d",                       cfg_samplePredRefLayerIdsPtr,       string(""), MAX_LAYERS, "sample pred reference layer IDs")
-  ("NumMotionPredRefLayers%d",                      cfg_numMotionPredRefLayers,                 -1, MAX_LAYERS, "Number of motion prediction reference layers")
-  ("MotionPredRefLayerIds%d",                       cfg_motionPredRefLayerIdsPtr,       string(""), MAX_LAYERS, "motion pred reference layer IDs")
-  ("NumActiveRefLayers%d",                          cfg_numActiveRefLayers,                     -1, MAX_LAYERS, "Number of active reference layers")
-  ("PredLayerIds%d",                                cfg_predLayerIdsPtr,                string(""), MAX_LAYERS, "inter-layer prediction layer IDs")
+  ("NumSamplePredRefLayers%d",                      cfg_numSamplePredRefLayers,               -1, m_numLayers, "Number of sample prediction reference layers")
+  ("SamplePredRefLayerIds%d",                       cfg_samplePredRefLayerIdsPtr,     string(""), m_numLayers, "sample pred reference layer IDs")
+  ("NumMotionPredRefLayers%d",                      cfg_numMotionPredRefLayers,               -1, m_numLayers, "Number of motion prediction reference layers")
+  ("MotionPredRefLayerIds%d",                       cfg_motionPredRefLayerIdsPtr,     string(""), m_numLayers, "motion pred reference layer IDs")
+  ("NumActiveRefLayers%d",                          cfg_numActiveRefLayers,                   -1, m_numLayers, "Number of active reference layers")
+  ("PredLayerIds%d",                                cfg_predLayerIdsPtr,              string(""), m_numLayers, "inter-layer prediction layer IDs")
 
-  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")  
+  ("NumLayers",                                     m_numLayers,                                            1, "Number of layers to code")  
 
-  ("NumLayerSets",                                  m_numLayerSets,                                          1, "Number of layer sets")
-  ("NumLayerInIdList%d",                            cfg_numLayerInIdList,            0, MAX_VPS_LAYER_IDX_PLUS1, "Number of layers in the set")
-  ("LayerSetLayerIdList%d",                         cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set")
-  ("NumAddLayerSets",                               m_numAddLayerSets,                                       0, "Number of additional layer sets")
-  ("NumHighestLayerIdx%d",                          cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of highest layer idx")
-  ("HighestLayerIdx%d",                             cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Highest layer idx for an additional layer set")
+  ("NumLayerSets",                                  m_numLayerSets,                                         1, "Number of layer sets")
+  ("NumLayerInIdList%d",                            cfg_numLayerInIdList,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of layers in the set")
+  ("LayerSetLayerIdList%d",                   cfg_layerSetLayerIdListPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set")
+  ("NumAddLayerSets",                               m_numAddLayerSets,                                      0, "Number of additional layer sets")
+  ("NumHighestLayerIdx%d",                        cfg_numHighestLayerIdx,          0, MAX_VPS_LAYER_IDX_PLUS1, "Number of highest layer idx")
+  ("HighestLayerIdx%d",                           cfg_highestLayerIdxPtr, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Highest layer idx for an additional layer set")
 
-  ("DefaultTargetOutputLayerIdc",                   m_defaultTargetOutputLayerIdc,                           1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
-  ("NumOutputLayerSets",                            m_numOutputLayerSets,                                    1, "Number of output layer sets excluding the 0-th output layer set")
-  ("NumOutputLayersInOutputLayerSet",               cfg_numOutputLayersInOutputLayerSet,         string(""), 1, "List containing number of output layers in the output layer sets")
-  ("ListOfOutputLayers%d",                          cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
-  ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                       string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
+  ("DefaultTargetOutputLayerIdc",                   m_defaultTargetOutputLayerIdc,                          1, "Default target output layers. 0: All layers are output layer, 1: Only highest layer is output layer, 2 or 3: No default output layers")
+  ("NumOutputLayerSets",                            m_numOutputLayerSets,                                   1, "Number of output layer sets excluding the 0-th output layer set")
+  ("NumOutputLayersInOutputLayerSet",               cfg_numOutputLayersInOutputLayerSet,        string(""), 1, "List containing number of output layers in the output layer sets")
+  ("ListOfOutputLayers%d",                        cfg_listOfOutputLayers, string(""), MAX_VPS_LAYER_IDX_PLUS1, "Layer IDs for the set, in terms of layer ID in the output layer set Range: [0..NumLayersInOutputLayerSet-1]")
+  ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                      string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #if AUXILIARY_PICTURES
-  ("AuxId%d",                                       cfg_auxId,                                   0, MAX_LAYERS, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
+  ("AuxId%d",                                       cfg_auxId,                                 0, m_numLayers, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
-  ("ExtendedPrecision%d",                           cfg_useExtendedPrecision,                false, MAX_LAYERS, "Increased internal accuracies to support high bit depths (not valid in V1 profiles)")
-  ("ConformanceMode%d",                             cfg_conformanceMode,                         0, MAX_LAYERS, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
-  ("ConfLeft%d",                                    cfg_confWinLeft,                             0, MAX_LAYERS, "Deprecated alias of ConfWinLeft")
-  ("ConfRight%d",                                   cfg_confWinRight,                            0, MAX_LAYERS, "Deprecated alias of ConfWinRight")
-  ("ConfTop%d",                                     cfg_confWinTop,                              0, MAX_LAYERS, "Deprecated alias of ConfWinTop")
-  ("ConfBottom%d",                                  cfg_confWinBottom,                           0, MAX_LAYERS, "Deprecated alias of ConfWinBottom")
-  ("ConfWinLeft%d",                                 cfg_confWinLeft,                             0, MAX_LAYERS, "Left offset for window conformance mode 3")
-  ("ConfWinRight%d",                                cfg_confWinRight,                            0, MAX_LAYERS, "Right offset for window conformance mode 3")
-  ("ConfWinTop%d",                                  cfg_confWinTop,                              0, MAX_LAYERS, "Top offset for window conformance mode 3")
-  ("ConfWinBottom%d",                               cfg_confWinBottom,                           0, MAX_LAYERS, "Bottom offset for window conformance mode 3")
-  ("HorizontalPadding%d,-pdx%d",                    cfg_aiPadX,                                  0, MAX_LAYERS, "Horizontal source padding for conformance window mode 2")
-  ("VerticalPadding%d,-pdy%d",                      cfg_aiPadY,                                  0, MAX_LAYERS, "Vertical source padding for conformance window mode 2")
-  ("ScalabilityMask1",                              m_scalabilityMask[VIEW_ORDER_INDEX],                     0, "scalability_mask[1] (multiview)")
-  ("ScalabilityMask2",                              m_scalabilityMask[SCALABILITY_ID],                       1, "scalability_mask[2] (scalable)" )
+  ("ExtendedPrecision%d",                           cfg_useExtendedPrecision,              false, m_numLayers, "Increased internal accuracies to support high bit depths (not valid in V1 profiles)")
+  ("ConformanceMode%d",                             cfg_conformanceMode,                       0, m_numLayers, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
+  ("ConfLeft%d",                                    cfg_confWinLeft,                           0, m_numLayers, "Deprecated alias of ConfWinLeft")
+  ("ConfRight%d",                                   cfg_confWinRight,                          0, m_numLayers, "Deprecated alias of ConfWinRight")
+  ("ConfTop%d",                                     cfg_confWinTop,                            0, m_numLayers, "Deprecated alias of ConfWinTop")
+  ("ConfBottom%d",                                  cfg_confWinBottom,                         0, m_numLayers, "Deprecated alias of ConfWinBottom")
+  ("ConfWinLeft%d",                                 cfg_confWinLeft,                           0, m_numLayers, "Left offset for window conformance mode 3")
+  ("ConfWinRight%d",                                cfg_confWinRight,                          0, m_numLayers, "Right offset for window conformance mode 3")
+  ("ConfWinTop%d",                                  cfg_confWinTop,                            0, m_numLayers, "Top offset for window conformance mode 3")
+  ("ConfWinBottom%d",                               cfg_confWinBottom,                         0, m_numLayers, "Bottom offset for window conformance mode 3")
+  ("HorizontalPadding%d,-pdx%d",                    cfg_aiPadX,                                0, m_numLayers, "Horizontal source padding for conformance window mode 2")
+  ("VerticalPadding%d,-pdy%d",                      cfg_aiPadY,                                0, m_numLayers, "Vertical source padding for conformance window mode 2")
+  ("ScalabilityMask1",                              m_scalabilityMask[VIEW_ORDER_INDEX],                    0, "scalability_mask[1] (multiview)")
+  ("ScalabilityMask2",                              m_scalabilityMask[SCALABILITY_ID],                      1, "scalability_mask[2] (scalable)" )
 #if AUXILIARY_PICTURES
-  ("ScalabilityMask3",                              m_scalabilityMask[AUX_ID],                               0, "scalability_mask[3] (auxiliary pictures)" )
+  ("ScalabilityMask3",                              m_scalabilityMask[AUX_ID],                              0, "scalability_mask[3] (auxiliary pictures)" )
 #endif
-  ("BitstreamFile,b",                               cfg_BitstreamFile, string(""), "Bitstream output file name")
-  ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,              0, MAX_LAYERS,  "Number of reference layer offset sets ")
-  ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,    string(""), MAX_LAYERS, "Layer ID of reference location offset")
-  ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,    string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
+  ("BitstreamFile,b",                               cfg_BitstreamFile,                             string(""), "Bitstream output file name")
+  ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,            0, m_numLayers,  "Number of reference layer offset sets ")
+  ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,  string(""), m_numLayers, "Layer ID of reference location offset")
+  ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,  string(""), m_numLayers, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerTopOffset%d",                     cfg_scaledRefLayerTopOffsetPtr,     string(""), MAX_LAYERS, "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerTopOffset%d",                     cfg_scaledRefLayerTopOffsetPtr,   string(""), m_numLayers, "Vertical offset of top-left luma sample of scaled base layer picture with respect to"
                                                                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerRightOffset%d",                   cfg_scaledRefLayerRightOffsetPtr,   string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerRightOffset%d",                   cfg_scaledRefLayerRightOffsetPtr, string(""), m_numLayers, "Horizontal offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                                                                 " bottom-right luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerBottomOffset%d",                  cfg_scaledRefLayerBottomOffsetPtr,  string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
+  ("ScaledRefLayerBottomOffset%d",                  cfg_scaledRefLayerBottomOffsetPtr,string(""), m_numLayers, "Vertical offset of bottom-right luma sample of scaled base layer picture with respect to"
                                                                                                                 "  bottom-right luma sample of the EL picture, in units of two luma samples")
-  ("ScaledRefLayerOffsetPresentFlag%d",         cfg_scaledRefLayerOffsetPresentFlagPtr, string(""), MAX_LAYERS, "presense flag of scaled reference layer offsets")
-  ("RefRegionOffsetPresentFlag%d",                  cfg_refRegionOffsetPresentFlagPtr,  string(""), MAX_LAYERS, "presense flag of reference region offsets")
-  ("RefRegionLeftOffset%d",                         cfg_refRegionLeftOffsetPtr,         string(""), MAX_LAYERS, "Horizontal offset of top-left luma sample of ref region with respect to"
+  ("ScaledRefLayerOffsetPresentFlag%d",        cfg_scaledRefLayerOffsetPresentFlagPtr,string(""), m_numLayers, "presense flag of scaled reference layer offsets")
+  ("RefRegionOffsetPresentFlag%d",                  cfg_refRegionOffsetPresentFlagPtr,string(""), m_numLayers, "presense flag of reference region offsets")
+  ("RefRegionLeftOffset%d",                         cfg_refRegionLeftOffsetPtr,       string(""), m_numLayers, "Horizontal offset of top-left luma sample of ref region with respect to"
                                                                                                                 "  top-left luma sample of the BL picture, in units of two luma samples")
-  ("RefRegionTopOffset%d",                          cfg_refRegionTopOffsetPtr,          string(""), MAX_LAYERS, "Vertical offset of top-left luma sample of ref region with respect to"
+  ("RefRegionTopOffset%d",                          cfg_refRegionTopOffsetPtr,        string(""), m_numLayers, "Vertical offset of top-left luma sample of ref region with respect to"
                                                                                                                 "  top-left luma sample of the BL picture, in units of two luma samples")
-  ("RefRegionRightOffset%d",                        cfg_refRegionRightOffsetPtr,        string(""), MAX_LAYERS, "Horizontal offset of bottom-right luma sample of ref region with respect to"
+  ("RefRegionRightOffset%d",                        cfg_refRegionRightOffsetPtr,      string(""), m_numLayers, "Horizontal offset of bottom-right luma sample of ref region with respect to"
                                                                                                                 "  bottom-right luma sample of the BL picture, in units of two luma samples")
-  ("RefRegionBottomOffset%d",                       cfg_refRegionBottomOffsetPtr,       string(""), MAX_LAYERS, "Vertical offset of bottom-right luma sample of ref region with respect to"
+  ("RefRegionBottomOffset%d",                       cfg_refRegionBottomOffsetPtr,     string(""), m_numLayers, "Vertical offset of bottom-right luma sample of ref region with respect to"
                                                                                                                 "  bottom-right luma sample of the BL picture, in units of two luma samples")
-  ("ResamplePhaseSetPresentFlag%d",                 cfg_resamplePhaseSetPresentFlagPtr, string(""), MAX_LAYERS, "presense flag of resample phase set")
-  ("PhaseHorLuma%d",                                cfg_phaseHorLumaPtr,                string(""), MAX_LAYERS, "luma shift in the horizontal direction used in resampling proces")
-  ("PhaseVerLuma%d",                                cfg_phaseVerLumaPtr,                string(""), MAX_LAYERS, "luma shift in the vertical   direction used in resampling proces")
-  ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,              string(""), MAX_LAYERS, "chroma shift in the horizontal direction used in resampling proces")
-  ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,              string(""), MAX_LAYERS, "chroma shift in the vertical   direction used in resampling proces")
+  ("ResamplePhaseSetPresentFlag%d",                cfg_resamplePhaseSetPresentFlagPtr,string(""), m_numLayers, "presense flag of resample phase set")
+  ("PhaseHorLuma%d",                                cfg_phaseHorLumaPtr,              string(""), m_numLayers, "luma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerLuma%d",                                cfg_phaseVerLumaPtr,              string(""), m_numLayers, "luma shift in the vertical   direction used in resampling proces")
+  ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,            string(""), m_numLayers, "chroma shift in the horizontal direction used in resampling proces")
+  ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,            string(""), m_numLayers, "chroma shift in the vertical   direction used in resampling proces")
 #if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileRoot,           string(""), MAX_LAYERS, "Colour Remapping Information SEI parameters file name for layer %d")
+  ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileRoot,       string(""), m_numLayers, "Colour Remapping Information SEI parameters file name for layer %d")
 #endif
-  ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],      8, MAX_LAYERS, "Bit-depth of input file for layer %d")
-  ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],   0, MAX_LAYERS, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
+  ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],     8, m_numLayers, "Bit-depth of input file for layer %d")
+  ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],  0, m_numLayers, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
                                                                                                                " If different to InputBitDepth, source data will be converted")
-  ("OutputBitDepth%d",                               cfg_OutputBitDepth[CHANNEL_TYPE_LUMA],     0, MAX_LAYERS, "Bit-depth of output file (default:InternalBitDepth)")
-  ("InputBitDepthC%d",                               cfg_InputBitDepth[CHANNEL_TYPE_CHROMA],    0, MAX_LAYERS, "As per InputBitDepth but for chroma component. (default:InputBitDepth) for layer %d")
-  ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA], 0, MAX_LAYERS, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
-  ("OutputBitDepthC%d",                              cfg_OutputBitDepth[CHANNEL_TYPE_CHROMA],   0, MAX_LAYERS, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
+  ("OutputBitDepth%d",                               cfg_OutputBitDepth[CHANNEL_TYPE_LUMA],    0, m_numLayers, "Bit-depth of output file (default:InternalBitDepth)")
+  ("InputBitDepthC%d",                               cfg_InputBitDepth[CHANNEL_TYPE_CHROMA],   0, m_numLayers, "As per InputBitDepth but for chroma component. (default:InputBitDepth) for layer %d")
+  ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA],0, m_numLayers, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
+  ("OutputBitDepthC%d",                              cfg_OutputBitDepth[CHANNEL_TYPE_CHROMA],  0, m_numLayers, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 
   ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                            false, "max_tid_ref_present_flag (0: not present, 1: present) " )
-  ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                  7, MAX_LAYERS, "allowed maximum temporal_id for inter-layer prediction")
+  ("MaxTidIlRefPicsPlus1%d",                         cfg_maxTidIlRefPicsPlus1,                 7, m_numLayers, "allowed maximum temporal_id for inter-layer prediction")
   ("CrossLayerPictureTypeAlignFlag",                 m_crossLayerPictureTypeAlignFlag,                   true, "align picture type across layers" )  
   ("CrossLayerIrapAlignFlag",                        m_crossLayerIrapAlignFlag,                          true, "align IRAP across layers" )  
   ("CrossLayerAlignedIdrOnlyFlag",                   m_crossLayerAlignedIdrOnlyFlag,                     true, "only idr for IRAP across layers" )  
-  ("InterLayerWeightedPred",                          m_useInterLayerWeightedPred,                       false, "enable IL WP parameters estimation at encoder" )  
+  ("InterLayerWeightedPred",                          m_useInterLayerWeightedPred,                      false, "enable IL WP parameters estimation at encoder" )  
 #if AVC_BASE
-  ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                                0, "BL is available but not internal")
-  ("InputBLFile,-ibl",                                cfg_BLInputFile,                              string(""), "Base layer rec YUV input file name")
+  ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                               0, "BL is available but not internal")
+  ("InputBLFile,-ibl",                                cfg_BLInputFile,                             string(""), "Base layer rec YUV input file name")
 #endif
   ("EnableElRapB,-use-rap-b",                         m_elRapSliceBEnabled,                                 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
   ("InputChromaFormat",                               tmpInputChromaFormat,                               420, "InputChromaFormatIDC")
@@ -1233,30 +1269,30 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("MaxChromaFormatConstraint",                       tmpConstraintChromaFormat,                            0, "Chroma-format to use for the profile-constraint for RExt profiles. 0=automatically choose based upon other parameters")
   ("IntraConstraintFlag",                             tmpIntraConstraintFlag,                           false, "Value of general_intra_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
   ("OnePictureOnlyConstraintFlag",                    tmpOnePictureOnlyConstraintFlag,                  false, "Value of general_one_picture_only_constraint_flag to use for RExt profiles (not used if an explicit RExt sub-profile is specified)")
-  ("LowerBitRateConstraintFlag",                      tmpLowerBitRateConstraintFlag,                      true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
+  ("LowerBitRateConstraintFlag",                      tmpLowerBitRateConstraintFlag,                     true, "Value of general_lower_bit_rate_constraint_flag to use for RExt profiles")
 
-  ("ProfileCompatibility%d",                          m_profileCompatibility, Profile::NONE, (MAX_NUM_LAYER_IDS + 1), "Compatible profile to be used when encoding")
-  ("ProgressiveSource%d",                             m_progressiveSourceFlagList,   false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is progressive")
-  ("InterlacedSource%d",                              m_interlacedSourceFlagList,    false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is interlaced")
-  ("NonPackedSource%d",                               m_nonPackedConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source does not contain frame packing")
-  ("FrameOnly%d",                                     m_frameOnlyConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that the bitstream contains only frames")
+  ("ProfileCompatibility%d",                   m_profileCompatibility, Profile::NONE, (MAX_NUM_LAYER_IDS + 1), "Compatible profile to be used when encoding")
+  ("ProgressiveSource%d",                       m_progressiveSourceFlagList,   false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is progressive")
+  ("InterlacedSource%d",                        m_interlacedSourceFlagList,    false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source is interlaced")
+  ("NonPackedSource%d",                         m_nonPackedConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that source does not contain frame packing")
+  ("FrameOnly%d",                               m_frameOnlyConstraintFlagList, false, (MAX_NUM_LAYER_IDS + 1), "Indicate that the bitstream contains only frames")
   
-  ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,               0, MAX_VPS_LAYER_IDX_PLUS1, "Index of PTL for each layer")
-  ("ListOfProfileTierLevelOls%d",                     cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
+  ("LayerPTLIndex%d",                                 cfg_layerPTLIdx,                         0, m_numLayers, "Index of PTL for each layer")
+  ("ListOfProfileTierLevelOls%d",       cfg_listOfLayerPTLOfOlss, string(""), MAX_VPS_OUTPUT_LAYER_SETS_PLUS1, "PTL Index for each layer in each OLS except the first OLS. The PTL index for layer in the first OLS is set to 1")
 
   // Unit definition parameters
-  ("MaxCUWidth%d",                                    cfg_uiMaxCUWidth,                       64u, MAX_LAYERS, "Maximum CU width")
-  ("MaxCUHeight%d",                                   cfg_uiMaxCUHeight,                      64u, MAX_LAYERS, "Maximum CU height")
+  ("MaxCUWidth%d",                                    cfg_uiMaxCUWidth,                      64u, m_numLayers, "Maximum CU width")
+  ("MaxCUHeight%d",                                   cfg_uiMaxCUHeight,                     64u, m_numLayers, "Maximum CU height")
   // todo: remove defaults from MaxCUSize
-  ("MaxCUSize%d,s",                                   cfg_uiMaxCUWidth,                       64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxCUSize%d,s",                                   cfg_uiMaxCUHeight,                      64u, MAX_LAYERS, "Maximum CU size")
-  ("MaxPartitionDepth%d,h%d",                         cfg_uiMaxCUDepth,                        4u, MAX_LAYERS, "CU depth")
+  ("MaxCUSize%d,s",                                   cfg_uiMaxCUWidth,                      64u, m_numLayers, "Maximum CU size")
+  ("MaxCUSize%d,s",                                   cfg_uiMaxCUHeight,                     64u, m_numLayers, "Maximum CU size")
+  ("MaxPartitionDepth%d,h%d",                         cfg_uiMaxCUDepth,                       4u, m_numLayers, "CU depth")
 
-  ("QuadtreeTULog2MaxSize%d",                         cfg_uiQuadtreeTULog2MaxSize,             5u, MAX_LAYERS, "Maximum TU size in logarithm base 2")
-  ("QuadtreeTULog2MinSize%d",                         cfg_uiQuadtreeTULog2MinSize,             2u, MAX_LAYERS, "Minimum TU size in logarithm base 2")
+  ("QuadtreeTULog2MaxSize%d",                         cfg_uiQuadtreeTULog2MaxSize,            5u, m_numLayers, "Maximum TU size in logarithm base 2")
+  ("QuadtreeTULog2MinSize%d",                         cfg_uiQuadtreeTULog2MinSize,            2u, m_numLayers, "Minimum TU size in logarithm base 2")
                                                                                                
-  ("QuadtreeTUMaxDepthIntra%d",                       cfg_uiQuadtreeTUMaxDepthIntra,           3u, MAX_LAYERS, "Depth of TU tree for intra CUs")
-  ("QuadtreeTUMaxDepthInter%d",                       cfg_uiQuadtreeTUMaxDepthInter,           3u, MAX_LAYERS, "Depth of TU tree for inter CUs") 
+  ("QuadtreeTUMaxDepthIntra%d",                       cfg_uiQuadtreeTUMaxDepthIntra,          3u, m_numLayers, "Depth of TU tree for intra CUs")
+  ("QuadtreeTUMaxDepthInter%d",                       cfg_uiQuadtreeTUMaxDepthInter,          3u, m_numLayers, "Depth of TU tree for inter CUs") 
 #else
   ("Profile",                                         extendedProfile,                                   NONE, "Profile name to use for encoding. Use main (for main), main10 (for main10), main-still-picture, main-RExt (for Range Extensions profile), any of the RExt specific profile names, or none")
   ("Level",                                           m_level,                                    Level::NONE, "Level limit to be used, eg 5.1, or none")
@@ -1290,7 +1326,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   
   // Coding structure paramters
 #if SVC_EXTENSION
-  ("IntraPeriod%d,-ip%d",                             cfg_IntraPeriod, -1, MAX_LAYERS, "intra period in frames for layer %d, (-1: only first frame)")
+  ("IntraPeriod%d,-ip%d",                             cfg_IntraPeriod,                        -1, m_numLayers, "intra period in frames for layer %d, (-1: only first frame)")
 #else
   ("IntraPeriod,-ip",                                 m_iIntraPeriod,                                      -1, "Intra period in frames, (-1: only first frame)")
 #endif
@@ -1309,7 +1345,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ASR",                                             m_bUseASR,                                        false, "Adaptive motion search range")
 
 #if SVC_EXTENSION
-  ("LambdaModifier%d,-LM%d",                          m_adLambdaModifier, ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
+  ("LambdaModifier%d,-LM%d",                          m_adLambdaModifier,           ( double )1.0, MAX_TLAYER, "Lambda modifier for temporal layer %d")
 #else
   // Mode decision parameters
   // Mode decision parameters
@@ -1324,14 +1360,14 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   /* Quantization parameters */
 #if SVC_EXTENSION
-  ("QP%d,-q%d",                                       cfg_fQP,  30.0, MAX_LAYERS, "Qp value for layer %d, if value is float, QP is switched once during encoding")
+  ("QP%d,-q%d",                                                                   cfg_fQP,  30.0, m_numLayers, "Qp value for layer %d, if value is float, QP is switched once during encoding")
 #else
   ("QP,q",                                            m_fQP,                                             30.0, "Qp value, if value is float, QP is switched once during encoding")
 #endif
   ("DeltaQpRD,-dqr",                                  m_uiDeltaQpRD,                                       0u, "max dQp offset for slice")
   ("MaxDeltaQP,d",                                    m_iMaxDeltaQP,                                        0, "max dQp offset for block")
 #if SVC_EXTENSION
-  ("MaxCuDQPDepth%d,-dqd",                            cfg_maxCuDQPDepth,                        0, MAX_LAYERS, "max depth for a minimum CuDQP")
+  ("MaxCuDQPDepth%d,-dqd",                            cfg_maxCuDQPDepth,                       0, m_numLayers, "max depth for a minimum CuDQP")
 #else
   ("MaxCuDQPDepth,-dqd",                              m_iMaxCuDQPDepth,                                     0, "max depth for a minimum CuDQP")
 #endif
@@ -1412,18 +1448,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("WeightedPredB,-wpB",                              m_useWeightedBiPred,                              false, "Use weighted (bidirectional) prediction in B slices")
   ("Log2ParallelMergeLevel",                          m_log2ParallelMergeLevel,                            2u, "Parallel merge estimation region")
     //deprecated copies of renamed tile parameters
-  ("UniformSpacingIdc",                               m_tileUniformSpacingFlag,                         false,      "deprecated alias of TileUniformSpacing")
+  ("UniformSpacingIdc",                               m_tileUniformSpacingFlag,                         false, "deprecated alias of TileUniformSpacing")
   ("ColumnWidthArray",                                cfg_ColumnWidth,                        cfg_ColumnWidth, "deprecated alias of TileColumnWidthArray")
   ("RowHeightArray",                                  cfg_RowHeight,                            cfg_RowHeight, "deprecated alias of TileRowHeightArray")
 
-  ("TileUniformSpacing",                              m_tileUniformSpacingFlag,                         false,      "Indicates that tile columns and rows are distributed uniformly")
-  ("NumTileColumnsMinus1",                            m_numTileColumnsMinus1,                               0,          "Number of tile columns in a picture minus 1")
-  ("NumTileRowsMinus1",                               m_numTileRowsMinus1,                                  0,          "Number of rows in a picture minus 1")
+  ("TileUniformSpacing",                              m_tileUniformSpacingFlag,                         false, "Indicates that tile columns and rows are distributed uniformly")
+  ("NumTileColumnsMinus1",                            m_numTileColumnsMinus1,                               0, "Number of tile columns in a picture minus 1")
+  ("NumTileRowsMinus1",                               m_numTileRowsMinus1,                                  0, "Number of rows in a picture minus 1")
   ("TileColumnWidthArray",                            cfg_ColumnWidth,                        cfg_ColumnWidth, "Array containing tile column width values in units of CTU")
   ("TileRowHeightArray",                              cfg_RowHeight,                            cfg_RowHeight, "Array containing tile row height values in units of CTU")
   ("LFCrossTileBoundaryFlag",                         m_bLFCrossTileBoundaryFlag,                        true, "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
 #if SVC_EXTENSION
-  ("WaveFrontSynchro%d",                              cfg_waveFrontSynchro,             0,  MAX_LAYERS,          "0: no synchro; 1 synchro with TR; 2 TRR etc")
+  ("WaveFrontSynchro%d",                              cfg_waveFrontSynchro,                   0,  m_numLayers, "0: no synchro; 1 synchro with TR; 2 TRR etc")
 #else
   ("WaveFrontSynchro",                                m_iWaveFrontSynchro,                                  0, "0: no synchro; 1 synchro with top-right-right")
 #endif
@@ -1447,13 +1483,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("FIS",                                             m_useFastIntraScalable, false, "Fast Intra Decision for Scalable HEVC")
 #endif
 #if RC_SHVC_HARMONIZATION
-  ("RateControl%d",                                   cfg_RCEnableRateControl, false, MAX_LAYERS, "Rate control: enable rate control for layer %d")
-  ("TargetBitrate%d",                                 cfg_RCTargetBitRate, 0, MAX_LAYERS, "Rate control: target bitrate for layer %d")
-  ("KeepHierarchicalBit%d",                           cfg_RCKeepHierarchicalBit, false, MAX_LAYERS, "Rate control: keep hierarchical bit allocation for layer %d")
-  ("LCULevelRateControl%d",                           cfg_RCLCULevelRC, true, MAX_LAYERS, "Rate control: LCU level RC")
-  ("RCLCUSeparateModel%d",                            cfg_RCUseLCUSeparateModel, true, MAX_LAYERS, "Rate control: Use LCU level separate R-lambda model")
-  ("InitialQP%d",                                     cfg_RCInitialQP, 0, MAX_LAYERS, "Rate control: initial QP")
-  ("RCForceIntraQP%d",                                cfg_RCForceIntraQP, false, MAX_LAYERS, "Rate control: force intra QP to be equal to initial QP")
+  ("RateControl%d",                                   cfg_RCEnableRateControl,             false, m_numLayers, "Rate control: enable rate control for layer %d")
+  ("TargetBitrate%d",                                 cfg_RCTargetBitRate,                     0, m_numLayers, "Rate control: target bitrate for layer %d")
+  ("KeepHierarchicalBit%d",                           cfg_RCKeepHierarchicalBit,           false, m_numLayers, "Rate control: keep hierarchical bit allocation for layer %d")
+  ("LCULevelRateControl%d",                           cfg_RCLCULevelRC,                     true, m_numLayers, "Rate control: LCU level RC")
+  ("RCLCUSeparateModel%d",                            cfg_RCUseLCUSeparateModel,            true, m_numLayers, "Rate control: Use LCU level separate R-lambda model")
+  ("InitialQP%d",                                     cfg_RCInitialQP,                         0, m_numLayers, "Rate control: initial QP")
+  ("RCForceIntraQP%d",                                cfg_RCForceIntraQP,                  false, m_numLayers, "Rate control: force intra QP to be equal to initial QP")
 #else
   ( "RateControl",                                    m_RCEnableRateControl,                            false, "Rate control: enable rate control" )
   ( "TargetBitrate",                                  m_RCTargetBitrate,                                    0, "Rate control: target bit-rate" )
@@ -1675,28 +1711,28 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0189_TMVP_CONSTRAINTS
   ("SEITemporalMotionVectorPredictionConstraints",             m_TMVPConstraintsSEIEnabled,              0, "Control generation of TMVP constrants SEI message")
 #endif
-  ("AdaptiveResolutionChange",     m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
-  ("LayerSwitchOffBegin%d", cfg_layerSwitchOffBegin, 0, MAX_LAYERS, "Switch layer %d off after given poc")
-  ("LayerSwitchOffEnd%d", cfg_layerSwitchOffEnd, 0, MAX_LAYERS, "Switch layer %d on at given poc")
-  ("SkipPictureAtArcSwitch",     m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
+  ("AdaptiveResolutionChange",                                  m_adaptiveResolutionChange, 0, "Adaptive resolution change frame number. Should coincide with EL RAP picture. (0: disable)")
+  ("LayerSwitchOffBegin%d",                           cfg_layerSwitchOffBegin, 0, m_numLayers, "Switch layer %d off after given poc")
+  ("LayerSwitchOffEnd%d",                               cfg_layerSwitchOffEnd, 0, m_numLayers, "Switch layer %d on at given poc")
+  ("SkipPictureAtArcSwitch",                                  m_skipPictureAtArcSwitch, false, "Code the higher layer picture in ARC up-switching as a skip picture. (0: disable)")
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  ("SEIInterLayerConstrainedTileSets", m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
-  ("IlNumSetsInMessage",               m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
-  ("TileSetsArray",                    cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
+  ("SEIInterLayerConstrainedTileSets",       m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
+  ("IlNumSetsInMessage",                     m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
+  ("TileSetsArray",                          cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
-  ("AltOutputLayerFlag",               m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
-  ("CrossLayerBLAFlag",                m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
+  ("AltOutputLayerFlag",                     m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
+  ("CrossLayerBLAFlag",                      m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
 #if CGS_3D_ASYMLUT
-  ("CGS",     m_nCGSFlag , 0, "whether CGS is enabled")
-  ("CGSMaxOctantDepth", m_nCGSMaxOctantDepth , 1, "max octant depth")
-  ("CGSMaxYPartNumLog",  m_nCGSMaxYPartNumLog2 , 2, "max Y part number ")
-  ("CGSLUTBit",     m_nCGSLUTBit , 12, "bit depth of CGS LUT")
-  ("CGSAdaptC",     m_nCGSAdaptiveChroma , 1, "adaptive chroma partition (only for the case of two chroma partitions)")
+  ("CGS",                                                                       m_nCGSFlag, 0, "whether CGS is enabled")
+  ("CGSMaxOctantDepth",                                               m_nCGSMaxOctantDepth, 1, "max octant depth")
+  ("CGSMaxYPartNumLog",                                              m_nCGSMaxYPartNumLog2, 2, "max Y part number ")
+  ("CGSLUTBit",                                                              m_nCGSLUTBit, 12, "bit depth of CGS LUT")
+  ("CGSAdaptC",                                                       m_nCGSAdaptiveChroma, 1, "adaptive chroma partition (only for the case of two chroma partitions)")
 #if R0179_ENC_OPT_3DLUT_SIZE
-  ("CGSSizeRDO",     m_nCGSLutSizeRDO , 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
+  ("CGSSizeRDO",                                                          m_nCGSLutSizeRDO, 0, "RDOpt selection of best table size (effective when large maximum table size such as 8x8x8 is used)")
 #endif
 #endif
-  ("InheritCodingStruct%d",m_inheritCodingStruct, 0, MAX_LAYERS, "Predicts the GOP structure of one layer for another layer")
+  ("InheritCodingStruct%d",                             m_inheritCodingStruct, 0, m_numLayers, "Predicts the GOP structure of one layer for another layer")
 #endif //SVC_EXTENSION
   ;
 
@@ -1708,7 +1744,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
 #if SVC_EXTENSION
-  for (Int i=1; i<MAX_LAYERS; i++)
+  for (Int i=1; i<m_numLayers; i++)
   {
     for(Int j=1; j<MAX_GOP+1; j++)
     { 
@@ -1724,7 +1760,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv, err);
 
 #if SVC_EXTENSION
-  for (Int i=1; i<MAX_LAYERS; i++)
+  for (Int i=1; i<m_numLayers; i++)
   {
     if(m_inheritCodingStruct[i] == 0)
     {
@@ -1794,12 +1830,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   if(m_isField)
   {
 #if SVC_EXTENSION
-    for(Int layer = 0; layer < MAX_LAYERS; layer++)
+    for(Int layer = 0; layer < m_numLayers; layer++)
     {
       //Frame height
-      m_acLayerCfg[layer].m_iSourceHeightOrg = m_acLayerCfg[layer].m_iSourceHeight;
+      m_apcLayerCfg[layer]->m_iSourceHeightOrg = m_apcLayerCfg[layer]->m_iSourceHeight;
       //Field height
-      m_acLayerCfg[layer].m_iSourceHeight = m_acLayerCfg[layer].m_iSourceHeight >> 1;
+      m_apcLayerCfg[layer]->m_iSourceHeight = m_apcLayerCfg[layer]->m_iSourceHeight >> 1;
     }
 #else
     //Frame height
@@ -1869,64 +1905,64 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   
   /* rules for input, output and internal bitdepths as per help text */
 #if SVC_EXTENSION
-  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
+  for( Int layer = 0; layer < m_numLayers; layer++ )
   {
-    if( m_acLayerCfg[layer].m_layerId < 0 )
+    if( m_apcLayerCfg[layer]->m_layerId < 0 )
     {
-      m_acLayerCfg[layer].m_layerId = layer;
+      m_apcLayerCfg[layer]->m_layerId = layer;
     }
 
-    m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
-    m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
+    m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
+    m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
 
-    if (m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-    if (m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-    if (m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-    if (m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-    if (m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_acLayerCfg[layer].m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layer].m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
+    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
+    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
+    if (m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
+    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
+    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
 
-    m_acLayerCfg[layer].m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
-    m_acLayerCfg[layer].m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_acLayerCfg[layer].m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
+    m_apcLayerCfg[layer]->m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
+    m_apcLayerCfg[layer]->m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_apcLayerCfg[layer]->m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 
-    m_acLayerCfg[layer].m_highPrecisionOffsetsEnabledFlag = false;
-    m_acLayerCfg[layer].m_extendedPrecisionProcessingFlag = false;
+    m_apcLayerCfg[layer]->m_highPrecisionOffsetsEnabledFlag = false;
+    m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag = false;
 
-    if( m_acLayerCfg[layer].m_layerSwitchOffBegin < m_acLayerCfg[layer].m_layerSwitchOffEnd )
+    if( m_apcLayerCfg[layer]->m_layerSwitchOffBegin < m_apcLayerCfg[layer]->m_layerSwitchOffEnd )
     {
-      if( m_iGOPSize > 0 && (m_acLayerCfg[layer].m_layerSwitchOffBegin % m_iGOPSize) != 0 )
+      if( m_iGOPSize > 0 && (m_apcLayerCfg[layer]->m_layerSwitchOffBegin % m_iGOPSize) != 0 )
       {
         printf("LayerSwitchOffBegin%d: Must be multiple of GOP size.\n", layer);
         exit(EXIT_FAILURE);
       }
-      if( m_acLayerCfg[layer].m_iIntraPeriod > 0 && (m_acLayerCfg[layer].m_layerSwitchOffEnd % m_acLayerCfg[layer].m_iIntraPeriod) != 0 )
+      if( m_apcLayerCfg[layer]->m_iIntraPeriod > 0 && (m_apcLayerCfg[layer]->m_layerSwitchOffEnd % m_apcLayerCfg[layer]->m_iIntraPeriod) != 0 )
       {
         printf("LayerSwitchOffEnd%d: Must be IRAP picture.\n", layer);
         exit(EXIT_FAILURE);
       }
     }
 
-    m_acLayerCfg[layer].m_bitDepthConstraint = tmpBitDepthConstraint;
-    m_acLayerCfg[layer].m_intraConstraintFlag = tmpIntraConstraintFlag;
-    m_acLayerCfg[layer].m_lowerBitRateConstraintFlag = tmpLowerBitRateConstraintFlag;    
+    m_apcLayerCfg[layer]->m_bitDepthConstraint = tmpBitDepthConstraint;
+    m_apcLayerCfg[layer]->m_intraConstraintFlag = tmpIntraConstraintFlag;
+    m_apcLayerCfg[layer]->m_lowerBitRateConstraintFlag = tmpLowerBitRateConstraintFlag;    
 
     for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
     {
-      m_acLayerCfg[layer].m_log2SaoOffsetScale[channelType] = 0;
+      m_apcLayerCfg[layer]->m_log2SaoOffsetScale[channelType] = 0;
     }
         
-    Int layerPTLIdx = m_acLayerCfg[layer].m_layerPTLIdx;
+    Int layerPTLIdx = m_apcLayerCfg[layer]->m_layerPTLIdx;
 
     if( extendedProfile[layerPTLIdx] >= 1000 && extendedProfile[layerPTLIdx] <= 2316 )
     {
       m_profileList[layerPTLIdx] = Profile::MAINREXT;            
 
-      if( m_acLayerCfg[layer].m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0)
+      if( m_apcLayerCfg[layer]->m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0)
       {
         fprintf(stderr, "Error: The bit depth and chroma format constraints are not used when an explicit RExt profile is specified\n");
         exit(EXIT_FAILURE);
       }
-      m_acLayerCfg[layer].m_bitDepthConstraint  = (extendedProfile[layerPTLIdx]%100);
-      m_acLayerCfg[layer].m_intraConstraintFlag = (extendedProfile[layerPTLIdx]>=2000);
+      m_apcLayerCfg[layer]->m_bitDepthConstraint  = (extendedProfile[layerPTLIdx]%100);
+      m_apcLayerCfg[layer]->m_intraConstraintFlag = (extendedProfile[layerPTLIdx]>=2000);
       switch ((extendedProfile[layerPTLIdx]/100)%10)
       {
       case 0:  tmpConstraintChromaFormat=400; break;
@@ -1947,12 +1983,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     if( m_profileList[layerPTLIdx] == Profile::HIGHTHROUGHPUTREXT )
     {
-      if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 ) m_acLayerCfg[layer].m_bitDepthConstraint = 16;
-      m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_444 : numberToChromaFormat(tmpConstraintChromaFormat);
+      if( m_apcLayerCfg[layer]->m_bitDepthConstraint == 0 ) m_apcLayerCfg[layer]->m_bitDepthConstraint = 16;
+      m_apcLayerCfg[layer]->m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_444 : numberToChromaFormat(tmpConstraintChromaFormat);
     }
     else if( m_profileList[layerPTLIdx] == Profile::MAINREXT )
     {
-      if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0 )
+      if( m_apcLayerCfg[layer]->m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0 )
       {
         // produce a valid combination, if possible.
         const Bool bUsingGeneralRExtTools  = m_transformSkipRotationEnabledFlag  ||
@@ -1963,31 +1999,31 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
           m_persistentRiceAdaptationEnabledFlag     ||
           m_log2MaxTransformSkipBlockSize!=2;
         const Bool bUsingChromaQPAdjustment= m_diffCuChromaQpOffsetDepth >= 0;
-        const Bool bUsingExtendedPrecision = m_acLayerCfg[layer].m_extendedPrecisionProcessingFlag;
-        m_acLayerCfg[layer].m_chromaFormatConstraint = NUM_CHROMA_FORMAT;
+        const Bool bUsingExtendedPrecision = m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag;
+        m_apcLayerCfg[layer]->m_chromaFormatConstraint = NUM_CHROMA_FORMAT;
         automaticallySelectRExtProfile(bUsingGeneralRExtTools,
           bUsingChromaQPAdjustment,
           bUsingExtendedPrecision,
-          m_acLayerCfg[layer].m_intraConstraintFlag,
-          m_acLayerCfg[layer].m_bitDepthConstraint,
-          m_acLayerCfg[layer].m_chromaFormatConstraint,
-          m_acLayerCfg[layer].m_chromaFormatIDC==CHROMA_400 ? m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA] : std::max(m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layer].m_internalBitDepth[CHANNEL_TYPE_CHROMA]),
-          m_acLayerCfg[layer].m_chromaFormatIDC);
+          m_apcLayerCfg[layer]->m_intraConstraintFlag,
+          m_apcLayerCfg[layer]->m_bitDepthConstraint,
+          m_apcLayerCfg[layer]->m_chromaFormatConstraint,
+          m_apcLayerCfg[layer]->m_chromaFormatIDC==CHROMA_400 ? m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA] : std::max(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]),
+          m_apcLayerCfg[layer]->m_chromaFormatIDC);
       }
-      else if( m_acLayerCfg[layer].m_bitDepthConstraint == 0 || tmpConstraintChromaFormat == 0)
+      else if( m_apcLayerCfg[layer]->m_bitDepthConstraint == 0 || tmpConstraintChromaFormat == 0)
       {
         fprintf(stderr, "Error: The bit depth and chroma format constraints must either both be specified or both be configured automatically\n");
         exit(EXIT_FAILURE);
       }
       else
       {
-        m_acLayerCfg[layer].m_chromaFormatConstraint = numberToChromaFormat(tmpConstraintChromaFormat);
+        m_apcLayerCfg[layer]->m_chromaFormatConstraint = numberToChromaFormat(tmpConstraintChromaFormat);
       }
     }
     else
     {
-      m_acLayerCfg[layer].m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_acLayerCfg[layer].m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
-      m_acLayerCfg[layer].m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10 || m_profileList[layerPTLIdx] == Profile::SCALABLEMAIN10) ? 10 : 8;
+      m_apcLayerCfg[layer]->m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_apcLayerCfg[layer]->m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
+      m_apcLayerCfg[layer]->m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10 || m_profileList[layerPTLIdx] == Profile::SCALABLEMAIN10) ? 10 : 8;
     }
   }
 #else
@@ -2114,10 +2150,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   m_inputColourSpaceConvert = stringToInputColourSpaceConvert(inputColourSpaceConvert, true);
 
 #if SVC_EXTENSION
-  for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  for(Int layer = 0; layer < m_numLayers; layer++)
   {
     // If number of scaled ref. layer offsets is non-zero, at least one of the offsets should be specified
-    if(m_acLayerCfg[layer].m_numRefLayerLocationOffsets)
+    if(m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets)
     {
       assert( strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""));
 
@@ -2146,12 +2182,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // ID //
     if(strcmp(cfg_refLocationOffsetLayerId[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refLocationOffsetLayerId[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefLocationOffsetLayerId");
+      cfgStringToArray( &tempArray, cfg_refLocationOffsetLayerId[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefLocationOffsetLayerId");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refLocationOffsetLayerId[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refLocationOffsetLayerId[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2160,12 +2196,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Presense Flag //
     if(strcmp(cfg_scaledRefLayerOffsetPresentFlag[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "ScaledRefLayerOffsetPresentFlag");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerOffsetPresentFlag[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "ScaledRefLayerOffsetPresentFlag");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerOffsetPresentFlag[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_scaledRefLayerOffsetPresentFlag[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2174,12 +2210,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Left offset //
     if(strcmp(cfg_scaledRefLayerLeftOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerLeftOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "LeftOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerLeftOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "LeftOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerLeftOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_scaledRefLayerLeftOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2188,12 +2224,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Top offset //
     if(strcmp(cfg_scaledRefLayerTopOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerTopOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "TopOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerTopOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "TopOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerTopOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_scaledRefLayerTopOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2202,12 +2238,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Right offset //
     if(strcmp(cfg_scaledRefLayerRightOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerRightOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RightOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerRightOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RightOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerRightOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_scaledRefLayerRightOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2216,12 +2252,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Bottom offset //
     if(strcmp(cfg_scaledRefLayerBottomOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_scaledRefLayerBottomOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "BottomOffset");
+      cfgStringToArray( &tempArray, cfg_scaledRefLayerBottomOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "BottomOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_scaledRefLayerBottomOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_scaledRefLayerBottomOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2230,12 +2266,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Presense Flag //
     if(strcmp(cfg_refRegionOffsetPresentFlag[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionOffsetPresentFlag");
+      cfgStringToArray( &tempArray, cfg_refRegionOffsetPresentFlag[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefRegionOffsetPresentFlag");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refRegionOffsetPresentFlag[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refRegionOffsetPresentFlag[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2244,12 +2280,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Left offset //
     if(strcmp(cfg_refRegionLeftOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionLeftOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionLeftOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefRegionLeftOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refRegionLeftOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refRegionLeftOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2258,12 +2294,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Top offset //
     if(strcmp(cfg_refRegionTopOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionTopOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionTopOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefRegionTopOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refRegionTopOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refRegionTopOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2272,12 +2308,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Right offset //
     if(strcmp(cfg_refRegionRightOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionRightOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionRightOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefRegionRightOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refRegionRightOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refRegionRightOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2286,18 +2322,18 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     // Bottom offset //
     if(strcmp(cfg_refRegionBottomOffset[layer].c_str(),  ""))
     {
-      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_acLayerCfg[layer].m_numRefLayerLocationOffsets, "RefRegionBottomOffset");
+      cfgStringToArray( &tempArray, cfg_refRegionBottomOffset[layer], m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets, "RefRegionBottomOffset");
       if(tempArray)
       {
-        for(Int i = 0; i < m_acLayerCfg[layer].m_numRefLayerLocationOffsets; i++)
+        for(Int i = 0; i < m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets; i++)
         {
-          m_acLayerCfg[layer].m_refRegionBottomOffset[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_refRegionBottomOffset[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
     }
 
-    Int numPhaseSet = m_acLayerCfg[layer].m_numRefLayerLocationOffsets;
+    Int numPhaseSet = m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets;
 
     // Presense Flag //
     if(strcmp(cfg_resamplePhaseSetPresentFlag[layer].c_str(),  ""))
@@ -2307,7 +2343,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         for(Int i = 0; i < numPhaseSet; i++)
         {
-          m_acLayerCfg[layer].m_resamplePhaseSetPresentFlag[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_resamplePhaseSetPresentFlag[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2321,7 +2357,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         for(Int i = 0; i < numPhaseSet; i++)
         {
-          m_acLayerCfg[layer].m_phaseHorLuma[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_phaseHorLuma[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2335,7 +2371,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         for(Int i = 0; i < numPhaseSet; i++)
         {
-          m_acLayerCfg[layer].m_phaseVerLuma[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_phaseVerLuma[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2349,7 +2385,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         for(Int i = 0; i < numPhaseSet; i++)
         {
-          m_acLayerCfg[layer].m_phaseHorChroma[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_phaseHorChroma[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
@@ -2363,31 +2399,31 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         for(Int i = 0; i < numPhaseSet; i++)
         {
-          m_acLayerCfg[layer].m_phaseVerChroma[i] = tempArray[i];
+          m_apcLayerCfg[layer]->m_phaseVerChroma[i] = tempArray[i];
         }
         delete [] tempArray; tempArray = NULL;
       }
     }
 
     Char* pSamplePredRefLayerIds = cfg_samplePredRefLayerIds[layer].empty() ? NULL: strdup(cfg_samplePredRefLayerIds[layer].c_str());
-    if( m_acLayerCfg[layer].m_numSamplePredRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numSamplePredRefLayers > 0 )
     {
       char *samplePredRefLayerId;
       int  i=0;
-      m_acLayerCfg[layer].m_samplePredRefLayerIds = new Int[m_acLayerCfg[layer].m_numSamplePredRefLayers];
+      m_apcLayerCfg[layer]->m_samplePredRefLayerIds = new Int[m_apcLayerCfg[layer]->m_numSamplePredRefLayers];
       samplePredRefLayerId = strtok(pSamplePredRefLayerIds, " ,-");
       while(samplePredRefLayerId != NULL)
       {
-        if( i >= m_acLayerCfg[layer].m_numSamplePredRefLayers )
+        if( i >= m_apcLayerCfg[layer]->m_numSamplePredRefLayers )
         {
           printf( "NumSamplePredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
-        *( m_acLayerCfg[layer].m_samplePredRefLayerIds + i ) = atoi( samplePredRefLayerId );
+        *( m_apcLayerCfg[layer]->m_samplePredRefLayerIds + i ) = atoi( samplePredRefLayerId );
         samplePredRefLayerId = strtok(NULL, " ,-");
         i++;
       }
-      if( i < m_acLayerCfg[layer].m_numSamplePredRefLayers )
+      if( i < m_apcLayerCfg[layer]->m_numSamplePredRefLayers )
       {
         printf( "NumSamplePredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
@@ -2395,7 +2431,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
     else
     {
-      m_acLayerCfg[layer].m_samplePredRefLayerIds = NULL;
+      m_apcLayerCfg[layer]->m_samplePredRefLayerIds = NULL;
     }
 
     if( pSamplePredRefLayerIds )
@@ -2405,24 +2441,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 
     Char* pMotionPredRefLayerIds = cfg_motionPredRefLayerIds[layer].empty() ? NULL: strdup(cfg_motionPredRefLayerIds[layer].c_str());
-    if( m_acLayerCfg[layer].m_numMotionPredRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numMotionPredRefLayers > 0 )
     {
       char *motionPredRefLayerId;
       int  i=0;
-      m_acLayerCfg[layer].m_motionPredRefLayerIds = new Int[m_acLayerCfg[layer].m_numMotionPredRefLayers];
+      m_apcLayerCfg[layer]->m_motionPredRefLayerIds = new Int[m_apcLayerCfg[layer]->m_numMotionPredRefLayers];
       motionPredRefLayerId = strtok(pMotionPredRefLayerIds, " ,-");
       while(motionPredRefLayerId != NULL)
       {
-        if( i >= m_acLayerCfg[layer].m_numMotionPredRefLayers )
+        if( i >= m_apcLayerCfg[layer]->m_numMotionPredRefLayers )
         {
           printf( "NumMotionPredRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
-        *( m_acLayerCfg[layer].m_motionPredRefLayerIds + i ) = atoi( motionPredRefLayerId );
+        *( m_apcLayerCfg[layer]->m_motionPredRefLayerIds + i ) = atoi( motionPredRefLayerId );
         motionPredRefLayerId = strtok(NULL, " ,-");
         i++;
       }
-      if( i < m_acLayerCfg[layer].m_numMotionPredRefLayers )
+      if( i < m_apcLayerCfg[layer]->m_numMotionPredRefLayers )
       {
         printf( "NumMotionPredRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
@@ -2430,7 +2466,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
     else
     {
-      m_acLayerCfg[layer].m_motionPredRefLayerIds = NULL;
+      m_apcLayerCfg[layer]->m_motionPredRefLayerIds = NULL;
     }
 
     if( pMotionPredRefLayerIds )
@@ -2440,24 +2476,24 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
 
     Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
-    if( m_acLayerCfg[layer].m_numActiveRefLayers > 0 )
+    if( m_apcLayerCfg[layer]->m_numActiveRefLayers > 0 )
     {
       char *refLayerId;
       int  i=0;
-      m_acLayerCfg[layer].m_predLayerIds = new Int[m_acLayerCfg[layer].m_numActiveRefLayers];
+      m_apcLayerCfg[layer]->m_predLayerIds = new Int[m_apcLayerCfg[layer]->m_numActiveRefLayers];
       refLayerId = strtok(pPredLayerIds, " ,-");
       while(refLayerId != NULL)
       {
-        if( i >= m_acLayerCfg[layer].m_numActiveRefLayers )
+        if( i >= m_apcLayerCfg[layer]->m_numActiveRefLayers )
         {
           printf( "NumActiveRefLayers%d: The number of columns whose width are defined is larger than the allowed number of columns.\n", layer );
           exit( EXIT_FAILURE );
         }
-        *( m_acLayerCfg[layer].m_predLayerIds + i ) = atoi( refLayerId );
+        *( m_apcLayerCfg[layer]->m_predLayerIds + i ) = atoi( refLayerId );
         refLayerId = strtok(NULL, " ,-");
         i++;
       }
-      if( i < m_acLayerCfg[layer].m_numActiveRefLayers )
+      if( i < m_apcLayerCfg[layer]->m_numActiveRefLayers )
       {
         printf( "NumActiveRefLayers%d: The width of some columns is not defined.\n", layer );
         exit( EXIT_FAILURE );
@@ -2465,7 +2501,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
     else
     {
-      m_acLayerCfg[layer].m_predLayerIds = NULL;
+      m_apcLayerCfg[layer]->m_predLayerIds = NULL;
     }
 
     if( pPredLayerIds )
@@ -2473,7 +2509,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       free( pPredLayerIds );
       pPredLayerIds = NULL;
     }
-  } //for(Int layer = 0; layer < MAX_LAYERS; layer++)
+  } //for(Int layer = 0; layer < m_numLayers; layer++)
 
   for (Int layerSet = 1; layerSet < m_numLayerSets; layerSet++)
   {
@@ -2918,13 +2954,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   for(Int layerIdx = 0; layerIdx < m_numLayers; layerIdx++)
   {
     UInt uiAddCUDepth  = 0;
-    while( (m_acLayerCfg[layerIdx].m_uiMaxCUWidth>>m_acLayerCfg[layerIdx].m_uiMaxCUDepth) > ( 1 << ( m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize + uiAddCUDepth )  ) )
+    while( (m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth>>m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth) > ( 1 << ( m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MinSize + uiAddCUDepth )  ) )
     {
       uiAddCUDepth++;
     }
 
-    m_acLayerCfg[layerIdx].m_uiMaxTotalCUDepth = m_acLayerCfg[layerIdx].m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_acLayerCfg[layerIdx].m_chromaFormatIDC, m_acLayerCfg[layerIdx].m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.    
-    m_acLayerCfg[layerIdx].m_uiLog2DiffMaxMinCodingBlockSize = m_acLayerCfg[layerIdx].m_uiMaxCUDepth - 1;
+    m_apcLayerCfg[layerIdx]->m_uiMaxTotalCUDepth = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth + uiAddCUDepth + getMaxCUDepthOffset(m_apcLayerCfg[layerIdx]->m_chromaFormatIDC, m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MinSize); // if minimum TU larger than 4x4, allow for additional part indices for 4:2:2 SubTUs.    
+    m_apcLayerCfg[layerIdx]->m_uiLog2DiffMaxMinCodingBlockSize = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth - 1;
   }
 #else  
   UInt uiAddCUDepth  = 0;
@@ -2951,25 +2987,25 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
 Void TAppEncCfg::xCheckParameter(UInt layerIdx)
 {
-  Bool m_extendedPrecisionProcessingFlag     = m_acLayerCfg[layerIdx].m_extendedPrecisionProcessingFlag;
-  Bool m_highPrecisionOffsetsEnabledFlag     = m_acLayerCfg[layerIdx].m_highPrecisionOffsetsEnabledFlag;
-  ChromaFormat m_chromaFormatIDC             = m_acLayerCfg[layerIdx].m_chromaFormatIDC;
-  ChromaFormat m_chromaFormatConstraint      = m_acLayerCfg[layerIdx].m_chromaFormatConstraint;
-  ChromaFormat m_InputChromaFormatIDC        = m_acLayerCfg[layerIdx].m_InputChromaFormatIDC;
+  Bool m_extendedPrecisionProcessingFlag     = m_apcLayerCfg[layerIdx]->m_extendedPrecisionProcessingFlag;
+  Bool m_highPrecisionOffsetsEnabledFlag     = m_apcLayerCfg[layerIdx]->m_highPrecisionOffsetsEnabledFlag;
+  ChromaFormat m_chromaFormatIDC             = m_apcLayerCfg[layerIdx]->m_chromaFormatIDC;
+  ChromaFormat m_chromaFormatConstraint      = m_apcLayerCfg[layerIdx]->m_chromaFormatConstraint;
+  ChromaFormat m_InputChromaFormatIDC        = m_apcLayerCfg[layerIdx]->m_InputChromaFormatIDC;
 
-  Int m_inputBitDepth[]       = {m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_acLayerCfg[layerIdx].m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_internalBitDepth[]    = {m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_acLayerCfg[layerIdx].m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_MSBExtendedBitDepth[] = {m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_acLayerCfg[layerIdx].m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};  
+  Int m_inputBitDepth[]       = {m_apcLayerCfg[layerIdx]->m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_apcLayerCfg[layerIdx]->m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
+  Int m_internalBitDepth[]    = {m_apcLayerCfg[layerIdx]->m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_apcLayerCfg[layerIdx]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
+  Int m_MSBExtendedBitDepth[] = {m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};  
 
-  m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]   = m_acLayerCfg[layerIdx].m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA];
-  m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA] = m_acLayerCfg[layerIdx].m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA];
+  m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]   = m_apcLayerCfg[layerIdx]->m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA];
+  m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layerIdx]->m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA];
 
-  Int layerPTLIdx = m_acLayerCfg[layerIdx].m_layerPTLIdx;
+  Int layerPTLIdx = m_apcLayerCfg[layerIdx]->m_layerPTLIdx;
   Profile::Name m_profile             = m_profileList[layerPTLIdx];
-  UInt m_bitDepthConstraint           = m_acLayerCfg[layerIdx].m_bitDepthConstraint;
-  Bool m_intraConstraintFlag          = m_acLayerCfg[layerIdx].m_intraConstraintFlag;
-  Bool m_lowerBitRateConstraintFlag   = m_acLayerCfg[layerIdx].m_lowerBitRateConstraintFlag;
-  Bool m_onePictureOnlyConstraintFlag = m_acLayerCfg[layerIdx].m_onePictureOnlyConstraintFlag;
+  UInt m_bitDepthConstraint           = m_apcLayerCfg[layerIdx]->m_bitDepthConstraint;
+  Bool m_intraConstraintFlag          = m_apcLayerCfg[layerIdx]->m_intraConstraintFlag;
+  Bool m_lowerBitRateConstraintFlag   = m_apcLayerCfg[layerIdx]->m_lowerBitRateConstraintFlag;
+  Bool m_onePictureOnlyConstraintFlag = m_apcLayerCfg[layerIdx]->m_onePictureOnlyConstraintFlag;
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -3322,7 +3358,7 @@ Void TAppEncCfg::xCheckParameter()
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
 #if SVC_EXTENSION
-  if( m_acLayerCfg[0].m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1 )
+  if( m_apcLayerCfg[0]->m_iIntraPeriod == 1 && m_GOPList[0].m_POC == -1 )
   {
     m_GOPList[0] = GOPEntry();
     m_GOPList[0].m_QPFactor = 1;
@@ -3336,7 +3372,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_intraConstraintFlag, "IntraConstraintFlag cannot be 1 for inter sequences");
   }
 
-  if (m_acLayerCfg[layerIdx].m_iIntraPeriod == 1 && m_EhGOPList[layerIdx][0].m_POC == -1) {
+  if (m_apcLayerCfg[layerIdx]->m_iIntraPeriod == 1 && m_EhGOPList[layerIdx][0].m_POC == -1) {
     m_EhGOPList[layerIdx][0] = GOPEntry();
     m_EhGOPList[layerIdx][0].m_QPFactor = 1;
     m_EhGOPList[layerIdx][0].m_betaOffsetDiv2 = 0;
@@ -3405,14 +3441,14 @@ Void TAppEncCfg::xCheckParameter()
   }
 
   // verify layer configuration parameters
-  if(m_acLayerCfg[layerIdx].xCheckParameter(m_isField))
+  if(m_apcLayerCfg[layerIdx]->xCheckParameter(m_isField))
   {
     printf("\nError: invalid configuration parameter found in layer %d \n", layerIdx);
     check_failed = true;
   }
 
   // verify layer configuration parameters
-  Int m_iIntraPeriod = m_acLayerCfg[layerIdx].m_iIntraPeriod;
+  Int m_iIntraPeriod = m_apcLayerCfg[layerIdx]->m_iIntraPeriod;
 #endif
   if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && (!m_bLoopFilterDisable) )
   {
@@ -3725,7 +3761,7 @@ Void TAppEncCfg::xCheckParameter()
     // verify layer configuration parameters
     for(UInt layer=0; layer<m_numLayers; layer++)
     {
-      if ( (m_acLayerCfg[layer].m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && (!m_bLoopFilterDisable) )
+      if ( (m_apcLayerCfg[layer]->m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && (!m_bLoopFilterDisable) )
       {
         for(Int i=0; i<m_iGOPSize; i++)
         {
@@ -4017,13 +4053,13 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
-  Int m_iSourceWidth = m_acLayerCfg[layerIdx].m_iSourceWidth;
-  Int m_iSourceHeight = m_acLayerCfg[layerIdx].m_iSourceHeight;
-  Int m_uiMaxCUWidth = m_acLayerCfg[layerIdx].m_uiMaxCUWidth;
-  Int m_uiMaxCUHeight = m_acLayerCfg[layerIdx].m_uiMaxCUHeight;
+  Int m_iSourceWidth = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
+  Int m_iSourceHeight = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
+  Int m_uiMaxCUWidth = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
+  Int m_uiMaxCUHeight = m_apcLayerCfg[layerIdx]->m_uiMaxCUHeight;
 
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
-  Int m_iWaveFrontSynchro = m_acLayerCfg[layerIdx].m_waveFrontSynchro;
+  Int m_iWaveFrontSynchro = m_apcLayerCfg[layerIdx]->m_waveFrontSynchro;
   xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
 #endif
 
@@ -4156,14 +4192,14 @@ Void TAppEncCfg::xCheckParameter()
 #endif
 
 #if RC_SHVC_HARMONIZATION
-  if ( m_acLayerCfg[layerIdx].m_RCEnableRateControl )
+  if ( m_apcLayerCfg[layerIdx]->m_RCEnableRateControl )
   {
-    if ( m_acLayerCfg[layerIdx].m_RCForceIntraQP )
+    if ( m_apcLayerCfg[layerIdx]->m_RCForceIntraQP )
     {
-      if ( m_acLayerCfg[layerIdx].m_RCInitialQP == 0 )
+      if ( m_apcLayerCfg[layerIdx]->m_RCInitialQP == 0 )
       {
         printf( "\nInitial QP for rate control is not specified. Reset not to use force intra QP!" );
-        m_acLayerCfg[layerIdx].m_RCForceIntraQP = false;
+        m_apcLayerCfg[layerIdx]->m_RCForceIntraQP = false;
       }
     }
   }
@@ -4209,30 +4245,30 @@ Void TAppEncCfg::xCheckParameter()
   }
 
 #if SVC_EXTENSION
-  xConfirmPara( (m_acLayerCfg[0].m_numSamplePredRefLayers != 0) && (m_acLayerCfg[0].m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
+  xConfirmPara( (m_apcLayerCfg[0]->m_numSamplePredRefLayers != 0) && (m_apcLayerCfg[0]->m_numSamplePredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numSamplePredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   if( layerIdx > 0 )
   {
-    xConfirmPara(m_acLayerCfg[layerIdx].m_numSamplePredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
-    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numSamplePredRefLayers; i++)
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_numSamplePredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
+    for(Int i = 0; i < m_apcLayerCfg[layerIdx]->m_numSamplePredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] > m_acLayerCfg[layerIdx].m_layerId, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i] == m_acLayerCfg[layerIdx].m_layerId, "Cannot reference the current layer itself");
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_samplePredRefLayerIds[i] > m_apcLayerCfg[layerIdx]->m_layerId, "Cannot reference higher layers");
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_samplePredRefLayerIds[i] == m_apcLayerCfg[layerIdx]->m_layerId, "Cannot reference the current layer itself");
     }
   }
-  xConfirmPara( (m_acLayerCfg[0].m_numMotionPredRefLayers != 0) && (m_acLayerCfg[0].m_numMotionPredRefLayers != -1), "Layer 0 cannot have any reference layers" );
+  xConfirmPara( (m_apcLayerCfg[0]->m_numMotionPredRefLayers != 0) && (m_apcLayerCfg[0]->m_numMotionPredRefLayers != -1), "Layer 0 cannot have any reference layers" );
   // NOTE: m_numMotionPredRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   if( layerIdx > 0 )
   {
-    xConfirmPara(m_acLayerCfg[layerIdx].m_numMotionPredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
-    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numMotionPredRefLayers; i++)
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_numMotionPredRefLayers > layerIdx, "Cannot reference more layers than before current layer");
+    for(Int i = 0; i < m_apcLayerCfg[layerIdx]->m_numMotionPredRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] > m_acLayerCfg[layerIdx].m_layerId, "Cannot reference higher layers");
-      xConfirmPara(m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i] == m_acLayerCfg[layerIdx].m_layerId, "Cannot reference the current layer itself");
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_motionPredRefLayerIds[i] > m_apcLayerCfg[layerIdx]->m_layerId, "Cannot reference higher layers");
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_motionPredRefLayerIds[i] == m_apcLayerCfg[layerIdx]->m_layerId, "Cannot reference the current layer itself");
     }
   }
 
-  xConfirmPara( (m_acLayerCfg[0].m_numActiveRefLayers != 0) && (m_acLayerCfg[0].m_numActiveRefLayers != -1), "Layer 0 cannot have any active reference layers" );
+  xConfirmPara( (m_apcLayerCfg[0]->m_numActiveRefLayers != 0) && (m_apcLayerCfg[0]->m_numActiveRefLayers != -1), "Layer 0 cannot have any active reference layers" );
   // NOTE: m_numActiveRefLayers  (for any layer) could be -1 (not signalled in cfg), in which case only the "previous layer" would be taken for reference
   if( layerIdx > 0 )
   {
@@ -4241,30 +4277,30 @@ Void TAppEncCfg::xCheckParameter()
     {
       predEnabledFlag[refLayer] = false;
     }
-    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numSamplePredRefLayers; i++)
+    for(Int i = 0; i < m_apcLayerCfg[layerIdx]->m_numSamplePredRefLayers; i++)
     {
-      predEnabledFlag[m_acLayerCfg[layerIdx].m_samplePredRefLayerIds[i]] = true;
+      predEnabledFlag[m_apcLayerCfg[layerIdx]->m_samplePredRefLayerIds[i]] = true;
     }
-    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numMotionPredRefLayers; i++)
+    for(Int i = 0; i < m_apcLayerCfg[layerIdx]->m_numMotionPredRefLayers; i++)
     {
-      predEnabledFlag[m_acLayerCfg[layerIdx].m_motionPredRefLayerIds[i]] = true;
+      predEnabledFlag[m_apcLayerCfg[layerIdx]->m_motionPredRefLayerIds[i]] = true;
     }
     Int numDirectRefLayers = 0;
     for (Int refLayer = 0; refLayer < layerIdx; refLayer++)
     {
       if (predEnabledFlag[refLayer] == true) numDirectRefLayers++;
     }
-    xConfirmPara(m_acLayerCfg[layerIdx].m_numActiveRefLayers > numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
-    for(Int i = 0; i < m_acLayerCfg[layerIdx].m_numActiveRefLayers; i++)
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_numActiveRefLayers > numDirectRefLayers, "Cannot reference more layers than NumDirectRefLayers");
+    for(Int i = 0; i < m_apcLayerCfg[layerIdx]->m_numActiveRefLayers; i++)
     {
-      xConfirmPara(m_acLayerCfg[layerIdx].m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_predLayerIds[i] >= numDirectRefLayers, "Cannot reference higher layers");
     }
   }
 
   if( m_adaptiveResolutionChange > 0 )
   {
     xConfirmPara(m_numLayers != 2, "Adaptive resolution change works with 2 layers only");
-    xConfirmPara(m_acLayerCfg[1].m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_acLayerCfg[1].m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
+    xConfirmPara(m_apcLayerCfg[1]->m_iIntraPeriod == 0 || (m_adaptiveResolutionChange % m_apcLayerCfg[1]->m_iIntraPeriod) != 0, "Adaptive resolution change must happen at enhancement layer RAP picture");
   }
 
   if( m_adaptiveResolutionChange > 0 )
@@ -4279,12 +4315,12 @@ Void TAppEncCfg::xCheckParameter()
 
   if( layerIdx < MAX_LAYERS-1 )
   {
-    xConfirmPara(m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 < 0 || m_acLayerCfg[layerIdx].m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_maxTidIlRefPicsPlus1 < 0 || m_apcLayerCfg[layerIdx]->m_maxTidIlRefPicsPlus1 > 7, "MaxTidIlRefPicsPlus1 must be in range 0 to 7");
   }
 #if AUXILIARY_PICTURES
   if( layerIdx < MAX_LAYERS-1 )
   {
-    xConfirmPara(m_acLayerCfg[layerIdx].m_auxId < 0 || m_acLayerCfg[layerIdx].m_auxId > 2, "AuxId must be in range 0 to 2");
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_auxId < 0 || m_apcLayerCfg[layerIdx]->m_auxId > 2, "AuxId must be in range 0 to 2");
   }
 #endif 
 #if CGS_3D_ASYMLUT
@@ -4340,7 +4376,7 @@ Void TAppEncCfg::xPrintParameter()
   for(UInt layer=0; layer<m_numLayers; layer++)
   {
     printf("=== Layer %d settings === \n", layer);
-    m_acLayerCfg[layer].xPrintParameter();
+    m_apcLayerCfg[layer]->xPrintParameter();
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
@@ -4703,7 +4739,7 @@ Void TAppEncCfg::cfgStringToArrayNumEntries(Int **arr, string const cfgString, I
 Bool TAppEncCfg::scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> & returnVector)
 {
   Int *tempArray = NULL;
-  numEntries = MAX_LAYERS;
+  numEntries = m_numLayers;
   // For all layer sets
   cfgStringToArrayNumEntries(&tempArray, cfgString, numEntries, logString);
   if (tempArray)

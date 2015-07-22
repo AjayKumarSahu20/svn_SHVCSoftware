@@ -59,10 +59,9 @@ class TAppEncTop : public TAppEncCfg
 private:
   // class interface
 #if SVC_EXTENSION
-  TEncTop                    m_acTEncTop [MAX_LAYERS];                    ///< encoder class
-  TEncTop*                   m_apcTEncTop [MAX_LAYERS];                   ///< encoder pointer class
-  TVideoIOYuv                m_acTVideoIOYuvInputFile [MAX_LAYERS];       ///< input YUV file
-  TVideoIOYuv                m_acTVideoIOYuvReconFile [MAX_LAYERS];       ///< output reconstruction file
+  TEncTop*                   m_apcTEncTop[MAX_LAYERS];                    ///< encoder pointer class
+  TVideoIOYuv*               m_apcTVideoIOYuvInputFile[MAX_LAYERS];       ///< input YUV file
+  TVideoIOYuv*               m_apcTVideoIOYuvReconFile[MAX_LAYERS];       ///< output reconstruction file
 
   TComList<TComPicYuv*>      m_acListPicYuvRec [MAX_LAYERS];              ///< list of reconstruction YUV files
 #else
@@ -113,7 +112,7 @@ public:
 
   Void        encode      ();                               ///< main encoding function
 #if SVC_EXTENSION
-  TEncTop&    getTEncTop  (UInt layer)   { return  m_acTEncTop[layer]; }      ///< return encoder class pointer reference
+  TEncTop&    getTEncTop  (UInt layer)   { return  *m_apcTEncTop[layer]; }      ///< return encoder class pointer reference
 #else
   TEncTop&    getTEncTop  ()   { return  m_cTEncTop; }      ///< return encoder class pointer reference
 #endif

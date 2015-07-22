@@ -59,7 +59,7 @@ class TAppEncCfg
 protected:
   // file I/O
 #if SVC_EXTENSION
-  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS];
+  TAppEncLayerCfg* m_apcLayerCfg[MAX_LAYERS];
   Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
@@ -550,6 +550,7 @@ public:
   Bool  parseCfg  ( Int argc, Char* argv[] );                 ///< parse configuration file to fill member variables
   
 #if SVC_EXTENSION
+  Bool parseCfgNumLayersAndInit( Int argc, Char* argv[] );    ///< parse configuration file to to get number of layers and allocate memory
   Int  getNumFrameToBeEncoded()                               { return m_framesToBeEncoded;                          }
   Int  getNumLayer()                                          { return m_numLayers;                                  }
   Int  getGOPSize()                                           { return m_iGOPSize;                                   }
@@ -558,11 +559,11 @@ public:
   Bool getUsePCM()                                            { return m_usePCM;                                     }
   UInt getPCMLog2MinSize  ()                                  { return  m_uiPCMLog2MinSize;                          }
 
-  UInt getInternalBitDepth(Int iLayer, ChannelType type)      { return m_acLayerCfg[iLayer].m_internalBitDepth[type];}
-  Bool getPCMInputBitDepthFlag()                              { return m_bPCMInputBitDepthFlag;                      }
+  UInt getInternalBitDepth(Int layer, ChannelType type)       { return m_apcLayerCfg[layer]->m_internalBitDepth[type];}
+  Bool getPCMInputBitDepthFlag()                              { return m_bPCMInputBitDepthFlag;                       }
 
   Int  getDecodingRefreshType()                               { return m_iDecodingRefreshType;                       }
-  Int  getWaveFrontSynchro(Int layerIdx)                      { return m_acLayerCfg[layerIdx].m_waveFrontSynchro;    }
+  Int  getWaveFrontSynchro(Int layerIdx)                      { return m_apcLayerCfg[layerIdx]->m_waveFrontSynchro;  }
   Void getDirFilename(string& filename, string& dir, const string path);
 
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
