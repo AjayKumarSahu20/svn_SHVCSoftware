@@ -215,9 +215,9 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSP
  * marshal all SEI messages in provided list into one bitstream bs
  */
 #if O0164_MULTI_LAYER_HRD
-Void SEIWriter::writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
+Void SEIWriter::writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComVPS *vps, const TComSPS *sps, Bool isNested, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei)
 #else
-Void SEIWriter::writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComSPS *sps)
+Void SEIWriter::writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, const TComSPS *sps, Bool isNested)
 #endif
 {
 #if ENC_DEC_TRACE
@@ -275,6 +275,10 @@ Void SEIWriter::writeSEImessages(TComBitIf& bs, const SEIMessages &seiList, cons
 #else
     xWriteSEIpayloadData(bs, **sei, sps);
 #endif
+  }
+  if (!isNested)
+  {
+    xWriteRbspTrailingBits();
   }
 }
 
@@ -792,10 +796,10 @@ Void SEIWriter::xWriteSEIScalableNesting(TComBitIf& bs, const SEIScalableNesting
   }
 
   // write nested SEI messages
-#if O0164_MULTI_LAYER_HRD  
-  writeSEImessages(bs, sei.m_nestedSEIs, vps, sps, &sei);
+#if O0164_MULTI_LAYER_HRD
+  writeSEImessages(bs, sei.m_nestedSEIs, vps, sps, true, &sei);
 #else
-  writeSEImessages(bs, sei.m_nestedSEIs, sps);
+  writeSEImessages(bs, sei.m_nestedSEIs, sps, true);
 #endif
 }
 
@@ -1144,7 +1148,7 @@ Void SEIWriter::xWriteSEIBspNesting(TComBitIf& bs, const SEIBspNesting &sei, con
   WRITE_UVLC( (UInt)sei.m_nestedSEIs.size(), "num_seis_in_bsp_minus1" );
   
   // write nested SEI messages
-  writeSEImessages(bs, sei.m_nestedSEIs, vps, sps, &nestingSei, &sei);
+  writeSEImessages(bs, sei.m_nestedSEIs, vps, sps, true, &nestingSei, &sei);
 }
 
 Void SEIWriter::xWriteSEIBspInitialArrivalTime(const SEIBspInitialArrivalTime &sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting &nestingSei, const SEIBspNesting &bspNestingSei)

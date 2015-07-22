@@ -99,6 +99,7 @@ protected:
   Void  xWriteStringTr        ( UChar* value, UInt length, const Char *pSymbolName);
 #endif
 #endif
+  Void xWriteRbspTrailingBits();
 
   UInt  xConvertToUInt        ( Int iValue ) {  return ( iValue <= 0) ? -iValue<<1 : (iValue<<1)-1; }
 };

@@ -138,9 +138,7 @@ Void SEIReader::parseSEImessage(TComInputBitstream* bs, SEIMessages& seis, const
   }
   while (m_pcBitstream->getNumBitsLeft() > 8);
 
-  UInt rbspTrailingBits;
-  sei_read_code(NULL, 8, rbspTrailingBits, "rbsp_trailing_bits");
-  assert(rbspTrailingBits == 0x80);
+  xReadRbspTrailingBits();
 }
 
 #if O0164_MULTI_LAYER_HRD
