@@ -432,6 +432,7 @@ Void TAppEncTop::xInitLibCfg()
 
     //====== Tool list ========    
     m_acTEncTop[layer].setDeltaQpRD                                        ( m_uiDeltaQpRD  );
+    m_acTEncTop[layer].setFastDeltaQp                                      ( m_bFastDeltaQP  );
     m_acTEncTop[layer].setUseASR                                           ( m_bUseASR      );
     m_acTEncTop[layer].setUseHADME                                         ( m_bUseHADME    );    
     m_acTEncTop[layer].setdQPs                                             ( m_acLayerCfg[layer].getdQPs() );
@@ -882,6 +883,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setHighPrecisionOffsetsEnabledFlag                   ( m_highPrecisionOffsetsEnabledFlag );
   //====== Tool list ========
   m_cTEncTop.setDeltaQpRD                                         ( m_uiDeltaQpRD  );
+  m_cTEncTop.setFastDeltaQp                                       ( m_bFastDeltaQP  );
   m_cTEncTop.setUseASR                                            ( m_bUseASR      );
   m_cTEncTop.setUseHADME                                          ( m_bUseHADME    );
   m_cTEncTop.setdQPs                                              ( m_aidQP        );
