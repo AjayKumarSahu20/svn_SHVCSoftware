@@ -108,13 +108,13 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
 
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
-: m_pchBitstreamFile()
 #if AVC_BASE
-, m_nonHEVCBaseLayerFlag(0)
+: m_nonHEVCBaseLayerFlag(0)
 #endif
 , m_maxTidRefPresentFlag(1)
 , m_defaultTargetOutputLayerIdc (-1)
 , m_numOutputLayerSets          (-1)
+, m_pchBitstreamFile()
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
