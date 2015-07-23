@@ -66,11 +66,11 @@ TAppDecTop::TAppDecTop()
 #endif
 {
   memset( m_apcTDecTop, NULL, sizeof(m_apcTDecTop) );
+  memset( m_apcTVideoIOYuvReconFile, NULL, sizeof(m_apcTVideoIOYuvReconFile) );
 
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
     m_aiPOCLastDisplay[layer]  = -MAX_INT;
-    m_apcTDecTop[layer] = &m_acTDecTop[layer];
   }
 }
 #else
@@ -105,6 +105,18 @@ Void TAppDecTop::destroy()
     {
       free ( m_pchReconFile[i] );
       m_pchReconFile[i] = NULL;
+    }
+
+    if( m_apcTDecTop[i] )
+    {
+      delete m_apcTDecTop[i];
+      m_apcTDecTop[i] = NULL;
+    }
+
+    if( m_apcTVideoIOYuvReconFile[i] )
+    {
+      delete m_apcTVideoIOYuvReconFile[i];
+      m_apcTVideoIOYuvReconFile[i] = NULL;
     }
   }
 #if AVC_BASE
@@ -194,8 +206,8 @@ Void TAppDecTop::decode()
   {
     streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
   }
-  TComList<TComPic*> *cListPic = m_acTDecTop[0].getListPic();
-  m_acTDecTop[0].setBLReconFile( &streamYUV );
+  TComList<TComPic*> *cListPic = m_apcTDecTop[0]->getListPic();
+  m_apcTDecTop[0]->setBLReconFile( &streamYUV );
   pcBLPic.setLayerId( 0 );
   cListPic->pushBack( &pcBLPic );
 #endif
@@ -244,10 +256,10 @@ Void TAppDecTop::decode()
       }
       else
       {
-        bNewPicture = m_acTDecTop[nalu.m_nuhLayerId].decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_nuhLayerId], curLayerId, bNewPOC);
+        bNewPicture = m_apcTDecTop[nalu.m_nuhLayerId]->decode(nalu, m_iSkipFrame, m_aiPOCLastDisplay[nalu.m_nuhLayerId], curLayerId, bNewPOC);
 
 #if SVC_POC
-        if( (bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 3) || (m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0) )
+        if( (bNewPicture && m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 3) || (m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 0) )
 #else
         if (bNewPicture)
 #endif
@@ -267,7 +279,7 @@ Void TAppDecTop::decode()
 #endif
         }
 #if SVC_POC
-        else if(m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 1) 
+        else if(m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 1) 
         {
           bitstreamFile.clear();
           // This is before third parse of the NAL unit, and 
@@ -283,32 +295,32 @@ Void TAppDecTop::decode()
     }
 
 #if SVC_POC
-    if( ( (bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 3) || m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
-        !m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence() )
+    if( ( (bNewPicture && m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 3) || m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 0 || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) && 
+        !m_apcTDecTop[nalu.m_nuhLayerId]->getFirstSliceInSequence() )
 #else
     if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS) &&
-        !m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence() )
+        !m_apcTDecTop[nalu.m_nuhLayerId]->getFirstSliceInSequence() )
 #endif
     {
       if (!loopFiltered[curLayerId] || bitstreamFile)
       {
-        m_acTDecTop[curLayerId].executeLoopFilters(poc, pcListPic);
+        m_apcTDecTop[curLayerId]->executeLoopFilters(poc, pcListPic);
       }
       loopFiltered[curLayerId] = (nalu.m_nalUnitType == NAL_UNIT_EOS);
 
       if (nalu.m_nalUnitType == NAL_UNIT_EOS)
       {
-        m_acTDecTop[nalu.m_nuhLayerId].setFirstSliceInSequence(true);
+        m_apcTDecTop[nalu.m_nuhLayerId]->setFirstSliceInSequence(true);
       }
     }
     else if ( (bNewPicture || !bitstreamFile || nalu.m_nalUnitType == NAL_UNIT_EOS ) &&
-              m_acTDecTop[nalu.m_nuhLayerId].getFirstSliceInSequence () ) 
+              m_apcTDecTop[nalu.m_nuhLayerId]->getFirstSliceInSequence () ) 
     {
-      m_acTDecTop[nalu.m_nuhLayerId].setFirstSliceInPicture (true);
+      m_apcTDecTop[nalu.m_nuhLayerId]->setFirstSliceInPicture (true);
     }
 
 #if SVC_POC
-    if( bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() == 0 )
+    if( bNewPicture && m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() == 0 )
     {
       outputAllPictures( nalu.m_nuhLayerId, true );
     }
@@ -326,14 +338,14 @@ Void TAppDecTop::decode()
             m_outputBitDepth[channelType] = bitDepths.recon[channelType];
           }
         }
-        m_acTVideoIOYuvReconFile[curLayerId].open( m_pchReconFile[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
+        m_apcTVideoIOYuvReconFile[curLayerId]->open( m_pchReconFile[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
 
         openedReconFile[curLayerId] = true;
       }
 #if ALIGNED_BUMPING
       Bool outputPicturesFlag = true;  
 
-      if( m_acTDecTop[nalu.m_nuhLayerId].getNoOutputPriorPicsFlag() )
+      if( m_apcTDecTop[nalu.m_nuhLayerId]->getNoOutputPriorPicsFlag() )
       {
         outputPicturesFlag = false;
       }
@@ -344,7 +356,7 @@ Void TAppDecTop::decode()
       }
 
 #if SVC_POC
-      if( bNewPicture && m_acTDecTop[nalu.m_nuhLayerId].getParseIdc() != 0 )
+      if( bNewPicture && m_apcTDecTop[nalu.m_nuhLayerId]->getParseIdc() != 0 )
       // New picture, slice header parsed but picture not decoded
 #else
       if( bNewPicture ) // New picture, slice header parsed but picture not decoded
@@ -396,12 +408,12 @@ Void TAppDecTop::decode()
 #else
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
   {
-    xFlushOutput( m_acTDecTop[layer].getListPic(), layer );
+    xFlushOutput( m_apcTDecTop[layer]->getListPic(), layer );
   }
 #endif
   // delete buffers
 #if AVC_BASE
-  UInt layerIdxmin = m_acTDecTop[0].getBLReconFile()->is_open() ? 1 : 0;
+  UInt layerIdxmin = m_apcTDecTop[0]->getBLReconFile()->is_open() ? 1 : 0;
 
   if( streamYUV.is_open() )
   {
@@ -417,7 +429,7 @@ Void TAppDecTop::decode()
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
   {
-    m_acTDecTop[layer].deletePicBuffer();
+    m_apcTDecTop[layer]->deletePicBuffer();
   }
 
   // destroy internal classes
@@ -606,13 +618,16 @@ Void TAppDecTop::xCreateDecLib()
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
   {
+    m_apcTDecTop[layer] = new TDecTop;
+    m_apcTVideoIOYuvReconFile[layer] = new TVideoIOYuv;
+
     // set layer ID
-    m_acTDecTop[layer].setLayerId                      ( layer );
+    m_apcTDecTop[layer]->setLayerId                      ( layer );
 
     // create decoder class
-    m_acTDecTop[layer].create();
+    m_apcTDecTop[layer]->create();
 
-    m_acTDecTop[layer].setLayerDec(m_apcTDecTop);
+    m_apcTDecTop[layer]->setLayerDec(m_apcTDecTop);
   }
 #else
   // create decoder class
@@ -634,11 +649,11 @@ Void TAppDecTop::xDestroyDecLib()
   {
     if ( m_pchReconFile[layer] )
     {
-      m_acTVideoIOYuvReconFile[layer].close();
+      m_apcTVideoIOYuvReconFile[layer]->close();
     }
 
     // destroy decoder class
-    m_acTDecTop[layer].destroy();
+    m_apcTDecTop[layer]->destroy();
   }
 #else
   if ( m_pchReconFile )
@@ -661,19 +676,19 @@ Void TAppDecTop::xInitDecLib()
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
   {
-    m_acTDecTop[layer].init();
-    m_acTDecTop[layer].setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
+    m_apcTDecTop[layer]->init();
+    m_apcTDecTop[layer]->setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
 #if CONFORMANCE_BITSTREAM_MODE
-    m_acTDecTop[layer].setNumLayer( MAX_LAYERS );
+    m_apcTDecTop[layer]->setNumLayer( MAX_LAYERS );
 #else
-    m_acTDecTop[layer].setNumLayer( m_tgtLayerId + 1 );
+    m_apcTDecTop[layer]->setNumLayer( m_tgtLayerId + 1 );
 #endif
-    m_acTDecTop[layer].setCommonDecoderParams( &m_commonDecoderParams );
+    m_apcTDecTop[layer]->setCommonDecoderParams( &m_commonDecoderParams );
   }
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
   {
-    m_acTDecTop[layer].setConfModeFlag( m_confModeFlag );
+    m_apcTDecTop[layer]->setConfModeFlag( m_confModeFlag );
   }
 #endif
 #else
@@ -798,7 +813,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
             UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
             Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
-            m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
+            m_apcTVideoIOYuvReconFile[layerId]->write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
               m_outputColourSpaceConvert,
               conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
               conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
@@ -893,7 +908,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
+          m_apcTVideoIOYuvReconFile[layerId]->write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
@@ -1017,7 +1032,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
-          m_acTVideoIOYuvReconFile[layerId].write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(), m_outputColourSpaceConvert,
+          m_apcTVideoIOYuvReconFile[layerId]->write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(), m_outputColourSpaceConvert,
             conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   *yScal + defDisp.getWindowTopOffset(),
@@ -1095,7 +1110,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
-          m_acTVideoIOYuvReconFile[layerId].write( pcPic->getPicYuvRec(),
+          m_apcTVideoIOYuvReconFile[layerId]->write( pcPic->getPicYuvRec(),
                                                    m_outputColourSpaceConvert,
                                                    conf.getWindowLeftOffset()  *xScal + defDisp.getWindowLeftOffset(),
                                                    conf.getWindowRightOffset() *xScal + defDisp.getWindowRightOffset(),
@@ -1231,7 +1246,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const I
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
     TComPicYuv* pPicCYuvRec = pic->getPicYuvRec();
-    m_acTVideoIOYuvReconFile[layerId].write( pPicCYuvRec, m_outputColourSpaceConvert,
+    m_apcTVideoIOYuvReconFile[layerId]->write( pPicCYuvRec, m_outputColourSpaceConvert,
       conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
       conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
@@ -1361,8 +1376,8 @@ Void TAppDecTop::markAllPicturesAsErased()
 
 Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
 {
-  TComList<TComPic*>::iterator  iterPic = m_acTDecTop[layerIdx].getListPic()->begin();
-  Int iSize = Int( m_acTDecTop[layerIdx].getListPic()->size() );
+  TComList<TComPic*>::iterator  iterPic = m_apcTDecTop[layerIdx]->getListPic()->begin();
+  Int iSize = Int( m_apcTDecTop[layerIdx]->getListPic()->size() );
   
   for (Int i = 0; i < iSize; i++ )
   {
@@ -1373,7 +1388,7 @@ Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
       pcPic->destroy();
 
       // pcPic is statically created for the external (AVC) base layer, no need to delete it
-      if( !m_acTDecTop[layerIdx].getParameterSetManager()->getActiveVPS()->getNonHEVCBaseLayerFlag() || layerIdx )
+      if( !m_apcTDecTop[layerIdx]->getParameterSetManager()->getActiveVPS()->getNonHEVCBaseLayerFlag() || layerIdx )
       {
         delete pcPic;
         pcPic = NULL;
@@ -1381,7 +1396,7 @@ Void TAppDecTop::markAllPicturesAsErased(Int layerIdx)
     }
   }
 
-  m_acTDecTop[layerIdx].getListPic()->clear();
+  m_apcTDecTop[layerIdx]->getListPic()->clear();
 }
 
 Void TAppDecTop::checkOutputBeforeDecoding(Int layerIdx)
@@ -1466,7 +1481,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
     {
       Int picPosition = (Int)std::distance( listOfPocsInEachLayer[layerId].begin(), it );
       Int j;
-      for(j = 0, iterPic = m_acTDecTop[layerId].getListPic()->begin(); j < listOfPocsPositionInEachLayer[layerId][picPosition]; j++) // Picture to be output
+      for(j = 0, iterPic = m_apcTDecTop[layerId]->getListPic()->begin(); j < listOfPocsPositionInEachLayer[layerId][picPosition]; j++) // Picture to be output
       {
         iterPic++;
       }
@@ -1512,15 +1527,15 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
     {
       Int layerId = dpbStatus.m_targetDecLayerIdList[dpbLayerCtr];
       // Output all picutres "decoded" in that layer that have POC less than the current picture
-      std::vector<TComPic> *layerBuffer = (m_acTDecTop->getLayerDec(layerId))->getConfListPic();
+      std::vector<TComPic> *layerBuffer = m_apcTDecTop[layerId]->getConfListPic();
       // Write all pictures to the file.
       if( this->getDecodedYuvLayerRefresh(layerId) )
       {
         char tempFileName[256];
         strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerId ).c_str());
 
-        const TComVPS *vps = m_acTDecTop->getLayerDec(layerId)->getParameterSetManager()->getActiveVPS();
-        const TComSPS *sps = m_acTDecTop->getLayerDec(layerId)->getParameterSetManager()->getActiveSPS();
+        const TComVPS *vps = m_apcTDecTop[layerId]->getParameterSetManager()->getActiveVPS();
+        const TComSPS *sps = m_apcTDecTop[layerId]->getParameterSetManager()->getActiveSPS();
         const BitDepths &bitDpeths = vps->getBitDepths(sps, layerId);
         Int bitDepth[] = {bitDpeths.recon[CHANNEL_TYPE_LUMA], bitDpeths.recon[CHANNEL_TYPE_CHROMA]};
 
@@ -1575,7 +1590,7 @@ const TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &list
     assert( listOfPocsInEachLayer[0].size() != 0 );
     TComList<TComPic*>::iterator iterPic;
     Int j;
-    for(j = 0, iterPic = m_acTDecTop[0].getListPic()->begin(); j < listOfPocsPositionInEachLayer[0][0]; j++) // Picture to be output
+    for(j = 0, iterPic = m_apcTDecTop[0]->getListPic()->begin(); j < listOfPocsPositionInEachLayer[0][0]; j++) // Picture to be output
     {
       iterPic++;
     }
@@ -1599,7 +1614,7 @@ const TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &list
     // -------------------------------------
     for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
     {
-      if( m_acTDecTop[i].getListPic()->empty() )
+      if( m_apcTDecTop[i]->getListPic()->empty() )
       {
         assert( listOfPocsInEachLayer[i].size() == 0 );
         continue;
@@ -1615,7 +1630,7 @@ const TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &list
         Int j;
 
         // Picture to be output
-        for( j = 0, iterPic = m_acTDecTop[i].getListPic()->begin(); j < listOfPocsPositionInEachLayer[i][picPosition]; j++ )
+        for( j = 0, iterPic = m_apcTDecTop[i]->getListPic()->begin(); j < listOfPocsPositionInEachLayer[i][picPosition]; j++ )
         {
           iterPic++;
         }
@@ -1650,7 +1665,7 @@ Void TAppDecTop::emptyUnusedPicturesNotNeededForOutput()
 {
   for( Int layerIdx = 0; layerIdx < MAX_VPS_LAYER_IDX_PLUS1; layerIdx++ )
   {
-    TComList <TComPic*> *pcListPic = m_acTDecTop[layerIdx].getListPic();
+    TComList <TComPic*> *pcListPic = m_apcTDecTop[layerIdx]->getListPic();
     TComList<TComPic*>::iterator iterPic = pcListPic->begin();
     while ( iterPic != pcListPic->end() )
     {
@@ -1702,16 +1717,16 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
 
   for( Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
   {
-    if( m_acTDecTop[i].getListPic()->empty() )
+    if( m_apcTDecTop[i]->getListPic()->empty() )
     {
       continue;
     }
     
     // To check # AUs that have at least one picture not output,
     // For each layer, populate listOfPOcs if not already present
-    TComList<TComPic*>::iterator iterPic = m_acTDecTop[i].getListPic()->begin();
+    TComList<TComPic*>::iterator iterPic = m_apcTDecTop[i]->getListPic()->begin();
     Int picPositionInList = 0;
-    while (iterPic != m_acTDecTop[i].getListPic()->end())
+    while (iterPic != m_apcTDecTop[i]->getListPic()->end())
     {
       TComPic* pic = *(iterPic);
       if( pic->getReconMark() )

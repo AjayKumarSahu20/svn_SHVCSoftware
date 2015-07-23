@@ -1665,7 +1665,6 @@ Void TAppEncTop::encode()
 Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE)
 {
   UInt layer;
-  const TComVPS *vps = m_apcTEncTop[0]->getVPS();
   const Int rateMultiplier = isField ? 2 : 1;
 
   // set frame rate
