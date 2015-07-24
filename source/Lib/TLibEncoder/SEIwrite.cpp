@@ -432,6 +432,9 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TC
     std::vector<Int> hrdIdx(maxValues, 0);
     std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
+
+    Int schedSelIdx = 0;
+
     for(i = 0; i < maxValues; i++)
     {
       hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
@@ -449,7 +452,7 @@ Void SEIWriter::xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TC
         assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
       }
     }
-    hrd = hrdVec[i];
+    hrd = hrdVec[schedSelIdx];
   }
   else
   {
