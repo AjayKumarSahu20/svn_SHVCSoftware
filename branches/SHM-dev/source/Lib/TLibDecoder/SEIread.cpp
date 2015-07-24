@@ -683,6 +683,9 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
     std::vector<Int> hrdIdx(maxValues, 0);
     std::vector<const TComHRD*> hrdVec;
     std::vector<Int> syntaxElemLen(maxValues, 0);
+
+    Int schedSelIdx = 0;
+
     for(i = 0; i < maxValues; i++)
     {
       hrdIdx[i] = vps->getBspHrdIdx( seiOlsIdx, psIdx, maxTemporalId, i, bspNestingSei->m_bspIdx);
@@ -700,7 +703,7 @@ Void SEIReader::xParseSEIBufferingPeriod(SEIBufferingPeriod& sei, UInt payloadSi
         assert( hrdVec[i]->getSubPicCpbParamsPresentFlag()    == hrdVec[i-1]->getSubPicCpbParamsPresentFlag() );
       }
     }
-    pHRD = hrdVec[i];
+    pHRD = hrdVec[schedSelIdx];
   }
   else
   {
