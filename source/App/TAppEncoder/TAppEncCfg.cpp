@@ -796,7 +796,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Bool do_help = false;
   
 #if SVC_EXTENSION
-  string  cfg_LayerCfgFile   [MAX_LAYERS];
   string  cfg_BitstreamFile;
   string* cfg_InputFile      [MAX_LAYERS];
   string* cfg_ReconFile      [MAX_LAYERS];
@@ -1101,7 +1100,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
   ("InputFile%d,-i%d",                              cfg_InputFile,                    string(""), m_numLayers, "original YUV input file name for layer %d")
   ("ReconFile%d,-o%d",                              cfg_ReconFile,                    string(""), m_numLayers, "reconstruction YUV input file name for layer %d")
-  ("LayerConfig%d,-lc%d",                           cfg_LayerCfgFile,                 string(""), m_numLayers, "layer %d configuration file name")
   ("SourceWidth%d,-wdt%d",                          cfg_SourceWidth,                           0, m_numLayers, "Source picture width for layer %d")
   ("SourceHeight%d,-hgt%d",                         cfg_SourceHeight,                          0, m_numLayers, "Source picture height for layer %d")
   ("FrameRate%d,-fr%d",                             cfg_FrameRate,                             0, m_numLayers, "Frame rate for layer %d")

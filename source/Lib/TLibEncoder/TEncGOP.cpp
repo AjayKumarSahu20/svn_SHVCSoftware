@@ -2570,7 +2570,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     {
       OutputNALUnit nalu(NAL_UNIT_PPS, 0, m_layerId);
       m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
-      m_pcEntropyCoder->encodePPS(pcSlice->getPPS() , &m_Enc3DAsymLUTPPS );      
+      m_pcEntropyCoder->encodePPS(pcSlice->getPPS() , &m_Enc3DAsymLUTPPS );
       accessUnit.push_back(new NALUnitEBSP(nalu));
     }
 #endif
