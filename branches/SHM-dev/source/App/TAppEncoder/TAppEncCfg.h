@@ -399,8 +399,10 @@ protected:
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
+#if !SVC_EXTENSION
   ScalingListMode m_useScalingListId;                         ///< using quantization matrix
   Char*     m_scalingListFile;                                ///< quantization matrix file name
+#endif
 
   Bool      m_TransquantBypassEnableFlag;                     ///< transquant_bypass_enable_flag setting in PPS.
   Bool      m_CUTransquantBypassFlagForce;                    ///< if transquant_bypass_enable_flag, then, if true, all CU transquant bypass flags will be set to true.

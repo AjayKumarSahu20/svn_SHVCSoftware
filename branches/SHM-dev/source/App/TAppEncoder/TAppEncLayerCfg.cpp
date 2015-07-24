@@ -41,13 +41,14 @@ static inline ChromaFormat numberToChromaFormat(const Int val)
 // ====================================================================================================================
 #if SVC_EXTENSION
 TAppEncLayerCfg::TAppEncLayerCfg()
-  :m_cInputFile(string("")),
-  m_cReconFile(string("")),
-  m_conformanceMode( 0 ),
-  m_aidQP(NULL),
-  m_repFormatIdx (-1)
+: m_cInputFile(string(""))
+, m_cReconFile(string(""))
+, m_conformanceMode( 0 )
+, m_scalingListFile(NULL)
+, m_aidQP(NULL)
+, m_repFormatIdx(-1)
 #if Q0074_COLOUR_REMAPPING_SEI
-,  m_colourRemapSEIFileRoot(string(""))
+, m_colourRemapSEIFileRoot(string(""))
 #endif
 {
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -107,6 +108,7 @@ TAppEncLayerCfg::~TAppEncLayerCfg()
     }
   }
 #endif
+  free(m_scalingListFile);
 }
 
 Void TAppEncLayerCfg::create()
@@ -269,7 +271,8 @@ Void TAppEncLayerCfg::xPrintParameter()
 
   const Int iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
   printf("WaveFrontSubstreams               : %d\n", iWaveFrontSubstreams);
-  printf("PCM                               : %d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
+  printf("ScalingList                       : %d\n", m_useScalingListId );
+  printf("PCM                               : %d\n", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
 }
 
 Bool confirmPara(Bool bflag, const char* message);
