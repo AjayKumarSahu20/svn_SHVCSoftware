@@ -118,7 +118,6 @@ TAppEncCfg::TAppEncCfg()
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
-, m_scalingListFile()
 , m_elRapSliceBEnabled(0)
 {
   memset( m_apcLayerCfg, NULL, sizeof(m_apcLayerCfg) );
@@ -171,8 +170,8 @@ TAppEncCfg::~TAppEncCfg()
 #if !SVC_EXTENSION  
   free(m_pchReconFile);
   free(m_pchdQPFile);
-#endif
   free(m_scalingListFile);
+#endif
 }
 
 Void TAppEncCfg::create()
@@ -899,6 +898,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
   Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_IDX_PLUS1];
+  string  cfg_ScalingListFile[MAX_LAYERS];
+  ScalingListMode*   cfg_UseScalingListId[MAX_LAYERS];
 
   for( UInt layer = 0; layer < m_numLayers; layer++ )
   {
@@ -988,7 +989,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #endif
     cfg_layerSwitchOffBegin[layer]  = &m_apcLayerCfg[layer]->m_layerSwitchOffBegin;
     cfg_layerSwitchOffEnd[layer]    = &m_apcLayerCfg[layer]->m_layerSwitchOffEnd;
-    cfg_layerPTLIdx[layer]          = &m_apcLayerCfg[layer]->m_layerPTLIdx; 
+    cfg_layerPTLIdx[layer]          = &m_apcLayerCfg[layer]->m_layerPTLIdx;
+
+    cfg_UseScalingListId[layer]     = &m_apcLayerCfg[layer]->m_useScalingListId;
   }
 
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -1024,8 +1027,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if Q0074_COLOUR_REMAPPING_SEI
   string cfg_colourRemapSEIFileRoot;
 #endif
-#endif //SVC_EXTENSION
   string cfg_ScalingListFile;
+#endif //SVC_EXTENSION
 
   Int tmpChromaFormat;
   Int tmpInputChromaFormat;
@@ -1458,11 +1461,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("LFCrossTileBoundaryFlag",                         m_bLFCrossTileBoundaryFlag,                        true, "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
 #if SVC_EXTENSION
   ("WaveFrontSynchro%d",                              cfg_waveFrontSynchro,                   0,  m_numLayers, "0: no synchro; 1 synchro with TR; 2 TRR etc")
+  ("ScalingList%d",                                   cfg_UseScalingListId,     SCALING_LIST_OFF, m_numLayers, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
+  ("ScalingListFile%d",                               cfg_ScalingListFile,            string(""), m_numLayers, "Scaling list file name. Use an empty string to produce help.")
 #else
   ("WaveFrontSynchro",                                m_iWaveFrontSynchro,                                  0, "0: no synchro; 1 synchro with top-right-right")
-#endif
   ("ScalingList",                                     m_useScalingListId,                    SCALING_LIST_OFF, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
   ("ScalingListFile",                                 cfg_ScalingListFile,                         string(""), "Scaling list file name. Use an empty string to produce help.")
+#endif
   ("SignHideFlag,-SBH",                               m_signHideFlag,                                    true)
   ("MaxNumMergeCand",                                 m_maxNumMergeCand,                                   5u, "Maximum number of merge candidates")
   /* Misc. */
@@ -1896,15 +1901,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_tileRowHeight.clear();
   }
-
-  m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-
-
-  
+    
   /* rules for input, output and internal bitdepths as per help text */
 #if SVC_EXTENSION
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
+    m_apcLayerCfg[layer]->m_scalingListFile = cfg_ScalingListFile[layer].empty() ? NULL : strdup(cfg_ScalingListFile[layer].c_str());
+
     if( m_apcLayerCfg[layer]->m_layerId < 0 )
     {
       m_apcLayerCfg[layer]->m_layerId = layer;
@@ -2025,6 +2028,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #else
+  m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
+
  /* rules for input, output and internal bitdepths as per help text */
   if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0)
   {
@@ -4378,7 +4383,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n");
   }
   printf("=== Common configuration settings === \n");
-  printf("Bitstream      File               : %s\n", m_pchBitstreamFile      );
+  printf("Bitstream File                         : %s\n", m_pchBitstreamFile      );
 #else //SVC_EXTENSION
   printf("\n");
   printf("Input          File                    : %s\n", m_pchInputFile          );
@@ -4562,8 +4567,8 @@ Void TAppEncCfg::xPrintParameter()
   const Int iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
   printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
           m_iWaveFrontSynchro, iWaveFrontSubstreams);
-#endif
   printf(" ScalingList:%d ", m_useScalingListId );
+#endif
   printf("TMVPMode:%d ", m_TMVPModeId     );
 #if ADAPTIVE_QP_SELECTION
   printf("AQpS:%d", m_bUseAdaptQpSelect   );

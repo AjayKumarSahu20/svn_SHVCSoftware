@@ -86,12 +86,15 @@ protected:
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
 
+  ScalingListMode m_useScalingListId;                         ///< using quantization matrix
+  Char*     m_scalingListFile;                                ///< quantization matrix file name
+
   Int       m_maxTidIlRefPicsPlus1;
   Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
   Int       m_waveFrontFlush;                     ///< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
-  char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
+  Char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
   Int       m_numRefLayerLocationOffsets;

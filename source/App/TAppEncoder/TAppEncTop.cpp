@@ -486,6 +486,9 @@ Void TAppEncTop::xInitLibCfg()
     Bool          m_RCUseLCUSeparateModel                      = m_apcLayerCfg[layer]->getRCUseLCUSeparateModel();
     Int           m_RCInitialQP                                = m_apcLayerCfg[layer]->getRCInitialQP();
     Bool          m_RCForceIntraQP                             = m_apcLayerCfg[layer]->getRCForceIntraQP();
+
+    ScalingListMode m_useScalingListId                         = m_apcLayerCfg[layer]->m_useScalingListId;
+    Char*         m_scalingListFile                            = m_apcLayerCfg[layer]->m_scalingListFile;
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
