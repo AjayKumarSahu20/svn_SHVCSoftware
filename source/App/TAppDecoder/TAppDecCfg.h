@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,68 +56,93 @@
 class TAppDecCfg
 {
 protected:
-  Char*         m_pchBitstreamFile;                   ///< input bitstream file name
+  Char*         m_pchBitstreamFile;                     ///< input bitstream file name
 #if SVC_EXTENSION
   Char*         m_pchReconFile [MAX_LAYERS];          ///< output reconstruction file name
 #else
-  Char*         m_pchReconFile;                       ///< output reconstruction file name
+  Char*         m_pchReconFile;                         ///< output reconstruction file name
 #endif
-  Int           m_iSkipFrame;                         ///< counter for frames prior to the random access point to skip
-  Int           m_outputBitDepthY;                     ///< bit depth used for writing output (luma)
-  Int           m_outputBitDepthC;                     ///< bit depth used for writing output (chroma)t
+  Int           m_iSkipFrame;                           ///< counter for frames prior to the random access point to skip
+  Int           m_outputBitDepth[MAX_NUM_CHANNEL_TYPE]; ///< bit depth used for writing output
+  InputColourSpaceConversion m_outputColourSpaceConvert;
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
   Int           m_decodedPictureHashSEIEnabled;       ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
+  Bool          m_decodedNoDisplaySEIEnabled;         ///< Enable(true)/disable(false) writing only pictures that get displayed based on the no display SEI message
 #if Q0074_COLOUR_REMAPPING_SEI
   Bool          m_colourRemapSEIEnabled;              ///< Enable the Colour Remapping Information SEI message if available (remapping decoded pictures)
 #endif
 
+  std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
+  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window
+#if O0043_BEST_EFFORT_DECODING
+  UInt          m_forceDecodeBitDepth;                ///< if non-zero, force the bit depth at the decoder (best effort decoding)
+#endif
+  std::string   m_outputDecodedSEIMessagesFilename;   ///< filename to output decoded SEI messages to. If '-', then use stdout. If empty, do not output details.
+  Bool          m_bClipOutputVideoToRec709Range;      ///< If true, clip the output video to the Rec 709 range on saving.
+
 #if SVC_EXTENSION
-  Int           m_tgtLayerId;                        ///< target layer ID
 #if AVC_BASE
   Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
-#if !REPN_FORMAT_IN_VPS
-  Int           m_iBLSourceWidth;
-  Int           m_iBLSourceHeight;
 #endif
-#endif
-#endif
-
-  std::vector<Int> m_targetDecLayerIdSet;             ///< set of LayerIds to be included in the sub-bitstream extraction process.
-  Int           m_respectDefDispWindow;               ///< Only output content inside the default display window 
-#if OUTPUT_LAYER_SET_INDEX
   CommonDecoderParams             m_commonDecoderParams;
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool          m_confModeFlag;
+  std::string   m_confPrefix;
+  std::string   m_metadataFileName;
+  Bool          m_metadataFileRefresh;
+  std::string   m_decodedYuvLayerFileName[63];
+  Bool          m_decodedYuvLayerRefresh[63];
+#endif
 #endif
 
 public:
   TAppDecCfg()
   : m_pchBitstreamFile(NULL)
 #if !SVC_EXTENSION
-  , m_pchReconFile(NULL) 
+  , m_pchReconFile(NULL)
 #endif
   , m_iSkipFrame(0)
-  , m_outputBitDepthY(0)
-  , m_outputBitDepthC(0)
+  , m_outputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
+  , m_decodedNoDisplaySEIEnabled(false)
 #if Q0074_COLOUR_REMAPPING_SEI
   , m_colourRemapSEIEnabled(0)
 #endif
-#if SVC_EXTENSION
-  , m_tgtLayerId(0)
-#if AVC_BASE && !REPN_FORMAT_IN_VPS
-  , m_iBLSourceWidth(0)
-  , m_iBLSourceHeight(0)
-#endif
-#endif
   , m_respectDefDispWindow(0)
-  {}
-  virtual ~TAppDecCfg() {}
-  
-  Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
-#if OUTPUT_LAYER_SET_INDEX
-  CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
+#if O0043_BEST_EFFORT_DECODING
+  , m_forceDecodeBitDepth(0)
 #endif
+  {
+    for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
+    {
+      m_outputBitDepth[channelTypeIndex] = 0;
+    }
+  }
+
+  virtual ~TAppDecCfg() {}
+
+  Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
+
+#if SVC_EXTENSION
+  CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}
+
+#if CONFORMANCE_BITSTREAM_MODE
+  Bool        getConfModeFlag() const        { return m_confModeFlag;       }
+  std::string getConfPrefix() const          { return m_confPrefix;         }
+  std::string getMetadataFileName() const    { return m_metadataFileName;   }
+  Bool        getMetadataFileRefresh() const {return m_metadataFileRefresh; }
+
+  std::string getDecodedYuvLayerFileName(Int layerId) const        { return m_decodedYuvLayerFileName[layerId]; }
+  Bool        getDecodedYuvLayerRefresh(const Int layerId) const   { return m_decodedYuvLayerRefresh[layerId];  }
+
+  Void setMetadataFileRefresh(const Bool x)                        { m_metadataFileRefresh = x;              }
+  Void setDecodedYuvLayerFileName(Int layerId, std::string x)      { m_decodedYuvLayerFileName[layerId] = x; }
+  Void setDecodedYuvLayerRefresh(const Int layerId, const Bool x)  { m_decodedYuvLayerRefresh[layerId] = x;  }
+#endif
+#endif
+
 };
 
 //! \}

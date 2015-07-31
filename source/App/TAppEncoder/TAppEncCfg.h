@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,74 +59,104 @@ class TAppEncCfg
 protected:
   // file I/O
 #if SVC_EXTENSION
-  TAppEncLayerCfg m_acLayerCfg [MAX_LAYERS];
+  TAppEncLayerCfg* m_apcLayerCfg[MAX_LAYERS];
+  Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
-  Char*     m_pBitstreamFile;                                 ///< output bitstream file
-  Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
-  // source specification
-  UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
-  Int       m_framesToBeEncoded;                              ///< number of encoded frames
 #if AVC_BASE
-#if VPS_AVC_BL_FLAG_REMOVAL
   Int       m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
-#else
-  Int       m_avcBaseLayerFlag;                               ///< avc_baselayer_flag
-#endif
 #endif
   Bool      m_maxTidRefPresentFlag; 
-#if Q0078_ADD_LAYER_SETS
+
   Int       m_numLayerSets;
-  Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
-  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
   Int       m_numAddLayerSets;
+  Int       m_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
+  Int       m_layerSetLayerIdList[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   Int       m_numHighestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1];
-  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_ID_PLUS1];
-#endif
-#if OUTPUT_LAYER_SETS_CONFIG
-  std::vector<Int>                m_outputLayerSetIdx;
+  Int       m_highestLayerIdx[MAX_VPS_LAYER_SETS_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
+
   Int       m_defaultTargetOutputLayerIdc;
   Int       m_numOutputLayerSets;
-  std::vector<Int>                m_numLayersInOutputLayerSet;
+  std::vector<Int>                m_outputLayerSetIdx;
+  std::vector<Int>                m_numOutputLayersInOutputLayerSet;
   std::vector< std::vector<Int> > m_listOfOutputLayers;
-#endif
 #else
   Char*     m_pchInputFile;                                   ///< source file name
+#endif
   Char*     m_pchBitstreamFile;                               ///< output bitstream file
+#if !SVC_EXTENSION
   Char*     m_pchReconFile;                                   ///< output reconstruction file
+#endif
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
   // source specification
+#if !SVC_EXTENSION
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
-  UInt      m_FrameSkip;                                      ///< number of skipped frames from the beginning
+#endif
+  UInt      m_FrameSkip;                                   ///< number of skipped frames from the beginning
+#if !SVC_EXTENSION
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
-  
+
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
-  
-  
+#endif
+  Bool      m_isField;                                        ///< enable field coding
+  Bool      m_isTopFieldFirst;
+  Bool      m_bEfficientFieldIRAPEnabled;                     ///< enable an efficient field IRAP structure.
+  Bool      m_bHarmonizeGopFirstFieldCoupleEnabled;
+
+#if !SVC_EXTENSION
   Int       m_conformanceWindowMode;
   Int       m_confWinLeft;
   Int       m_confWinRight;
   Int       m_confWinTop;
   Int       m_confWinBottom;
+#endif
   Int       m_framesToBeEncoded;                              ///< number of encoded frames
+#if !SVC_EXTENSION
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
 #endif  
-#if AUXILIARY_PICTURES
+  InputColourSpaceConversion m_inputColourSpaceConvert;       ///< colour space conversion to apply to input video
+  Bool      m_snrInternalColourSpace;                       ///< if true, then no colour space conversion is applied for snr calculation, otherwise inverse of input is applied.
+  Bool      m_outputInternalColourSpace;                    ///< if true, then no colour space conversion is applied for reconstructed video, otherwise inverse of input is applied.
+#if !SVC_EXTENSION
   ChromaFormat m_InputChromaFormatIDC;
 #endif
-  Bool      m_isField;                                        ///< enable field coding
-  Bool      m_isTopFieldFirst;
 
+  Bool      m_printMSEBasedSequencePSNR;
+  Bool      m_printFrameMSE;
+  Bool      m_printSequenceMSE;
+  Bool      m_cabacZeroWordPaddingEnabled;
+  Bool      m_bClipInputVideoToRec709Range;
+  Bool      m_bClipOutputVideoToRec709Range;
+
+#if SVC_EXTENSION
+  Int           m_numPTLInfo;
+  Profile::Name m_profileList[MAX_NUM_LAYER_IDS + 1];
+  Level::Tier   m_levelTierList[MAX_NUM_LAYER_IDS + 1];
+  Level::Name   m_levelList[MAX_NUM_LAYER_IDS + 1];
+  Profile::Name m_profileCompatibility[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_progressiveSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_interlacedSourceFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_nonPackedConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
+  Bool          m_frameOnlyConstraintFlagList[MAX_NUM_LAYER_IDS + 1];
+
+  std::vector< std::vector<Int> > m_listOfLayerPTLofOlss;
+#else
   // profile/level
   Profile::Name m_profile;
   Level::Tier   m_levelTier;
   Level::Name   m_level;
+  UInt          m_bitDepthConstraint;
+  ChromaFormat  m_chromaFormatConstraint;
+  Bool          m_intraConstraintFlag;
+  Bool          m_onePictureOnlyConstraintFlag;
+  Bool          m_lowerBitRateConstraintFlag;
   Bool m_progressiveSourceFlag;
   Bool m_interlacedSourceFlag;
   Bool m_nonPackedConstraintFlag;
   Bool m_frameOnlyConstraintFlag;
-  
+#endif
+
   // coding structure
 #if !SVC_EXTENSION
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
@@ -134,23 +164,31 @@ protected:
   Int       m_iDecodingRefreshType;                           ///< random access type
   Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
 
-#if !Q0108_TSA_STSA
-  Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
-#else
+#if SVC_EXTENSION
   Int       m_extraRPSs[MAX_LAYERS];                          ///< extra RPSs added to handle CRA
+  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
+  Int       m_inheritCodingStruct[MAX_LAYERS];
+  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
+#else
+  Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
 #endif
 
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
-#if Q0108_TSA_STSA
-  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
-  Int       m_inheritCodingStruct[MAX_LAYERS];
-#endif
-
   Int       m_numReorderPics[MAX_TLAYER];                     ///< total number of reorder pictures
   Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of pictures in the decoded picture buffer
+  Bool      m_crossComponentPredictionEnabledFlag;            ///< flag enabling the use of cross-component prediction
+  Bool      m_reconBasedCrossCPredictionEstimate;             ///< causes the alpha calculation in encoder search to be based on the decoded residual rather than the pre-transform encoder-side residual
+  UInt      m_log2SaoOffsetScale[MAX_NUM_CHANNEL_TYPE];       ///< number of bits for the upward bit shift operation on the decoded SAO offsets
   Bool      m_useTransformSkip;                               ///< flag for enabling intra transform skipping
   Bool      m_useTransformSkipFast;                           ///< flag for enabling fast intra transform skipping
+  UInt      m_log2MaxTransformSkipBlockSize;                  ///< transform-skip maximum size (minimum of 2)
+  Bool      m_transformSkipRotationEnabledFlag;               ///< control flag for transform-skip/transquant-bypass residual rotation
+  Bool      m_transformSkipContextEnabledFlag;                ///< control flag for transform-skip/transquant-bypass single significance map context
+  Bool      m_rdpcmEnabledFlag[NUMBER_OF_RDPCM_SIGNALLING_MODES];///< control flags for residual DPCM
   Bool      m_enableAMP;
+  Bool      m_persistentRiceAdaptationEnabledFlag;            ///< control flag for Golomb-Rice parameter adaptation over each slice
+  Bool      m_cabacBypassAlignmentEnabledFlag;
+
   // coding quality
 #if !SVC_EXTENSION
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
@@ -160,47 +198,52 @@ protected:
 #endif
   Int       m_iMaxDeltaQP;                                    ///< max. |delta QP|
   UInt      m_uiDeltaQpRD;                                    ///< dQP range for multi-pass slice QP optimization
+#if !SVC_EXTENSION
   Int       m_iMaxCuDQPDepth;                                 ///< Max. depth for a minimum CuDQPSize (0:default)
+#endif
+  Int       m_diffCuChromaQpOffsetDepth;                      ///< If negative, then do not apply chroma qp offsets.
+  Bool      m_bFastDeltaQP;                                   ///< Fast Delta QP (false:default)
 
-  Int       m_cbQpOffset;                                     ///< Chroma Cb QP Offset (0:default) 
+  Int       m_cbQpOffset;                                     ///< Chroma Cb QP Offset (0:default)
   Int       m_crQpOffset;                                     ///< Chroma Cr QP Offset (0:default)
 
 #if ADAPTIVE_QP_SELECTION
   Bool      m_bUseAdaptQpSelect;
 #endif
+  TComSEIMasteringDisplay m_masteringDisplay;
 
   Bool      m_bUseAdaptiveQP;                                 ///< Flag for enabling QP adaptation based on a psycho-visual model
   Int       m_iQPAdaptationRange;                             ///< dQP range by QP adaptation
-  
-  Int       m_maxTempLayer;                                  ///< Max temporal layer
-#if Q0108_TSA_STSA
-  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
-#endif
 
-#if !LAYER_CTB
+  Int       m_maxTempLayer;                                  ///< Max temporal layer
+
   // coding unit (CU) definition
+  // TODO: Remove MaxCUWidth/MaxCUHeight and replace with MaxCUSize.
+#if !SVC_EXTENSION
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
-  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth
-  
+  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth (as specified by command line)
+  UInt      m_uiMaxTotalCUDepth;                              ///< max. total CU depth - includes depth of transform-block structure
+  UInt      m_uiLog2DiffMaxMinCodingBlockSize;                ///< difference between largest and smallest CU depth
+
   // transfom unit (TU) definition
   UInt      m_uiQuadtreeTULog2MaxSize;
   UInt      m_uiQuadtreeTULog2MinSize;
-  
+
   UInt      m_uiQuadtreeTUMaxDepthInter;
   UInt      m_uiQuadtreeTUMaxDepthIntra;
 #endif
   
   // coding tools (bit-depth)
-#if !O0194_DIFFERENT_BITDEPTH_EL_BL
-  Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
-  Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
-  Int       m_outputBitDepthY;                              ///< bit-depth of output file (luma component)
-  Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
-  Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
-  Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
-#endif
-#if AUXILIARY_PICTURES
+#if !SVC_EXTENSION
+  Int       m_inputBitDepth   [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of input file
+  Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file
+  Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
+  Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
+  Bool      m_extendedPrecisionProcessingFlag;
+  Bool      m_highPrecisionOffsetsEnabledFlag;
+
+  //coding tools (chroma format)
   ChromaFormat m_chromaFormatIDC;
 #endif
 
@@ -208,44 +251,50 @@ protected:
   Bool      m_bPCMInputBitDepthFlag;                          ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
 
   // coding tool (SAO)
-  Bool      m_bUseSAO; 
+  Bool      m_bUseSAO;
+  Bool      m_bTestSAODisableAtPictureLevel;
+  Double    m_saoEncodingRate;                                ///< When >0 SAO early picture termination is enabled for luma and chroma
+  Double    m_saoEncodingRateChroma;                          ///< The SAO early picture termination rate to use for chroma (when m_SaoEncodingRate is >0). If <=0, use results for luma.
   Int       m_maxNumOffsetsPerPic;                            ///< SAO maximun number of offset per picture
-  Bool      m_saoLcuBoundary;                                 ///< SAO parameter estimation using non-deblocked pixels for LCU bottom and right boundary areas
+  Bool      m_saoCtuBoundary;                                 ///< SAO parameter estimation using non-deblocked pixels for CTU bottom and right boundary areas
   // coding tools (loop filter)
   Bool      m_bLoopFilterDisable;                             ///< flag for using deblocking filter
   Bool      m_loopFilterOffsetInPPS;                         ///< offset for deblocking filter in 0 = slice header, 1 = PPS
   Int       m_loopFilterBetaOffsetDiv2;                     ///< beta offset for deblocking filter
   Int       m_loopFilterTcOffsetDiv2;                       ///< tc offset for deblocking filter
-  Bool      m_DeblockingFilterControlPresent;                 ///< deblocking filter control present flag in PPS
   Bool      m_DeblockingFilterMetric;                         ///< blockiness metric in encoder
- 
+
   // coding tools (PCM)
   Bool      m_usePCM;                                         ///< flag for using IPCM
   UInt      m_pcmLog2MaxSize;                                 ///< log2 of maximum PCM block size
   UInt      m_uiPCMLog2MinSize;                               ///< log2 of minimum PCM block size
   Bool      m_bPCMFilterDisableFlag;                          ///< PCM filter disable flag
+  Bool      m_enableIntraReferenceSmoothing;                  ///< flag for enabling(default)/disabling intra reference smoothing/filtering
 
   // coding tools (encoder-only parameters)
   Bool      m_bUseASR;                                        ///< flag for using adaptive motion search range
   Bool      m_bUseHADME;                                      ///< flag for using HAD in sub-pel ME
   Bool      m_useRDOQ;                                       ///< flag for using RD optimized quantization
   Bool      m_useRDOQTS;                                     ///< flag for using RD optimized quantization for transform skip
-  Int       m_rdPenalty;                                      ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty) 
+#if T0196_SELECTIVE_RDOQ
+  Bool      m_useSelectiveRDOQ;                               ///< flag for using selective RDOQ
+#endif
+  Int       m_rdPenalty;                                      ///< RD-penalty for 32x32 TU for intra in non-intra slices (0: no RD-penalty, 1: RD-penalty, 2: maximum RD-penalty)
+  Bool      m_bDisableIntraPUsInInterSlices;                  ///< Flag for disabling intra predicted PUs in inter slices.
   Int       m_iFastSearch;                                    ///< ME mode, 0 = full, 1 = diamond, 2 = PMVFAST
   Int       m_iSearchRange;                                   ///< ME search range
   Int       m_bipredSearchRange;                              ///< ME search range for bipred refinement
+  Bool      m_bClipForBiPredMeEnabled;                        ///< Enables clipping for Bi-Pred ME.
+  Bool      m_bFastMEAssumingSmootherMVEnabled;               ///< Enables fast ME assuming a smoother MV.
   Bool      m_bUseFastEnc;                                    ///< flag for using fast encoder setting
   Bool      m_bUseEarlyCU;                                    ///< flag for using Early CU setting
-  Bool      m_useFastDecisionForMerge;                        ///< flag for using Fast Decision Merge RD-Cost 
+  Bool      m_useFastDecisionForMerge;                        ///< flag for using Fast Decision Merge RD-Cost
   Bool      m_bUseCbfFastMode;                              ///< flag for using Cbf Fast PU Mode Decision
   Bool      m_useEarlySkipDetection;                         ///< flag for using Early SKIP Detection
-#if FAST_INTRA_SHVC
-  Bool      m_useFastIntraScalable;                          ///< flag for using Fast Intra Decision for Scalable HEVC
-#endif
-  Int       m_sliceMode;                                     ///< 0: no slice limits, 1 : max number of CTBs per slice, 2: max number of bytes per slice, 
+  Int       m_sliceMode;                                     ///< 0: no slice limits, 1 : max number of CTBs per slice, 2: max number of bytes per slice,
                                                              ///< 3: max number of tiles per slice
   Int       m_sliceArgument;                                 ///< argument according to selected slice mode
-  Int       m_sliceSegmentMode;                              ///< 0: no slice segment limits, 1 : max number of CTBs per slice segment, 2: max number of bytes per slice segment, 
+  Int       m_sliceSegmentMode;                              ///< 0: no slice segment limits, 1 : max number of CTBs per slice segment, 2: max number of bytes per slice segment,
                                                              ///< 3: max number of tiles per slice segment
   Int       m_sliceSegmentArgument;                          ///< argument according to selected slice segment mode
 
@@ -256,22 +305,31 @@ protected:
   Int       m_numTileRowsMinus1;
   std::vector<Int> m_tileColumnWidth;
   std::vector<Int> m_tileRowHeight;
+
 #if !SVC_EXTENSION
   Int       m_iWaveFrontSynchro; //< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-  Int       m_iWaveFrontSubstreams; //< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
+  Int       m_iWaveFrontFlush; //< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
 #endif
+
   Bool      m_bUseConstrainedIntraPred;                       ///< flag for using constrained intra prediction
+  Bool      m_bFastUDIUseMPMEnabled;
+  Bool      m_bFastMEForGenBLowDelayEnabled;
+  Bool      m_bUseBLambdaForNonKeyLowDelayPictures;
+
   Int       m_decodedPictureHashSEIEnabled;                    ///< Checksum(3)/CRC(2)/MD5(1)/disable(0) acting on decoded picture hash SEI message
   Int       m_recoveryPointSEIEnabled;
   Int       m_bufferingPeriodSEIEnabled;
   Int       m_pictureTimingSEIEnabled;
   Bool      m_toneMappingInfoSEIEnabled;
+  Bool      m_chromaSamplingFilterSEIenabled;
+  Int       m_chromaSamplingHorFilterIdc;
+  Int       m_chromaSamplingVerFilterIdc;
   Int       m_toneMapId;
   Bool      m_toneMapCancelFlag;
   Bool      m_toneMapPersistenceFlag;
   Int       m_toneMapCodedDataBitDepth;
   Int       m_toneMapTargetBitDepth;
-  Int       m_toneMapModelId; 
+  Int       m_toneMapModelId;
   Int       m_toneMapMinValue;
   Int       m_toneMapMaxValue;
   Int       m_sigmoidMidpoint;
@@ -281,7 +339,7 @@ protected:
   Int       m_cameraIsoSpeedValue;
   Int       m_exposureIndexIdc;
   Int       m_exposureIndexValue;
-  Int       m_exposureCompensationValueSignFlag;
+  Bool      m_exposureCompensationValueSignFlag;
   Int       m_exposureCompensationValueNumerator;
   Int       m_exposureCompensationValueDenomIdc;
   Int       m_refScreenLuminanceWhite;
@@ -297,41 +355,58 @@ protected:
   Int       m_framePackingSEIId;
   Int       m_framePackingSEIQuincunx;
   Int       m_framePackingSEIInterpretation;
+  Int       m_segmentedRectFramePackingSEIEnabled;
+  Bool      m_segmentedRectFramePackingSEICancel;
+  Int       m_segmentedRectFramePackingSEIType;
+  Bool      m_segmentedRectFramePackingSEIPersistence;
   Int       m_displayOrientationSEIAngle;
   Int       m_temporalLevel0IndexSEIEnabled;
   Int       m_gradualDecodingRefreshInfoEnabled;
+  Int       m_noDisplaySEITLayer;
   Int       m_decodingUnitInfoSEIEnabled;
-#if LAYERS_NOT_PRESENT_SEI
-  Int       m_layersNotPresentSEIEnabled;
-#endif
   Int       m_SOPDescriptionSEIEnabled;
   Int       m_scalableNestingSEIEnabled;
-#if Q0189_TMVP_CONSTRAINTS
-  Int       m_TMVPConstraintsSEIEnabled;
-#endif
+  Bool      m_tmctsSEIEnabled;
+  Bool      m_timeCodeSEIEnabled;
+  Int       m_timeCodeSEINumTs;
+  TComSEITimeSet m_timeSetArray[MAX_TIMECODE_SEI_SETS];
+  Bool      m_kneeSEIEnabled;
+  Int       m_kneeSEIId;
+  Bool      m_kneeSEICancelFlag;
+  Bool      m_kneeSEIPersistenceFlag;
+  Int       m_kneeSEIInputDrange;
+  Int       m_kneeSEIInputDispLuminance;
+  Int       m_kneeSEIOutputDrange;
+  Int       m_kneeSEIOutputDispLuminance;
+  Int       m_kneeSEINumKneePointsMinus1;
+  Int*      m_kneeSEIInputKneePoint;
+  Int*      m_kneeSEIOutputKneePoint;
   // weighted prediction
   Bool      m_useWeightedPred;                    ///< Use of weighted prediction in P slices
   Bool      m_useWeightedBiPred;                  ///< Use of bi-directional weighted prediction in B slices
-  
+
   UInt      m_log2ParallelMergeLevel;                         ///< Parallel merge estimation region
   UInt      m_maxNumMergeCand;                                ///< Max number of merge candidates
 
   Int       m_TMVPModeId;
-  Int       m_signHideFlag;
+  Bool      m_signHideFlag;
 #if !RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
   Int       m_RCTargetBitrate;                    ///< target bitrate when rate control is enabled
   Int       m_RCKeepHierarchicalBit;              ///< 0: equal bit allocation; 1: fixed ratio bit allocation; 2: adaptive ratio bit allocation
-  Bool      m_RCLCULevelRC;                       ///< true: LCU level rate control; false: picture level rate control
-  Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
+  Bool      m_RCLCULevelRC;                       ///< true: LCU level rate control; false: picture level rate control NOTE: code-tidy - rename to m_RCCtuLevelRC
+  Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level                        NOTE: code-tidy - rename to m_RCUseCtuSeparateModel
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
-  Int       m_useScalingListId;                               ///< using quantization matrix
+#if !SVC_EXTENSION
+  ScalingListMode m_useScalingListId;                         ///< using quantization matrix
   Char*     m_scalingListFile;                                ///< quantization matrix file name
+#endif
 
   Bool      m_TransquantBypassEnableFlag;                     ///< transquant_bypass_enable_flag setting in PPS.
   Bool      m_CUTransquantBypassFlagForce;                    ///< if transquant_bypass_enable_flag, then, if true, all CU transquant bypass flags will be set to true.
+  CostMode  m_costMode;                                       ///< Cost mode to use
 
   Bool      m_recalculateQPAccordingToLambda;                 ///< recalculate QP value according to the lambda value
   Bool      m_useStrongIntraSmoothing;                        ///< enable strong intra smoothing for 32x32 blocks where the reference samples are flat
@@ -371,56 +446,55 @@ protected:
   Int       m_maxBitsPerMinCuDenom;                           ///< Indicates an upper bound for the number of bits of coding_unit() data
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
-#if O0153_ALT_OUTPUT_LAYER_FLAG
-  Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
-#endif
 
+  std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.
+  std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
+  UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
+
+#if LAYERS_NOT_PRESENT_SEI
+  Int       m_layersNotPresentSEIEnabled;
+#endif
+#if P0123_ALPHA_CHANNEL_SEI
+  Bool      m_alphaSEIEnabled;
+  Bool      m_alphaCancelFlag;
+  Int       m_alphaUseIdc;
+  Int       m_alphaBitDepthMinus8;
+  Int       m_alphaTransparentValue;
+  Int       m_alphaOpaqueValue;
+  Bool      m_alphaIncrementFlag;
+  Bool      m_alphaClipFlag;
+  Bool      m_alphaClipTypeFlag;
+#endif
 #if SVC_EXTENSION
+#if FAST_INTRA_SHVC
+  Bool      m_useFastIntraScalable;                          ///< flag for using Fast Intra Decision for Scalable HEVC
+#endif
+#if Q0189_TMVP_CONSTRAINTS
+  Int       m_TMVPConstraintsSEIEnabled;
+#endif
+  Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
   Int       m_elRapSliceBEnabled;
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION
-  string    m_colourRemapSEIFile;
-  Int       m_colourRemapSEIId;
-  Bool      m_colourRemapSEICancelFlag;
-  Bool      m_colourRemapSEIPersistenceFlag;
-  Bool      m_colourRemapSEIVideoSignalInfoPresentFlag;
-  Bool      m_colourRemapSEIFullRangeFlag;
-  Int       m_colourRemapSEIPrimaries;
-  Int       m_colourRemapSEITransferFunction;
-  Int       m_colourRemapSEIMatrixCoefficients;
-  Int       m_colourRemapSEIInputBitDepth;
-  Int       m_colourRemapSEIBitDepth;
-  Int       m_colourRemapSEIPreLutNumValMinus1[3];
-  Int*      m_colourRemapSEIPreLutCodedValue[3];
-  Int*      m_colourRemapSEIPreLutTargetValue[3];
-  Bool      m_colourRemapSEIMatrixPresentFlag;
-  Int       m_colourRemapSEILog2MatrixDenom;
-  Int       m_colourRemapSEICoeffs[3][3];
-  Int       m_colourRemapSEIPostLutNumValMinus1[3];
-  Int*      m_colourRemapSEIPostLutCodedValue[3];
-  Int*      m_colourRemapSEIPostLutTargetValue[3];
+  string    m_colourRemapSEIFileRoot;
 #endif
 #endif
   // internal member functions
-#if LAYER_CTB
+#if SVC_EXTENSION
   Void  xSetGlobal      (UInt layerId);                       ///< set global variables
+  Void  xCheckParameter (UInt layerIdx);                       ///< check validity of configuration values per layer
 #else
   Void  xSetGlobal      ();                                   ///< set global variables
-#endif
   Void  xCheckParameter ();                                   ///< check validity of configuration values
+#endif
   Void  xPrintParameter ();                                   ///< print configuration values
   Void  xPrintUsage     ();                                   ///< print usage
 #if SVC_EXTENSION
-#if M0040_ADAPTIVE_RESOLUTION_CHANGE
   Int       m_adaptiveResolutionChange;                       ///< Indicate adaptive resolution change frame
-#endif
-#if HIGHER_LAYER_IRAP_SKIP_FLAG
   Bool      m_skipPictureAtArcSwitch;                         ///< Indicates that when ARC up-switching is performed the higher layer picture is a skip picture
-#endif
-#if REPN_FORMAT_IN_VPS
+
   RepFormatCfg m_repFormatCfg[16];                            ///< Rep_format structures
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool      m_interLayerConstrainedTileSetsSEIEnabled;
   UInt      m_ilNumSetsInMessage;
@@ -429,92 +503,77 @@ protected:
   UInt      m_bottomRightTileIndex[1024];
   UInt      m_ilcIdc[1024];
 #endif
-#if O0215_PHASE_ALIGNMENT
-  Bool      m_phaseAlignFlag;
-#endif
-#if O0223_PICTURE_TYPES_ALIGN_FLAG
   Bool      m_crossLayerPictureTypeAlignFlag;
-#endif
   Bool      m_crossLayerIrapAlignFlag;
-#if P0050_KNEE_FUNCTION_SEI
-  Bool      m_kneeSEIEnabled;
-  Int       m_kneeSEIId;
-  Bool      m_kneeSEICancelFlag;
-  Bool      m_kneeSEIPersistenceFlag;
-  Bool      m_kneeSEIMappingFlag;
-  Int       m_kneeSEIInputDrange;
-  Int       m_kneeSEIInputDispLuminance;
-  Int       m_kneeSEIOutputDrange;
-  Int       m_kneeSEIOutputDispLuminance;
-  Int       m_kneeSEINumKneePointsMinus1;
-  Int*      m_kneeSEIInputKneePoint;
-  Int*      m_kneeSEIOutputKneePoint;
+#if Q0096_OVERLAY_SEI
+  Bool                                m_overlaySEIEnabled;
+  Bool                                m_overlayInfoCancelFlag;
+  UInt                                m_overlayContentAuxIdMinus128;
+  UInt                                m_overlayLabelAuxIdMinus128;
+  UInt                                m_overlayAlphaAuxIdMinus128;
+  UInt                                m_overlayElementLabelValueLengthMinus8;
+  UInt                                m_numOverlaysMinus1;
+  std::vector<UInt>                   m_overlayIdx;  
+  std::vector<Bool>                   m_overlayLanguagePresentFlag;
+  std::vector<UInt>                   m_overlayContentLayerId;
+  std::vector<Bool>                   m_overlayLabelPresentFlag;
+  std::vector<UInt>                   m_overlayLabelLayerId;
+  std::vector<Bool>                   m_overlayAlphaPresentFlag;
+  std::vector<UInt>                   m_overlayAlphaLayerId;
+  std::vector<UInt>                   m_numOverlayElementsMinus1;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMin;
+  std::vector< std::vector<UInt> >    m_overlayElementLabelMax;
+  std::vector<string>                 m_overlayLanguage;  
+  std::vector<string>                 m_overlayName;  
+  std::vector< std::vector<string> >  m_overlayElementName;  
+  Bool                                m_overlayInfoPersistenceFlag;
 #endif
-#if P0068_CROSS_LAYER_ALIGNED_IDR_ONLY_FOR_IRAP_FLAG
   Bool      m_crossLayerAlignedIdrOnlyFlag;
-#endif
-#if O0149_CROSS_LAYER_BLA_FLAG
   Bool      m_crossLayerBLAFlag;
-#endif
-#if O0194_WEIGHTED_PREDICTION_CGS
   Bool      m_useInterLayerWeightedPred;
-#endif
-#if Q0048_CGS_3D_ASYMLUT
-  Int  m_nCGSFlag;
-  Int  m_nCGSMaxOctantDepth;
-  Int  m_nCGSMaxYPartNumLog2;
-  Int  m_nCGSLUTBit;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-  Int  m_nCGSAdaptiveChroma;
-#endif
+#if CGS_3D_ASYMLUT
+  Int       m_nCGSFlag;
+  Int       m_nCGSMaxOctantDepth;
+  Int       m_nCGSMaxYPartNumLog2;
+  Int       m_nCGSLUTBit;
+  Int       m_nCGSAdaptiveChroma;
 #if R0179_ENC_OPT_3DLUT_SIZE
-  Int  m_nCGSLutSizeRDO;
+  Int       m_nCGSLutSizeRDO;
 #endif
 #endif 
 #endif //SVC_EXTENSION
 public:
   TAppEncCfg();
   virtual ~TAppEncCfg();
-  
+
 public:
   Void  create    ();                                         ///< create option handling class
   Void  destroy   ();                                         ///< destroy option handling class
   Bool  parseCfg  ( Int argc, Char* argv[] );                 ///< parse configuration file to fill member variables
   
 #if SVC_EXTENSION
-  Int  getNumFrameToBeEncoded()    {return m_framesToBeEncoded; }
-  Int  getNumLayer()               {return m_numLayers;        }
-  Int  getGOPSize()                {return m_iGOPSize;          }
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  UInt getInternalBitDepthY(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthY; }
-  UInt getInternalBitDepthC(Int iLayer)      {return m_acLayerCfg[iLayer].m_internalBitDepthC; }
-  Bool getPCMInputBitDepthFlag()             {return m_bPCMInputBitDepthFlag;                  }
-#else
-  UInt getInternalBitDepthY()      {return m_internalBitDepthY; }
-  UInt getInternalBitDepthC()      {return m_internalBitDepthC; }
-#endif
-#if !LAYER_CTB
-  UInt getMaxCUWidth()             {return m_uiMaxCUWidth;      }
-  UInt getMaxCUHeight()            {return m_uiMaxCUHeight;     }
-  UInt getMaxCUDepth()             {return m_uiMaxCUDepth;      }
-#endif
-  Int  getDecodingRefreshType()    {return m_iDecodingRefreshType; }
-  Int  getWaveFrontSynchro(Int layerId)        { return m_acLayerCfg[layerId].m_waveFrontSynchro; }
+  Bool parseCfgNumLayersAndInit( Int argc, Char* argv[] );    ///< parse configuration file to to get number of layers and allocate memory
+  Int  getNumFrameToBeEncoded()                               { return m_framesToBeEncoded;                          }
+  Int  getNumLayer()                                          { return m_numLayers;                                  }
+  Int  getGOPSize()                                           { return m_iGOPSize;                                   }
+
+  RepFormatCfg* getRepFormatCfg(Int i)                        { return &m_repFormatCfg[i];                           }
+  Bool getUsePCM()                                            { return m_usePCM;                                     }
+  UInt getPCMLog2MinSize  ()                                  { return  m_uiPCMLog2MinSize;                          }
+
+  UInt getInternalBitDepth(Int layer, ChannelType type)       { return m_apcLayerCfg[layer]->m_internalBitDepth[type];}
+  Bool getPCMInputBitDepthFlag()                              { return m_bPCMInputBitDepthFlag;                       }
+
+  Int  getDecodingRefreshType()                               { return m_iDecodingRefreshType;                       }
+  Int  getWaveFrontSynchro(Int layerIdx)                      { return m_apcLayerCfg[layerIdx]->m_waveFrontSynchro;  }
   Void getDirFilename(string& filename, string& dir, const string path);
-#if OUTPUT_LAYER_SETS_CONFIG
+
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, Int * const returnArray);
   Bool scanStringToArray(string const cfgString, Int const numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString);
-#else
-  Void cfgStringToArray(Int **arr, string cfgString, Int numEntries, const char* logString);
-#endif
-#if REPN_FORMAT_IN_VPS
-  RepFormatCfg* getRepFormatCfg(Int i)  { return &m_repFormatCfg[i]; }
-#endif
-#if LAYER_CTB
-  Bool getUsePCM()                  { return m_usePCM;               }
-  UInt getPCMLog2MinSize  ()        { return  m_uiPCMLog2MinSize;    }
-#endif
+  Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, Int * const returnArray);
+  Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
+  Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
 #endif
 };// END CLASS DEFINITION TAppEncCfg
 

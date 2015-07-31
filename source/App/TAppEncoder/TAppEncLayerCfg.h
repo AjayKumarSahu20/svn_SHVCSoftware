@@ -9,6 +9,7 @@
 #include "TLibCommon/CommonDef.h"
 #include "TLibEncoder/TEncCfg.h"
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 class TAppEncCfg;
@@ -28,7 +29,7 @@ protected:
   // file I/O0
   string    m_cInputFile;                                     ///< source file name
   string    m_cReconFile;                                     ///< output reconstruction file
-
+  Int       m_layerId;                                        ///< layer Id
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
@@ -41,25 +42,32 @@ protected:
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
-#if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatIDC;
-  ChromaFormat m_InputChromaFormat;
-  Int          m_auxId;
+  ChromaFormat m_InputChromaFormatIDC;
+  ChromaFormat m_chromaFormatConstraint;
+  UInt      m_bitDepthConstraint;
+  Bool      m_intraConstraintFlag;
+  Bool      m_lowerBitRateConstraintFlag;
+  Bool      m_onePictureOnlyConstraintFlag;
+#if AUXILIARY_PICTURES
+  Int       m_auxId;
 #endif
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int       *m_samplePredRefLayerIds;
   Int       m_numSamplePredRefLayers;
   Int       *m_motionPredRefLayerIds;
   Int       m_numMotionPredRefLayers;
   Int       *m_predLayerIds;
   Int       m_numActiveRefLayers;
-#endif
 
-#if LAYER_CTB
+  Int       m_iMaxCuDQPDepth;                                 ///< Max. depth for a minimum CuDQPSize (0:default)
+
   // coding unit (CU) definition
   UInt      m_uiMaxCUWidth;                                   ///< max. CU width in pixel
   UInt      m_uiMaxCUHeight;                                  ///< max. CU height in pixel
-  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth
+  UInt      m_uiMaxCUDepth;                                   ///< max. CU depth (as specified by command line)
+  UInt      m_uiMaxTotalCUDepth;                              ///< max. total CU depth - includes depth of transform-block structure
+  UInt      m_uiLog2DiffMaxMinCodingBlockSize;                ///< difference between largest and smallest CU depth
   
   // transfom unit (TU) definition
   UInt      m_uiQuadtreeTULog2MaxSize;
@@ -67,7 +75,6 @@ protected:
   
   UInt      m_uiQuadtreeTUMaxDepthInter;
   UInt      m_uiQuadtreeTUMaxDepthIntra;
-#endif
 
 #if RC_SHVC_HARMONIZATION
   Bool      m_RCEnableRateControl;                ///< enable rate control or not
@@ -79,54 +86,46 @@ protected:
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
 #endif
 
+  ScalingListMode m_useScalingListId;                         ///< using quantization matrix
+  Char*     m_scalingListFile;                                ///< quantization matrix file name
+
   Int       m_maxTidIlRefPicsPlus1;
   Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-  Int       m_iWaveFrontSubstreams;               ///< If iWaveFrontSynchro, this is the number of substreams per frame (dependent tiles) or per tile (independent tiles).
+  Int       m_waveFrontFlush;                     ///< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
-  char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
+  Char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
-  Int       m_numScaledRefLayerOffsets  ;
-#if O0098_SCALED_REF_LAYER_ID
-  Int       m_scaledRefLayerId          [MAX_LAYERS];
-#endif
+  Int       m_numRefLayerLocationOffsets;
+  Int       m_refLocationOffsetLayerId  [MAX_LAYERS];
   Int       m_scaledRefLayerLeftOffset  [MAX_LAYERS];
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-#if REF_REGION_OFFSET
   Bool      m_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
   Bool      m_refRegionOffsetPresentFlag      [MAX_LAYERS];
   Int       m_refRegionLeftOffset  [MAX_LAYERS];
   Int       m_refRegionTopOffset   [MAX_LAYERS];
   Int       m_refRegionRightOffset [MAX_LAYERS];
   Int       m_refRegionBottomOffset[MAX_LAYERS];
-#endif
-#if P0312_VERT_PHASE_ADJ
-  Bool      m_vertPhasePositionEnableFlag[MAX_LAYERS];
-#endif
-#if R0209_GENERIC_PHASE
   Int       m_phaseHorLuma  [MAX_LAYERS];
   Int       m_phaseVerLuma  [MAX_LAYERS];
   Int       m_phaseHorChroma[MAX_LAYERS];
   Int       m_phaseVerChroma[MAX_LAYERS];
   Bool      m_resamplePhaseSetPresentFlag [MAX_LAYERS];
-#endif
 
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
-  Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
-  Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
-  Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
-  Int       m_outputBitDepthY;                              ///< bit-depth of output file (luma component)
-  Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
-#endif
-#if REPN_FORMAT_IN_VPS
+  Int       m_inputBitDepth[MAX_NUM_CHANNEL_TYPE];            ///< bit-depth of input file
+  Int       m_outputBitDepth[MAX_NUM_CHANNEL_TYPE];           ///< bit-depth of output file
+  Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
+  Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
+  UInt      m_log2SaoOffsetScale[MAX_NUM_CHANNEL_TYPE];
+  Bool      m_extendedPrecisionProcessingFlag;
+  Bool      m_highPrecisionOffsetsEnabledFlag;
+
   Int       m_repFormatIdx;
-#endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  string    m_colourRemapSEIFile;                           ///< Colour Remapping Information SEI message parameters file
+  string    m_colourRemapSEIFileRoot;                           ///< Colour Remapping Information SEI message parameters file
   Int       m_colourRemapSEIId;
   Bool      m_colourRemapSEICancelFlag;
   Bool      m_colourRemapSEIPersistenceFlag;
@@ -147,6 +146,12 @@ protected:
   Int*      m_colourRemapSEIPostLutCodedValue[3];
   Int*      m_colourRemapSEIPostLutTargetValue[3];
 #endif
+
+  Int       m_layerSwitchOffBegin;
+  Int       m_layerSwitchOffEnd;
+
+  // profile/level
+  Int       m_layerPTLIdx;
 
 public:
   TAppEncLayerCfg();
@@ -176,14 +181,14 @@ public:
   Int     getConfWinTop()             {return m_confWinTop;          }
   Int     getConfWinBottom()          {return m_confWinBottom;       }
 #if AUXILIARY_PICTURES
-  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
+  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormatIDC;}
   ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }
   Int          getAuxId()               {return m_auxId;            }
 #endif
 
   Int     getIntQP()                  {return m_iQP;              } 
   Int*    getdQPs()                   {return m_aidQP;            }
-#if VPS_EXTN_DIRECT_REF_LAYERS
+
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
   Int*    getSamplePredRefLayerIds()     {return m_samplePredRefLayerIds;    }
   Int     getSamplePredRefLayerId(Int i) {return m_samplePredRefLayerIds[i]; }
@@ -193,8 +198,8 @@ public:
 
   Int     getNumActiveRefLayers()     {return m_numActiveRefLayers;}
   Int*    getPredLayerIds()           {return m_predLayerIds;     }
-  Int     getPredLayerId(Int i)       {return m_predLayerIds[i];  }
-#endif
+  Int     getPredLayerIdx(Int i)      {return m_predLayerIds[i];  }
+
 #if RC_SHVC_HARMONIZATION
   Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }
   Int     getRCTargetBitrate()        {return m_RCTargetBitrate;       }
@@ -204,12 +209,10 @@ public:
   Int     getRCInitialQP()            {return m_RCInitialQP;           }
   Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
 #endif
-#if REPN_FORMAT_IN_VPS
   Int     getRepFormatIdx()           { return m_repFormatIdx;  }
   Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
   Void    setSourceWidth(Int x)       { m_iSourceWidth = x;     }
   Void    setSourceHeight(Int x)      { m_iSourceHeight = x;    }
-#endif
   Int     getMaxTidIlRefPicsPlus1()   { return m_maxTidIlRefPicsPlus1; }
 #if LAYER_CTB
   UInt    getMaxCUWidth()             {return m_uiMaxCUWidth;      }

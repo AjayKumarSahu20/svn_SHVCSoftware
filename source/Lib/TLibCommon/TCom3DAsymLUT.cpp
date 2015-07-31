@@ -1,15 +1,51 @@
+/* The copyright in this software is being made available under the BSD
+ * License, included below. This software may be subject to other third party
+ * and contributor rights, including patent rights, and no such rights are
+ * granted under this license.
+ *
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
+ *    be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/** \file     TCom3DAsymLUT.cpp
+    \brief    TCom3DAsymLUT class
+*/
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
 
-#include "TypeDef.h"
+#include "CommonDef.h"
 #include "TCom3DAsymLUT.h"
 #include "TComPicYuv.h"
 
-#if Q0048_CGS_3D_ASYMLUT
-
+#if CGS_3D_ASYMLUT
 const Int TCom3DAsymLUT::m_nVertexIdxOffset[4][3] = { { 0 , 0 , 0 } , { 0 , 1 , 0 } , { 0 , 1 , 1 } , { 1 , 1 , 1 } };
 
 TCom3DAsymLUT::TCom3DAsymLUT()
@@ -27,11 +63,7 @@ TCom3DAsymLUT::~TCom3DAsymLUT()
   destroy();
 }
 
-Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
-#endif
-  )
+Void TCom3DAsymLUT::create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV )
 {
   m_nMaxOctantDepth = nMaxOctantDepth;
   m_nInputBitDepthY = nInputBitDepth;
@@ -43,11 +75,7 @@ Void TCom3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInpu
   m_nMaxYPartNumLog2 = nMaxYPartNumLog2;
   m_nMaxPartNumLog2 = 3 * m_nMaxOctantDepth + m_nMaxYPartNumLog2;
 
-  xUpdatePartitioning( nMaxOctantDepth , nMaxYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-    , nAdaptCThresholdU , nAdaptCThresholdV
-#endif
-    );
+  xUpdatePartitioning( nMaxOctantDepth, nMaxYPartNumLog2, nAdaptCThresholdU, nAdaptCThresholdV );
 
   m_nYSize = 1 << ( m_nMaxOctantDepth + m_nMaxYPartNumLog2 );
   m_nUSize = 1 << m_nMaxOctantDepth;
@@ -76,30 +104,20 @@ Void TCom3DAsymLUT::destroy()
 }
 
 
-Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
-#endif
-  )
+Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth, Int nCurYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV  )
 {
   assert( nCurOctantDepth <= m_nMaxOctantDepth );
-#if R0179_CGS_SIZE_8x1x1
   assert( nCurYPartNumLog2 + nCurOctantDepth <= m_nMaxYPartNumLog2 + m_nMaxOctantDepth );
-#else
-  assert( nCurYPartNumLog2 <= m_nMaxYPartNumLog2 );
-#endif 
 
   m_nCurOctantDepth = nCurOctantDepth;
   m_nCurYPartNumLog2 = nCurYPartNumLog2;
   m_nYShift2Idx = m_nInputBitDepthY - m_nCurOctantDepth - m_nCurYPartNumLog2;
   m_nUShift2Idx = m_nVShift2Idx = m_nInputBitDepthC - m_nCurOctantDepth;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   m_nMappingShift = 10 + m_nInputBitDepthY - m_nOutputBitDepthY; 
   m_nAdaptCThresholdU = nAdaptCThresholdU;
   m_nAdaptCThresholdV = nAdaptCThresholdV;
-#else
-  m_nMappingShift = m_nYShift2Idx + m_nUShift2Idx;
-#endif
+
   m_nMappingOffset = 1 << ( m_nMappingShift - 1 );
 
 #if R0179_ENC_OPT_3DLUT_SIZE
@@ -111,19 +129,19 @@ Void TCom3DAsymLUT::xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumL
 
 Void TCom3DAsymLUT::colorMapping( TComPicYuv * pcPic, TComPicYuv * pcPicDst )
 {
-  Int nWidth = pcPic->getWidth();
-  Int nHeight = pcPic->getHeight();
-  Int nStrideY = pcPic->getStride();
-  Int nStrideC = pcPic->getCStride();
-  Pel * pY = pcPic->getLumaAddr();
-  Pel * pU = pcPic->getCbAddr();
-  Pel * pV = pcPic->getCrAddr();
+  Int nWidth = pcPic->getWidth(COMPONENT_Y);
+  Int nHeight = pcPic->getHeight(COMPONENT_Y);
+  Int nStrideY = pcPic->getStride(COMPONENT_Y);
+  Int nStrideC = pcPic->getStride(COMPONENT_Cb);
+  Pel * pY = pcPic->getAddr(COMPONENT_Y);
+  Pel * pU = pcPic->getAddr(COMPONENT_Cb);
+  Pel * pV = pcPic->getAddr(COMPONENT_Cr);
 
-  Int nDstStrideY = pcPicDst->getStride();
-  Int nDstStrideC = pcPicDst->getCStride();
-  Pel * pYDst = pcPicDst->getLumaAddr();
-  Pel * pUDst = pcPicDst->getCbAddr();
-  Pel * pVDst = pcPicDst->getCrAddr();
+  Int nDstStrideY = pcPicDst->getStride(COMPONENT_Y);
+  Int nDstStrideC = pcPicDst->getStride(COMPONENT_Cb);
+  Pel * pYDst = pcPicDst->getAddr(COMPONENT_Y);
+  Pel * pUDst = pcPicDst->getAddr(COMPONENT_Cb);
+  Pel * pVDst = pcPicDst->getAddr(COMPONENT_Cr);
 
   Pel *pUPrev = pU;
   Pel *pVPrev = pV;
@@ -200,27 +218,29 @@ SYUVP TCom3DAsymLUT::xGetCuboidVertexPredA( Int yIdx , Int uIdx , Int vIdx , Int
   assert( nVertexIdx < 4 );
   
   SYUVP sPred;
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   sPred.Y = sPred.U = sPred.V = 0;
+
   if( nVertexIdx == 0 )
+  {
     sPred.Y = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
+  }
   else if( nVertexIdx == 1 )
+  {
     sPred.U = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
+  }
   else if( nVertexIdx == 2 )
+  {
     sPred.V = xGetNormCoeffOne() << ( m_nOutputBitDepthY - m_nInputBitDepthY );
-#else
-  sPred.Y = ( yIdx + m_nVertexIdxOffset[nVertexIdx][0] ) << ( m_nYShift2Idx + m_nDeltaBitDepth );
-  sPred.U = ( uIdx + m_nVertexIdxOffset[nVertexIdx][1] ) << ( m_nUShift2Idx + m_nDeltaBitDepthC );
-  sPred.V = ( vIdx + m_nVertexIdxOffset[nVertexIdx][2] ) << ( m_nVShift2Idx + m_nDeltaBitDepthC );
-#endif
-  return( sPred );
+  }
+
+  return sPred;
 }
 
 SYUVP  TCom3DAsymLUT::xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx , SCuboid *** pCurCuboid )
 {
   SCuboid***  pCuboid = pCurCuboid ? pCurCuboid : m_pCuboid ;
 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   SYUVP sPred;
   if( yIdx == 0 )
   {
@@ -232,35 +252,7 @@ SYUVP  TCom3DAsymLUT::xGetCuboidVertexPredAll( Int yIdx , Int uIdx , Int vIdx , 
   {
     sPred = pCuboid[yIdx-1][uIdx][vIdx].P[nVertexIdx];
   }
-#else
-  // PredA
-  SYUVP sPredA = xGetCuboidVertexPredA( yIdx , uIdx , vIdx , nVertexIdx );
 
-  // PredB
-  SYUVP sPredB; 
-  memset( &sPredB , 0 , sizeof( sPredB ) );
-  if( yIdx > 0 )
-  {
-    SYUVP & recNeighborP = pCuboid[yIdx-1][uIdx][vIdx].P[nVertexIdx];
-    SYUVP sPredNeighbor = xGetCuboidVertexPredA( yIdx - 1 , uIdx , vIdx , nVertexIdx );
-    sPredB.Y += recNeighborP.Y - sPredNeighbor.Y ;
-    sPredB.U += recNeighborP.U - sPredNeighbor.U ;
-    sPredB.V += recNeighborP.V - sPredNeighbor.V ;
-
-    Pel min = - ( 1 << ( getOutputBitDepthY() - 2 ) );
-    Pel max =  - min;
-    sPredB.Y = Clip3( min , max , sPredB.Y );
-    min = - ( 1 << ( getOutputBitDepthC() - 2 ) );
-    max =  - min;
-    sPredB.U = Clip3( min , max , sPredB.U );
-    sPredB.V = Clip3( min , max , sPredB.V );
-  }
-
-  SYUVP sPred;
-  sPred.Y = sPredA.Y + sPredB.Y;
-  sPred.U = sPredA.U + sPredB.U;
-  sPred.V = sPredA.V + sPredB.V;
-#endif
   return sPred ;
 }
 
@@ -284,56 +276,29 @@ Void TCom3DAsymLUT::setCuboidVertexResTree( Int yIdx , Int uIdx , Int vIdx , Int
   rYUVP.Y = sPred.Y + ( deltaY << m_nResQuanBit );
   rYUVP.U = sPred.U + ( deltaU << m_nResQuanBit );
   rYUVP.V = sPred.V + ( deltaV << m_nResQuanBit );
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+
   // LUT coefficients are less than 12-bit
   assert( -2048 <= rYUVP.Y && rYUVP.Y <= 2047 );
   assert( -2048 <= rYUVP.U && rYUVP.U <= 2047 );
   assert( -2048 <= rYUVP.V && rYUVP.V <= 2047 );
-#endif
 }
 
 Pel TCom3DAsymLUT::xMapY( Pel y , Pel u , Pel v )
 {
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   const SCuboid & rCuboid = m_pCuboid[xGetYIdx(y)][xGetUIdx(u)][xGetVIdx(v)];
   Pel dstY = ( ( rCuboid.P[0].Y * y + rCuboid.P[1].Y * u + rCuboid.P[2].Y * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].Y;
-#else
-  const SCuboid & rCuboid = m_pCuboid[y>>m_nYShift2Idx][u>>m_nUShift2Idx][v>>m_nVShift2Idx];
-  Pel dstY = rCuboid.P[0].Y;
-  Int deltaY = y - ( y >> m_nYShift2Idx << m_nYShift2Idx );
-  Int deltaU = u - ( u >> m_nUShift2Idx << m_nUShift2Idx );
-  Int deltaV = v - ( v >> m_nVShift2Idx << m_nVShift2Idx );
-  dstY += ( Pel )( ( ( ( deltaY * ( rCuboid.P[3].Y - rCuboid.P[2].Y ) ) << m_nUShift2Idx ) 
-                   + ( ( deltaU * ( rCuboid.P[1].Y - rCuboid.P[0].Y ) ) << m_nYShift2Idx )
-                   + ( ( deltaV * ( rCuboid.P[2].Y - rCuboid.P[1].Y ) ) << m_nYShift2Idx ) 
-                   + m_nMappingOffset ) >> m_nMappingShift );
-#endif
+
   return( dstY );
 }
 
 SYUVP TCom3DAsymLUT::xMapUV( Pel y , Pel u , Pel v )
 {
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   const SCuboid & rCuboid = m_pCuboid[xGetYIdx(y)][xGetUIdx(u)][xGetVIdx(v)];
   SYUVP dst;
   dst.Y = 0;
   dst.U = ( ( rCuboid.P[0].U * y + rCuboid.P[1].U * u + rCuboid.P[2].U * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].U;
   dst.V = ( ( rCuboid.P[0].V * y + rCuboid.P[1].V * u + rCuboid.P[2].V * v + m_nMappingOffset ) >> m_nMappingShift ) + rCuboid.P[3].V;
-#else
-  const SCuboid & rCuboid = m_pCuboid[y>>m_nYShift2Idx][u>>m_nUShift2Idx][v>>m_nVShift2Idx];
-  SYUVP dst = rCuboid.P[0];
-  Int deltaY = y - ( y >> m_nYShift2Idx << m_nYShift2Idx );
-  Int deltaU = u - ( u >> m_nUShift2Idx << m_nUShift2Idx );
-  Int deltaV = v - ( v >> m_nVShift2Idx << m_nVShift2Idx );
-  dst.U += ( Pel )( ( ( ( deltaY * ( rCuboid.P[3].U - rCuboid.P[2].U ) ) << m_nUShift2Idx ) 
-                    + ( ( deltaU * ( rCuboid.P[1].U - rCuboid.P[0].U ) ) << m_nYShift2Idx )
-                    + ( ( deltaV * ( rCuboid.P[2].U - rCuboid.P[1].U ) ) << m_nYShift2Idx ) 
-                    + m_nMappingOffset ) >> m_nMappingShift );
-  dst.V += ( Pel )( ( ( ( deltaY * ( rCuboid.P[3].V - rCuboid.P[2].V ) ) << m_nUShift2Idx ) 
-                    + ( ( deltaU * ( rCuboid.P[1].V - rCuboid.P[0].V ) ) << m_nYShift2Idx )
-                    + ( ( deltaV * ( rCuboid.P[2].V - rCuboid.P[1].V ) ) << m_nYShift2Idx ) 
-                    + m_nMappingOffset ) >> m_nMappingShift );
-#endif
+
   return( dst );
 }
 
@@ -349,11 +314,7 @@ Void TCom3DAsymLUT::xSaveCuboids( SCuboid *** pSrcCuboid )
 Void TCom3DAsymLUT::copy3DAsymLUT( TCom3DAsymLUT * pSrc )
 {
   assert( pSrc->getMaxOctantDepth() == getMaxOctantDepth() && pSrc->getMaxYPartNumLog2() == getMaxYPartNumLog2() );
-  xUpdatePartitioning( pSrc->getCurOctantDepth() , pSrc->getCurYPartNumLog2() 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-    , pSrc->getAdaptChromaThresholdU() , pSrc->getAdaptChromaThresholdV()
-#endif
-    );
+  xUpdatePartitioning( pSrc->getCurOctantDepth(), pSrc->getCurYPartNumLog2(), pSrc->getAdaptChromaThresholdU(), pSrc->getAdaptChromaThresholdV() );
   setResQuantBit( pSrc->getResQuantBit() );
   xSaveCuboids( pSrc->m_pCuboid );
 }
@@ -412,7 +373,6 @@ Void TCom3DAsymLUT::xCuboidsFilledCheck( Bool bDecode )
 }
 #endif
 
-#if R0150_CGS_SIGNAL_CONSTRAINTS
 Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
 {
   Bool bIsRefLayer = false;
@@ -427,7 +387,6 @@ Bool TCom3DAsymLUT::isRefLayer( UInt uiRefLayerId )
 
   return( bIsRefLayer );
 }
-#endif
 
 #if R0164_CGS_LUT_BUGFIX_CHECK
 Void  TCom3DAsymLUT::display( Bool bFilled )

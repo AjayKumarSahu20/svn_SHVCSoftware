@@ -144,10 +144,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\Lib\TLibEncoder\NALwrite.cpp" />
+    <ClCompile Include="..\..\source\Lib\TLibEncoder\SEIEncoder.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\SEIwrite.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\SyntaxElementWriter.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.cpp" />
-    <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncAnalyze.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncBinCoderCABAC.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncBinCoderCABACCounter.cpp" />
     <ClCompile Include="..\..\source\Lib\TLibEncoder\TEncCavlc.cpp" />
@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\source\Lib\TLibEncoder\AnnexBwrite.h" />
     <ClInclude Include="..\..\source\Lib\TLibEncoder\NALwrite.h" />
+    <ClInclude Include="..\..\source\Lib\TLibEncoder\SEIEncoder.h" />
     <ClInclude Include="..\..\source\Lib\TLibEncoder\SEIwrite.h" />
     <ClInclude Include="..\..\source\Lib\TLibEncoder\SyntaxElementWriter.h" />
     <ClInclude Include="..\..\source\Lib\TLibEncoder\TEnc3DAsymLUT.h" />

@@ -41,15 +41,14 @@ static inline ChromaFormat numberToChromaFormat(const Int val)
 // ====================================================================================================================
 #if SVC_EXTENSION
 TAppEncLayerCfg::TAppEncLayerCfg()
-  :m_cInputFile(string("")),
-  m_cReconFile(string("")),
-  m_conformanceMode( 0 ),
-  m_aidQP(NULL)
-#if REPN_FORMAT_IN_VPS
-, m_repFormatIdx (-1)
-#endif
+: m_cInputFile(string(""))
+, m_cReconFile(string(""))
+, m_conformanceMode( 0 )
+, m_scalingListFile(NULL)
+, m_aidQP(NULL)
+, m_repFormatIdx(-1)
 #if Q0074_COLOUR_REMAPPING_SEI
-,  m_colourRemapSEIFile(string(""))
+, m_colourRemapSEIFileRoot(string(""))
 #endif
 {
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -63,33 +62,23 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 #endif
   m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
-  m_numScaledRefLayerOffsets = 0;
-#if O0098_SCALED_REF_LAYER_ID
-  ::memset(m_scaledRefLayerId,           0, sizeof(m_scaledRefLayerId));
-#endif
+  m_numRefLayerLocationOffsets = 0;
+  ::memset(m_refLocationOffsetLayerId,   0, sizeof(m_refLocationOffsetLayerId));
   ::memset(m_scaledRefLayerLeftOffset,   0, sizeof(m_scaledRefLayerLeftOffset));
   ::memset(m_scaledRefLayerTopOffset,    0, sizeof(m_scaledRefLayerTopOffset));
   ::memset(m_scaledRefLayerRightOffset,  0, sizeof(m_scaledRefLayerRightOffset));
   ::memset(m_scaledRefLayerBottomOffset, 0, sizeof(m_scaledRefLayerBottomOffset));
-#if REF_REGION_OFFSET
   ::memset(m_scaledRefLayerOffsetPresentFlag, 0, sizeof(m_scaledRefLayerOffsetPresentFlag));
   ::memset(m_refRegionOffsetPresentFlag, 0, sizeof(m_refRegionOffsetPresentFlag));
   ::memset(m_refRegionLeftOffset,   0, sizeof(m_refRegionLeftOffset));
   ::memset(m_refRegionTopOffset,    0, sizeof(m_refRegionTopOffset));
   ::memset(m_refRegionRightOffset,  0, sizeof(m_refRegionRightOffset));
   ::memset(m_refRegionBottomOffset, 0, sizeof(m_refRegionBottomOffset));
-#endif
-#if R0209_GENERIC_PHASE
   ::memset(m_resamplePhaseSetPresentFlag, 0, sizeof(m_resamplePhaseSetPresentFlag));
   ::memset(m_phaseHorLuma,   0, sizeof(m_phaseHorLuma));
   ::memset(m_phaseVerLuma,   0, sizeof(m_phaseVerLuma));
   ::memset(m_phaseHorChroma, 0, sizeof(m_phaseHorChroma));
   ::memset(m_phaseVerChroma, 0, sizeof(m_phaseVerChroma));
-#else
-#if P0312_VERT_PHASE_ADJ 
-  ::memset(m_vertPhasePositionEnableFlag, 0, sizeof(m_vertPhasePositionEnableFlag));
-#endif
-#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()
@@ -119,6 +108,7 @@ TAppEncLayerCfg::~TAppEncLayerCfg()
     }
   }
 #endif
+  free(m_scalingListFile);
 }
 
 Void TAppEncLayerCfg::create()
@@ -148,7 +138,7 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   Int tmpChromaFormat;
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  string  cfg_colourRemapSEIFile;
+  string cfg_colourRemapSEIFileRoot;
 #endif
 
   po::Options opts;
@@ -180,7 +170,7 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
     ("dQPFile,m",             cfg_dQPFile, string(""), "dQP file name")
     ("QP,q",                  m_fQP,          30.0, "Qp value, if value is float, QP is switched once during encoding")
 #if Q0074_COLOUR_REMAPPING_SEI
-    ("SEIColourRemappingInfoFile", cfg_colourRemapSEIFile, string(""), "Colour Remapping Information SEI parameters file name")
+    ("SEIColourRemappingInfoFileRoot", cfg_colourRemapSEIFileRoot, string(""), "Colour Remapping Information SEI parameters file name")
 #endif
   ;
 
@@ -191,11 +181,14 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
   m_cReconFile = cfg_ReconFile;
   m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
 #if AUXILIARY_PICTURES
-  m_InputChromaFormat = numberToChromaFormat(tmpInputChromaFormat);
-  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormat) : (numberToChromaFormat(tmpChromaFormat)));
+  m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
+  m_chromaFormatIDC   = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  m_colourRemapSEIFile = cfg_colourRemapSEIFile.empty() ? NULL : strdup(cfg_colourRemapSEIFile.c_str());
+  if( !cfg_colourRemapSEIFileRoot.empty() )
+  {
+    m_colourRemapSEIFileRoot = strdup(cfg_colourRemapSEIFileRoot.c_str());
+  }
 #endif
 
   // reading external dQP description from file
@@ -216,126 +209,70 @@ bool TAppEncLayerCfg::parseCfg( const string& cfgFileName  )
     }
   }
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  if( m_colourRemapSEIFile.size() > 0 )
-  {
-    FILE* fic;
-    Int retval;
-    if((fic = fopen(m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
-    {
-      fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile.c_str());
-      exit(EXIT_FAILURE);
-    }
-
-    Int tempCode;
-    retval = fscanf( fic, "%d", &m_colourRemapSEIId );
-    retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEICancelFlag = tempCode ? 1 : 0; 
-    if( !m_colourRemapSEICancelFlag )
-    {
-      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIPersistenceFlag = tempCode ? 1 : 0; 
-      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0; 
-      if( m_colourRemapSEIVideoSignalInfoPresentFlag )
-      {
-        retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0; 
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPrimaries );
-        retval = fscanf( fic, "%d", &m_colourRemapSEITransferFunction );
-        retval = fscanf( fic, "%d", &m_colourRemapSEIMatrixCoefficients );
-      }
-
-      retval = fscanf( fic, "%d", &m_colourRemapSEIInputBitDepth );
-      retval = fscanf( fic, "%d", &m_colourRemapSEIBitDepth );
-  
-      for( Int c=0 ; c<3 ; c++ )
-      {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutNumValMinus1[c] );
-        if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
-        {
-          m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          m_colourRemapSEIPreLutTargetValue[c] = new Int[m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
-          {
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPreLutTargetValue[c][i] );
-          }
-        }
-      }
-
-      retval = fscanf( fic, "%d", &tempCode );m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0; 
-      if( m_colourRemapSEIMatrixPresentFlag )
-      {
-        retval = fscanf( fic, "%d", &m_colourRemapSEILog2MatrixDenom );
-        for( Int c=0 ; c<3 ; c++ )
-          for( Int i=0 ; i<3 ; i++ )
-            retval = fscanf( fic, "%d", &m_colourRemapSEICoeffs[c][i] );
-      }
-
-      for( Int c=0 ; c<3 ; c++ )
-      {
-        retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutNumValMinus1[c] );
-        if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
-        {
-          m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          m_colourRemapSEIPostLutTargetValue[c] = new Int[m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
-          {
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_colourRemapSEIPostLutTargetValue[c][i] );
-          }
-        }
-      }
-    }
-
-    fclose( fic );
-    if( retval != 1 )
-    {
-      fprintf(stderr, "Error while reading Colour Remapping Information SEI parameters file\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-#endif
-
   return true;
 }
 
 Void TAppEncLayerCfg::xPrintParameter()
 {
-  printf("Input File                    : %s\n", m_cInputFile.c_str()  );
-  printf("Reconstruction File           : %s\n", m_cReconFile.c_str()  );
-#if REPN_FORMAT_IN_VPS
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
-#else
-  printf("Real     Format               : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
-#endif
-  printf("Internal Format               : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  printf("Input bit depth               : (Y:%d, C:%d)\n", m_inputBitDepthY   , m_inputBitDepthC    );
-  printf("Internal bit depth            : (Y:%d, C:%d)\n", m_internalBitDepthY, m_internalBitDepthC );
-  printf("PCM sample bit depth          : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthY : m_internalBitDepthY, m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepthC : m_internalBitDepthC );
-#endif
-#if LAYER_CTB
-  printf("CU size / depth               : %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth );
-  printf("RQT trans. size (min / max)   : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
-  printf("Max RQT depth inter           : %d\n", m_uiQuadtreeTUMaxDepthInter);
-  printf("Max RQT depth intra           : %d\n", m_uiQuadtreeTUMaxDepthIntra);
-#endif
-  printf("QP                            : %5.2f\n", m_fQP );
-  printf("Intra period                  : %d\n", m_iIntraPeriod );
-#if RC_SHVC_HARMONIZATION
-  printf("RateControl                   : %d\n", m_RCEnableRateControl );
+  printf("Input File                        : %s\n", m_cInputFile.c_str()  );
+  printf("Reconstruction File               : %s\n", m_cReconFile.c_str()  );
+  printf("Real     Format                   : %dx%d %dHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_chromaFormatIDC ), m_iFrameRate );
+  printf("Internal Format                   : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
+  printf("PTL index                         : %d\n", m_layerPTLIdx );
+  printf("Input bit depth                   : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("Internal bit depth                : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  printf("PCM sample bit depth              : (Y:%d, C:%d)\n", m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA], m_cAppEncCfg->getPCMInputBitDepthFlag() ? m_inputBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+  std::cout << "Input ChromaFormatIDC             :";
+
+  switch (m_InputChromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << std::endl;
+
+  std::cout << "Output (internal) ChromaFormatIDC :";
+  switch (m_chromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << " 4:0:0"; break;
+  case CHROMA_420:  std::cout << " 4:2:0"; break;
+  case CHROMA_422:  std::cout << " 4:2:2"; break;
+  case CHROMA_444:  std::cout << " 4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  printf("\n");
+  printf("CU size / depth / total-depth     : %d / %d / %d\n", m_uiMaxCUWidth, m_uiMaxCUDepth, m_uiMaxTotalCUDepth );
+  printf("RQT trans. size (min / max)       : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
+  printf("Max RQT depth inter               : %d\n", m_uiQuadtreeTUMaxDepthInter);
+  printf("Max RQT depth intra               : %d\n", m_uiQuadtreeTUMaxDepthIntra);
+  printf("QP                                : %5.2f\n", m_fQP );
+  printf("Max dQP signaling depth           : %d\n", m_iMaxCuDQPDepth);
+  printf("Intra period                      : %d\n", m_iIntraPeriod );
+#if RC_SHVC_HARMONIZATION                    
+  printf("RateControl                       : %d\n", m_RCEnableRateControl );
   if(m_RCEnableRateControl)
   {
-    printf("TargetBitrate                 : %d\n", m_RCTargetBitrate );
-    printf("KeepHierarchicalBit           : %d\n", m_RCKeepHierarchicalBit );
-    printf("LCULevelRC                    : %d\n", m_RCLCULevelRC );
-    printf("UseLCUSeparateModel           : %d\n", m_RCUseLCUSeparateModel );
-    printf("InitialQP                     : %d\n", m_RCInitialQP );
-    printf("ForceIntraQP                  : %d\n", m_RCForceIntraQP );
+    printf("TargetBitrate                     : %d\n", m_RCTargetBitrate );
+    printf("KeepHierarchicalBit               : %d\n", m_RCKeepHierarchicalBit );
+    printf("LCULevelRC                        : %d\n", m_RCLCULevelRC );
+    printf("UseLCUSeparateModel               : %d\n", m_RCUseLCUSeparateModel );
+    printf("InitialQP                         : %d\n", m_RCInitialQP );
+    printf("ForceIntraQP                      : %d\n", m_RCForceIntraQP );
   }
 #endif
-  printf("WaveFrontSynchro:%d WaveFrontSubstreams:%d", m_waveFrontSynchro, m_iWaveFrontSubstreams);
-#if LAYER_CTB
-  printf("PCM:%d ", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
-#endif
+  printf("WaveFrontSynchro                  : %d\n", m_waveFrontSynchro);
+
+  const Int iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
+  printf("WaveFrontSubstreams               : %d\n", iWaveFrontSubstreams);
+  printf("ScalingList                       : %d\n", m_useScalingListId );
+  printf("PCM                               : %d\n", (m_cAppEncCfg->getUsePCM() && (1<<m_cAppEncCfg->getPCMLog2MinSize()) <= m_uiMaxCUWidth)? 1 : 0);
 }
 
 Bool confirmPara(Bool bflag, const char* message);
@@ -353,19 +290,24 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   case 1:
     {
+      // conformance
+      if ((m_confWinLeft != 0) || (m_confWinRight != 0) || (m_confWinTop != 0) || (m_confWinBottom != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but cropping parameters are set. Undesired size possible.\n");
+      }
+      if ((m_aiPad[1] != 0) || (m_aiPad[0] != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but padding parameters are also set\n");
+      }
+
       // automatic padding to minimum CU size
-#if LAYER_CTB
       Int minCuSize = m_uiMaxCUHeight >> (m_uiMaxCUDepth - 1);
-#else
-      Int minCuSize = m_cAppEncCfg->getMaxCUHeight() >> (m_cAppEncCfg->getMaxCUDepth() - 1);
-#endif
+
       if (m_iSourceWidth % minCuSize)
       {
         m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
         m_iSourceWidth  += m_confWinRight;
-#if REPN_FORMAT_IN_VPS
         m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
-#endif
       }
       if (m_iSourceHeight % minCuSize)
       {
@@ -376,23 +318,25 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
           m_iSourceHeightOrg += m_confWinBottom << 1;
           m_aiPad[1] = m_confWinBottom << 1;
         }
-#if REPN_FORMAT_IN_VPS
         m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
-#endif
       }
       break;
     }
   case 2:
     {
+      // conformance
+      if ((m_confWinLeft != 0) || (m_confWinRight != 0) || (m_confWinTop != 0) || (m_confWinBottom != 0))
+      {
+        fprintf(stderr, "Warning: Automatic padding enabled, but cropping parameters are set. Undesired size possible.\n");
+      }
+
       //padding
       m_iSourceWidth  += m_aiPad[0];
       m_iSourceHeight += m_aiPad[1];
       m_confWinRight  = m_aiPad[0];
       m_confWinBottom = m_aiPad[1];
-#if REPN_FORMAT_IN_VPS
       m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
       m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
-#endif
       break;
     }
   case 3:
@@ -433,15 +377,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     }
   }
 
-#if LAYER_CTB
   UInt maxCUWidth = m_uiMaxCUWidth;
   UInt maxCUHeight = m_uiMaxCUHeight;
   UInt maxCUDepth = m_uiMaxCUDepth;
-#else
-  UInt maxCUWidth = m_cAppEncCfg->getMaxCUWidth();
-  UInt maxCUHeight = m_cAppEncCfg->getMaxCUHeight();
-  UInt maxCUDepth = m_cAppEncCfg->getMaxCUDepth();
-#endif
   bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
   // check range of parameters
@@ -454,19 +392,9 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
   }
 
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  for(UInt layer = 0; layer < MAX_LAYERS; layer++)
-  {
-    xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY(layer) - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-  }
-#else
-  xConfirmPara( m_iQP <  -6 * ((Int)m_cAppEncCfg->getInternalBitDepthY() - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
-#endif
+  xConfirmPara( m_iQP <  -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,                "QP exceeds supported range (-QpBDOffsety to 51)" );
 
-  m_iWaveFrontSubstreams = m_waveFrontSynchro ? (m_iSourceHeight + maxCUHeight - 1) / maxCUHeight : 1;
   xConfirmPara( m_waveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
-  xConfirmPara( m_iWaveFrontSubstreams <= 0, "WaveFrontSubstreams must be positive" );
-  xConfirmPara( m_iWaveFrontSubstreams > 1 && !m_waveFrontSynchro, "Must have WaveFrontSynchro > 0 in order to have WaveFrontSubstreams > 1" );
 
   //chekc parameters
   xConfirmPara( m_iSourceWidth  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Picture width must be an integer multiple of the specified chroma subsampling");
@@ -475,14 +403,8 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(CHROMA_420) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(CHROMA_420) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
-#if !REPN_FORMAT_IN_VPS
-  xConfirmPara( m_confLeft   % TComSPS::getWinUnitX(CHROMA_420) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confRight  % TComSPS::getWinUnitX(CHROMA_420) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confTop    % TComSPS::getWinUnitY(CHROMA_420) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
-  xConfirmPara( m_confBottom % TComSPS::getWinUnitY(CHROMA_420) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
-#endif
+  xConfirmPara( m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                          "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
 
-#if LAYER_CTB  
   xConfirmPara( (m_uiMaxCUWidth  >> m_uiMaxCUDepth) < 4,                                    "Minimum partition width size should be larger than or equal to 8");
   xConfirmPara( (m_uiMaxCUHeight >> m_uiMaxCUDepth) < 4,                                    "Minimum partition height size should be larger than or equal to 8");
   xConfirmPara( m_uiMaxCUWidth < 16,                                                        "Maximum partition width size should be larger than or equal to 16");
@@ -515,38 +437,6 @@ Bool TAppEncLayerCfg::xCheckParameter( Bool isField )
     if( (ui & 1) == 1)
       xConfirmPara( ui != 1 , "Height should be 2^n");
   }
-#endif
-#if Q0074_COLOUR_REMAPPING_SEI
-  if ( ( m_colourRemapSEIFile.size() > 0 ) && !m_colourRemapSEICancelFlag )
-  {
-    xConfirmPara( m_colourRemapSEIInputBitDepth < 8 || m_colourRemapSEIInputBitDepth > 16 , "colour_remap_input_bit_depth shall be in the range of 8 to 16, inclusive");
-    xConfirmPara( m_colourRemapSEIBitDepth < 8 || m_colourRemapSEIBitDepth > 16, "colour_remap_bit_depth shall be in the range of 8 to 16, inclusive");
-    for( Int c=0 ; c<3 ; c++)
-    {
-      xConfirmPara( m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_colourRemapSEIPreLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<=m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
-        {
-          xConfirmPara( m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_input_bit_depth)-1, inclusive");
-          xConfirmPara( m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
-        }
-      xConfirmPara( m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_colourRemapSEIPostLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<=m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
-        { 
-          xConfirmPara( m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
-          xConfirmPara( m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_bit_depth)-1, inclusive");
-        }
-    }
-    if( m_colourRemapSEIMatrixPresentFlag )
-    {
-      xConfirmPara( m_colourRemapSEILog2MatrixDenom < 0 || m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
-      for( Int c=0 ; c<3 ; c++)
-        for( Int i=0 ; i<3 ; i++)
-          xConfirmPara( m_colourRemapSEICoeffs[c][i] < -32768 || m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
-    }
-  }
-#endif
 
 #undef xConfirmPara
   return check_failed;
