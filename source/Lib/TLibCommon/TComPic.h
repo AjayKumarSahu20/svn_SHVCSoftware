@@ -156,7 +156,11 @@ public:
   Void          allocateNewSlice()           {m_picSym.allocateNewSlice();         }
   Void          clearSliceBuffer()           {m_picSym.clearSliceBuffer();         }
 
+#if SVC_EXTENSION
+  const Window& getConformanceWindow() const { return m_picSym.getSlice(0)->getConformanceWindow(); }
+#else
   const Window& getConformanceWindow() const { return m_picSym.getSPS().getConformanceWindow(); }
+#endif
   Window        getDefDisplayWindow() const  { return m_picSym.getSPS().getVuiParametersPresentFlag() ? m_picSym.getSPS().getVuiParameters()->getDefaultDisplayWindow() : Window(); }
 
   Bool          getSAOMergeAvailability(Int currAddr, Int mergeAddr);
