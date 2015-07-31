@@ -161,6 +161,7 @@ private:
   std::vector<TComPic>    m_confListPic;         //  Dynamic buffer for storing pictures for conformance purposes
 #endif
   Bool                    m_isOutputLayerFlag;
+  static std::vector<UInt> m_targetDecLayerIdList; // list of layers to be decoded according to the OLS index
 #endif //SVC_EXTENSION
 
 public:
