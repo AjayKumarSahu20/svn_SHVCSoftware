@@ -53,6 +53,7 @@ Bool  TDecTop::m_picNonIdrWithRadlPresentFlag  = false;
 Bool  TDecTop::m_picNonIdrNoLpPresentFlag      = false;
 Int   TDecTop::m_crossLayerPocResetPeriodId    = -1;
 Int   TDecTop::m_crossLayerPocResetIdc         = -1;
+std::vector<UInt> TDecTop::m_targetDecLayerIdList; // list of layers to be decoded according to the OLS index
 #endif
 
 //! \ingroup TLibDecoder
@@ -1957,6 +1958,13 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   {  
     return false;
   }
+
+  // skip NAL units of the layers not needed to be decoded specified by OLS
+  if( nalu.m_nalUnitType != NAL_UNIT_VPS && nalu.m_nalUnitType != NAL_UNIT_SPS && nalu.m_nalUnitType != NAL_UNIT_PPS &&
+      m_targetDecLayerIdList.size() && std::find( m_targetDecLayerIdList.begin(), m_targetDecLayerIdList.end(), nalu.m_nuhLayerId ) == m_targetDecLayerIdList.end() )
+  {
+    return false;
+  }
 #endif
   switch (nalu.m_nalUnitType)
   {
@@ -2381,7 +2389,7 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
   {
     if( vps->getOutputLayerFlag( targetOlsIdx, i ) )
     {
-      this->getLayerDec( vps->getLayerSetLayerIdList( targetLsIdx, i ) )->m_isOutputLayerFlag = true;
+      m_ppcTDecTop[vps->getLayerSetLayerIdList( targetLsIdx, i )]->m_isOutputLayerFlag = true;
     }
   }
 }
@@ -2519,15 +2527,17 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
   Int  targetOlsIdx = m_commonDecoderParams->getTargetOutputLayerSetIdx();
   assert( targetOlsIdx >= 0 );
 
+  // list of layers to be decoded is not built yet
+  m_targetDecLayerIdList.resize(0);
+
   UInt targetDecLayerSetIdx = vps->getOutputLayerSetIdx(targetOlsIdx);
   UInt lsIdx = targetDecLayerSetIdx;
-  UInt targetDecLayerIdList[MAX_LAYERS] = {0};
-
-  for (UInt i = 0, j = 0; i < vps->getNumLayersInIdList(lsIdx); i++)
+  
+  for (UInt i = 0; i < vps->getNumLayersInIdList(lsIdx); i++)
   {
     if (vps->getNecessaryLayerFlag(targetOlsIdx, i))
     {
-      targetDecLayerIdList[j++] = vps->getLayerSetLayerIdList(lsIdx, i);
+      m_targetDecLayerIdList.push_back( vps->getLayerSetLayerIdList(lsIdx, i) );
     }
   }
 
@@ -2541,7 +2551,7 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
   }
   else
   {
-    smallestLayerId = targetDecLayerIdList[0];
+    smallestLayerId = m_targetDecLayerIdList[0];
   }
 
   for( UInt layerId = 0; layerId < MAX_VPS_LAYER_IDX_PLUS1; layerId++ )
