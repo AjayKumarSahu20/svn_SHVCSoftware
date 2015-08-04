@@ -3267,6 +3267,8 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   }
   printf(" [ET %5.0f ]", dEncTime );
 
+  // printf(" [WP %d]", pcSlice->getUseWeightedPrediction());
+
   for (Int iRefList = 0; iRefList < 2; iRefList++)
   {
     printf(" [L%d ", iRefList);

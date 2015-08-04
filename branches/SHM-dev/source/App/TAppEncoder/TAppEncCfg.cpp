@@ -974,6 +974,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int tmpChromaFormat;
   Int tmpInputChromaFormat;
   Int tmpConstraintChromaFormat;
+  Int tmpWeightedPredictionMethod;
   string inputColourSpaceConvert;
 #if SVC_EXTENSION
   ExtendedProfileName extendedProfile[MAX_NUM_LAYER_IDS + 1];
@@ -1393,15 +1394,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("IntraReferenceSmoothing",                         m_enableIntraReferenceSmoothing,                   true, "0: Disable use of intra reference smoothing. 1: Enable use of intra reference smoothing (not valid in V1 profiles)")
   ("WeightedPredP,-wpP",                              m_useWeightedPred,                                false, "Use weighted prediction in P slices")
   ("WeightedPredB,-wpB",                              m_useWeightedBiPred,                              false, "Use weighted (bidirectional) prediction in B slices")
+  ("WeightedPredMethod,-wpM",                         tmpWeightedPredictionMethod, Int(WP_PER_PICTURE_WITH_SIMPLE_DC_COMBINED_COMPONENT), "Weighted prediction method")
   ("Log2ParallelMergeLevel",                          m_log2ParallelMergeLevel,                            2u, "Parallel merge estimation region")
     //deprecated copies of renamed tile parameters
-  ("UniformSpacingIdc",                               m_tileUniformSpacingFlag,                         false, "deprecated alias of TileUniformSpacing")
+  ("UniformSpacingIdc",                               m_tileUniformSpacingFlag,                         false,      "deprecated alias of TileUniformSpacing")
   ("ColumnWidthArray",                                cfg_ColumnWidth,                        cfg_ColumnWidth, "deprecated alias of TileColumnWidthArray")
   ("RowHeightArray",                                  cfg_RowHeight,                            cfg_RowHeight, "deprecated alias of TileRowHeightArray")
 
-  ("TileUniformSpacing",                              m_tileUniformSpacingFlag,                         false, "Indicates that tile columns and rows are distributed uniformly")
-  ("NumTileColumnsMinus1",                            m_numTileColumnsMinus1,                               0, "Number of tile columns in a picture minus 1")
-  ("NumTileRowsMinus1",                               m_numTileRowsMinus1,                                  0, "Number of rows in a picture minus 1")
+  ("TileUniformSpacing",                              m_tileUniformSpacingFlag,                         false,      "Indicates that tile columns and rows are distributed uniformly")
+  ("NumTileColumnsMinus1",                            m_numTileColumnsMinus1,                               0,          "Number of tile columns in a picture minus 1")
+  ("NumTileRowsMinus1",                               m_numTileRowsMinus1,                                  0,          "Number of rows in a picture minus 1")
   ("TileColumnWidthArray",                            cfg_ColumnWidth,                        cfg_ColumnWidth, "Array containing tile column width values in units of CTU")
   ("TileRowHeightArray",                              cfg_RowHeight,                            cfg_RowHeight, "Array containing tile row height values in units of CTU")
   ("LFCrossTileBoundaryFlag",                         m_bLFCrossTileBoundaryFlag,                        true, "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
@@ -1556,9 +1558,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
                                                                                                                "\tN: 0 < N enable no display SEI message for temporal layer N or higher\n"
                                                                                                                "\t0: disable")
   ("SEIDecodingUnitInfo",                             m_decodingUnitInfoSEIEnabled,                         0, "Control generation of decoding unit information SEI message.")
-#if LAYERS_NOT_PRESENT_SEI
-  ("SEILayersNotPresent",                             m_layersNotPresentSEIEnabled,             0, "Control generation of layers not present SEI message")
-#endif
   ("SEISOPDescription",                               m_SOPDescriptionSEIEnabled,                           0, "Control generation of SOP description SEI messages")
   ("SEIScalableNesting",                              m_scalableNestingSEIEnabled,                          0, "Control generation of scalable nesting SEI messages")
   ("SEITempMotionConstrainedTileSets",                m_tmctsSEIEnabled,                                false, "Control generation of temporal motion constrained tile sets SEI message")
@@ -1595,7 +1594,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SEIMasteringDisplayMinLuminance",                 m_masteringDisplay.minLuminance,                      0u, "Specifies the mastering display minimum luminance value in units of 1/10000 candela per square metre (32-bit code value)")
   ("SEIMasteringDisplayPrimaries",                    cfg_DisplayPrimariesCode,       cfg_DisplayPrimariesCode, "Mastering display primaries for all three colour planes in CIE xy coordinates in increments of 1/50000 (results in the ranges 0 to 50000 inclusive)")
   ("SEIMasteringDisplayWhitePoint",                   cfg_DisplayWhitePointCode,     cfg_DisplayWhitePointCode, "Mastering display white point CIE xy coordinates in normalised increments of 1/50000 (e.g. 0.333 = 16667)")
-    
+ 
+#if LAYERS_NOT_PRESENT_SEI
+  ("SEILayersNotPresent",                             m_layersNotPresentSEIEnabled,             0, "Control generation of layers not present SEI message")
+#endif   
 #if P0123_ALPHA_CHANNEL_SEI
   ("SEIAlphaChannelInfo",                     m_alphaSEIEnabled,                        false, "Enables transmission of information associated with alpha channel (default : 0)")
   ("SEIAlphaCancelFlag",                      m_alphaCancelFlag,                         true, "Denotes that this SEI message cancels the persistence of any previously received alpha channel SEI message (default : 1)")
@@ -1863,11 +1865,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
     m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
 
-    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0) { m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ]; }
-    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-    if (m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_LUMA  ]; }
-    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0) { m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ]; }
-    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0) { m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA]; }
+    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] == 0)
+    { 
+      m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ];
+    }
+    if (m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] == 0)
+    { 
+      m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ];
+    }
+    if (m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] == 0)
+    { 
+      m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
+    }
+    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] == 0)
+    { 
+      m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_LUMA  ] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_LUMA  ];
+    }
+    if (m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] == 0)
+    { 
+      m_apcLayerCfg[layer]->m_outputBitDepth     [CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layer]->m_internalBitDepth   [CHANNEL_TYPE_CHROMA];
+    }
 
     m_apcLayerCfg[layer]->m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
     m_apcLayerCfg[layer]->m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_apcLayerCfg[layer]->m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
@@ -1977,7 +1994,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
 
- /* rules for input, output and internal bitdepths as per help text */
+  /* rules for input, output and internal bitdepths as per help text */
   if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0)
   {
     m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] = m_inputBitDepth      [CHANNEL_TYPE_LUMA  ];
@@ -2009,7 +2026,15 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
   m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
+#endif
+  assert(tmpWeightedPredictionMethod>=0 && tmpWeightedPredictionMethod<=WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION);
+  if (!(tmpWeightedPredictionMethod>=0 && tmpWeightedPredictionMethod<=WP_PER_PICTURE_WITH_HISTOGRAM_AND_PER_COMPONENT_AND_CLIPPING_AND_EXTENSION))
+  {
+    exit(EXIT_FAILURE);
+  }
+  m_weightedPredictionMethod = WeightedPredictionMethod(tmpWeightedPredictionMethod);
 
+#if !SVC_EXTENSION
   if (extendedProfile >= 1000 && extendedProfile <= 12316)
   {
     m_profile = Profile::MAINREXT;
@@ -3412,7 +3437,7 @@ Void TAppEncCfg::xCheckParameter()
 #if SVC_EXTENSION
   memset( m_extraRPSs, 0, sizeof( m_extraRPSs ) );
 #else
-  m_extraRPSs=0;                                    
+  m_extraRPSs=0;
 #endif
 
   //start looping through frames in coding order until we can verify that the GOP structure is correct.
@@ -4445,7 +4470,10 @@ Void TAppEncCfg::xPrintParameter()
 
 #if !RC_SHVC_HARMONIZATION
   printf("RateControl                            : %d\n", m_RCEnableRateControl );
+#endif
+  printf("WPMethod                               : %d\n", Int(m_weightedPredictionMethod));
 
+#if !RC_SHVC_HARMONIZATION
   if(m_RCEnableRateControl)
   {
     printf("TargetBitrate                          : %d\n", m_RCTargetBitrate );
