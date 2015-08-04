@@ -87,7 +87,11 @@ protected:
 #if !SVC_EXTENSION
   Char*     m_pchReconFile;                                   ///< output reconstruction file
 #endif
+  // Lambda modifiers
   Double    m_adLambdaModifier[ MAX_TLAYER ];                 ///< Lambda modifier array for each temporal layer
+  std::vector<Double> m_adIntraLambdaModifier;                ///< Lambda modifier for Intra pictures, one for each temporal layer. If size>temporalLayer, then use [temporalLayer], else if size>0, use [size()-1], else use m_adLambdaModifier.
+  Double    m_dIntraQpFactor;                                 ///< Intra Q Factor. If negative, use a default equation: 0.57*(1.0 - Clip3( 0.0, 0.5, 0.05*(Double)(isField ? (GopSize-1)/2 : GopSize-1) ))
+
   // source specification
 #if !SVC_EXTENSION
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
