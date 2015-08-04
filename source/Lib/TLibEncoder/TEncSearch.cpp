@@ -345,54 +345,58 @@ __inline Void TEncSearch::xTZSearchHelp( const TComPattern* const pcPatternKey, 
     // motion cost
     Distortion uiBitCost = m_pcRdCost->getCost( iSearchX, iSearchY );
 
-    if ( m_cDistParam.iRows > 32 )
+    // Skip search if bit cost is already larger than best SAD
+    if (uiBitCost < rcStruct.uiBestSad)
     {
-      m_cDistParam.iSubShift = 4;
-    }
-    else if ( m_cDistParam.iRows > 16 )
-    {
-      m_cDistParam.iSubShift = 3;
-    }
-    else if ( m_cDistParam.iRows > 8 )
-    {
-      m_cDistParam.iSubShift = 2;
-    }
-    else
-    {
-      m_cDistParam.iSubShift = 1;
-    }
-
-    Distortion uiTempSad = m_cDistParam.DistFunc( &m_cDistParam );
-    if((uiTempSad + uiBitCost) < rcStruct.uiBestSad)
-    {
-      uiSad += uiTempSad >>  m_cDistParam.iSubShift;
-      while(m_cDistParam.iSubShift > 0)
+      if ( m_cDistParam.iRows > 32 )
       {
-        isubShift         = m_cDistParam.iSubShift -1;
-        m_cDistParam.pOrg = pcPatternKey->getROIY() + (pcPatternKey->getPatternLStride() << isubShift);
-        m_cDistParam.pCur = piRefSrch + (rcStruct.iYStride << isubShift);
-        uiTempSad = m_cDistParam.DistFunc( &m_cDistParam );
-        uiSad += uiTempSad >>  m_cDistParam.iSubShift;
-        if(((uiSad << isubShift) + uiBitCost) > rcStruct.uiBestSad)
-        {
-          break;
-        }
-
-        m_cDistParam.iSubShift--;
+        m_cDistParam.iSubShift = 4;
+      }
+      else if ( m_cDistParam.iRows > 16 )
+      {
+        m_cDistParam.iSubShift = 3;
+      }
+      else if ( m_cDistParam.iRows > 8 )
+      {
+        m_cDistParam.iSubShift = 2;
+      }
+      else
+      {
+        m_cDistParam.iSubShift = 1;
       }
 
-      if(m_cDistParam.iSubShift == 0)
+      Distortion uiTempSad = m_cDistParam.DistFunc( &m_cDistParam );
+      if((uiTempSad + uiBitCost) < rcStruct.uiBestSad)
       {
-        uiSad += uiBitCost;
-        if( uiSad < rcStruct.uiBestSad )
+        uiSad += uiTempSad >>  m_cDistParam.iSubShift;
+        while(m_cDistParam.iSubShift > 0)
         {
-          rcStruct.uiBestSad      = uiSad;
-          rcStruct.iBestX         = iSearchX;
-          rcStruct.iBestY         = iSearchY;
-          rcStruct.uiBestDistance = uiDistance;
-          rcStruct.uiBestRound    = 0;
-          rcStruct.ucPointNr      = ucPointNr;
-          m_cDistParam.m_maximumDistortionForEarlyExit = uiSad;
+          isubShift         = m_cDistParam.iSubShift -1;
+          m_cDistParam.pOrg = pcPatternKey->getROIY() + (pcPatternKey->getPatternLStride() << isubShift);
+          m_cDistParam.pCur = piRefSrch + (rcStruct.iYStride << isubShift);
+          uiTempSad = m_cDistParam.DistFunc( &m_cDistParam );
+          uiSad += uiTempSad >>  m_cDistParam.iSubShift;
+          if(((uiSad << isubShift) + uiBitCost) > rcStruct.uiBestSad)
+          {
+            break;
+          }
+
+          m_cDistParam.iSubShift--;
+        }
+
+        if(m_cDistParam.iSubShift == 0)
+        {
+          uiSad += uiBitCost;
+          if( uiSad < rcStruct.uiBestSad )
+          {
+            rcStruct.uiBestSad      = uiSad;
+            rcStruct.iBestX         = iSearchX;
+            rcStruct.iBestY         = iSearchY;
+            rcStruct.uiBestDistance = uiDistance;
+            rcStruct.uiBestRound    = 0;
+            rcStruct.ucPointNr      = ucPointNr;
+            m_cDistParam.m_maximumDistortionForEarlyExit = uiSad;
+          }
         }
       }
     }
@@ -410,18 +414,24 @@ __inline Void TEncSearch::xTZSearchHelp( const TComPattern* const pcPatternKey, 
 
     uiSad = m_cDistParam.DistFunc( &m_cDistParam );
 
-    // motion cost
-    uiSad += m_pcRdCost->getCost( iSearchX, iSearchY );
-
+    // only add motion cost if uiSad is smaller than best. Otherwise pointless
+    // to add motion cost.
     if( uiSad < rcStruct.uiBestSad )
     {
-      rcStruct.uiBestSad      = uiSad;
-      rcStruct.iBestX         = iSearchX;
-      rcStruct.iBestY         = iSearchY;
-      rcStruct.uiBestDistance = uiDistance;
-      rcStruct.uiBestRound    = 0;
-      rcStruct.ucPointNr      = ucPointNr;
-      m_cDistParam.m_maximumDistortionForEarlyExit = uiSad;
+
+      // motion cost
+      uiSad += m_pcRdCost->getCost( iSearchX, iSearchY );
+
+      if( uiSad < rcStruct.uiBestSad )
+      {
+        rcStruct.uiBestSad      = uiSad;
+        rcStruct.iBestX         = iSearchX;
+        rcStruct.iBestY         = iSearchY;
+        rcStruct.uiBestDistance = uiDistance;
+        rcStruct.uiBestRound    = 0;
+        rcStruct.ucPointNr      = ucPointNr;
+        m_cDistParam.m_maximumDistortionForEarlyExit = uiSad;
+      }
     }
   }
 }
@@ -3184,7 +3194,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
     }
 #endif
 
-    //  Bi-directional prediction
+    //  Bi-predictive Motion estimation
 #if REF_IDX_ME_ZEROMV
     if ( (pcCU->getSlice()->isInterB()) && (pcCU->isBipredRestriction(iPartIdx) == false) && !(pcCU->getSlice()->getMvdL1ZeroFlag() && bestBiPDist == MAX_INT) )
 #else
@@ -3824,8 +3834,6 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
 }
 
 
-
-
 Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, TComMv* pcMvPred, Int iRefIdxPred, TComMv& rcMv, UInt& ruiBits, Distortion& ruiCost, Bool bBi  )
 {
   UInt          uiPartAddr;
@@ -3849,7 +3857,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
 
   pcCU->getPartIndexAndSize( iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight );
 
-  if ( bBi )
+  if ( bBi ) // Bipredictive ME
   {
     TComYuv*  pcYuvOther = &m_acYuvPred[1-(Int)eRefPicList];
     pcYuv                = &m_cYuvPredTemp;
@@ -3951,8 +3959,6 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
 }
 
 
-
-
 Void TEncSearch::xSetSearchRange ( const TComDataCU* const pcCU, const TComMv& cMvPred, const Int iSrchRng,
                                    TComMv& rcMvSrchRngLT, TComMv& rcMvSrchRngRB )
 {
@@ -3976,6 +3982,7 @@ Void TEncSearch::xSetSearchRange ( const TComDataCU* const pcCU, const TComMv& c
   rcMvSrchRngRB >>= iMvShift;
 #endif
 }
+
 
 Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
                                  const Pel*               piRefY,
@@ -4041,7 +4048,6 @@ Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
 }
 
 
-
 Void TEncSearch::xPatternSearchFast( const TComDataCU* const  pcCU,
                                      const TComPattern* const pcPatternKey,
                                      const Pel* const         piRefY,
@@ -4072,8 +4078,6 @@ Void TEncSearch::xPatternSearchFast( const TComDataCU* const  pcCU,
       break;
   }
 }
-
-
 
 
 Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
@@ -4131,14 +4135,23 @@ Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
 #else
       cMv >>= 2;
 #endif
-      xTZSearchHelp( pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0 );
+      if (cMv != rcMv && (cMv.getHor() != cStruct.iBestX && cMv.getVer() != cStruct.iBestY))
+      {
+        // only test cMV if not obviously previously tested.
+        xTZSearchHelp( pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0 );
+      }
     }
   }
 
   // test whether zero Mv is better start point than Median predictor
   if ( bTestZeroVector )
   {
-    xTZSearchHelp( pcPatternKey, cStruct, 0, 0, 0, 0 );
+    if ((rcMv.getHor() != 0 || rcMv.getVer() != 0) &&
+        (0 != cStruct.iBestX || 0 != cStruct.iBestY))
+    {
+      // only test 0-vector if not obviously previously tested.
+      xTZSearchHelp( pcPatternKey, cStruct, 0, 0, 0, 0 );
+    }
   }
 
   Int   iSrchRngHorLeft   = pcMvSrchRngLT->getHor();
@@ -4156,7 +4169,12 @@ Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
 #else
     integerMv2Nx2NPred >>= 2;
 #endif
-    xTZSearchHelp(pcPatternKey, cStruct, integerMv2Nx2NPred.getHor(), integerMv2Nx2NPred.getVer(), 0, 0);
+    if ((rcMv != integerMv2Nx2NPred) &&
+        (integerMv2Nx2NPred.getHor() != cStruct.iBestX || integerMv2Nx2NPred.getVer() != cStruct.iBestY))
+    {
+      // only test integerMv2Nx2NPred if not obviously previously tested.
+      xTZSearchHelp(pcPatternKey, cStruct, integerMv2Nx2NPred.getHor(), integerMv2Nx2NPred.getVer(), 0, 0);
+    }
 
     // reset search range
     TComMv cMvSrchRngLT;
@@ -4264,7 +4282,7 @@ Void TEncSearch::xTZSearch( const TComDataCU* const pcCU,
     }
   }
 
-  // start refinement
+  // star refinement
   if ( bStarRefinementEnable && cStruct.uiBestDistance > 0 )
   {
     while ( cStruct.uiBestDistance > 0 )
