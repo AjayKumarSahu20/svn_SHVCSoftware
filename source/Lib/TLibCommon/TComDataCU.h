@@ -88,6 +88,9 @@ private:
   
 #if SVC_EXTENSION
   UInt          m_layerId;          ///< layer id
+#if FAST_INTRA_SHVC
+  UChar         m_reducedSetIntraModes[NUM_INTRA_MODE-1];
+#endif
 #endif
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -473,14 +476,14 @@ public:
   UInt          getCoefScanIdx(const UInt uiAbsPartIdx, const UInt uiWidth, const UInt uiHeight, const ComponentID compID) const ;
  
 #if SVC_EXTENSION
-  Void          setLayerId (UInt layerId) { m_layerId = layerId; }
-  UInt          getLayerId ()               { return m_layerId; }
-  UInt          getLayerIdx ()              { return m_pcSlice->getVPS()->getLayerIdxInVps(m_layerId); }
+  Void          setLayerId (UInt layerId)       { m_layerId = layerId; }
+  UInt          getLayerId ()                   { return m_layerId; }
+  UInt          getLayerIdx ()                  { return m_pcSlice->getVPS()->getLayerIdxInVps(m_layerId); }
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
 #endif
 #if FAST_INTRA_SHVC
-  Int           reduceSetOfIntraModes              (  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
+  Int           reduceSetOfIntraModes(  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
 #endif
 #if REF_IDX_ME_ZEROMV
   Bool          xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
@@ -489,6 +492,9 @@ public:
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping = false );
   TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping = false );
   Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
+#if FAST_INTRA_SHVC
+  UChar         getReducedSetIntraModes(UChar idx)     { assert( idx < NUM_INTRA_MODE-1 ); return m_reducedSetIntraModes[idx]; }
+#endif
 #endif
 };
 
