@@ -1286,6 +1286,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SearchRange,-sr",                                 m_iSearchRange,                                      96, "Motion search range")
   ("BipredSearchRange",                               m_bipredSearchRange,                                  4, "Motion search range for bipred refinement")
   ("MinSearchWindow",                                 m_minSearchWindow,                                    8, "Minimum motion search window size for the adaptive window ME")
+  ("RestrictMESampling",                              m_bRestrictMESampling,                            false, "Restrict ME Sampling for selective inter motion search")
   ("ClipForBiPredMEEnabled",                          m_bClipForBiPredMeEnabled,                        false, "Enables clipping in the Bi-Pred ME. It is disabled to reduce encoder run-time")
   ("FastMEAssumingSmootherMVEnabled",                 m_bFastMEAssumingSmootherMVEnabled,                true, "Enables fast ME assuming a smoother MV.")
 
@@ -4509,6 +4510,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("SQP:%d ", m_uiDeltaQpRD                        );
   printf("ASR:%d ", m_bUseASR                            );
   printf("MinSearchWindow:%d ", m_minSearchWindow        );
+  printf("RestrictMESampling:%d ", m_bRestrictMESampling );
   printf("FEN:%d ", Int(m_fastInterSearchMode)           );
   printf("ECU:%d ", m_bUseEarlyCU                        );
   printf("FDM:%d ", m_useFastDecisionForMerge            );
