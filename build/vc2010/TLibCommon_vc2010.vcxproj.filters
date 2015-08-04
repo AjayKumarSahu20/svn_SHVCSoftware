@@ -196,6 +196,9 @@
     <ClInclude Include="..\..\source\Lib\TLibCommon\TypeDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\Lib\TLibCommon\Debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComUpsampleFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -205,16 +208,13 @@
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComChromaFormat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComCodingStatistics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\Lib\TLibCommon\TComRectangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibCommon\Debug.h">
+    <ClInclude Include="..\..\source\Lib\TLibCommon\TComTU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\Lib\TLibCommon\TComTU.h">
+    <ClInclude Include="..\..\source\Lib\TLibCommon\TComCodingStatistics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
