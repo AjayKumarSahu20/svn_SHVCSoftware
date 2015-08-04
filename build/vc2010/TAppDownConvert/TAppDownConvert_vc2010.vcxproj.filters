@@ -18,5 +18,13 @@
     <ClCompile Include="..\..\..\source\App\TAppDownConvert\TAppDownConvert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\App\TAppDownConvert\DownConvert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\source\App\TAppDownConvert\DownConvert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,25 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDecoder", "vc10\TAppDecoder_vc10.vcxproj", "{A7A515D9-E917-4706-BD5B-57DC6C78D612}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDecoder", "vc2010\TAppDecoder_vc2010.vcxproj", "{A7A515D9-E917-4706-BD5B-57DC6C78D612}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppEncoder", "vc10\TAppEncoder_vc10.vcxproj", "{D759E4E1-D33A-4483-B57B-0FD248E022FE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppEncoder", "vc2010\TAppEncoder_vc2010.vcxproj", "{D759E4E1-D33A-4483-B57B-0FD248E022FE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppCommon", "vc10\TAppCommon_vc10.vcxproj", "{D1E8A1C2-15DB-4C94-80E8-4F70CF0A2DC5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppCommon", "vc2010\TAppCommon_vc2010.vcxproj", "{D1E8A1C2-15DB-4C94-80E8-4F70CF0A2DC5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibCommon", "vc10\TLibCommon_vc10.vcxproj", "{78018D78-F890-47E3-A0B7-09D273F0B11D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibCommon", "vc2010\TLibCommon_vc2010.vcxproj", "{78018D78-F890-47E3-A0B7-09D273F0B11D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibDecoder", "vc10\TLibDecoder_vc10.vcxproj", "{F8B77A48-AF6C-4746-A89F-B706ABA6AD94}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibDecoder", "vc2010\TLibDecoder_vc2010.vcxproj", "{F8B77A48-AF6C-4746-A89F-B706ABA6AD94}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibEncoder", "vc10\TLibEncoder_vc10.vcxproj", "{47E90995-1FC5-4EE4-A94D-AD474169F0E1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibEncoder", "vc2010\TLibEncoder_vc2010.vcxproj", "{47E90995-1FC5-4EE4-A94D-AD474169F0E1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibVideoIO", "vc10\TLibVideoIO_vc10.vcxproj", "{5280C25A-D316-4BE7-AE50-29D72108624F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibVideoIO", "vc2010\TLibVideoIO_vc2010.vcxproj", "{5280C25A-D316-4BE7-AE50-29D72108624F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDownConvert", "vc10\TAppDownConvert\TAppDownConvert.vcxproj", "{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDownConvert", "vc2010\TAppDownConvert\TAppDownConvert_vc2010.vcxproj", "{FB952E1B-681F-4461-9C8B-4F1F8B70E58B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDecoderAnalyser", "vc10\TAppDecoderAnalyser_vc10.vcxproj", "{6BB4C8D8-449D-4CC1-A5E1-E98AAF94012F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TAppDecoderAnalyser", "vc2010\TAppDecoderAnalyser_vc2010.vcxproj", "{6BB4C8D8-449D-4CC1-A5E1-E98AAF94012F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibDecoderAnalyser", "vc10\TLibDecoderAnalyser_vc10.vcxproj", "{68C1251A-55D8-47C9-9052-62F785BD437A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLibDecoderAnalyser", "vc2010\TLibDecoderAnalyser_vc2010.vcxproj", "{68C1251A-55D8-47C9-9052-62F785BD437A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
