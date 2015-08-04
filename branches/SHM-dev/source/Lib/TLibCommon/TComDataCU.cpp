@@ -101,6 +101,10 @@ TComDataCU::TComDataCU()
   }
 
   m_bDecSubCu          = false;
+
+#if FAST_INTRA_SHVC
+  ::memset( m_reducedSetIntraModes, 0, sizeof(m_reducedSetIntraModes) );
+#endif
 }
 
 TComDataCU::~TComDataCU()
@@ -3367,49 +3371,61 @@ Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, I
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
   {
     return( NUM_INTRA_MODE-1 );
-  }
+  }   
 
-  // compute set of enabled modes g_reducedSetIntraModes[...]
+  // compute set of enabled modes m_reducedSetIntraModes[...]
   Int authorizedMode[NUM_INTRA_MODE-1]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
   Int nbModes;
   for (nbModes=0; nbModes<3; nbModes++)  // add 3 MPMs 1st
   {
-    g_reducedSetIntraModes[nbModes] = uiIntraDirPred[nbModes];
+    m_reducedSetIntraModes[nbModes] = uiIntraDirPred[nbModes];
     authorizedMode[ uiIntraDirPred[nbModes] ] = 0;
   }
 
   Int iColBaseDir = pcTempCU->getIntraDir( CHANNEL_TYPE_LUMA, uiAbsPartAddrBase );
   if ( authorizedMode[iColBaseDir] )  //possibly add BL mode
   {
-    g_reducedSetIntraModes[nbModes++] = iColBaseDir;
+    m_reducedSetIntraModes[nbModes++] = iColBaseDir;
     authorizedMode[ iColBaseDir ] = 0;
   }
 
   Int iRefMode = ( iColBaseDir > 1 ) ? iColBaseDir : uiIntraDirPred[0];
   if ( iRefMode > 1 )    //add neighboring modes of refMode
   {
-    UInt Left  = iRefMode;
-    UInt Right = iRefMode;
+    UInt left  = iRefMode;
+    UInt right = iRefMode;
     while ( nbModes < NB_REMAIN_MODES+3 )
     {
-      Left = ((Left + 29) % 32) + 2;
-      Right = ((Right - 1 ) % 32) + 2;
-      if ( authorizedMode[Left] )   g_reducedSetIntraModes[nbModes++] = Left;
-      if ( authorizedMode[Right] )  g_reducedSetIntraModes[nbModes++] = Right;
+      left = ((left + 29) % 32) + 2;
+      right = ((right - 1 ) % 32) + 2;
+      if( authorizedMode[left] )
+      {
+        m_reducedSetIntraModes[nbModes++] = left;
+      }
+      if( authorizedMode[right] )
+      {
+        m_reducedSetIntraModes[nbModes++] = right;
+      }
     }
   }
   else      //add pre-defined modes
   {
+    const UChar predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
+
     Int  idx = 0;
-    while ( nbModes < NB_REMAIN_MODES+3 )
+    while( nbModes < NB_REMAIN_MODES+3 )
     {
-      UInt mode = g_predefSetIntraModes[idx++];
-      if ( authorizedMode[mode] )   g_reducedSetIntraModes[nbModes++] = mode;
+      UInt mode = predefSetIntraModes[idx++];
+      if( authorizedMode[mode] )
+      {
+        m_reducedSetIntraModes[nbModes++] = mode;
+      }
     }
   }
 
   fullSetOfModes = 0;
-  return ( nbModes );
+
+  return nbModes;
 }
 #endif
 

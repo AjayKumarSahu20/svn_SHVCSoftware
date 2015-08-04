@@ -725,10 +725,6 @@ const UInt g_scalingListSize   [SCALING_LIST_SIZE_NUM] = {16,64,256,1024};
 const UInt g_scalingListSizeX  [SCALING_LIST_SIZE_NUM] = { 4, 8, 16,  32};
 
 #if SVC_EXTENSION
-#if FAST_INTRA_SHVC
-UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; 
-UInt g_predefSetIntraModes[NUM_INTRA_MODE-1] = {26,10,18,34,2,22,14,30,6,24,12,28,8,20,16,32,4,17,19,15,21,13,23,11,25,9,27,7,29,5,31,3,33,0,2};
-#endif
 Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
 Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
 #if LAYER_CTB

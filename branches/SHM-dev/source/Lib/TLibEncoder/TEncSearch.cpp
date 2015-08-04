@@ -2289,7 +2289,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
           numModesForFullRD = numModesAvailable;
           for( Int i=0; i < numModesForFullRD; i++ )
           {
-            uiRdModeList[ i ] = g_reducedSetIntraModes[ i ];
+            uiRdModeList[ i ] = pcCU->getReducedSetIntraModes(i);
           }
         }
       }
@@ -2326,7 +2326,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
           {
             break;
           }
-          uiMode = ( iMode==0 ) ? g_reducedSetIntraModes[modeIdx] : uiMode; //(iMode=0) indicates reduced set of modes
+          uiMode = ( iMode==0 ) ? pcCU->getReducedSetIntraModes(modeIdx) : uiMode; //(iMode=0) indicates reduced set of modes
         }
 #endif
 

@@ -171,10 +171,6 @@ extern const UInt g_scalingListSize [SCALING_LIST_SIZE_NUM];
 extern const UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 
 #if SVC_EXTENSION
-#if FAST_INTRA_SHVC
-extern UInt g_reducedSetIntraModes[NUM_INTRA_MODE-1];
-extern UInt g_predefSetIntraModes[NUM_INTRA_MODE-1];
-#endif
 extern Int g_mvScalingFactor  [MAX_LAYERS][2];
 extern Int g_posScalingFactor [MAX_LAYERS][2];
 #if LAYER_CTB
