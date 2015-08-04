@@ -4003,8 +4003,13 @@ Void TEncSearch::xSetSearchRange ( TComDataCU* pcCU, TComMv& cMvPred, Int iSrchR
   pcCU->clipMv        ( rcMvSrchRngLT );
   pcCU->clipMv        ( rcMvSrchRngRB );
 
+#if ME_ENABLE_ROUNDING_OF_MVS
+  rcMvSrchRngLT.divideByPowerOf2(iMvShift);
+  rcMvSrchRngRB.divideByPowerOf2(iMvShift);
+#else
   rcMvSrchRngLT >>= iMvShift;
   rcMvSrchRngRB >>= iMvShift;
+#endif
 }
 
 
@@ -4124,7 +4129,11 @@ Void TEncSearch::xTZSearch( TComDataCU*  pcCU,
 
   UInt uiSearchRange = m_iSearchRange;
   pcCU->clipMv( rcMv );
+#if ME_ENABLE_ROUNDING_OF_MVS
+  rcMv.divideByPowerOf2(2);
+#else
   rcMv >>= 2;
+#endif
   // init TZSearchStruct
   IntTZSearchStruct cStruct;
   cStruct.iYStride    = iRefStride;
@@ -4141,7 +4150,11 @@ Void TEncSearch::xTZSearch( TComDataCU*  pcCU,
     {
       TComMv cMv = m_acMvPredictors[index];
       pcCU->clipMv( cMv );
+#if ME_ENABLE_ROUNDING_OF_MVS
+      cMv.divideByPowerOf2(2);
+#else
       cMv >>= 2;
+#endif
       xTZSearchHelp( pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0 );
     }
   }
@@ -4157,7 +4170,11 @@ Void TEncSearch::xTZSearch( TComDataCU*  pcCU,
     TComMv integerMv2Nx2NPred = *pIntegerMv2Nx2NPred;
     integerMv2Nx2NPred <<= 2;
     pcCU->clipMv( integerMv2Nx2NPred );
+#if ME_ENABLE_ROUNDING_OF_MVS
+    integerMv2Nx2NPred.divideByPowerOf2(2);
+#else
     integerMv2Nx2NPred >>= 2;
+#endif
     xTZSearchHelp(pcPatternKey, cStruct, integerMv2Nx2NPred.getHor(), integerMv2Nx2NPred.getVer(), 0, 0);
 
     // reset search range
@@ -4336,7 +4353,11 @@ Void TEncSearch::xTZSearchSelective( TComDataCU*   pcCU,
   Int   iDist                   = 0;
 
   pcCU->clipMv( rcMv );
+#if ME_ENABLE_ROUNDING_OF_MVS
+  rcMv.divideByPowerOf2(2);
+#else
   rcMv >>= 2;
+#endif
   // init TZSearchStruct
   IntTZSearchStruct cStruct;
   cStruct.iYStride    = iRefStride;
@@ -4356,7 +4377,11 @@ Void TEncSearch::xTZSearchSelective( TComDataCU*   pcCU,
     {
       TComMv cMv = m_acMvPredictors[index];
       pcCU->clipMv( cMv );
+#if ME_ENABLE_ROUNDING_OF_MVS
+      cMv.divideByPowerOf2(2);
+#else
       cMv >>= 2;
+#endif
       xTZSearchHelp( pcPatternKey, cStruct, cMv.getHor(), cMv.getVer(), 0, 0 );
     }
   }
@@ -4372,7 +4397,11 @@ Void TEncSearch::xTZSearchSelective( TComDataCU*   pcCU,
     TComMv integerMv2Nx2NPred = *pIntegerMv2Nx2NPred;
     integerMv2Nx2NPred <<= 2;
     pcCU->clipMv( integerMv2Nx2NPred );
+#if ME_ENABLE_ROUNDING_OF_MVS
+    integerMv2Nx2NPred.divideByPowerOf2(2);
+#else
     integerMv2Nx2NPred >>= 2;
+#endif
     xTZSearchHelp(pcPatternKey, cStruct, integerMv2Nx2NPred.getHor(), integerMv2Nx2NPred.getVer(), 0, 0);
 
     // reset search range
@@ -5924,7 +5953,10 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
     if ( pcCU->getSlice()->getNumRefIdx(eRefPicList) > 1 ) 
     { 
       uiBitsTemp += iRefIdxTemp+1; 
-      if ( iRefIdxTemp == pcCU->getSlice()->getNumRefIdx(eRefPicList)-1 ) uiBitsTemp--; 
+      if ( iRefIdxTemp == pcCU->getSlice()->getNumRefIdx(eRefPicList)-1 )
+      {
+        uiBitsTemp--;
+      }
     }
 
     xEstimateMvPredAMVP( pcCU, pcOrgYuv, iPartIdx, eRefPicList, iRefIdxTemp, cMvPred[iRefList][iRefIdxTemp], false, &biPDistTemp);
