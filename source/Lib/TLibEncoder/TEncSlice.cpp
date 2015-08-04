@@ -687,7 +687,7 @@ Void TEncSlice::precompressSlice( TComPic* pcPic )
     // m_pcGOPEncoder->preLoopFilterPicAll( pcPic, uiPicDist );
 
     // compute RD cost and choose the best
-    Double dPicRdCost = m_pcRdCost->calcRdCost64( m_uiPicTotalBits, uiPicDist, true, DF_SSE_FRAME); // NOTE: Is the 'true' parameter really necessary?
+    Double dPicRdCost = m_pcRdCost->calcRdCost( (Double)m_uiPicTotalBits, (Double)uiPicDist, DF_SSE_FRAME);
 
     if ( dPicRdCost < dPicRdCostBest )
     {
@@ -1375,11 +1375,11 @@ Double TEncSlice::xGetQPValueAccordingToLambda ( Double lambda )
 
 #if SVC_EXTENSION
 #if JCTVC_M0259_LAMBDAREFINEMENT
-Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP , Double beta )
+Double TEncSlice::xCalEnhLambdaFactor( Double deltaQP, Double beta )
 {
-  double tmp = beta * pow( 2.0 , deltaQP / 6 );
-  double gamma = tmp / ( tmp + 1 );
-  return( gamma );
+  Double tmp = beta * pow( 2.0 , deltaQP / 6 );
+  Double gamma = tmp / ( tmp + 1 );
+  return gamma;
 }
 #endif
 

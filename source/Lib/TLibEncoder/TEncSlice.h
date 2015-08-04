@@ -146,7 +146,7 @@ private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
 
 #if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
-  Double  xCalEnhLambdaFactor( Double deltaQP , Double beta );
+  Double  xCalEnhLambdaFactor( Double deltaQP, Double beta );
 #endif
 };
 
