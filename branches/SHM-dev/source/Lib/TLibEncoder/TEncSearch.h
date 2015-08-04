@@ -101,7 +101,7 @@ protected:
   // ME parameters
   Int             m_iSearchRange;
   Int             m_bipredSearchRange; // Search range for bi-prediction
-  Int             m_iFastSearch;
+  MESearchMethod  m_motionEstimationSearchMethod;
   Int             m_aaiAdaptSR[MAX_NUM_REF_LIST_ADAPT_SR][MAX_IDX_ADAPT_SR];
   TComMv          m_cSrchRngLT;
   TComMv          m_cSrchRngRB;
@@ -124,28 +124,26 @@ protected:
 
   Bool            m_isInitialized;
 
-#if SVC_EXTENSION
-#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
+#if SVC_EXTENSION && N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool            m_disableILP;
-#endif
 #endif
 
 public:
   TEncSearch();
   virtual ~TEncSearch();
 
-  Void init(TEncCfg*      pcEncCfg,
-            TComTrQuant*  pcTrQuant,
-            Int           iSearchRange,
-            Int           bipredSearchRange,
-            Int           iFastSearch,
-            const UInt    maxCUWidth,
-            const UInt    maxCUHeight,
-            const UInt    maxTotalCUDepth,
-            TEncEntropy*  pcEntropyCoder,
-            TComRdCost*   pcRdCost,
-            TEncSbac***   pppcRDSbacCoder,
-            TEncSbac*     pcRDGoOnSbacCoder );
+  Void init(TEncCfg*       pcEncCfg,
+            TComTrQuant*   pcTrQuant,
+            Int            iSearchRange,
+            Int            bipredSearchRange,
+            MESearchMethod motionEstimationSearchMethod,
+            const UInt     maxCUWidth,
+            const UInt     maxCUHeight,
+            const UInt     maxTotalCUDepth,
+            TEncEntropy*   pcEntropyCoder,
+            TComRdCost*    pcRdCost,
+            TEncSbac***    pppcRDSbacCoder,
+            TEncSbac*      pcRDGoOnSbacCoder );
 
   Void destroy();
 
