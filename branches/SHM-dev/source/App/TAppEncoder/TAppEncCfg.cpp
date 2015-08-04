@@ -1187,6 +1187,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfWinRight",                                    m_confWinRight,                                       0, "Right offset for window conformance mode 3")
   ("ConfWinTop",                                      m_confWinTop,                                         0, "Top offset for window conformance mode 3")
   ("ConfWinBottom",                                   m_confWinBottom,                                      0, "Bottom offset for window conformance mode 3")
+  ("AccessUnitDelimiter",                             m_AccessUnitDelimiter,                            false, "Enable Access Unit Delimiter NALUs")
   ("FrameRate,-fr",                                   m_iFrameRate,                                         0, "Frame rate")
 #if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot",                  cfg_colourRemapSEIFileRoot, string(""), "Colour Remapping Information SEI parameters file name")

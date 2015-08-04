@@ -48,14 +48,15 @@
 #include "NALwrite.h"
 #include <time.h>
 #include <math.h>
+
 #include <deque>
+using namespace std;
 
 #if SVC_EXTENSION
 #include <limits.h>
 Bool TEncGOP::m_signalledVPS = false;
 #endif
 
-using namespace std;
 
 //! \ingroup TLibEncoder
 //! \{
@@ -292,6 +293,17 @@ Int TEncGOP::xWriteParameterSets (AccessUnit &accessUnit, TComSlice *slice)
   actualTotalBits += xWritePPS(accessUnit, slice->getPPS());
 
   return actualTotalBits;
+}
+
+Void TEncGOP::xWriteAccessUnitDelimiter (AccessUnit &accessUnit, TComSlice *slice)
+{
+  AUDWriter audWriter;
+  OutputNALUnit nalu(NAL_UNIT_ACCESS_UNIT_DELIMITER);
+
+  Int picType = slice->isIntra() ? 0 : (slice->isInterP() ? 1 : 2);
+
+  audWriter.codeAUD(nalu.m_Bitstream, picType);
+  accessUnit.push_front(new NALUnitEBSP(nalu));
 }
 
 // write SEI list into one NAL unit and add it to the Access unit at auPos
@@ -2574,6 +2586,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       accessUnit.push_back(new NALUnitEBSP(nalu));
     }
 #endif
+
+    if (m_pcCfg->getAccessUnitDelimiter())
+    {
+      xWriteAccessUnitDelimiter(accessUnit, pcSlice);
+    }
 
     // reset presence of BP SEI indication
     m_bufferingPeriodSEIPresentInAU = false;
