@@ -2007,7 +2007,7 @@ struct WPACDCParam
   Int64 iAC;
   Int64 iDC;
 #if SVC_EXTENSION
-  Int iSamples;
+  Int   numSamples;
 #endif
 };
 
@@ -2185,6 +2185,7 @@ public:
   SliceType                   getSliceType() const                                   { return m_eSliceType;                                          }
   Int                         getPOC() const                                         { return m_iPOC;                                                }
   Int                         getSliceQp() const                                     { return m_iSliceQp;                                            }
+  Bool                        getUseWeightedPrediction() const                       { return( (m_eSliceType==P_SLICE && testWeightPred()) || (m_eSliceType==B_SLICE && testWeightBiPred()) ); }
   Bool                        getDependentSliceSegmentFlag() const                   { return m_dependentSliceSegmentFlag;                           }
   Void                        setDependentSliceSegmentFlag(Bool val)                 { m_dependentSliceSegmentFlag = val;                            }
 #if ADAPTIVE_QP_SELECTION
