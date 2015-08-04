@@ -388,18 +388,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTotalCurr )
 #endif
 {
-  if (!checkNumPocTotalCurr)
+  if ( m_eSliceType == I_SLICE)
   {
-    if (m_eSliceType == I_SLICE)
-    {
-      ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
-      ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
+    ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
+    ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
 
+    if (!checkNumPocTotalCurr)
+    {
       return;
     }
-
-    m_aiNumRefIdx[REF_PIC_LIST_0] = getNumRefIdx(REF_PIC_LIST_0);
-    m_aiNumRefIdx[REF_PIC_LIST_1] = getNumRefIdx(REF_PIC_LIST_1);
   }
 
   TComPic*  pcRefPic= NULL;
@@ -571,18 +568,12 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 
     if (m_eSliceType == I_SLICE)
     {
-      ::memset( m_apcRefPicList, 0, sizeof (m_apcRefPicList));
-      ::memset( m_aiNumRefIdx,   0, sizeof ( m_aiNumRefIdx ));
-
       return;
     }
 
     assert(numPicTotalCurr > 0);
     // general tier and level limit:
     assert(numPicTotalCurr <= 8);
-
-    m_aiNumRefIdx[0] = getNumRefIdx(REF_PIC_LIST_0);
-    m_aiNumRefIdx[1] = getNumRefIdx(REF_PIC_LIST_1);
   }
 
   Int cIdx = 0;
