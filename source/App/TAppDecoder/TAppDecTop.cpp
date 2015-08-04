@@ -1539,7 +1539,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         const BitDepths &bitDpeths = vps->getBitDepths(sps, layerId);
         Int bitDepth[] = {bitDpeths.recon[CHANNEL_TYPE_LUMA], bitDpeths.recon[CHANNEL_TYPE_CHROMA]};
 
-        m_confReconFile[layerId].open(tempFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepth ); // write mode
+        m_confReconFile[layerId].open(tempFileName, true, bitDepth, bitDepth, bitDepth ); // write mode
         this->setDecodedYuvLayerRefresh( layerId, false );
       }
 
@@ -1562,7 +1562,9 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
             conf.getWindowLeftOffset()  * xScal + defDisp.getWindowLeftOffset(),
             conf.getWindowRightOffset() * xScal + defDisp.getWindowRightOffset(),
             conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
-            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
+            conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset(),
+            NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
+
           layerBuffer->erase(itPic);
           itPic = layerBuffer->begin();  // Ensure doesn't go to infinite loop
           if(layerBuffer->size() == 0)
