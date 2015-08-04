@@ -54,13 +54,14 @@
 #include "TEncSbac.h"
 #include "SEIwrite.h"
 #include "SEIEncoder.h"
-#if CGS_3D_ASYMLUT
-#include "TEnc3DAsymLUT.h"
-#endif
 
 #include "TEncAnalyze.h"
 #include "TEncRateCtrl.h"
 #include <vector>
+
+#if CGS_3D_ASYMLUT
+#include "TEnc3DAsymLUT.h"
+#endif
 
 //! \ingroup TLibEncoder
 //! \{
@@ -233,6 +234,8 @@ protected:
   UInt64 xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1, const BitDepths &bitDepths);
 
   Double xCalculateRVM();
+
+  Void xWriteAccessUnitDelimiter (AccessUnit &accessUnit, TComSlice *slice);
 
   Void xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TComSPS *sps, const TComPPS *pps);
   Void xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, TComSlice *slice);

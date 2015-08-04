@@ -543,6 +543,8 @@ Void TAppEncTop::xInitLibCfg()
 
   m_cTEncTop.setPad                                               ( m_aiPad );
 
+  m_cTEncTop.setAccessUnitDelimiter                               ( m_AccessUnitDelimiter );
+
 #if SVC_EXTENSION
   m_cTEncTop.setMaxTempLayer                                      ( layer ? m_EhMaxTempLayer[layer] : m_maxTempLayer );
 #else

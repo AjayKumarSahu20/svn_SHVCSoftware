@@ -64,6 +64,15 @@ class TCom3DAsymLUT;
 // Class definition
 // ====================================================================================================================
 
+class AUDWriter : public SyntaxElementWriter
+{
+public:
+  AUDWriter() {};
+  virtual ~AUDWriter() {};
+
+  Void  codeAUD(TComBitIf& bs, const Int pictureType);
+};
+
 /// CAVLC encoder class
 class TEncCavlc : public SyntaxElementWriter, public TEncEntropyIf
 {
