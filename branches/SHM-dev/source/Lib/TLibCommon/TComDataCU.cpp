@@ -2814,7 +2814,7 @@ Bool TComDataCU::isBipredRestriction(UInt puIdx)
 }
 
 
-Void TComDataCU::clipMv    (TComMv&  rcMv)
+Void TComDataCU::clipMv    (TComMv&  rcMv) const
 {
   const TComSPS &sps=*(m_pcSlice->getSPS());
   Int  iMvShift = 2;
