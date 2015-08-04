@@ -299,7 +299,7 @@ Bool WeightPredAnalysis::xUpdatingWPParameters(TComSlice *const slice, const Int
 
         // Weighting factor limitation
         const Int defaultWeight = (1<<log2Denom);
-        const Int deltaWeight   = (defaultWeight - weight);
+        const Int deltaWeight   = (weight - defaultWeight);
 
         if(deltaWeight >= range || deltaWeight < -range)
         {
