@@ -1598,8 +1598,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     if( m_layerId > 0 && m_uiSliceIdx == 0 && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
     {
       // create buffers for scaling factors
-      m_pcPic->createMvScalingFactor(pcSlice->getNumILRRefIdx());
-      m_pcPic->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+      if( pcSlice->getNumILRRefIdx() )
+      {
+        m_pcPic->createMvScalingFactor(pcSlice->getNumILRRefIdx());
+        m_pcPic->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+      }
 
       for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {

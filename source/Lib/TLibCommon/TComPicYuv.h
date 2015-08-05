@@ -185,7 +185,7 @@ public:
   Void          setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
   
 #if SVC_EXTENSION
-  Void          setHeight   ( Int picHeight )                    { m_picHeight = picHeight;                 }
+  Void          setHeight( Int picHeight )                       { m_picHeight = picHeight;                 }
   Window&       getConformanceWindow()                           { return  m_conformanceWindow;             }
   Void          setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
   Void          setReconstructed(Bool x)                         { m_isReconstructed = x;                   }

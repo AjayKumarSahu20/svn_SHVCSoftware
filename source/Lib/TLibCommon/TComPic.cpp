@@ -238,19 +238,35 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
 #if SVC_EXTENSION
 Void TComPic::createMvScalingFactor(UInt numOfILRPs)
 {
-  assert(m_mvScalingFactor[0] == NULL);
+  // picture object might be reused and hence m_mvScalingFactor[0] can be already allocated
+  if(m_mvScalingFactor[0])
+  {
+    delete m_mvScalingFactor[0];
+  }
   m_mvScalingFactor[0] = new Int[numOfILRPs];
 
-  assert(m_mvScalingFactor[1] == NULL);
+  // picture object might be reused and hence m_mvScalingFactor[1] can be already allocated
+  if(m_mvScalingFactor[1])
+  {
+    delete m_mvScalingFactor[1];
+  }
   m_mvScalingFactor[1] = new Int[numOfILRPs];
 }
 
 Void TComPic::createPosScalingFactor(UInt numOfILRPs)
 {
-  assert(m_posScalingFactor[0] == NULL);
+  // picture object might be reused and hence m_posScalingFactor[0] can be already allocated
+  if(m_posScalingFactor[0])
+  {
+    delete m_posScalingFactor[0];
+  }
   m_posScalingFactor[0] = new Int[numOfILRPs];
 
-  assert(m_posScalingFactor[1] == NULL);
+  // picture object might be reused and hence m_posScalingFactor[1] can be already allocated
+  if(m_posScalingFactor[1])
+  {
+    delete m_posScalingFactor[1];
+  }
   m_posScalingFactor[1] = new Int[numOfILRPs];
 }
 

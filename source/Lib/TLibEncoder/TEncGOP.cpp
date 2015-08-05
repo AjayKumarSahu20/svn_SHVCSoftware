@@ -1734,8 +1734,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if( pcSlice->getSliceIdx() == 0 )
       {
         // create buffers for scaling factors
-        pcSlice->getPic()->createMvScalingFactor(pcSlice->getNumILRRefIdx());
-        pcSlice->getPic()->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+        if( pcSlice->getNumILRRefIdx() )
+        {
+          pcSlice->getPic()->createMvScalingFactor(pcSlice->getNumILRRefIdx());
+          pcSlice->getPic()->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+        }
       }
 
       Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_IDX_PLUS1];
