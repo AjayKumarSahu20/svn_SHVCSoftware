@@ -1307,12 +1307,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setCrossLayerIrapAlignFlag( true ); 
   }
 
-  for(UInt layerCtr = 1;layerCtr <= vps->getMaxLayers() - 1; layerCtr++)
+  for(UInt layerCtr = 1;layerCtr < vps->getMaxLayers(); layerCtr++)
   {
     for(Int refLayerCtr = 0; refLayerCtr < layerCtr; refLayerCtr++)
     {
       if (vps->getDirectDependencyFlag( layerCtr, refLayerCtr))
       {
+        assert( layerCtr < MAX_LAYERS );
+
         if(m_apcTEncTop[layerCtr]->getIntraPeriod() !=  m_apcTEncTop[refLayerCtr]->getIntraPeriod())
         {
           vps->setCrossLayerIrapAlignFlag(false);
