@@ -2353,7 +2353,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
 
       if (m_pcEncCfg->getFastUDIUseMPMEnabled())
       {
-#if FAST_INTRA_SHVC == 0
+#if !FAST_INTRA_SHVC
         Int uiPreds[NUM_MOST_PROBABLE_MODES] = {-1, -1, -1};
 
         Int iMode = -1;

@@ -118,7 +118,7 @@ TAppEncCfg::TAppEncCfg()
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
-, m_elRapSliceBEnabled(0)
+, m_elRapSliceBEnabled(false)
 {
   memset( m_apcLayerCfg, 0, sizeof(m_apcLayerCfg) );
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
@@ -1145,7 +1145,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                               0, "BL is available but not internal")
   ("InputBLFile,-ibl",                                cfg_BLInputFile,                             string(""), "Base layer rec YUV input file name")
 #endif
-  ("EnableElRapB,-use-rap-b",                         m_elRapSliceBEnabled,                                 0, "Set ILP over base-layer I picture to B picture (default is P picture)")
+  ("EnableElRapB,-use-rap-b",                         m_elRapSliceBEnabled,                             false, "Set ILP over base-layer I picture to B picture (default is P picture)")
   ("InputChromaFormat",                               tmpInputChromaFormat,                               420, "InputChromaFormatIDC")
   ("ChromaFormatIDC,-cf",                             tmpChromaFormat,                                      0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
 #else //SVC_EXTENSION
@@ -1187,7 +1187,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("ConfWinRight",                                    m_confWinRight,                                       0, "Right offset for window conformance mode 3")
   ("ConfWinTop",                                      m_confWinTop,                                         0, "Top offset for window conformance mode 3")
   ("ConfWinBottom",                                   m_confWinBottom,                                      0, "Bottom offset for window conformance mode 3")
+#endif
   ("AccessUnitDelimiter",                             m_AccessUnitDelimiter,                            false, "Enable Access Unit Delimiter NALUs")
+#if !SVC_EXTENSION
   ("FrameRate,-fr",                                   m_iFrameRate,                                         0, "Frame rate")
 #if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot",                  cfg_colourRemapSEIFileRoot, string(""), "Colour Remapping Information SEI parameters file name")
@@ -1413,6 +1415,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("TileRowHeightArray",                              cfg_RowHeight,                            cfg_RowHeight, "Array containing tile row height values in units of CTU")
   ("LFCrossTileBoundaryFlag",                         m_bLFCrossTileBoundaryFlag,                        true, "1: cross-tile-boundary loop filtering. 0:non-cross-tile-boundary loop filtering")
 #if SVC_EXTENSION
+#if FAST_INTRA_SHVC
+  ("FIS",                                             m_useFastIntraScalable,                           false, "Fast Intra Decision for Scalable HEVC")
+#endif
   ("WaveFrontSynchro%d",                              cfg_waveFrontSynchro,                   0,  m_numLayers, "0: no synchro; 1 synchro with TR; 2 TRR etc")
   ("ScalingList%d",                                   cfg_UseScalingListId,     SCALING_LIST_OFF, m_numLayers, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
   ("ScalingListFile%d",                               cfg_ScalingListFile,            string(""), m_numLayers, "Scaling list file name. Use an empty string to produce help.")
@@ -1435,9 +1440,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("FDM",                                             m_useFastDecisionForMerge,                         true, "Fast decision for Merge RD Cost")
   ("CFM",                                             m_bUseCbfFastMode,                                false, "Cbf fast mode setting")
   ("ESD",                                             m_useEarlySkipDetection,                          false, "Early SKIP detection setting")
-#if FAST_INTRA_SHVC
-  ("FIS",                                             m_useFastIntraScalable, false, "Fast Intra Decision for Scalable HEVC")
-#endif
 #if RC_SHVC_HARMONIZATION
   ("RateControl%d",                                   cfg_RCEnableRateControl,             false, m_numLayers, "Rate control: enable rate control for layer %d")
   ("TargetBitrate%d",                                 cfg_RCTargetBitRate,                     0, m_numLayers, "Rate control: target bitrate for layer %d")
@@ -4524,9 +4526,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("FDM:%d ", m_useFastDecisionForMerge            );
   printf("CFM:%d ", m_bUseCbfFastMode                    );
   printf("ESD:%d ", m_useEarlySkipDetection              );
-#if FAST_INTRA_SHVC
-  printf("FIS:%d ", m_useFastIntraScalable  );
-#endif
   printf("RQT:%d ", 1                                    );
   printf("TransformSkip:%d ",     m_useTransformSkip     );
   printf("TransformSkipFast:%d ", m_useTransformSkipFast );
@@ -4571,11 +4570,16 @@ Void TAppEncCfg::xPrintParameter()
 #endif
 
   printf(" SignBitHidingFlag:%d ", m_signHideFlag);
-#if SVC_EXTENSION
   printf("RecalQP:%d ", m_recalculateQPAccordingToLambda ? 1 : 0 );
-  printf("EL_RAP_SliceType: %d ", m_elRapSliceBEnabled);
+
+#if SVC_EXTENSION
+  printf("\n\nSHVC TOOL CFG: ");
+  printf("ElRapSliceType: %c-slice ", m_elRapSliceBEnabled ? 'B' : 'P');
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
+#if FAST_INTRA_SHVC
+  printf("FIS:%d ", m_useFastIntraScalable  );
+#endif
 #if CGS_3D_ASYMLUT
   printf("CGS: %d CGSMaxOctantDepth: %d CGSMaxYPartNumLog2: %d CGSLUTBit:%d ", m_nCGSFlag, m_nCGSMaxOctantDepth, m_nCGSMaxYPartNumLog2, m_nCGSLUTBit );
   printf("CGSAdaptC:%d ", m_nCGSAdaptiveChroma );
@@ -4583,8 +4587,6 @@ Void TAppEncCfg::xPrintParameter()
   printf("CGSSizeRDO:%d ", m_nCGSLutSizeRDO );
 #endif
 #endif
-#else
-  printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 #endif
 
   printf("\n\n");
