@@ -120,7 +120,7 @@ TAppEncCfg::TAppEncCfg()
 , m_outputInternalColourSpace(false)
 , m_elRapSliceBEnabled(0)
 {
-  memset( m_apcLayerCfg, NULL, sizeof(m_apcLayerCfg) );
+  memset( m_apcLayerCfg, 0, sizeof(m_apcLayerCfg) );
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
 }
 #else

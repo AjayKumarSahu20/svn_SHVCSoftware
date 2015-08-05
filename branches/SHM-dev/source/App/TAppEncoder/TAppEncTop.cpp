@@ -63,9 +63,9 @@ TAppEncTop::TAppEncTop()
   m_totalBytes = 0;
   m_essentialBytes = 0;
 #if SVC_EXTENSION
-  memset( m_apcTVideoIOYuvInputFile, NULL, sizeof(m_apcTVideoIOYuvInputFile) );
-  memset( m_apcTVideoIOYuvReconFile, NULL, sizeof(m_apcTVideoIOYuvReconFile) );
-  memset( m_apcTEncTop, NULL, sizeof(m_apcTEncTop) );
+  memset( m_apcTVideoIOYuvInputFile, 0, sizeof(m_apcTVideoIOYuvInputFile) );
+  memset( m_apcTVideoIOYuvReconFile, 0, sizeof(m_apcTVideoIOYuvReconFile) );
+  memset( m_apcTEncTop, 0, sizeof(m_apcTEncTop) );
 #endif
 }
 
