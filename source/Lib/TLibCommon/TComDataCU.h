@@ -483,7 +483,7 @@ public:
   Bool          isInterLayerReference(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
 #endif
 #if FAST_INTRA_SHVC
-  Int           reduceSetOfIntraModes(  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes );
+  Int           reduceSetOfIntraModes(  UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int** posScalingFactor, Int &fullSetOfModes );
 #endif
 #if REF_IDX_ME_ZEROMV
   Bool          xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);

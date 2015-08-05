@@ -3361,12 +3361,12 @@ Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, T
 *\param   uiIntraDirPred  pointer to the array for MPM storage
 *\returns Number of intra coding modes (nb of remaining modes + 3 MPMs)
 */
-Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, Int &fullSetOfModes )
+Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, Int** posScalingFactor, Int &fullSetOfModes )
 {
   // check BL mode
   UInt uiCUAddrBase = 0, uiAbsPartAddrBase = 0;
   // the right reference layerIdc should be specified, currently it is set to m_layerId-1
-  TComDataCU* pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, false );
+  TComDataCU* pcTempCU = getBaseColCU(m_layerId - 1, uiAbsPartIdx, uiCUAddrBase, uiAbsPartAddrBase, posScalingFactor, false );
 
   if( pcTempCU->getPredictionMode( uiAbsPartAddrBase ) != MODE_INTRA )
   {
