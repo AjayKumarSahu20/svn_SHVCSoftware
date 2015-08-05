@@ -118,10 +118,10 @@ TEncGOP::TEncGOP()
 #endif //SVC_EXTENSION
 
 #if Q0074_COLOUR_REMAPPING_SEI
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue,   NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue,  NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue,  NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue, NULL, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue,   0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue,  0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue,  0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue));
+  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue, 0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue));
 #endif
   return;
 }
