@@ -481,7 +481,7 @@ protected:
   Int       m_TMVPConstraintsSEIEnabled;
 #endif
   Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
-  Int       m_elRapSliceBEnabled;
+  Bool      m_elRapSliceBEnabled;
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
 #if !SVC_EXTENSION

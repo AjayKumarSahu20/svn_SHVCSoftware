@@ -372,6 +372,8 @@ Void TAppEncTop::xInitLibCfg()
       }
     }
 
+    m_cTEncTop.setElRapSliceTypeB                        ( m_elRapSliceBEnabled );
+
     m_cTEncTop.setAdaptiveResolutionChange               ( m_adaptiveResolutionChange );
     m_cTEncTop.setLayerSwitchOffBegin                    ( m_apcLayerCfg[layer]->m_layerSwitchOffBegin );
     m_cTEncTop.setLayerSwitchOffEnd                      ( m_apcLayerCfg[layer]->m_layerSwitchOffEnd );
@@ -389,6 +391,10 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 #endif
     m_cTEncTop.setNumAddLayerSets                        ( m_numAddLayerSets );
+
+#if FAST_INTRA_SHVC
+    m_cTEncTop.setUseFastIntraScalable                              ( m_useFastIntraScalable );
+#endif
 
 #if P0123_ALPHA_CHANNEL_SEI
     m_cTEncTop.setAlphaSEIEnabled                                   ( m_alphaSEIEnabled );
@@ -825,9 +831,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setSummaryPicFilenameBase                            ( m_summaryPicFilenameBase );
   m_cTEncTop.setSummaryVerboseness                                ( m_summaryVerboseness );
 
-#if FAST_INTRA_SHVC
-  m_cTEncTop.setUseFastIntraScalable                              ( m_useFastIntraScalable );
-#endif
 #if Q0074_COLOUR_REMAPPING_SEI
 #if SVC_EXTENSION
   m_cTEncTop.setCRISEIFileRoot                                    ( const_cast<Char*>(m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot.c_str()) );

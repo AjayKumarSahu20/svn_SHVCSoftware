@@ -394,7 +394,7 @@ protected:
 #if SVC_EXTENSION
   UInt      m_layerId;   
   UInt      m_numLayer;
-  Int       m_elRapSliceBEnabled;
+  Bool      m_elRapSliceBEnabled;
   Int       m_adaptiveResolutionChange;
   Int       m_layerSwitchOffBegin;
   Int       m_layerSwitchOffEnd;
@@ -1095,7 +1095,7 @@ public:
   Void      setNumLayer( UInt uiNum )                        { m_numLayer = uiNum;  }
   Void      setConformanceWindow(Window& conformanceWindow ) { m_conformanceWindow = conformanceWindow; }
   Void      setElRapSliceTypeB(Int bEnabled)                 { m_elRapSliceBEnabled = bEnabled;   }
-  Int       getElRapSliceTypeB()                             { return m_elRapSliceBEnabled;       }
+  Bool      getElRapSliceTypeB()                             { return m_elRapSliceBEnabled;       }
   Void      setAdaptiveResolutionChange(Int x)               { m_adaptiveResolutionChange = x;    }
   Int       getAdaptiveResolutionChange()                    { return m_adaptiveResolutionChange; }
   Void      setLayerSwitchOffBegin(Int x)                    { m_layerSwitchOffBegin = x;    }
