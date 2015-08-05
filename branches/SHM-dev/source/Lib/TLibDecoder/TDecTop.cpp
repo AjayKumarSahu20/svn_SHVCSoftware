@@ -836,6 +836,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
   setRefLayerParams(vps);
   m_apcSlicePilot->setNumMotionPredRefLayers(m_numMotionPredRefLayers);
+
+  // set motion mapping flag
+  m_apcSlicePilot->setMFMEnabledFlag( ( m_apcSlicePilot->getNumMotionPredRefLayers() > 0 && m_apcSlicePilot->getActiveNumILRRefIdx() && !m_apcSlicePilot->isIntra() ) ? true : false );
 #endif
 
   // set POC for dependent slices in skipped pictures
@@ -1727,7 +1730,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
     // motion field mapping constraint
-    if( pcSlice->getNumMotionPredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() && !pcSlice->isIntra() )
+    if( pcSlice->getMFMEnabledFlag() )
     {
       TComPic* refPic = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() );
 
