@@ -1791,10 +1791,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
 
     if ( pcSlice->getEnableTMVPFlag() )
     {
-#if SVC_EXTENSION
-      // set motion mapping flag
-      pcSlice->setMFMEnabledFlag( ( pcSlice->getNumMotionPredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() && !pcSlice->isIntra() ) ? true : false );
-#endif
       if ( pcSlice->getSliceType() == B_SLICE )
       {
         READ_FLAG( uiCode, "collocated_from_l0_flag" );
