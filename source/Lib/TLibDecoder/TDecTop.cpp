@@ -1727,7 +1727,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
 
     // motion field mapping constraint
-    if( pcSlice->getMFMEnabledFlag() )
+    if( pcSlice->getNumMotionPredRefLayers() > 0 && pcSlice->getActiveNumILRRefIdx() && !pcSlice->isIntra() )
     {
       TComPic* refPic = pcSlice->getRefPic( pcSlice->getSliceType() == B_SLICE ? ( RefPicList )( 1 - pcSlice->getColFromL0Flag() ) : REF_PIC_LIST_0 , pcSlice->getColRefIdx() );
 
