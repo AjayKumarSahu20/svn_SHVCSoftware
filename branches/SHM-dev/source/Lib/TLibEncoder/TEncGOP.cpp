@@ -1731,6 +1731,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 #if SVC_EXTENSION
     if (m_layerId > 0)
     {
+      if( pcSlice->getSliceIdx() == 0 )
+      {
+        // create buffers for scaling factors
+        pcSlice->getPic()->createMvScalingFactor(pcSlice->getNumILRRefIdx());
+        pcSlice->getPic()->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+      }
+
       Int interLayerPredLayerIdcTmp[MAX_VPS_LAYER_IDX_PLUS1];
       Int activeNumILRRefIdxTmp = 0;
 
@@ -1772,11 +1779,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         assert( ( (widthEL  != widthBL)  || (resamplingPhase.phaseHorLuma == 0 && resamplingPhase.phaseHorChroma == 0) )
              && ( (heightEL != heightBL) || (resamplingPhase.phaseVerLuma == 0 && resamplingPhase.phaseVerChroma == 0) ) );
 
-        g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
-        g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+        pcSlice->getPic()->setMvScalingFactor( refLayerIdc,
+                                               widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL),
+                                               heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
 
-        g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
-        g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
+        pcSlice->getPic()->setPosScalingFactor( refLayerIdc, 
+                                                ((widthBL  << 16) + (widthEL  >> 1)) / widthEL,
+                                                ((heightBL << 16) + (heightEL >> 1)) / heightEL );
 
 #if CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
@@ -1786,10 +1795,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_Enc3DAsymLUTPPS.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
           m_Enc3DAsymLUTPicUpdate.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
 
-          if( g_posScalingFactor[refLayerIdc][0] < (1<<16) || g_posScalingFactor[refLayerIdc][1] < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
+          if( pcSlice->getPic()->getMvScalingFactor(refLayerIdc, 0) < (1<<16) || pcSlice->getPic()->getMvScalingFactor(refLayerIdc, 1) < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
             //downsampling
-            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths());
+            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor());
             
             m_Enc3DAsymLUTPPS.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
             m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
@@ -3296,10 +3305,10 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
       {
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
         UInt refLayerIdc = pcSlice->getReferenceLayerIdc(refLayerId);
-        assert( g_posScalingFactor[refLayerIdc][0] );
-        assert( g_posScalingFactor[refLayerIdc][1] );
+        assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) );
+        assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
 
-        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/g_posScalingFactor[refLayerIdc][0], 65536.0/g_posScalingFactor[refLayerIdc][1] );
+        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0), 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
       }
       else
       {
@@ -4177,10 +4186,10 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt re
   }
 }
 
-Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth)
+Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, Int** posScalingFactor)
 {
   pcYuvSrc->setBorderExtension(false);
-  pcYuvSrc->extendPicBorder   (); // extend the border.
+  pcYuvSrc->extendPicBorder(); // extend the border.
   pcYuvSrc->setBorderExtension(false);
 
   Int iWidth  = pcYuvSrc->getWidth(COMPONENT_Y);
@@ -4188,7 +4197,7 @@ Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDept
 
   if(!m_temp)
   {
-    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1);
+    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1, posScalingFactor);
   }
 
   filterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    bitDepth, 0);
@@ -4312,10 +4321,10 @@ Void TEncGOP::filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int
   }
 }
 
-Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType)
+Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType, Int** posScalingFactor)
 {
   m_iTap = 13;
-  if(g_posScalingFactor[0][0] == (1<<15))
+  if(posScalingFactor[0][0] == (1<<15))
   {
     m_iM = 4;
     m_iN = 8;

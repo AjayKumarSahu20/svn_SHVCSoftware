@@ -489,9 +489,9 @@ public:
   Bool          xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
   Bool          xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx);
 #endif
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping = false );
-  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping = false );
-  Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** posScalingFactor, Bool motionMapping = false );
+  TComDataCU*   getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** posScalingFactor, Bool motionMapping = false );
+  Void          scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase, Int** mvScalingFactor );
 #if FAST_INTRA_SHVC
   UChar         getReducedSetIntraModes(UChar idx)     { assert( idx < NUM_INTRA_MODE-1 ); return m_reducedSetIntraModes[idx]; }
 #endif

@@ -215,10 +215,10 @@ Void TDecGop::filterPicture(TComPic* pcPic)
       {
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
         UInt refLayerIdc = pcSlice->getReferenceLayerIdc(refLayerId);
-        assert( g_posScalingFactor[refLayerIdc][0] );
-        assert( g_posScalingFactor[refLayerIdc][1] );
+        assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) );
+        assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
 
-        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/g_posScalingFactor[refLayerIdc][0], 65536.0/g_posScalingFactor[refLayerIdc][1] );
+        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0), 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
       }
       else
       {

@@ -63,6 +63,8 @@ TComPic::TComPic()
   memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
   memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
   memset( m_equalPictureSizeAndOffsetFlag, false, sizeof( m_equalPictureSizeAndOffsetFlag ) );
+  memset( m_mvScalingFactor, NULL, sizeof( m_mvScalingFactor ) );
+  memset( m_posScalingFactor, NULL, sizeof( m_posScalingFactor ) );
 #endif
   for(UInt i=0; i<NUM_PIC_YUV; i++)
   {
@@ -161,6 +163,21 @@ Void TComPic::destroy()
       m_pcFullPelBaseRec[i]  = NULL;
     }
   }
+
+  for( Int comp = 0; comp < 2; comp++ )
+  {
+    if( m_mvScalingFactor[comp] )
+    {
+      delete [] m_mvScalingFactor[comp];
+      m_mvScalingFactor[comp] = NULL;
+    }
+
+    if( m_posScalingFactor[comp] )
+    {
+      delete [] m_posScalingFactor[comp];
+      m_posScalingFactor[comp] = NULL;
+    }
+  }
 #endif 
 }
 
@@ -219,6 +236,24 @@ UInt TComPic::getSubstreamForCtuAddr(const UInt ctuAddr, const Bool bAddressInRa
 }
 
 #if SVC_EXTENSION
+Void TComPic::createMvScalingFactor(UInt numOfILRPs)
+{
+  assert(m_mvScalingFactor[0] == NULL);
+  m_mvScalingFactor[0] = new Int[numOfILRPs];
+
+  assert(m_mvScalingFactor[1] == NULL);
+  m_mvScalingFactor[1] = new Int[numOfILRPs];
+}
+
+Void TComPic::createPosScalingFactor(UInt numOfILRPs)
+{
+  assert(m_posScalingFactor[0] == NULL);
+  m_posScalingFactor[0] = new Int[numOfILRPs];
+
+  assert(m_posScalingFactor[1] == NULL);
+  m_posScalingFactor[1] = new Int[numOfILRPs];
+}
+
 Void copyOnetoOnePicture(    // SVC_NONCOLL
                   Pel *in,        
                   Pel *out,      
@@ -261,7 +296,7 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
     upsampledRowWidthCroma);
 }
 
-Void TComPic::copyUpsampledMvField(UInt refLayerIdc)
+Void TComPic::copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int** posScalingFactor)
 {
   const TComSPS *sps       = getSlice(0)->getSPS();
   const UInt uiMaxDepth    = sps->getMaxTotalCUDepth();
@@ -282,7 +317,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc)
       UInt baseCUAddr, baseAbsPartIdx;
 
       TComDataCU *pcColCU = 0;
-      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX, pelY, baseCUAddr, baseAbsPartIdx, true);
+      pcColCU = pcCUDes->getBaseColCU(refLayerIdc, pelX, pelY, baseCUAddr, baseAbsPartIdx, posScalingFactor, true);
 
       if( pcColCU && pcColCU->getPredictionMode(baseAbsPartIdx) == MODE_INTER )  //base layer unit not skip and invalid mode
       {
@@ -290,7 +325,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc)
         {
           TComMvField sMvFieldBase, sMvField;
           pcColCU->getMvField( pcColCU, baseAbsPartIdx, (RefPicList)refPicList, sMvFieldBase);
-          pcCUDes->scaleBaseMV( refLayerIdc, sMvField, sMvFieldBase );
+          pcCUDes->scaleBaseMV( refLayerIdc, sMvField, sMvFieldBase, mvScalingFactor );
 
           pcCUDes->getCUMvField((RefPicList)refPicList)->setMvField(sMvField, absPartIdx);
           pcCUDes->setPredictionMode(absPartIdx, MODE_INTER);

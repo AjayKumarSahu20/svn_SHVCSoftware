@@ -170,16 +170,12 @@ extern const Int g_quantInterDefault8x8[8*8];
 extern const UInt g_scalingListSize [SCALING_LIST_SIZE_NUM];
 extern const UInt g_scalingListSizeX[SCALING_LIST_SIZE_NUM];
 
-#if SVC_EXTENSION
-extern Int g_mvScalingFactor  [MAX_LAYERS][2];
-extern Int g_posScalingFactor [MAX_LAYERS][2];
 #if LAYER_CTB
 extern       UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 extern       UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 #endif
-#endif //SVC_EXTENSION
 
 //! \}
 

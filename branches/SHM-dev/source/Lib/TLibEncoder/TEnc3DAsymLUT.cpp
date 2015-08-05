@@ -548,10 +548,10 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
   Window scalEL = pSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId); 
   TComPicYuv *pcRecPicBL = pSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
   // borders of down-sampled picture
-  Int leftDS =  (scalEL.getWindowLeftOffset()*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16;
-  Int rightDS = pcRecPicBL->getWidth(COMPONENT_Y) - 1 + (((scalEL.getWindowRightOffset())*g_posScalingFactor[refLayerIdc][0]+(1<<15))>>16);
-  Int topDS = (((scalEL.getWindowTopOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
-  Int bottomDS = pcRecPicBL->getHeight(COMPONENT_Y) - 1 + (((scalEL.getWindowBottomOffset())*g_posScalingFactor[refLayerIdc][1]+(1<<15))>>16);
+  Int leftDS =  (scalEL.getWindowLeftOffset() * pSlice->getPic()->getPosScalingFactor(refLayerIdc, 0)+(1<<15))>>16;
+  Int rightDS = pcRecPicBL->getWidth(COMPONENT_Y) - 1 + (((scalEL.getWindowRightOffset()) * pSlice->getPic()->getPosScalingFactor(refLayerIdc, 0)+(1<<15))>>16);
+  Int topDS = (((scalEL.getWindowTopOffset()) * pSlice->getPic()->getPosScalingFactor(refLayerIdc, 1)+(1<<15))>>16);
+  Int bottomDS = pcRecPicBL->getHeight(COMPONENT_Y) - 1 + (((scalEL.getWindowBottomOffset()) * pSlice->getPic()->getPosScalingFactor(refLayerIdc, 1)+(1<<15))>>16);
   // overlapped region
   Int left = max( 0 , leftDS );
   Int right = min( pcRecPicBL->getWidth(COMPONENT_Y) - 1 , rightDS );

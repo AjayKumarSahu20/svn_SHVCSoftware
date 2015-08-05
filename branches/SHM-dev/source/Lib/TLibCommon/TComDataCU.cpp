@@ -3275,15 +3275,15 @@ UInt TComDataCU::getCoefScanIdx(const UInt uiAbsPartIdx, const UInt uiWidth, con
 }
 
 #if SVC_EXTENSION
-TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping )
+TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** petPosScalingFactor, Bool motionMapping )
 {
   UInt uiPelX = getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
   UInt uiPelY = getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiCuAbsPartIdx] ];
 
-  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase, motionMapping );
+  return getBaseColCU( refLayerIdc, uiPelX, uiPelY, uiCUAddrBase, uiAbsPartIdxBase, petPosScalingFactor, motionMapping );
 }
 
-TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Bool motionMapping )
+TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** posScalingFactor, Bool motionMapping )
 {
   TComPic* baseColPic = m_pcSlice->getBaseColPic(refLayerIdc);
 
@@ -3301,8 +3301,8 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   Int topStartL  = m_pcSlice->getPPS()->getScaledRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc)).getWindowTopOffset();
 
   const Window &windowRL = m_pcSlice->getPPS()->getRefLayerWindowForLayer(baseColPic->getSlice(0)->getVPS()->getRefLayerId(getSlice()->getLayerId(), refLayerIdc));
-  Int iBX = (((iPelX - leftStartL)*g_posScalingFactor[refLayerIdc][0] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
-  Int iBY = (((iPelY - topStartL )*g_posScalingFactor[refLayerIdc][1] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
+  Int iBX = (((iPelX - leftStartL) * posScalingFactor[0][refLayerIdc] + (1<<15)) >> 16) + windowRL.getWindowLeftOffset();
+  Int iBY = (((iPelY - topStartL ) * posScalingFactor[1][refLayerIdc] + (1<<15)) >> 16) + windowRL.getWindowTopOffset();
 
   // offset for collocated block in the motion mapping
   if( motionMapping )
@@ -3345,12 +3345,12 @@ TComDataCU* TComDataCU::getBaseColCU( UInt refLayerIdc, UInt pelX, UInt pelY, UI
   return baseColPic->getCtu(uiCUAddrBase);
 }
 
-Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase )
+Void TComDataCU::scaleBaseMV( UInt refLayerIdc, TComMvField& rcMvFieldEnhance, TComMvField& rcMvFieldBase, Int** mvScalingFactor )
 {
   TComMvField cMvFieldBase;
   TComMv cMv;
 
-  cMv = rcMvFieldBase.getMv().scaleMv( g_mvScalingFactor[refLayerIdc][0], g_mvScalingFactor[refLayerIdc][1] );
+  cMv = rcMvFieldBase.getMv().scaleMv( mvScalingFactor[0][refLayerIdc], mvScalingFactor[1][refLayerIdc] );
 
   rcMvFieldEnhance.setMvField( cMv, rcMvFieldBase.getRefIdx() );
 }

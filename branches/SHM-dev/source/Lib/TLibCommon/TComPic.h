@@ -87,7 +87,9 @@ private:
   UInt                  m_layerId;              //  Layer ID
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
-  Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS]; 
+  Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS];
+  Int*                  m_mvScalingFactor[2];
+  Int*                  m_posScalingFactor[2];
 #if CGS_3D_ASYMLUT
   Int                   m_nFrameBit;
 #endif
@@ -198,10 +200,18 @@ public:
   Bool          isILR( UInt currLayerId )                                   { return ( m_bIsLongTerm && m_layerId < currLayerId );       }
   Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc];       }
   Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;          }
-  Void          copyUpsampledMvField(UInt refLayerIdc);
+  Void          copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int** posScalingFactor);
   Void          initUpsampledMvField();
   Bool          checkSameRefInfo();
-  Void          copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut); 
+  Void          copyUpsampledPictureYuv(TComPicYuv* pcPicYuvIn, TComPicYuv* pcPicYuvOut); 
+  Void          setMvScalingFactor(UInt refLayerIdc, Int compX, Int compY)  { m_mvScalingFactor[0][refLayerIdc] = compX; m_mvScalingFactor[1][refLayerIdc] = compY;   }
+  Void          setPosScalingFactor(UInt refLayerIdc, Int compX, Int compY) { m_posScalingFactor[0][refLayerIdc] = compX; m_posScalingFactor[1][refLayerIdc] = compY; }
+  Int           getMvScalingFactor(UInt refLayerIdc, UChar comp) const      { return m_mvScalingFactor[comp][refLayerIdc];  }
+  Int           getPosScalingFactor(UInt refLayerIdc, UChar comp) const     { return m_posScalingFactor[comp][refLayerIdc]; }
+  Int**         getPosScalingFactor()                                       { return m_posScalingFactor; }
+  Int**         getMvScalingFactor()                                        { return m_mvScalingFactor;  }
+  Void          createMvScalingFactor(UInt numOfILRPs);
+  Void          createPosScalingFactor(UInt numOfILRPs);
 #if CGS_3D_ASYMLUT
   Void          setFrameBit( Int n )                                        { m_nFrameBit = n;     }
   Int           getFrameBit()                                               { return m_nFrameBit;  }

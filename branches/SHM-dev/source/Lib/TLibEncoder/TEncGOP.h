@@ -286,10 +286,10 @@ protected:
 #endif
 #if CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
-  Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth);
+  Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, Int** posScalingFactor);
   Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
   inline Short xClip( Short x , Int bitdepth );
-  Void initDs(Int iWidth, Int iHeight, Int iType);
+  Void initDs(Int iWidth, Int iHeight, Int iType, Int** posScalingFactor);
   Void filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, Int plane );
 
   Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);

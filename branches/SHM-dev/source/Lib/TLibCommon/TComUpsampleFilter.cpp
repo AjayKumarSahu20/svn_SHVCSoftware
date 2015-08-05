@@ -108,8 +108,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   Pel* piSrcV;
   Pel* piDstV;
 
-  Int scaleX = g_posScalingFactor[refLayerIdc][0];
-  Int scaleY = g_posScalingFactor[refLayerIdc][1];
+  Int scaleX = currSlice->getPic()->getPosScalingFactor(refLayerIdc, 0);
+  Int scaleY = currSlice->getPic()->getPosScalingFactor(refLayerIdc, 1);
 
   // non-normative software optimization for certain simple resampling cases
   if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
