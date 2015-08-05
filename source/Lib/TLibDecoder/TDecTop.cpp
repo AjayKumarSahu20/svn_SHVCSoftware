@@ -1594,6 +1594,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     // Other slices might choose which reference pictures to be used for inter-layer prediction
     if( m_layerId > 0 && m_uiSliceIdx == 0 && ( !pcSlice->getVPS()->getSingleLayerForNonIrapFlag() || pcSlice->isIRAP() ) )
     {
+      // create buffers for scaling factors
+      m_pcPic->createMvScalingFactor(pcSlice->getNumILRRefIdx());
+      m_pcPic->createPosScalingFactor(pcSlice->getNumILRRefIdx());
+
       for( Int i = 0; i < pcSlice->getNumILRRefIdx(); i++ )
       {
         UInt refLayerIdc = i;
@@ -1646,12 +1650,13 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         assert( ( (widthEL  != widthBL)  || (resamplingPhase.phaseHorLuma == 0 && resamplingPhase.phaseHorChroma == 0) )
              && ( (heightEL != heightBL) || (resamplingPhase.phaseVerLuma == 0 && resamplingPhase.phaseVerChroma == 0) ) );
 
-        g_mvScalingFactor[refLayerIdc][0] = widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL);
-        g_mvScalingFactor[refLayerIdc][1] = heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL);
+        m_pcPic->setMvScalingFactor( refLayerIdc, 
+                                     widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL), 
+                                     heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
 
-        g_posScalingFactor[refLayerIdc][0] = ((widthBL  << 16) + (widthEL  >> 1)) / widthEL;
-        g_posScalingFactor[refLayerIdc][1] = ((heightBL << 16) + (heightEL >> 1)) / heightEL;
-
+        m_pcPic->setPosScalingFactor( refLayerIdc, 
+                                     ((widthBL  << 16) + (widthEL  >> 1)) / widthEL, 
+                                     ((heightBL << 16) + (heightEL >> 1)) / heightEL );
 #if CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
         if( pcSlice->getPPS()->getCGSFlag() && m_c3DAsymLUTPPS.isRefLayer( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) ) )

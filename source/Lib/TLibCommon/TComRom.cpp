@@ -724,15 +724,11 @@ const Int g_quantInterDefault8x8[8*8] =
 const UInt g_scalingListSize   [SCALING_LIST_SIZE_NUM] = {16,64,256,1024};
 const UInt g_scalingListSizeX  [SCALING_LIST_SIZE_NUM] = { 4, 8, 16,  32};
 
-#if SVC_EXTENSION
-Int g_mvScalingFactor  [MAX_LAYERS][2] = {{0,0}, {0,0}};
-Int g_posScalingFactor [MAX_LAYERS][2] = {{0,0}, {0,0}};
 #if LAYER_CTB
 UInt g_auiLayerZscanToRaster[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 UInt g_auiLayerRasterToZscan[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 UInt g_auiLayerRasterToPelX[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 UInt g_auiLayerRasterToPelY[MAX_LAYERS][ MAX_NUM_SPU_W*MAX_NUM_SPU_W ];
 #endif
-#endif //SVC_EXTENSION
 
 //! \}
