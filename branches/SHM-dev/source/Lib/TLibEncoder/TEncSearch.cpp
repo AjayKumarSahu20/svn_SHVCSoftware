@@ -2282,7 +2282,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
 
       if( m_pcEncCfg->getUseFastIntraScalable() && pcCU->getLayerId() > 0 )
       {
-        numModesAvailable = pcCU->reduceSetOfIntraModes(uiPartOffset, uiPreds, iMode );
+        numModesAvailable = pcCU->reduceSetOfIntraModes(uiPartOffset, uiPreds, pcCU->getPic()->getPosScalingFactor(), iMode );
         if( numModesForFullRD > numModesAvailable ) //fast HAD can be skipped
         {
           skipFastHAD = true;
