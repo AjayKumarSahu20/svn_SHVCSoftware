@@ -63,8 +63,8 @@ TComPic::TComPic()
   memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
   memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
   memset( m_equalPictureSizeAndOffsetFlag, false, sizeof( m_equalPictureSizeAndOffsetFlag ) );
-  memset( m_mvScalingFactor, NULL, sizeof( m_mvScalingFactor ) );
-  memset( m_posScalingFactor, NULL, sizeof( m_posScalingFactor ) );
+  memset( m_mvScalingFactor, 0, sizeof( m_mvScalingFactor ) );
+  memset( m_posScalingFactor, 0, sizeof( m_posScalingFactor ) );
 #endif
   for(UInt i=0; i<NUM_PIC_YUV; i++)
   {

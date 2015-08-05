@@ -65,8 +65,8 @@ TAppDecTop::TAppDecTop()
 : seiColourRemappingInfoPrevious(NULL)
 #endif
 {
-  memset( m_apcTDecTop, NULL, sizeof(m_apcTDecTop) );
-  memset( m_apcTVideoIOYuvReconFile, NULL, sizeof(m_apcTVideoIOYuvReconFile) );
+  memset( m_apcTDecTop, 0, sizeof(m_apcTDecTop) );
+  memset( m_apcTVideoIOYuvReconFile, 0, sizeof(m_apcTVideoIOYuvReconFile) );
 
   for(UInt layer=0; layer < MAX_LAYERS; layer++)
   {
