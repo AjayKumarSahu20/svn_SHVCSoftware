@@ -1085,7 +1085,7 @@ public:
   Bool  getAlphaClipTypeFlag()                               { return m_alphaClipTypeFlag; }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  Void  setCRISEIFileRoot( Char* pch )                       { m_colourRemapSEIFileRoot = pch; }
+  Void  xSetCRISEIFileRoot( Char* pch )                       { m_colourRemapSEIFileRoot = pch; }
   Char* getCRISEIFileRoot()                                  { return m_colourRemapSEIFileRoot; }
 #endif
 #if SVC_EXTENSION

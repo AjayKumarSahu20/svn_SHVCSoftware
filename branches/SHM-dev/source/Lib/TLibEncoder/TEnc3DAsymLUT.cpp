@@ -137,7 +137,7 @@ TEnc3DAsymLUT::~TEnc3DAsymLUT()
   destroy();
 }
 
-Double TEnc3DAsymLUT::xxDeriveVertexPerColor( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
+Double TEnc3DAsymLUT::xDeriveVertexPerColor( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
   Pel & rP0 , Pel & rP1 , Pel & rP3 , Pel & rP7 , Int nResQuantBit )
 {
   Int nInitP0 = rP0;
@@ -181,7 +181,7 @@ Double TEnc3DAsymLUT::xxDeriveVertexPerColor( Double N , Double Ys , Double Yy ,
         for( Int m = 0 ; m < 2 ; m++ )
         {
           Int nTestP7 = Clip3( nMin , nMax , nInitP7 + m * nStepSize );
-          Double dError = xxCalEstDist( N , Ys , Yy , Yu , Yv , ys , us , vs , yy , yu , yv , uu , uv , vv , YY , a , b , c , nTestP7 );
+          Double dError = xCalEstDist( N , Ys , Yy , Yu , Yv , ys , us , vs , yy , yu , yv , uu , uv , vv , YY , a , b , c , nTestP7 );
           if( dError < dMinError )
           {
             dMinError = dError;
@@ -201,7 +201,7 @@ Double TEnc3DAsymLUT::xxDeriveVertexPerColor( Double N , Double Ys , Double Yy ,
 
 Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt refLayerIdc )
 {
-  xxCollectData( pCurPic , refLayerIdc );
+  xCollectData( pCurPic , refLayerIdc );
 
   Double dErrorLuma = 0 , dErrorChroma = 0;
   Int nYSize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
@@ -217,14 +217,14 @@ Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt ref
         SCuboid & rCuboid = xGetCuboid( yIdx , uIdx , vIdx );
         if( rCuboidColorInfo.N > 0 )
         {
-          dErrorLuma += xxCalEstDist( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
+          dErrorLuma += xCalEstDist( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
             rCuboid.P[0].Y , rCuboid.P[1].Y , rCuboid.P[2].Y , rCuboid.P[3].Y );
         }
         if( rCuboidColorInfoC.N > 0 )
         {
-          dErrorChroma += xxCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
+          dErrorChroma += xCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
             rCuboid.P[0].U , rCuboid.P[1].U , rCuboid.P[2].U , rCuboid.P[3].U );
-          dErrorChroma += xxCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
+          dErrorChroma += xCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
             rCuboid.P[0].V , rCuboid.P[1].V , rCuboid.P[2].V , rCuboid.P[3].V );
         }
       }
@@ -252,10 +252,10 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
   Int nCurYPartNumLog2 = 0 , nCurOctantDepth = 0; 
   Int nMaxPartNumLog2 = xGetMaxPartNumLog2();
 
-  xxMapPartNum2DepthYPart( nMaxPartNumLog2 , nCurOctantDepth , nCurYPartNumLog2 ); 
+  xMapPartNum2DepthYPart( nMaxPartNumLog2 , nCurOctantDepth , nCurYPartNumLog2 ); 
   xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
-  xxCollectData( pCurPic , refLayerIdc );
-  xxCopyColorInfo(m_pMaxColorInfo, m_pColorInfo, m_pMaxColorInfoC, m_pColorInfoC); 
+  xCollectData( pCurPic , refLayerIdc );
+  xCopyColorInfo(m_pMaxColorInfo, m_pColorInfo, m_pMaxColorInfoC, m_pColorInfoC); 
  
   sMaxLutSize.iCPartNumLog2 = nCurOctantDepth; 
   sMaxLutSize.iYPartNumLog2 = nCurOctantDepth + nCurYPartNumLog2; 
@@ -274,7 +274,7 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
   Double dDistFactor = getDistFactor(pSlice->getSliceType(), pSlice->getDepth());
 
   // check all LUT sizes 
-  xxGetAllLutSizes(pSlice);  
+  xGetAllLutSizes(pSlice);  
   if (m_nTotalLutSizes == 0) // return if no valid size is found, LUT will not be updated
   {
     nCurOctantDepth = sMaxLutSize.iCPartNumLog2;
@@ -290,9 +290,9 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
     nCurOctantDepth = m_sLutSizes[i].iCPartNumLog2;
     nCurYPartNumLog2 = m_sLutSizes[i].iYPartNumLog2-nCurOctantDepth; 
     xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
-    xxConsolidateData( &m_sLutSizes[i], &sMaxLutSize );
+    xConsolidateData( &m_sLutSizes[i], &sMaxLutSize );
   
-    dCurError = xxDeriveVertexes(nBestResQuanBit, m_pEncCuboid);
+    dCurError = xDeriveVertexes(nBestResQuanBit, m_pEncCuboid);
 
     setResQuantBit( nBestResQuanBit );
     xSaveCuboids( m_pEncCuboid ); 
@@ -328,9 +328,9 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
       if( nCurOctantDepth + nCurYPartNumLog2 > getMaxYPartNumLog2()+getMaxOctantDepth() )
         nCurYPartNumLog2 = getMaxYPartNumLog2()+getMaxOctantDepth()-nCurOctantDepth; 
       xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2 , nAdaptCThresholdU , nAdaptCThresholdV );
-      xxCollectData( pCurPic , refLayerIdc );
+      xCollectData( pCurPic , refLayerIdc );
 
-      dCurError = xxDeriveVertexes( nBestResQuanBit , m_pEncCuboid ) ;
+      dCurError = xDeriveVertexes( nBestResQuanBit , m_pEncCuboid ) ;
       setResQuantBit( nBestResQuanBit );
       xSaveCuboids( m_pEncCuboid ); 
       m_pEncCavlc->xCode3DAsymLUT( this ); 
@@ -355,12 +355,12 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
 
   // check res_quant_bits only for the best table size and best U/V threshold
   if( !bUseNewColorInfo ) 
-    xxConsolidateData( &m_sLutSizes[iBestLUTSizeIdx], &sMaxLutSize );
+    xConsolidateData( &m_sLutSizes[iBestLUTSizeIdx], &sMaxLutSize );
 
-  //    xxCollectData( pCurPic , refLayerIdc );
+  //    xCollectData( pCurPic , refLayerIdc );
   for( Int nResQuanBit = 1 ; nResQuanBit < 4 ; nResQuanBit++ )
   {
-    dCurError = xxDeriveVertexes( nResQuanBit , m_pEncCuboid );
+    dCurError = xDeriveVertexes( nResQuanBit , m_pEncCuboid );
 
     setResQuantBit( nResQuanBit );
     xSaveCuboids( m_pEncCuboid ); 
@@ -406,7 +406,7 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
 {
   m_nLUTBitDepth = pCfg->getCGSLUTBit();
   Int nCurYPartNumLog2 = 0 , nCurOctantDepth = 0; 
-  xxDerivePartNumLog2( pSlice , pCfg , nCurOctantDepth , nCurYPartNumLog2 , bSignalPPS , bElRapSliceTypeB );
+  xDerivePartNumLog2( pSlice , pCfg , nCurOctantDepth , nCurYPartNumLog2 , bSignalPPS , bElRapSliceTypeB );
 
   Int nBestResQuanBit = 0;
   Int nBestAdaptCThresholdU = 1 << ( getInputBitDepthC() - 1 );
@@ -434,10 +434,10 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
     }
 
     xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2 , nAdaptCThresholdU , nAdaptCThresholdV );
-    xxCollectData( pCurPic , refLayerIdc );
+    xCollectData( pCurPic , refLayerIdc );
     for( Int nResQuanBit = 0 ; nResQuanBit < 4 ; nResQuanBit++ )
     {
-      Double dError = xxDeriveVertexes( nResQuanBit , m_pEncCuboid ) / ( 1 + ( nResQuanBit > 0 ) * 0.001 * ( pSlice->getDepth() + 1 ) );
+      Double dError = xDeriveVertexes( nResQuanBit , m_pEncCuboid ) / ( 1 + ( nResQuanBit > 0 ) * 0.001 * ( pSlice->getDepth() + 1 ) );
       if( dError <= dMinError )
       {
         nBestResQuanBit = nResQuanBit;
@@ -464,7 +464,7 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
   return( dMinError );
 }
 
-Double TEnc3DAsymLUT::xxDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid )
+Double TEnc3DAsymLUT::xDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid )
 {
   Double dErrorLuma = 0 , dErrorChroma = 0;
   Int nYSize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
@@ -487,16 +487,16 @@ Double TEnc3DAsymLUT::xxDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid
 
         if( rCuboidColorInfo.N > 0 )
         {
-          dErrorLuma += xxDeriveVertexPerColor( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
+          dErrorLuma += xDeriveVertexPerColor( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
             rCuboid.P[0].Y , rCuboid.P[1].Y , rCuboid.P[2].Y , rCuboid.P[3].Y , nResQuanBit );
         }
 
         if( rCuboidColorInfoC.N > 0 )
         {
-          dErrorChroma += xxDeriveVertexPerColor( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
+          dErrorChroma += xDeriveVertexPerColor( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
             rCuboid.P[0].U , rCuboid.P[1].U , rCuboid.P[2].U , rCuboid.P[3].U , nResQuanBit );
 
-          dErrorChroma += xxDeriveVertexPerColor( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
+          dErrorChroma += xDeriveVertexPerColor( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
             rCuboid.P[0].V , rCuboid.P[1].V , rCuboid.P[2].V , rCuboid.P[3].V , nResQuanBit );
         }
 
@@ -518,7 +518,7 @@ Double TEnc3DAsymLUT::xxDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid
   return( dErrorLuma + dErrorChroma );
 }
 
-Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
+Void TEnc3DAsymLUT::xCollectData( TComPic * pCurPic , UInt refLayerIdc )
 {
   Pel * pSrcY = m_pDsOrigPic->getAddr(COMPONENT_Y);
   Pel * pSrcU = m_pDsOrigPic->getAddr(COMPONENT_Cb);
@@ -658,7 +658,7 @@ Void TEnc3DAsymLUT::xxCollectData( TComPic * pCurPic , UInt refLayerIdc )
   }
 }
 
-Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , Int & rOctantDepth , Int & rYPartNumLog2 , Bool bSignalPPS , Bool bElRapSliceTypeB )
+Void TEnc3DAsymLUT::xDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , Int & rOctantDepth , Int & rYPartNumLog2 , Bool bSignalPPS , Bool bElRapSliceTypeB )
 {
   Int nPartNumLog2 = 4;
   if( pSlice->getBaseColPic( pSlice->getInterLayerPredLayerIdc( 0 ) )->getSlice( 0 )->isIntra() )
@@ -683,10 +683,10 @@ Void TEnc3DAsymLUT::xxDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , 
   }
 
   nPartNumLog2 = Clip3( 0 , xGetMaxPartNumLog2()  , nPartNumLog2 );
-  xxMapPartNum2DepthYPart( nPartNumLog2 , rOctantDepth , rYPartNumLog2 );
+  xMapPartNum2DepthYPart( nPartNumLog2 , rOctantDepth , rYPartNumLog2 );
 }
 
-Void TEnc3DAsymLUT::xxMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDepth , Int & rYPartNumLog2 )
+Void TEnc3DAsymLUT::xMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDepth , Int & rYPartNumLog2 )
 {
   for( Int y = getMaxYPartNumLog2() ; y >= 0 ; y-- )
   {
@@ -727,14 +727,14 @@ Void TEnc3DAsymLUT::updatePicCGSBits( TComSlice * pcSlice , Int nPPSBit )
 
 #if R0179_ENC_OPT_3DLUT_SIZE
 
-Void TEnc3DAsymLUT::xxGetAllLutSizes(TComSlice *pSlice)
+Void TEnc3DAsymLUT::xGetAllLutSizes(TComSlice *pSlice)
 {
   Int iMaxYPartNumLog2, iMaxCPartNumLog2; 
   Int iCurYPartNumLog2, iCurCPartNumLog2; 
   Int iMaxAddYPartNumLog2; 
   Int iNumELFrameBits = m_nPrevELFrameBit[pSlice->getSliceType()][pSlice->getDepth()];
 
-  xxMapPartNum2DepthYPart( xGetMaxPartNumLog2() , iMaxCPartNumLog2 , iMaxYPartNumLog2 );
+  xMapPartNum2DepthYPart( xGetMaxPartNumLog2() , iMaxCPartNumLog2 , iMaxYPartNumLog2 );
   iMaxAddYPartNumLog2 = iMaxYPartNumLog2; 
   iMaxYPartNumLog2 += iMaxCPartNumLog2; 
 
@@ -761,7 +761,7 @@ Void TEnc3DAsymLUT::xxGetAllLutSizes(TComSlice *pSlice)
 
 }
 
-Void TEnc3DAsymLUT::xxCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  SColorInfo *** dstC, SColorInfo *** srcC )
+Void TEnc3DAsymLUT::xCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  SColorInfo *** dstC, SColorInfo *** srcC )
 {
   Int yIdx, uIdx, vIdx; 
 
@@ -779,7 +779,7 @@ Void TEnc3DAsymLUT::xxCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  S
   }
 }
 
-Void TEnc3DAsymLUT::xxAddColorInfo( Int yIdx, Int uIdx, Int vIdx, Int iYDiffLog2, Int iCDiffLog2 )
+Void TEnc3DAsymLUT::xAddColorInfo( Int yIdx, Int uIdx, Int vIdx, Int iYDiffLog2, Int iCDiffLog2 )
 {
   SColorInfo & rCuboidColorInfo  = m_pColorInfo [yIdx][uIdx][vIdx];
   SColorInfo & rCuboidColorInfoC = m_pColorInfoC[yIdx][uIdx][vIdx];
@@ -797,7 +797,7 @@ Void TEnc3DAsymLUT::xxAddColorInfo( Int yIdx, Int uIdx, Int vIdx, Int iYDiffLog2
   }
 }
 
-Void TEnc3DAsymLUT::xxConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSize )
+Void TEnc3DAsymLUT::xConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSize )
 {
   Int yIdx, uIdx, vIdx; 
   Int iYDiffLog2, iCDiffLog2;
@@ -810,7 +810,7 @@ Void TEnc3DAsymLUT::xxConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTS
   //assert(pMaxLUTSize->iCPartNumLog2 >= pCurLUTSize->iCPartNumLog2 && pMaxLUTSize->iYPartNumLog2 >= pCurLUTSize->iYPartNumLog2); 
   if (iYDiffLog2 == 0 && iCDiffLog2 == 0) // shouldn't have to do anything 
   {
-    xxCopyColorInfo(m_pColorInfo, m_pMaxColorInfo, m_pColorInfoC, m_pMaxColorInfoC);
+    xCopyColorInfo(m_pColorInfo, m_pMaxColorInfo, m_pColorInfoC, m_pMaxColorInfoC);
     return; 
   }
 

@@ -833,9 +833,9 @@ Void TAppEncTop::xInitLibCfg()
 
 #if Q0074_COLOUR_REMAPPING_SEI
 #if SVC_EXTENSION
-  m_cTEncTop.setCRISEIFileRoot                                    ( const_cast<Char*>(m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot.c_str()) );
+  m_cTEncTop.xSetCRISEIFileRoot                                    ( const_cast<Char*>(m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot.c_str()) );
 #else
-  m_cTEncTop.setCRISEIFileRoot                                    ( const_cast<Char*>(m_colourRemapSEIFileRoot.c_str()) );
+  m_cTEncTop.xSetCRISEIFileRoot                                    ( const_cast<Char*>(m_colourRemapSEIFileRoot.c_str()) );
 #endif
 #endif
 #if LAYERS_NOT_PRESENT_SEI

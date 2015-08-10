@@ -122,7 +122,8 @@ static const Double MAX_DOUBLE =                             1.7e+308; ///< max.
 
 #if SVC_EXTENSION
 static const Int    POS_SCALING_FACTOR_1X =                     65536; ///< position scaling factor equal to 1x
-static const Int    MV_SCALING_FACTOR_1X =                      4096 ; ///< MV scaling factor equal to 1x
+static const Int    POS_SCALING_FACTOR_2X =                     32768; ///< position scaling factor equal to 1x
+static const Int    MV_SCALING_FACTOR_1X =                       4096; ///< MV scaling factor equal to 1x
 #endif
 
 // ====================================================================================================================
@@ -256,6 +257,11 @@ static const Int SCALING_LIST_DC =                                16 ; ///< defa
 static const Int CONTEXT_STATE_BITS =                              6 ;
 static const Int LAST_SIGNIFICANT_GROUPS =                        10 ;
 
+#if SVC_EXTENSION
+static const Int CGS_FILTER_LENGTH =                               13;
+static const Int CGS_FILTER_PHASES_2X =                             4;
+static const Int CGS_FILTER_PHASES_1X =                             8;
+#endif
 
 // ====================================================================================================================
 // Macro functions
