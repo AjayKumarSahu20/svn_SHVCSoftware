@@ -285,7 +285,7 @@ protected:
   Void xBuildTileSetsMap(TComPicSym* picSym);
 #endif
 #if CGS_3D_ASYMLUT
-  Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
+  Void xDetermine3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
   Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, Int** posScalingFactor);
   Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
   inline Short xClip( Short x , Int bitdepth );

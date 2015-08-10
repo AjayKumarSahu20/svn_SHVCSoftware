@@ -1814,7 +1814,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
           Bool bSignalPPS = m_bSeqFirst;
           bSignalPPS |= m_pcCfg->getGOPSize() > 1 ? pocCurr % m_pcCfg->getIntraPeriod() == 0 : pocCurr % m_pcCfg->getFrameRate() == 0;
-          xDetermin3DAsymLUT( pcSlice, pcPic, refLayerIdc, m_pcCfg, bSignalPPS );
+          xDetermine3DAsymLUT( pcSlice, pcPic, refLayerIdc, m_pcCfg, bSignalPPS );
 
           // update PPS in TEncTop and TComPicSym classes
           m_pcEncTop->getPPS()->setCGSOutputBitDepthY( m_Enc3DAsymLUTPPS.getOutputBitDepthY() );
@@ -4122,7 +4122,7 @@ Void TEncGOP::updatePocValuesOfPics(Int const pocCurr, TComSlice *const slice)
 }
 
 #if CGS_3D_ASYMLUT
-Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS )
+Void TEncGOP::xDetermine3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS )
 {
   Int nCGSFlag = pSlice->getPPS()->getCGSFlag();
   m_Enc3DAsymLUTPPS.setPPSBit( 0 );
@@ -4141,10 +4141,14 @@ Void TEncGOP::xDetermin3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt re
   // set frame lambda
   dFrameLambda = 0.68 * pow (2, (QP  - SHIFT_QP) / 3.0) * (m_pcCfg->getGOPSize() > 1 && pSlice->isInterB()? 2 : 1);
 
-  if(m_pcCfg->getCGSLutSizeRDO() == 1 && (!bSignalPPS && (pSlice->getDepth() < nTLthres))) 
+  if(m_pcCfg->getCGSLutSizeRDO() == 1 && (!bSignalPPS && (pSlice->getDepth() < nTLthres)))
+  {
     dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB(), dFrameLambda );
+  }
   else if (pSlice->getDepth() >= nTLthres)
+  {
     dErrorUpdatedPPS = MAX_DOUBLE;
+  }
   else // if (m_pcCfg->getCGSLutSizeRDO() = 0 || bSignalPPS)
 #endif   
     dErrorUpdatedPPS = m_Enc3DAsymLUTPicUpdate.derive3DAsymLUT( pSlice , pCurPic , refLayerIdc , pCfg , bSignalPPS , m_pcEncTop->getElRapSliceTypeB() );
