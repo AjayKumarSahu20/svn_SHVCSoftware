@@ -151,21 +151,22 @@ private:
   TEnc3DAsymLUT           m_Enc3DAsymLUTPPS;
   TComPicYuv*             m_pColorMappedPic;
 
-  Int m_iTap;
-  const Int (*m_phase_filter)[13];
-  const Int (*m_phase_filter_luma)[13];
-  const Int (*m_phase_filter_chroma)[13];
-  Int m_iM, m_iN;
-  static const Int m_phase_filter_0_t0[4][13];
-  static const Int m_phase_filter_0_t1[4][13];
-  static const Int m_phase_filter_0_t1_chroma[4][13];
-  static const Int m_phase_filter_1[8][13];
-  Int   **m_temp;
+  Char                    m_cgsFilterLength;
+  Char                    m_cgsFilterPhases;
+  Int                     m_iN;
+  Int                   **m_temp;
+  const Pel             (*m_phaseFilter)[CGS_FILTER_LENGTH];
+  const Pel             (*m_phaseFilterLuma)[CGS_FILTER_LENGTH];
+  const Pel             (*m_phaseFilterChroma)[CGS_FILTER_LENGTH];
+  static const Pel        m_phaseFilter0T0[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH];
+  static const Pel        m_phaseFilter0T1[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH];
+  static const Pel        m_phaseFilter0T1Chroma[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH];
+  static const Pel        m_phaseFilter1[CGS_FILTER_PHASES_1X][CGS_FILTER_LENGTH];
 #endif
-  Int   m_lastPocPeriodId;
-  Bool  m_noRaslOutputFlag;
-  Bool  m_prevPicHasEos;
-  static Bool m_signalledVPS;
+  Int                     m_lastPocPeriodId;
+  Bool                    m_noRaslOutputFlag;
+  Bool                    m_prevPicHasEos;
+  static Bool             m_signalledVPS;
 #endif
   
 public:
@@ -274,10 +275,10 @@ protected:
 
 #if Q0074_COLOUR_REMAPPING_SEI
   TComSEIColourRemappingInfo* xGetSEIColourRemappingInfo()  { return &m_seiColourRemappingInfo; }
-  Void  setCRISEIFile( Char* pch )       { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
+  Void xSetCRISEIFile( Char* pch )                          { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
 
-  Void freeColourCRI();
-  Int  readingCRIparameters();
+  Void xFreeColourCRI();
+  Int  xReadingCRIparameters();
   Void xCheckParameter();
 #endif
 #if SVC_EXTENSION
@@ -286,14 +287,14 @@ protected:
 #endif
 #if CGS_3D_ASYMLUT
   Void xDetermine3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
-  Void downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX);
-  Void downScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
-  inline Short xClip( Short x , Int bitdepth );
-  Void initDs(Int iWidth, Int iHeight, Int iType, const Int posScalingFactorX);
-  Void filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, Int plane );
+  Void xDownScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX);
+  Void xDownScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
+  inline Short xClip( Short x, Int bitdepth );
+  Void xInitDs( const Int iWidth, const Int iHeight, const Bool allIntra, const Int posScalingFactorX);
+  Void xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, ComponentID comp );
 
-  Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
-  Void free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX);
+  Int  xCreate2DArray(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
+  Void xDestroy2DArray(Int **array2D, Int iPadY, Int iPadX);
 #endif
   Void xCheckLayerReset(TComSlice *slice);
   Void xSetNoRaslOutputFlag(TComSlice *slice);

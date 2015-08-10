@@ -3555,29 +3555,29 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
 Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 {
   UInt uiNumRefLayersM1;
-  READ_UVLC( uiNumRefLayersM1 , "num_cm_ref_layers_minus1" );
+  READ_UVLC( uiNumRefLayersM1, "num_cm_ref_layers_minus1" );
   assert( uiNumRefLayersM1 <= 61 );
   for( UInt i = 0 ; i <= uiNumRefLayersM1 ; i++ )
   {
     UInt uiRefLayerId;
-    READ_CODE( 6 , uiRefLayerId , "cm_ref_layer_id" );
+    READ_CODE( 6, uiRefLayerId, "cm_ref_layer_id" );
     pc3DAsymLUT->addRefLayerId( uiRefLayerId );
   }
 
   UInt uiCurOctantDepth, uiCurPartNumLog2, uiInputBitDepthM8, uiOutputBitDepthM8, uiResQaunBit, uiDeltaBits;;
   
-  READ_CODE( 2 , uiCurOctantDepth , "cm_octant_depth" ); 
-  READ_CODE( 2 , uiCurPartNumLog2 , "cm_y_part_num_log2" );     
+  READ_CODE( 2, uiCurOctantDepth, "cm_octant_depth" ); 
+  READ_CODE( 2, uiCurPartNumLog2, "cm_y_part_num_log2" );     
 
-  UInt uiChromaInputBitDepthM8 , uiChromaOutputBitDepthM8;
+  UInt uiChromaInputBitDepthM8, uiChromaOutputBitDepthM8;
 
-  READ_UVLC( uiInputBitDepthM8 , "cm_input_luma_bit_depth_minus8" );
+  READ_UVLC( uiInputBitDepthM8, "cm_input_luma_bit_depth_minus8" );
   READ_UVLC( uiChromaInputBitDepthM8 , "cm_input_chroma_bit_depth_minus8" );
-  READ_UVLC( uiOutputBitDepthM8 , "cm_output_luma_bit_depth_minus8" );
-  READ_UVLC( uiChromaOutputBitDepthM8 , "cm_output_chroma_bit_depth_minus8" );
-  READ_CODE( 2 , uiResQaunBit , "cm_res_quant_bit" );
+  READ_UVLC( uiOutputBitDepthM8, "cm_output_luma_bit_depth_minus8" );
+  READ_UVLC( uiChromaOutputBitDepthM8  "cm_output_chroma_bit_depth_minus8" );
+  READ_CODE( 2, uiResQaunBit, "cm_res_quant_bit" );
 
-  READ_CODE( 2 , uiDeltaBits , "cm_flc_bits" );
+  READ_CODE( 2, uiDeltaBits, "cm_flc_bits" );
   pc3DAsymLUT->setDeltaBits(uiDeltaBits + 1);
 
   Int nAdaptCThresholdU = 1 << ( uiChromaInputBitDepthM8 + 8 - 1 );
@@ -3586,9 +3586,9 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   if( uiCurOctantDepth == 1 )
   {
     Int delta = 0;
-    READ_SVLC( delta , "cm_adapt_threshold_u_delta" );
+    READ_SVLC( delta, "cm_adapt_threshold_u_delta" );
     nAdaptCThresholdU += delta;
-    READ_SVLC( delta , "cm_adapt_threshold_v_delta" );
+    READ_SVLC( delta, "cm_adapt_threshold_v_delta" );
     nAdaptCThresholdV += delta;
   }
 
@@ -3599,7 +3599,7 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 #if R0164_CGS_LUT_BUGFIX_CHECK
   pc3DAsymLUT->xInitCuboids();
 #endif
-  xParse3DAsymLUTOctant( pc3DAsymLUT , 0 , 0 , 0 , 0 , 1 << pc3DAsymLUT->getCurOctantDepth() );
+  xParse3DAsymLUTOctant( pc3DAsymLUT, 0, 0, 0, 0, 1 << pc3DAsymLUT->getCurOctantDepth() );
 #if R0164_CGS_LUT_BUGFIX_CHECK
   printf("============= Before 'xCuboidsFilledCheck()': ================\n");
   pc3DAsymLUT->display();
@@ -3609,12 +3609,15 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
 #endif
 }
 
-Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth , Int yIdx , Int uIdx , Int vIdx , Int nLength )
+Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT, Int nDepth, Int yIdx, Int uIdx, Int vIdx, Int nLength )
 {
   UInt uiOctantSplit = nDepth < pc3DAsymLUT->getCurOctantDepth();
   if( nDepth < pc3DAsymLUT->getCurOctantDepth() )
-    READ_FLAG( uiOctantSplit , "split_octant_flag" );
+  {
+    READ_FLAG( uiOctantSplit, "split_octant_flag" );
+  }
   Int nYPartNum = 1 << pc3DAsymLUT->getCurYPartNumLog2();
+
   if( uiOctantSplit )
   {
     Int nHalfLength = nLength >> 1;
@@ -3624,7 +3627,7 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
       {
         for( Int n = 0 ; n < 2 ; n++ )
         {
-          xParse3DAsymLUTOctant( pc3DAsymLUT , nDepth + 1 , yIdx + l * nHalfLength * nYPartNum , uIdx + m * nHalfLength , vIdx + n * nHalfLength , nHalfLength );
+          xParse3DAsymLUTOctant( pc3DAsymLUT, nDepth + 1, yIdx + l * nHalfLength * nYPartNum, uIdx + m * nHalfLength, vIdx + n * nHalfLength, nHalfLength );
         }
       }
     }
@@ -3634,15 +3637,17 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
     Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
     nFLCbits = nFLCbits >= 0 ? nFLCbits:0;
 
-    for( Int l = 0 ; l < nYPartNum ; l++ )
+    for( Int l = 0; l < nYPartNum; l++ )
     {
       Int shift = pc3DAsymLUT->getCurOctantDepth() - nDepth;
 
-      for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+      for( Int nVertexIdx = 0; nVertexIdx < 4; nVertexIdx++ )
       {
         UInt uiCodeVertex = 0;
-        Int deltaY = 0 , deltaU = 0 , deltaV = 0;
-        READ_FLAG( uiCodeVertex , "coded_vertex_flag" );
+        Int deltaY = 0, deltaU = 0, deltaV = 0;
+
+        READ_FLAG( uiCodeVertex, "coded_vertex_flag" );
+
         if( uiCodeVertex )
         {
           xReadParam( deltaY, nFLCbits );
@@ -3650,11 +3655,11 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
           xReadParam( deltaV, nFLCbits );
         }
 
-        pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) , uIdx , vIdx , nVertexIdx , deltaY , deltaU , deltaV );
+        pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift), uIdx, vIdx, nVertexIdx, deltaY, deltaU, deltaV );
 
         for( Int m = 1; m < (1<<shift); m++ )
         {
-          pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) + m , uIdx , vIdx , nVertexIdx , 0 , 0 , 0 );
+          pc3DAsymLUT->setCuboidVertexResTree( yIdx + (l<<shift) + m, uIdx, vIdx, nVertexIdx, 0, 0, 0 );
 #if R0164_CGS_LUT_BUGFIX_CHECK
           pc3DAsymLUT->xSetFilled( yIdx + (l<<shift) + m , uIdx , vIdx );
 #endif
@@ -3671,13 +3676,13 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth 
       {
         if( u!=0 || v!=0 )
         {
-          for( Int y=0 ; y<nLength*nYPartNum ; y++ )
+          for( Int y=0; y<nLength*nYPartNum; y++ )
           {
-            for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+            for( Int nVertexIdx = 0; nVertexIdx < 4; nVertexIdx++ )
             {
-              pc3DAsymLUT->setCuboidVertexResTree( yIdx + y , uIdx + u , vIdx + v , nVertexIdx , 0 , 0 , 0 );
+              pc3DAsymLUT->setCuboidVertexResTree( yIdx + y, uIdx +  , vIdx + v, nVertexIdx, 0, 0, 0 );
 #if R0164_CGS_LUT_BUGFIX_CHECK
-              pc3DAsymLUT->xSetFilled( yIdx + y , uIdx + u , vIdx + v );
+              pc3DAsymLUT->xSetFilled( yIdx + y, uIdx + u, vIdx + v );
 #endif
             }
           }

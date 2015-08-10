@@ -137,7 +137,7 @@ TEncGOP::~TEncGOP()
   }
   if(m_temp)
   {
-    free_mem2DintWithPad(m_temp, m_iTap>>1, 0);
+    xDestroy2DArray(m_temp, m_cgsFilterLength>>1, 0);
     m_temp = NULL;
   }
 #endif
@@ -696,7 +696,7 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
 }
 
 #if Q0074_COLOUR_REMAPPING_SEI
-Void TEncGOP::freeColourCRI()
+Void TEncGOP::xFreeColourCRI()
 {
   for( Int c=0 ; c<3 ; c++)
   {
@@ -723,7 +723,7 @@ Void TEncGOP::freeColourCRI()
   }
 }
 
-Int TEncGOP::readingCRIparameters(){
+Int TEncGOP::xReadingCRIparameters(){
 
   // reading external Colour Remapping Information SEI message parameters from file
   if( m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str() )
@@ -937,16 +937,16 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
     // insert one CRI by picture (if the file exist)   
-    freeColourCRI();
+    xFreeColourCRI();
 
     // building the CRI file name with poc num in suffix "_poc.txt"
     char suffix[10];
     sprintf(suffix, "_%d.txt",  slice->getPOC());
     string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
     colourRemapSEIFileWithPoc.append(suffix);
-    setCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
+    xSetCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
   
-    Int ret = readingCRIparameters();
+    Int ret = xReadingCRIparameters();
 
     if(ret != -1 && m_pcCfg->getCRISEIFileRoot())
     {
@@ -1801,7 +1801,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < POS_SCALING_FACTOR_1X || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < POS_SCALING_FACTOR_1X ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
             //downsampling
-            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor(refLayerIdc, 0));
+            xDownScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor(refLayerIdc, 0));
             
             m_Enc3DAsymLUTPPS.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
             m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
@@ -4193,7 +4193,7 @@ Void TEncGOP::xDetermine3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt r
   }
 }
 
-Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX)
+Void TEncGOP::xDownScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX)
 {
   pcYuvSrc->setBorderExtension(false);
   pcYuvSrc->extendPicBorder(); // extend the border.
@@ -4204,42 +4204,47 @@ Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDept
 
   if(!m_temp)
   {
-    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1, posScalingFactorX);
+    xInitDs(iWidth, iHeight, m_pcCfg->getIntraPeriod() > 1, posScalingFactorX);
   }
 
-  filterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    bitDepth, 0);
-  filterImg(pcYuvSrc->getAddr(COMPONENT_Cb), pcYuvSrc->getStride(COMPONENT_Cb), pcYuvDest->getAddr(COMPONENT_Cb), pcYuvDest->getStride(COMPONENT_Cb), iHeight>>1, iWidth>>1, bitDepth, 1);
-  filterImg(pcYuvSrc->getAddr(COMPONENT_Cr), pcYuvSrc->getStride(COMPONENT_Cr), pcYuvDest->getAddr(COMPONENT_Cr), pcYuvDest->getStride(COMPONENT_Cr), iHeight>>1, iWidth>>1, bitDepth, 2);  
+  xFilterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    bitDepth, COMPONENT_Y);
+  xFilterImg(pcYuvSrc->getAddr(COMPONENT_Cb), pcYuvSrc->getStride(COMPONENT_Cb), pcYuvDest->getAddr(COMPONENT_Cb), pcYuvDest->getStride(COMPONENT_Cb), iHeight>>1, iWidth>>1, bitDepth, COMPONENT_Cb);
+  xFilterImg(pcYuvSrc->getAddr(COMPONENT_Cr), pcYuvSrc->getStride(COMPONENT_Cr), pcYuvDest->getAddr(COMPONENT_Cr), pcYuvDest->getStride(COMPONENT_Cr), iHeight>>1, iWidth>>1, bitDepth, COMPONENT_Cr);  
 }
-const Int TEncGOP::m_phase_filter_0_t0[4][13]={
+const Pel TEncGOP::m_phaseFilter0T0[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH] =
+{
   {0,  2,  -3,  -9,   6,  39,  58,  39,   6,  -9,  -3,  2,  0},  
-  {0, 0,  0,  -2,  8,-20, 116, 34, -10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  0,   0,  -2,  8,  -20, 116,  34, -10,   2,   0,  0,  0},            //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
   {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
-  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
+  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8, -1,  1}  
 };
 
-const Int TEncGOP::m_phase_filter_0_t1[4][13]={
-  {0,  4,  0,  -12, 0,  40,  64,  40, 0, -12,  0,  4,  0},
-  {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
-  {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
-  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
-};
-const Int TEncGOP::m_phase_filter_0_t1_chroma[4][13]={
-  {0,  0,  0,   0,  0,   0,  128, 0,  0,  0,  0,  0,  0},
-  {0, 0,  0,  -2,  8,-20, 116,34,-10,  2,  0, 0,  0},                      //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
-  {0,  1,   0,  -7,  -5,  22,  53,  53,  22,  -5,  -7,  0,  1},  
-  {0,  0,   1,  -5,  -7,  13,  47,  57,  31,  -1,  -8,-1,  1}  
+const Pel TEncGOP::m_phaseFilter0T1[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH] =
+{
+  {0,  4,  0,  -12, 0,  40,  64,  40,   0, -12,  0,  4,  0},
+  {0,  0,  0,  -2,  8, -20, 116,  34, -10,   2,  0,  0,  0},               //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  1,  0,  -7, -5,  22,  53,  53,  22,  -5, -7,  0,  1},  
+  {0,  0,  1,  -5, -7,  13,  47,  57,  31,  -1, -8, -1,  1}  
 };
 
-const Int TEncGOP::m_phase_filter_1[8][13]={
-  {0,   0,  5,  -6,  -10,37,  76,  37,-10,   -6, 5,  0,   0},    
-  {0,  -1,  5,  -3,  -12,29,  75,  45,  -7,   -8, 5,  0,   0},    
-  {0,  -1,  4,  -1,  -13,22,  73,  52,  -3,  -10, 4,  1,   0},    
-  {0,  -1,  4,   1,  -13,14,  70,  59,   2,  -12, 3,  2,  -1},  
-  {0,  -1,  3,   2,  -13, 8,  65,  65,   8,  -13, 2,  3,  -1},    
-  {0,  -1,  2,   3,  -12, 2,  59,  70,  14,  -13, 1,  4,  -1},    
-  {0,   0,  1,   4,  -10,-3,  52,  73,  22,  -13,-1,  4,  -1},    
-  {0,   0,  0,   5,   -8,-7,  45,  75,  29,  -12,-3,  5,  -1}    
+const Pel TEncGOP::m_phaseFilter0T1Chroma[CGS_FILTER_PHASES_2X][CGS_FILTER_LENGTH] =
+{
+  {0,  0,  0,  0,  0,   0, 128,  0,   0,  0,  0,  0, 0},
+  {0,  0,  0, -2,  8, -20, 116, 34, -10,  2,  0,  0, 0},                   //{0,  1,  -1,  -8,  -1,  31,  57,  47,  13,  -7,  -5,  1,  0},  //
+  {0,  1,  0, -7, -5,  22,  53, 53,  22, -5, -7,  0, 1},  
+  {0,  0,  1, -5, -7,  13,  47, 57,  31, -1, -8, -1, 1}  
+};
+
+const Pel TEncGOP::m_phaseFilter1[CGS_FILTER_PHASES_1X][CGS_FILTER_LENGTH] =
+{
+  {0,  0, 5, -6, -10, 37, 76, 37, -10,  -6, 5, 0,  0},    
+  {0, -1, 5, -3, -12, 29, 75, 45,  -7,  -8, 5, 0,  0},    
+  {0, -1, 4, -1, -13, 22, 73, 52,  -3, -10, 4, 1,  0},    
+  {0, -1, 4,  1, -13, 14, 70, 59,   2, -12, 3, 2, -1},  
+  {0, -1, 3,  2, -13,  8, 65, 65,   8, -13, 2, 3, -1},    
+  {0, -1, 2,  3, -12,  2, 59, 70,  14, -13, 1, 4, -1},    
+  {0,  0, 1,  4, -10, -3, 52, 73,  22, -13,-1, 4, -1},    
+  {0,  0, 0,  5,  -8, -7, 45, 75,  29, -12,-3, 5, -1}    
 };
 
 #if CGS_GCC_NO_VECTORIZATION  
@@ -4250,106 +4255,108 @@ __attribute__((optimize("no-tree-vectorize")))
 #endif
 #endif
 #endif
-Void TEncGOP::filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, Int plane )
+Void TEncGOP::xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, ComponentID comp )
 {
-  Int length = m_iTap;
-  Int height2,width2;
-  Int k,iSum;
-  Int i0, div_i0, i1;
-  Int j0, div_j0, j1;
-  const Int *p_filter;
-  Pel *p_src, *p_dst;
-  Pel *p_src_line, *p_dst_line;
-  Int **p_temp, *p_tmp;
-  Int shift = bitDepth.recon[CHANNEL_TYPE_LUMA] - bitDepth.recon[CHANNEL_TYPE_CHROMA];
-  Int shift2 = 2*7+shift;
-  Int shift_round = (1 << (shift2 - 1));
-  Int iMax = (1<<(bitDepth.recon[CHANNEL_TYPE_LUMA]-shift))-1;
-  height2 = (height1 * m_iM) / m_iN;
-  width2  = (width1  * m_iM) / m_iN;
+  Int height2, width2;
 
-  m_phase_filter = plane? m_phase_filter_chroma : m_phase_filter_luma;
+  Pel *srcLine = src;
+  Pel *dstLine = dst;
+  Int length = m_cgsFilterLength;
+  Int shift  = bitDepth.recon[CHANNEL_TYPE_LUMA] - bitDepth.recon[CHANNEL_TYPE_CHROMA];
+  Int shift2 = 2*7+shift;
+  Int roundingOffset = (1 << (shift2 - 1));
+  Int maxVal = (1<<(bitDepth.recon[toChannelType(comp)]-shift))-1;
+  height2 = (height1 * m_cgsFilterPhases) / m_iN;
+  width2  = (width1  * m_cgsFilterPhases) / m_iN;
+
+  m_phaseFilter = comp == COMPONENT_Y ? m_phaseFilterLuma : m_phaseFilterChroma;
 
   // horizontal filtering
-  p_src_line = src;
-  for(j1 = 0; j1 < height1; j1++)
+  for( Int j1 = 0; j1 < height1; j1++ )
   {
-    i0=-m_iN;
-    p_tmp = m_temp[j1];
+    Int i0 = -m_iN;
+    Int *tmp = m_temp[j1];
     
-    for(i1 = 0; i1 < width2; i1++)
+    for( Int i1 = 0; i1 < width2; i1++ )
     {
-      i0      += m_iN;
-      div_i0   = (i0 / m_iM);
-      p_src    =  p_src_line + ( div_i0 - (length >> 1));
-      p_filter = m_phase_filter[i0 - div_i0 * m_iM]; // phase_filter[i0 % M]
-      iSum     = 0;
-      for(k = 0; k < length; k++)
+      i0 += m_iN;
+      Int div_i0 = i0 / m_cgsFilterPhases;
+
+      Pel *srcTmp =  srcLine + ( div_i0 - (length >> 1));
+      const Pel *filter = m_phaseFilter[i0 - div_i0 * m_cgsFilterPhases]; // phase_filter[i0 % M]
+
+      Int sum = 0;
+      for(Int k = 0; k < length; k++)
       {
-        iSum += (*p_src++) * (*p_filter++);
+        sum += (*srcTmp++) * (*filter++);
       }
-      *p_tmp++ = iSum;
+      *tmp++ = sum;
     }
-    p_src_line +=  iSrcStride;
+    srcLine += iSrcStride;
   }
 
   // pad temp (vertical)
-  for (k=-(length>>1); k<0; k++)
+  for( Int k = -(length>>1); k<0; k++ )
   {
     memcpy(m_temp[k], m_temp[0], width2*sizeof(Int));
   }
-  for (k=height1; k<(height1+(length>>1)); k++)
+
+  for( Int k = height1; k < (height1 + (length>>1)); k++)
   {
-    memcpy(m_temp[k], m_temp[k-1], (width2)* sizeof(Int));
+    memcpy(m_temp[k], m_temp[k-1], (width2) * sizeof(Int));
   }
 
   // vertical filtering
-  j0 = (plane == 0) ? -m_iN : -(m_iN-1);
+  Int j0 = comp == COMPONENT_Y ? -m_iN : (1 - m_iN);
   
-  p_dst_line = dst;
-  for(j1 = 0; j1 < height2; j1++)
+  for( Int j1 = 0; j1 < height2; j1++ )
   {
-    j0      += m_iN;
-    div_j0   = (j0 / m_iM);
-    p_dst = p_dst_line;
-    p_temp   = &m_temp[div_j0 - (length>>1)];
-    p_filter = m_phase_filter[j0 - div_j0 * m_iM]; // phase_filter[j0 % M]
-    for(i1 = 0; i1 < width2;i1++)
+    j0 += m_iN;
+    Int div_j0 = j0 / m_cgsFilterPhases;
+
+    Pel* dstTmp = dstLine;
+
+    Int **temp = &m_temp[div_j0 - (length>>1)];
+    const Pel *filter = m_phaseFilter[j0 - div_j0 * m_cgsFilterPhases]; // phase_filter[j0 % M]
+
+    for( Int i1 = 0; i1 < width2;i1++ )
     {
-      iSum=0;
-      for(k = 0; k < length; k++)
+      Int sum=0;
+      for( Int k = 0; k < length; k++ )
       {
-        iSum += p_temp[k][i1] * p_filter[k];
+        sum += temp[k][i1] * filter[k];
       }
-      iSum=((iSum + shift_round) >> shift2);
-      *p_dst++ = (Short)(iSum > iMax ? iMax : (iSum < 0 ? 0 : iSum));
+      sum = ((sum + roundingOffset) >> shift2);
+
+      *dstTmp++ = Clip3<Short>(sum < 0 ? 0 : sum, maxVal, sum);
     }
-    p_dst_line += iDstStride;
+    dstLine += iDstStride;
   }
 }
 
-Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType, const Int posScalingFactorX)
+Void TEncGOP::xInitDs( const Int iWidth, const Int iHeight, const Bool allIntra, const Int posScalingFactorX )
 {
-  m_iTap = 13;
-  if(posScalingFactorX == (1<<15))
+  m_cgsFilterLength = CGS_FILTER_LENGTH;
+
+  if( posScalingFactorX == POS_SCALING_FACTOR_2X )
   {
-    m_iM = 4;
+    m_cgsFilterPhases = CGS_FILTER_PHASES_2X;
     m_iN = 8;
-    m_phase_filter_luma = iType? m_phase_filter_0_t1 : m_phase_filter_0_t0;
-    m_phase_filter_chroma = m_phase_filter_0_t1_chroma;    
+    m_phaseFilterLuma = allIntra ? m_phaseFilter0T1 : m_phaseFilter0T0;
+    m_phaseFilterChroma = m_phaseFilter0T1Chroma;    
   }
   else
   {
-    m_iM = 8;
+    m_cgsFilterPhases = CGS_FILTER_PHASES_1X;
     m_iN = 12;
-    m_phase_filter_luma = m_phase_filter_chroma =  m_phase_filter_1;
-    m_phase_filter = m_phase_filter_1;
+    m_phaseFilterLuma = m_phaseFilterChroma = m_phaseFilter1;
+    m_phaseFilter = m_phaseFilter1;
   }
 
-  get_mem2DintWithPad (&m_temp, iHeight, iWidth*m_iM/m_iN, m_iTap>>1, 0);
+  xCreate2DArray( &m_temp, iHeight, iWidth * m_cgsFilterPhases/m_iN, m_cgsFilterLength >> 1, 0 );
 }
 
-Int TEncGOP::get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX)
+Int TEncGOP::xCreate2DArray(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX)
 {
   Int i;
   Int *curr = NULL;
@@ -4372,7 +4379,7 @@ Int TEncGOP::get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, 
   return 0;
 }
 
-Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
+Void TEncGOP::xDestroy2DArray(Int **array2D, Int iPadY, Int iPadX)
 {
   if (array2D)
   {
@@ -4382,14 +4389,14 @@ Void TEncGOP::free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX)
     }
     else 
     {
-      printf("free_mem2DintWithPad: trying to free unused memory\r\nPress Any Key\r\n");
+      printf("xDestroy2DArray: trying to free unused memory\r\nPress Any Key\r\n");
     }
 
     free (&array2D[-iPadY]);
   } 
   else
   {
-    printf("free_mem2DintWithPad: trying to free unused memory\r\nPress Any Key\r\n");
+    printf("xDestroy2DArray: trying to free unused memory\r\nPress Any Key\r\n");
   }
 }
 #endif
