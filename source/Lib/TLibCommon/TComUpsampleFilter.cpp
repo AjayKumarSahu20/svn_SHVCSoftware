@@ -112,7 +112,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   Int scaleY = currSlice->getPic()->getPosScalingFactor(refLayerIdc, 1);
 
   // non-normative software optimization for certain simple resampling cases
-  if( scaleX == 65536 && scaleY == 65536 ) // ratio 1x
+  if( scaleX == POS_SCALING_FACTOR_1X && scaleY == POS_SCALING_FACTOR_1X ) // ratio 1x
   {
     piSrcY = piSrcBufY;
     piDstY = piDstBufY + scalEL.getWindowLeftOffset() + scalEL.getWindowTopOffset() * strideEL;
