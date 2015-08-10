@@ -1657,8 +1657,8 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
              && ( (heightEL != heightBL) || (resamplingPhase.phaseVerLuma == 0 && resamplingPhase.phaseVerChroma == 0) ) );
 
         m_pcPic->setMvScalingFactor( refLayerIdc, 
-                                     widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL), 
-                                     heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
+                                     widthEL  == widthBL  ? MV_SCALING_FACTOR_1X : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL), 
+                                     heightEL == heightBL ? MV_SCALING_FACTOR_1X : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
 
         m_pcPic->setPosScalingFactor( refLayerIdc, 
                                      ((widthBL  << 16) + (widthEL  >> 1)) / widthEL, 

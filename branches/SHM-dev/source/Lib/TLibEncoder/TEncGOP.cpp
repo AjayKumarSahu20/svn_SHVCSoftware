@@ -1783,8 +1783,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
              && ( (heightEL != heightBL) || (resamplingPhase.phaseVerLuma == 0 && resamplingPhase.phaseVerChroma == 0) ) );
 
         pcSlice->getPic()->setMvScalingFactor( refLayerIdc,
-                                               widthEL  == widthBL  ? 4096 : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL),
-                                               heightEL == heightBL ? 4096 : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
+                                               widthEL  == widthBL  ? MV_SCALING_FACTOR_1X : Clip3(-4096, 4095, ((widthEL  << 8) + (widthBL  >> 1)) / widthBL),
+                                               heightEL == heightBL ? MV_SCALING_FACTOR_1X : Clip3(-4096, 4095, ((heightEL << 8) + (heightBL >> 1)) / heightBL) );
 
         pcSlice->getPic()->setPosScalingFactor( refLayerIdc, 
                                                 ((widthBL  << 16) + (widthEL  >> 1)) / widthEL,
@@ -1798,7 +1798,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_Enc3DAsymLUTPPS.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
           m_Enc3DAsymLUTPicUpdate.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
 
-          if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < (1<<16) || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
+          if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < POS_SCALING_FACTOR_1X || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < POS_SCALING_FACTOR_1X ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
             //downsampling
             downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor(refLayerIdc, 0));
@@ -3311,7 +3311,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
         assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) );
         assert( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
 
-        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0), 65536.0/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
+        printf( "%d(%d, {%1.2f, %1.2f}x)", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex), refLayerId, (Double)POS_SCALING_FACTOR_1X/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0), (Double)POS_SCALING_FACTOR_1X/pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) );
       }
       else
       {

@@ -166,8 +166,8 @@ public:
 #if SVC_EXTENSION
   const TComMv scaleMv( Int iScaleX, Int iScaleY ) const
   {
-    Int mvx = iScaleX == 4096 ? getHor() : Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );
-    Int mvy = iScaleY == 4096 ? getVer() : Clip3( -32768, 32767, (iScaleY * getVer() + 127 + (iScaleY * getVer() < 0)) >> 8 );
+    Int mvx = iScaleX == MV_SCALING_FACTOR_1X ? getHor() : Clip3( -32768, 32767, (iScaleX * getHor() + 127 + (iScaleX * getHor() < 0)) >> 8 );
+    Int mvy = iScaleY == MV_SCALING_FACTOR_1X ? getVer() : Clip3( -32768, 32767, (iScaleY * getVer() + 127 + (iScaleY * getVer() < 0)) >> 8 );
     return TComMv( mvx, mvy );
   }
 #endif
