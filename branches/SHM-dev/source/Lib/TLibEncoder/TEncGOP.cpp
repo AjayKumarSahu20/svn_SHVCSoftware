@@ -1798,10 +1798,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_Enc3DAsymLUTPPS.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
           m_Enc3DAsymLUTPicUpdate.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
 
-          if( pcSlice->getPic()->getMvScalingFactor(refLayerIdc, 0) < (1<<16) || pcSlice->getPic()->getMvScalingFactor(refLayerIdc, 1) < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
+          if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < (1<<16) || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < (1<<16) ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
           {
             //downsampling
-            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor());
+            downScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getBitDepths(), pcPic->getPosScalingFactor(refLayerIdc, 0));
             
             m_Enc3DAsymLUTPPS.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
             m_Enc3DAsymLUTPicUpdate.setDsOrigPic(pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg());
@@ -4193,7 +4193,7 @@ Void TEncGOP::xDetermine3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt r
   }
 }
 
-Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, Int** posScalingFactor)
+Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX)
 {
   pcYuvSrc->setBorderExtension(false);
   pcYuvSrc->extendPicBorder(); // extend the border.
@@ -4204,7 +4204,7 @@ Void TEncGOP::downScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDept
 
   if(!m_temp)
   {
-    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1, posScalingFactor);
+    initDs(iWidth, iHeight, m_pcCfg->getIntraPeriod()>1, posScalingFactorX);
   }
 
   filterImg(pcYuvSrc->getAddr(COMPONENT_Y),  pcYuvSrc->getStride(COMPONENT_Y),  pcYuvDest->getAddr(COMPONENT_Y),  pcYuvDest->getStride(COMPONENT_Y),  iHeight,    iWidth,    bitDepth, 0);
@@ -4328,15 +4328,15 @@ Void TEncGOP::filterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int
   }
 }
 
-Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType, Int** posScalingFactor)
+Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType, const Int posScalingFactorX)
 {
   m_iTap = 13;
-  if(posScalingFactor[0][0] == (1<<15))
+  if(posScalingFactorX == (1<<15))
   {
     m_iM = 4;
     m_iN = 8;
     m_phase_filter_luma = iType? m_phase_filter_0_t1 : m_phase_filter_0_t0;
-    m_phase_filter_chroma = m_phase_filter_0_t1_chroma; 
+    m_phase_filter_chroma = m_phase_filter_0_t1_chroma;    
   }
   else
   {
@@ -4346,7 +4346,7 @@ Void TEncGOP::initDs(Int iWidth, Int iHeight, Int iType, Int** posScalingFactor)
     m_phase_filter = m_phase_filter_1;
   }
 
-  get_mem2DintWithPad (&m_temp, iHeight, iWidth*m_iM/m_iN,   m_iTap>>1, 0);
+  get_mem2DintWithPad (&m_temp, iHeight, iWidth*m_iM/m_iN, m_iTap>>1, 0);
 }
 
 Int TEncGOP::get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX)
