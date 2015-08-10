@@ -124,8 +124,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     {
       shift = bitDepthLuma - currSlice->getPPS()->getCGSOutputBitDepthY();
     }
-    assert( shift >= 0 );
 #endif
+    assert( shift >= 0 );
 
     for( i = 0; i < heightBL; i++ )
     {
@@ -158,9 +158,10 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 #if CGS_3D_ASYMLUT
     if( currSlice->getPPS()->getCGSFlag() )
     {
-      shift = currSlice->getBitDepth(CHANNEL_TYPE_CHROMA) - currSlice->getPPS()->getCGSOutputBitDepthC();
+      shift = bitDepthChroma - currSlice->getPPS()->getCGSOutputBitDepthC();
     }
 #endif
+    assert( shift >= 0 );
 
     for( i = 0; i < heightBL; i++ )
     {
@@ -219,7 +220,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     Int rlClipT = -(NTAPS_US_LUMA>>1);
     Int rlClipB = heightBL - 1 + (NTAPS_US_LUMA>>1);
 
-    // g_bitDepthY was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
+    // shift1 should be calculated using BL bit-depth
     Int shift1 = refBitDepthLuma - 8;
 
 #if CGS_3D_ASYMLUT
@@ -319,7 +320,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     widthBL   = pcBasePic->getWidth (COMPONENT_Y) >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight(COMPONENT_Y) >> 1, heightEL );
 
-    // g_bitDepthC was set to EL bit-depth, but shift1 should be calculated using BL bit-depth
+    // shift1 should be calculated using BL bit-depth
     shift1 = refBitDepthChroma - 8;
 
 #if CGS_3D_ASYMLUT
