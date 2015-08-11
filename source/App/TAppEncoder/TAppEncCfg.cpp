@@ -4236,8 +4236,6 @@ Void TAppEncCfg::xCheckParameter()
     }
     xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
 #if U0132_TARGET_BITS_SATURATION
-    Int layerPTLIdx = m_apcLayerCfg[layerIdx]->m_layerPTLIdx;
-
     if( m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled && m_levelList[layerPTLIdx]!=Level::NONE && m_profileList[layerPTLIdx]!=Profile::NONE )
     {
       UInt uiLevelIdx = (m_levelList[layerPTLIdx] / 10) + (UInt)((m_levelList[layerPTLIdx] % 10) / 3);    // (m_level / 30)*3 + ((m_level % 10) / 3);
