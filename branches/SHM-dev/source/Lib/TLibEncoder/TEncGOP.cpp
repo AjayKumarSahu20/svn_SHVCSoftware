@@ -634,6 +634,12 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
     sei->values = seiCfg;
     seiMessages.push_back(sei);
   }
+  if(m_pcCfg->getChromaResamplingFilterHintEnabled())
+  {
+    SEIChromaResamplingFilterHint *seiChromaResamplingFilterHint = new SEIChromaResamplingFilterHint;
+    m_seiEncoder.initSEIChromaResamplingFilterHint(seiChromaResamplingFilterHint, m_pcCfg->getChromaResamplingHorFilterIdc(), m_pcCfg->getChromaResamplingVerFilterIdc());
+    seiMessages.push_back(seiChromaResamplingFilterHint);
+  }
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
@@ -889,24 +895,12 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     SEIRecoveryPoint *recoveryPointSEI = new SEIRecoveryPoint();
     m_seiEncoder.initSEIRecoveryPoint(recoveryPointSEI, slice);
     seiMessages.push_back(recoveryPointSEI);
-
-    if(m_pcCfg->getDecodingRefreshType() == 3)
-    {
-      m_iLastRecoveryPicPOC = slice->getPOC();
-    }
   }
   if (m_pcCfg->getTemporalLevel0IndexSEIEnabled())
   {
     SEITemporalLevel0Index *temporalLevel0IndexSEI = new SEITemporalLevel0Index();
     m_seiEncoder.initTemporalLevel0IndexSEI(temporalLevel0IndexSEI, slice);
     seiMessages.push_back(temporalLevel0IndexSEI);
-  }
-
-  if(slice->getSPS()->getVuiParametersPresentFlag() && m_pcCfg->getChromaSamplingFilterHintEnabled() && ( slice->getSliceType() == I_SLICE ))
-  {
-    SEIChromaSamplingFilterHint *seiChromaSamplingFilterHint = new SEIChromaSamplingFilterHint;
-    m_seiEncoder.initSEIChromaSamplingFilterHint(seiChromaSamplingFilterHint, m_pcCfg->getChromaSamplingHorFilterIdc(), m_pcCfg->getChromaSamplingVerFilterIdc());
-    seiMessages.push_back(seiChromaSamplingFilterHint);
   }
 
   if( m_pcEncTop->getNoDisplaySEITLayer() && ( slice->getTLayer() >= m_pcEncTop->getNoDisplaySEITLayer() ) )
@@ -1713,7 +1707,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setInterLayerPredEnabledFlag(false);
       pcSlice->setMFMEnabledFlag(false);
     }
-#endif //SVC_EXTENSION    
+#endif //SVC_EXTENSION
+
     pcSlice->setLastIDR(m_iLastIDR);
     pcSlice->setSliceIdx(0);
     //set default slice level flag to the same as SPS level flag
@@ -1915,6 +1910,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         pcSlice->setNalUnitType(NAL_UNIT_CODED_SLICE_RASL_N);
       }
     }
+
     if (m_pcCfg->getEfficientFieldIRAPEnabled())
     {
       if ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP

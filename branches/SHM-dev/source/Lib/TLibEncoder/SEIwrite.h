@@ -56,11 +56,6 @@ public:
 #endif
 
 protected:
-#if O0164_MULTI_LAYER_HRD
-  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei);
-#else
-  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSPS *sps);
-#endif
   Void xWriteSEIuserDataUnregistered(const SEIuserDataUnregistered &sei);
   Void xWriteSEIActiveParameterSets(const SEIActiveParameterSets& sei);
 #if SVC_EXTENSION
@@ -74,8 +69,7 @@ protected:
 #if !SVC_EXTENSION
   Void xWriteSEIBufferingPeriod(const SEIBufferingPeriod& sei, const TComSPS *sps);
   Void xWriteSEIPictureTiming(const SEIPictureTiming& sei, const TComSPS *sps);
-#endif
-  TComSPS *m_pSPS;
+#endif  
   Void xWriteSEIRecoveryPoint(const SEIRecoveryPoint& sei);
   Void xWriteSEIFramePacking(const SEIFramePacking& sei);
   Void xWriteSEISegmentedRectFramePacking(const SEISegmentedRectFramePacking& sei);
@@ -92,10 +86,15 @@ protected:
 #endif
   Void xWriteSEITempMotionConstrainedTileSets(const SEITempMotionConstrainedTileSets& sei);
   Void xWriteSEITimeCode(const SEITimeCode& sei);
-  Void xWriteSEIChromaSamplingFilterHint(const SEIChromaSamplingFilterHint& sei/*, TComSPS *sps*/);
-  Void writeUserDefinedCoefficients(const SEIChromaSamplingFilterHint& sei);
+  Void xWriteSEIChromaResamplingFilterHint(const SEIChromaResamplingFilterHint& sei);
   Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
   Void xWriteSEIMasteringDisplayColourVolume( const SEIMasteringDisplayColourVolume& sei);
+
+#if O0164_MULTI_LAYER_HRD
+  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei);
+#else
+  Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSPS *sps);
+#endif
   Void xWriteByteAlign();
 #if Q0074_COLOUR_REMAPPING_SEI
   Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
