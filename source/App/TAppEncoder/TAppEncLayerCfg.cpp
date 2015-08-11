@@ -265,6 +265,14 @@ Void TAppEncLayerCfg::xPrintParameter()
     printf("UseLCUSeparateModel               : %d\n", m_RCUseLCUSeparateModel );
     printf("InitialQP                         : %d\n", m_RCInitialQP );
     printf("ForceIntraQP                      : %d\n", m_RCForceIntraQP );
+#if U0132_TARGET_BITS_SATURATION
+    printf("CpbSaturation                          : %d\n", m_RCCpbSaturationEnabled );
+    if (m_RCCpbSaturationEnabled)
+    {
+      printf("CpbSize                                : %d\n", m_RCCpbSize);
+      printf("InitalCpbFullness                      : %.2f\n", m_RCInitialCpbFullness);
+    }
+#endif
   }
 #endif
   printf("WaveFrontSynchro                  : %d\n", m_waveFrontSynchro);

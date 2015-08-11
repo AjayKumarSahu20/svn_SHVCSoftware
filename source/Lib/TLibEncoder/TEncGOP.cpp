@@ -2431,6 +2431,28 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_pcRateCtrl->initRCPic( frameLevel );
       estimatedBits = m_pcRateCtrl->getRCPic()->getTargetBits();
 
+#if U0132_TARGET_BITS_SATURATION
+      if (m_pcRateCtrl->getCpbSaturationEnabled() && frameLevel != 0)
+      {
+        Int estimatedCpbFullness = m_pcRateCtrl->getCpbState() + m_pcRateCtrl->getBufferingRate();
+
+        // prevent overflow
+        if (estimatedCpbFullness - estimatedBits > (Int)(m_pcRateCtrl->getCpbSize()*0.9f))
+        {
+          estimatedBits = estimatedCpbFullness - (Int)(m_pcRateCtrl->getCpbSize()*0.9f);
+        }
+
+        estimatedCpbFullness -= m_pcRateCtrl->getBufferingRate();
+        // prevent underflow
+        if (estimatedCpbFullness - estimatedBits < (Int)(m_pcRateCtrl->getCpbSize()*0.1f))
+        {
+          estimatedBits = max(200, estimatedCpbFullness - (Int)(m_pcRateCtrl->getCpbSize()*0.1f));
+        }
+
+        m_pcRateCtrl->getRCPic()->setTargetBits(estimatedBits);
+      }
+#endif
+
       Int sliceQP = m_pcCfg->getInitialQP();
 #if SVC_EXTENSION
       if ( ( pocCurr == 0 && m_pcCfg->getInitialQP() > 0 ) || ( frameLevel == 0 && m_pcCfg->getForceIntraQP() ) ) // QP is specified
@@ -2454,6 +2476,27 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         {
           Int bits = m_pcRateCtrl->getRCSeq()->getLeftAverageBits();
           bits = m_pcRateCtrl->getRCPic()->getRefineBitsForIntra( bits );
+
+#if U0132_TARGET_BITS_SATURATION
+          if (m_pcRateCtrl->getCpbSaturationEnabled() )
+          {
+            Int estimatedCpbFullness = m_pcRateCtrl->getCpbState() + m_pcRateCtrl->getBufferingRate();
+
+            // prevent overflow
+            if (estimatedCpbFullness - bits > (Int)(m_pcRateCtrl->getCpbSize()*0.9f))
+            {
+              bits = estimatedCpbFullness - (Int)(m_pcRateCtrl->getCpbSize()*0.9f);
+            }
+
+            estimatedCpbFullness -= m_pcRateCtrl->getBufferingRate();
+            // prevent underflow
+            if (estimatedCpbFullness - bits < (Int)(m_pcRateCtrl->getCpbSize()*0.1f))
+            {
+              bits = estimatedCpbFullness - (Int)(m_pcRateCtrl->getCpbSize()*0.1f);
+            }
+          }
+#endif
+
           if ( bits < 200 )
           {
             bits = 200;
@@ -2845,6 +2888,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         m_pcRateCtrl->getRCGOP()->updateAfterPicture( estimatedBits );
       }
+#if U0132_TARGET_BITS_SATURATION
+      if (m_pcRateCtrl->getCpbSaturationEnabled())
+      {
+        m_pcRateCtrl->updateCpbState(actualTotalBits);
+        printf(" [CPB %6d bits]", m_pcRateCtrl->getCpbState());
+      }
+#endif
     }
 
     xCreatePictureTimingSEI(m_pcCfg->getEfficientFieldIRAPEnabled()?effFieldIRAPMap.GetIRAPGOPid():0, leadingSeiMessages, nestedSeiMessages, duInfoSeiMessages, pcSlice, isField, duData);
@@ -4255,7 +4305,7 @@ __attribute__((optimize("no-tree-vectorize")))
 #endif
 #endif
 #endif
-Void TEncGOP::xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height1, Int width1, BitDepths& bitDepth, ComponentID comp )
+Void TEncGOP::xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height, Int width, BitDepths& bitDepth, ComponentID comp )
 {
   Int height2, width2;
 
@@ -4263,16 +4313,16 @@ Void TEncGOP::xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, In
   Pel *dstLine = dst;
   Int length = m_cgsFilterLength;
   Int shift  = bitDepth.recon[CHANNEL_TYPE_LUMA] - bitDepth.recon[CHANNEL_TYPE_CHROMA];
-  Int shift2 = 2*7+shift;
+  Int shift2 = 2*7 + shift;
   Int roundingOffset = (1 << (shift2 - 1));
   Int maxVal = (1<<(bitDepth.recon[toChannelType(comp)]-shift))-1;
-  height2 = (height1 * m_cgsFilterPhases) / m_iN;
-  width2  = (width1  * m_cgsFilterPhases) / m_iN;
+  height2 = (height * m_cgsFilterPhases) / m_iN;
+  width2  = (width  * m_cgsFilterPhases) / m_iN;
 
   m_phaseFilter = comp == COMPONENT_Y ? m_phaseFilterLuma : m_phaseFilterChroma;
 
   // horizontal filtering
-  for( Int j1 = 0; j1 < height1; j1++ )
+  for( Int j1 = 0; j1 < height; j1++ )
   {
     Int i0 = -m_iN;
     Int *tmp = m_temp[j1];
@@ -4301,7 +4351,7 @@ Void TEncGOP::xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, In
     memcpy(m_temp[k], m_temp[0], width2*sizeof(Int));
   }
 
-  for( Int k = height1; k < (height1 + (length>>1)); k++)
+  for( Int k = height; k < (height + (length>>1)); k++)
   {
     memcpy(m_temp[k], m_temp[k-1], (width2) * sizeof(Int));
   }

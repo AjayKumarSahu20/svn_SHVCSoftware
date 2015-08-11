@@ -493,6 +493,12 @@ Void TAppEncTop::xInitLibCfg()
     Int           m_RCInitialQP                                = m_apcLayerCfg[layer]->getRCInitialQP();
     Bool          m_RCForceIntraQP                             = m_apcLayerCfg[layer]->getRCForceIntraQP();
 
+#if U0132_TARGET_BITS_SATURATION
+    Bool          m_RCCpbSaturationEnabled                     = m_apcLayerCfg[layer]->m_RCCpbSaturationEnabled;
+    UInt          m_RCCpbSize                                  = m_apcLayerCfg[layer]->m_RCCpbSize;
+    Double        m_RCInitialCpbFullness                       = m_apcLayerCfg[layer]->m_RCInitialCpbFullness;
+#endif
+
     ScalingListMode m_useScalingListId                         = m_apcLayerCfg[layer]->m_useScalingListId;
     Char*         m_scalingListFile                            = m_apcLayerCfg[layer]->m_scalingListFile;
 #endif
@@ -788,6 +794,11 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseLCUSeparateModel                               ( m_RCUseLCUSeparateModel );
   m_cTEncTop.setInitialQP                                         ( m_RCInitialQP );
   m_cTEncTop.setForceIntraQP                                      ( m_RCForceIntraQP );
+#if U0132_TARGET_BITS_SATURATION
+  m_cTEncTop.setCpbSaturationEnabled                              ( m_RCCpbSaturationEnabled );
+  m_cTEncTop.setCpbSize                                           ( m_RCCpbSize );
+  m_cTEncTop.setInitialCpbFullness                                ( m_RCInitialCpbFullness );
+#endif
   m_cTEncTop.setTransquantBypassEnableFlag                        ( m_TransquantBypassEnableFlag );
   m_cTEncTop.setCUTransquantBypassFlagForceValue                  ( m_CUTransquantBypassFlagForce );
   m_cTEncTop.setCostMode                                          ( m_costMode );

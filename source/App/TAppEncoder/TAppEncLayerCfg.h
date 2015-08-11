@@ -84,6 +84,11 @@ protected:
   Bool      m_RCUseLCUSeparateModel;              ///< use separate R-lambda model at LCU level
   Int       m_RCInitialQP;                        ///< inital QP for rate control
   Bool      m_RCForceIntraQP;                     ///< force all intra picture to use initial QP or not
+#if U0132_TARGET_BITS_SATURATION
+  Bool      m_RCCpbSaturationEnabled;             ///< enable target bits saturation to avoid CPB overflow and underflow
+  UInt      m_RCCpbSize;                          ///< CPB size
+  Double    m_RCInitialCpbFullness;               ///< initial CPB fullness 
+#endif
 #endif
 
   ScalingListMode m_useScalingListId;                         ///< using quantization matrix
