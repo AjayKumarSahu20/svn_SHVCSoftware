@@ -3574,7 +3574,7 @@ Void TDecCavlc::xParse3DAsymLUT( TCom3DAsymLUT * pc3DAsymLUT )
   READ_UVLC( uiInputBitDepthM8, "cm_input_luma_bit_depth_minus8" );
   READ_UVLC( uiChromaInputBitDepthM8 , "cm_input_chroma_bit_depth_minus8" );
   READ_UVLC( uiOutputBitDepthM8, "cm_output_luma_bit_depth_minus8" );
-  READ_UVLC( uiChromaOutputBitDepthM8  "cm_output_chroma_bit_depth_minus8" );
+  READ_UVLC( uiChromaOutputBitDepthM8,  "cm_output_chroma_bit_depth_minus8" );
   READ_CODE( 2, uiResQaunBit, "cm_res_quant_bit" );
 
   READ_CODE( 2, uiDeltaBits, "cm_flc_bits" );
@@ -3680,7 +3680,7 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT, Int nDepth, 
           {
             for( Int nVertexIdx = 0; nVertexIdx < 4; nVertexIdx++ )
             {
-              pc3DAsymLUT->setCuboidVertexResTree( yIdx + y, uIdx +  , vIdx + v, nVertexIdx, 0, 0, 0 );
+              pc3DAsymLUT->setCuboidVertexResTree( yIdx + y, uIdx + u, vIdx + v, nVertexIdx, 0, 0, 0 );
 #if R0164_CGS_LUT_BUGFIX_CHECK
               pc3DAsymLUT->xSetFilled( yIdx + y, uIdx + u, vIdx + v );
 #endif
