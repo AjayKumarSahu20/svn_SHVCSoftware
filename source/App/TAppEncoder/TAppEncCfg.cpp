@@ -4443,16 +4443,12 @@ Void TAppEncCfg::xPrintParameter()
     ChromaFormat& m_chromaFormatConstraint = m_apcLayerCfg[layerIdx]->m_chromaFormatConstraint;
 
     UInt& m_uiMaxCUWidth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
-    UInt& m_uiMaxCUHeight                  = m_apcLayerCfg[layerIdx]->m_uiMaxCUHeight;
     UInt& m_uiMaxCUDepth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth;
-    ChromaFormat& m_chromaFormatIDC        = m_apcLayerCfg[layerIdx]->m_chromaFormatIDC;
 
     Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinLeft;
-    Int* m_aiPad                           = m_apcLayerCfg[layerIdx]->m_aiPad;
-    Int* m_aidQP                           = m_apcLayerCfg[layerIdx]->m_aidQP;
 
     Int& m_iSourceWidth                    = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
     Int& m_iSourceHeight                   = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
@@ -4736,12 +4732,10 @@ Void TAppEncCfg::xPrintParameter()
     Bool& m_bUseSAO                       = m_apcLayerCfg[layer]->m_bUseSAO;
     UInt& m_uiMaxCUWidth                  = m_apcLayerCfg[layer]->m_uiMaxCUWidth;
     UInt& m_uiMaxCUHeight                 = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
-    Int& m_iSourceWidth                   = m_apcLayerCfg[layer]->m_iSourceWidth;
     Int& m_iSourceHeight                  = m_apcLayerCfg[layer]->m_iSourceHeight;
     Int& m_iWaveFrontSynchro              = m_apcLayerCfg[layer]->m_waveFrontSynchro;
     ScalingListMode& m_useScalingListId   = m_apcLayerCfg[layer]->m_useScalingListId;
-
-
+    
     printf("Layer%d ", layer);
 #endif
 
