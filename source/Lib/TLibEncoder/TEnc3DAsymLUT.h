@@ -110,9 +110,9 @@ public:
   TEnc3DAsymLUT();
   virtual ~TEnc3DAsymLUT();
 
-  virtual Void  create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 );
-  virtual Void  destroy();
-  Double derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB );
+  Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2 );
+  virtual Void destroy();
+  Double derive3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS, Bool bElRapSliceTypeB );
   Double estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt refLayerIdc );
 #if R0179_ENC_OPT_3DLUT_SIZE
   Double getDistFactor( Int iSliceType, Int iLayer) { return m_dDistFactor[iSliceType][iLayer];}

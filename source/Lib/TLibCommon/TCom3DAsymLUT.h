@@ -62,8 +62,8 @@ class TCom3DAsymLUT
 public:
   TCom3DAsymLUT();
   virtual ~TCom3DAsymLUT();
-
-  virtual Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
+    
+  Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
   virtual Void destroy();
 
   Int   getMaxOctantDepth()   { return m_nMaxOctantDepth;  }

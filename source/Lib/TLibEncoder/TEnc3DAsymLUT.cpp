@@ -89,14 +89,14 @@ TEnc3DAsymLUT::TEnc3DAsymLUT()
 #endif
 }
 
-Void TEnc3DAsymLUT::create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 )
+Void TEnc3DAsymLUT::create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2 )
 {
   if( m_pColorInfo != NULL )
   {
     destroy();
   }
 
-  TCom3DAsymLUT::create( nMaxOctantDepth , nInputBitDepth , nInputBitDepthC, nOutputBitDepth , nOutputBitDepthC, nMaxYPartNumLog2, 1 << ( nInputBitDepthC - 1 ) , 1 << ( nInputBitDepthC - 1 ) );
+  TCom3DAsymLUT::create( nMaxOctantDepth, nInputBitDepth, nInputBitDepthC, nOutputBitDepth, nOutputBitDepthC, nMaxYPartNumLog2, 1 << ( nInputBitDepthC - 1 ), 1 << ( nInputBitDepthC - 1 ) );
 
   xAllocate3DArray( m_pColorInfo , xGetYSize() , xGetUSize() , xGetVSize() );
   xAllocate3DArray( m_pColorInfoC , xGetYSize() , xGetUSize() , xGetVSize() );
@@ -137,8 +137,8 @@ TEnc3DAsymLUT::~TEnc3DAsymLUT()
   destroy();
 }
 
-Double TEnc3DAsymLUT::xDeriveVertexPerColor( Double N , Double Ys , Double Yy , Double Yu , Double Yv , Double ys , Double us , Double vs , Double yy , Double yu , Double yv , Double uu , Double uv , Double vv , Double YY ,
-  Pel & rP0 , Pel & rP1 , Pel & rP3 , Pel & rP7 , Int nResQuantBit )
+Double TEnc3DAsymLUT::xDeriveVertexPerColor( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY,
+                                             Pel & rP0, Pel & rP1, Pel & rP3, Pel & rP7, Int nResQuantBit )
 {
   Int nInitP0 = rP0;
   Int nInitP1 = rP1;
@@ -199,7 +199,7 @@ Double TEnc3DAsymLUT::xDeriveVertexPerColor( Double N , Double Ys , Double Yy , 
   return( dMinError );
 }
 
-Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt refLayerIdc )
+Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic, UInt refLayerIdc )
 {
   xCollectData( pCurPic , refLayerIdc );
 
@@ -235,7 +235,7 @@ Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic , UInt ref
 }
 
 #if R0179_ENC_OPT_3DLUT_SIZE
-Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB, Double dFrameLambda )
+Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS, Bool bElRapSliceTypeB, Double dFrameLambda )
 {
   m_nLUTBitDepth = pCfg->getCGSLUTBit();
 
@@ -354,8 +354,10 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
   xUpdatePartitioning( nCurOctantDepth , nCurYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV ); 
 
   // check res_quant_bits only for the best table size and best U/V threshold
-  if( !bUseNewColorInfo ) 
+  if( !bUseNewColorInfo )
+  {
     xConsolidateData( &m_sLutSizes[iBestLUTSizeIdx], &sMaxLutSize );
+  }
 
   //    xCollectData( pCurPic , refLayerIdc );
   for( Int nResQuanBit = 1 ; nResQuanBit < 4 ; nResQuanBit++ )
@@ -402,7 +404,7 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
 }
 #endif 
 
-Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS , Bool bElRapSliceTypeB )
+Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice, TComPic * pCurPic, UInt refLayerIdc, TEncCfg * pCfg, Bool bSignalPPS, Bool bElRapSliceTypeB )
 {
   m_nLUTBitDepth = pCfg->getCGSLUTBit();
   Int nCurYPartNumLog2 = 0 , nCurOctantDepth = 0; 
@@ -458,13 +460,13 @@ Double TEnc3DAsymLUT::derive3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , 
   }
 
   setResQuantBit( nBestResQuanBit );
-  xUpdatePartitioning( nBestOctantDepth , nBestYPartNumLog2 , nBestAdaptCThresholdU , nBestAdaptCThresholdV );
+  xUpdatePartitioning( nBestOctantDepth, nBestYPartNumLog2, nBestAdaptCThresholdU, nBestAdaptCThresholdV );
 
   xSaveCuboids( m_pBestEncCuboid );
   return( dMinError );
 }
 
-Double TEnc3DAsymLUT::xDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid )
+Double TEnc3DAsymLUT::xDeriveVertexes( Int nResQuanBit, SCuboid *** pCurCuboid )
 {
   Double dErrorLuma = 0 , dErrorChroma = 0;
   Int nYSize = 1 << ( getCurOctantDepth() + getCurYPartNumLog2() );
@@ -518,7 +520,7 @@ Double TEnc3DAsymLUT::xDeriveVertexes( Int nResQuanBit , SCuboid *** pCurCuboid 
   return( dErrorLuma + dErrorChroma );
 }
 
-Void TEnc3DAsymLUT::xCollectData( TComPic * pCurPic , UInt refLayerIdc )
+Void TEnc3DAsymLUT::xCollectData( TComPic * pCurPic, UInt refLayerIdc )
 {
   Pel * pSrcY = m_pDsOrigPic->getAddr(COMPONENT_Y);
   Pel * pSrcU = m_pDsOrigPic->getAddr(COMPONENT_Cb);
@@ -658,7 +660,7 @@ Void TEnc3DAsymLUT::xCollectData( TComPic * pCurPic , UInt refLayerIdc )
   }
 }
 
-Void TEnc3DAsymLUT::xDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , Int & rOctantDepth , Int & rYPartNumLog2 , Bool bSignalPPS , Bool bElRapSliceTypeB )
+Void TEnc3DAsymLUT::xDerivePartNumLog2( TComSlice * pSlice, TEncCfg * pcCfg, Int & rOctantDepth, Int & rYPartNumLog2, Bool bSignalPPS, Bool bElRapSliceTypeB )
 {
   Int nPartNumLog2 = 4;
   if( pSlice->getBaseColPic( pSlice->getInterLayerPredLayerIdc( 0 ) )->getSlice( 0 )->isIntra() )
@@ -686,7 +688,7 @@ Void TEnc3DAsymLUT::xDerivePartNumLog2( TComSlice * pSlice , TEncCfg * pcCfg , I
   xMapPartNum2DepthYPart( nPartNumLog2 , rOctantDepth , rYPartNumLog2 );
 }
 
-Void TEnc3DAsymLUT::xMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDepth , Int & rYPartNumLog2 )
+Void TEnc3DAsymLUT::xMapPartNum2DepthYPart( Int nPartNumLog2, Int & rOctantDepth, Int & rYPartNumLog2 )
 {
   for( Int y = getMaxYPartNumLog2() ; y >= 0 ; y-- )
   {
@@ -704,7 +706,7 @@ Void TEnc3DAsymLUT::xMapPartNum2DepthYPart( Int nPartNumLog2 , Int & rOctantDept
   rYPartNumLog2 = min( getMaxYPartNumLog2() , nPartNumLog2 - 3 * rOctantDepth );
 }
 
-Void TEnc3DAsymLUT::updatePicCGSBits( TComSlice * pcSlice , Int nPPSBit )
+Void TEnc3DAsymLUT::updatePicCGSBits( TComSlice * pcSlice, Int nPPSBit )
 {
   for( Int i = 0; i < pcSlice->getActiveNumILRRefIdx(); i++ )
   {
@@ -734,7 +736,7 @@ Void TEnc3DAsymLUT::xGetAllLutSizes(TComSlice *pSlice)
   Int iMaxAddYPartNumLog2; 
   Int iNumELFrameBits = m_nPrevELFrameBit[pSlice->getSliceType()][pSlice->getDepth()];
 
-  xMapPartNum2DepthYPart( xGetMaxPartNumLog2() , iMaxCPartNumLog2 , iMaxYPartNumLog2 );
+  xMapPartNum2DepthYPart( xGetMaxPartNumLog2(), iMaxCPartNumLog2, iMaxYPartNumLog2 );
   iMaxAddYPartNumLog2 = iMaxYPartNumLog2; 
   iMaxYPartNumLog2 += iMaxCPartNumLog2; 
 
@@ -761,7 +763,7 @@ Void TEnc3DAsymLUT::xGetAllLutSizes(TComSlice *pSlice)
 
 }
 
-Void TEnc3DAsymLUT::xCopyColorInfo( SColorInfo *** dst, SColorInfo *** src ,  SColorInfo *** dstC, SColorInfo *** srcC )
+Void TEnc3DAsymLUT::xCopyColorInfo( SColorInfo *** dst, SColorInfo *** src,  SColorInfo *** dstC, SColorInfo *** srcC )
 {
   Int yIdx, uIdx, vIdx; 
 
@@ -814,8 +816,8 @@ Void TEnc3DAsymLUT::xConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSi
     return; 
   }
 
-  xReset3DArray( m_pColorInfo  ,  1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
-  xReset3DArray( m_pColorInfoC ,  1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
+  xReset3DArray( m_pColorInfo,   1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
+  xReset3DArray( m_pColorInfoC,  1<<pMaxLUTSize->iYPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2, 1<<pMaxLUTSize->iCPartNumLog2 );
 
   for(yIdx = 0; yIdx < nYSize; yIdx++)
   {
