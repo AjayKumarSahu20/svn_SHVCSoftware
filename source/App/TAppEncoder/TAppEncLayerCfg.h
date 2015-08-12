@@ -34,7 +34,7 @@ protected:
   Int       m_iSourceWidth;                                   ///< source width in pixel
   Int       m_iSourceHeight;                                  ///< source height in pixel (when interlaced = field height)
   Int       m_iSourceHeightOrg;                               ///< original source height in pixel (when interlaced = frame height)
-  Int       m_conformanceMode;
+  Int       m_conformanceWindowMode;
   Int       m_confWinLeft;
   Int       m_confWinRight;
   Int       m_confWinTop;
@@ -91,6 +91,8 @@ protected:
 #endif
 #endif
 
+  Bool      m_bUseSAO;
+
   ScalingListMode m_useScalingListId;                         ///< using quantization matrix
   Char*     m_scalingListFile;                                ///< quantization matrix file name
 
@@ -124,9 +126,6 @@ protected:
   Int       m_outputBitDepth[MAX_NUM_CHANNEL_TYPE];           ///< bit-depth of output file
   Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
-  UInt      m_log2SaoOffsetScale[MAX_NUM_CHANNEL_TYPE];
-  Bool      m_extendedPrecisionProcessingFlag;
-  Bool      m_highPrecisionOffsetsEnabledFlag;
 
   Int       m_repFormatIdx;
 #if Q0074_COLOUR_REMAPPING_SEI
@@ -165,34 +164,16 @@ public:
 public:
   Void  create    ();                                         ///< create option handling class
   Void  destroy   ();                                         ///< destroy option handling class
-  bool  parseCfg  ( const string& cfgFileName );              ///< parse layer configuration file to fill member variables
-
-  Void  xPrintParameter();
-  Bool  xCheckParameter( Bool isField );
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
 
   string  getInputFile()              {return m_cInputFile;       }
   string  getReconFile()              {return m_cReconFile;       }
-  Int     getFrameRate()              {return m_iFrameRate;       }
-  Int     getSourceWidth()            {return m_iSourceWidth;     }
-  Int     getSourceHeight()           {return m_iSourceHeight;    }
-  Int     getSourceHeightOrg()        {return m_iSourceHeightOrg; }
-  Int     getConformanceMode()        { return m_conformanceMode; }
-  Int*    getPad()                    {return m_aiPad;            }
   Double  getFloatQP()                {return m_fQP;              }
   Int     getConfWinLeft()            {return m_confWinLeft;         }
   Int     getConfWinRight()           {return m_confWinRight;        }
   Int     getConfWinTop()             {return m_confWinTop;          }
   Int     getConfWinBottom()          {return m_confWinBottom;       }
-#if AUXILIARY_PICTURES
-  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormatIDC;}
-  ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }
-  Int          getAuxId()               {return m_auxId;            }
-#endif
-
-  Int     getIntQP()                  {return m_iQP;              } 
-  Int*    getdQPs()                   {return m_aidQP;            }
 
   Int     getNumSamplePredRefLayers()    {return m_numSamplePredRefLayers;   }
   Int*    getSamplePredRefLayerIds()     {return m_samplePredRefLayerIds;    }
@@ -205,15 +186,6 @@ public:
   Int*    getPredLayerIds()           {return m_predLayerIds;     }
   Int     getPredLayerIdx(Int i)      {return m_predLayerIds[i];  }
 
-#if RC_SHVC_HARMONIZATION
-  Bool    getRCEnableRateControl()    {return m_RCEnableRateControl;   }
-  Int     getRCTargetBitrate()        {return m_RCTargetBitrate;       }
-  Bool    getRCKeepHierarchicalBit()  {return m_RCKeepHierarchicalBit; }
-  Bool    getRCLCULevelRC()           {return m_RCLCULevelRC;          }
-  Bool    getRCUseLCUSeparateModel()  {return m_RCUseLCUSeparateModel; }
-  Int     getRCInitialQP()            {return m_RCInitialQP;           }
-  Bool    getRCForceIntraQP()         {return m_RCForceIntraQP;        }
-#endif
   Int     getRepFormatIdx()           { return m_repFormatIdx;  }
   Void    setRepFormatIdx(Int x)      { m_repFormatIdx = x;     }
   Void    setSourceWidth(Int x)       { m_iSourceWidth = x;     }

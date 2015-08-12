@@ -246,7 +246,9 @@ namespace df
 
           size_t pos = cNameBuffer.find_first_of('\0');
           if(pos != std::string::npos)
+          {
             cNameBuffer.resize(pos);
+          }
       
           parent.addOption(new Option<T>( cNameBuffer, (storage[uiK]), default_val, cDescriptionBuffer ));
         }

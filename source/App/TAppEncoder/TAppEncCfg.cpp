@@ -762,7 +762,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   Int*    cfg_aiPadX        [MAX_LAYERS];
   Int*    cfg_aiPadY        [MAX_LAYERS];
   Int*    cfg_conformanceMode  [MAX_LAYERS];
-  Bool*   cfg_useExtendedPrecision [MAX_LAYERS];
 
   Int*    cfg_maxCuDQPDepth[MAX_LAYERS];
 
@@ -857,6 +856,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string  cfg_ScalingListFile[MAX_LAYERS];
   ScalingListMode*   cfg_UseScalingListId[MAX_LAYERS];
 
+  Bool*   cfg_bUseSAO[MAX_LAYERS];
+
   for( UInt layer = 0; layer < m_numLayers; layer++ )
   {
     cfg_InputFile[layer]    = &m_apcLayerCfg[layer]->m_cInputFile;
@@ -871,14 +872,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_SourceHeight[layer]         = &m_apcLayerCfg[layer]->m_iSourceHeight;
     cfg_FrameRate[layer]            = &m_apcLayerCfg[layer]->m_iFrameRate; 
     cfg_IntraPeriod[layer]          = &m_apcLayerCfg[layer]->m_iIntraPeriod; 
-    cfg_conformanceMode[layer]      = &m_apcLayerCfg[layer]->m_conformanceMode;
+    cfg_conformanceMode[layer]      = &m_apcLayerCfg[layer]->m_conformanceWindowMode;
     cfg_confWinLeft[layer]          = &m_apcLayerCfg[layer]->m_confWinLeft;
     cfg_confWinRight[layer]         = &m_apcLayerCfg[layer]->m_confWinRight;
     cfg_confWinTop[layer]           = &m_apcLayerCfg[layer]->m_confWinTop;
     cfg_confWinBottom[layer]        = &m_apcLayerCfg[layer]->m_confWinBottom;
     cfg_aiPadX[layer]               = &m_apcLayerCfg[layer]->m_aiPad[0];
     cfg_aiPadY[layer]               = &m_apcLayerCfg[layer]->m_aiPad[1];
-    cfg_useExtendedPrecision[layer] = &m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag;
 
     cfg_maxCuDQPDepth[layer]        = &m_apcLayerCfg[layer]->m_iMaxCuDQPDepth;
 
@@ -954,6 +954,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     cfg_layerPTLIdx[layer]          = &m_apcLayerCfg[layer]->m_layerPTLIdx;
 
     cfg_UseScalingListId[layer]     = &m_apcLayerCfg[layer]->m_useScalingListId;
+
+    cfg_bUseSAO[layer]              = &m_apcLayerCfg[layer]->m_bUseSAO;
   }
 
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -1102,7 +1104,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AUXILIARY_PICTURES
   ("AuxId%d",                                       cfg_auxId,                                 0, m_numLayers, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
 #endif
-  ("ExtendedPrecision%d",                           cfg_useExtendedPrecision,              false, m_numLayers, "Increased internal accuracies to support high bit depths (not valid in V1 profiles)")
   ("ConformanceMode%d",                             cfg_conformanceMode,                       0, m_numLayers, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
   ("ConfLeft%d",                                    cfg_confWinLeft,                           0, m_numLayers, "Deprecated alias of ConfWinLeft")
   ("ConfRight%d",                                   cfg_confWinRight,                          0, m_numLayers, "Deprecated alias of ConfWinRight")
@@ -1183,8 +1184,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("OutputBitDepthC",                                 m_outputBitDepth[CHANNEL_TYPE_CHROMA],                0, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
   ("MSBExtendedBitDepthC",                            m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA],           0, "As per MSBExtendedBitDepth but for chroma component. (default:MSBExtendedBitDepth)")
   ("InternalBitDepthC",                               m_internalBitDepth[CHANNEL_TYPE_CHROMA],              0, "As per InternalBitDepth but for chroma component. (default:InternalBitDepth)")
+#endif
   ("ExtendedPrecision",                               m_extendedPrecisionProcessingFlag,                false, "Increased internal accuracies to support high bit depths (not valid in V1 profiles)")
   ("HighPrecisionPredictionWeighting",                m_highPrecisionOffsetsEnabledFlag,                false, "Use high precision option for weighted prediction (not valid in V1 profiles)")
+#if !SVC_EXTENSION
   ("InputColourSpaceConvert",                         inputColourSpaceConvert,                     string(""), "Colour space conversion to apply to input video. Permitted values are (empty string=UNCHANGED) " + getListOfColourSpaceConverts(true))
   ("SNRInternalColourSpace",                          m_snrInternalColourSpace,                         false, "If true, then no colour space conversion is applied prior to SNR, otherwise inverse of input is applied.")
   ("OutputInternalColourSpace",                       m_outputInternalColourSpace,                      false, "If true, then no colour space conversion is applied for reconstructed video, otherwise inverse of input is applied.")
@@ -1390,7 +1393,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("SingleSignificanceMapContext",                    m_transformSkipContextEnabledFlag,                false, "Enable, for transform-skipped and transquant-bypassed TUs, the selection of a single significance map context variable for all coefficients (not valid in V1 profiles)")
   ("GolombRiceParameterAdaptation",                   m_persistentRiceAdaptationEnabledFlag,            false, "Enable the adaptation of the Golomb-Rice parameter over the course of each slice")
   ("AlignCABACBeforeBypass",                          m_cabacBypassAlignmentEnabledFlag,                false, "Align the CABAC engine to a defined fraction of a bit prior to coding bypass data. Must be 1 in high bit rate profile, 0 otherwise" )
+#if SVC_EXTENSION
+  ("SAO%d",                                           cfg_bUseSAO,                          true, m_numLayers, "Enable Sample Adaptive Offset")
+#else
   ("SAO",                                             m_bUseSAO,                                         true, "Enable Sample Adaptive Offset")
+#endif
   ("TestSAODisableAtPictureLevel",                    m_bTestSAODisableAtPictureLevel,                  false, "Enables the testing of disabling SAO at the picture level after having analysed all blocks")
   ("SaoEncodingRate",                                 m_saoEncodingRate,                                 0.75, "When >0 SAO early picture termination is enabled for luma and chroma")
   ("SaoEncodingRateChroma",                           m_saoEncodingRateChroma,                            0.5, "The SAO early picture termination rate to use for chroma (when m_SaoEncodingRate is >0). If <=0, use results for luma")
@@ -1926,9 +1933,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     m_apcLayerCfg[layer]->m_InputChromaFormatIDC = numberToChromaFormat(tmpInputChromaFormat);
     m_apcLayerCfg[layer]->m_chromaFormatIDC      = ((tmpChromaFormat == 0) ? (m_apcLayerCfg[layer]->m_InputChromaFormatIDC) : (numberToChromaFormat(tmpChromaFormat)));
 
-    m_apcLayerCfg[layer]->m_highPrecisionOffsetsEnabledFlag = false;
-    m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag = false;
-
     if( m_apcLayerCfg[layer]->m_layerSwitchOffBegin < m_apcLayerCfg[layer]->m_layerSwitchOffEnd )
     {
       if( m_iGOPSize > 0 && (m_apcLayerCfg[layer]->m_layerSwitchOffBegin % m_iGOPSize) != 0 )
@@ -1949,7 +1953,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
     for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
     {
-      m_apcLayerCfg[layer]->m_log2SaoOffsetScale[channelType] = 0;
+      m_log2SaoOffsetScale[channelType] = 0;
     }
         
     Int layerPTLIdx = m_apcLayerCfg[layer]->m_layerPTLIdx;
@@ -2001,7 +2005,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
           m_persistentRiceAdaptationEnabledFlag     ||
           m_log2MaxTransformSkipBlockSize!=2;
         const Bool bUsingChromaQPAdjustment= m_diffCuChromaQpOffsetDepth >= 0;
-        const Bool bUsingExtendedPrecision = m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag;
+        const Bool bUsingExtendedPrecision = m_extendedPrecisionProcessingFlag;
         m_apcLayerCfg[layer]->m_chromaFormatConstraint = NUM_CHROMA_FORMAT;
         automaticallySelectRExtProfile(bUsingGeneralRExtTools,
           bUsingChromaQPAdjustment,
@@ -2634,7 +2638,31 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   delete cfg_numOutputLayersInOutputLayerSet;
   delete [] cfg_listOfOutputLayers;
   delete cfg_outputLayerSetIdx;
-#else //SVC_EXTENSION
+
+  for( Int layer = 0; layer < m_numLayers; layer++ )
+  {
+    Int& m_conformanceWindowMode    = m_apcLayerCfg[layer]->m_conformanceWindowMode;
+    UInt&  m_uiMaxCUHeight          = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
+    UInt& m_uiMaxCUDepth            = m_apcLayerCfg[layer]->m_uiMaxCUDepth;
+    ChromaFormat& m_chromaFormatIDC = m_apcLayerCfg[layer]->m_chromaFormatIDC;
+
+    Int& m_confWinLeft              = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int& m_confWinRight             = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int& m_confWinTop               = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int* m_aiPad                    = m_apcLayerCfg[layer]->m_aiPad;
+    Int* m_aidQP                    = m_apcLayerCfg[layer]->m_aidQP;
+
+    Int& m_iSourceWidth             = m_apcLayerCfg[layer]->m_iSourceWidth;
+    Int& m_iSourceHeight            = m_apcLayerCfg[layer]->m_iSourceHeight;
+    Int& m_iSourceHeightOrg         = m_apcLayerCfg[layer]->m_iSourceHeightOrg;
+
+    Int& m_iQP                      = m_apcLayerCfg[layer]->m_iQP;
+    Double& m_fQP                   = m_apcLayerCfg[layer]->m_fQP;
+
+    Char* m_pchdQPFile              = m_apcLayerCfg[layer]->m_pchdQPFile;
+    Int* m_internalBitDepth         = m_apcLayerCfg[layer]->m_internalBitDepth;
+#endif //SVC_EXTENSION
   switch (m_conformanceWindowMode)
   {
   case 0:
@@ -2652,6 +2680,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       {
         m_aiPad[0] = m_confWinRight  = ((m_iSourceWidth / minCuSize) + 1) * minCuSize - m_iSourceWidth;
         m_iSourceWidth  += m_confWinRight;
+#if SVC_EXTENSION
+        m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+#endif
       }
       if (m_iSourceHeight % minCuSize)
       {
@@ -2662,6 +2693,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
           m_iSourceHeightOrg += m_confWinBottom << 1;
           m_aiPad[1] = m_confWinBottom << 1;
         }
+#if SVC_EXTENSION
+        m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+#endif
       }
       if (m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0)
       {
@@ -2682,6 +2716,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       m_iSourceHeight += m_aiPad[1];
       m_confWinRight  = m_aiPad[0];
       m_confWinBottom = m_aiPad[1];
+
+#if SVC_EXTENSION
+      m_confWinRight /= TComSPS::getWinUnitX( m_chromaFormatIDC );
+      m_confWinBottom /= TComSPS::getWinUnitY( m_chromaFormatIDC );
+#endif
       break;
     }
   case 3:
@@ -2756,6 +2795,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
       fclose(fpt);
     }
+  }
+#if SVC_EXTENSION
   }
 #endif
 
@@ -3013,25 +3054,52 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if SVC_EXTENSION
 Void TAppEncCfg::xCheckParameter(UInt layerIdx)
 {
-  Bool m_extendedPrecisionProcessingFlag     = m_apcLayerCfg[layerIdx]->m_extendedPrecisionProcessingFlag;
-  Bool m_highPrecisionOffsetsEnabledFlag     = m_apcLayerCfg[layerIdx]->m_highPrecisionOffsetsEnabledFlag;
-  ChromaFormat m_chromaFormatIDC             = m_apcLayerCfg[layerIdx]->m_chromaFormatIDC;
-  ChromaFormat m_chromaFormatConstraint      = m_apcLayerCfg[layerIdx]->m_chromaFormatConstraint;
-  ChromaFormat m_InputChromaFormatIDC        = m_apcLayerCfg[layerIdx]->m_InputChromaFormatIDC;
+  ChromaFormat& m_chromaFormatIDC             = m_apcLayerCfg[layerIdx]->m_chromaFormatIDC;
+  ChromaFormat& m_chromaFormatConstraint      = m_apcLayerCfg[layerIdx]->m_chromaFormatConstraint;
+  ChromaFormat& m_InputChromaFormatIDC        = m_apcLayerCfg[layerIdx]->m_InputChromaFormatIDC;
 
-  Int m_inputBitDepth[]       = {m_apcLayerCfg[layerIdx]->m_inputBitDepth[CHANNEL_TYPE_LUMA],       m_apcLayerCfg[layerIdx]->m_inputBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_internalBitDepth[]    = {m_apcLayerCfg[layerIdx]->m_internalBitDepth[CHANNEL_TYPE_LUMA],    m_apcLayerCfg[layerIdx]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]};
-  Int m_MSBExtendedBitDepth[] = {m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA]};  
+  Int* m_inputBitDepth                        = m_apcLayerCfg[layerIdx]->m_inputBitDepth;
+  Int* m_internalBitDepth                     = m_apcLayerCfg[layerIdx]->m_internalBitDepth;
+  Int* m_MSBExtendedBitDepth                  = m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth;
 
-  m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]   = m_apcLayerCfg[layerIdx]->m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA];
-  m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA] = m_apcLayerCfg[layerIdx]->m_log2SaoOffsetScale[CHANNEL_TYPE_CHROMA];
+  Int& layerPTLIdx                            = m_apcLayerCfg[layerIdx]->m_layerPTLIdx;
+  Profile::Name& m_profile                    = m_profileList[layerPTLIdx];
+  UInt& m_bitDepthConstraint                  = m_apcLayerCfg[layerIdx]->m_bitDepthConstraint;
+  Bool& m_intraConstraintFlag                 = m_apcLayerCfg[layerIdx]->m_intraConstraintFlag;
+  Bool& m_lowerBitRateConstraintFlag          = m_apcLayerCfg[layerIdx]->m_lowerBitRateConstraintFlag;
+  Bool& m_onePictureOnlyConstraintFlag        = m_apcLayerCfg[layerIdx]->m_onePictureOnlyConstraintFlag;
 
-  Int layerPTLIdx = m_apcLayerCfg[layerIdx]->m_layerPTLIdx;
-  Profile::Name m_profile             = m_profileList[layerPTLIdx];
-  UInt m_bitDepthConstraint           = m_apcLayerCfg[layerIdx]->m_bitDepthConstraint;
-  Bool m_intraConstraintFlag          = m_apcLayerCfg[layerIdx]->m_intraConstraintFlag;
-  Bool m_lowerBitRateConstraintFlag   = m_apcLayerCfg[layerIdx]->m_lowerBitRateConstraintFlag;
-  Bool m_onePictureOnlyConstraintFlag = m_apcLayerCfg[layerIdx]->m_onePictureOnlyConstraintFlag;
+#if RC_SHVC_HARMONIZATION
+  Bool& m_RCEnableRateControl                 = m_apcLayerCfg[layerIdx]->m_RCEnableRateControl;
+  Bool& m_RCForceIntraQP                      = m_apcLayerCfg[layerIdx]->m_RCForceIntraQP;
+  Int&  m_RCInitialQP                         = m_apcLayerCfg[layerIdx]->m_RCInitialQP;
+
+#if U0132_TARGET_BITS_SATURATION
+  Bool& m_RCCpbSaturationEnabled              = m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled;
+  UInt& m_RCCpbSize                           = m_apcLayerCfg[layerIdx]->m_RCCpbSize;
+  Double& m_RCInitialCpbFullness              = m_apcLayerCfg[layerIdx]->m_RCInitialCpbFullness;
+  Level::Name& m_level                        = m_levelList[layerPTLIdx];
+  Level::Tier& m_levelTier                    = m_levelTierList[layerPTLIdx];
+#endif
+#endif
+
+  Int& m_iFrameRate                           = m_apcLayerCfg[layerIdx]->m_iFrameRate;
+  Int& m_iQP                                  = m_apcLayerCfg[layerIdx]->m_iQP;
+  Int& m_iSourceWidth                         = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
+  Int& m_iSourceHeight                        = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
+  Int* m_aiPad                                = m_apcLayerCfg[layerIdx]->m_aiPad;
+  Int& m_iMaxCuDQPDepth                       = m_apcLayerCfg[layerIdx]->m_iMaxCuDQPDepth;
+  UInt& m_uiMaxCUDepth                        = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth;
+  UInt& m_uiQuadtreeTULog2MinSize             = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MinSize;
+
+  Int& m_iIntraPeriod                         = m_apcLayerCfg[layerIdx]->m_iIntraPeriod;
+  UInt& m_uiMaxCUWidth                        = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
+  UInt& m_uiMaxCUHeight                       = m_apcLayerCfg[layerIdx]->m_uiMaxCUHeight;
+  UInt& m_uiQuadtreeTULog2MaxSize             = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MaxSize;
+  UInt& m_uiQuadtreeTUMaxDepthInter           = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTUMaxDepthInter;
+  UInt& m_uiQuadtreeTUMaxDepthIntra           = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTUMaxDepthIntra;
+
+  Int& m_iWaveFrontSynchro                    = m_apcLayerCfg[layerIdx]->m_waveFrontSynchro;
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -3199,15 +3267,11 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_inputColourSpaceConvert >= NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS,         sTempIPCSC.c_str() );
   xConfirmPara( m_InputChromaFormatIDC >= NUM_CHROMA_FORMAT,                                "InputChromaFormatIDC must be either 400, 420, 422 or 444" );
 
-#if !SVC_EXTENSION  
   xConfirmPara( m_iFrameRate <= 0,                                                          "Frame rate must be more than 1" );
-#endif
   xConfirmPara( m_framesToBeEncoded <= 0,                                                   "Total Number Of Frames encoded must be more than 0" );
   xConfirmPara( m_iGOPSize < 1 ,                                                            "GOP Size must be greater or equal to 1" );
   xConfirmPara( m_iGOPSize > 1 &&  m_iGOPSize % 2,                                          "GOP Size must be a multiple of 2, if GOP Size is greater than 1" );
-#if !SVC_EXTENSION 
   xConfirmPara( (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0" );
-#endif
   xConfirmPara( m_iDecodingRefreshType < 0 || m_iDecodingRefreshType > 3,                   "Decoding Refresh Type must be comprised between 0 and 3 included" );
   if(m_iDecodingRefreshType == 3)
   {
@@ -3254,9 +3318,7 @@ Void TAppEncCfg::xCheckParameter()
     fprintf(stderr, "***************************************************************************\n");
   }
 
-#if !SVC_EXTENSION
   xConfirmPara( m_iQP <  -6 * (m_internalBitDepth[CHANNEL_TYPE_LUMA] - 8) || m_iQP > 51,    "QP exceeds supported range (-QpBDOffsety to 51)" );
-#endif
   xConfirmPara( m_DeblockingFilterMetric && (m_bLoopFilterDisable || m_loopFilterOffsetInPPS), "If DeblockingFilterMetric is true then both LoopFilterDisable and LoopFilterOffsetInPPS must be 0");
   xConfirmPara( m_loopFilterBetaOffsetDiv2 < -6 || m_loopFilterBetaOffsetDiv2 > 6,        "Loop Filter Beta Offset div. 2 exceeds supported range (-6 to 6)");
   xConfirmPara( m_loopFilterTcOffsetDiv2 < -6 || m_loopFilterTcOffsetDiv2 > 6,            "Loop Filter Tc Offset div. 2 exceeds supported range (-6 to 6)");
@@ -3264,9 +3326,7 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_bipredSearchRange < 0 ,                                                   "Bi-prediction refinement search range must be more than 0" );
   xConfirmPara( m_minSearchWindow < 0,                                                      "Minimum motion search window size for the adaptive window ME must be greater than or equal to 0" );
   xConfirmPara( m_iMaxDeltaQP > 7,                                                          "Absolute Delta QP exceeds supported range (0 to 7)" );
-#if !SVC_EXTENSION  
   xConfirmPara( m_iMaxCuDQPDepth > m_uiMaxCUDepth - 1,                                          "Absolute depth for a minimum CuDQP exceeds maximum coding unit depth" );
-#endif
 
   xConfirmPara( m_cbQpOffset < -12,   "Min. Chroma Cb QP Offset is -12" );
   xConfirmPara( m_cbQpOffset >  12,   "Max. Chroma Cb QP Offset is  12" );
@@ -3274,7 +3334,6 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_crQpOffset >  12,   "Max. Chroma Cr QP Offset is  12" );
 
   xConfirmPara( m_iQPAdaptationRange <= 0,                                                  "QP Adaptation Range must be more than 0" );
-#if !SVC_EXTENSION
   if (m_iDecodingRefreshType == 2)
   {
     xConfirmPara( m_iIntraPeriod > 0 && m_iIntraPeriod <= m_iGOPSize ,                      "Intra period must be larger than GOP size for periodic IDR pictures");
@@ -3297,16 +3356,13 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthInter - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
   xConfirmPara( m_uiQuadtreeTUMaxDepthIntra < 1,                                                         "QuadtreeTUMaxDepthIntra must be greater than or equal to 1" );
   xConfirmPara( m_uiMaxCUWidth < ( 1 << (m_uiQuadtreeTULog2MinSize + m_uiQuadtreeTUMaxDepthIntra - 1) ), "QuadtreeTUMaxDepthInter must be less than or equal to the difference between log2(maxCUSize) and QuadtreeTULog2MinSize plus 1" );
-#endif
   
   xConfirmPara(  m_maxNumMergeCand < 1,  "MaxNumMergeCand must be 1 or greater.");
   xConfirmPara(  m_maxNumMergeCand > 5,  "MaxNumMergeCand must be 5 or smaller.");
 
-#if !SVC_EXTENSION
 #if ADAPTIVE_QP_SELECTION
   xConfirmPara( m_bUseAdaptQpSelect == true && m_iQP < 0,                                              "AdaptiveQpSelection must be disabled when QP < 0.");
   xConfirmPara( m_bUseAdaptQpSelect == true && (m_cbQpOffset !=0 || m_crQpOffset != 0 ),               "AdaptiveQpSelection must be disabled when ChromaQpOffset is not equal to 0.");
-#endif
 #endif
 
   if( m_usePCM)
@@ -3332,7 +3388,6 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_sliceSegmentArgument < 1 ,         "SliceSegmentArgument should be larger than or equal to 1" );
   }
   
-#if !SVC_EXTENSION
   Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
   if (m_profile!=Profile::HIGHTHROUGHPUTREXT)
   {
@@ -3345,10 +3400,12 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_aiPad[0] % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Horizontal padding must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_aiPad[1] % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Vertical padding must be an integer multiple of the specified chroma subsampling");
 
+#if !SVC_EXTENSION
   xConfirmPara( m_confWinLeft   % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Left conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confWinRight  % TComSPS::getWinUnitX(m_chromaFormatIDC) != 0, "Right conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confWinTop    % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Top conformance window offset must be an integer multiple of the specified chroma subsampling");
   xConfirmPara( m_confWinBottom % TComSPS::getWinUnitY(m_chromaFormatIDC) != 0, "Bottom conformance window offset must be an integer multiple of the specified chroma subsampling");
+#endif
 
   xConfirmPara( m_defaultDisplayWindowFlag && !m_vuiParametersPresentFlag, "VUI needs to be enabled for default display window");
 
@@ -3379,7 +3436,6 @@ Void TAppEncCfg::xCheckParameter()
       xConfirmPara( ui != 1 , "Height should be 2^n");
     }
   }
-#endif
 
   /* if this is an intra-only sequence, ie IntraPeriod=1, don't verify the GOP structure
    * This permits the ability to omit a GOP structure specification */
@@ -3442,9 +3498,7 @@ Void TAppEncCfg::xCheckParameter()
     isOK[i]=false;
   }
   Int numOK=0;
-#if !SVC_EXTENSION
   xConfirmPara( m_iIntraPeriod >=0&&(m_iIntraPeriod%m_iGOPSize!=0), "Intra period must be a multiple of GOPSize, or -1" );
-#endif
 
   for(Int i=0; i<m_iGOPSize; i++)
   {
@@ -3467,14 +3521,6 @@ Void TAppEncCfg::xCheckParameter()
   }
 
   // verify layer configuration parameters
-  if(m_apcLayerCfg[layerIdx]->xCheckParameter(m_isField))
-  {
-    printf("\nError: invalid configuration parameter found in layer %d \n", layerIdx);
-    check_failed = true;
-  }
-
-  // verify layer configuration parameters
-  Int m_iIntraPeriod = m_apcLayerCfg[layerIdx]->m_iIntraPeriod;
 #endif
   if ( (m_iIntraPeriod != 1) && !m_loopFilterOffsetInPPS && (!m_bLoopFilterDisable) )
   {
@@ -3992,6 +4038,16 @@ Void TAppEncCfg::xCheckParameter()
       checkGOP++;
     }
     xConfirmPara(errorGOP,"Invalid GOP structure given");
+
+    m_EhMaxTempLayer[layerIdx] = 1;
+    for(Int i=0; i<m_iGOPSize; i++) 
+    {
+      if(m_EhGOPList[layerIdx][i].m_temporalId >= m_EhMaxTempLayer[layerIdx] )
+      {
+        m_EhMaxTempLayer[layerIdx] = m_EhGOPList[layerIdx][i].m_temporalId;
+      }
+      xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
+    }
   }
 #endif 
 
@@ -4004,21 +4060,6 @@ Void TAppEncCfg::xCheckParameter()
     }
     xConfirmPara(m_GOPList[i].m_sliceType!='B' && m_GOPList[i].m_sliceType!='P' && m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
   }
-
-#if SVC_EXTENSION
-  if( layerIdx > 0 )
-  {
-    m_EhMaxTempLayer[layerIdx] = 1;
-    for(Int i=0; i<m_iGOPSize; i++) 
-    {
-      if(m_EhGOPList[layerIdx][i].m_temporalId >= m_EhMaxTempLayer[layerIdx] )
-      {
-        m_EhMaxTempLayer[layerIdx] = m_EhGOPList[layerIdx][i].m_temporalId;
-      }
-      xConfirmPara(m_GOPList[i].m_sliceType!='B'&&m_GOPList[i].m_sliceType!='P'&&m_GOPList[i].m_sliceType!='I', "Slice type must be equal to B or P or I");
-    }
-  }
-#endif
 
   for(Int i=0; i<MAX_TLAYER; i++)
   {
@@ -4077,17 +4118,6 @@ Void TAppEncCfg::xCheckParameter()
   {
     m_maxDecPicBuffering[MAX_TLAYER-1] = m_numReorderPics[MAX_TLAYER-1] + 1;
   }
-
-#if SVC_EXTENSION // ToDo: it should be checked for the case when parameters are different for the layers
-  Int m_iSourceWidth = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
-  Int m_iSourceHeight = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
-  Int m_uiMaxCUWidth = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
-  Int m_uiMaxCUHeight = m_apcLayerCfg[layerIdx]->m_uiMaxCUHeight;
-
-  Bool tileFlag = (m_numTileColumnsMinus1 > 0 || m_numTileRowsMinus1 > 0 );
-  Int m_iWaveFrontSynchro = m_apcLayerCfg[layerIdx]->m_waveFrontSynchro;
-  xConfirmPara( tileFlag && m_iWaveFrontSynchro,            "Tile and Wavefront can not be applied together");
-#endif
 
   if(m_vuiParametersPresentFlag && m_bitstreamRestrictionFlag)
   {
@@ -4162,9 +4192,7 @@ Void TAppEncCfg::xCheckParameter()
       m_minSpatialSegmentationIdc = 0;
     }
   }
-#if !SVC_EXTENSION
   xConfirmPara( m_iWaveFrontSynchro < 0, "WaveFrontSynchro cannot be negative" );
-#endif
 
   xConfirmPara( m_decodedPictureHashSEIEnabled<0 || m_decodedPictureHashSEIEnabled>3, "this hash type is not correct!\n");
 
@@ -4223,34 +4251,6 @@ Void TAppEncCfg::xCheckParameter()
   }
 #endif
 
-#if RC_SHVC_HARMONIZATION
-  if ( m_apcLayerCfg[layerIdx]->m_RCEnableRateControl )
-  {
-    if ( m_apcLayerCfg[layerIdx]->m_RCForceIntraQP )
-    {
-      if ( m_apcLayerCfg[layerIdx]->m_RCInitialQP == 0 )
-      {
-        printf( "\nInitial QP for rate control is not specified. Reset not to use force intra QP!" );
-        m_apcLayerCfg[layerIdx]->m_RCForceIntraQP = false;
-      }
-    }
-    xConfirmPara( m_uiDeltaQpRD > 0, "Rate control cannot be used together with slice level multiple-QP optimization!\n" );
-#if U0132_TARGET_BITS_SATURATION
-    if( m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled && m_levelList[layerPTLIdx]!=Level::NONE && m_profileList[layerPTLIdx]!=Profile::NONE )
-    {
-      UInt uiLevelIdx = (m_levelList[layerPTLIdx] / 10) + (UInt)((m_levelList[layerPTLIdx] % 10) / 3);    // (m_level / 30)*3 + ((m_level % 10) / 3);
-      xConfirmPara( m_apcLayerCfg[layerIdx]->m_RCCpbSize > g_uiMaxCpbSize[m_levelTierList[layerPTLIdx]][uiLevelIdx], "RCCpbSize should be smaller than or equal to Max CPB size according to tier and level");
-      xConfirmPara( m_apcLayerCfg[layerIdx]->m_RCInitialCpbFullness > 1, "RCInitialCpbFullness should be smaller than or equal to 1");
-    }
-#endif
-  }
-#if U0132_TARGET_BITS_SATURATION
-  else
-  {
-    xConfirmPara( m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled != 0, "Target bits saturation cannot be processed without Rate control" );
-  }
-#endif
-#else
   if ( m_RCEnableRateControl )
   {
     if ( m_RCForceIntraQP )
@@ -4276,7 +4276,6 @@ Void TAppEncCfg::xCheckParameter()
   {
     xConfirmPara( m_RCCpbSaturationEnabled != 0, "Target bits saturation cannot be processed without Rate control" );
   }
-#endif
 #endif
 
   xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
@@ -4416,7 +4415,7 @@ const Char *profileToString(const Profile::Name profile)
 Void TAppEncCfg::xPrintParameter()
 {
   printf("\n");
-#if SVC_EXTENSION  
+#if SVC_EXTENSION
   printf("Total number of layers            : %d\n", m_numLayers       );
   printf("Multiview                         : %d\n", m_scalabilityMask[VIEW_ORDER_INDEX] );
   printf("Scalable                          : %d\n", m_scalabilityMask[SCALABILITY_ID] );
@@ -4432,24 +4431,104 @@ Void TAppEncCfg::xPrintParameter()
   printf("Cross layer IRAP alignment        : %d\n", m_crossLayerIrapAlignFlag );
   printf("IDR only for IRAP                 : %d\n", m_crossLayerAlignedIdrOnlyFlag );
   printf("InterLayerWeightedPred            : %d\n", m_useInterLayerWeightedPred );
-  printf("\n");
-  for(UInt layer=0; layer<m_numLayers; layer++)
+
+  for( UInt layer = 0; layer < m_numLayers + 1; layer++ )
   {
-    printf("=== Layer %d settings === \n", layer);
-    m_apcLayerCfg[layer]->xPrintParameter();
-    printf("\n");
-  }
-  printf("=== Common configuration settings === \n");
-  printf("Bitstream File                         : %s\n", m_pchBitstreamFile      );
-#else //SVC_EXTENSION
-  printf("\n");
+    UInt layerIdx                          = layer == m_numLayers ? 0 : layer;
+    Int& layerPTLIdx                       = m_apcLayerCfg[layerIdx]->m_layerPTLIdx;
+    Profile::Name& m_profile               = m_profileList[layerPTLIdx];
+    Bool m_onePictureOnlyConstraintFlag    = m_apcLayerCfg[layerIdx]->m_onePictureOnlyConstraintFlag;
+    UInt& m_bitDepthConstraint             = m_apcLayerCfg[layerIdx]->m_bitDepthConstraint;
+    Bool& m_intraConstraintFlag            = m_apcLayerCfg[layerIdx]->m_intraConstraintFlag;
+    ChromaFormat& m_chromaFormatConstraint = m_apcLayerCfg[layerIdx]->m_chromaFormatConstraint;
+
+    UInt& m_uiMaxCUWidth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
+    UInt& m_uiMaxCUHeight                  = m_apcLayerCfg[layerIdx]->m_uiMaxCUHeight;
+    UInt& m_uiMaxCUDepth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth;
+    ChromaFormat& m_chromaFormatIDC        = m_apcLayerCfg[layerIdx]->m_chromaFormatIDC;
+
+    Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+    Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+    Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+    Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+    Int* m_aiPad                           = m_apcLayerCfg[layerIdx]->m_aiPad;
+    Int* m_aidQP                           = m_apcLayerCfg[layerIdx]->m_aidQP;
+
+    Int& m_iSourceWidth                    = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
+    Int& m_iSourceHeight                   = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
+
+    const Char* m_pchInputFile             = m_apcLayerCfg[layerIdx]->m_cInputFile.c_str();
+    const Char* m_pchReconFile             = m_apcLayerCfg[layerIdx]->m_cReconFile.c_str();
+
+    Int& m_iFrameRate                      = m_apcLayerCfg[layerIdx]->m_iFrameRate;
+    Int& m_iIntraPeriod                    = m_apcLayerCfg[layerIdx]->m_iFrameRate;
+
+    UInt& m_uiMaxTotalCUDepth              = m_apcLayerCfg[layerIdx]->m_uiMaxTotalCUDepth;
+    UInt& m_uiQuadtreeTULog2MinSize        = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MinSize;
+    UInt& m_uiQuadtreeTULog2MaxSize        = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MaxSize;
+    UInt& m_uiQuadtreeTUMaxDepthInter      = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTUMaxDepthInter;
+    UInt& m_uiQuadtreeTUMaxDepthIntra      = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTUMaxDepthIntra;
+
+    Double& m_fQP                          = m_apcLayerCfg[layerIdx]->m_fQP;
+    Int& m_iMaxCuDQPDepth                  = m_apcLayerCfg[layerIdx]->m_iMaxCuDQPDepth;
+
+    Bool& m_RCEnableRateControl            = m_apcLayerCfg[layerIdx]->m_RCEnableRateControl;
+    Int& m_RCTargetBitrate                 = m_apcLayerCfg[layerIdx]->m_RCTargetBitrate;
+    Bool& m_RCKeepHierarchicalBit          = m_apcLayerCfg[layerIdx]->m_RCKeepHierarchicalBit;
+    Bool& m_RCLCULevelRC                   = m_apcLayerCfg[layerIdx]->m_RCLCULevelRC;
+    Bool& m_RCUseLCUSeparateModel          = m_apcLayerCfg[layerIdx]->m_RCUseLCUSeparateModel;
+    Int& m_RCInitialQP                     = m_apcLayerCfg[layerIdx]->m_RCInitialQP;
+    Bool& m_RCForceIntraQP                 = m_apcLayerCfg[layerIdx]->m_RCForceIntraQP;
+
+    Bool& m_bUseSAO                         = m_apcLayerCfg[layerIdx]->m_bUseSAO;
+
+    Int* m_inputBitDepth                    = m_apcLayerCfg[layerIdx]->m_inputBitDepth;
+    Int* m_MSBExtendedBitDepth              = m_apcLayerCfg[layerIdx]->m_MSBExtendedBitDepth;
+    Int* m_internalBitDepth                 = m_apcLayerCfg[layerIdx]->m_internalBitDepth;
+
+#if U0132_TARGET_BITS_SATURATION
+    Bool& m_RCCpbSaturationEnabled          = m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled;
+    UInt& m_RCCpbSize                       = m_apcLayerCfg[layerIdx]->m_RCCpbSize;
+    Double& m_RCInitialCpbFullness          = m_apcLayerCfg[layerIdx]->m_RCInitialCpbFullness;
+#endif
+
+    if( layer == m_numLayers )
+    {
+      printf("\n=== Common configuration settings === \n");
+    }
+    
+    if( layer < m_numLayers )
+    {
+      printf("\n=== Layer %d settings ===\n", layer);
+#endif
+
   printf("Input          File                    : %s\n", m_pchInputFile          );
+
+#if SVC_EXTENSION
+    }
+    if( layer == m_numLayers )
+    {
+#endif
+
   printf("Bitstream      File                    : %s\n", m_pchBitstreamFile      );
+
+#if SVC_EXTENSION
+    }
+    if( layer < m_numLayers )
+    {
+#endif
+
   printf("Reconstruction File                    : %s\n", m_pchReconFile          );
   printf("Real     Format                        : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
   printf("Internal Format                        : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
-#endif //SVC_EXTENSION
 
+#if SVC_EXTENSION
+      printf("PTL index                              : %d\n", m_apcLayerCfg[layerIdx]->m_layerPTLIdx );
+    }
+
+    if( layer == m_numLayers )
+    {
+#endif
   printf("Sequence PSNR output                   : %s\n", (m_printMSEBasedSequencePSNR ? "Linear average, MSE-based" : "Linear average only") );
   printf("Sequence MSE output                    : %s\n", (m_printSequenceMSE ? "Enabled" : "Disabled") );
   printf("Frame MSE output                       : %s\n", (m_printFrameMSE    ? "Enabled" : "Disabled") );
@@ -4466,7 +4545,13 @@ Void TAppEncCfg::xPrintParameter()
     printf("Frame/Field                            : Frame based coding\n");
     printf("Frame index                            : %u - %d (%d frames)\n", m_FrameSkip, m_FrameSkip+m_framesToBeEncoded-1, m_framesToBeEncoded );
   }
-#if !SVC_EXTENSION
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
+
   if (m_profile == Profile::MAINREXT)
   {
     ExtendedProfileName validProfileName;
@@ -4500,44 +4585,79 @@ Void TAppEncCfg::xPrintParameter()
   printf("RQT trans. size (min / max)            : %d / %d\n", 1 << m_uiQuadtreeTULog2MinSize, 1 << m_uiQuadtreeTULog2MaxSize );
   printf("Max RQT depth inter                    : %d\n", m_uiQuadtreeTUMaxDepthInter);
   printf("Max RQT depth intra                    : %d\n", m_uiQuadtreeTUMaxDepthIntra);
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
   printf("Min PCM size                           : %d\n", 1 << m_uiPCMLog2MinSize);
   printf("Motion search range                    : %d\n", m_iSearchRange );
-#if !SVC_EXTENSION
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
   printf("Intra period                           : %d\n", m_iIntraPeriod );
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
   printf("Decoding refresh type                  : %d\n", m_iDecodingRefreshType );
-#if !SVC_EXTENSION
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
   printf("QP                                     : %5.2f\n", m_fQP );
   printf("Max dQP signaling depth                : %d\n", m_iMaxCuDQPDepth);
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
 
   printf("Cb QP Offset                           : %d\n", m_cbQpOffset   );
   printf("Cr QP Offset                           : %d\n", m_crQpOffset);
   printf("QP adaptation                          : %d (range=%d)\n", m_bUseAdaptiveQP, (m_bUseAdaptiveQP ? m_iQPAdaptationRange : 0) );
   printf("GOP size                               : %d\n", m_iGOPSize );
-#if !SVC_EXTENSION
+
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
+
   printf("Input bit depth                        : (Y:%d, C:%d)\n", m_inputBitDepth[CHANNEL_TYPE_LUMA], m_inputBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("MSB-extended bit depth                 : (Y:%d, C:%d)\n", m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA], m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("Internal bit depth                     : (Y:%d, C:%d)\n", m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
   printf("PCM sample bit depth                   : (Y:%d, C:%d)\n", m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA],
                                                                     m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
+
   printf("Intra reference smoothing              : %s\n", (m_enableIntraReferenceSmoothing           ? "Enabled" : "Disabled") );
   printf("diff_cu_chroma_qp_offset_depth         : %d\n", m_diffCuChromaQpOffsetDepth);
-#if !SVC_EXTENSION
   printf("extended_precision_processing_flag     : %s\n", (m_extendedPrecisionProcessingFlag         ? "Enabled" : "Disabled") );
-#endif
   printf("implicit_rdpcm_enabled_flag            : %s\n", (m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT] ? "Enabled" : "Disabled") );
   printf("explicit_rdpcm_enabled_flag            : %s\n", (m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT] ? "Enabled" : "Disabled") );
   printf("transform_skip_rotation_enabled_flag   : %s\n", (m_transformSkipRotationEnabledFlag        ? "Enabled" : "Disabled") );
   printf("transform_skip_context_enabled_flag    : %s\n", (m_transformSkipContextEnabledFlag         ? "Enabled" : "Disabled") );
   printf("cross_component_prediction_enabled_flag: %s\n", (m_crossComponentPredictionEnabledFlag     ? (m_reconBasedCrossCPredictionEstimate ? "Enabled (reconstructed-residual-based estimate)" : "Enabled (encoder-side-residual-based estimate)") : "Disabled") );
-#if !SVC_EXTENSION
   printf("high_precision_offsets_enabled_flag    : %s\n", (m_highPrecisionOffsetsEnabledFlag         ? "Enabled" : "Disabled") );
-#endif
   printf("persistent_rice_adaptation_enabled_flag: %s\n", (m_persistentRiceAdaptationEnabledFlag     ? "Enabled" : "Disabled") );
   printf("cabac_bypass_alignment_enabled_flag    : %s\n", (m_cabacBypassAlignmentEnabledFlag         ? "Enabled" : "Disabled") );
+
   if (m_bUseSAO)
   {
     printf("log2_sao_offset_scale_luma             : %d\n", m_log2SaoOffsetScale[CHANNEL_TYPE_LUMA]);
@@ -4553,12 +4673,30 @@ Void TAppEncCfg::xPrintParameter()
     default:                                printf("Cost function:                         : Unknown\n"); break;
   }
 
-#if !RC_SHVC_HARMONIZATION
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
+
   printf("RateControl                            : %d\n", m_RCEnableRateControl );
+
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
   printf("WPMethod                               : %d\n", Int(m_weightedPredictionMethod));
 
-#if !RC_SHVC_HARMONIZATION
+#if SVC_EXTENSION
+    }
+
+    if( layer < m_numLayers )
+    {
+#endif
+
   if(m_RCEnableRateControl)
   {
     printf("TargetBitrate                          : %d\n", m_RCTargetBitrate );
@@ -4576,15 +4714,39 @@ Void TAppEncCfg::xPrintParameter()
     }
 #endif
   }
+
+#if SVC_EXTENSION
+    }
+
+    if( layer == m_numLayers )
+    {
 #endif
 
   printf("Max Num Merge Candidates               : %d\n", m_maxNumMergeCand);
   printf("\n");
 
-  printf("TOOL CFG: ");
-#if !SVC_EXTENSION
-  printf("IBD:%d ", ((m_internalBitDepth[CHANNEL_TYPE_LUMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]) || (m_internalBitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
+#if SVC_EXTENSION
+    }
+  }
+
+  for( UInt layer = 0; layer < m_numLayers; layer++ )
+  {
+    Int* m_internalBitDepth               = m_apcLayerCfg[layer]->m_internalBitDepth;
+    Int* m_MSBExtendedBitDepth            = m_apcLayerCfg[layer]->m_MSBExtendedBitDepth;
+    Bool& m_bUseSAO                       = m_apcLayerCfg[layer]->m_bUseSAO;
+    UInt& m_uiMaxCUWidth                  = m_apcLayerCfg[layer]->m_uiMaxCUWidth;
+    UInt& m_uiMaxCUHeight                 = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
+    Int& m_iSourceWidth                   = m_apcLayerCfg[layer]->m_iSourceWidth;
+    Int& m_iSourceHeight                  = m_apcLayerCfg[layer]->m_iSourceHeight;
+    Int& m_iWaveFrontSynchro              = m_apcLayerCfg[layer]->m_waveFrontSynchro;
+    ScalingListMode& m_useScalingListId   = m_apcLayerCfg[layer]->m_useScalingListId;
+
+
+    printf("Layer%d ", layer);
 #endif
+
+  printf("TOOL CFG: ");
+  printf("IBD:%d ", ((m_internalBitDepth[CHANNEL_TYPE_LUMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA]) || (m_internalBitDepth[CHANNEL_TYPE_CHROMA] > m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA])));
   printf("HAD:%d ", m_bUseHADME                          );
   printf("RDQ:%d ", m_useRDOQ                            );
   printf("RDQTS:%d ", m_useRDOQTS                        );
@@ -4614,9 +4776,7 @@ Void TAppEncCfg::xPrintParameter()
   }
   printf("CIP:%d ", m_bUseConstrainedIntraPred);
   printf("SAO:%d ", (m_bUseSAO)?(1):(0));
-#if !SVC_EXTENSION
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
-#endif
 
   if (m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce)
   {
@@ -4630,12 +4790,10 @@ Void TAppEncCfg::xPrintParameter()
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
   printf("PME:%d ", m_log2ParallelMergeLevel);
-#if !SVC_EXTENSION
   const Int iWaveFrontSubstreams = m_iWaveFrontSynchro ? (m_iSourceHeight + m_uiMaxCUHeight - 1) / m_uiMaxCUHeight : 1;
   printf(" WaveFrontSynchro:%d WaveFrontSubstreams:%d",
           m_iWaveFrontSynchro, iWaveFrontSubstreams);
   printf(" ScalingList:%d ", m_useScalingListId );
-#endif
   printf("TMVPMode:%d ", m_TMVPModeId     );
 #if ADAPTIVE_QP_SELECTION
   printf("AQpS:%d", m_bUseAdaptQpSelect   );
@@ -4645,7 +4803,10 @@ Void TAppEncCfg::xPrintParameter()
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 
 #if SVC_EXTENSION
-  printf("\n\nSHVC TOOL CFG: ");
+    printf("\n\n");
+  }
+
+  printf("\nSHVC TOOL CFG: ");
   printf("ElRapSliceType: %c-slice ", m_elRapSliceBEnabled ? 'B' : 'P');
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
