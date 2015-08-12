@@ -716,7 +716,6 @@ private:
   Int                   m_numLayersInTreePartition[MAX_LAYERS];
   UInt                  m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
 
-  Int                   m_TolsIdx;
   Bool                  m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool                  m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
   Int                   m_maxVpsDecPicBufferingMinus1 [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS][MAX_TLAYER];
