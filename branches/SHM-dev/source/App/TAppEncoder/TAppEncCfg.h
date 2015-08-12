@@ -245,10 +245,12 @@ protected:
   Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file
   Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
+#endif
   Bool      m_extendedPrecisionProcessingFlag;
   Bool      m_highPrecisionOffsetsEnabledFlag;
 
   //coding tools (chroma format)
+#if !SVC_EXTENSION
   ChromaFormat m_chromaFormatIDC;
 #endif
 
@@ -256,7 +258,9 @@ protected:
   Bool      m_bPCMInputBitDepthFlag;                          ///< 0: PCM bit-depth is internal bit-depth. 1: PCM bit-depth is input bit-depth.
 
   // coding tool (SAO)
+#if !SVC_EXTENSION
   Bool      m_bUseSAO;
+#endif
   Bool      m_bTestSAODisableAtPictureLevel;
   Double    m_saoEncodingRate;                                ///< When >0 SAO early picture termination is enabled for luma and chroma
   Double    m_saoEncodingRateChroma;                          ///< The SAO early picture termination rate to use for chroma (when m_SaoEncodingRate is >0). If <=0, use results for luma.

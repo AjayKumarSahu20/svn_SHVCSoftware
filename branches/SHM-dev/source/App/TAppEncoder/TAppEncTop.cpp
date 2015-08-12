@@ -110,9 +110,9 @@ Void TAppEncTop::xInitLibCfg()
       Bool found = false;
       for( UInt idx = 0; idx < layer; idx++ )
       {
-        if( m_apcLayerCfg[layer]->getSourceWidth() == m_apcLayerCfg[idx]->getSourceWidth() && m_apcLayerCfg[layer]->getSourceHeight() == m_apcLayerCfg[idx]->getSourceHeight()
+        if( m_apcLayerCfg[layer]->m_iSourceWidth == m_apcLayerCfg[idx]->m_iSourceWidth && m_apcLayerCfg[layer]->m_iSourceHeight == m_apcLayerCfg[idx]->m_iSourceHeight
 #if AUXILIARY_PICTURES
-          && m_apcLayerCfg[layer]->getChromaFormatIDC() == m_apcLayerCfg[idx]->getChromaFormatIDC()
+          && m_apcLayerCfg[layer]->m_chromaFormatIDC == m_apcLayerCfg[idx]->m_chromaFormatIDC
 #endif
           && m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA] == m_apcLayerCfg[idx]->m_internalBitDepth[CHANNEL_TYPE_LUMA] && m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA] == m_apcLayerCfg[idx]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]
           )
@@ -170,10 +170,10 @@ Void TAppEncTop::xInitLibCfg()
       assert(repFormat->getChromaAndBitDepthVpsPresentFlag() == true); 
     }
 
-    repFormat->setPicWidthVpsInLumaSamples                                ( m_apcLayerCfg[mapIdxToLayer[idx]]->getSourceWidth()   );
-    repFormat->setPicHeightVpsInLumaSamples                               ( m_apcLayerCfg[mapIdxToLayer[idx]]->getSourceHeight()  );
+    repFormat->setPicWidthVpsInLumaSamples                                ( m_apcLayerCfg[mapIdxToLayer[idx]]->m_iSourceWidth   );
+    repFormat->setPicHeightVpsInLumaSamples                               ( m_apcLayerCfg[mapIdxToLayer[idx]]->m_iSourceHeight  );
 #if AUXILIARY_PICTURES
-    repFormat->setChromaFormatVpsIdc                                      ( m_apcLayerCfg[mapIdxToLayer[idx]]->getChromaFormatIDC() );
+    repFormat->setChromaFormatVpsIdc                                      ( m_apcLayerCfg[mapIdxToLayer[idx]]->m_chromaFormatIDC );
 #else
     repFormat->setChromaFormatVpsIdc                                      ( 1 );  // Need modification to change for each layer - corresponds to 420
 #endif
@@ -442,65 +442,64 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setIlcIdc                                            ( m_ilcIdc );
 #endif
 
-    Int layerPTLIdx = m_apcLayerCfg[layer]->m_layerPTLIdx;
+    Int& layerPTLIdx                                            = m_apcLayerCfg[layer]->m_layerPTLIdx;
 
-    Profile::Name m_profile                                    = m_profileList[layerPTLIdx];
-    Level::Tier   m_levelTier                                  = m_levelTierList[layerPTLIdx];
-    Level::Name   m_level                                      = m_levelList[layerPTLIdx];
-    UInt          m_bitDepthConstraint                         = m_apcLayerCfg[layer]->m_bitDepthConstraint;
-    ChromaFormat  m_chromaFormatConstraint                     = m_apcLayerCfg[layer]->m_chromaFormatConstraint;
-    Bool          m_intraConstraintFlag                        = m_apcLayerCfg[layer]->m_intraConstraintFlag;
-    Bool          m_onePictureOnlyConstraintFlag               = m_apcLayerCfg[layer]->m_onePictureOnlyConstraintFlag;
-    Bool          m_lowerBitRateConstraintFlag                 = m_apcLayerCfg[layer]->m_lowerBitRateConstraintFlag;
-    Bool          m_progressiveSourceFlag                      = m_progressiveSourceFlagList[layerPTLIdx];
-    Bool          m_interlacedSourceFlag                       = m_interlacedSourceFlagList[layerPTLIdx];
-    Bool          m_nonPackedConstraintFlag                    = m_nonPackedConstraintFlagList[layerPTLIdx];
-    Bool          m_frameOnlyConstraintFlag                    = m_frameOnlyConstraintFlagList[layerPTLIdx];
+    Profile::Name& m_profile                                    = m_profileList[layerPTLIdx];
+    Level::Tier&   m_levelTier                                  = m_levelTierList[layerPTLIdx];
+    Level::Name&   m_level                                      = m_levelList[layerPTLIdx];
+    UInt&          m_bitDepthConstraint                         = m_apcLayerCfg[layer]->m_bitDepthConstraint;
+    ChromaFormat&  m_chromaFormatConstraint                     = m_apcLayerCfg[layer]->m_chromaFormatConstraint;
+    Bool&          m_intraConstraintFlag                        = m_apcLayerCfg[layer]->m_intraConstraintFlag;
+    Bool&          m_onePictureOnlyConstraintFlag               = m_apcLayerCfg[layer]->m_onePictureOnlyConstraintFlag;
+    Bool&          m_lowerBitRateConstraintFlag                 = m_apcLayerCfg[layer]->m_lowerBitRateConstraintFlag;
+    Bool&          m_progressiveSourceFlag                      = m_progressiveSourceFlagList[layerPTLIdx];
+    Bool&          m_interlacedSourceFlag                       = m_interlacedSourceFlagList[layerPTLIdx];
+    Bool&          m_nonPackedConstraintFlag                    = m_nonPackedConstraintFlagList[layerPTLIdx];
+    Bool&          m_frameOnlyConstraintFlag                    = m_frameOnlyConstraintFlagList[layerPTLIdx];
 
-    Int           m_iFrameRate                                 = m_apcLayerCfg[layer]->getFrameRate();
-    Int           m_iSourceWidth                               = m_apcLayerCfg[layer]->getSourceWidth();
-    Int           m_iSourceHeight                              = m_apcLayerCfg[layer]->getSourceHeight();
-    Int           m_confWinLeft                                = m_apcLayerCfg[layer]->m_confWinLeft;
-    Int           m_confWinRight                               = m_apcLayerCfg[layer]->m_confWinRight;
-    Int           m_confWinTop                                 = m_apcLayerCfg[layer]->m_confWinTop;
-    Int           m_confWinBottom                              = m_apcLayerCfg[layer]->m_confWinBottom;
+    Int&           m_iFrameRate                                 = m_apcLayerCfg[layer]->m_iFrameRate;
+    Int&           m_iSourceWidth                               = m_apcLayerCfg[layer]->m_iSourceWidth;
+    Int&           m_iSourceHeight                              = m_apcLayerCfg[layer]->m_iSourceHeight;
+    Int&           m_confWinLeft                                = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int&           m_confWinRight                               = m_apcLayerCfg[layer]->m_confWinRight;
+    Int&           m_confWinTop                                 = m_apcLayerCfg[layer]->m_confWinTop;
+    Int&           m_confWinBottom                              = m_apcLayerCfg[layer]->m_confWinBottom;
 
-    Int           m_iIntraPeriod                               = m_apcLayerCfg[layer]->m_iIntraPeriod;
-    Int           m_iQP                                        = m_apcLayerCfg[layer]->getIntQP();
-    Int          *m_aiPad                                      = m_apcLayerCfg[layer]->getPad();
+    Int&           m_iIntraPeriod                               = m_apcLayerCfg[layer]->m_iIntraPeriod;
+    Int&           m_iQP                                        = m_apcLayerCfg[layer]->m_iQP;
+    Int           *m_aiPad                                      = m_apcLayerCfg[layer]->m_aiPad;
 
-    Int           m_iMaxCuDQPDepth                             = m_apcLayerCfg[layer]->m_iMaxCuDQPDepth;
-    ChromaFormat  m_chromaFormatIDC                            = m_apcLayerCfg[layer]->m_chromaFormatIDC;
-    Bool          m_extendedPrecisionProcessingFlag            = m_apcLayerCfg[layer]->m_extendedPrecisionProcessingFlag;
-    Bool          m_highPrecisionOffsetsEnabledFlag            = m_apcLayerCfg[layer]->m_highPrecisionOffsetsEnabledFlag;
-    Int           *m_aidQP                                     = m_apcLayerCfg[layer]->getdQPs();
+    Int&           m_iMaxCuDQPDepth                             = m_apcLayerCfg[layer]->m_iMaxCuDQPDepth;
+    ChromaFormat&  m_chromaFormatIDC                            = m_apcLayerCfg[layer]->m_chromaFormatIDC;
+    Int           *m_aidQP                                      = m_apcLayerCfg[layer]->m_aidQP;
 
-    UInt          m_uiMaxCUWidth                               = m_apcLayerCfg[layer]->m_uiMaxCUWidth;
-    UInt          m_uiMaxCUHeight                              = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
-    UInt          m_uiMaxTotalCUDepth                          = m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth;
-    UInt          m_uiLog2DiffMaxMinCodingBlockSize            = m_apcLayerCfg[layer]->m_uiLog2DiffMaxMinCodingBlockSize;
-    UInt          m_uiQuadtreeTULog2MaxSize                    = m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MaxSize;
-    UInt          m_uiQuadtreeTULog2MinSize                    = m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MinSize;
-    UInt          m_uiQuadtreeTUMaxDepthInter                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthInter;
-    UInt          m_uiQuadtreeTUMaxDepthIntra                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthIntra;
+    UInt&          m_uiMaxCUWidth                               = m_apcLayerCfg[layer]->m_uiMaxCUWidth;
+    UInt&          m_uiMaxCUHeight                              = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
+    UInt&          m_uiMaxTotalCUDepth                          = m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth;
+    UInt&          m_uiLog2DiffMaxMinCodingBlockSize            = m_apcLayerCfg[layer]->m_uiLog2DiffMaxMinCodingBlockSize;
+    UInt&          m_uiQuadtreeTULog2MaxSize                    = m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MaxSize;
+    UInt&          m_uiQuadtreeTULog2MinSize                    = m_apcLayerCfg[layer]->m_uiQuadtreeTULog2MinSize;
+    UInt&          m_uiQuadtreeTUMaxDepthInter                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthInter;
+    UInt&          m_uiQuadtreeTUMaxDepthIntra                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthIntra;
 
-    Int           m_iWaveFrontSynchro                          = m_apcLayerCfg[layer]->m_waveFrontSynchro;
-    Bool          m_RCEnableRateControl                        = m_apcLayerCfg[layer]->getRCEnableRateControl();
-    Int           m_RCTargetBitrate                            = m_apcLayerCfg[layer]->getRCTargetBitrate();
-    Bool          m_RCKeepHierarchicalBit                      = m_apcLayerCfg[layer]->getRCKeepHierarchicalBit();
-    Bool          m_RCLCULevelRC                               = m_apcLayerCfg[layer]->getRCLCULevelRC();
-    Bool          m_RCUseLCUSeparateModel                      = m_apcLayerCfg[layer]->getRCUseLCUSeparateModel();
-    Int           m_RCInitialQP                                = m_apcLayerCfg[layer]->getRCInitialQP();
-    Bool          m_RCForceIntraQP                             = m_apcLayerCfg[layer]->getRCForceIntraQP();
+    Int&           m_iWaveFrontSynchro                          = m_apcLayerCfg[layer]->m_waveFrontSynchro;
+    Bool&          m_RCEnableRateControl                        = m_apcLayerCfg[layer]->m_RCEnableRateControl;
+    Int&           m_RCTargetBitrate                            = m_apcLayerCfg[layer]->m_RCTargetBitrate;
+    Bool&          m_RCKeepHierarchicalBit                      = m_apcLayerCfg[layer]->m_RCKeepHierarchicalBit;
+    Bool&          m_RCLCULevelRC                               = m_apcLayerCfg[layer]->m_RCLCULevelRC;
+    Bool&          m_RCUseLCUSeparateModel                      = m_apcLayerCfg[layer]->m_RCUseLCUSeparateModel;
+    Int&           m_RCInitialQP                                = m_apcLayerCfg[layer]->m_RCInitialQP;
+    Bool&          m_RCForceIntraQP                             = m_apcLayerCfg[layer]->m_RCForceIntraQP;
 
 #if U0132_TARGET_BITS_SATURATION
-    Bool          m_RCCpbSaturationEnabled                     = m_apcLayerCfg[layer]->m_RCCpbSaturationEnabled;
-    UInt          m_RCCpbSize                                  = m_apcLayerCfg[layer]->m_RCCpbSize;
-    Double        m_RCInitialCpbFullness                       = m_apcLayerCfg[layer]->m_RCInitialCpbFullness;
+    Bool&          m_RCCpbSaturationEnabled                     = m_apcLayerCfg[layer]->m_RCCpbSaturationEnabled;
+    UInt&          m_RCCpbSize                                  = m_apcLayerCfg[layer]->m_RCCpbSize;
+    Double&        m_RCInitialCpbFullness                       = m_apcLayerCfg[layer]->m_RCInitialCpbFullness;
 #endif
 
-    ScalingListMode m_useScalingListId                         = m_apcLayerCfg[layer]->m_useScalingListId;
-    Char*         m_scalingListFile                            = m_apcLayerCfg[layer]->m_scalingListFile;
+    ScalingListMode& m_useScalingListId                         = m_apcLayerCfg[layer]->m_useScalingListId;
+    Char*          m_scalingListFile                            = m_apcLayerCfg[layer]->m_scalingListFile;
+    Bool&          m_bUseSAO                                    = m_apcLayerCfg[layer]->m_bUseSAO;
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
@@ -878,7 +877,7 @@ Void TAppEncTop::xCreateLib()
     //2
     // Video I/O
     m_apcTVideoIOYuvInputFile[layer]->open( (Char *)m_apcLayerCfg[layer]->getInputFile().c_str(),  false, m_apcLayerCfg[layer]->m_inputBitDepth, m_apcLayerCfg[layer]->m_MSBExtendedBitDepth, m_apcLayerCfg[layer]->m_internalBitDepth );  // read  mode
-    m_apcTVideoIOYuvInputFile[layer]->skipFrames(m_FrameSkip, m_apcLayerCfg[layer]->getSourceWidth() - m_apcLayerCfg[layer]->getPad()[0], m_apcLayerCfg[layer]->getSourceHeight() - m_apcLayerCfg[layer]->getPad()[1], m_apcLayerCfg[layer]->m_InputChromaFormatIDC);
+    m_apcTVideoIOYuvInputFile[layer]->skipFrames(m_FrameSkip, m_apcLayerCfg[layer]->m_iSourceWidth - m_apcLayerCfg[layer]->m_aiPad[0], m_apcLayerCfg[layer]->m_iSourceHeight - m_apcLayerCfg[layer]->m_aiPad[1], m_apcLayerCfg[layer]->m_InputChromaFormatIDC);
 
     if( !m_apcLayerCfg[layer]->getReconFile().empty() )
     {
@@ -1093,9 +1092,9 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     Int  auxId = vps->getNumScalabilityTypes() - 1;
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
-      if (m_apcLayerCfg[i]->getAuxId() > maxAuxId)
+      if (m_apcLayerCfg[i]->m_auxId > maxAuxId)
       {
-        maxAuxId = m_apcLayerCfg[i]->getAuxId();
+        maxAuxId = m_apcLayerCfg[i]->m_auxId;
       }
     }
     while((1 << auxDimIdLen) < (maxAuxId + 1))
@@ -1105,7 +1104,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     vps->setDimensionIdLen(auxId, auxDimIdLen);
     for(i = 1; i < vps->getMaxLayers(); i++)
     {
-      vps->setDimensionId(i, auxId, m_apcLayerCfg[i]->getAuxId());
+      vps->setDimensionId(i, auxId, m_apcLayerCfg[i]->m_auxId);
     }
   }
 #endif
@@ -1480,13 +1479,13 @@ Void TAppEncTop::encode()
     pcPicYuvOrg[layer] = new TComPicYuv;
     if( m_isField )
     {
-      pcPicYuvOrg[layer]->create( m_apcLayerCfg[layer]->getSourceWidth(), m_apcLayerCfg[layer]->getSourceHeightOrg(), m_apcLayerCfg[layer]->getChromaFormatIDC(), m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
-      acPicYuvTrueOrg[layer].create( m_apcLayerCfg[layer]->getSourceWidth(), m_apcLayerCfg[layer]->getSourceHeightOrg(), m_apcLayerCfg[layer]->getChromaFormatIDC(), m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
+      pcPicYuvOrg[layer]->create( m_apcLayerCfg[layer]->m_iSourceWidth, m_apcLayerCfg[layer]->m_iSourceHeightOrg, m_apcLayerCfg[layer]->m_chromaFormatIDC, m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
+      acPicYuvTrueOrg[layer].create( m_apcLayerCfg[layer]->m_iSourceWidth, m_apcLayerCfg[layer]->m_iSourceHeightOrg, m_apcLayerCfg[layer]->m_chromaFormatIDC, m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
     }
     else
     {
-      pcPicYuvOrg[layer]->create( m_apcLayerCfg[layer]->getSourceWidth(), m_apcLayerCfg[layer]->getSourceHeight(), m_apcLayerCfg[layer]->getChromaFormatIDC(), m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
-      acPicYuvTrueOrg[layer].create( m_apcLayerCfg[layer]->getSourceWidth(), m_apcLayerCfg[layer]->getSourceHeight(), m_apcLayerCfg[layer]->getChromaFormatIDC(), m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
+      pcPicYuvOrg[layer]->create( m_apcLayerCfg[layer]->m_iSourceWidth, m_apcLayerCfg[layer]->m_iSourceHeight, m_apcLayerCfg[layer]->m_chromaFormatIDC, m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
+      acPicYuvTrueOrg[layer].create( m_apcLayerCfg[layer]->m_iSourceWidth, m_apcLayerCfg[layer]->m_iSourceHeight, m_apcLayerCfg[layer]->m_chromaFormatIDC, m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
     }
   }
 
@@ -1504,10 +1503,10 @@ Void TAppEncTop::encode()
         xGetBuffer(pcPicYuvRec, layer);
 
         // read input YUV file
-        m_apcTVideoIOYuvInputFile[layer]->read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_apcLayerCfg[layer]->getPad(), m_apcLayerCfg[layer]->getInputChromaFormat(), m_bClipInputVideoToRec709Range );
+        m_apcTVideoIOYuvInputFile[layer]->read( pcPicYuvOrg[layer], &acPicYuvTrueOrg[layer], ipCSC, m_apcLayerCfg[layer]->m_aiPad, m_apcLayerCfg[layer]->m_InputChromaFormatIDC, m_bClipInputVideoToRec709Range );
 
 #if AUXILIARY_PICTURES
-        if( m_apcLayerCfg[layer]->getChromaFormatIDC() == CHROMA_400 || (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_apcLayerCfg[layer]->getAuxId() == AUX_ALPHA || m_apcLayerCfg[layer]->getAuxId() == AUX_DEPTH)) )
+        if( m_apcLayerCfg[layer]->m_chromaFormatIDC == CHROMA_400 || (m_apcTEncTop[0]->getVPS()->getScalabilityMask(AUX_ID) && (m_apcLayerCfg[layer]->m_auxId == AUX_ALPHA || m_apcLayerCfg[layer]->m_auxId == AUX_DEPTH)) )
         {
           pcPicYuvOrg[layer]->convertToMonochrome(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
         }
@@ -1700,10 +1699,10 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   // set frame rate
   for(layer = 0; layer < m_numLayers; layer++)
   {
-    m_apcTEncTop[layer]->getAnalyzeAll()->setFrmRate( m_apcLayerCfg[layer]->getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layer]->getAnalyzeI()->setFrmRate( m_apcLayerCfg[layer]->getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layer]->getAnalyzeP()->setFrmRate( m_apcLayerCfg[layer]->getFrameRate() * rateMultiplier );
-    m_apcTEncTop[layer]->getAnalyzeB()->setFrmRate( m_apcLayerCfg[layer]->getFrameRate() * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeAll()->setFrmRate( m_apcLayerCfg[layer]->m_iFrameRate * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeI()->setFrmRate( m_apcLayerCfg[layer]->m_iFrameRate * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeP()->setFrmRate( m_apcLayerCfg[layer]->m_iFrameRate * rateMultiplier );
+    m_apcTEncTop[layer]->getAnalyzeB()->setFrmRate( m_apcLayerCfg[layer]->m_iFrameRate * rateMultiplier );
   }
 
   //-- all
@@ -1711,28 +1710,28 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);    
-    m_apcTEncTop[layer]->getAnalyzeAll()->printOut('a', m_apcLayerCfg[layer]->getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeAll()->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeI()->printOut('i', m_apcLayerCfg[layer]->getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeI()->printOut('i', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeP()->printOut('p', m_apcLayerCfg[layer]->getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeP()->printOut('p', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeB()->printOut('b', m_apcLayerCfg[layer]->getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeB()->printOut('b', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
   }
 
   for( layer = 0; layer < m_numLayers; layer++ )
@@ -1741,7 +1740,7 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
     {
       const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
 
-      m_apcTEncTop[layer]->getAnalyzeAll()->printSummary(m_apcLayerCfg[layer]->getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
+      m_apcTEncTop[layer]->getAnalyzeAll()->printSummary(m_apcLayerCfg[layer]->m_chromaFormatIDC, printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
     }
   }
 
@@ -1751,9 +1750,9 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
     {
       const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
 
-      m_apcTEncTop[layer]->getAnalyzeI()->printSummary(m_apcLayerCfg[layer]->getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"I.txt");
-      m_apcTEncTop[layer]->getAnalyzeP()->printSummary(m_apcLayerCfg[layer]->getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"P.txt");
-      m_apcTEncTop[layer]->getAnalyzeB()->printSummary(m_apcLayerCfg[layer]->getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"B.txt");
+      m_apcTEncTop[layer]->getAnalyzeI()->printSummary(m_apcLayerCfg[layer]->m_chromaFormatIDC, printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"I.txt");
+      m_apcTEncTop[layer]->getAnalyzeP()->printSummary(m_apcLayerCfg[layer]->m_chromaFormatIDC, printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"P.txt");
+      m_apcTEncTop[layer]->getAnalyzeB()->printSummary(m_apcLayerCfg[layer]->m_chromaFormatIDC, printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryPicFilenameBase()+"B.txt");
     }
   }
 
@@ -1765,16 +1764,16 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
       TEncAnalyze *analyze = m_apcTEncTop[layer]->getAnalyzeAllin();
 
       //-- interlaced summary
-      analyze->setFrmRate( m_apcLayerCfg[layer]->getFrameRate());
+      analyze->setFrmRate( m_apcLayerCfg[layer]->m_iFrameRate);
       analyze->setBits(m_apcTEncTop[layer]->getAnalyzeB()->getBits());
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-      analyze->printOut('a', m_apcLayerCfg[layer]->getChromaFormatIDC(), printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+      analyze->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
 
       if (!m_apcTEncTop[layer]->getSummaryOutFilename().empty())
       {
-        analyze->printSummary(m_apcLayerCfg[layer]->getChromaFormatIDC(), printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
+        analyze->printSummary(m_apcLayerCfg[layer]->m_chromaFormatIDC, printSequenceMSE, bitDepths, m_apcTEncTop[layer]->getSummaryOutFilename());
       }
     }
   }   
@@ -1927,7 +1926,7 @@ Void TAppEncTop::xGetBuffer( TComPicYuv*& rpcPicYuvRec, UInt layer)
   {
     rpcPicYuvRec = new TComPicYuv;
 
-    rpcPicYuvRec->create( m_apcLayerCfg[layer]->getSourceWidth(), m_apcLayerCfg[layer]->getSourceHeight(), m_apcLayerCfg[layer]->getChromaFormatIDC(), m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
+    rpcPicYuvRec->create( m_apcLayerCfg[layer]->m_iSourceWidth, m_apcLayerCfg[layer]->m_iSourceHeight, m_apcLayerCfg[layer]->m_chromaFormatIDC, m_apcLayerCfg[layer]->m_uiMaxCUWidth, m_apcLayerCfg[layer]->m_uiMaxCUHeight, m_apcLayerCfg[layer]->m_uiMaxTotalCUDepth, true, NULL );
   }
   m_acListPicYuvRec[layer].pushBack( rpcPicYuvRec );
 }
@@ -1951,7 +1950,7 @@ Void TAppEncTop::xDeleteBuffer( )
 
 Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
 {
-  ChromaFormat chromaFormatIdc = m_apcLayerCfg[layer]->getChromaFormatIDC();
+  ChromaFormat& chromaFormatIdc = m_apcLayerCfg[layer]->m_chromaFormatIDC;
   Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -2188,7 +2187,7 @@ Void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
 Void TAppEncTop::printRateSummary()
 {
 #if SVC_EXTENSION
-  Double time = (Double) m_iFrameRcvd / m_apcLayerCfg[m_numLayers-1]->getFrameRate();
+  Double time = (Double) m_iFrameRcvd / m_apcLayerCfg[m_numLayers-1]->m_iFrameRate;
 #else
   Double time = (Double) m_iFrameRcvd / m_iFrameRate;
 #endif

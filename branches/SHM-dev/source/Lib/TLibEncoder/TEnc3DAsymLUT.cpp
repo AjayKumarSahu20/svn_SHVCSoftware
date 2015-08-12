@@ -131,7 +131,7 @@ TEnc3DAsymLUT::~TEnc3DAsymLUT()
 {
   if( m_dTotalFrameBit != 0 )
   {
-    printf( "\nTotal CGS bit: %d, %.2lf%%" , m_nTotalCGSBit , m_nTotalCGSBit * 100 / m_dTotalFrameBit );
+    printf( "\nTotal CGS bits: %d, %.2lf%%\n\n" , m_nTotalCGSBit , m_nTotalCGSBit * 100 / m_dTotalFrameBit );
   }
 
   destroy();
