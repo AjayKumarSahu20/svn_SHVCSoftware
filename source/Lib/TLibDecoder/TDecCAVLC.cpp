@@ -3410,7 +3410,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   }
   else
   {
-    vps->setNumVideoSignalInfo(vps->getMaxLayers() - vps->getBaseLayerInternalFlag() ? 0 : 1);
+    vps->setNumVideoSignalInfo(vps->getMaxLayers() - (vps->getBaseLayerInternalFlag() ? 0 : 1));
   }
 
   for(i = 0; i < vps->getNumVideoSignalInfo(); i++)

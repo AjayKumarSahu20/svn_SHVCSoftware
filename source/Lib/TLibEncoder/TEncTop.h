@@ -142,7 +142,6 @@ private:
   Int                     m_numAddLayerSets;
   Bool                    m_pocDecrementedInDPBFlag;
   Int                     m_currPocMsb;
-  Bool                    m_prevPicHasEos;
 #endif //SVC_EXTENSION
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
