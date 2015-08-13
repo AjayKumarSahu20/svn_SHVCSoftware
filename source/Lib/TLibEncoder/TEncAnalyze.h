@@ -136,7 +136,7 @@ public:
   }
 
 #if SVC_EXTENSION
-  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layer = 0 )
+  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layerId = 0 )
 #else
   Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths )
 #endif
@@ -172,7 +172,7 @@ public:
         if (printMSEBasedSNR)
         {
 #if SVC_EXTENSION
-          if( layer == 0 )
+          if( layerId == 0 )
           {
 #endif
           printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR" );
@@ -191,7 +191,7 @@ public:
           }
 
           printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
-                 layer,
+                 layerId,
 
 #else
           printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf",
@@ -211,7 +211,7 @@ public:
 
 #if SVC_EXTENSION
           printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
-                 layer,
+                 layerId,
 #else
           printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
 #endif
@@ -235,7 +235,7 @@ public:
           //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
 #if SVC_EXTENSION
           printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
-                 layer,
+                 layerId,
 #else
           printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf",
 #endif
@@ -265,7 +265,7 @@ public:
           if (printMSEBasedSNR)
           {
 #if SVC_EXTENSION
-            if( layer == 0 )
+            if( layerId == 0 )
             {
 #endif
             printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
@@ -283,7 +283,7 @@ public:
 #if SVC_EXTENSION
             }
             printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
-                   layer,
+                   layerId,
 #else
             printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
 #endif
@@ -309,7 +309,7 @@ public:
 
 #if SVC_EXTENSION
             printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
-                   layer,
+                   layerId,
 #else
             printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
 #endif
@@ -323,7 +323,7 @@ public:
           else
           {
 #if SVC_EXTENSION
-            if( layer == 0 )
+            if( layerId == 0 )
             {
 #endif
             printf( "\tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
@@ -341,7 +341,7 @@ public:
 #if SVC_EXTENSION
             }
             printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
-                   layer,
+                   layerId,
 #else
             printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
 #endif
