@@ -169,16 +169,11 @@ protected:
   Int       m_iDecodingRefreshType;                           ///< random access type
   Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
 
-#if SVC_EXTENSION
-  Int       m_extraRPSs[MAX_LAYERS];                          ///< extra RPSs added to handle CRA
-  GOPEntry  m_EhGOPList[MAX_LAYERS][MAX_GOP];                 ///< the enhancement layer coding structure entries from the config file
-  Int       m_inheritCodingStruct[MAX_LAYERS];
-  Int       m_EhMaxTempLayer[MAX_LAYERS];                    ///< Max temporal layer
-#else
+#if !SVC_EXTENSION
   Int       m_extraRPSs;                                      ///< extra RPSs added to handle CRA
-#endif
 
   GOPEntry  m_GOPList[MAX_GOP];                               ///< the coding structure entries from the config file
+#endif
   Int       m_numReorderPics[MAX_TLAYER];                     ///< total number of reorder pictures
   Int       m_maxDecPicBuffering[MAX_TLAYER];                 ///< total number of pictures in the decoded picture buffer
   Bool      m_crossComponentPredictionEnabledFlag;            ///< flag enabling the use of cross-component prediction
@@ -220,7 +215,9 @@ protected:
   Bool      m_bUseAdaptiveQP;                                 ///< Flag for enabling QP adaptation based on a psycho-visual model
   Int       m_iQPAdaptationRange;                             ///< dQP range by QP adaptation
 
+#if !SVC_EXTENSION
   Int       m_maxTempLayer;                                  ///< Max temporal layer
+#endif
 
   // coding unit (CU) definition
   // TODO: Remove MaxCUWidth/MaxCUHeight and replace with MaxCUSize.
