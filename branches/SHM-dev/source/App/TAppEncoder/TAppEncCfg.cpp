@@ -779,7 +779,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
   Int*    cfg_layerPTLIdx[MAX_VPS_LAYER_IDX_PLUS1];
-  string  cfg_ScalingListFile[MAX_LAYERS];
+  string* cfg_scalingListFileName[MAX_LAYERS];
   ScalingListMode*   cfg_UseScalingListId[MAX_LAYERS];
 
   Bool*   cfg_bUseSAO[MAX_LAYERS];
@@ -825,8 +825,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     cfg_samplePredRefLayerIdsPtr[layer] = &cfg_samplePredRefLayerIds[layer];
     cfg_numMotionPredRefLayers  [layer] = &m_apcLayerCfg[layer]->m_numMotionPredRefLayers;
     cfg_motionPredRefLayerIdsPtr[layer] = &cfg_motionPredRefLayerIds[layer];
-    cfg_numActiveRefLayers  [layer] = &m_apcLayerCfg[layer]->m_numActiveRefLayers;
-    cfg_predLayerIdsPtr     [layer] = &cfg_predLayerIds[layer];
+    cfg_numActiveRefLayers      [layer] = &m_apcLayerCfg[layer]->m_numActiveRefLayers;
+    cfg_predLayerIdsPtr         [layer] = &cfg_predLayerIds[layer];
+    cfg_scalingListFileName     [layer] = &m_apcLayerCfg[layer]->m_scalingListFileName;
 
     cfg_numRefLayerLocationOffsets [layer] = &m_apcLayerCfg[layer]->m_numRefLayerLocationOffsets;
     cfg_waveFrontSynchro[layer]  = &m_apcLayerCfg[layer]->m_waveFrontSynchro;
@@ -1367,7 +1368,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #endif
   ("WaveFrontSynchro%d",                              cfg_waveFrontSynchro,                   0,  m_numLayers, "0: no synchro; 1 synchro with TR; 2 TRR etc")
   ("ScalingList%d",                                   cfg_UseScalingListId,     SCALING_LIST_OFF, m_numLayers, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
-  ("ScalingListFile%d",                               cfg_ScalingListFile,            string(""), m_numLayers, "Scaling list file name. Use an empty string to produce help.")
+  ("ScalingListFile%d",                               cfg_scalingListFileName,        string(""), m_numLayers, "Scaling list file name. Use an empty string to produce help.")
 #else
   ("WaveFrontSynchro",                                m_iWaveFrontSynchro,                                  0, "0: no synchro; 1 synchro with top-right-right")
   ("ScalingList",                                     m_useScalingListId,                    SCALING_LIST_OFF, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
@@ -1802,8 +1803,6 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if SVC_EXTENSION
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcLayerCfg[layer]->m_scalingListFileName = cfg_ScalingListFile[layer].empty() ? NULL : strdup(cfg_ScalingListFile[layer].c_str());
-
     if( m_apcLayerCfg[layer]->m_layerId < 0 )
     {
       m_apcLayerCfg[layer]->m_layerId = layer;
