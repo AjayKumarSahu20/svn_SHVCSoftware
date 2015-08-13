@@ -41,6 +41,7 @@ protected:
   Int       m_confWinBottom;
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
+  Int       m_iGOPSize;                                       ///< GOP size of hierarchical structure
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
   ChromaFormat m_chromaFormatIDC;
   ChromaFormat m_InputChromaFormatIDC;
@@ -52,6 +53,11 @@ protected:
 #if AUXILIARY_PICTURES
   Int       m_auxId;
 #endif
+
+  Int       m_extraRPSs;                                     ///< extra RPSs added to handle CRA
+  GOPEntry  m_GOPList[MAX_GOP];                              ///< the enhancement layer coding structure entries from the config file
+  Int       m_inheritCodingStruct;                           ///< inherit coding structure from certain layer
+  Int       m_maxTempLayer;                                  ///< Max temporal layer
 
   Int       *m_samplePredRefLayerIds;
   Int       m_numSamplePredRefLayers;
