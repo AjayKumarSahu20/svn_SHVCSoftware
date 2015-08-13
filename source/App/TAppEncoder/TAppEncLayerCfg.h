@@ -27,8 +27,8 @@ class TAppEncLayerCfg
   friend class TAppEncTop;
 protected:
   // file I/O0
-  string    m_cInputFile;                                     ///< source file name
-  string    m_cReconFile;                                     ///< output reconstruction file
+  string    m_inputFileName;                                     ///< source file name
+  string    m_reconFileName;                                     ///< output reconstruction file
   Int       m_layerId;                                        ///< layer Id
   Int       m_iFrameRate;                                     ///< source frame-rates (Hz)
   Int       m_iSourceWidth;                                   ///< source width in pixel
@@ -94,14 +94,14 @@ protected:
   Bool      m_bUseSAO;
 
   ScalingListMode m_useScalingListId;                         ///< using quantization matrix
-  Char*     m_scalingListFile;                                ///< quantization matrix file name
+  std::string m_scalingListFileName;                          ///< quantization matrix file name
 
   Int       m_maxTidIlRefPicsPlus1;
   Int       m_waveFrontSynchro;                   ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
   Int       m_waveFrontFlush;                     ///< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
-  Char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
+  std::string m_dQPFileName;                                  ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
   Int       m_numRefLayerLocationOffsets;
@@ -129,7 +129,7 @@ protected:
 
   Int       m_repFormatIdx;
 #if Q0074_COLOUR_REMAPPING_SEI
-  string    m_colourRemapSEIFileRoot;                           ///< Colour Remapping Information SEI message parameters file
+  string    m_colourRemapSEIFileName;                         ///< Colour Remapping Information SEI message parameters file
   Int       m_colourRemapSEIId;
   Bool      m_colourRemapSEICancelFlag;
   Bool      m_colourRemapSEIPersistenceFlag;
@@ -167,9 +167,9 @@ public:
 
   Void    setAppEncCfg(TAppEncCfg* p) {m_cAppEncCfg = p;          }
 
-  string  getInputFile()              {return m_cInputFile;       }
-  string  getReconFile()              {return m_cReconFile;       }
-  Double  getFloatQP()                {return m_fQP;              }
+  string& getInputFileName()          {return m_inputFileName;       }
+  string& getReconFileName()          {return m_reconFileName;       }
+  Double  getFloatQP()                {return m_fQP;                 }
   Int     getConfWinLeft()            {return m_confWinLeft;         }
   Int     getConfWinRight()           {return m_confWinRight;        }
   Int     getConfWinTop()             {return m_confWinTop;          }

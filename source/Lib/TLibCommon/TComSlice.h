@@ -175,7 +175,7 @@ public:
 
   Void       checkDcOfMatrix();
   Void       processRefMatrix(UInt sizeId, UInt listId , UInt refListId );
-  Bool       xParseScalingList(Char* pchFile);
+  Bool       xParseScalingList(const std::string &fileName);
   Void       setDefaultScalingList();
   Bool       checkDefaultScalingList();
 
@@ -788,7 +788,7 @@ public:
 
   UInt              getNumHrdParameters() const                          { return m_numHrdParameters;                                       }
   Void              setNumHrdParameters(UInt v)                          { m_numHrdParameters = v;                                          }
-  
+
 #if !SVC_EXTENSION
   UInt              getMaxNuhReservedZeroLayerId() const                 { return m_maxNuhReservedZeroLayerId;                              }
   Void              setMaxNuhReservedZeroLayerId(UInt v)                 { m_maxNuhReservedZeroLayerId = v;                                 }
@@ -1139,6 +1139,7 @@ public:
   const Window&     getConformanceWindow( const TComSPS* sps, const UInt layerId ) const;
 #endif //SVC_EXTENSION
 };
+
 
 class TComVUI
 {

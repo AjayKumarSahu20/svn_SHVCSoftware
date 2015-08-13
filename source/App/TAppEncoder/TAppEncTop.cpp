@@ -498,8 +498,10 @@ Void TAppEncTop::xInitLibCfg()
 #endif
 
     ScalingListMode& m_useScalingListId                         = m_apcLayerCfg[layer]->m_useScalingListId;
-    Char*          m_scalingListFile                            = m_apcLayerCfg[layer]->m_scalingListFile;
+    string&        m_scalingListFileName                        = m_apcLayerCfg[layer]->m_scalingListFileName;
     Bool&          m_bUseSAO                                    = m_apcLayerCfg[layer]->m_bUseSAO;
+
+    string&        m_colourRemapSEIFileName                     = m_apcLayerCfg[layer]->m_colourRemapSEIFileName;
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
@@ -784,7 +786,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setWaveFrontSynchro                                  ( m_iWaveFrontSynchro );
   m_cTEncTop.setTMVPModeId                                        ( m_TMVPModeId );
   m_cTEncTop.setUseScalingListId                                  ( m_useScalingListId  );
-  m_cTEncTop.setScalingListFile                                   ( m_scalingListFile   );
+  m_cTEncTop.setScalingListFileName                               ( m_scalingListFileName );
   m_cTEncTop.setSignHideFlag                                      ( m_signHideFlag);
   m_cTEncTop.setUseRateCtrl                                       ( m_RCEnableRateControl );
   m_cTEncTop.setTargetBitrate                                     ( m_RCTargetBitrate );
@@ -842,11 +844,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setSummaryVerboseness                                ( m_summaryVerboseness );
 
 #if Q0074_COLOUR_REMAPPING_SEI
-#if SVC_EXTENSION
-  m_cTEncTop.xSetCRISEIFileRoot                                    ( const_cast<Char*>(m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot.c_str()) );
-#else
-  m_cTEncTop.xSetCRISEIFileRoot                                    ( const_cast<Char*>(m_colourRemapSEIFileRoot.c_str()) );
-#endif
+  m_cTEncTop.xSetCRISEIFileRoot                                   ( m_colourRemapSEIFileName );
 #endif
 #if LAYERS_NOT_PRESENT_SEI
   m_cTEncTop.setLayersNotPresentSEIEnabled                        ( m_layersNotPresentSEIEnabled );
@@ -876,12 +874,12 @@ Void TAppEncTop::xCreateLib()
   {
     //2
     // Video I/O
-    m_apcTVideoIOYuvInputFile[layer]->open( (Char *)m_apcLayerCfg[layer]->getInputFile().c_str(),  false, m_apcLayerCfg[layer]->m_inputBitDepth, m_apcLayerCfg[layer]->m_MSBExtendedBitDepth, m_apcLayerCfg[layer]->m_internalBitDepth );  // read  mode
+    m_apcTVideoIOYuvInputFile[layer]->open( m_apcLayerCfg[layer]->getInputFileName(),  false, m_apcLayerCfg[layer]->m_inputBitDepth, m_apcLayerCfg[layer]->m_MSBExtendedBitDepth, m_apcLayerCfg[layer]->m_internalBitDepth );  // read  mode
     m_apcTVideoIOYuvInputFile[layer]->skipFrames(m_FrameSkip, m_apcLayerCfg[layer]->m_iSourceWidth - m_apcLayerCfg[layer]->m_aiPad[0], m_apcLayerCfg[layer]->m_iSourceHeight - m_apcLayerCfg[layer]->m_aiPad[1], m_apcLayerCfg[layer]->m_InputChromaFormatIDC);
 
-    if( !m_apcLayerCfg[layer]->getReconFile().empty() )
+    if( !m_apcLayerCfg[layer]->getReconFileName().empty() )
     {
-      m_apcTVideoIOYuvReconFile[layer]->open((Char *)m_apcLayerCfg[layer]->getReconFile().c_str(), true, m_apcLayerCfg[layer]->m_outputBitDepth, m_apcLayerCfg[layer]->m_MSBExtendedBitDepth, m_apcLayerCfg[layer]->m_internalBitDepth );  // write mode
+      m_apcTVideoIOYuvReconFile[layer]->open( m_apcLayerCfg[layer]->getReconFileName(), true, m_apcLayerCfg[layer]->m_outputBitDepth, m_apcLayerCfg[layer]->m_MSBExtendedBitDepth, m_apcLayerCfg[layer]->m_internalBitDepth );  // write mode
     }
 
     // Neo Decoder
@@ -889,12 +887,12 @@ Void TAppEncTop::xCreateLib()
   }
 #else //SVC_EXTENSION
   // Video I/O
-  m_cTVideoIOYuvInputFile.open( m_pchInputFile,     false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // read  mode
+  m_cTVideoIOYuvInputFile.open( m_inputFileName,     false, m_inputBitDepth, m_MSBExtendedBitDepth, m_internalBitDepth );  // read  mode
   m_cTVideoIOYuvInputFile.skipFrames(m_FrameSkip, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1], m_InputChromaFormatIDC);
 
-  if (m_pchReconFile)
+  if (!m_reconFileName.empty())
   {
-    m_cTVideoIOYuvReconFile.open(m_pchReconFile, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
+    m_cTVideoIOYuvReconFile.open(m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, m_internalBitDepth);  // write mode
   }
 
   // Neo Decoder
@@ -1438,10 +1436,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 #if SVC_EXTENSION
 Void TAppEncTop::encode()
 {
-  fstream bitstreamFile(m_pchBitstreamFile, fstream::binary | fstream::out);
+  fstream bitstreamFile(m_bitstreamFileName.c_str(), fstream::binary | fstream::out);
   if (!bitstreamFile)
   {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_pchBitstreamFile);
+    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_bitstreamFileName.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -1800,10 +1798,10 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
  */
 Void TAppEncTop::encode()
 {
-  fstream bitstreamFile(m_pchBitstreamFile, fstream::binary | fstream::out);
+  fstream bitstreamFile(m_bitstreamFileName.c_str(), fstream::binary | fstream::out);
   if (!bitstreamFile)
   {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_pchBitstreamFile);
+    fprintf(stderr, "\nfailed to open bitstream file `%s' for writing\n", m_bitstreamFileName.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -1972,7 +1970,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
       TComPicYuv*  pcPicYuvRecTop  = *(iterPicYuvRec++);
       TComPicYuv*  pcPicYuvRecBottom  = *(iterPicYuvRec++);
 
-      if( !m_apcLayerCfg[layer]->getReconFile().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed() )
+      if( !m_apcLayerCfg[layer]->getReconFileName().empty() && pcPicYuvRecTop->isReconstructed() && pcPicYuvRecBottom->isReconstructed() )
       {
         m_apcTVideoIOYuvReconFile[layer]->write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_apcLayerCfg[layer]->getConfWinLeft() * xScal, m_apcLayerCfg[layer]->getConfWinRight() * xScal, 
         m_apcLayerCfg[layer]->getConfWinTop() * yScal, m_apcLayerCfg[layer]->getConfWinBottom() * yScal, NUM_CHROMA_FORMAT, m_isTopFieldFirst );
@@ -1993,7 +1991,7 @@ Void TAppEncTop::xWriteRecon(UInt layer, Int iNumEncoded)
     for ( i = 0; i < iNumEncoded; i++ )
     {
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
-      if( !m_apcLayerCfg[layer]->getReconFile().empty() && pcPicYuvRec->isReconstructed() )
+      if( !m_apcLayerCfg[layer]->getReconFileName().empty() && pcPicYuvRec->isReconstructed() )
       {
         m_apcTVideoIOYuvReconFile[layer]->write( pcPicYuvRec, ipCSC, m_apcLayerCfg[layer]->getConfWinLeft() * xScal, m_apcLayerCfg[layer]->getConfWinRight() * xScal,
           m_apcLayerCfg[layer]->getConfWinTop() * yScal, m_apcLayerCfg[layer]->getConfWinBottom() * yScal,
@@ -2100,7 +2098,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
       TComPicYuv*  pcPicYuvRecTop  = *(iterPicYuvRec++);
       TComPicYuv*  pcPicYuvRecBottom  = *(iterPicYuvRec++);
 
-      if (m_pchReconFile)
+      if (!m_reconFileName.empty())
       {
         m_cTVideoIOYuvReconFile.write( pcPicYuvRecTop, pcPicYuvRecBottom, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom, NUM_CHROMA_FORMAT, m_isTopFieldFirst );
       }
@@ -2129,7 +2127,7 @@ Void TAppEncTop::xWriteOutput(std::ostream& bitstreamFile, Int iNumEncoded, cons
     for ( i = 0; i < iNumEncoded; i++ )
     {
       TComPicYuv*  pcPicYuvRec  = *(iterPicYuvRec++);
-      if (m_pchReconFile)
+      if (!m_reconFileName.empty())
       {
         m_cTVideoIOYuvReconFile.write( pcPicYuvRec, ipCSC, m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom,
             NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );

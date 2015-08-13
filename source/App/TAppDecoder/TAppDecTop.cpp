@@ -89,11 +89,7 @@ Void TAppDecTop::create()
 
 Void TAppDecTop::destroy()
 {
-  if (m_pchBitstreamFile)
-  {
-    free (m_pchBitstreamFile);
-    m_pchBitstreamFile = NULL;
-  }
+  m_bitstreamFileName.clear();
 #if SVC_EXTENSION
 #if CONFORMANCE_BITSTREAM_MODE
   for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
@@ -101,11 +97,7 @@ Void TAppDecTop::destroy()
   for( Int i = 0; i <= m_tgtLayerId; i++ )
 #endif
   {
-    if( m_pchReconFile[i] )
-    {
-      free ( m_pchReconFile[i] );
-      m_pchReconFile[i] = NULL;
-    }
+    m_reconFileName[i].clear();
 
     if( m_apcTDecTop[i] )
     {
@@ -120,18 +112,10 @@ Void TAppDecTop::destroy()
     }
   }
 #if AVC_BASE
-  if( m_pchBLReconFile )
-  {
-    free ( m_pchBLReconFile );
-    m_pchBLReconFile = NULL;
-  }
+  m_reconFileNameBL.clear();
 #endif
 #else
-  if (m_pchReconFile)
-  {
-    free (m_pchReconFile);
-    m_pchReconFile = NULL;
-  }
+  m_reconFileName.clear();
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
   if (seiColourRemappingInfoPrevious != NULL)
@@ -159,10 +143,10 @@ Void TAppDecTop::decode()
   Int                poc;
   TComList<TComPic*>* pcListPic = NULL;
 
-  ifstream bitstreamFile(m_pchBitstreamFile, ifstream::in | ifstream::binary);
+  ifstream bitstreamFile(m_bitstreamFileName.c_str(), ifstream::in | ifstream::binary);
   if (!bitstreamFile)
   {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for reading\n", m_pchBitstreamFile);
+    fprintf(stderr, "\nfailed to open bitstream file `%s' for reading\n", m_bitstreamFileName.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -202,9 +186,9 @@ Void TAppDecTop::decode()
 #if AVC_BASE
   TComPic pcBLPic;
   fstream streamYUV;
-  if( m_pchBLReconFile )
+  if( !m_reconFileNameBL.empty() )
   {
-    streamYUV.open( m_pchBLReconFile, fstream::in | fstream::binary );
+    streamYUV.open( m_reconFileNameBL, fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_apcTDecTop[0]->getListPic();
   m_apcTDecTop[0]->setBLReconFile( &streamYUV );
@@ -328,7 +312,7 @@ Void TAppDecTop::decode()
 
     if( pcListPic )
     {
-      if ( m_pchReconFile[curLayerId] && !openedReconFile[curLayerId] )
+      if ( !m_reconFileName[curLayerId].empty() && !openedReconFile[curLayerId] )
       {
         const BitDepths &bitDepths=pcListPic->front()->getSlice(0)->getBitDepths(); // use bit depths of first reconstructed picture.
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
@@ -338,7 +322,7 @@ Void TAppDecTop::decode()
             m_outputBitDepth[channelType] = bitDepths.recon[channelType];
           }
         }
-        m_apcTVideoIOYuvReconFile[curLayerId]->open( m_pchReconFile[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
+        m_apcTVideoIOYuvReconFile[curLayerId]->open( m_reconFileName[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
 
         openedReconFile[curLayerId] = true;
       }
@@ -441,10 +425,10 @@ Void TAppDecTop::decode()
   Int                 poc;
   TComList<TComPic*>* pcListPic = NULL;
 
-  ifstream bitstreamFile(m_pchBitstreamFile, ifstream::in | ifstream::binary);
+  ifstream bitstreamFile(m_bitstreamFileName.c_str(), ifstream::in | ifstream::binary);
   if (!bitstreamFile)
   {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for reading\n", m_pchBitstreamFile);
+    fprintf(stderr, "\nfailed to open bitstream file `%s' for reading\n", m_bitstreamFileName.c_str());
     exit(EXIT_FAILURE);
   }
 
@@ -547,7 +531,7 @@ Void TAppDecTop::decode()
 
     if( pcListPic )
     {
-      if ( m_pchReconFile && !openedReconFile )
+      if ( (!m_reconFileName.empty()) && (!openedReconFile) )
       {
         const BitDepths &bitDepths=pcListPic->front()->getPicSym()->getSPS().getBitDepths(); // use bit depths of first reconstructed picture.
         for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
@@ -558,7 +542,7 @@ Void TAppDecTop::decode()
           }
         }
 
-        m_cTVideoIOYuvReconFile.open( m_pchReconFile, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
+        m_cTVideoIOYuvReconFile.open( m_reconFileName, true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
         openedReconFile = true;
       }
       // write reconstruction to file
@@ -647,7 +631,7 @@ Void TAppDecTop::xDestroyDecLib()
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
   {
-    if ( m_pchReconFile[layer] )
+    if ( !m_reconFileName[layer].empty() )
     {
       m_apcTVideoIOYuvReconFile[layer]->close();
     }
@@ -656,9 +640,9 @@ Void TAppDecTop::xDestroyDecLib()
     m_apcTDecTop[layer]->destroy();
   }
 #else
-  if ( m_pchReconFile )
+  if ( !m_reconFileName.empty() )
   {
-    m_cTVideoIOYuvReconFile. close();
+    m_cTVideoIOYuvReconFile.close();
   }
 
   // destroy decoder class
@@ -791,7 +775,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
         // write to file
         numPicsNotYetDisplayed = numPicsNotYetDisplayed-2;
 #if SVC_EXTENSION
-        if ( m_pchReconFile[layerId] )
+        if ( !m_reconFileName[layerId].empty() )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
@@ -825,7 +809,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
         // update POC of display order
         m_aiPOCLastDisplay[layerId] = pcPicBottom->getPOC();
 #else
-        if ( m_pchReconFile )
+        if ( !m_reconFileName.empty() )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
@@ -900,7 +884,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
           dpbFullness--;
         }
 #if SVC_EXTENSION
-        if( m_pchReconFile[layerId] )
+        if ( !m_reconFileName[layerId].empty() )
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
@@ -919,7 +903,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
         // update POC of display order
         m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
 #else
-        if ( m_pchReconFile )
+        if ( !m_reconFileName.empty() )
         {
           const Window &conf    = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
@@ -1023,7 +1007,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
       {
         // write to file
 #if SVC_EXTENSION
-        if ( m_pchReconFile[layerId] )
+        if ( !m_reconFileName[layerId].empty() )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
@@ -1042,7 +1026,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         // update POC of display order
         m_aiPOCLastDisplay[layerId] = pcPicBottom->getPOC();
 #else
-        if ( m_pchReconFile )
+        if ( !m_reconFileName.empty() )
         {
           const Window &conf = pcPicTop->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
@@ -1102,7 +1086,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
       {
         // write to file
 #if SVC_EXTENSION
-        if ( m_pchReconFile[layerId] )
+        if ( !m_reconFileName[layerId].empty() )
         {
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
@@ -1122,7 +1106,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
         // update POC of display order
         m_aiPOCLastDisplay[layerId] = pcPic->getPOC();
 #else
-        if ( m_pchReconFile )
+        if ( !m_reconFileName.empty() )
         {
           const Window &conf    = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();
@@ -1233,9 +1217,9 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
 
 #if ALIGNED_BUMPING
 // Function outputs a picture, and marks it as not needed for output.
-Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus )
+Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, std::string& reconFileName, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus )
 {
-  if ( reconFile )
+  if( !reconFileName.empty() )
   {
     const Window &conf = pic->getConformanceWindow();
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
@@ -1487,7 +1471,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       }
       TComPic *pic = *iterPic;
 
-      xOutputAndMarkPic( pic, m_pchReconFile[layerId], layerId, m_aiPOCLastDisplay[layerId], dpbStatus );
+      xOutputAndMarkPic( pic, m_reconFileName[layerId], layerId, m_aiPOCLastDisplay[layerId], dpbStatus );
 
 #if CONFORMANCE_BITSTREAM_MODE
       FILE *fptr;
@@ -1960,7 +1944,7 @@ Void TAppDecTop::xApplyColourRemapping( const TComSPS *sps, TComPicYuv& pic, con
     }
 
     //Write remapped picture in decoding order
-    Char  cTemp[255];
+    TChar  cTemp[255];
     sprintf(cTemp, "seiColourRemappedPic_L%d_%dx%d_%dbits.yuv", layerId, iWidth, iHeight, storeCriSEI[layerId].m_colourRemapBitDepth );
     picColourRemapped.dump( cTemp, true, storeCriSEI[layerId].m_colourRemapBitDepth );
 
@@ -1973,7 +1957,7 @@ Void TAppDecTop::xApplyColourRemapping( const TComSPS *sps, TComPicYuv& pic, con
     //Write no remapped picture in decoding order
     if (storeCriSEI[layerId].m_colourRemapBitDepth == 8 || storeCriSEI[layerId].m_colourRemapBitDepth == 10)
     {
-      Char  cTemp[255];
+      TChar  cTemp[255];
       sprintf(cTemp, "seiColourRemappedPic_L%d_%dx%d_%dbits.yuv", layerId, pic.getWidth(COMPONENT_Y), pic.getHeight(COMPONENT_Y), storeCriSEI[layerId].m_colourRemapBitDepth );
       pic.dump( cTemp, true, storeCriSEI[layerId].m_colourRemapBitDepth );
     }

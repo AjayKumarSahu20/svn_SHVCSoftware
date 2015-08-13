@@ -135,7 +135,7 @@ protected:
   Void flushAllPictures(Bool outputPictures); 
   Void flushAllPictures(Int layerId, Bool outputPictures);
 
-  Void xOutputAndMarkPic( TComPic *pic, const Char *reconFile, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus);
+  Void xOutputAndMarkPic( TComPic *pic, std::string& reconFileName, const Int layerId, Int &pocLastDisplay, DpbStatus &dpbStatus);
   Void outputAllPictures(Int layerId, Bool notOutputCurrAu);
   Void xFindDPBStatus( std::vector<Int> &listOfPocs
                             , std::vector<Int> *listOfPocsInEachLayer

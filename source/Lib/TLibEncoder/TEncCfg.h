@@ -56,7 +56,7 @@ struct GOPEntry
   Int m_temporalId;
   Bool m_refPic;
   Int m_numRefPicsActive;
-  Char m_sliceType;
+  SChar m_sliceType;
   Int m_numRefPics;
   Int m_referencePics[MAX_NUM_REF_PICS];
   Int m_usedByCurrPic[MAX_NUM_REF_PICS];
@@ -327,8 +327,8 @@ protected:
   WeightedPredictionMethod m_weightedPredictionMethod;
   UInt      m_log2ParallelMergeLevelMinus2;       ///< Parallel merge estimation region
   UInt      m_maxNumMergeCand;                    ///< Maximum number of merge candidates
-  ScalingListMode m_useScalingListId;            ///< Using quantization matrix i.e. 0=off, 1=default, 2=file.
-  Char*     m_scalingListFile;          ///< quantization matrix file name
+  ScalingListMode m_useScalingListId;             ///< Using quantization matrix i.e. 0=off, 1=default, 2=file.
+  std::string m_scalingListFileName;              ///< quantization matrix file name
   Int       m_TMVPModeId;
   Bool      m_signHideFlag;
   Bool      m_RCEnableRateControl;
@@ -483,7 +483,7 @@ protected:
 #endif
 #endif //SVC_EXTENSION
 #if Q0074_COLOUR_REMAPPING_SEI
-  Char*                               m_colourRemapSEIFileRoot;          ///< SEI Colour Remapping File (initialized from external file)
+  string                              m_colourRemapSEIFileName;          ///< SEI Colour Remapping File (initialized from external file)
 #endif
 
 public:
@@ -491,7 +491,7 @@ public:
   : m_tileColumnWidth()
   , m_tileRowHeight()
 #if Q0074_COLOUR_REMAPPING_SEI
-  , m_colourRemapSEIFileRoot(NULL)
+  , m_colourRemapSEIFileName()
 #endif
   {
     m_PCMBitDepth[CHANNEL_TYPE_LUMA]=8;
@@ -918,8 +918,8 @@ public:
   UInt         getMaxNumMergeCand                ()                  { return m_maxNumMergeCand;   }
   Void         setUseScalingListId    ( ScalingListMode u )          { m_useScalingListId       = u;   }
   ScalingListMode getUseScalingListId    ()                          { return m_useScalingListId;      }
-  Void         setScalingListFile     ( Char*  pch )                 { m_scalingListFile     = pch; }
-  Char*        getScalingListFile     ()                             { return m_scalingListFile;    }
+  Void         setScalingListFileName       ( const std::string &s ) { m_scalingListFileName = s;      }
+  const std::string& getScalingListFileName () const                 { return m_scalingListFileName;   }
   Void         setTMVPModeId ( Int  u )                              { m_TMVPModeId = u;    }
   Int          getTMVPModeId ()                                      { return m_TMVPModeId; }
   WeightedPredictionMethod getWeightedPredictionMethod() const       { return m_weightedPredictionMethod; }
@@ -1099,8 +1099,8 @@ public:
   Bool  getAlphaClipTypeFlag()                               { return m_alphaClipTypeFlag; }
 #endif
 #if Q0074_COLOUR_REMAPPING_SEI
-  Void  xSetCRISEIFileRoot( Char* pch )                       { m_colourRemapSEIFileRoot = pch; }
-  Char* getCRISEIFileRoot()                                  { return m_colourRemapSEIFileRoot; }
+  Void  xSetCRISEIFileRoot( std::string pch )                { m_colourRemapSEIFileName = pch; }
+  std::string& getCRISEIFileRoot()                           { return m_colourRemapSEIFileName; }
 #endif
 #if SVC_EXTENSION
   UInt      getLayerId()                                     { return m_layerId;    }

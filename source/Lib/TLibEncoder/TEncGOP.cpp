@@ -813,7 +813,8 @@ Int TEncGOP::xReadingCRIparameters(){
   }
   return 1;
 }
-Bool confirmParameter(Bool bflag, const Char* message);
+
+Bool confirmParameter(Bool bflag, const TChar* message);
 // ====================================================================================================================
 // Private member functions
 // ====================================================================================================================
@@ -938,11 +939,11 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     sprintf(suffix, "_%d.txt",  slice->getPOC());
     string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
     colourRemapSEIFileWithPoc.append(suffix);
-    xSetCRISEIFile( const_cast<Char*>(colourRemapSEIFileWithPoc.c_str()) );
+    xSetCRISEIFile( colourRemapSEIFileWithPoc );
   
     Int ret = xReadingCRIparameters();
 
-    if(ret != -1 && m_pcCfg->getCRISEIFileRoot())
+    if(ret != -1 && !m_pcCfg->getCRISEIFileRoot().empty())
     {
       // check validity of input parameters
       xCheckParameter();
@@ -1268,12 +1269,12 @@ cabac_zero_word_padding(TComSlice *const pcSlice, TComPic *const pcPic, const st
       const std::size_t numberOfAdditionalCabacZeroBytes=numberOfAdditionalCabacZeroWords*3;
       if (cabacZeroWordPaddingEnabled)
       {
-        std::vector<Char> zeroBytesPadding(numberOfAdditionalCabacZeroBytes, Char(0));
+        std::vector<UChar> zeroBytesPadding(numberOfAdditionalCabacZeroBytes, UChar(0));
         for(std::size_t i=0; i<numberOfAdditionalCabacZeroWords; i++)
         {
           zeroBytesPadding[i*3+2]=3;  // 00 00 03
         }
-        nalUnitData.write(&(zeroBytesPadding[0]), numberOfAdditionalCabacZeroBytes);
+        nalUnitData.write(reinterpret_cast<const TChar*>(&(zeroBytesPadding[0])), numberOfAdditionalCabacZeroBytes);
         printf("Adding %d bytes of padding\n", UInt(numberOfAdditionalCabacZeroWords*3));
       }
       else
@@ -3294,7 +3295,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     m_gcAnalyzeB.addResult (dPSNR, (Double)uibits, MSEyuvframe);
   }
 
-  Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
+  TChar c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced())
   {
     c += 32;
@@ -4570,7 +4571,7 @@ Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
 #endif //SVC_EXTENSION
 
 #if Q0074_COLOUR_REMAPPING_SEI
-Bool confirmParameter(Bool bflag, const Char* message)
+Bool confirmParameter(Bool bflag, const TChar* message)
 {
   if (!bflag)
     return false;
