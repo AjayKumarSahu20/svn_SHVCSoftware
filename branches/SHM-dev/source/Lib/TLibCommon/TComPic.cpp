@@ -362,7 +362,7 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int*
         pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx));
       }
     }
-    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(Char)*numPartitions );
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(SChar)*numPartitions );
   }
 }
 

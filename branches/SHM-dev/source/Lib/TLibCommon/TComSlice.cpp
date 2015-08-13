@@ -2443,13 +2443,13 @@ Void TComScalingList::outputScalingLists(std::ostream &os) const
   }
 }
 
-Bool TComScalingList::xParseScalingList(Char* pchFile)
+Bool TComScalingList::xParseScalingList(const std::string &fileName)
 {
   static const Int LINE_SIZE=1024;
   FILE *fp = NULL;
-  Char line[LINE_SIZE];
+  TChar line[LINE_SIZE];
 
-  if (pchFile == NULL)
+  if (fileName.empty())
   {
     fprintf(stderr, "Error: no scaling list file specified. Help on scaling lists being output\n");
     outputScalingListHelp(std::cout);
@@ -2458,9 +2458,9 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
     exit (1);
     return true;
   }
-  else if ((fp = fopen(pchFile,"r")) == (FILE*)NULL)
+  else if ((fp = fopen(fileName.c_str(),"r")) == (FILE*)NULL)
   {
-    fprintf(stderr, "Error: cannot open scaling list file %s for reading\n",pchFile);
+    fprintf(stderr, "Error: cannot open scaling list file %s for reading\n", fileName.c_str());
     return true;
   }
 
@@ -2488,8 +2488,8 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
           Bool bFound=false;
           while ((!feof(fp)) && (!bFound))
           {
-            Char *ret = fgets(line, LINE_SIZE, fp);
-            Char *findNamePosition= ret==NULL ? NULL : strstr(line, MatrixType[sizeIdc][listIdc]);
+            TChar *ret = fgets(line, LINE_SIZE, fp);
+            TChar *findNamePosition= ret==NULL ? NULL : strstr(line, MatrixType[sizeIdc][listIdc]);
             // This could be a match against the DC string as well, so verify it isn't
             if (findNamePosition!= NULL && (MatrixType_DC[sizeIdc][listIdc]==NULL || strstr(line, MatrixType_DC[sizeIdc][listIdc])==NULL))
             {
@@ -2498,7 +2498,7 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
           }
           if (!bFound)
           {
-            fprintf(stderr, "Error: cannot find Matrix %s from scaling list file %s\n", MatrixType[sizeIdc][listIdc], pchFile);
+            fprintf(stderr, "Error: cannot find Matrix %s from scaling list file %s\n", MatrixType[sizeIdc][listIdc], fileName.c_str());
             return true;
           }
         }
@@ -2507,12 +2507,12 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
           Int data;
           if (fscanf(fp, "%d,", &data)!=1)
           {
-            fprintf(stderr, "Error: cannot read value #%d for Matrix %s from scaling list file %s at file position %ld\n", i, MatrixType[sizeIdc][listIdc], pchFile, ftell(fp));
+            fprintf(stderr, "Error: cannot read value #%d for Matrix %s from scaling list file %s at file position %ld\n", i, MatrixType[sizeIdc][listIdc], fileName.c_str(), ftell(fp));
             return true;
           }
           if (data<0 || data>255)
           {
-            fprintf(stderr, "Error: QMatrix entry #%d of value %d for Matrix %s from scaling list file %s at file position %ld is out of range (0 to 255)\n", i, data, MatrixType[sizeIdc][listIdc], pchFile, ftell(fp));
+            fprintf(stderr, "Error: QMatrix entry #%d of value %d for Matrix %s from scaling list file %s at file position %ld is out of range (0 to 255)\n", i, data, MatrixType[sizeIdc][listIdc], fileName.c_str(), ftell(fp));
             return true;
           }
           src[i] = data;
@@ -2528,8 +2528,8 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
             Bool bFound=false;
             while ((!feof(fp)) && (!bFound))
             {
-              Char *ret = fgets(line, LINE_SIZE, fp);
-              Char *findNamePosition= ret==NULL ? NULL : strstr(line, MatrixType_DC[sizeIdc][listIdc]);
+              TChar *ret = fgets(line, LINE_SIZE, fp);
+              TChar *findNamePosition= ret==NULL ? NULL : strstr(line, MatrixType_DC[sizeIdc][listIdc]);
               if (findNamePosition!= NULL)
               {
                 // This won't be a match against the non-DC string.
@@ -2538,19 +2538,19 @@ Bool TComScalingList::xParseScalingList(Char* pchFile)
             }
             if (!bFound)
             {
-              fprintf(stderr, "Error: cannot find DC Matrix %s from scaling list file %s\n", MatrixType_DC[sizeIdc][listIdc], pchFile);
+              fprintf(stderr, "Error: cannot find DC Matrix %s from scaling list file %s\n", MatrixType_DC[sizeIdc][listIdc], fileName.c_str());
               return true;
             }
           }
           Int data;
           if (fscanf(fp, "%d,", &data)!=1)
           {
-            fprintf(stderr, "Error: cannot read DC %s from scaling list file %s at file position %ld\n", MatrixType_DC[sizeIdc][listIdc], pchFile, ftell(fp));
+            fprintf(stderr, "Error: cannot read DC %s from scaling list file %s at file position %ld\n", MatrixType_DC[sizeIdc][listIdc], fileName.c_str(), ftell(fp));
             return true;
           }
           if (data<0 || data>255)
           {
-            fprintf(stderr, "Error: DC value %d for Matrix %s from scaling list file %s at file position %ld is out of range (0 to 255)\n", data, MatrixType[sizeIdc][listIdc], pchFile, ftell(fp));
+            fprintf(stderr, "Error: DC value %d for Matrix %s from scaling list file %s at file position %ld is out of range (0 to 255)\n", data, MatrixType[sizeIdc][listIdc], fileName.c_str(), ftell(fp));
             return true;
           }
           //overwrite DC value when size of matrix is larger than 16x16

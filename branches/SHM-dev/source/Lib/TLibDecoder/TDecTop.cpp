@@ -1385,7 +1385,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         UInt uiStride = pBLPic->getPicYuvRec()->getStride(COMPONENT_Y);
         for( Int i = 0; i < uiHeight; i++ )
         {
-          pFile->read(reinterpret_cast<Char*>(buf), len);
+          pFile->read(reinterpret_cast<TChar*>(buf), len);
 
           if( !is16bit )
           {
@@ -1414,7 +1414,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         uiStride = pBLPic->getPicYuvRec()->getStride(COMPONENT_Cb);
         for( Int i = 0; i < uiHeight; i++ )
         {
-          pFile->read(reinterpret_cast<Char*>(buf), len);
+          pFile->read(reinterpret_cast<TChar*>(buf), len);
 
           if( !is16bit )
           {
@@ -1439,7 +1439,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         uiStride = pBLPic->getPicYuvRec()->getStride(COMPONENT_Cr);
         for( Int i = 0; i < uiHeight; i++ )
         {
-          pFile->read(reinterpret_cast<Char*>(buf), len);
+          pFile->read(reinterpret_cast<TChar*>(buf), len);
 
           if( !is16bit )
           {

@@ -109,12 +109,11 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
 #if AVC_BASE
-: m_nonHEVCBaseLayerFlag(0)
+: m_nonHEVCBaseLayerFlag(false)
 #endif
 , m_maxTidRefPresentFlag(1)
 , m_defaultTargetOutputLayerIdc (-1)
 , m_numOutputLayerSets          (-1)
-, m_pchBitstreamFile()
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
@@ -125,14 +124,9 @@ TAppEncCfg::TAppEncCfg()
 }
 #else
 TAppEncCfg::TAppEncCfg()
-: m_pchInputFile()
-, m_pchBitstreamFile()
-, m_pchReconFile()
-, m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
+: m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
-, m_pchdQPFile()
-, m_scalingListFile()
 {
   m_aidQP = NULL;
   m_startOfCodedInterval = NULL;
@@ -163,15 +157,7 @@ TAppEncCfg::~TAppEncCfg()
     delete[] m_targetPivotValue;
     m_targetPivotValue = NULL;
   }
-
-  free(m_pchInputFile);
-#endif
-  free(m_pchBitstreamFile);
-#if !SVC_EXTENSION  
-  free(m_pchReconFile);
-  free(m_pchdQPFile);
-  free(m_scalingListFile);
-#endif
+#endif  
 }
 
 Void TAppEncCfg::create()
@@ -239,7 +225,7 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry)     //in
   return in;
 }
 
-Bool confirmPara(Bool bflag, const Char* message);
+Bool confirmPara(Bool bflag, const TChar* message);
 
 static inline ChromaFormat numberToChromaFormat(const Int val)
 {
@@ -253,35 +239,9 @@ static inline ChromaFormat numberToChromaFormat(const Int val)
   }
 }
 
-#if SVC_EXTENSION
-void TAppEncCfg::getDirFilename(string& filename, string& dir, const string path)
-{
-  size_t pos = path.find_last_of("\\");
-  if(pos != std::string::npos)
-  {
-    filename.assign(path.begin() + pos + 1, path.end());
-    dir.assign(path.begin(), path.begin() + pos + 1);
-  }
-  else
-  {
-    pos = path.find_last_of("/");
-    if(pos != std::string::npos)
-    {
-      filename.assign(path.begin() + pos + 1, path.end());
-      dir.assign(path.begin(), path.begin() + pos + 1);
-    }
-    else
-    {
-      filename = path;
-      dir.assign("");
-    }
-  }
-}
-#endif
-
 static const struct MapStrToProfile
 {
-  const Char* str;
+  const TChar* str;
   Profile::Name value;
 }
 strToProfile[] =
@@ -301,7 +261,7 @@ strToProfile[] =
 
 static const struct MapStrToExtendedProfile
 {
-  const Char* str;
+  const TChar* str;
   ExtendedProfileName value;
 }
 strToExtendedProfile[] =
@@ -365,7 +325,7 @@ static const ExtendedProfileName validRExtProfileNames[2/* intraConstraintFlag*/
 
 static const struct MapStrToTier
 {
-  const Char* str;
+  const TChar* str;
   Level::Tier value;
 }
 strToTier[] =
@@ -376,7 +336,7 @@ strToTier[] =
 
 static const struct MapStrToLevel
 {
-  const Char* str;
+  const TChar* str;
   Level::Name value;
 }
 strToLevel[] =
@@ -409,7 +369,7 @@ UInt g_uiMaxCpbSize[2][21] =
 
 static const struct MapStrToCostMode
 {
-  const Char* str;
+  const TChar* str;
   CostMode    value;
 }
 strToCostMode[] =
@@ -422,7 +382,7 @@ strToCostMode[] =
 
 static const struct MapStrToScalingListMode
 {
-  const Char* str;
+  const TChar* str;
   ScalingListMode value;
 }
 strToScalingListMode[] =
@@ -525,7 +485,7 @@ struct SMultiValueInput
   SMultiValueInput<T> &operator=(const std::vector<T> &userValues) { values=userValues; return *this; }
   SMultiValueInput<T> &operator=(const SMultiValueInput<T> &userValues) { values=userValues.values; return *this; }
 
-  T readValue(const Char *&pStr, Bool &bSuccess);
+  T readValue(const TChar *&pStr, Bool &bSuccess);
 
   istream& readValues(std::istream &in);
 };
@@ -537,9 +497,9 @@ static inline istream& operator >> (std::istream &in, SMultiValueInput<T> &value
 }
 
 template<>
-UInt SMultiValueInput<UInt>::readValue(const Char *&pStr, Bool &bSuccess)
+UInt SMultiValueInput<UInt>::readValue(const TChar *&pStr, Bool &bSuccess)
 {
-  Char *eptr;
+  TChar *eptr;
   UInt val=strtoul(pStr, &eptr, 0);
   pStr=eptr;
   bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
@@ -547,9 +507,9 @@ UInt SMultiValueInput<UInt>::readValue(const Char *&pStr, Bool &bSuccess)
 }
 
 template<>
-Int SMultiValueInput<Int>::readValue(const Char *&pStr, Bool &bSuccess)
+Int SMultiValueInput<Int>::readValue(const TChar *&pStr, Bool &bSuccess)
 {
-  Char *eptr;
+  TChar *eptr;
   Int val=strtol(pStr, &eptr, 0);
   pStr=eptr;
   bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
@@ -557,9 +517,9 @@ Int SMultiValueInput<Int>::readValue(const Char *&pStr, Bool &bSuccess)
 }
 
 template<>
-Double SMultiValueInput<Double>::readValue(const Char *&pStr, Bool &bSuccess)
+Double SMultiValueInput<Double>::readValue(const TChar *&pStr, Bool &bSuccess)
 {
-  Char *eptr;
+  TChar *eptr;
   Double val=strtod(pStr, &eptr);
   pStr=eptr;
   bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<minValIncl || val>maxValIncl);
@@ -567,9 +527,9 @@ Double SMultiValueInput<Double>::readValue(const Char *&pStr, Bool &bSuccess)
 }
 
 template<>
-Bool SMultiValueInput<Bool>::readValue(const Char *&pStr, Bool &bSuccess)
+Bool SMultiValueInput<Bool>::readValue(const TChar *&pStr, Bool &bSuccess)
 {
-  Char *eptr;
+  TChar *eptr;
   Int val=strtol(pStr, &eptr, 0);
   pStr=eptr;
   bSuccess=!(*eptr!=0 && !isspace(*eptr) && *eptr!=',') && !(val<Int(minValIncl) || val>Int(maxValIncl));
@@ -587,7 +547,7 @@ istream& SMultiValueInput<T>::readValues(std::istream &in)
   }
   if (!str.empty())
   {
-    const Char *pStr=str.c_str();
+    const TChar *pStr=str.c_str();
     // soak up any whitespace
     for(;isspace(*pStr);pStr++);
 
@@ -702,54 +662,20 @@ automaticallySelectRExtProfile(const Bool bUsingGeneralRExtTools,
 // Public member functions
 // ====================================================================================================================
 
-#if SVC_EXTENSION
 /** \param  argc        number of arguments
     \param  argv        array of arguments
     \retval             true when success
  */
-Bool TAppEncCfg::parseCfgNumLayersAndInit( Int argc, Char* argv[] )
-{
-  po::Options opts;
-  opts.addOptions()
-  ("c",    po::parseConfigFile, "configuration file name")
-  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")
-  ;
-
-  po::setDefaults(opts);
-  po::ErrorReporter err;
-  err.verbose = false;
-  po::scanArgv(opts, argc, (const Char**) argv, err);
-
-  if( m_numLayers <= 0 )
-  {
-    printf("Wrong number of layers %d\n", m_numLayers);
-    return false;
-  }
-
-  for( Int layer = 0; layer < m_numLayers; layer++ )
-  {
-    m_apcLayerCfg[layer] = new TAppEncLayerCfg;
-    m_apcLayerCfg[layer]->setAppEncCfg(this);
-  }
-
-  return true;
-}
-#endif
-
-/** \param  argc        number of arguments
-    \param  argv        array of arguments
-    \retval             true when success
- */
-Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
+Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 {
   Bool do_help = false;
   
-#if SVC_EXTENSION
-  string  cfg_BitstreamFile;
-  string* cfg_InputFile      [MAX_LAYERS];
-  string* cfg_ReconFile      [MAX_LAYERS];
-  Double* cfg_fQP            [MAX_LAYERS];
-  Int*    cfg_layerId        [MAX_LAYERS];
+#if SVC_EXTENSION  
+  string* cfg_InputFile     [MAX_LAYERS];
+  string* cfg_ReconFile     [MAX_LAYERS];
+  string* cfg_dQPFileName   [MAX_LAYERS];
+  Double* cfg_fQP           [MAX_LAYERS];
+  Int*    cfg_layerId       [MAX_LAYERS];
   Int*    cfg_repFormatIdx  [MAX_LAYERS];
   Int*    cfg_SourceWidth   [MAX_LAYERS]; 
   Int*    cfg_SourceHeight  [MAX_LAYERS];
@@ -847,7 +773,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
 #if Q0074_COLOUR_REMAPPING_SEI
-  string* cfg_colourRemapSEIFileRoot[MAX_LAYERS];
+  string* cfg_colourRemapSEIFileName[MAX_LAYERS];
 #endif
   Int*    cfg_waveFrontSynchro[MAX_LAYERS];
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
@@ -860,11 +786,12 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   for( UInt layer = 0; layer < m_numLayers; layer++ )
   {
-    cfg_InputFile[layer]    = &m_apcLayerCfg[layer]->m_cInputFile;
-    cfg_ReconFile[layer]    = &m_apcLayerCfg[layer]->m_cReconFile;
+    cfg_InputFile[layer]    = &m_apcLayerCfg[layer]->m_inputFileName;
+    cfg_ReconFile[layer]    = &m_apcLayerCfg[layer]->m_reconFileName;
+    cfg_dQPFileName[layer]  = &m_apcLayerCfg[layer]->m_dQPFileName;
     cfg_fQP[layer]          = &m_apcLayerCfg[layer]->m_fQP;
 #if Q0074_COLOUR_REMAPPING_SEI
-    cfg_colourRemapSEIFileRoot[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
+    cfg_colourRemapSEIFileName[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileName;
 #endif
     cfg_repFormatIdx[layer]         = &m_apcLayerCfg[layer]->m_repFormatIdx;
     cfg_layerId[layer]              = &m_apcLayerCfg[layer]->m_layerId;
@@ -978,20 +905,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string* cfg_outputLayerSetIdx      = new string;
   string* cfg_listOfLayerPTLOfOlss   = new string[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
 #if AVC_BASE
-  string  cfg_BLInputFile;
+  string  m_inputFileNameBL;
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-  string  cfg_tileSets;
-#endif
-#else //SVC_EXTENSION
-  string cfg_InputFile;
-  string cfg_BitstreamFile;
-  string cfg_ReconFile;
-  string cfg_dQPFile;
-#if Q0074_COLOUR_REMAPPING_SEI
-  string cfg_colourRemapSEIFileRoot;
-#endif
-  string cfg_ScalingListFile;
+  string  m_tileSets;
+#endif 
 #endif //SVC_EXTENSION
 
   Int tmpChromaFormat;
@@ -1120,8 +1038,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if AUXILIARY_PICTURES
   ("ScalabilityMask3",                              m_scalabilityMask[AUX_ID],                              0, "scalability_mask[3] (auxiliary pictures)" )
 #endif
-  ("BitstreamFile,b",                               cfg_BitstreamFile,                             string(""), "Bitstream output file name")
-  ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,            0, m_numLayers,  "Number of reference layer offset sets ")
+  ("BitstreamFile,b",                               m_bitstreamFileName,                           string(""), "Bitstream output file name")
+  ("NumRefLocationOffsets%d",                       cfg_numRefLayerLocationOffsets,            0, m_numLayers, "Number of reference layer offset sets ")
   ("RefLocationOffsetLayerId%d",                    cfg_refLocationOffsetLayerIdPtr,  string(""), m_numLayers, "Layer ID of reference location offset")
   ("ScaledRefLayerLeftOffset%d",                    cfg_scaledRefLayerLeftOffsetPtr,  string(""), m_numLayers, "Horizontal offset of top-left luma sample of scaled base layer picture with respect to"
                                                                                                                 " top-left luma sample of the EL picture, in units of two luma samples")
@@ -1147,7 +1065,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,            string(""), m_numLayers, "chroma shift in the horizontal direction used in resampling proces")
   ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,            string(""), m_numLayers, "chroma shift in the vertical   direction used in resampling proces")
 #if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileRoot,       string(""), m_numLayers, "Colour Remapping Information SEI parameters file name for layer %d")
+  ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileName,       string(""), m_numLayers, "Colour Remapping Information SEI parameters file name for layer %d")
 #endif
   ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],     8, m_numLayers, "Bit-depth of input file for layer %d")
   ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],  0, m_numLayers, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
@@ -1164,16 +1082,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("CrossLayerAlignedIdrOnlyFlag",                   m_crossLayerAlignedIdrOnlyFlag,                     true, "only idr for IRAP across layers" )  
   ("InterLayerWeightedPred",                          m_useInterLayerWeightedPred,                      false, "enable IL WP parameters estimation at encoder" )  
 #if AVC_BASE
-  ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                               0, "BL is available but not internal")
-  ("InputBLFile,-ibl",                                cfg_BLInputFile,                             string(""), "Base layer rec YUV input file name")
+  ("NonHEVCBase,-nonhevc",                            m_nonHEVCBaseLayerFlag,                           false, "BL is available but not internal")
+  ("InputBLFile,-ibl",                                m_inputFileNameBL,                           string(""), "Base layer rec YUV input file name")
 #endif
   ("EnableElRapB,-use-rap-b",                         m_elRapSliceBEnabled,                             false, "Set ILP over base-layer I picture to B picture (default is P picture)")
   ("InputChromaFormat",                               tmpInputChromaFormat,                               420, "InputChromaFormatIDC")
   ("ChromaFormatIDC,-cf",                             tmpChromaFormat,                                      0, "ChromaFormatIDC (400|420|422|444 or set 0 (default) for same as InputChromaFormat)")
 #else //SVC_EXTENSION
-  ("InputFile,i",                                     cfg_InputFile,                               string(""), "Original YUV input file name")
-  ("BitstreamFile,b",                                 cfg_BitstreamFile,                           string(""), "Bitstream output file name")
-  ("ReconFile,o",                                     cfg_ReconFile,                               string(""), "Reconstructed YUV output file name")
+  ("InputFile,i",                                     m_inputFileName,                             string(""), "Original YUV input file name")
+  ("BitstreamFile,b",                                 m_bitstreamFileName,                         string(""), "Bitstream output file name")
+  ("ReconFile,o",                                     m_reconFileName,                             string(""), "Reconstructed YUV output file name")
   ("SourceWidth,-wdt",                                m_iSourceWidth,                                       0, "Source picture width")
   ("SourceHeight,-hgt",                               m_iSourceHeight,                                      0, "Source picture height")
   ("InputBitDepth",                                   m_inputBitDepth[CHANNEL_TYPE_LUMA],                   8, "Bit-depth of input file")
@@ -1216,7 +1134,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if !SVC_EXTENSION
   ("FrameRate,-fr",                                   m_iFrameRate,                                         0, "Frame rate")
 #if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfoFileRoot",                  cfg_colourRemapSEIFileRoot, string(""), "Colour Remapping Information SEI parameters file name")
+  ("SEIColourRemappingInfoFileRoot",                  m_colourRemapSEIFileName,                    string(""), "Colour Remapping Information SEI parameters file name")
 #endif
 #endif //SVC_EXTENSION
   ("FrameSkip,-fs",                                   m_FrameSkip,                                         0u, "Number of frames to skip at start of input YUV")
@@ -1361,8 +1279,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   ("AdaptiveQP,-aq",                                  m_bUseAdaptiveQP,                                 false, "QP adaptation based on a psycho-visual model")
   ("MaxQPAdaptationRange,-aqr",                       m_iQPAdaptationRange,                                 6, "QP adaptation range")
-#if !SVC_EXTENSION
-  ("dQPFile,m",                                       cfg_dQPFile,                                 string(""), "dQP file name")
+#if SVC_EXTENSION
+  ("dQPFile,m",                                       cfg_dQPFileName,                string(""), m_numLayers, "dQP file name")
+#else
+  ("dQPFile,m",                                       m_dQPFileName,                               string(""), "dQP file name")
 #endif
   ("RDOQ",                                            m_useRDOQ,                                         true)
   ("RDOQTS",                                          m_useRDOQTS,                                       true)
@@ -1451,7 +1371,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #else
   ("WaveFrontSynchro",                                m_iWaveFrontSynchro,                                  0, "0: no synchro; 1 synchro with top-right-right")
   ("ScalingList",                                     m_useScalingListId,                    SCALING_LIST_OFF, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
-  ("ScalingListFile",                                 cfg_ScalingListFile,                         string(""), "Scaling list file name. Use an empty string to produce help.")
+  ("ScalingListFile",                                 m_scalingListFileName,                       string(""), "Scaling list file name. Use an empty string to produce help.")
 #endif
   ("SignHideFlag,-SBH",                               m_signHideFlag,                                    true)
   ("MaxNumMergeCand",                                 m_maxNumMergeCand,                                   5u, "Maximum number of merge candidates")
@@ -1713,7 +1633,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   ("SEIInterLayerConstrainedTileSets",       m_interLayerConstrainedTileSetsSEIEnabled, false, "Control generation of inter layer constrained tile sets SEI message")
   ("IlNumSetsInMessage",                     m_ilNumSetsInMessage,                         0u, "Number of inter layer constrained tile sets")
-  ("TileSetsArray",                          cfg_tileSets,                         string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
+  ("TileSetsArray",                          m_tileSets,                           string(""), "Array containing tile sets params (TopLeftTileIndex, BottonRightTileIndex and ilcIdc for each set) ")
 #endif
   ("AltOutputLayerFlag",                     m_altOutputLayerFlag,                      false, "Specifies the value of alt_output_layer_flag in VPS extension")
   ("CrossLayerBLAFlag",                      m_crossLayerBLAFlag,                       false, "Specifies the value of cross_layer_bla_flag in VPS")
@@ -1752,9 +1672,16 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 
   po::setDefaults(opts);
   po::ErrorReporter err;
-  const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv, err);
+  const list<const TChar*>& argv_unhandled = po::scanArgv(opts, argc, (const TChar**) argv, err);
 
 #if SVC_EXTENSION
+#if AVC_BASE
+  if( m_nonHEVCBaseLayerFlag )
+  {
+    *cfg_InputFile[0] = m_inputFileNameBL;
+  }
+#endif
+
   for (Int i=1; i<m_numLayers; i++)
   {
     if(m_inheritCodingStruct[i] == 0)
@@ -1774,7 +1701,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 #endif 
   
-  for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
+  for (list<const TChar*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
   {
     fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
   }
@@ -1798,29 +1725,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /*
    * Set any derived parameters
    */
-  /* convert std::string to c string for compatability */
-#if SVC_EXTENSION
-#if AVC_BASE
-  if( m_nonHEVCBaseLayerFlag )
-  {
-    *cfg_InputFile[0] = cfg_BLInputFile;
-  }
-#endif
-#else //SVC_EXTENSION
-  m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
-#endif
-  m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
-#if !SVC_EXTENSION
-  m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
-  m_pchdQPFile = cfg_dQPFile.empty() ? NULL : strdup(cfg_dQPFile.c_str());
-#if Q0074_COLOUR_REMAPPING_SEI
-  if( !cfg_colourRemapSEIFileRoot.empty() )
-  {
-    m_colourRemapSEIFileRoot = strdup(cfg_colourRemapSEIFileRoot.c_str());
-  }
-#endif
-#endif //SVC_EXTENSION
-
 
   m_adIntraLambdaModifier = cfg_adIntraLambdaModifier.values;
   if(m_isField)
@@ -1894,12 +1798,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   {
     m_tileRowHeight.clear();
   }
-    
-  /* rules for input, output and internal bitdepths as per help text */
+  
 #if SVC_EXTENSION
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
-    m_apcLayerCfg[layer]->m_scalingListFile = cfg_ScalingListFile[layer].empty() ? NULL : strdup(cfg_ScalingListFile[layer].c_str());
+    m_apcLayerCfg[layer]->m_scalingListFileName = cfg_ScalingListFile[layer].empty() ? NULL : strdup(cfg_ScalingListFile[layer].c_str());
 
     if( m_apcLayerCfg[layer]->m_layerId < 0 )
     {
@@ -2033,8 +1936,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     }
   }
 #else
-  m_scalingListFile = cfg_ScalingListFile.empty() ? NULL : strdup(cfg_ScalingListFile.c_str());
-
   /* rules for input, output and internal bitdepths as per help text */
   if (m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA  ] == 0)
   {
@@ -2435,7 +2336,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       }
     }
 
-    Char* pSamplePredRefLayerIds = cfg_samplePredRefLayerIds[layer].empty() ? NULL: strdup(cfg_samplePredRefLayerIds[layer].c_str());
+    TChar* pSamplePredRefLayerIds = cfg_samplePredRefLayerIds[layer].empty() ? NULL: strdup(cfg_samplePredRefLayerIds[layer].c_str());
     if( m_apcLayerCfg[layer]->m_numSamplePredRefLayers > 0 )
     {
       char *samplePredRefLayerId;
@@ -2470,7 +2371,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       pSamplePredRefLayerIds = NULL;
     }
 
-    Char* pMotionPredRefLayerIds = cfg_motionPredRefLayerIds[layer].empty() ? NULL: strdup(cfg_motionPredRefLayerIds[layer].c_str());
+    TChar* pMotionPredRefLayerIds = cfg_motionPredRefLayerIds[layer].empty() ? NULL: strdup(cfg_motionPredRefLayerIds[layer].c_str());
     if( m_apcLayerCfg[layer]->m_numMotionPredRefLayers > 0 )
     {
       char *motionPredRefLayerId;
@@ -2505,11 +2406,11 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       pMotionPredRefLayerIds = NULL;
     }
 
-    Char* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
+    TChar* pPredLayerIds = cfg_predLayerIds[layer].empty() ? NULL: strdup(cfg_predLayerIds[layer].c_str());
     if( m_apcLayerCfg[layer]->m_numActiveRefLayers > 0 )
     {
-      char *refLayerId;
-      int  i=0;
+      TChar *refLayerId;
+      Int  i=0;
       m_apcLayerCfg[layer]->m_predLayerIds = new Int[m_apcLayerCfg[layer]->m_numActiveRefLayers];
       refLayerId = strtok(pPredLayerIds, " ,-");
       while(refLayerId != NULL)
@@ -2660,9 +2561,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
     Int& m_iQP                      = m_apcLayerCfg[layer]->m_iQP;
     Double& m_fQP                   = m_apcLayerCfg[layer]->m_fQP;
 
-    Char* m_pchdQPFile              = m_apcLayerCfg[layer]->m_pchdQPFile;
+    string& m_dQPFileName           = m_apcLayerCfg[layer]->m_dQPFileName;
     Int* m_internalBitDepth         = m_apcLayerCfg[layer]->m_internalBitDepth;
 #endif //SVC_EXTENSION
+
   switch (m_conformanceWindowMode)
   {
   case 0:
@@ -2777,9 +2679,10 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   }
 
   // reading external dQP description from file
-  if ( m_pchdQPFile )
+  if ( !m_dQPFileName.empty() )
   {
-    FILE* fpt=fopen( m_pchdQPFile, "r" );
+    FILE* fpt=fopen( m_dQPFileName.c_str(), "r" );
+
     if ( fpt )
     {
       Int iValue;
@@ -2964,9 +2867,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
       printf( "Tiles are not defined (needed for inter-layer comnstrained tile sets SEI).\n" );
       exit( EXIT_FAILURE );
     }
-    Char* pTileSets = cfg_tileSets.empty() ? NULL : strdup(cfg_tileSets.c_str());
+    TChar* pTileSets = m_tileSets.empty() ? NULL : strdup(m_tileSets.c_str());
     int i = 0;
-    char *topLeftTileIndex = strtok(pTileSets, " ,");
+    TChar *topLeftTileIndex = strtok(pTileSets, " ,");
     while(topLeftTileIndex != NULL)
     {
       if( i >= m_ilNumSetsInMessage )
@@ -3160,7 +3063,7 @@ Void TAppEncCfg::xCheckParameter()
   Bool check_failed = false; /* abort if there is a fatal configuration problem */
 #define xConfirmPara(a,b) check_failed |= confirmPara(a,b)
 
-  xConfirmPara(m_pchBitstreamFile==NULL, "A bitstream file name must be specified (BitstreamFile)");
+  xConfirmPara(m_bitstreamFileName.empty(), "A bitstream file name must be specified (BitstreamFile)");
   const UInt maxBitDepth=(m_chromaFormatIDC==CHROMA_400) ? m_internalBitDepth[CHANNEL_TYPE_LUMA] : std::max(m_internalBitDepth[CHANNEL_TYPE_LUMA], m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
   xConfirmPara(m_bitDepthConstraint<maxBitDepth, "The internalBitDepth must not be greater than the bitDepthConstraint value");
   xConfirmPara(m_chromaFormatConstraint<m_chromaFormatIDC, "The chroma format used must not be greater than the chromaFormatConstraint value");
@@ -4393,7 +4296,7 @@ Void TAppEncCfg::xCheckParameter()
   }
 }
 
-const Char *profileToString(const Profile::Name profile)
+const TChar *profileToString(const Profile::Name profile)
 {
   static const UInt numberOfProfiles = sizeof(strToProfile)/sizeof(*strToProfile);
 
@@ -4453,8 +4356,8 @@ Void TAppEncCfg::xPrintParameter()
     Int& m_iSourceWidth                    = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
     Int& m_iSourceHeight                   = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
 
-    const Char* m_pchInputFile             = m_apcLayerCfg[layerIdx]->m_cInputFile.c_str();
-    const Char* m_pchReconFile             = m_apcLayerCfg[layerIdx]->m_cReconFile.c_str();
+    string& m_inputFileName                = m_apcLayerCfg[layerIdx]->m_inputFileName;
+    string& m_reconFileName                = m_apcLayerCfg[layerIdx]->m_reconFileName;
 
     Int& m_iFrameRate                      = m_apcLayerCfg[layerIdx]->m_iFrameRate;
     Int& m_iIntraPeriod                    = m_apcLayerCfg[layerIdx]->m_iFrameRate;
@@ -4498,7 +4401,7 @@ Void TAppEncCfg::xPrintParameter()
       printf("\n=== Layer %d settings ===\n", layer);
 #endif
 
-  printf("Input          File                    : %s\n", m_pchInputFile          );
+  printf("Input          File                    : %s\n", m_inputFileName.c_str()          );
 
 #if SVC_EXTENSION
     }
@@ -4506,15 +4409,15 @@ Void TAppEncCfg::xPrintParameter()
     {
 #endif
 
-  printf("Bitstream      File                    : %s\n", m_pchBitstreamFile      );
+  printf("Bitstream      File                    : %s\n", m_bitstreamFileName.c_str()      );
 
 #if SVC_EXTENSION
     }
     if( layer < m_numLayers )
     {
 #endif
-
-  printf("Reconstruction File                    : %s\n", m_pchReconFile          );
+  
+  printf("Reconstruction File                    : %s\n", m_reconFileName.c_str()          );
   printf("Real     Format                        : %dx%d %dHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, m_iFrameRate );
   printf("Internal Format                        : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 
@@ -4800,7 +4703,7 @@ Void TAppEncCfg::xPrintParameter()
     printf("\n\n");
   }
 
-  printf("\nSHVC TOOL CFG: ");
+  printf("SHVC TOOL CFG: ");
   printf("ElRapSliceType: %c-slice ", m_elRapSliceBEnabled ? 'B' : 'P');
   printf("REF_IDX_ME_ZEROMV: %d ", REF_IDX_ME_ZEROMV);
   printf("ENCODER_FAST_MODE: %d ", ENCODER_FAST_MODE);
@@ -4821,7 +4724,7 @@ Void TAppEncCfg::xPrintParameter()
   fflush(stdout);
 }
 
-Bool confirmPara(Bool bflag, const Char* message)
+Bool confirmPara(Bool bflag, const TChar* message)
 {
   if (!bflag)
   {
@@ -4835,10 +4738,10 @@ Bool confirmPara(Bool bflag, const Char* message)
 #if SVC_EXTENSION
 Void TAppEncCfg::cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString)
 {
-  Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
+  TChar *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
   if( numEntries > 0 )
   {
-    Char *arrayEntry;
+    TChar *arrayEntry;
     Int i = 0;
     *arr = new Int[numEntries];
 
@@ -4917,10 +4820,10 @@ Bool TAppEncCfg::scanStringToArray(string const cfgString, Int const numEntries,
 
 Void TAppEncCfg::cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString)
 {
-  Char *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
+  TChar *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());
   if (numEntries > 0)
   {
-    Char *arrayEntry;
+    TChar *arrayEntry;
     Int i = 0;
     *arr = new Int[numEntries];
 
@@ -4981,6 +4884,62 @@ Bool TAppEncCfg::scanStringToArrayNumEntries(string const cfgString, Int &numEnt
     return true;
   }
   return false;
+}
+
+void TAppEncCfg::getDirFilename(string& filename, string& dir, const string path)
+{
+  size_t pos = path.find_last_of("\\");
+  if(pos != std::string::npos)
+  {
+    filename.assign(path.begin() + pos + 1, path.end());
+    dir.assign(path.begin(), path.begin() + pos + 1);
+  }
+  else
+  {
+    pos = path.find_last_of("/");
+    if(pos != std::string::npos)
+    {
+      filename.assign(path.begin() + pos + 1, path.end());
+      dir.assign(path.begin(), path.begin() + pos + 1);
+    }
+    else
+    {
+      filename = path;
+      dir.assign("");
+    }
+  }
+}
+
+/** \param  argc        number of arguments
+    \param  argv        array of arguments
+    \retval             true when success
+ */
+Bool TAppEncCfg::parseCfgNumLayersAndInit( Int argc, TChar* argv[] )
+{
+  po::Options opts;
+  opts.addOptions()
+  ("c",    po::parseConfigFile, "configuration file name")
+  ("NumLayers",                                     m_numLayers,                                             1, "Number of layers to code")
+  ;
+
+  po::setDefaults(opts);
+  po::ErrorReporter err;
+  err.verbose = false;
+  po::scanArgv(opts, argc, (const TChar**) argv, err);
+
+  if( m_numLayers <= 0 )
+  {
+    printf("Wrong number of layers %d\n", m_numLayers);
+    return false;
+  }
+
+  for( Int layer = 0; layer < m_numLayers; layer++ )
+  {
+    m_apcLayerCfg[layer] = new TAppEncLayerCfg;
+    m_apcLayerCfg[layer]->setAppEncCfg(this);
+  }
+
+  return true;
 }
 #endif //SVC_EXTENSION
 //! \}

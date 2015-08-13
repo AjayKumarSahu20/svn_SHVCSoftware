@@ -295,18 +295,9 @@ Void TComPicYuv::extendPicBorder ()
 
 
 // NOTE: This function is never called, but may be useful for developers.
-Void TComPicYuv::dump (const Char* pFileName, const BitDepths &bitDepths, Bool bAdd) const
+Void TComPicYuv::dump (const std::string &fileName, const BitDepths &bitDepths, Bool bAdd) const
 {
-  FILE* pFile;
-  if (!bAdd)
-  {
-    pFile = fopen (pFileName, "wb");
-  }
-  else
-  {
-    pFile = fopen (pFileName, "ab");
-  }
-
+  FILE* pFile = fopen (fileName.c_str(), bAdd?"ab":"wb");
 
   for(Int comp = 0; comp < getNumberValidComponents(); comp++)
   {
@@ -332,21 +323,13 @@ Void TComPicYuv::dump (const Char* pFileName, const BitDepths &bitDepths, Bool b
   fclose(pFile);
 }
 
-Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
+Void TComPicYuv::dump( const std::string &fileName, const Bool bAdd, const Int bitDepth )
 {
-  FILE* pFile;
-  if (!bAdd)
-  {
-    pFile = fopen (pFileName, "wb");
-  }
-  else
-  {
-    pFile = fopen (pFileName, "ab");
-  }
+  FILE* pFile = fopen (fileName.c_str(), bAdd?"ab":"wb");
 
   if( bitDepth == 8 )
   {
-    dump( pFileName, bitDepth, bAdd );
+    dump( fileName, bitDepth, bAdd );
     return;
   }
 
@@ -377,7 +360,7 @@ Void TComPicYuv::dump( Char* pFileName, Bool bAdd, Int bitDepth )
 }
 
 #if AUXILIARY_PICTURES
-Void TComPicYuv::convertToMonochrome(Int bitDepthChroma)
+Void TComPicYuv::convertToMonochrome(const Int bitDepthChroma)
 {
   Pel grayVal = (1 << (bitDepthChroma - 1));
 

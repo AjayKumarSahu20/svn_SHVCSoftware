@@ -41,16 +41,9 @@ static inline ChromaFormat numberToChromaFormat(const Int val)
 // ====================================================================================================================
 #if SVC_EXTENSION
 TAppEncLayerCfg::TAppEncLayerCfg()
-: m_cInputFile(string(""))
-, m_cReconFile(string(""))
-, m_conformanceWindowMode(0)
-, m_scalingListFile(NULL)
-, m_pchdQPFile(NULL)
+: m_conformanceWindowMode(0)
 , m_aidQP(NULL)
 , m_repFormatIdx(-1)
-#if Q0074_COLOUR_REMAPPING_SEI
-, m_colourRemapSEIFileRoot(string(""))
-#endif
 {
 #if Q0074_COLOUR_REMAPPING_SEI
   memset( m_colourRemapSEIPreLutCodedValue,   0, sizeof(m_colourRemapSEIPreLutCodedValue) );
@@ -106,7 +99,6 @@ TAppEncLayerCfg::~TAppEncLayerCfg()
     }
   }
 #endif
-  free(m_scalingListFile);
 }
 
 Void TAppEncLayerCfg::create()

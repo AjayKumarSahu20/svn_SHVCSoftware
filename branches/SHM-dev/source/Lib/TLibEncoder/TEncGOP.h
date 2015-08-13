@@ -151,8 +151,8 @@ private:
   TEnc3DAsymLUT           m_Enc3DAsymLUTPPS;
   TComPicYuv*             m_pColorMappedPic;
 
-  Char                    m_cgsFilterLength;
-  Char                    m_cgsFilterPhases;
+  UChar                   m_cgsFilterLength;
+  UChar                   m_cgsFilterPhases;
   Int                     m_iN;
   Int                   **m_temp;
   const Pel             (*m_phaseFilter)[CGS_FILTER_LENGTH];
@@ -275,7 +275,7 @@ protected:
 
 #if Q0074_COLOUR_REMAPPING_SEI
   TComSEIColourRemappingInfo* xGetSEIColourRemappingInfo()  { return &m_seiColourRemappingInfo; }
-  Void xSetCRISEIFile( Char* pch )                          { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
+  Void xSetCRISEIFile( std::string pch )                    { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
 
   Void xFreeColourCRI();
   Int  xReadingCRIparameters();

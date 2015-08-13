@@ -56,11 +56,11 @@
 class TAppDecCfg
 {
 protected:
-  Char*         m_pchBitstreamFile;                     ///< input bitstream file name
+  std::string   m_bitstreamFileName;                    ///< input bitstream file name
 #if SVC_EXTENSION
-  Char*         m_pchReconFile [MAX_LAYERS];          ///< output reconstruction file name
+  std::string   m_reconFileName[MAX_LAYERS];            ///< output reconstruction file name
 #else
-  Char*         m_pchReconFile;                         ///< output reconstruction file name
+  std::string   m_reconFileName;                        ///< output reconstruction file name
 #endif
   Int           m_iSkipFrame;                           ///< counter for frames prior to the random access point to skip
   Int           m_outputBitDepth[MAX_NUM_CHANNEL_TYPE]; ///< bit depth used for writing output
@@ -83,7 +83,7 @@ protected:
 
 #if SVC_EXTENSION
 #if AVC_BASE
-  Char*         m_pchBLReconFile;                     ///< input BL reconstruction file name
+  std::string   m_reconFileNameBL;                     ///< input BL reconstruction file name
 #endif
   CommonDecoderParams             m_commonDecoderParams;
 #if CONFORMANCE_BITSTREAM_MODE
@@ -98,15 +98,17 @@ protected:
 
 public:
   TAppDecCfg()
-  : m_pchBitstreamFile(NULL)
+  : m_bitstreamFileName()
 #if !SVC_EXTENSION
-  , m_pchReconFile(NULL)
+  , m_reconFileName()
 #endif
   , m_iSkipFrame(0)
+  // m_outputBitDepth array initialised below
   , m_outputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
   , m_decodedNoDisplaySEIEnabled(false)
+  , m_targetDecLayerIdSet()
 #if Q0074_COLOUR_REMAPPING_SEI
   , m_colourRemapSEIEnabled(0)
 #endif
@@ -114,6 +116,8 @@ public:
 #if O0043_BEST_EFFORT_DECODING
   , m_forceDecodeBitDepth(0)
 #endif
+  , m_outputDecodedSEIMessagesFilename()
+  , m_bClipOutputVideoToRec709Range(false)
   {
     for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
@@ -123,7 +127,7 @@ public:
 
   virtual ~TAppDecCfg() {}
 
-  Bool  parseCfg        ( Int argc, Char* argv[] );   ///< initialize option class from configuration
+  Bool  parseCfg        ( Int argc, TChar* argv[] );   ///< initialize option class from configuration
 
 #if SVC_EXTENSION
   CommonDecoderParams* getCommonDecoderParams() {return &m_commonDecoderParams;}

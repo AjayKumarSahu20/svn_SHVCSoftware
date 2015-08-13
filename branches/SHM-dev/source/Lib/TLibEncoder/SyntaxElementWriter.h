@@ -91,10 +91,10 @@ protected:
   Void  xWriteString          ( UChar* sCode, UInt uiLength);
 #endif
 #if ENC_DEC_TRACE
-  Void  xWriteCodeTr          ( UInt value, UInt  length, const Char *pSymbolName);
-  Void  xWriteUvlcTr          ( UInt value,               const Char *pSymbolName);
-  Void  xWriteSvlcTr          ( Int  value,               const Char *pSymbolName);
-  Void  xWriteFlagTr          ( UInt value,               const Char *pSymbolName);
+  Void  xWriteCodeTr          ( UInt value, UInt  length, const TChar *pSymbolName);
+  Void  xWriteUvlcTr          ( UInt value,               const TChar *pSymbolName);
+  Void  xWriteSvlcTr          ( Int  value,               const TChar *pSymbolName);
+  Void  xWriteFlagTr          ( UInt value,               const TChar *pSymbolName);
 #if Q0096_OVERLAY_SEI
   Void  xWriteStringTr        ( UChar* value, UInt length, const Char *pSymbolName);
 #endif

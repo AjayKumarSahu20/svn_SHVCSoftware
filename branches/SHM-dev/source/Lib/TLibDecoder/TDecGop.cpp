@@ -180,7 +180,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
   }
 
   pcPic->compressMotion();
-  Char c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
+  TChar c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
   if (!pcSlice->isReferenced())
   {
     c += 32;
@@ -283,7 +283,7 @@ static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
   /* calculate MD5sum for entire reconstructed picture */
   TComPictureHash recon_digest;
   Int numChar=0;
-  const Char* hashType = "\0";
+  const TChar* hashType = "\0";
 
   if (pictureHashSEI)
   {
@@ -316,7 +316,7 @@ static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
   }
 
   /* compare digest against received version */
-  const Char* ok = "(unk)";
+  const TChar* ok = "(unk)";
   Bool mismatch = false;
 
   if (pictureHashSEI)

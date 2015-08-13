@@ -179,7 +179,7 @@ public:
   Void          extendPicBorder   ();
 
   //  Dump picture
-  Void          dump              (const Char* pFileName, const BitDepths &bitDepths, Bool bAdd = false) const ;
+  Void          dump              (const std::string &fileName, const BitDepths &bitDepths, Bool bAdd = false) const ;
 
   // Set border extension flag
   Void          setBorderExtension(Bool b) { m_bIsBorderExtended = b; }
@@ -191,11 +191,11 @@ public:
   Void          setReconstructed(Bool x)                         { m_isReconstructed = x;                   }
   Bool          isReconstructed()                                { return m_isReconstructed;                }
 #if AUXILIARY_PICTURES  
-  Void          convertToMonochrome(Int bitDepthChroma);
+  Void          convertToMonochrome(const Int bitDepthChroma);
 #endif
 #endif
 
-  Void          dump( Char* pFileName, Bool bAdd, Int bitDepth );
+  Void          dump( const std::string &fileName, const Bool bAdd, const Int bitDepth );
 
 };// END CLASS DEFINITION TComPicYuv
 

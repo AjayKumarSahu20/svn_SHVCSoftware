@@ -136,9 +136,9 @@ public:
   }
 
 #if SVC_EXTENSION
-  Void    printOut ( Char cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layer = 0 )
+  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layer = 0 )
 #else
-  Void    printOut ( Char cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths )
+  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths )
 #endif
   {
     Double dFps     =   m_dFrmRate; //--CFG_KDY
