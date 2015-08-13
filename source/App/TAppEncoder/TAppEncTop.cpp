@@ -77,6 +77,7 @@ Void TAppEncTop::xInitLibCfg()
 {
 #if SVC_EXTENSION
   TComVPS& vps = *m_apcTEncTop[0]->getVPS();
+  Int& m_maxTempLayer = m_apcLayerCfg[0]->m_maxTempLayer;
 #else
   TComVPS vps;
 #endif
@@ -502,6 +503,10 @@ Void TAppEncTop::xInitLibCfg()
     Bool&          m_bUseSAO                                    = m_apcLayerCfg[layer]->m_bUseSAO;
 
     string&        m_colourRemapSEIFileName                     = m_apcLayerCfg[layer]->m_colourRemapSEIFileName;
+
+    GOPEntry*      m_GOPList                                    = m_apcLayerCfg[layer]->m_GOPList;
+    Int&           m_extraRPSs                                  = m_apcLayerCfg[layer]->m_extraRPSs;
+    Int&           m_maxTempLayer                               = m_apcLayerCfg[layer]->m_maxTempLayer;
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
@@ -532,13 +537,8 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setIntraPeriod                                       ( m_iIntraPeriod );
   m_cTEncTop.setDecodingRefreshType                               ( m_iDecodingRefreshType );
   m_cTEncTop.setGOPSize                                           ( m_iGOPSize );
-#if SVC_EXTENSION
-  m_cTEncTop.setGopList                                           ( layer ? m_EhGOPList[layer] : m_GOPList );
-  m_cTEncTop.setExtraRPSs                                         ( m_extraRPSs[layer] );
-#else
   m_cTEncTop.setGopList                                           ( m_GOPList );
   m_cTEncTop.setExtraRPSs                                         ( m_extraRPSs );
-#endif
 
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
@@ -558,11 +558,7 @@ Void TAppEncTop::xInitLibCfg()
 
   m_cTEncTop.setAccessUnitDelimiter                               ( m_AccessUnitDelimiter );
 
-#if SVC_EXTENSION
-  m_cTEncTop.setMaxTempLayer                                      ( layer ? m_EhMaxTempLayer[layer] : m_maxTempLayer );
-#else
   m_cTEncTop.setMaxTempLayer                                      ( m_maxTempLayer );
-#endif
   m_cTEncTop.setUseAMP( m_enableAMP );
 
   //===== Slice ========
@@ -1610,21 +1606,20 @@ Void TAppEncTop::encode()
         {
           if( (*it_nalu)->m_nalUnitType == NAL_UNIT_SPS )
           {
-            first_au->insert(++it_sps, *it_nalu);
+            it_sps = first_au->insert(++it_sps, *it_nalu);
             it_nalu = it_au->erase(it_nalu);
           }
         }
       }
     }
-
 #endif
 
 #if RC_SHVC_HARMONIZATION
-    for(UInt layer=0; layer<m_numLayers; layer++)
+    for( UInt layer = 0; layer < m_numLayers; layer++ )
     {
-      if ( m_apcTEncTop[layer]->getUseRateCtrl() )
+      if( m_apcTEncTop[layer]->getUseRateCtrl() )
       {
-        (m_apcTEncTop[layer]->getRateCtrl())->destroyRCGOP();
+        m_apcTEncTop[layer]->getRateCtrl()->destroyRCGOP();
       }
     }
 #endif
