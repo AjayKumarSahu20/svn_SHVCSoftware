@@ -77,13 +77,15 @@ Void TAppEncTop::xInitLibCfg()
 {
 #if SVC_EXTENSION
   TComVPS& vps = *m_apcTEncTop[0]->getVPS();
-  Int& m_maxTempLayer = m_apcLayerCfg[0]->m_maxTempLayer;
+
+  vps.setMaxTLayers                                               ( m_apcLayerCfg[0]->m_maxTempLayer );
+  if (m_apcLayerCfg[0]->m_maxTempLayer == 1)
 #else
   TComVPS vps;
-#endif
 
   vps.setMaxTLayers                                               ( m_maxTempLayer );
   if (m_maxTempLayer == 1)
+#endif
   {
     vps.setTemporalNestingFlag(true);
   }
