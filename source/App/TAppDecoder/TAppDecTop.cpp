@@ -188,7 +188,7 @@ Void TAppDecTop::decode()
   fstream streamYUV;
   if( !m_reconFileNameBL.empty() )
   {
-    streamYUV.open( m_reconFileNameBL, fstream::in | fstream::binary );
+    streamYUV.open( m_reconFileNameBL.c_str(), fstream::in | fstream::binary );
   }
   TComList<TComPic*> *cListPic = m_apcTDecTop[0]->getListPic();
   m_apcTDecTop[0]->setBLReconFile( &streamYUV );

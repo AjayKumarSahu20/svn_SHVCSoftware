@@ -108,10 +108,10 @@ public:
   , m_iMaxTemporalLayer(-1)
   , m_decodedPictureHashSEIEnabled(0)
   , m_decodedNoDisplaySEIEnabled(false)
-  , m_targetDecLayerIdSet()
 #if Q0074_COLOUR_REMAPPING_SEI
-  , m_colourRemapSEIEnabled(0)
+  , m_colourRemapSEIEnabled(false)
 #endif
+  , m_targetDecLayerIdSet()
   , m_respectDefDispWindow(0)
 #if O0043_BEST_EFFORT_DECODING
   , m_forceDecodeBitDepth(0)
