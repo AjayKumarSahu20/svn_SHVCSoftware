@@ -1707,29 +1707,33 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   printf( "\n\nSUMMARY --------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
+    const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);    
-    m_apcTEncTop[layer]->getAnalyzeAll()->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeAll()->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layerId);
   }
 
   printf( "\n\nI Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
+    const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeI()->printOut('i', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeI()->printOut('i', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layerId);
   }
 
   printf( "\n\nP Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
+    const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeP()->printOut('p', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeP()->printOut('p', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layerId);
   }
 
   printf( "\n\nB Slices--------------------------------------------------------\n" );
   for(layer = 0; layer < m_numLayers; layer++)
   {
+    const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
     const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
-    m_apcTEncTop[layer]->getAnalyzeB()->printOut('b', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+    m_apcTEncTop[layer]->getAnalyzeB()->printOut('b', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layerId);
   }
 
   for( layer = 0; layer < m_numLayers; layer++ )
@@ -1758,6 +1762,7 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   {
     for(layer = 0; layer < m_numLayers; layer++)
     {
+      const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
       const BitDepths bitDepths(m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_LUMA], m_apcLayerCfg[layer]->m_internalBitDepth[CHANNEL_TYPE_CHROMA]);
       TEncAnalyze *analyze = m_apcTEncTop[layer]->getAnalyzeAllin();
 
@@ -1767,7 +1772,7 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
       // prior to the above statement, the interlace analyser does not contain the correct total number of bits.
 
       printf( "\n\nSUMMARY INTERLACED ---------------------------------------------\n" );
-      analyze->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layer);
+      analyze->printOut('a', m_apcLayerCfg[layer]->m_chromaFormatIDC, printMSEBasedSNR, printSequenceMSE, bitDepths, layerId);
 
       if (!m_apcTEncTop[layer]->getSummaryOutFilename().empty())
       {
@@ -1779,7 +1784,8 @@ Void TAppEncTop::printOutSummary(Bool isField, const Bool printMSEBasedSNR, cons
   printf("\n");
   for( layer = 0; layer < m_numLayers; layer++ )
   {
-    printf("RVM[L%d]: %.3lf\n", layer, m_apcTEncTop[layer]->calculateRVM());
+    const UInt layerId = m_apcTEncTop[layer]->getVPS()->getLayerIdInNuh(layer);
+    printf("RVM[L%d]: %.3lf\n", layerId, m_apcTEncTop[layer]->calculateRVM());
   }
   printf("\n");
 }
