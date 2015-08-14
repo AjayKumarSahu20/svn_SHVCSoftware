@@ -21,21 +21,6 @@ namespace po = df::program_options_lite;
 //! \ingroup TAppEncoder
 //! \{
 
-
-#if AUXILIARY_PICTURES
-static inline ChromaFormat numberToChromaFormat(const Int val)
-{
-  switch (val)
-  {
-    case 400: return CHROMA_400; break;
-    case 420: return CHROMA_420; break;
-    case 422: return CHROMA_422; break;
-    case 444: return CHROMA_444; break;
-    default:  return NUM_CHROMA_FORMAT;
-  }
-}
-#endif
-
 // ====================================================================================================================
 // Constructor / destructor / initialization / destroy
 // ====================================================================================================================
@@ -99,14 +84,6 @@ TAppEncLayerCfg::~TAppEncLayerCfg()
     }
   }
 #endif
-}
-
-Void TAppEncLayerCfg::create()
-{
-}
-
-Void TAppEncLayerCfg::destroy()
-{
 }
 
 #endif //SVC_EXTENSION
