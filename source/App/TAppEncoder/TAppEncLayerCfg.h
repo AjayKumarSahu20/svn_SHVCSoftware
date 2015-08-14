@@ -116,8 +116,8 @@ protected:
   Int       m_scaledRefLayerTopOffset   [MAX_LAYERS];
   Int       m_scaledRefLayerRightOffset [MAX_LAYERS];
   Int       m_scaledRefLayerBottomOffset[MAX_LAYERS];
-  Bool      m_scaledRefLayerOffsetPresentFlag [MAX_LAYERS];
-  Bool      m_refRegionOffsetPresentFlag      [MAX_LAYERS];
+  Bool      m_scaledRefLayerOffsetPresentFlag[MAX_LAYERS];
+  Bool      m_refRegionOffsetPresentFlag     [MAX_LAYERS];
   Int       m_refRegionLeftOffset  [MAX_LAYERS];
   Int       m_refRegionTopOffset   [MAX_LAYERS];
   Int       m_refRegionRightOffset [MAX_LAYERS];
