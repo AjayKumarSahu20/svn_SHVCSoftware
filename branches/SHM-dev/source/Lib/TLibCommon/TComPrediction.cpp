@@ -583,8 +583,11 @@ Void TComPrediction::xPredInterUni ( TComDataCU* pcCU, UInt uiPartAddr, Int iWid
       assert( pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), refPic->getLayerIdx() ) );
 
 #if REF_IDX_ME_ZEROMV
-      // It is a requirement of bitstream conformance that the variables mvLX[ 0 ] and mvLX[ 1 ] shall be equal to 0 if the value of refIdxLX corresponds to an inter-layer reference picture. 
-      assert( cMv.getHor() == 0 && cMv.getVer() == 0 );
+      // It is a requirement of bitstream conformance that the variables mvLX[ 0 ] and mvLX[ 1 ] shall be equal to 0 if the value of refIdxLX corresponds to an inter-layer reference picture.
+      if( pcCU->getSlice()->getVPS()->getScalabilityMask( SCALABILITY_ID ) )
+      {
+        assert( cMv.getHor() == 0 && cMv.getVer() == 0 );
+      }
 #endif
     }
 
