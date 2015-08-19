@@ -2900,12 +2900,14 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       {
         numBits++;
       }
-      READ_CODE( numBits, uiCode, "layer_set_idx_for_ols_minus1");   vps->setOutputLayerSetIdx( i, uiCode + 1);
+      READ_CODE( numBits, uiCode, "layer_set_idx_for_ols_minus1");
     }
     else
     {
-      vps->setOutputLayerSetIdx( i, i );
+      uiCode = 0;
     }
+
+    vps->setOutputLayerSetIdx( i, i < vps->getNumLayerSets() ? i : (uiCode + 1) );
 
     Int layerSetIdxForOutputLayerSet = vps->getOutputLayerSetIdx(i);
 
@@ -3151,7 +3153,8 @@ Void TDecCavlc::defaultVPSExtension( TComVPS* vps )
   // LayerSetIdxForOutputLayerSet[ i ] = ( i <= vps_number_layer_sets_minus1 ) ? i : layer_set_idx_for_ols_minus1[ i ] + 1
   for( i = 1; i < vps->getNumOutputLayerSets(); i++ )
   {
-    vps->setOutputLayerSetIdx( i, i );
+    vps->setOutputLayerSetIdx( i, i < vps->getNumLayerSets() ? i : 1 );
+
     Int lsIdx = vps->getOutputLayerSetIdx(i);
 
     for( j = 0; j < vps->getNumLayersInIdList(lsIdx); j++ )
