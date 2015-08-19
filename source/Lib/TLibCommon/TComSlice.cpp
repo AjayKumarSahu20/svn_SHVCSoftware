@@ -3007,10 +3007,21 @@ Int TComVPS::getNumViews() const
   for( Int i = 0; i < m_uiMaxLayers; i++ )
   {
     Int lId = m_layerIdInNuh[i]; 
-    if( i > 0 && ( getViewIndex( lId ) != getScalabilityId( i - 1, VIEW_ORDER_INDEX ) ) )
+    if( i > 0 )
     {
-      numViews++; 
-    }    
+      UChar newViewFlag = 1;
+
+      for( Int j = 0; j < i; j++ )
+      {
+        if( getViewIndex(lId) == getScalabilityId( m_layerIdInNuh[j], VIEW_ORDER_INDEX ) )
+        {
+          newViewFlag = 0;
+          break;
+        }
+      }
+
+      numViews += newViewFlag; 
+    }
   }
 
   return numViews;
