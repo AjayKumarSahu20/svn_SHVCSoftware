@@ -114,7 +114,7 @@ Void xTraceFillerData ()
 }
 
 #if Q0096_OVERLAY_SEI
-Void  SyntaxElementParser::xReadStringTr        (UInt buSize, UChar *pValue, UInt& rLength, const Char *pSymbolName)
+Void SyntaxElementParser::xReadStringTr( UInt buSize, UChar *pValue, UInt& rLength, const TChar *pSymbolName )
 {
 #if RExt__DECODER_DEBUG_BIT_STATISTICS
   xReadString(buSize, pValue, rLength, pSymbolName);

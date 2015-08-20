@@ -91,7 +91,7 @@ Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const TChar *pSymbolName)
 }
 
 #if Q0096_OVERLAY_SEI
-Void  SyntaxElementWriter::xWriteStringTr( UChar* value, UInt length, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteStringTr( UChar* value, UInt length, const TChar *pSymbolName)
 {
   xWriteString(value, length);
   if( g_HLSTraceEnable )
