@@ -119,7 +119,7 @@ protected:
   Void  xReadSvlcTr  (               Int& rValue, const TChar *pSymbolName);
   Void  xReadFlagTr  (              UInt& rValue, const TChar *pSymbolName);
 #if Q0096_OVERLAY_SEI
-  Void  xReadStringTr(UInt bufSize, UChar *pValue, UInt& rLength, const Char *pSymbolName);
+  Void  xReadStringTr(UInt bufSize, UChar *pValue, UInt& rLength, const TChar *pSymbolName);
 #endif
 #endif
 public:
