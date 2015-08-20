@@ -2180,20 +2180,20 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
     READ_FLAG(    uiCode, PTL_TRACE_TEXT("one_picture_only_constraint_flag")); ptl->setOnePictureOnlyConstraintFlag(uiCode != 0);
     READ_FLAG(    uiCode, PTL_TRACE_TEXT("lower_bit_rate_constraint_flag"  )); ptl->setLowerBitRateConstraintFlag(uiCode != 0);
 #if SVC_EXTENSION
-    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+    READ_CODE(32, uiCode, "reserved_zero_34bits");  READ_CODE(2, uiCode, "reserved_zero_34bits");
   }
-  else if( ptl->getProfileIdc() == Profile::SCALABLEMAIN )
+  else if( ptl->getProfileIdc() == Profile::SCALABLEMAIN || ptl->getProfileCompatibilityFlag(Profile::SCALABLEMAIN) )
   {
-    READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
-    READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
-    READ_FLAG(    uiCode, "general_max_8bit_constraint_flag"  ); ptl->setProfileIdc  ((uiCode) ? Profile::SCALABLEMAIN : Profile::SCALABLEMAIN10);
-    READ_FLAG(    uiCode, "general_max_422chroma_constraint_flag"  ); assert (uiCode == 1);
-    READ_FLAG(    uiCode, "general_max_420chroma_constraint_flag"  ); assert (uiCode == 1);
-    READ_FLAG(    uiCode, "general_max_monochrome_constraint_flag" ); assert (uiCode == 0);
-    READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
-    READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
-    READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
-    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+    READ_FLAG(    uiCode, "max_12bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "max_10bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "max_8bit_constraint_flag"  ); ptl->setProfileIdc  ((uiCode) ? Profile::SCALABLEMAIN : Profile::SCALABLEMAIN10);
+    READ_FLAG(    uiCode, "max_422chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "max_420chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "max_monochrome_constraint_flag" ); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "intra_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "one_picture_only_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "lower_bit_rate_constraint_flag"); assert (uiCode == 1);
+    READ_CODE(32, uiCode, "reserved_zero_34bits");  READ_CODE(2, uiCode, "reserved_zero_34bits");
   }
   else
   {
@@ -2201,7 +2201,7 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
     ptl->setChromaFormatConstraint(CHROMA_420);
     ptl->setIntraConstraintFlag(false);
     ptl->setLowerBitRateConstraintFlag(true);
-    READ_CODE(32,  uiCode, "general_reserved_zero_43bits");  READ_CODE(11,  uiCode, "general_reserved_zero_43bits");
+    READ_CODE(32,  uiCode, "reserved_zero_43bits");  READ_CODE(11,  uiCode, "reserved_zero_43bits");
   }
 #else
     READ_CODE(16, uiCode, PTL_TRACE_TEXT("reserved_zero_34bits[0..15]"     ));
@@ -2956,14 +2956,31 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
         //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
 
-        // The assertion below is not valid for independent non-base layers 
-        if (vps->getNumAddLayerSets() == 0)
+        if( layerSetIdxForOutputLayerSet <= vps->getVpsNumLayerSetsMinus1() )
         {
-          if( j > 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j - 1) != 0 && vps->getNecessaryLayerFlag(i, j-1) )
+          if( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getNecessaryLayerFlag(i, j) )
           {
-            assert(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc() == vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc() ||
-              vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileIdc()) ||  
-              vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL()->getProfileCompatibilityFlag(vps->getPTL(vps->getProfileLevelTierIdx(i, j - 1))->getGeneralPTL()->getProfileIdc())  );
+            std::vector<Profile::Name> profiles;
+
+            if( vps->getScalabilityMask( VIEW_ORDER_INDEX ) )
+            {
+              profiles.push_back( Profile::MULTIVIEWMAIN );
+            }
+
+            if( vps->getScalabilityMask( SCALABILITY_ID ) )
+            {
+              profiles.push_back( Profile::SCALABLEMAIN );
+            }
+            
+            ProfileTierLevel* ptl = vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL();
+
+            Bool found = false;
+            for( Int p = 0; p < profiles.size(); p++ )
+            {
+              found = ptl->getProfileIdc() == profiles[p] || ptl->getProfileCompatibilityFlag(Int(profiles[p]));
+            }
+
+            assert( found );
           }
         }
       }
