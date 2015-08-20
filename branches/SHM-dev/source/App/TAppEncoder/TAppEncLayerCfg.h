@@ -103,8 +103,7 @@ protected:
   std::string m_scalingListFileName;                          ///< quantization matrix file name
 
   Int       m_maxTidIlRefPicsPlus1;
-  Int       m_waveFrontSynchro;                               ///< 0: no WPP. >= 1: WPP is enabled, the "Top right" from which inheritance occurs is this LCU offset in the line above the current.
-  Int       m_waveFrontFlush;                                 ///< enable(1)/disable(0) the CABAC flush at the end of each line of LCUs.
+  Bool      m_entropyCodingSyncEnabledFlag;
 
   Int       m_iQP;                                            ///< QP value of key-picture (integer)
   std::string m_dQPFileName;                                  ///< QP offset for each slice (initialized from external file)

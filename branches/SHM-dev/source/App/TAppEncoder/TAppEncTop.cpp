@@ -485,7 +485,7 @@ Void TAppEncTop::xInitLibCfg()
     UInt&          m_uiQuadtreeTUMaxDepthInter                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthInter;
     UInt&          m_uiQuadtreeTUMaxDepthIntra                  = m_apcLayerCfg[layer]->m_uiQuadtreeTUMaxDepthIntra;
 
-    Int&           m_iWaveFrontSynchro                          = m_apcLayerCfg[layer]->m_waveFrontSynchro;
+    Bool&          m_entropyCodingSyncEnabledFlag               = m_apcLayerCfg[layer]->m_entropyCodingSyncEnabledFlag;
     Bool&          m_RCEnableRateControl                        = m_apcLayerCfg[layer]->m_RCEnableRateControl;
     Int&           m_RCTargetBitrate                            = m_apcLayerCfg[layer]->m_RCTargetBitrate;
     Bool&          m_RCKeepHierarchicalBit                      = m_apcLayerCfg[layer]->m_RCKeepHierarchicalBit;
@@ -673,12 +673,12 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setLog2ParallelMergeLevelMinus2                      ( m_log2ParallelMergeLevel - 2 );
 
   //====== Slice ========
-  m_cTEncTop.setSliceMode                                         ( (SliceConstraint) m_sliceMode );
-  m_cTEncTop.setSliceArgument                                     ( m_sliceArgument            );
+  m_cTEncTop.setSliceMode                                         ( m_sliceMode );
+  m_cTEncTop.setSliceArgument                                     ( m_sliceArgument );
 
   //====== Dependent Slice ========
-  m_cTEncTop.setSliceSegmentMode                                  (  (SliceConstraint) m_sliceSegmentMode );
-  m_cTEncTop.setSliceSegmentArgument                              ( m_sliceSegmentArgument     );
+  m_cTEncTop.setSliceSegmentMode                                  ( m_sliceSegmentMode );
+  m_cTEncTop.setSliceSegmentArgument                              ( m_sliceSegmentArgument );
 
   if(m_sliceMode == NO_SLICES )
   {
@@ -696,7 +696,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setPCMFilterDisableFlag                              ( m_bPCMFilterDisableFlag);
 
   m_cTEncTop.setIntraSmoothingDisabledFlag                        (!m_enableIntraReferenceSmoothing );
-  m_cTEncTop.setDecodedPictureHashSEIEnabled                      ( m_decodedPictureHashSEIEnabled );
+  m_cTEncTop.setDecodedPictureHashSEIType                         ( m_decodedPictureHashSEIType );
   m_cTEncTop.setRecoveryPointSEIEnabled                           ( m_recoveryPointSEIEnabled );
   m_cTEncTop.setBufferingPeriodSEIEnabled                         ( m_bufferingPeriodSEIEnabled );
   m_cTEncTop.setPictureTimingSEIEnabled                           ( m_pictureTimingSEIEnabled );
@@ -781,7 +781,7 @@ Void TAppEncTop::xInitLibCfg()
     m_bLFCrossTileBoundaryFlag = true;
   }
   m_cTEncTop.setLFCrossTileBoundaryFlag                           ( m_bLFCrossTileBoundaryFlag );
-  m_cTEncTop.setWaveFrontSynchro                                  ( m_iWaveFrontSynchro );
+  m_cTEncTop.setEntropyCodingSyncEnabledFlag                      ( m_entropyCodingSyncEnabledFlag );
   m_cTEncTop.setTMVPModeId                                        ( m_TMVPModeId );
   m_cTEncTop.setUseScalingListId                                  ( m_useScalingListId  );
   m_cTEncTop.setScalingListFileName                               ( m_scalingListFileName );

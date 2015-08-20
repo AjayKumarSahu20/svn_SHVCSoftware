@@ -94,7 +94,7 @@ Void TDecGop::destroy()
 
 #if SVC_EXTENSION
 Void TDecGop::init( TDecTop**               ppcDecTop,
-                   TDecEntropy*             pcEntropyDecoder,
+                    TDecEntropy*            pcEntropyDecoder,
 #else
 Void TDecGop::init( TDecEntropy*            pcEntropyDecoder,
 #endif
@@ -289,19 +289,19 @@ static Void calcAndPrintHashStatus(TComPicYuv& pic, const SEIDecodedPictureHash*
   {
     switch (pictureHashSEI->method)
     {
-      case SEIDecodedPictureHash::MD5:
+      case HASHTYPE_MD5:
         {
           hashType = "MD5";
           numChar = calcMD5(pic, recon_digest, bitDepths);
           break;
         }
-      case SEIDecodedPictureHash::CRC:
+      case HASHTYPE_CRC:
         {
           hashType = "CRC";
           numChar = calcCRC(pic, recon_digest, bitDepths);
           break;
         }
-      case SEIDecodedPictureHash::CHECKSUM:
+      case HASHTYPE_CHECKSUM:
         {
           hashType = "Checksum";
           numChar = calcChecksum(pic, recon_digest, bitDepths);
