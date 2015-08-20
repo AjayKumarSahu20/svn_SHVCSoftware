@@ -3567,8 +3567,6 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   // more syntax elements to be parsed here
 
   READ_FLAG( uiCode, "inter_view_mv_vert_constraint_flag" );
-  // Vertical MV component restriction is not used in SHVC CTC
-  assert( uiCode == 0 );
 }
 
 #if CGS_3D_ASYMLUT
