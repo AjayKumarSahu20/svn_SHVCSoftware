@@ -157,13 +157,7 @@ public:
   SEIDecodedPictureHash() {}
   virtual ~SEIDecodedPictureHash() {}
 
-  enum Method
-  {
-    MD5,
-    CRC,
-    CHECKSUM,
-    RESERVED,
-  } method;
+  HashType method;
 
   TComPictureHash m_pictureHash;
 };
