@@ -320,6 +320,9 @@ protected:
   Int       m_kneeSEINumKneePointsMinus1;
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
+#if Q0074_COLOUR_REMAPPING_SEI
+  std::string m_colourRemapSEIFileRoot;          ///< SEI Colour Remapping File (initialized from external file)
+#endif
   TComSEIMasteringDisplay m_masteringDisplay;
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
@@ -906,6 +909,10 @@ public:
   Int*  getKneeSEIInputKneePoint()                                   { return m_kneeSEIInputKneePoint; }
   Void  setKneeSEIOutputKneePoint(Int *p)                            { m_kneeSEIOutputKneePoint = p; }
   Int*  getKneeSEIOutputKneePoint()                                  { return m_kneeSEIOutputKneePoint; }
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void  setColourRemapInfoSEIFileRoot( const std::string &s )        { m_colourRemapSEIFileRoot = s; }
+  const std::string &getColourRemapInfoSEIFileRoot() const           { return m_colourRemapSEIFileRoot; }
+#endif
   Void  setMasteringDisplaySEI(const TComSEIMasteringDisplay &src)   { m_masteringDisplay = src; }
   const TComSEIMasteringDisplay &getMasteringDisplaySEI() const      { return m_masteringDisplay; }
   Void         setUseWP               ( Bool b )                     { m_useWeightedPred   = b;    }
@@ -1097,10 +1104,6 @@ public:
   Bool  getAlphaClipFlag()                                   { return m_alphaClipFlag; }
   Void  setAlphaClipTypeFlag(Bool b)                         { m_alphaClipTypeFlag     = b; }
   Bool  getAlphaClipTypeFlag()                               { return m_alphaClipTypeFlag; }
-#endif
-#if Q0074_COLOUR_REMAPPING_SEI
-  Void  xSetCRISEIFileRoot( std::string pch )                { m_colourRemapSEIFileName = pch; }
-  std::string& getCRISEIFileRoot()                           { return m_colourRemapSEIFileName; }
 #endif
 #if SVC_EXTENSION
   UInt      getLayerId()                                     { return m_layerId;    }

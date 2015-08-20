@@ -30,12 +30,6 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 , m_aidQP(NULL)
 , m_repFormatIdx(-1)
 {
-#if Q0074_COLOUR_REMAPPING_SEI
-  memset( m_colourRemapSEIPreLutCodedValue,   0, sizeof(m_colourRemapSEIPreLutCodedValue) );
-  memset( m_colourRemapSEIPreLutTargetValue,  0, sizeof(m_colourRemapSEIPreLutTargetValue) );
-  memset( m_colourRemapSEIPostLutCodedValue,  0, sizeof(m_colourRemapSEIPostLutCodedValue) );
-  memset( m_colourRemapSEIPostLutTargetValue, 0, sizeof(m_colourRemapSEIPostLutTargetValue) );
-#endif
   m_confWinLeft = m_confWinRight = m_confWinTop = m_confWinBottom = 0;
   m_aiPad[1] = m_aiPad[0] = 0;
   m_numRefLayerLocationOffsets = 0;
@@ -63,27 +57,6 @@ TAppEncLayerCfg::~TAppEncLayerCfg()
   {
     delete[] m_aidQP;
   }
-#if Q0074_COLOUR_REMAPPING_SEI
-  for( Int c=0 ; c<3 ; c++)
-  {
-    if ( m_colourRemapSEIPreLutCodedValue[c] )
-    {
-      delete[] m_colourRemapSEIPreLutCodedValue[c];
-    }
-    if ( m_colourRemapSEIPreLutTargetValue[c] )
-    {
-      delete[] m_colourRemapSEIPreLutTargetValue[c];
-    }
-    if ( m_colourRemapSEIPostLutCodedValue[c] )
-    {
-      delete[] m_colourRemapSEIPostLutCodedValue[c];
-    }
-    if ( m_colourRemapSEIPostLutTargetValue[c] )
-    {
-      delete[] m_colourRemapSEIPostLutTargetValue[c];
-    }
-  }
-#endif
 }
 
 #endif //SVC_EXTENSION

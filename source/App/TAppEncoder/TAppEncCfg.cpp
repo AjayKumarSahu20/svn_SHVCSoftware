@@ -773,7 +773,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
 #if Q0074_COLOUR_REMAPPING_SEI
-  string* cfg_colourRemapSEIFileName[MAX_LAYERS];
+  string* cfg_colourRemapSEIFileRoot[MAX_LAYERS];
 #endif
   Bool*   cfg_entropyCodingSyncEnabledFlag[MAX_LAYERS];
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
@@ -792,7 +792,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     cfg_dQPFileName[layer]  = &m_apcLayerCfg[layer]->m_dQPFileName;
     cfg_fQP[layer]          = &m_apcLayerCfg[layer]->m_fQP;
 #if Q0074_COLOUR_REMAPPING_SEI
-    cfg_colourRemapSEIFileName[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileName;
+    cfg_colourRemapSEIFileRoot[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
 #endif
     cfg_repFormatIdx[layer]         = &m_apcLayerCfg[layer]->m_repFormatIdx;
     cfg_layerId[layer]              = &m_apcLayerCfg[layer]->m_layerId;
@@ -1072,7 +1072,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,            string(""), m_numLayers, "chroma shift in the horizontal direction used in resampling proces")
   ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,            string(""), m_numLayers, "chroma shift in the vertical   direction used in resampling proces")
 #if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfoFileRoot%d",              cfg_colourRemapSEIFileName,       string(""), m_numLayers, "Colour Remapping Information SEI parameters file name for layer %d")
+  ("SEIColourRemappingInfoFileRoot%d,-cri",         cfg_colourRemapSEIFileRoot,       string(""), m_numLayers, "Colour Remapping Information SEI parameters root file name (wo num ext)")
 #endif
   ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],     8, m_numLayers, "Bit-depth of input file for layer %d")
   ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],  0, m_numLayers, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
@@ -1140,10 +1140,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("AccessUnitDelimiter",                             m_AccessUnitDelimiter,                            false, "Enable Access Unit Delimiter NALUs")
 #if !SVC_EXTENSION
   ("FrameRate,-fr",                                   m_iFrameRate,                                         0, "Frame rate")
-#if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfoFileRoot",                  m_colourRemapSEIFileName,                    string(""), "Colour Remapping Information SEI parameters file name")
 #endif
-#endif //SVC_EXTENSION
   ("FrameSkip,-fs",                                   m_FrameSkip,                                         0u, "Number of frames to skip at start of input YUV")
   ("FramesToBeEncoded,f",                             m_framesToBeEncoded,                                  0, "Number of frames to be encoded (default=all)")
   ("ClipInputVideoToRec709Range",                     m_bClipInputVideoToRec709Range,                   false, "If true then clip input video to the Rec. 709 Range on loading when InternalBitDepth is less than MSBExtendedBitDepth")
@@ -1461,6 +1458,11 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("MaxBitsPerMinCuDenom",                            m_maxBitsPerMinCuDenom,                               1, "Indicates an upper bound for the number of bits of coding_unit() data")
   ("Log2MaxMvLengthHorizontal",                       m_log2MaxMvLengthHorizontal,                         15, "Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units")
   ("Log2MaxMvLengthVertical",                         m_log2MaxMvLengthVertical,                           15, "Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units")
+#if !SVC_EXTENSION
+#if Q0074_COLOUR_REMAPPING_SEI
+  ("SEIColourRemappingInfoFileRoot,-cri",             m_colourRemapSEIFileRoot,                    string(""), "Colour Remapping Information SEI parameters root file name (wo num ext)")
+#endif
+#endif
   ("SEIRecoveryPoint",                                m_recoveryPointSEIEnabled,                        false, "Control generation of recovery point SEI messages")
   ("SEIBufferingPeriod",                              m_bufferingPeriodSEIEnabled,                      false, "Control generation of buffering period SEI messages")
   ("SEIPictureTiming",                                m_pictureTimingSEIEnabled,                        false, "Control generation of picture timing SEI messages")
@@ -1565,7 +1567,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("SEIMasteringDisplayMinLuminance",                 m_masteringDisplay.minLuminance,                      0u, "Specifies the mastering display minimum luminance value in units of 1/10000 candela per square metre (32-bit code value)")
   ("SEIMasteringDisplayPrimaries",                    cfg_DisplayPrimariesCode,       cfg_DisplayPrimariesCode, "Mastering display primaries for all three colour planes in CIE xy coordinates in increments of 1/50000 (results in the ranges 0 to 50000 inclusive)")
   ("SEIMasteringDisplayWhitePoint",                   cfg_DisplayWhitePointCode,     cfg_DisplayWhitePointCode, "Mastering display white point CIE xy coordinates in normalised increments of 1/50000 (e.g. 0.333 = 16667)")
- 
+
 #if LAYERS_NOT_PRESENT_SEI
   ("SEILayersNotPresent",                             m_layersNotPresentSEIEnabled,             0, "Control generation of layers not present SEI message")
 #endif   

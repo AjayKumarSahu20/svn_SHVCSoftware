@@ -456,6 +456,11 @@ protected:
   Int       m_maxBitsPerMinCuDenom;                           ///< Indicates an upper bound for the number of bits of coding_unit() data
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
+#if !SVC_EXTENSION
+#if Q0074_COLOUR_REMAPPING_SEI
+  std::string m_colourRemapSEIFileRoot;
+#endif
+#endif
 
   std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.
   std::string m_summaryPicFilenameBase;                       ///< Base filename to use for producing summary picture output files. The actual filenames used will have I.txt, P.txt and B.txt appended.
@@ -485,11 +490,7 @@ protected:
   Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
   Bool      m_elRapSliceBEnabled;
 #endif
-#if Q0074_COLOUR_REMAPPING_SEI
-#if !SVC_EXTENSION
-  string    m_colourRemapSEIFileName;
-#endif
-#endif
+
   // internal member functions
 #if SVC_EXTENSION
   Void  xSetGlobal      (UInt layerId);                       ///< set global variables

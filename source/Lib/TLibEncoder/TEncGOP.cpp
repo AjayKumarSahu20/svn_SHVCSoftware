@@ -116,13 +116,6 @@ TEncGOP::TEncGOP()
   m_noRaslOutputFlag = false;
   m_prevPicHasEos    = false;
 #endif //SVC_EXTENSION
-
-#if Q0074_COLOUR_REMAPPING_SEI
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue,   0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue,  0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue,  0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue));
-  memset( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue, 0, sizeof(m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue));
-#endif
   return;
 }
 
@@ -701,161 +694,6 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
 #endif //SVC_EXTENSION
 }
 
-#if Q0074_COLOUR_REMAPPING_SEI
-Void TEncGOP::xFreeColourCRI()
-{
-  for( Int c=0 ; c<3 ; c++)
-  {
-    if ( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c] != NULL)
-    {
-      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c];
-      m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c] = NULL;
-    }
-    if ( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] != NULL)
-    {
-      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c];
-      m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] = NULL;
-    }
-    if ( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c] != NULL)
-    {
-      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c];
-      m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c] = NULL;
-    }
-    if ( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] != NULL)
-    {
-      delete[] m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c];
-      m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] = NULL;
-    }
-  }
-}
-
-Int TEncGOP::xReadingCRIparameters(){
-
-  // reading external Colour Remapping Information SEI message parameters from file
-  if( m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str() )
-  {
-    FILE* fic;
-    Int retval;
-    if((fic = fopen(m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str(),"r")) == (FILE*)NULL)
-    {
-      //fprintf(stderr, "Can't open Colour Remapping Information SEI parameters file %s\n", m_colourRemapSEIFile.c_str());
-      //exit(EXIT_FAILURE);
-      return (-1);
-    }
-    Int tempCode;
-    retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIId );
-    retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEICancelFlag = tempCode ? 1 : 0;
-    if( !m_seiColourRemappingInfo.m_colourRemapSEICancelFlag )
-    {
-      retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEIPersistenceFlag= tempCode ? 1 : 0;
-      retval = fscanf( fic, "%d", &tempCode); m_seiColourRemappingInfo.m_colourRemapSEIVideoSignalInfoPresentFlag = tempCode ? 1 : 0;
-      if( m_seiColourRemappingInfo.m_colourRemapSEIVideoSignalInfoPresentFlag )
-      {
-        retval = fscanf( fic, "%d", &tempCode  ); m_seiColourRemappingInfo.m_colourRemapSEIFullRangeFlag = tempCode ? 1 : 0;
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPrimaries );
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEITransferFunction );
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIMatrixCoefficients );
-      }
-
-      retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth );
-      retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIBitDepth );
-  
-      for( Int c=0 ; c<3 ; c++ )
-      {
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] );
-        if( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]>0 )
-        {
-          m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c]  = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c] = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<=m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] ; i++ )
-          {
-            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] );
-          }
-        }
-      }
-
-      retval = fscanf( fic, "%d", &tempCode ); m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag = tempCode ? 1 : 0;
-      if( m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag )
-      {
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom );
-        for( Int c=0 ; c<3 ; c++ )
-        {
-          for( Int i=0 ; i<3 ; i++ )
-          {
-            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] );
-          }
-        }
-      }
-
-      for( Int c=0 ; c<3 ; c++ )
-      {
-        retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] );
-        if( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]>0 )
-        {
-          m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c]  = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c] = new Int[m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]+1];
-          for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] ; i++ )
-          {
-            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] );
-            retval = fscanf( fic, "%d", &m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] );
-          }
-        }
-      }
-    }
-
-    fclose( fic );
-    if( retval != 1 )
-    {
-      fprintf(stderr, "Error while reading Colour Remapping Information SEI parameters file\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-  return 1;
-}
-
-Bool confirmParameter(Bool bflag, const TChar* message);
-// ====================================================================================================================
-// Private member functions
-// ====================================================================================================================
-
-Void TEncGOP::xCheckParameter()
-{
-  Bool check_failed = false; /* abort if there is a fatal configuration problem */
-#define xConfirmParameter(a,b) check_failed |= confirmParameter(a,b)
-
-  if ( m_seiColourRemappingInfo.m_colourRemapSEIFile.c_str() && !m_seiColourRemappingInfo.m_colourRemapSEICancelFlag )
-  {
-    xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth < 8 || m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth > 16 , "colour_remap_coded_data_bit_depth shall be in the range of 8 to 16, inclusive");
-    xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIBitDepth < 8 || (m_seiColourRemappingInfo.m_colourRemapSEIBitDepth > 16 && m_seiColourRemappingInfo.m_colourRemapSEIBitDepth < 255) , "colour_remap_target_bit_depth shall be in the range of 8 to 16, inclusive");
-    for( Int c=0 ; c<3 ; c++)
-    {
-      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] > 32, "pre_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPreLutNumValMinus1[c] ; i++)
-        {
-          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutCodedValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIInputBitDepth)-1), "pre_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_coded_data_bit_depth)-1, inclusive");
-          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPreLutTargetValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "pre_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
-        }
-      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] > 32, "post_lut_num_val_minus1[c] shall be in the range of 0 to 32, inclusive");
-      if( m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c]>0 )
-        for( Int i=0 ; i<= m_seiColourRemappingInfo.m_colourRemapSEIPostLutNumValMinus1[c] ; i++)
-        {
-          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutCodedValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "post_lut_coded_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
-          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] < 0 || m_seiColourRemappingInfo.m_colourRemapSEIPostLutTargetValue[c][i] > ((1<<m_seiColourRemappingInfo.m_colourRemapSEIBitDepth)-1), "post_lut_target_value[c][i] shall be in the range of 0 to (1<<colour_remap_target_bit_depth)-1, inclusive");
-        }
-    }
-    if ( m_seiColourRemappingInfo.m_colourRemapSEIMatrixPresentFlag )
-    {
-      xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom < 0 || m_seiColourRemappingInfo.m_colourRemapSEILog2MatrixDenom > 15, "log2_matrix_denom shall be in the range of 0 to 15, inclusive");
-      for( Int c=0 ; c<3 ; c++)
-        for( Int i=0 ; i<3 ; i++)
-          xConfirmParameter( m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] < -32768 || m_seiColourRemappingInfo.m_colourRemapSEICoeffs[c][i] > 32767, "colour_remap_coeffs[c][i] shall be in the range of -32768 and 32767, inclusive");
-    }
-  }
-}
-#endif
-
 Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessages, SEIMessages& nestedSeiMessages, TComSlice *slice)
 {
   if( ( m_pcCfg->getBufferingPeriodSEIEnabled() ) && ( slice->getSliceType() == I_SLICE ) &&
@@ -911,6 +749,24 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     seiMessages.push_back(seiNoDisplay);
   }
 
+#if Q0074_COLOUR_REMAPPING_SEI
+  // insert one Colour Remapping Info SEI for the picture (if the file exists)
+  if (!m_pcCfg->getColourRemapInfoSEIFileRoot().empty())
+  {
+    SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo();
+    const Bool success = m_seiEncoder.initSEIColourRemappingInfo(seiColourRemappingInfo, slice->getPOC() );
+
+    if(success)
+    {
+      seiMessages.push_back(seiColourRemappingInfo);
+    }
+    else
+    {
+      delete seiColourRemappingInfo;
+    }
+  }
+#endif
+
 #if Q0189_TMVP_CONSTRAINTS
   if( m_pcEncTop->getTMVPConstraintsSEIEnabled() == 1 && (m_pcEncTop->getTMVPModeId() == 1 || m_pcEncTop->getTMVPModeId() == 2) &&
     slice->getLayerId() > 0 && (slice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_W_RADL || slice->getNalUnitType() ==  NAL_UNIT_CODED_SLICE_IDR_N_LP))
@@ -929,29 +785,6 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     seiFFInfo->m_ffinfo_picStruct = (isField && slice->getPic()->isTopField())? 1 : isField? 2 : 0;
     seiMessages.push_back(seiFFInfo);
   }
-#endif
-#if Q0074_COLOUR_REMAPPING_SEI
-    // insert one CRI by picture (if the file exist)   
-    xFreeColourCRI();
-
-    // building the CRI file name with poc num in suffix "_poc.txt"
-    char suffix[10];
-    sprintf(suffix, "_%d.txt",  slice->getPOC());
-    string  colourRemapSEIFileWithPoc(m_pcCfg->getCRISEIFileRoot());
-    colourRemapSEIFileWithPoc.append(suffix);
-    xSetCRISEIFile( colourRemapSEIFileWithPoc );
-  
-    Int ret = xReadingCRIparameters();
-
-    if(ret != -1 && !m_pcCfg->getCRISEIFileRoot().empty())
-    {
-      // check validity of input parameters
-      xCheckParameter();
-
-      SEIColourRemappingInfo *seiColourRemappingInfo = new SEIColourRemappingInfo;
-      m_seiEncoder.initSEIColourRemappingInfo(seiColourRemappingInfo, &m_seiColourRemappingInfo);
-      seiMessages.push_back(seiColourRemappingInfo);
-    }
 #endif
 }
 
@@ -4588,16 +4421,5 @@ Void TEncGOP::xSetLayerInitializedFlag(TComSlice *slice)
   }
 }
 #endif //SVC_EXTENSION
-
-#if Q0074_COLOUR_REMAPPING_SEI
-Bool confirmParameter(Bool bflag, const TChar* message)
-{
-  if (!bflag)
-    return false;
-
-  printf("Error: %s\n",message);
-  return true;
-}
-#endif
 
 //! \}

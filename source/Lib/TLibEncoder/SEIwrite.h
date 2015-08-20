@@ -88,6 +88,9 @@ protected:
   Void xWriteSEITimeCode(const SEITimeCode& sei);
   Void xWriteSEIChromaResamplingFilterHint(const SEIChromaResamplingFilterHint& sei);
   Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
+#if Q0074_COLOUR_REMAPPING_SEI
+  Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
+#endif
   Void xWriteSEIMasteringDisplayColourVolume( const SEIMasteringDisplayColourVolume& sei);
 
 #if O0164_MULTI_LAYER_HRD
@@ -96,9 +99,7 @@ protected:
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSPS *sps);
 #endif
   Void xWriteByteAlign();
-#if Q0074_COLOUR_REMAPPING_SEI
-  Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
-#endif
+
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   Void xWriteSEILayersNotPresent(const SEILayersNotPresent& sei);

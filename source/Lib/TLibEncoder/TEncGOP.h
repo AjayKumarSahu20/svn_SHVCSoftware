@@ -137,9 +137,6 @@ private:
   Bool                    m_bufferingPeriodSEIPresentInAU;
   SEIEncoder              m_seiEncoder;
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  TComSEIColourRemappingInfo m_seiColourRemappingInfo;  
-#endif
 #if SVC_EXTENSION
   Int                     m_pocCraWithoutReset;
   Int                     m_associatedIrapPocBeforeReset;
@@ -273,14 +270,6 @@ protected:
 
   Void applyDeblockingFilterMetric( TComPic* pcPic, UInt uiNumSlices );
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  TComSEIColourRemappingInfo* xGetSEIColourRemappingInfo()  { return &m_seiColourRemappingInfo; }
-  Void xSetCRISEIFile( std::string pch )                    { m_seiColourRemappingInfo.m_colourRemapSEIFile = pch; }
-
-  Void xFreeColourCRI();
-  Int  xReadingCRIparameters();
-  Void xCheckParameter();
-#endif
 #if SVC_EXTENSION
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void xBuildTileSetsMap(TComPicSym* picSym);
