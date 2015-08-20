@@ -149,7 +149,7 @@ const TChar *SEI::getSEIMessageString(SEI::PayloadType payloadType)
     case SEI::TEMP_MOTION_CONSTRAINED_TILE_SETS:    return "Temporal motion constrained tile sets";
     case SEI::CHROMA_RESAMPLING_FILTER_HINT:        return "Chroma sampling filter hint";
 #if Q0074_COLOUR_REMAPPING_SEI
-    case SEI::COLOUR_REMAPPING_INFO:                return "Colour Remapping Information";
+    case SEI::COLOUR_REMAPPING_INFO:                return "Colour remapping info";
 #endif
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
@@ -193,52 +193,5 @@ SEISubBitstreamProperty::SEISubBitstreamProperty()
   ::memset(m_highestSublayerId      , 0, sizeof(m_highestSublayerId));
   ::memset(m_avgBitRate             , 0, sizeof(m_avgBitRate));
   ::memset(m_maxBitRate             , 0, sizeof(m_maxBitRate));
-}
-#endif
-
-#if Q0074_COLOUR_REMAPPING_SEI
-Void  SEIColourRemappingInfo::copyFrom( SEIColourRemappingInfo const * SeiCriInput)
-{
-  m_colourRemapId                         = SeiCriInput->m_colourRemapId;
-  m_colourRemapCancelFlag                 = SeiCriInput->m_colourRemapCancelFlag;
-  m_colourRemapPersistenceFlag            = SeiCriInput->m_colourRemapPersistenceFlag;
-  m_colourRemapVideoSignalInfoPresentFlag = SeiCriInput->m_colourRemapVideoSignalInfoPresentFlag;
-  m_colourRemapFullRangeFlag              = SeiCriInput->m_colourRemapFullRangeFlag;
-  m_colourRemapPrimaries                  = SeiCriInput->m_colourRemapPrimaries;
-  m_colourRemapTransferFunction           = SeiCriInput->m_colourRemapTransferFunction;
-  m_colourRemapMatrixCoefficients         = SeiCriInput->m_colourRemapMatrixCoefficients;
-  m_colourRemapInputBitDepth              = SeiCriInput->m_colourRemapInputBitDepth;
-  m_colourRemapBitDepth                   = SeiCriInput->m_colourRemapBitDepth;
-
-  for( Int c=0 ; c<3 ; c++ )
-  {
-    m_preLutNumValMinus1[c] = SeiCriInput->m_preLutNumValMinus1[c];
-    m_preLutCodedValue[c].resize(m_preLutNumValMinus1[c]+1);
-    m_preLutTargetValue[c].resize(m_preLutNumValMinus1[c]+1);
-    for ( Int i=0 ; i <= SeiCriInput->m_preLutNumValMinus1[c] ; i++ )
-    {
-        m_preLutCodedValue[c][i]   = SeiCriInput->m_preLutCodedValue[c][i];
-        m_preLutTargetValue[c][i]  = SeiCriInput->m_preLutTargetValue[c][i];
-    } 
-  }
-    
-  m_colourRemapMatrixPresentFlag  = SeiCriInput->m_colourRemapMatrixPresentFlag;
-  m_log2MatrixDenom               = SeiCriInput->m_log2MatrixDenom;
-
-  for ( Int c=0 ; c<3 ; c++ )
-    for ( Int i=0 ; i<3 ; i++ )
-      m_colourRemapCoeffs[c][i] = SeiCriInput->m_colourRemapCoeffs[c][i];
-
-  for( Int c=0 ; c<3 ; c++ )
-  {
-    m_postLutNumValMinus1[c] = SeiCriInput->m_postLutNumValMinus1[c];
-    m_postLutCodedValue[c].resize(m_postLutNumValMinus1[c]+1);
-    m_postLutTargetValue[c].resize(m_postLutNumValMinus1[c]+1);
-    for ( Int i=0 ; i <= m_postLutNumValMinus1[c] ; i++ )
-    {
-        m_postLutCodedValue[c][i]  = SeiCriInput->m_postLutCodedValue[c][i];
-        m_postLutTargetValue[c][i] = SeiCriInput->m_postLutTargetValue[c][i];
-    } 
-  }
 }
 #endif

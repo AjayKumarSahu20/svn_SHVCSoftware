@@ -458,6 +458,50 @@ public:
   std::vector<Int> m_kneeOutputKneePoint;
 };
 
+#if Q0074_COLOUR_REMAPPING_SEI
+class SEIColourRemappingInfo : public SEI
+{
+public:
+
+  struct CRIlut
+  {
+    Int codedValue;
+    Int targetValue;
+    bool operator < (const CRIlut& a) const
+    {
+      return codedValue < a.codedValue;
+    }
+  };
+
+  PayloadType payloadType() const { return COLOUR_REMAPPING_INFO; }
+  SEIColourRemappingInfo() {}
+  ~SEIColourRemappingInfo() {}
+
+  Void copyFrom( const SEIColourRemappingInfo &seiCriInput)
+  {
+    (*this) = seiCriInput;
+  }
+
+  UInt                m_colourRemapId;
+  Bool                m_colourRemapCancelFlag;
+  Bool                m_colourRemapPersistenceFlag;
+  Bool                m_colourRemapVideoSignalInfoPresentFlag;
+  Bool                m_colourRemapFullRangeFlag;
+  Int                 m_colourRemapPrimaries;
+  Int                 m_colourRemapTransferFunction;
+  Int                 m_colourRemapMatrixCoefficients;
+  Int                 m_colourRemapInputBitDepth;
+  Int                 m_colourRemapBitDepth;
+  Int                 m_preLutNumValMinus1[3];
+  std::vector<CRIlut> m_preLut[3];
+  Bool                m_colourRemapMatrixPresentFlag;
+  Int                 m_log2MatrixDenom;
+  Int                 m_colourRemapCoeffs[3][3];
+  Int                 m_postLutNumValMinus1[3];
+  std::vector<CRIlut> m_postLut[3];
+};
+#endif
+
 class SEIChromaResamplingFilterHint : public SEI
 {
 public:
@@ -669,62 +713,6 @@ public:
   UInt m_activeVpsId;
   UInt m_vpsMaxLayers;
   Bool m_layerNotPresentFlag[MAX_LAYERS];
-};
-#endif
-
-#if Q0074_COLOUR_REMAPPING_SEI
-struct TComSEIColourRemappingInfo
-{
-  std::string             m_colourRemapSEIFile;
-  Int                     m_colourRemapSEIId;
-  Bool                    m_colourRemapSEICancelFlag;
-  Bool                    m_colourRemapSEIPersistenceFlag;
-  Bool                    m_colourRemapSEIVideoSignalInfoPresentFlag;
-  Bool                    m_colourRemapSEIFullRangeFlag;
-  Int                     m_colourRemapSEIPrimaries;
-  Int                     m_colourRemapSEITransferFunction;
-  Int                     m_colourRemapSEIMatrixCoefficients;
-  Int                     m_colourRemapSEIInputBitDepth;
-  Int                     m_colourRemapSEIBitDepth;
-  Int                     m_colourRemapSEIPreLutNumValMinus1[3];
-  Int*                    m_colourRemapSEIPreLutCodedValue[3];
-  Int*                    m_colourRemapSEIPreLutTargetValue[3];
-  Bool                    m_colourRemapSEIMatrixPresentFlag;
-  Int                     m_colourRemapSEILog2MatrixDenom;
-  Int                     m_colourRemapSEICoeffs[3][3];
-  Int                     m_colourRemapSEIPostLutNumValMinus1[3];
-  Int*                    m_colourRemapSEIPostLutCodedValue[3];
-  Int*                    m_colourRemapSEIPostLutTargetValue[3];
-};
-
-class SEIColourRemappingInfo : public SEI
-{
-public:
-  PayloadType payloadType() const { return COLOUR_REMAPPING_INFO; }
-  SEIColourRemappingInfo() {}
-  ~SEIColourRemappingInfo() {}
-
-  Void  copyFrom( SEIColourRemappingInfo const * SeiCriInput);
- 
-  Int   m_colourRemapId;
-  Bool  m_colourRemapCancelFlag;
-  Bool  m_colourRemapPersistenceFlag;
-  Bool  m_colourRemapVideoSignalInfoPresentFlag;
-  Bool  m_colourRemapFullRangeFlag;
-  Int   m_colourRemapPrimaries;
-  Int   m_colourRemapTransferFunction;
-  Int   m_colourRemapMatrixCoefficients;
-  Int   m_colourRemapInputBitDepth;
-  Int   m_colourRemapBitDepth;
-  Int   m_preLutNumValMinus1[3];
-  std::vector<Int> m_preLutCodedValue[3];
-  std::vector<Int> m_preLutTargetValue[3];
-  Bool  m_colourRemapMatrixPresentFlag;
-  Int   m_log2MatrixDenom;
-  Int   m_colourRemapCoeffs[3][3];
-  Int   m_postLutNumValMinus1[3];
-  std::vector<Int> m_postLutCodedValue[3];
-  std::vector<Int> m_postLutTargetValue[3];
 };
 #endif
 

@@ -504,11 +504,13 @@ Void TAppEncTop::xInitLibCfg()
     string&        m_scalingListFileName                        = m_apcLayerCfg[layer]->m_scalingListFileName;
     Bool&          m_bUseSAO                                    = m_apcLayerCfg[layer]->m_bUseSAO;
 
-    string&        m_colourRemapSEIFileName                     = m_apcLayerCfg[layer]->m_colourRemapSEIFileName;
-
     GOPEntry*      m_GOPList                                    = m_apcLayerCfg[layer]->m_GOPList;
     Int&           m_extraRPSs                                  = m_apcLayerCfg[layer]->m_extraRPSs;
     Int&           m_maxTempLayer                               = m_apcLayerCfg[layer]->m_maxTempLayer;
+
+#if Q0074_COLOUR_REMAPPING_SEI
+    string&        m_colourRemapSEIFileRoot                     = m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
+#endif
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
@@ -541,7 +543,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setGOPSize                                           ( m_iGOPSize );
   m_cTEncTop.setGopList                                           ( m_GOPList );
   m_cTEncTop.setExtraRPSs                                         ( m_extraRPSs );
-
   for(Int i = 0; i < MAX_TLAYER; i++)
   {
     m_cTEncTop.setNumReorderPics                                  ( m_numReorderPics[i], i );
@@ -764,6 +765,9 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setKneeSEINumKneePointsMinus1                        ( m_kneeSEINumKneePointsMinus1 );
   m_cTEncTop.setKneeSEIInputKneePoint                             ( m_kneeSEIInputKneePoint );
   m_cTEncTop.setKneeSEIOutputKneePoint                            ( m_kneeSEIOutputKneePoint );
+#if Q0074_COLOUR_REMAPPING_SEI
+  m_cTEncTop.setColourRemapInfoSEIFileRoot                        ( m_colourRemapSEIFileRoot );
+#endif
   m_cTEncTop.setMasteringDisplaySEI                               ( m_masteringDisplay );
 
   m_cTEncTop.setTileUniformSpacingFlag                            ( m_tileUniformSpacingFlag );
@@ -841,9 +845,6 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setSummaryPicFilenameBase                            ( m_summaryPicFilenameBase );
   m_cTEncTop.setSummaryVerboseness                                ( m_summaryVerboseness );
 
-#if Q0074_COLOUR_REMAPPING_SEI
-  m_cTEncTop.xSetCRISEIFileRoot                                   ( m_colourRemapSEIFileName );
-#endif
 #if LAYERS_NOT_PRESENT_SEI
   m_cTEncTop.setLayersNotPresentSEIEnabled                        ( m_layersNotPresentSEIEnabled );
 #endif  

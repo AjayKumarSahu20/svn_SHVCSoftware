@@ -126,7 +126,6 @@ enum AuxType
 #define MAX_VPS_LAYER_IDX_PLUS1                   MAX_LAYERS
 
 #endif // SVC_EXTENSION
-#define Q0074_COLOUR_REMAPPING_SEI       1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
 
 //! \ingroup TLibCommon
 //! \{
@@ -165,6 +164,7 @@ enum AuxType
 #define DECODER_CHECK_SUBSTREAM_AND_SLICE_TRAILING_BYTES  1 ///< TODO: integrate this macro into a broader conformance checking system.
 #define T0196_SELECTIVE_RDOQ                              1 ///< selective RDOQ
 #define U0040_MODIFIED_WEIGHTEDPREDICTION_WITH_BIPRED_AND_CLIPPING 1
+#define Q0074_COLOUR_REMAPPING_SEI                        1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
 
 // ====================================================================================================================
 // Tool Switches
@@ -376,6 +376,23 @@ enum InputColourSpaceConversion // defined in terms of conversion prior to input
   IPCOLOURSPACE_RGBtoGBR                = 3,
   NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS = 4
 };
+
+#if Q0074_COLOUR_REMAPPING_SEI
+enum MATRIX_COEFFICIENTS // Table E.5 (Matrix coefficients)
+{
+  MATRIX_COEFFICIENTS_RGB                           = 0,
+  MATRIX_COEFFICIENTS_BT709                         = 1,
+  MATRIX_COEFFICIENTS_UNSPECIFIED                   = 2,
+  MATRIX_COEFFICIENTS_RESERVED_BY_ITUISOIEC         = 3,
+  MATRIX_COEFFICIENTS_USFCCT47                      = 4,
+  MATRIX_COEFFICIENTS_BT601_625                     = 5,
+  MATRIX_COEFFICIENTS_BT601_525                     = 6,
+  MATRIX_COEFFICIENTS_SMPTE240                      = 7,
+  MATRIX_COEFFICIENTS_YCGCO                         = 8,
+  MATRIX_COEFFICIENTS_BT2020_NON_CONSTANT_LUMINANCE = 9,
+  MATRIX_COEFFICIENTS_BT2020_CONSTANT_LUMINANCE     = 10,
+};
+#endif
 
 enum DeblockEdgeDir
 {
