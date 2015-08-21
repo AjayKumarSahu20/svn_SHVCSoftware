@@ -2484,6 +2484,18 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     startOlsCtr = m_numLayerSets;
   }
 
+  std::vector<Profile::Name> profiles;
+
+  if( m_scalabilityMask[VIEW_ORDER_INDEX] )
+  {
+    profiles.push_back( Profile::MULTIVIEWMAIN );
+  }
+
+  if( m_scalabilityMask[SCALABILITY_ID] )
+  {
+    profiles.push_back( Profile::SCALABLEMAIN );
+  }
+
   for( Int olsCtr = 1; olsCtr < m_numOutputLayerSets; olsCtr++ )
   {
     if( olsCtr < startOlsCtr )
@@ -2516,17 +2528,27 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     //Conformance of a layer in an output operation point associated with an OLS in a bitstream to the Scalable Main 10 profile is indicated as follows:
     //If OpTid of the output operation point is equal to vps_max_sub_layer_minus1, the conformance is indicated by general_profile_idc being equal to 7 or general_profile_compatibility_flag[ 7 ] being equal to 1
     //The following assert may be updated / upgraded to take care of general_profile_compatibility_flag.
-    if (m_numAddLayerSets == 0)
+    if( olsToLsIndex < m_numLayerSets )
     {
-      for ( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++)
+      std::vector<UInt> passedCheck(profiles.size(), 0);
+      UInt numIncludedLayers = 0;
+
+      for( Int ii = 1; ii < m_numLayerInIdList[olsToLsIndex]; ii++ )
       {
-        if (m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0)  //Profile / profile compatibility of enhancement layers must indicate the same profile.
+        if( m_layerSetLayerIdList[olsToLsIndex][ii - 1] != 0 && m_layerSetLayerIdList[olsToLsIndex][ii] != 0 )  //Profile / profile compatibility of enhancement layers must indicate the same profile.
         {
-          assert( (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||
-            (m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) ||   
-            (m_profileCompatibility[m_listOfLayerPTLofOlss[olsCtr][ii]] == m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii - 1]]) );
+          numIncludedLayers++;
+          const Profile::Name profileName = m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]] == Profile::SCALABLEMAIN10 ? Profile::SCALABLEMAIN : m_profileList[m_listOfLayerPTLofOlss[olsCtr][ii]];
+
+          for( Int p = 0; p < profiles.size(); p++ )
+          {
+            passedCheck[p] += profileName == profiles[p] || m_profileCompatibility[Int(profiles[p])];
+          }
         }
       }
+
+      // check whether all layers are compatible to at least one extension profile
+      assert( std::find(passedCheck.begin(), passedCheck.end(), numIncludedLayers) != passedCheck.end() );
     }
   }
 
