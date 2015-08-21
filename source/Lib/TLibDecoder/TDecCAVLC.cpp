@@ -2891,6 +2891,18 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
   vps->getProfileLevelTierIdx()->resize(numOutputLayerSets);
   vps->getProfileLevelTierIdx(0)->push_back( vps->getBaseLayerInternalFlag() && vps->getMaxLayers() > 1 ? 1 : 0);
 
+  std::vector<Profile::Name> profiles;
+
+  if( vps->getScalabilityMask( VIEW_ORDER_INDEX ) )
+  {
+    profiles.push_back( Profile::MULTIVIEWMAIN );
+  }
+
+  if( vps->getScalabilityMask( SCALABILITY_ID ) )
+  {
+    profiles.push_back( Profile::SCALABLEMAIN );
+  }
+
   for(i = 1; i < numOutputLayerSets; i++)
   {
     if( vps->getNumLayerSets() > 2 && i >= vps->getNumLayerSets() )
@@ -2942,6 +2954,9 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
     vps->getProfileLevelTierIdx(i)->assign(vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet), -1);
 
+    std::vector<UInt> passedCheck(profiles.size(), 0);
+    UInt numIncludedLayers = 0;
+
     for( j = 0; j < vps->getNumLayersInIdList(layerSetIdxForOutputLayerSet); j++ )
     {
       if( vps->getNecessaryLayerFlag(i, j) && (vps->getNumProfileTierLevel()-1) > 0 )
@@ -2960,31 +2975,21 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
         {
           if( vps->getLayerSetLayerIdList(layerSetIdxForOutputLayerSet, j) != 0 && vps->getNecessaryLayerFlag(i, j) )
           {
-            std::vector<Profile::Name> profiles;
-
-            if( vps->getScalabilityMask( VIEW_ORDER_INDEX ) )
-            {
-              profiles.push_back( Profile::MULTIVIEWMAIN );
-            }
-
-            if( vps->getScalabilityMask( SCALABILITY_ID ) )
-            {
-              profiles.push_back( Profile::SCALABLEMAIN );
-            }
-            
             ProfileTierLevel* ptl = vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL();
+            numIncludedLayers++;
+            const Profile::Name profileName = ptl->getProfileIdc() == Profile::SCALABLEMAIN10 ? Profile::SCALABLEMAIN : ptl->getProfileIdc();
 
-            Bool found = false;
             for( Int p = 0; p < profiles.size(); p++ )
             {
-              found = ptl->getProfileIdc() == profiles[p] || ptl->getProfileCompatibilityFlag(Int(profiles[p]));
+              passedCheck[p] += profileName == profiles[p] || ptl->getProfileCompatibilityFlag(Int(profiles[p]));
             }
-
-            assert( found );
           }
         }
       }
     }
+
+    // check whether all layers are compatible to at least one extension profile
+    assert( std::find(passedCheck.begin(), passedCheck.end(), numIncludedLayers) != passedCheck.end() );
 
     NumOutputLayersInOutputLayerSet[i] = 0;
 
