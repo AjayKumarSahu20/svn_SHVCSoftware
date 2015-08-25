@@ -715,8 +715,8 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   {
 #endif
   READ_FLAG( uiCode, "sps_temporal_id_nesting_flag" );           pcSPS->setTemporalIdNestingFlag ( uiCode > 0 ? true : false );
-  parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
 #if SVC_EXTENSION
+    parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
   }
 #else
   if ( pcSPS->getMaxTLayers() == 1 )
@@ -724,8 +724,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     // sps_temporal_id_nesting_flag must be 1 when sps_max_sub_layers_minus1 is 0
     assert( uiCode == 1 );
   }
-#endif
 
+  parsePTL(pcSPS->getPTL(), 1, pcSPS->getMaxTLayers() - 1);
+#endif
   READ_UVLC(     uiCode, "sps_seq_parameter_set_id" );           pcSPS->setSPSId( uiCode );
   assert(uiCode <= 15);
 
@@ -828,7 +829,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
     READ_UVLC ( uiCode, "sps_max_num_reorder_pics[i]" );
     pcSPS->setNumReorderPics(uiCode, i);
     READ_UVLC ( uiCode, "sps_max_latency_increase_plus1[i]");
-    pcSPS->setMaxLatencyIncrease( uiCode, i );
+    pcSPS->setMaxLatencyIncreasePlus1( uiCode, i );
 
     if (!subLayerOrderingInfoPresentFlag)
     {
@@ -836,7 +837,7 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
       {
         pcSPS->setMaxDecPicBuffering(pcSPS->getMaxDecPicBuffering(0), i);
         pcSPS->setNumReorderPics(pcSPS->getNumReorderPics(0), i);
-        pcSPS->setMaxLatencyIncrease(pcSPS->getMaxLatencyIncrease(0), i);
+        pcSPS->setMaxLatencyIncreasePlus1(pcSPS->getMaxLatencyIncreasePlus1(0), i);
       }
       break;
     }
@@ -2234,7 +2235,7 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
 #endif
   }
   else
-  {  
+  {
 #if SVC_EXTENSION
     READ_FLAG(    uiCode, PTL_TRACE_TEXT("inbld_flag"                      ));
 #else

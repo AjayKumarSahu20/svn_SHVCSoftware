@@ -1834,10 +1834,10 @@ const TComVPS *TAppDecTop::findDpbParametersFromVps(std::vector<Int> const &list
     Int highestTId = sps->getMaxTLayers() - 1;
 
     maxDpbLimit.m_numAUsNotDisplayed = sps->getNumReorderPics( highestTId ); // m_numAUsNotDisplayed is only variable name - stores reorderpics
-    maxDpbLimit.m_maxLatencyIncrease = sps->getMaxLatencyIncrease( highestTId ) > 0;
+    maxDpbLimit.m_maxLatencyIncrease = sps->getMaxLatencyIncreasePlus1( highestTId ) > 0;
     if( maxDpbLimit.m_maxLatencyIncrease )
     {
-      maxDpbLimit.m_maxLatencyPictures = sps->getMaxLatencyIncrease( highestTId ) + sps->getNumReorderPics( highestTId ) - 1;
+      maxDpbLimit.m_maxLatencyPictures = sps->getMaxLatencyIncreasePlus1( highestTId ) + sps->getNumReorderPics( highestTId ) - 1;
     }
     maxDpbLimit.m_numPicsInSubDpb[0] = sps->getMaxDecPicBuffering( highestTId );
   }
