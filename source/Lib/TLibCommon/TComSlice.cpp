@@ -2062,7 +2062,7 @@ TComSPS::TComSPS()
 
   for ( Int i = 0; i < MAX_TLAYER; i++ )
   {
-    m_uiMaxLatencyIncrease[i] = 0;
+    m_uiMaxLatencyIncreasePlus1[i] = 0;
     m_uiMaxDecPicBuffering[i] = 1;
     m_numReorderPics[i]       = 0;
   }
