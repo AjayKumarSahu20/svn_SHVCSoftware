@@ -83,6 +83,7 @@ private:
   std::vector<std::vector<TComDataCU*> > m_vSliceCUDataLink;
 
   SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
+
 #if SVC_EXTENSION
   UInt                  m_layerId;              //  Layer ID
   Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
@@ -118,6 +119,7 @@ public:
   Bool          getCheckLTMSBPresent     () { return m_bCheckLTMSB;}
 
   TComPicSym*   getPicSym()           { return  &m_picSym;    }
+  const TComPicSym* getPicSym() const { return  &m_picSym;    }
   TComSlice*    getSlice(Int i)       { return  m_picSym.getSlice(i);  }
   Int           getPOC() const        { return  m_picSym.getSlice(m_uiCurrSliceIdx)->getPOC();  }
   TComDataCU*   getCtu( UInt ctuRsAddr )           { return  m_picSym.getCtu( ctuRsAddr ); }
@@ -191,14 +193,14 @@ public:
 
 #if SVC_EXTENSION
   Void          setLayerId(UInt layerId)                                    { m_layerId = layerId;                                       }
-  UInt          getLayerId()                                                { return m_layerId;                                          }
-  UInt          getLayerIdx()                                               { return getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId); }
-  Bool          isSpatialEnhLayer(UInt refLayerIdc)                         { return m_bSpatialEnhLayer[refLayerIdc];                    }
+  UInt          getLayerId() const                                          { return m_layerId;                                          }
+  UInt          getLayerIdx() const                                         { return m_picSym.getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId);     }
+  Bool          isSpatialEnhLayer(UInt refLayerIdc) const                   { return m_bSpatialEnhLayer[refLayerIdc];                    }
   Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b)           { m_bSpatialEnhLayer[refLayerIdc] = b;                       }
   Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p)       { m_pcFullPelBaseRec[refLayerIdc] = p;                       }
-  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc)                      { return  m_pcFullPelBaseRec[refLayerIdc];                   }
-  Bool          isILR( UInt currLayerId )                                   { return ( m_bIsLongTerm && m_layerId < currLayerId );       }
-  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc)             { return m_equalPictureSizeAndOffsetFlag[refLayerIdc];       }
+  TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc) const                { return  m_pcFullPelBaseRec[refLayerIdc];                   }
+  Bool          isILR( UInt currLayerId ) const                             { return ( m_bIsLongTerm && m_layerId < currLayerId );       }
+  Bool          equalPictureSizeAndOffsetFlag(UInt refLayerIdc) const       { return m_equalPictureSizeAndOffsetFlag[refLayerIdc];       }
   Void          setEqualPictureSizeAndOffsetFlag(UInt refLayerIdc, Bool b)  { m_equalPictureSizeAndOffsetFlag[refLayerIdc] = b;          }
   Void          copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int** posScalingFactor);
   Void          initUpsampledMvField();
@@ -214,9 +216,9 @@ public:
   Void          createPosScalingFactor(UInt numOfILRPs);
 #if CGS_3D_ASYMLUT
   Void          setFrameBit( Int n )                                        { m_nFrameBit = n;     }
-  Int           getFrameBit()                                               { return m_nFrameBit;  }
+  Int           getFrameBit() const                                         { return m_nFrameBit;  }
 #endif
-  Bool          isCurrAu()                                                  { return m_currAuFlag; }
+  Bool          isCurrAu() const                                            { return m_currAuFlag; }
   Void          setCurrAuFlag(Bool x)                                       { m_currAuFlag = x;    }
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TComPic
