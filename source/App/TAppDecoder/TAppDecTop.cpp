@@ -1378,9 +1378,9 @@ Void TAppDecTop::applyColourRemapping(const TComPicYuv& pic, SEIColourRemappingI
   // create colour remapped picture
   if ( m_pcPicYuvColourRemapped == NULL )
   {
-    const ChromaFormat chromaFormatIDC = activeSPS.getChromaFormatIdc();
-    const Int          iWidth          = activeSPS.getPicWidthInLumaSamples();
-    const Int          iHeight         = activeSPS.getPicHeightInLumaSamples();
+    const ChromaFormat chromaFormatIDC = pic.getChromaFormat(); 
+    const Int          iWidth          = pic.getWidth(COMPONENT_Y);
+    const Int          iHeight         = pic.getHeight(COMPONENT_Y);
     const UInt         uiMaxCuWidth    = activeSPS.getMaxCUWidth();
     const UInt         uiMaxCuHeight   = activeSPS.getMaxCUHeight();
     const UInt         uiMaxDepth      = activeSPS.getMaxTotalCUDepth();
@@ -1415,8 +1415,10 @@ Void TAppDecTop::applyColourRemapping(const TComPicYuv& pic, SEIColourRemappingI
     YUVOut[COMPONENT_Cb] = m_pcPicYuvColourRemapped->getAddr(COMPONENT_Cb);
     YUVOut[COMPONENT_Cr] = m_pcPicYuvColourRemapped->getAddr(COMPONENT_Cr);
 
-    Int bitDepthY = activeSPS.getBitDepth(CHANNEL_TYPE_LUMA);
-    assert(bitDepthY == activeSPS.getBitDepth(CHANNEL_TYPE_CHROMA)); // Different bitdepth is not implemented
+    Int bitDepth = criSEI.m_colourRemapBitDepth;
+    BitDepths bitDepthsCriFile;
+    bitDepthsCriFile.recon[CHANNEL_TYPE_LUMA] = bitDepth;
+    bitDepthsCriFile.recon[CHANNEL_TYPE_CHROMA] = bitDepth; // Different bitdepth is not implemented
 
     const Int postOffsetShift = criSEI.m_log2MatrixDenom;
     const Int matrixRound = 1 << (postOffsetShift - 1);
@@ -1446,7 +1448,7 @@ Void TAppDecTop::applyColourRemapping(const TComPicYuv& pic, SEIColourRemappingI
     matrixOutputOffset[2] += applyColourRemappingInfoMatrix(criSEI.m_colourRemapCoeffs[2], 0, matrixInputOffset[0], matrixInputOffset[1], matrixInputOffset[2], 0);
 
     // rescaling output: include CRI/output frame difference
-    const Int scaleShiftOut_neg = abs(bitDepthY - maxBitDepth);
+    const Int scaleShiftOut_neg = abs(bitDepth - maxBitDepth);
     const Int scaleOut_round = 1 << (scaleShiftOut_neg-1);
 
     initColourRemappingInfoLuts(preLut, postLut, criSEI, maxBitDepth);
@@ -1492,7 +1494,7 @@ Void TAppDecTop::applyColourRemapping(const TComPicYuv& pic, SEIColourRemappingI
       }
     }
     //Write remapped picture in display order
-    m_pcPicYuvColourRemapped->dump( m_colourRemapSEIFileName, activeSPS.getBitDepths(), !firstPicture );
+    m_pcPicYuvColourRemapped->dump( m_colourRemapSEIFileName, bitDepthsCriFile, !firstPicture );
   }
 }
 #endif
