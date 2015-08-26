@@ -656,33 +656,32 @@ Void TAppDecTop::xInitDecLib()
   for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
 #endif
   {
-    m_apcTDecTop[layer]->init();
-    m_apcTDecTop[layer]->setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
-#if CONFORMANCE_BITSTREAM_MODE
-    m_apcTDecTop[layer]->setNumLayer( MAX_LAYERS );
-#else
-    m_apcTDecTop[layer]->setNumLayer( m_tgtLayerId + 1 );
+    TDecTop& m_cTDecTop = *m_apcTDecTop[layer];
 #endif
-    m_apcTDecTop[layer]->setCommonDecoderParams( &m_commonDecoderParams );
-  }
-#if CONFORMANCE_BITSTREAM_MODE
-  for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
-  {
-    m_apcTDecTop[layer]->setConfModeFlag( m_confModeFlag );
-  }
-#endif
-#else
+
   m_cTDecTop.init();
   m_cTDecTop.setDecodedPictureHashSEIEnabled(m_decodedPictureHashSEIEnabled);
 #if O0043_BEST_EFFORT_DECODING
   m_cTDecTop.setForceDecodeBitDepth(m_forceDecodeBitDepth);
 #endif
+
   if (!m_outputDecodedSEIMessagesFilename.empty())
   {
     std::ostream &os=m_seiMessageFileStream.is_open() ? m_seiMessageFileStream : std::cout;
     m_cTDecTop.setDecodedSEIMessageOutputStream(&os);
   }
+
+#if SVC_EXTENSION  
+#if CONFORMANCE_BITSTREAM_MODE
+    m_cTDecTop.setNumLayer( MAX_LAYERS );
+#else
+    m_cTDecTop.setNumLayer( m_tgtLayerId + 1 );
 #endif
+    m_cTDecTop.setCommonDecoderParams( &m_commonDecoderParams );
+    m_cTDecTop.setConfModeFlag( m_confModeFlag );
+  }
+#endif
+
 #if Q0074_COLOUR_REMAPPING_SEI
   if (m_pcSeiColourRemappingInfoPrevious != NULL)
   {
