@@ -131,7 +131,6 @@ Void TAppDecTop::destroy()
  - destroy internal class
  .
  */
-#if SVC_EXTENSION
 Void TAppDecTop::decode()
 {
   Int                 poc;
@@ -159,6 +158,9 @@ Void TAppDecTop::decode()
   // create & initialize internal classes
   xCreateDecLib();
   xInitDecLib  ();
+#if !SVC_EXTENSION
+  m_iPOCLastDisplay += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
+#endif
 
 #if Q0074_COLOUR_REMAPPING_SEI
   // clear contents of colour-remap-information-SEI output file
@@ -174,6 +176,7 @@ Void TAppDecTop::decode()
 #endif
 
   // main decoder loop
+#if SVC_EXTENSION
   Bool openedReconFile[MAX_LAYERS]; // reconstruction file not yet opened. (must be performed after SPS is seen)
   Bool loopFiltered[MAX_LAYERS];
   memset( loopFiltered, false, sizeof( loopFiltered ) );
@@ -425,51 +428,7 @@ Void TAppDecTop::decode()
 
   // destroy internal classes
   xDestroyDecLib();
-}
 #else
-Void TAppDecTop::decode()
-{
-  Int                 poc;
-  TComList<TComPic*>* pcListPic = NULL;
-
-  ifstream bitstreamFile(m_bitstreamFileName.c_str(), ifstream::in | ifstream::binary);
-  if (!bitstreamFile)
-  {
-    fprintf(stderr, "\nfailed to open bitstream file `%s' for reading\n", m_bitstreamFileName.c_str());
-    exit(EXIT_FAILURE);
-  }
-
-  InputByteStream bytestream(bitstreamFile);
-
-  if (!m_outputDecodedSEIMessagesFilename.empty() && m_outputDecodedSEIMessagesFilename!="-")
-  {
-    m_seiMessageFileStream.open(m_outputDecodedSEIMessagesFilename.c_str(), std::ios::out);
-    if (!m_seiMessageFileStream.is_open() || !m_seiMessageFileStream.good())
-    {
-      fprintf(stderr, "\nUnable to open file `%s' for writing decoded SEI messages\n", m_outputDecodedSEIMessagesFilename.c_str());
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  // create & initialize internal classes
-  xCreateDecLib();
-  xInitDecLib  ();
-  m_iPOCLastDisplay += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
-
-#if Q0074_COLOUR_REMAPPING_SEI
-  // clear contents of colour-remap-information-SEI output file
-  if (!m_colourRemapSEIFileName.empty())
-  {
-    std::ofstream ofile(m_colourRemapSEIFileName.c_str());
-    if (!ofile.good() || !ofile.is_open())
-    {
-      fprintf(stderr, "\nUnable to open file '%s' for writing colour-remap-information-SEI video\n", m_colourRemapSEIFileName.c_str());
-      exit(EXIT_FAILURE);
-    }
-  }
-#endif
-
-  // main decoder loop
   Bool openedReconFile = false; // reconstruction file not yet opened. (must be performed after SPS is seen)
   Bool loopFiltered = false;
 
@@ -603,8 +562,8 @@ Void TAppDecTop::decode()
 
   // destroy internal classes
   xDestroyDecLib();
-}
 #endif
+}
 
 // ====================================================================================================================
 // Protected member functions
