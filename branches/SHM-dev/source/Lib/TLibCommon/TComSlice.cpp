@@ -3476,7 +3476,9 @@ UInt TComVPS::getBitDepth( ChannelType type, const TComSPS* sps, const UInt laye
 
 const BitDepths& TComVPS::getBitDepths( const TComSPS* sps, const UInt layerId ) const
 {
-  static const BitDepths bitDepths( getBitDepth(CHANNEL_TYPE_LUMA, sps, layerId), getBitDepth(CHANNEL_TYPE_CHROMA, sps, layerId) );
+  static BitDepths bitDepths;
+  bitDepths.recon[CHANNEL_TYPE_LUMA]   = getBitDepth(CHANNEL_TYPE_LUMA, sps, layerId);
+  bitDepths.recon[CHANNEL_TYPE_CHROMA] = getBitDepth(CHANNEL_TYPE_CHROMA, sps, layerId);
   return bitDepths;
 }
 

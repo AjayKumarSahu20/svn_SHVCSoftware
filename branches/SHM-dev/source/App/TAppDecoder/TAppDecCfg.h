@@ -63,7 +63,11 @@ protected:
   std::string   m_reconFileName;                        ///< output reconstruction file name
 #endif
   Int           m_iSkipFrame;                           ///< counter for frames prior to the random access point to skip
+#if SVC_EXTENSION
+  Int           m_outputBitDepth[MAX_LAYERS][MAX_NUM_CHANNEL_TYPE]; ///< bit depth used for writing output
+#else
   Int           m_outputBitDepth[MAX_NUM_CHANNEL_TYPE]; ///< bit depth used for writing output
+#endif
   InputColourSpaceConversion m_outputColourSpaceConvert;
 
   Int           m_iMaxTemporalLayer;                  ///< maximum temporal layer to be decoded
@@ -118,10 +122,20 @@ public:
   , m_outputDecodedSEIMessagesFilename()
   , m_bClipOutputVideoToRec709Range(false)
   {
+#if SVC_EXTENSION
+    for( Int layerId = 0; layerId < MAX_LAYERS; layerId++ )
+    {
+      for( UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++ )
+      {
+        m_outputBitDepth[layerId][channelTypeIndex] = 0;
+      }
+    }
+#else
     for (UInt channelTypeIndex = 0; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
       m_outputBitDepth[channelTypeIndex] = 0;
     }
+#endif
   }
 
   virtual ~TAppDecCfg() {}
