@@ -324,15 +324,16 @@ Void TAppDecTop::decode()
     {
       if ( !m_reconFileName[curLayerId].empty() && !openedReconFile[curLayerId] )
       {
-        const BitDepths &bitDepths=pcListPic->front()->getSlice(0)->getBitDepths(); // use bit depths of first reconstructed picture.
-        for (UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
+        const BitDepths& bitDepths = m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveVPS()->getBitDepths( m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveSPS(), curLayerId );
+
+        for( UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
         {
-          if (m_outputBitDepth[channelType] == 0)
+          if( m_outputBitDepth[curLayerId][channelType] == 0 )
           {
-            m_outputBitDepth[channelType] = bitDepths.recon[channelType];
+            m_outputBitDepth[curLayerId][channelType] = bitDepths.recon[channelType];
           }
         }
-        m_apcTVideoIOYuvReconFile[curLayerId]->open( m_reconFileName[curLayerId], true, m_outputBitDepth, m_outputBitDepth, bitDepths.recon ); // write mode
+        m_apcTVideoIOYuvReconFile[curLayerId]->open( m_reconFileName[curLayerId], true, m_outputBitDepth[curLayerId], m_outputBitDepth[curLayerId], bitDepths.recon ); // write mode
 
         openedReconFile[curLayerId] = true;
       }

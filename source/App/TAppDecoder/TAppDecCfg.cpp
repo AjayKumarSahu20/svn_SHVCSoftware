@@ -69,8 +69,17 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   Int layerNum, targetLayerId;
   Int olsIdx;
 #if CONFORMANCE_BITSTREAM_MODE
-  string cfg_confPrefix;
+  string confPrefix;
 #endif
+
+  Int* cfg_outputBitDepthY[MAX_LAYERS];
+  Int* cfg_outputBitDepthC[MAX_LAYERS];
+
+  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
+  {
+    cfg_outputBitDepthY[layer] = &m_outputBitDepth[layer][CHANNEL_TYPE_LUMA];
+    cfg_outputBitDepthC[layer] = &m_outputBitDepth[layer][CHANNEL_TYPE_CHROMA];
+  }
 #endif
 
   string cfg_TargetDecLayerIdSetFile;
@@ -84,7 +93,8 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   ("help",                      do_help,                               false,      "this help text")
   ("BitstreamFile,b",           m_bitstreamFileName,                   string(""), "bitstream input file name")
 #if SVC_EXTENSION
-  ("ReconFileL%d,-o%d",                 m_reconFileName,   string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
+  ("c",                         po::parseConfigFile,                               "configuration file name")
+  ("ReconFile%d,-o%d",          m_reconFileName,           string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
                                                                                    "YUV writing is skipped if omitted")
 #if AVC_BASE
   ("BLReconFile,-ibl",                              m_reconFileNameBL, string(""), "BL reconstructed YUV input file name")
@@ -93,8 +103,8 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   ("LayerNum,-ls",                                    layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
   ("OutpuLayerSetIdx,-olsidx",                                         olsIdx, -1, "Index of output layer set to be decoded.")
 #if CONFORMANCE_BITSTREAM_MODE
-  ("ConformanceBitstremMode,-confMode",                     m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
-  ("ConformanceMetadataPrefix,           -confPrefix", cfg_confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
+  ("ConformanceBitstremMode,-confMode",                      m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
+  ("ConformanceMetadataPrefix,-confPrefix",                 confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
 #endif
 #else
   ("ReconFile,o",               m_reconFileName,                       string(""), "reconstructed YUV output file name\n"
@@ -102,8 +112,13 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
 #endif
   ("WarnUnknowParameter,w",     warnUnknowParameter,                                  0, "warn for unknown configuration parameters instead of failing")
   ("SkipFrames,s",              m_iSkipFrame,                          0,          "number of frames to skip before random access")
+#if SVC_EXTENSION
+  ("OutputBitDepth%d,%d",       cfg_outputBitDepthY,                0, MAX_LAYERS, "bit depth of YUV output luma component (default: use 0 for native depth)")
+  ("OutputBitDepthC%d,%d",      cfg_outputBitDepthC,                0, MAX_LAYERS, "bit depth of YUV output chroma component (default: use 0 for native depth)")
+#else
   ("OutputBitDepth,d",          m_outputBitDepth[CHANNEL_TYPE_LUMA],   0,          "bit depth of YUV output luma component (default: use 0 for native depth)")
   ("OutputBitDepthC,d",         m_outputBitDepth[CHANNEL_TYPE_CHROMA], 0,          "bit depth of YUV output chroma component (default: use 0 for native depth)")
+#endif
   ("OutputColourSpaceConvert",  outputColourSpaceConvert,              string(""), "Colour space conversion to apply to input 444 video. Permitted values are (empty string=UNCHANGED) " + getListOfColourSpaceConverts(false))
   ("MaxTemporalLayer,t",        m_iMaxTemporalLayer,                   -1,         "Maximum Temporal Layer to be decoded. -1 to decode all layers")
   ("SEIDecodedPictureHash",     m_decodedPictureHashSEIEnabled,        1,          "Control handling of decoded picture hash SEI messages\n"
@@ -167,13 +182,13 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
   {
     assert( olsIdx != -1 ); // In the conformance mode, target output layer set index is to be explicitly specified.
 
-    if( cfg_confPrefix.empty() )
+    if( confPrefix.empty() )
     {
       m_confPrefix = string("decodedBitstream");
     }
     else
     {
-      m_confPrefix = cfg_confPrefix;
+      m_confPrefix = confPrefix;
     }
       // Open metadata file and write
     char fileNameSuffix[255];
