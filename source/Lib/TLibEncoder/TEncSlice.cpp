@@ -542,7 +542,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
   rpcSlice->setDepth            ( depth );
 
   pcPic->setTLayer( temporalId );
-  if(eSliceType==I_SLICE)
+  if(eSliceType==I_SLICE  || m_ppcTEncTop[m_pcCfg->getLayerId()]->getPOCLast() == 0)
   {
     pcPic->setTLayer(0);
   }
