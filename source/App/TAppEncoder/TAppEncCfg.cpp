@@ -772,9 +772,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   Int*    cfg_OutputBitDepth   [MAX_NUM_CHANNEL_TYPE][MAX_LAYERS];
 
   Int*    cfg_maxTidIlRefPicsPlus1[MAX_LAYERS]; 
-#if Q0074_COLOUR_REMAPPING_SEI
   string* cfg_colourRemapSEIFileRoot[MAX_LAYERS];
-#endif
   Bool*   cfg_entropyCodingSyncEnabledFlag[MAX_LAYERS];
   Int*    cfg_layerSwitchOffBegin[MAX_LAYERS];
   Int*    cfg_layerSwitchOffEnd[MAX_LAYERS];
@@ -791,9 +789,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     cfg_ReconFile[layer]    = &m_apcLayerCfg[layer]->m_reconFileName;
     cfg_dQPFileName[layer]  = &m_apcLayerCfg[layer]->m_dQPFileName;
     cfg_fQP[layer]          = &m_apcLayerCfg[layer]->m_fQP;
-#if Q0074_COLOUR_REMAPPING_SEI
     cfg_colourRemapSEIFileRoot[layer] = &m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
-#endif
     cfg_repFormatIdx[layer]         = &m_apcLayerCfg[layer]->m_repFormatIdx;
     cfg_layerId[layer]              = &m_apcLayerCfg[layer]->m_layerId;
     cfg_SourceWidth[layer]          = &m_apcLayerCfg[layer]->m_iSourceWidth;
@@ -1071,9 +1067,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("PhaseVerLuma%d",                                cfg_phaseVerLumaPtr,              string(""), m_numLayers, "luma shift in the vertical   direction used in resampling proces")
   ("PhaseHorChroma%d",                              cfg_phaseHorChromaPtr,            string(""), m_numLayers, "chroma shift in the horizontal direction used in resampling proces")
   ("PhaseVerChroma%d",                              cfg_phaseVerChromaPtr,            string(""), m_numLayers, "chroma shift in the vertical   direction used in resampling proces")
-#if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot%d,-cri",         cfg_colourRemapSEIFileRoot,       string(""), m_numLayers, "Colour Remapping Information SEI parameters root file name (wo num ext)")
-#endif
   ("InputBitDepth%d",                                cfg_InputBitDepth[CHANNEL_TYPE_LUMA],     8, m_numLayers, "Bit-depth of input file for layer %d")
   ("InternalBitDepth%d",                             cfg_InternalBitDepth[CHANNEL_TYPE_LUMA],  0, m_numLayers, "Bit-depth the codec operates at. (default:InputBitDepth) for layer %d "
                                                                                                                " If different to InputBitDepth, source data will be converted")
@@ -1459,9 +1453,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("Log2MaxMvLengthHorizontal",                       m_log2MaxMvLengthHorizontal,                         15, "Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units")
   ("Log2MaxMvLengthVertical",                         m_log2MaxMvLengthVertical,                           15, "Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units")
 #if !SVC_EXTENSION
-#if Q0074_COLOUR_REMAPPING_SEI
   ("SEIColourRemappingInfoFileRoot,-cri",             m_colourRemapSEIFileRoot,                    string(""), "Colour Remapping Information SEI parameters root file name (wo num ext)")
-#endif
 #endif
   ("SEIRecoveryPoint",                                m_recoveryPointSEIEnabled,                        false, "Control generation of recovery point SEI messages")
   ("SEIBufferingPeriod",                              m_bufferingPeriodSEIEnabled,                      false, "Control generation of buffering period SEI messages")

@@ -90,9 +90,7 @@ public:
     TEMP_MOTION_CONSTRAINED_TILE_SETS    = 139,
     CHROMA_RESAMPLING_FILTER_HINT        = 140,
     KNEE_FUNCTION_INFO                   = 141,
-#if Q0074_COLOUR_REMAPPING_SEI
     COLOUR_REMAPPING_INFO                = 142,
-#endif
 #if LAYERS_NOT_PRESENT_SEI
     LAYERS_NOT_PRESENT                   = 160,
 #endif
@@ -458,7 +456,6 @@ public:
   std::vector<Int> m_kneeOutputKneePoint;
 };
 
-#if Q0074_COLOUR_REMAPPING_SEI
 class SEIColourRemappingInfo : public SEI
 {
 public:
@@ -500,7 +497,6 @@ public:
   Int                 m_postLutNumValMinus1[3];
   std::vector<CRIlut> m_postLut[3];
 };
-#endif
 
 class SEIChromaResamplingFilterHint : public SEI
 {

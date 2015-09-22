@@ -133,9 +133,7 @@ protected:
   Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
 
   Int       m_repFormatIdx;
-#if Q0074_COLOUR_REMAPPING_SEI
   string    m_colourRemapSEIFileRoot;
-#endif
 
   Int       m_layerSwitchOffBegin;
   Int       m_layerSwitchOffEnd;

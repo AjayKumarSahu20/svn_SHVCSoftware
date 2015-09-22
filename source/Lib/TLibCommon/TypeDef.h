@@ -164,7 +164,6 @@ enum AuxType
 #define DECODER_CHECK_SUBSTREAM_AND_SLICE_TRAILING_BYTES  1 ///< TODO: integrate this macro into a broader conformance checking system.
 #define T0196_SELECTIVE_RDOQ                              1 ///< selective RDOQ
 #define U0040_MODIFIED_WEIGHTEDPREDICTION_WITH_BIPRED_AND_CLIPPING 1
-#define Q0074_COLOUR_REMAPPING_SEI                        1      ///< JCTVC-Q0074, JCTVC-R0344: SEI Colour Remapping Information
 
 // ====================================================================================================================
 // Tool Switches
@@ -377,7 +376,6 @@ enum InputColourSpaceConversion // defined in terms of conversion prior to input
   NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS = 4
 };
 
-#if Q0074_COLOUR_REMAPPING_SEI
 enum MATRIX_COEFFICIENTS // Table E.5 (Matrix coefficients)
 {
   MATRIX_COEFFICIENTS_RGB                           = 0,
@@ -392,7 +390,6 @@ enum MATRIX_COEFFICIENTS // Table E.5 (Matrix coefficients)
   MATRIX_COEFFICIENTS_BT2020_NON_CONSTANT_LUMINANCE = 9,
   MATRIX_COEFFICIENTS_BT2020_CONSTANT_LUMINANCE     = 10,
 };
-#endif
 
 enum DeblockEdgeDir
 {
