@@ -749,7 +749,6 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
     seiMessages.push_back(seiNoDisplay);
   }
 
-#if Q0074_COLOUR_REMAPPING_SEI
   // insert one Colour Remapping Info SEI for the picture (if the file exists)
   if (!m_pcCfg->getColourRemapInfoSEIFileRoot().empty())
   {
@@ -765,7 +764,6 @@ Void TEncGOP::xCreatePerPictureSEIMessages (Int picInGOP, SEIMessages& seiMessag
       delete seiColourRemappingInfo;
     }
   }
-#endif
 
 #if Q0189_TMVP_CONSTRAINTS
   if( m_pcEncTop->getTMVPConstraintsSEIEnabled() == 1 && (m_pcEncTop->getTMVPModeId() == 1 || m_pcEncTop->getTMVPModeId() == 2) &&

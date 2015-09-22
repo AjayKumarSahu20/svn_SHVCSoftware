@@ -80,9 +80,7 @@ public:
   Void initSEIKneeFunctionInfo(SEIKneeFunctionInfo *sei);
   Void initSEIChromaResamplingFilterHint(SEIChromaResamplingFilterHint *sei, Int iHorFilterIndex, Int iVerFilterIndex);
   Void initSEITimeCode(SEITimeCode *sei);
-#if Q0074_COLOUR_REMAPPING_SEI
   Bool initSEIColourRemappingInfo(SEIColourRemappingInfo *sei, Int currPOC); // returns true on success, false on failure.
-#endif
 
 #if LAYERS_NOT_PRESENT_SEI
   Void initSEILayersNotPresent(SEILayersNotPresent *seiLayersNotPresent);

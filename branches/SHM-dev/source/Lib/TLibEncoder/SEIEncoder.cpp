@@ -420,7 +420,6 @@ Void SEIEncoder::initSEIKneeFunctionInfo(SEIKneeFunctionInfo *seiKneeFunctionInf
   }
 }
 
-#if Q0074_COLOUR_REMAPPING_SEI
 template <typename T>
 static Void readTokenValue(T            &returnedValue, /// value returned
                            Bool         &failed,        /// used and updated
@@ -592,7 +591,6 @@ Bool SEIEncoder::initSEIColourRemappingInfo(SEIColourRemappingInfo* seiColourRem
   }
   return true;
 }
-#endif
 
 Void SEIEncoder::initSEIChromaResamplingFilterHint(SEIChromaResamplingFilterHint *seiChromaResamplingFilterHint, Int iHorFilterIndex, Int iVerFilterIndex)
 {

@@ -457,9 +457,7 @@ protected:
   Int       m_log2MaxMvLengthHorizontal;                      ///< Indicate the maximum absolute value of a decoded horizontal MV component in quarter-pel luma units
   Int       m_log2MaxMvLengthVertical;                        ///< Indicate the maximum absolute value of a decoded vertical MV component in quarter-pel luma units
 #if !SVC_EXTENSION
-#if Q0074_COLOUR_REMAPPING_SEI
   std::string m_colourRemapSEIFileRoot;
-#endif
 #endif
 
   std::string m_summaryOutFilename;                           ///< filename to use for producing summary output file.

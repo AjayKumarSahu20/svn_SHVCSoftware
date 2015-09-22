@@ -61,9 +61,7 @@
 
 #if SVC_EXTENSION
 TAppDecTop::TAppDecTop()
-#if Q0074_COLOUR_REMAPPING_SEI
 : m_pcSeiColourRemappingInfoPrevious(NULL)
-#endif
 {
   memset( m_apcTDecTop, 0, sizeof(m_apcTDecTop) );
   memset( m_apcTVideoIOYuvReconFile, 0, sizeof(m_apcTVideoIOYuvReconFile) );
@@ -76,9 +74,7 @@ TAppDecTop::TAppDecTop()
 #else
 TAppDecTop::TAppDecTop()
 : m_iPOCLastDisplay(-MAX_INT)
-#if Q0074_COLOUR_REMAPPING_SEI
  ,m_pcSeiColourRemappingInfoPrevious(NULL)
-#endif
 {
 }
 #endif
@@ -162,7 +158,6 @@ Void TAppDecTop::decode()
   m_iPOCLastDisplay += m_iSkipFrame;      // set the last displayed POC correctly for skip forward.
 #endif
 
-#if Q0074_COLOUR_REMAPPING_SEI
   // clear contents of colour-remap-information-SEI output file
   if (!m_colourRemapSEIFileName.empty())
   {
@@ -173,7 +168,6 @@ Void TAppDecTop::decode()
       exit(EXIT_FAILURE);
     }
   }
-#endif
 
   // main decoder loop
 #if SVC_EXTENSION
@@ -628,13 +622,11 @@ Void TAppDecTop::xDestroyDecLib()
   // destroy decoder class
   m_cTDecTop.destroy();
 #endif
-#if Q0074_COLOUR_REMAPPING_SEI
   if (m_pcSeiColourRemappingInfoPrevious != NULL)
   {
     delete m_pcSeiColourRemappingInfoPrevious;
     m_pcSeiColourRemappingInfoPrevious = NULL;
   }
-#endif
 }
 
 Void TAppDecTop::xInitDecLib()
@@ -655,7 +647,6 @@ Void TAppDecTop::xInitDecLib()
 #if O0043_BEST_EFFORT_DECODING
   m_cTDecTop.setForceDecodeBitDepth(m_forceDecodeBitDepth);
 #endif
-
   if (!m_outputDecodedSEIMessagesFilename.empty())
   {
     std::ostream &os=m_seiMessageFileStream.is_open() ? m_seiMessageFileStream : std::cout;
@@ -673,13 +664,11 @@ Void TAppDecTop::xInitDecLib()
   }
 #endif
 
-#if Q0074_COLOUR_REMAPPING_SEI
   if (m_pcSeiColourRemappingInfoPrevious != NULL)
   {
     delete m_pcSeiColourRemappingInfoPrevious;
     m_pcSeiColourRemappingInfoPrevious = NULL;
   }
-#endif
 }
 
 /** \param pcListPic list of pictures to be written to file
@@ -910,12 +899,10 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range  );
         }
 
-#if Q0074_COLOUR_REMAPPING_SEI
         if (!m_colourRemapSEIFileName.empty())
         {
           xOutputColourRemapPic(pcPic);
         }
-#endif
 
         // update POC of display order
         m_iPOCLastDisplay = pcPic->getPOC();
@@ -1082,12 +1069,10 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
                                          NUM_CHROMA_FORMAT, m_bClipOutputVideoToRec709Range );
         }
 
-#if Q0074_COLOUR_REMAPPING_SEI
         if (!m_colourRemapSEIFileName.empty())
         {
           xOutputColourRemapPic(pcPic);
         }
-#endif
 
         // update POC of display order
         m_iPOCLastDisplay = pcPic->getPOC();
@@ -1145,8 +1130,6 @@ Bool TAppDecTop::isNaluWithinTargetDecLayerIdSet( InputNALUnit* nalu )
   }
   return false;
 }
-
-#if Q0074_COLOUR_REMAPPING_SEI
 
 Void TAppDecTop::xOutputColourRemapPic(TComPic* pcPic)
 {
@@ -1467,7 +1450,6 @@ Void TAppDecTop::applyColourRemapping(const TComPicYuv& pic, SEIColourRemappingI
     picYuvColourRemapped.destroy();
   }
 }
-#endif
 
 #if ALIGNED_BUMPING
 // Function outputs a picture, and marks it as not needed for output.
@@ -1490,12 +1472,10 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, std::string& reconFileName, co
       conf.getWindowTopOffset()   * yScal + defDisp.getWindowTopOffset(),
       conf.getWindowBottomOffset()* yScal + defDisp.getWindowBottomOffset() );
 
-#if Q0074_COLOUR_REMAPPING_SEI
     if( !m_colourRemapSEIFileName.empty() )
     {
       xOutputColourRemapPic(pic);
     }
-#endif
   }
   // update POC of display order
   pocLastDisplay = pic->getPOC();

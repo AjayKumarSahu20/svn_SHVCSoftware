@@ -320,9 +320,7 @@ protected:
   Int       m_kneeSEINumKneePointsMinus1;
   Int*      m_kneeSEIInputKneePoint;
   Int*      m_kneeSEIOutputKneePoint;
-#if Q0074_COLOUR_REMAPPING_SEI
   std::string m_colourRemapSEIFileRoot;          ///< SEI Colour Remapping File (initialized from external file)
-#endif
   TComSEIMasteringDisplay m_masteringDisplay;
   //====== Weighted Prediction ========
   Bool      m_useWeightedPred;       //< Use of Weighting Prediction (P_SLICE)
@@ -485,17 +483,11 @@ protected:
   Int                                 m_TMVPConstraintsSEIEnabled;
 #endif
 #endif //SVC_EXTENSION
-#if Q0074_COLOUR_REMAPPING_SEI
-  string                              m_colourRemapSEIFileName;          ///< SEI Colour Remapping File (initialized from external file)
-#endif
 
 public:
   TEncCfg()
   : m_tileColumnWidth()
   , m_tileRowHeight()
-#if Q0074_COLOUR_REMAPPING_SEI
-  , m_colourRemapSEIFileName()
-#endif
   {
     m_PCMBitDepth[CHANNEL_TYPE_LUMA]=8;
     m_PCMBitDepth[CHANNEL_TYPE_CHROMA]=8;
@@ -909,10 +901,8 @@ public:
   Int*  getKneeSEIInputKneePoint()                                   { return m_kneeSEIInputKneePoint; }
   Void  setKneeSEIOutputKneePoint(Int *p)                            { m_kneeSEIOutputKneePoint = p; }
   Int*  getKneeSEIOutputKneePoint()                                  { return m_kneeSEIOutputKneePoint; }
-#if Q0074_COLOUR_REMAPPING_SEI
   Void  setColourRemapInfoSEIFileRoot( const std::string &s )        { m_colourRemapSEIFileRoot = s; }
   const std::string &getColourRemapInfoSEIFileRoot() const           { return m_colourRemapSEIFileRoot; }
-#endif
   Void  setMasteringDisplaySEI(const TComSEIMasteringDisplay &src)   { m_masteringDisplay = src; }
   const TComSEIMasteringDisplay &getMasteringDisplaySEI() const      { return m_masteringDisplay; }
   Void         setUseWP               ( Bool b )                     { m_useWeightedPred   = b;    }
