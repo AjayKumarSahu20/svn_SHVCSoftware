@@ -1,4 +1,4 @@
-TAppEncoder -c cfg/encoder_randomaccess_main.cfg -c cfg/per-sequence-svc/BasketballDrive-2x.cfg -c cfg/layers.cfg -q0 22 -q1 22 -b str/BasketballDrive.bin -o0 rec/BasketballDrive_l0_rec.yuv -o1 rec/BasketballDrive_l1_rec.yuv
+TAppEncoder -c cfg/encoder_randomaccess_scalable.cfg -c cfg/per-sequence-svc/BasketballDrive-2x.cfg -c cfg/layers.cfg -q0 22 -q1 22 -b str/BasketballDrive.bin -o0 rec/BasketballDrive_l0_rec.yuv -o1 rec/BasketballDrive_l1_rec.yuv
 
 TAppDecoder -b str/BasketballDrive.bin -ls 2 -o0 rec/BasketballDrive_l0_drec.yuv -o1 rec/BasketballDrive_l1_drec.yuv
 
