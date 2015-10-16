@@ -1443,7 +1443,6 @@ private:
   UInt             m_layerId;
   Bool             m_extensionFlag;
   Bool             m_bV1CompatibleSPSFlag;
-  UInt             m_numScaledRefLayerOffsets;
   Bool             m_multiLayerExtSpsFlag;
   Int              m_NumDirectRefLayers;
   Bool             m_updateRepFormatFlag;
