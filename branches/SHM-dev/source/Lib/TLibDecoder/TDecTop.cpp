@@ -167,12 +167,11 @@ TDecTop::~TDecTop()
 
 Void TDecTop::create()
 {
-#if SVC_EXTENSION
-  m_cGopDecoder.create( m_layerId );
-#else
   m_cGopDecoder.create();
-#endif
   m_apcSlicePilot = new TComSlice;
+#if SVC_EXTENSION
+  m_apcSlicePilot->setLayerId(m_layerId);
+#endif
   m_uiSliceIdx = 0;
 }
 

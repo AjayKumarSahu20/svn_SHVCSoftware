@@ -76,17 +76,10 @@ TDecGop::~TDecGop()
 
 }
 
-#if SVC_EXTENSION
-Void TDecGop::create(UInt layerId)
-{
-  m_layerId = layerId;
-}
-#else
 Void TDecGop::create()
 {
 
 }
-#endif
 
 Void TDecGop::destroy()
 {
@@ -211,7 +204,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
 #if SVC_EXTENSION
-      if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( m_layerId ) )
+      if( pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->isILR( pcSlice->getLayerId() ) )
       {
         UInt refLayerId = pcSlice->getRefPic(RefPicList(iRefList), iRefIndex)->getLayerId();
         UInt refLayerIdc = pcSlice->getReferenceLayerIdc(refLayerId);
