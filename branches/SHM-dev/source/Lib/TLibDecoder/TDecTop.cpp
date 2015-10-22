@@ -482,6 +482,9 @@ Void TDecTop::xActivateParameterSets()
         assert( refLayerId > 0 );
       }
 
+      // reference layer active SPS (specified by sps_scaling_list_ref_layer_id or pps_scaling_list_ref_layer_id) shall have scaling_list_enabled_flag equal to 1.
+      assert( refSps->getScalingListFlag() == true );
+
       // It is a requirement of bitstream conformance that, when an SPS with nuh_layer_id equal to nuhLayerIdA is active for a layer with nuh_layer_id equal to nuhLayerIdB and
       // sps_infer_scaling_list_flag in the SPS is equal to 1, sps_infer_scaling_list_flag shall be equal to 0 for the SPS that is active for the layer with nuh_layer_id equal to sps_scaling_list_ref_layer_id
       assert( refSps->getInferScalingListFlag() == false );
