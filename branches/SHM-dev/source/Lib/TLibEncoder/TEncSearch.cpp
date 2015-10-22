@@ -2264,7 +2264,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
       Bool  skipFastHAD = false;
       pcCU->getIntraDirPredictor( uiPartOffset, uiPreds, COMPONENT_Y, &iMode );
 
-      if( m_pcEncCfg->getUseFastIntraScalable() && pcCU->getLayerId() > 0 )
+      if( m_pcEncCfg->getUseFastIntraScalable() && pcCU->getPic()->getLayerId() > 0 )
       {
         numModesAvailable = pcCU->reduceSetOfIntraModes(uiPartOffset, uiPreds, pcCU->getPic()->getPosScalingFactor(), iMode );
         if( numModesForFullRD > numModesAvailable ) //fast HAD can be skipped
@@ -3097,19 +3097,19 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
         TComPic* pcPic = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxTemp );
         
         // motion search only for the ILRP with sample prediction type
-        if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcPic->getLayerIdx() ) )
+        if( pcPic->isILR( pcCU->getPic()->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getPic()->getLayerIdx(), pcPic->getLayerIdx() ) )
         {
           continue;
         }
 
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-        if( pcPic->isILR(pcCU->getLayerId()) && m_disableILP )
+        if( pcPic->isILR(pcCU->getPic()->getLayerId()) && m_disableILP )
         {
           continue;
         }
 #endif
 #if ENCODER_FAST_MODE        
-        if( pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N) ) 
+        if( pcPic->isILR(pcCU->getPic()->getLayerId()) && (ePartSize == SIZE_2Nx2N) ) 
         {
           continue;
         }
@@ -3201,7 +3201,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
     }
 
 #if SVC_EXTENSION
-    if( pcCU->getLayerId() && !doneUniPred )
+    if( pcCU->getPic()->getLayerId() && !doneUniPred )
     {
       // there is no valid reference pictures for inter prediction
       return false;
@@ -3312,12 +3312,12 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
 #if ENCODER_FAST_MODE
         Bool     testIter = true;
         TComPic* pcPic    = pcCU->getSlice()->getRefPic( RefPicList(1 - iRefList), iRefIdxBi[1 - iRefList] );
-        if(pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N))
+        if(pcPic->isILR(pcCU->getPic()->getLayerId()) && (ePartSize == SIZE_2Nx2N))
         {
           testIter = false;  //the fixed part is ILR, skip this iteration       
         }
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-        if (pcPic->isILR(pcCU->getLayerId()) && m_disableILP)
+        if (pcPic->isILR(pcCU->getPic()->getLayerId()) && m_disableILP)
         {
           testIter = false;
         }
@@ -3335,17 +3335,17 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
           pcPic = pcCU->getSlice()->getRefPic( RefPicList(iRefList) , iRefIdxTemp );
 
           // motion search only for the ILRP with sample prediction type
-          if( pcPic->isILR( pcCU->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcPic->getLayerIdx() ) )
+          if( pcPic->isILR( pcCU->getPic()->getLayerId() ) && !pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getPic()->getLayerIdx(), pcPic->getLayerIdx() ) )
           {
             continue;
           }
 
-          if(pcPic->isILR(pcCU->getLayerId()) && (ePartSize == SIZE_2Nx2N))
+          if(pcPic->isILR(pcCU->getPic()->getLayerId()) && (ePartSize == SIZE_2Nx2N))
           {
             testRefIdx = false;  //the refined part is ILR, skip this reference pic           
           }
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
-          if (pcPic->isILR(pcCU->getLayerId()) && m_disableILP)
+          if (pcPic->isILR(pcCU->getPic()->getLayerId()) && m_disableILP)
           {
             testRefIdx = false;
           }
@@ -3918,7 +3918,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
   //  Do integer search
 #if REF_IDX_ME_ZEROMV
-  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getLayerId()))  //ILR reference pic 
+  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()))  //ILR reference pic 
   {
     rcMv.setZero();  //use Mv(0, 0) for integer ME 
   }
@@ -3954,7 +3954,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   const Bool bIsLosslessCoded = pcCU->getCUTransquantBypass(uiPartAddr) != 0;
 
 #if REF_IDX_ME_ZEROMV
-  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getLayerId()))  //ILR reference pic
+  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()))  //ILR reference pic
   {
     xPatternSearchFracDIFMv0( pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost );
   }
@@ -6025,7 +6025,7 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
       TComPic* refPic = pcCU->getSlice()->getRefPic(eRefPicList, refIdx);
 
       // ILRP has to be for the sample prediction type
-      if( refPic->isILR(pcCU->getLayerId()) && refPic->getLayerId() == refLayerId && pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getLayerIdx(), pcCU->getSlice()->getVPS()->getLayerIdxInVps(refLayerId) ) )
+      if( refPic->isILR(pcCU->getPic()->getLayerId()) && refPic->getLayerId() == refLayerId && pcCU->getSlice()->getVPS()->isSamplePredictionType( pcCU->getPic()->getLayerIdx(), pcCU->getSlice()->getVPS()->getLayerIdxInVps(refLayerId) ) )
       {
         iRefIdxTemp = refIdx;
         foundILR    = true;
