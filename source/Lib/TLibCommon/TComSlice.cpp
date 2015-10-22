@@ -3593,12 +3593,8 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
       pcIlpPic[refLayerIdc]->getSlice(0)->setLayerId(pcRefPicBL->getLayerId());
 
       pcIlpPic[refLayerIdc]->getPicYuvRec()->setBorderExtension( false );
-      pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();
-      for (Int j=0; j<pcIlpPic[refLayerIdc]->getPicSym()->getNumberOfCtusInFrame(); j++)    // set reference CU layerId
-      {
-        pcIlpPic[refLayerIdc]->getPicSym()->getCtu(j)->setLayerId( pcIlpPic[refLayerIdc]->getLayerId() );
-      }
-      pcIlpPic[refLayerIdc]->setIsLongTerm(1);
+      pcIlpPic[refLayerIdc]->getPicYuvRec()->extendPicBorder();      
+      pcIlpPic[refLayerIdc]->setIsLongTerm(true);
 
       // assign PPS to ILRP to be used for reference location offsets
       pcIlpPic[refLayerIdc]->getSlice(0)->setPPS( m_pcPic->getSlice(0)->getPPS() );

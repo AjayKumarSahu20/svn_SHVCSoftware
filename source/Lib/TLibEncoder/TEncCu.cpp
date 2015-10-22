@@ -211,12 +211,7 @@ Void TEncCu::init( TEncTop* pcEncTop )
   m_pcRdCost           = pcEncTop->getRdCost();
   
 #if SVC_EXTENSION
-  m_ppcTEncTop         = pcEncTop->getLayerEnc();
-  for(UInt i=0 ; i< m_uhTotalDepth-1 ; i++)
-  {    
-    m_ppcBestCU[i]->setLayerId(pcEncTop->getLayerId());
-    m_ppcTempCU[i]->setLayerId(pcEncTop->getLayerId());
-  }
+  m_ppcTEncTop         = pcEncTop->getLayerEnc();  
 #endif
   
   m_pcEntropyCoder     = pcEncTop->getEntropyCoder();
@@ -464,7 +459,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
 #endif
 #if ENCODER_FAST_MODE
     Bool testInter = true;
-    if( rpcBestCU->getLayerId() > 0 )
+    if( rpcBestCU->getPic()->getLayerId() > 0 )
     {
       if(pcSlice->getSliceType() == P_SLICE && pcSlice->getNumRefIdx(REF_PIC_LIST_0) == pcSlice->getActiveNumILRRefIdx())
       {
@@ -1831,7 +1826,7 @@ Bool TEncCu::xCheckTileSetConstraint( TComDataCU*& rpcCU )
 {
   Bool disableILP = false;
 
-  if (rpcCU->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getCtuRsAddr()) >= 0)
+  if (rpcCU->getPic()->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getCtuRsAddr()) >= 0)
   {
     if (rpcCU->getPic()->getPicSym()->getTileSetType(rpcCU->getCtuRsAddr()) == 2)
     {
@@ -1867,8 +1862,8 @@ Bool TEncCu::xCheckTileSetConstraint( TComDataCU*& rpcCU )
 
 Void TEncCu::xVerifyTileSetConstraint( TComDataCU*& rpcCU )
 {
-  if (rpcCU->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getCtuRsAddr()) >= 0 &&
-      m_disableILP)
+  if( rpcCU->getPic()->getLayerId() == (m_pcEncCfg->getNumLayer() - 1)  && m_pcEncCfg->getInterLayerConstrainedTileSetsSEIEnabled() && 
+      rpcCU->getPic()->getPicSym()->getTileSetIdxMap(rpcCU->getCtuRsAddr()) >= 0 && m_disableILP )
   {
     UInt numPartitions = rpcCU->getPic()->getNumPartitionsInCtu();
     for (UInt i = 0; i < numPartitions; i++)
@@ -1882,7 +1877,7 @@ Void TEncCu::xVerifyTileSetConstraint( TComDataCU*& rpcCU )
             TComCUMvField *mvField = rpcCU->getCUMvField(RefPicList(refList));
             if (mvField->getRefIdx(i) >= 0)
             {
-              assert(!(rpcCU->getSlice()->getRefPic(RefPicList(refList), mvField->getRefIdx(i))->isILR(rpcCU->getLayerId())));
+              assert(!(rpcCU->getSlice()->getRefPic(RefPicList(refList), mvField->getRefIdx(i))->isILR(rpcCU->getPic()->getLayerId())));
             }
           }
         }

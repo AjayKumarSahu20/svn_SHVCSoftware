@@ -70,11 +70,6 @@ Void TDecCu::init(TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TComTrQuan
   m_ppcTDecTop = ppcDecTop;
   m_layerId = layerId; 
 
-  for ( UInt ui = 0; ui < m_uiMaxDepth-1; ui++ )
-  {
-    m_ppcCU     [ui]->setLayerId(layerId);
-  }
-  
 #if LAYER_CTB
   memcpy(g_auiLayerZscanToRaster[m_layerId], g_auiZscanToRaster, sizeof( g_auiZscanToRaster ) );
   memcpy(g_auiLayerRasterToZscan[m_layerId], g_auiRasterToZscan, sizeof( g_auiRasterToZscan ) );
@@ -170,11 +165,7 @@ Void TDecCu::decodeCtu( TComDataCU* pCtu, Bool& isLastCtuOfSliceSegment )
   {
     setIsChromaQpAdjCoded(true);
   }
-
-#if SVC_EXTENSION
-  pCtu->setLayerId(m_layerId);
-#endif
-
+  
   // start from the top level CU
   xDecodeCU( pCtu, 0, 0, isLastCtuOfSliceSegment);
 }
@@ -310,10 +301,10 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
  
 #if SVC_EXTENSION
   // Check CU skip for higher layer IRAP skip flag
-  if( pcCU->getSlice()->getVPS()->getHigherLayerIrapSkipFlag() && pcCU->getSlice()->getVPS()->getSingleLayerForNonIrapFlag() && pcCU->getLayerId() > 0 )
+  if( pcCU->getSlice()->getVPS()->getHigherLayerIrapSkipFlag() && pcCU->getSlice()->getVPS()->getSingleLayerForNonIrapFlag() && pcCU->getPic()->getLayerId() > 0 )
   {
     Bool lowerLayerExist = false;
-    for(int i=0;i<pcCU->getLayerId();i++)
+    for( Int i = 0; i < pcCU->getPic()->getLayerId(); i++ )
     {
       if(pcCU->getSlice()->getBaseColPic(pcCU->getSlice()->getInterLayerPredLayerIdc(i)))
       {

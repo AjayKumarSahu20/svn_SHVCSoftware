@@ -87,7 +87,6 @@ private:
   Int           m_unitSize;                             ///< size of a "minimum partition"
 
 #if SVC_EXTENSION
-  UInt          m_layerId;                              ///< layer id
 #if FAST_INTRA_SHVC
   UChar         m_reducedSetIntraModes[NUM_INTRA_MODE-1];
 #endif
@@ -480,9 +479,6 @@ public:
   UInt          getCoefScanIdx                ( const UInt uiAbsPartIdx, const UInt uiWidth, const UInt uiHeight, const ComponentID compID ) const ;
 
 #if SVC_EXTENSION
-  Void          setLayerId                    ( UInt layerId )                                             { m_layerId = layerId;        }
-  UInt          getLayerId                    ( ) const                                                    { return m_layerId;           }
-  UInt          getLayerIdx                   ( ) const                                                    { return m_pcSlice->getVPS()->getLayerIdxInVps(m_layerId); }
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool          isInterLayerReference         ( UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1 ) const;
 #endif
