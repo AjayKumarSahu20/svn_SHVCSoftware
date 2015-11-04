@@ -87,6 +87,8 @@ Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps
   
   const Window& conformanceWindow = vps.getConformanceWindow( &sps, layerId );
 
+  m_layerId = layerId;
+
   m_picSym.create( vps, sps, pps, uiMaxDepth, layerId );
 
   if (!bIsVirtual)
