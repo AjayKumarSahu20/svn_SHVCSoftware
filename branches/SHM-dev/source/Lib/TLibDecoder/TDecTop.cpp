@@ -169,9 +169,6 @@ Void TDecTop::create()
 {
   m_cGopDecoder.create();
   m_apcSlicePilot = new TComSlice;
-#if SVC_EXTENSION
-  m_apcSlicePilot->setLayerId(m_layerId);
-#endif
   m_uiSliceIdx = 0;
 }
 
@@ -1968,7 +1965,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
 #if SVC_EXTENSION
   // ignore any NAL units with nuh_layer_id == 63
   if( nalu.m_nuhLayerId == 63 )
-  {  
+  {
     return false;
   }
 

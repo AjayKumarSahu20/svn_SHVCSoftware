@@ -233,6 +233,16 @@ Void TAppDecTop::decode()
     else
     {
       read(nalu);
+
+#if SVC_EXTENSION
+      // ignore any NAL units with nuh_layer_id == 63
+      if( nalu.m_nuhLayerId == 63 )
+      {
+        printf("Ignore NAL unit with m_nuhLayerId equal to 63\n");
+        continue;
+      }
+#endif
+
       if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
 #if CONFORMANCE_BITSTREAM_MODE
         (nalu.m_nuhLayerId > m_commonDecoderParams.getTargetLayerId()) )

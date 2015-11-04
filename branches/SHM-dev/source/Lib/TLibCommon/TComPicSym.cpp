@@ -120,6 +120,10 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
   clearSliceBuffer();
   allocateNewSlice();
 
+#if SVC_EXTENSION
+   m_apSlices.back()->setLayerId( layerId );
+#endif
+
 #if ADAPTIVE_QP_SELECTION
   if (m_pParentARLBuffer == NULL)
   {
