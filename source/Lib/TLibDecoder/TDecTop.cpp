@@ -846,7 +846,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_apcSlicePilot->setPOC(m_skippedPOC);
   }
 
+#if !CONFORMANCE_BITSTREAM_FIX  //This update previous Tid0 POC is moved down and invoke only after the POC derivation has been finalized
   xUpdatePreviousTid0POC(m_apcSlicePilot);
+#endif
 
   m_apcSlicePilot->setAssociatedIRAPPOC(m_pocCRA);
   m_apcSlicePilot->setAssociatedIRAPType(m_associatedIRAPType);
@@ -907,7 +909,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
     Int iMaxPOClsb = 1 << sps->getBitsForPOC();
     m_apcSlicePilot->setPOC( m_apcSlicePilot->getPOC() & (iMaxPOClsb - 1) );
+#if !CONFORMANCE_BITSTREAM_FIX  //This update previous Tid0 POC is moved down and invoke only after the POC derivation has been finalized
     xUpdatePreviousTid0POC(m_apcSlicePilot);
+#endif
   }
 
   // Skip pictures due to random access
@@ -1034,7 +1038,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       }
     }
 
+#if CONFORMANCE_BITSTREAM_FIX
+    if( m_apcSlicePilot->getPocResetIdc() && m_apcSlicePilot->getFirstSliceInPic() )
+#else
     if( m_apcSlicePilot->getPocResetIdc() && m_apcSlicePilot->getSliceIdx() == 0 )
+#endif
     {
       Int pocResetPeriodId = m_apcSlicePilot->getPocResetPeriodId();
       if ( m_apcSlicePilot->getPocResetIdc() == 1 || m_apcSlicePilot->getPocResetIdc() == 2 ||
@@ -1236,12 +1244,21 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     m_apcSlicePilot->setPOC( picOrderCntMsb + slicePicOrderCntLsb );
   }
 
+#if CONFORMANCE_BITSTREAM_FIX
+  xUpdatePreviousTid0POC(m_apcSlicePilot);
+#endif
+
   if( m_parseIdc == 1 || m_parseIdc == 3)
   {
     // Adjust prevPicOrderCnt
     if(    !m_apcSlicePilot->getRaslPicFlag() 
       && !m_apcSlicePilot->getRadlPicFlag()
-      && (m_apcSlicePilot->getNalUnitType() % 2 == 1)
+      && (m_apcSlicePilot->getNalUnitType() % 2 == 1
+#if CONFORMANCE_BITSTREAM_FIX
+        || (m_apcSlicePilot->getNalUnitType() > 15 && m_apcSlicePilot->getNalUnitType() < 24))
+#else
+        )
+#endif
       && ( nalu.m_temporalId == 0 )
       && !m_apcSlicePilot->getDiscardableFlag() )
     {

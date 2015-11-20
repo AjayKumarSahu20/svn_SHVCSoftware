@@ -67,6 +67,7 @@
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define NO_CLRAS_OUTPUT_FLAG             1
 
+#define CONFORMANCE_BITSTREAM_FIX        1
 /// scalability types
 enum ScalabilityType
 {
