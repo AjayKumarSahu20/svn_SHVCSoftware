@@ -1960,7 +1960,11 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
     }
   }
 
+#if CONFORMANCE_BITSTREAM_FIX
+  if (!vps) return;
+#else 
   assert( vps != NULL );    // No picture in any DPB?
+#endif
   std::sort( listOfPocs.begin(), listOfPocs.end() );    // Sort in increasing order of POC
   Int targetLsIdx = vps->getOutputLayerSetIdx( getCommonDecoderParams()->getTargetOutputLayerSetIdx() );
 
