@@ -47,6 +47,9 @@
 #define SVC_EXTENSION                    1
 
 #if SVC_EXTENSION
+#define SCALABLE_REXT                    1
+#define FORMATIDX_CHECK                  1
+
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
@@ -196,7 +199,7 @@ enum AuxType
 
 // This can be enabled by the makefile
 #ifndef RExt__HIGH_BIT_DEPTH_SUPPORT
-#define RExt__HIGH_BIT_DEPTH_SUPPORT                      0 ///< 0 (default) use data type definitions for 8-10 bit video, 1 = use larger data types to allow for up to 16-bit video (originally developed as part of N0188)
+#define RExt__HIGH_BIT_DEPTH_SUPPORT                      1 ///< 0 (default) use data type definitions for 8-10 bit video, 1 = use larger data types to allow for up to 16-bit video (originally developed as part of N0188)
 #endif
 
 #define U0132_TARGET_BITS_SATURATION                      1 ///< Rate control with target bits saturation method
@@ -643,6 +646,9 @@ namespace Profile
     MULTIVIEWMAIN = 6,
     SCALABLEMAIN = 7,
     SCALABLEMAIN10 = 8,
+#if SCALABLE_REXT
+    SCALABLEREXT = 10
+#endif
 #endif
   };
 }

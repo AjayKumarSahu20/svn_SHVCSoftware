@@ -479,7 +479,11 @@ protected:
                                    TComMv*       pcMvInt,
                                    TComMv&       rcMvHalf,
                                    TComMv&       rcMvQter,
+#if SCALABLE_REXT
+                                   Distortion&   ruiCost     );
+#else
                                    UInt&         ruiCost     );
+#endif
 #endif //SVC_EXTENSION  
 
 };// END CLASS DEFINITION TEncSearch

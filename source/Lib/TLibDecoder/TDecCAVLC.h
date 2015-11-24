@@ -75,7 +75,11 @@ public:
   Void  parseQtCbf          ( class TComTU &rTu, const ComponentID compID, const Bool lowestLevel );
   Void  parseQtRootCbf      ( UInt uiAbsPartIdx, UInt& uiQtRootCbf );
   Void  parseVPS            ( TComVPS* pcVPS );
+#if SCALABLE_REXT
+  Void  parseSPS            ( TComSPS* pcSPS, ParameterSetManager* pcParamSetManager );
+#else
   Void  parseSPS            ( TComSPS* pcSPS );
+#endif
 #if !SVC_EXTENSION
   Void  parsePPS            ( TComPPS* pcPPS );
 #endif

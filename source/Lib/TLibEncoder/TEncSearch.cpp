@@ -5959,7 +5959,11 @@ Void TEncSearch::xPatternSearchFracDIFMv0( TComPattern* pcPatternKey,
                                            TComMv* pcMvInt,
                                            TComMv& rcMvHalf,
                                            TComMv& rcMvQter,
-                                           UInt& ruiCost     )                                           
+#if SCALABLE_REXT
+                                           Distortion& ruiCost     )
+#else
+                                           UInt& ruiCost     )
+#endif
 {
   assert(pcMvInt->getHor() == 0 && pcMvInt->getVer() == 0);
   Int         iOffset    = pcMvInt->getHor() + pcMvInt->getVer() * iRefStride;
@@ -5994,9 +5998,15 @@ Bool TEncSearch::predInterSearchILRUni( TComDataCU* pcCU, TComYuv* pcOrgYuv, TCo
   UInt          uiMbBits[3] = {1, 1, 0};
   UInt          uiLastMode = 0;
 
+#if SCALABLE_REXT
+  Distortion    uiCost[2]   = { MAX_UINT, MAX_UINT };     //uni, rdCost
+  Distortion    uiCostTemp;
+  Distortion    biPDistTemp = MAX_INT;
+#else
   UInt          uiCost[2]   = { MAX_UINT, MAX_UINT };     //uni, rdCost
   UInt          uiCostTemp;
   UInt          biPDistTemp = MAX_INT;
+#endif
   UInt          uiBitsTemp;
 
   PartSize      ePartSize = pcCU->getPartitionSize( 0 );  //2Nx2N

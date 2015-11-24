@@ -56,7 +56,7 @@ using namespace std;
 namespace po = df::program_options_lite;
 
 
-
+#if !SCALABLE_REXT
 enum ExtendedProfileName // this is used for determining profile strings, where multiple profiles map to a single profile idc with various constraint flag combinations
 {
   NONE = 0,
@@ -69,12 +69,16 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MULTIVIEWMAIN = 6,
   SCALABLEMAIN = 7,
   SCALABLEMAIN10 = 8,
+#if SCALABLE_REXT
+  SCALABLEREXT = 10,
+#endif
 #endif
   // The following are RExt profiles, which would map to the MAINREXT profile idc.
   // The enumeration indicates the bit-depth constraint in the bottom 2 digits
   //                           the chroma format in the next digit
   //                           the intra constraint in the next digit
-  //                           If it is a RExt still picture, there is a '1' for the top digit.
+  //                           If it is a RExt still picture, there is a '1' for the next digit,
+  //                           If it is a Scalable Rext profile, there is a '1' for the top digit.
   MONOCHROME_8      = 1008,
   MONOCHROME_12     = 1012,
   MONOCHROME_16     = 1016,
@@ -96,7 +100,15 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
   MAIN_444_16_INTRA = 2316,
   MAIN_444_STILL_PICTURE = 11308,
   MAIN_444_16_STILL_PICTURE = 12316
+#if SCALABLE_REXT
+  ,
+  SCALABLE_MONOCHROME_8   = 101008,
+  SCALABLE_MONOCHROME_12  = 101012,
+  SCALABLE_MONOCHROME_16  = 101016,
+  SCALABLE_MAIN_444       = 101308
+#endif
 };
+#endif
 
 
 //! \ingroup TAppEncoder
@@ -256,6 +268,9 @@ strToProfile[] =
   {"multiview-main",       Profile::MULTIVIEWMAIN      },       //This is not used in this software
   {"scalable-main",        Profile::SCALABLEMAIN       },
   {"scalable-main10",      Profile::SCALABLEMAIN10     },
+#if SCALABLE_REXT
+  {"scalable-Rext",        Profile::SCALABLEREXT     },
+#endif
 #endif
 };
 
@@ -304,6 +319,12 @@ strToExtendedProfile[] =
     {"multiview-main",            MULTIVIEWMAIN    },
     {"scalable-main",             SCALABLEMAIN     },
     {"scalable-main10",           SCALABLEMAIN10   },
+#if SCALABLE_REXT
+    {"scalable-monochrome",       SCALABLE_MONOCHROME_8   },
+    {"scalable-monochrome12",     SCALABLE_MONOCHROME_12  },
+    {"scalable-monochrome16",     SCALABLE_MONOCHROME_16  },
+    {"scalable-main_444",         SCALABLE_MAIN_444       },
+#endif
 #endif
 };
 
@@ -1073,7 +1094,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
                                                                                                                " If different to InputBitDepth, source data will be converted")
   ("OutputBitDepth%d",                               cfg_OutputBitDepth[CHANNEL_TYPE_LUMA],    0, m_numLayers, "Bit-depth of output file (default:InternalBitDepth)")
   ("InputBitDepthC%d",                               cfg_InputBitDepth[CHANNEL_TYPE_CHROMA],   0, m_numLayers, "As per InputBitDepth but for chroma component. (default:InputBitDepth) for layer %d")
-  ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA],0, m_numLayers, "As per InternalBitDepth but for chroma component. (default:IntrenalBitDepth) for layer %d")
+  ("InternalBitDepthC%d",                            cfg_InternalBitDepth[CHANNEL_TYPE_CHROMA],0, m_numLayers, "As per InternalBitDepth but for chroma component. (default:InternalBitDepth) for layer %d")
   ("OutputBitDepthC%d",                              cfg_OutputBitDepth[CHANNEL_TYPE_CHROMA],  0, m_numLayers, "As per OutputBitDepth but for chroma component. (default:InternalBitDepthC)")
 
   ("MaxTidRefPresentFlag",                           m_maxTidRefPresentFlag,                            false, "max_tid_ref_present_flag (0: not present, 1: present) " )
@@ -1790,6 +1811,9 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   }
   
 #if SVC_EXTENSION
+#if SCALABLE_REXT
+  Int cfgTmpConstraintChromaFormat = tmpConstraintChromaFormat;
+#endif
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
     if( m_apcLayerCfg[layer]->m_layerId < 0 )
@@ -1853,7 +1877,16 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     {
       m_profileList[layerPTLIdx] = Profile::MAINREXT;            
 
+#if SCALABLE_REXT
+      if(m_numLayers > 1 && layer == 0 )
+      {
+        m_profileList[0] = extendedToShortProfileName(extendedProfile[0]);
+      }
+
+      if( m_apcLayerCfg[layer]->m_bitDepthConstraint != 0 || cfgTmpConstraintChromaFormat != 0)
+#else
       if( m_apcLayerCfg[layer]->m_bitDepthConstraint != 0 || tmpConstraintChromaFormat != 0)
+#endif
       {
         fprintf(stderr, "Error: The bit depth and chroma format constraints are not used when an explicit RExt profile is specified\n");
         exit(EXIT_FAILURE);
@@ -1868,11 +1901,36 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       default: tmpConstraintChromaFormat=444; break;
       }
     }
+#if SCALABLE_REXT
+    else if(extendedProfile[layerPTLIdx] >= 101008 && extendedProfile[layerPTLIdx] <= 101308)
+    {
+      m_profileList[layerPTLIdx] = Profile::SCALABLEREXT;
+      
+      if( m_apcLayerCfg[layer]->m_bitDepthConstraint != 0 || cfgTmpConstraintChromaFormat != 0)
+      {
+        fprintf(stderr, "Error: The bit depth and chroma format constraints are not used when an explicit Scalabe-RExt profile is specified\n");
+        exit(EXIT_FAILURE);
+      }
+      m_apcLayerCfg[layer]->m_bitDepthConstraint  = (extendedProfile[layerPTLIdx]%100);
+      m_apcLayerCfg[layer]->m_intraConstraintFlag = 0; // no all-intra constraint for scalable-Rext profiles 
+      switch ((extendedProfile[layerPTLIdx]/100)%10)
+      {
+        case 0:  tmpConstraintChromaFormat=400; break;
+        case 1:  tmpConstraintChromaFormat=420; break;
+        case 2:  tmpConstraintChromaFormat=422; break;
+        default: tmpConstraintChromaFormat=444; break;
+      }
+    }
+#endif
     else
     {
       if( layer == 0 )
       {
+#if SCALABLE_REXT
+        m_profileList[0] = extendedToShortProfileName(extendedProfile[0]);
+#else
         m_profileList[0] = Profile::Name(extendedProfile[0]);
+#endif
       }
 
       m_profileList[layerPTLIdx] = Profile::Name(extendedProfile[layerPTLIdx]);
@@ -1883,7 +1941,11 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       if( m_apcLayerCfg[layer]->m_bitDepthConstraint == 0 ) m_apcLayerCfg[layer]->m_bitDepthConstraint = 16;
       m_apcLayerCfg[layer]->m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? CHROMA_444 : numberToChromaFormat(tmpConstraintChromaFormat);
     }
+#if SCALABLE_REXT
+    else if( m_profileList[layerPTLIdx] == Profile::MAINREXT || m_profileList[layerPTLIdx] == Profile::SCALABLEREXT )
+#else
     else if( m_profileList[layerPTLIdx] == Profile::MAINREXT )
+#endif
     {
       if( m_apcLayerCfg[layer]->m_bitDepthConstraint == 0 && tmpConstraintChromaFormat == 0 )
       {
@@ -1922,6 +1984,26 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
       m_apcLayerCfg[layer]->m_chromaFormatConstraint = (tmpConstraintChromaFormat == 0) ? m_apcLayerCfg[layer]->m_chromaFormatIDC : numberToChromaFormat(tmpConstraintChromaFormat);
       m_apcLayerCfg[layer]->m_bitDepthConstraint = (m_profileList[layerPTLIdx] == Profile::MAIN10 || m_profileList[layerPTLIdx] == Profile::SCALABLEMAIN10) ? 10 : 8;
     }
+#if FORMATIDX_CHECK
+    for(Int compareLayer = layer+1; compareLayer < m_numLayers; compareLayer++ )
+    {
+      if(m_apcLayerCfg[layer]->m_repFormatIdx == m_apcLayerCfg[compareLayer]->m_repFormatIdx && (
+           m_apcLayerCfg[layer]->m_chromaFormatIDC != m_apcLayerCfg[compareLayer]->m_chromaFormatIDC
+           // separate_colour_plane_flag not supported yet but if supported insert check here
+           || m_apcLayerCfg[layer]->m_iSourceWidth != m_apcLayerCfg[compareLayer]->m_iSourceWidth
+           || m_apcLayerCfg[layer]->m_iSourceHeight != m_apcLayerCfg[compareLayer]->m_iSourceHeight
+           || m_apcLayerCfg[layer]->m_internalBitDepth != m_apcLayerCfg[compareLayer]->m_internalBitDepth
+           || m_apcLayerCfg[layer]->m_confWinLeft != m_apcLayerCfg[compareLayer]->m_confWinLeft
+           || m_apcLayerCfg[layer]->m_confWinRight != m_apcLayerCfg[compareLayer]->m_confWinRight
+           || m_apcLayerCfg[layer]->m_confWinTop != m_apcLayerCfg[compareLayer]->m_confWinTop
+           || m_apcLayerCfg[layer]->m_confWinBottom != m_apcLayerCfg[compareLayer]->m_confWinBottom
+        ))
+      {
+        fprintf(stderr, "Error: Two layers using the same FormatIdx value must share the same values of the related parameters\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+#endif
   }
 #else
   /* rules for input, output and internal bitdepths as per help text */
@@ -2557,10 +2639,17 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     UInt& m_uiMaxCUDepth            = m_apcLayerCfg[layer]->m_uiMaxCUDepth;
     ChromaFormat& m_chromaFormatIDC = m_apcLayerCfg[layer]->m_chromaFormatIDC;
 
+#if SCALABLE_REXT
+    Int& m_confWinLeft              = m_apcLayerCfg[layer]->m_confWinLeft;
+    Int& m_confWinRight             = m_apcLayerCfg[layer]->m_confWinRight;
+    Int& m_confWinTop               = m_apcLayerCfg[layer]->m_confWinTop;
+    Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinBottom;
+#else
     Int& m_confWinLeft              = m_apcLayerCfg[layer]->m_confWinLeft;
     Int& m_confWinRight             = m_apcLayerCfg[layer]->m_confWinLeft;
     Int& m_confWinTop               = m_apcLayerCfg[layer]->m_confWinLeft;
     Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinLeft;
+#endif
     Int* m_aiPad                    = m_apcLayerCfg[layer]->m_aiPad;
     Int* m_aidQP                    = m_apcLayerCfg[layer]->m_aidQP;
 
@@ -3109,11 +3198,19 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara(m_bitDepthConstraint<maxBitDepth, "The internalBitDepth must not be greater than the bitDepthConstraint value");
   xConfirmPara(m_chromaFormatConstraint<m_chromaFormatIDC, "The chroma format used must not be greater than the chromaFormatConstraint value");
 
+#if SCALABLE_REXT
+  if (m_profile==Profile::MAINREXT || m_profile==Profile::HIGHTHROUGHPUTREXT || m_profile==Profile::SCALABLEREXT)
+#else
   if (m_profile==Profile::MAINREXT || m_profile==Profile::HIGHTHROUGHPUTREXT)
+#endif
   {
     xConfirmPara(m_lowerBitRateConstraintFlag==false && m_intraConstraintFlag==false, "The lowerBitRateConstraint flag cannot be false when intraConstraintFlag is false");
     xConfirmPara(m_cabacBypassAlignmentEnabledFlag && m_profile!=Profile::HIGHTHROUGHPUTREXT, "AlignCABACBeforeBypass must not be enabled unless the high throughput profile is being used.");
+#if SCALABLE_REXT
+    if (m_profile == Profile::MAINREXT || m_profile==Profile::SCALABLEREXT)
+#else
     if (m_profile == Profile::MAINREXT)
+#endif
     {
       const UInt intraIdx = m_intraConstraintFlag ? 1:0;
       const UInt bitDepthIdx = (m_bitDepthConstraint == 8 ? 0 : (m_bitDepthConstraint ==10 ? 1 : (m_bitDepthConstraint == 12 ? 2 : (m_bitDepthConstraint == 16 ? 3 : 4 ))));
@@ -3161,6 +3258,24 @@ Void TAppEncCfg::xCheckParameter()
 #else
     xConfirmPara(m_bitDepthConstraint!=((m_profile==Profile::MAIN10)?10:8), "BitDepthConstraint must be 8 for MAIN profile and 10 for MAIN10 profile.");
 #endif
+#if SCALABLE_REXT // changes below are only about displayed text
+    xConfirmPara(m_chromaFormatConstraint!=CHROMA_420, "ChromaFormatConstraint must be 420 for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_intraConstraintFlag==true, "IntraConstraintFlag must be false for non main_RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_lowerBitRateConstraintFlag==false, "LowerBitrateConstraintFlag must be true for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_profile == Profile::MAINSTILLPICTURE && m_framesToBeEncoded > 1, "Number of frames to be encoded must be 1 when main still picture profile is used.");
+
+    xConfirmPara(m_crossComponentPredictionEnabledFlag==true, "CrossComponentPrediction must not be used for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_log2MaxTransformSkipBlockSize!=2, "Transform Skip Log2 Max Size must be 2 for V1 profiles.");
+    xConfirmPara(m_transformSkipRotationEnabledFlag==true, "UseResidualRotation must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_transformSkipContextEnabledFlag==true, "UseSingleSignificanceMapContext must not be enabled for non main-RExt nand on scalable-Rext profiles.");
+    xConfirmPara(m_rdpcmEnabledFlag[RDPCM_SIGNAL_IMPLICIT]==true, "ImplicitResidualDPCM must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_rdpcmEnabledFlag[RDPCM_SIGNAL_EXPLICIT]==true, "ExplicitResidualDPCM must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_persistentRiceAdaptationEnabledFlag==true, "GolombRiceParameterAdaption must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_extendedPrecisionProcessingFlag==true, "UseExtendedPrecision must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_highPrecisionOffsetsEnabledFlag==true, "UseHighPrecisionPredictionWeighting must not be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_enableIntraReferenceSmoothing==false, "EnableIntraReferenceSmoothing must be enabled for non main-RExt and non scalable-Rext profiles.");
+    xConfirmPara(m_cabacBypassAlignmentEnabledFlag, "AlignCABACBeforeBypass cannot be enabled for non main-RExt and non scalable-Rext profiles.");
+#else
     xConfirmPara(m_chromaFormatConstraint!=CHROMA_420, "ChromaFormatConstraint must be 420 for non main-RExt profiles.");
     xConfirmPara(m_intraConstraintFlag==true, "IntraConstraintFlag must be false for non main_RExt profiles.");
     xConfirmPara(m_lowerBitRateConstraintFlag==false, "LowerBitrateConstraintFlag must be true for non main-RExt profiles.");
@@ -3177,6 +3292,7 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_highPrecisionOffsetsEnabledFlag==true, "UseHighPrecisionPredictionWeighting must not be enabled for non main-RExt profiles.");
     xConfirmPara(m_enableIntraReferenceSmoothing==false, "EnableIntraReferenceSmoothing must be enabled for non main-RExt profiles.");
     xConfirmPara(m_cabacBypassAlignmentEnabledFlag, "AlignCABACBeforeBypass cannot be enabled for non main-RExt profiles.");
+#endif
   }
 
   // check range of parameters
@@ -4028,10 +4144,17 @@ Void TAppEncCfg::xPrintParameter()
     UInt& m_uiMaxCUWidth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
     UInt& m_uiMaxCUDepth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth;
 
+#if SCALABLE_REXT
+    Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+    Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinRight;
+    Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinTop;
+    Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinBottom;
+#else
     Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinLeft;
+#endif
 
     Int& m_iSourceWidth                    = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
     Int& m_iSourceHeight                   = m_apcLayerCfg[layerIdx]->m_iSourceHeight;

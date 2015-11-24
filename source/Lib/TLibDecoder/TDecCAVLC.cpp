@@ -680,7 +680,11 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
   }
 }
 
+#if SCALABLE_REXT
+Void TDecCavlc::parseSPS(TComSPS* pcSPS, ParameterSetManager* pcParamSetManager)
+#else
 Void TDecCavlc::parseSPS(TComSPS* pcSPS)
+#endif
 {
 #if ENC_DEC_TRACE
   xTraceSPSHeader ();
@@ -688,7 +692,9 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   UInt  uiCode;
   READ_CODE( 4,  uiCode, "sps_video_parameter_set_id");          pcSPS->setVPSId        ( uiCode );
-
+#if SCALABLE_REXT
+  const TComVPS* pTmpVPS = pcParamSetManager->getVPS(pcSPS->getVPSId()); 
+#endif
 #if SVC_EXTENSION
   UInt uiTmp = 0;
   
@@ -741,6 +747,25 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
       READ_CODE(8, uiCode, "sps_rep_format_idx");
       pcSPS->setUpdateRepFormatIndex(uiCode);
     }
+#if SCALABLE_REXT
+    // If update_rep_format_flag is equal to 0, the variable repFormatIdx is set equal to vps_rep_format_idx[ LayerIdxInVps[ layerIdCurr ] ].
+    else
+    {
+      Int iVPSRepFormatIdx = pTmpVPS->getVpsRepFormatIdx( pTmpVPS->getLayerIdxInVps( pcSPS->getLayerId() ) );
+      pcSPS->setUpdateRepFormatIndex( iVPSRepFormatIdx );
+
+      pcSPS->setChromaFormatIdc(              pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getChromaFormatVpsIdc() );
+      pcSPS->setPicWidthInLumaSamples(        pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getPicWidthVpsInLumaSamples() );
+      pcSPS->setPicHeightInLumaSamples(       pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getPicHeightVpsInLumaSamples() );
+      pcSPS->setBitDepth(CHANNEL_TYPE_LUMA,   pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getBitDepthVpsLuma() );
+      pcSPS->setBitDepth(CHANNEL_TYPE_CHROMA, pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getBitDepthVpsChroma() );
+      Window &conf = pcSPS->getConformanceWindow();
+      conf.setWindowLeftOffset(               pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowLeftOffset() );
+      conf.setWindowRightOffset(              pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowRightOffset() );
+      conf.setWindowTopOffset(                pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowTopOffset() );
+      conf.setWindowBottomOffset(             pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowBottomOffset() );
+    }
+#endif
   }
   else
   {
@@ -2165,7 +2190,11 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
   READ_FLAG(uiCode,       PTL_TRACE_TEXT("frame_only_constraint_flag"      )); ptl->setFrameOnlyConstraintFlag(uiCode ? true : false);
 
   if (ptl->getProfileIdc() == Profile::MAINREXT           || ptl->getProfileCompatibilityFlag(Profile::MAINREXT) ||
-      ptl->getProfileIdc() == Profile::HIGHTHROUGHPUTREXT || ptl->getProfileCompatibilityFlag(Profile::HIGHTHROUGHPUTREXT))
+      ptl->getProfileIdc() == Profile::HIGHTHROUGHPUTREXT || ptl->getProfileCompatibilityFlag(Profile::HIGHTHROUGHPUTREXT
+#if SCALABLE_REXT
+      || ptl->getProfileIdc() == Profile::SCALABLEREXT
+#endif
+      ))
   {
     UInt maxBitDepth=16;
     READ_FLAG(    uiCode, PTL_TRACE_TEXT("max_12bit_constraint_flag"       )); if (uiCode) maxBitDepth=12;
@@ -2978,7 +3007,12 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
           {
             ProfileTierLevel* ptl = vps->getPTL(vps->getProfileLevelTierIdx(i, j))->getGeneralPTL();
             numIncludedLayers++;
+#if SCALABLE_REXT
+            // if scalable profile is Scalable Main 10 or Scalable Rext, dimension_id = 2
+            const Profile::Name profileName = ( ptl->getProfileIdc() == Profile::SCALABLEMAIN10 || ptl->getProfileIdc() == Profile::SCALABLEREXT ) ? Profile::SCALABLEMAIN : ptl->getProfileIdc();
+#else
             const Profile::Name profileName = ptl->getProfileIdc() == Profile::SCALABLEMAIN10 ? Profile::SCALABLEMAIN : ptl->getProfileIdc();
+#endif
 
             for( Int p = 0; p < profiles.size(); p++ )
             {

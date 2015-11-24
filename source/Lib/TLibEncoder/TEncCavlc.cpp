@@ -1411,7 +1411,11 @@ Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl, const Bool /*bIsSu
   WRITE_FLAG(ptl->getNonPackedConstraintFlag(), PTL_TRACE_TEXT("non_packed_constraint_flag"      ));
   WRITE_FLAG(ptl->getFrameOnlyConstraintFlag(), PTL_TRACE_TEXT("frame_only_constraint_flag"      ));
 
-  if (ptl->getProfileIdc() == Profile::MAINREXT || ptl->getProfileIdc() == Profile::HIGHTHROUGHPUTREXT )
+  if (ptl->getProfileIdc() == Profile::MAINREXT || ptl->getProfileIdc() == Profile::HIGHTHROUGHPUTREXT 
+#if SCALABLE_REXT
+    || ptl->getProfileIdc() == Profile::SCALABLEREXT
+#endif
+    )
   {
     const UInt         bitDepthConstraint=ptl->getBitDepthConstraint();
     WRITE_FLAG(bitDepthConstraint<=12,          PTL_TRACE_TEXT("max_12bit_constraint_flag"       ));
