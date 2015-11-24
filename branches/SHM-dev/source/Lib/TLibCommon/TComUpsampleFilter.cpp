@@ -84,8 +84,19 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
   if( !resamplingPhase.phasePresentFlag )
   {
+#if SCALABLE_REXT
+    if(chromaFormatIdc == 3)
+    {
+      phaseVerChroma = 0;
+    }
+    else
+    {
+#endif
     Int refRegionHeight = heightBL - windowRL.getWindowTopOffset() - windowRL.getWindowBottomOffset();
     phaseVerChroma = (4 * heightEL + (refRegionHeight >> 1)) / refRegionHeight - 4;
+#if SCALABLE_REXT
+    }
+#endif
   }
 
   Pel* piTempBufY = pcTempPic->getAddr(COMPONENT_Y);
@@ -138,6 +149,10 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
       piDstY += strideEL;
     }
 
+#if SCALABLE_REXT
+  if(chromaFormatIdc != 0)
+  {
+#endif
     widthEL  >>= 1;
     heightEL >>= 1;
 
@@ -176,6 +191,9 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
       piDstU += strideEL;
       piDstV += strideEL;
     }
+#if SCALABLE_REXT
+  }
+#endif
   }
   else // general resampling process
   {
@@ -289,6 +307,10 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     //========== UV component upsampling ===========
 
+#if SCALABLE_REXT
+  if(chromaFormatIdc != 0)
+  {
+#endif
     widthEL  >>= 1;
     heightEL >>= 1;
     widthBL  >>= 1;
@@ -395,6 +417,9 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
         piDstV++;
       }
     }
+#if SCALABLE_REXT
+    }
+#endif
   }
     pcUsPic->setBorderExtension(false);
     pcUsPic->extendPicBorder   (); // extend the border.

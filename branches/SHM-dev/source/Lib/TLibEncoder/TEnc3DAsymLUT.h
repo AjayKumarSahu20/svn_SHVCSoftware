@@ -174,9 +174,15 @@ private:
                              Int y0, Int u0, Int v0, Int nLengthY, Int nLengthUV, Pel nP0, Pel nP1, Pel nP3, Pel nP7 );
 
   inline Double xCalEstDist( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY, Double a, Double b, Double c, Double d );
-
+#if SCALABLE_REXT
+/* 
+former xCalEstDist(Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Pel, Pel, Pel, Pel)
+replaced by this fucntion because behaving differently than other xCalEstDist and was conflicting with xCalEstDist when RExt__HIGH_BIT_DEPTH_SUPPORT = 1
+*/
+  inline Double xCalEstPelDist( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY, Pel nP0, Pel nP1, Pel nP3, Pel nP7 );
+#else
   inline Double xCalEstDist( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY, Pel nP0, Pel nP1, Pel nP3, Pel nP7 );
-
+#endif
 #if R0179_ENC_OPT_3DLUT_SIZE
   Void    xConsolidateData( SLUTSize *pCurLUTSize, SLUTSize *pMaxLUTSize );
   Void    xGetAllLutSizes(TComSlice *pSlice);
@@ -201,6 +207,23 @@ Double TEnc3DAsymLUT::xCalEstDist( Double N, Double Ys, Double Yy, Double Yu, Do
   return( dError );
 };
 
+
+#if SCALABLE_REXT
+/* 
+former xCalEstDist(Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Double, Pel, Pel, Pel, Pel)
+replaced by this fucntion because behaving differently than other xCalEstDist and was conflicting with xCalEstDist when RExt__HIGH_BIT_DEPTH_SUPPORT = 1
+*/
+Double TEnc3DAsymLUT::xCalEstPelDist( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY, Pel nP0, Pel nP1, Pel nP3, Pel nP7 )  
+{
+  const Int nOne = xGetNormCoeffOne();
+  Double a = 1.0 * nP0 / nOne;
+  Double b = 1.0 * nP1 / nOne;
+  Double c = 1.0 * nP3 / nOne;
+  Double d = nP7;
+  Double dError = N * d * d + 2 * b * c * uv + 2 * a * c * yv + 2 * a * b * yu - 2 * c * Yv - 2 * b * Yu - 2 * a * Yy + 2 * c * d * vs + 2 * b * d * us + 2 * a * d * ys + a * a * yy + c * c * vv + b * b * uu - 2 * d * Ys + YY;
+  return( dError );
+};
+#else
 Double TEnc3DAsymLUT::xCalEstDist( Double N, Double Ys, Double Yy, Double Yu, Double Yv, Double ys, Double us, Double vs, Double yy, Double yu, Double yv, Double uu, Double uv, Double vv, Double YY, Pel nP0, Pel nP1, Pel nP3, Pel nP7 )  
 {
   const Int nOne = xGetNormCoeffOne();
@@ -211,6 +234,7 @@ Double TEnc3DAsymLUT::xCalEstDist( Double N, Double Ys, Double Yy, Double Yu, Do
   Double dError = N * d * d + 2 * b * c * uv + 2 * a * c * yv + 2 * a * b * yu - 2 * c * Yv - 2 * b * Yu - 2 * a * Yy + 2 * c * d * vs + 2 * b * d * us + 2 * a * d * ys + a * a * yy + c * c * vv + b * b * uu - 2 * d * Ys + YY;
   return( dError );
 };
+#endif
 
 #endif
 

@@ -291,6 +291,33 @@ Void copyOnetoOnePicture(    // SVC_NONCOLL
 
 Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pcPicYuvOut)
 {
+#if SCALABLE_REXT
+  Int upsampledRowWidthLuma = pcPicYuvOut->getStride(COMPONENT_Y); // 2 * pcPicYuvOut->getLumaMargin() + pcPicYuvOut->getWidth(); 
+  copyOnetoOnePicture(
+    pcPicYuvIn->getAddr(COMPONENT_Y),        
+    pcPicYuvOut->getAddr(COMPONENT_Y),      
+    pcPicYuvOut->getWidth(COMPONENT_Y), 
+    pcPicYuvOut->getHeight(COMPONENT_Y),
+    upsampledRowWidthLuma);
+
+  if(pcPicYuvOut->getChromaFormat() != CHROMA_400)
+  {
+    Int upsampledRowWidthChroma = pcPicYuvOut->getStride(COMPONENT_Cb); //2 * pcPicYuvOut->getChromaMargin() + (pcPicYuvOut->getWidth()>>1);
+
+    copyOnetoOnePicture(
+      pcPicYuvIn->getAddr(COMPONENT_Cr),        
+      pcPicYuvOut->getAddr(COMPONENT_Cr),      
+      pcPicYuvOut->getWidth(COMPONENT_Cr), 
+      pcPicYuvOut->getHeight(COMPONENT_Cr),
+      upsampledRowWidthChroma);
+    copyOnetoOnePicture(
+      pcPicYuvIn->getAddr(COMPONENT_Cb),        
+      pcPicYuvOut->getAddr(COMPONENT_Cb),      
+      pcPicYuvOut->getWidth(COMPONENT_Cb), 
+      pcPicYuvOut->getHeight(COMPONENT_Cb),
+      upsampledRowWidthChroma);
+  }
+#else
   Int upsampledRowWidthLuma = pcPicYuvOut->getStride(COMPONENT_Y); // 2 * pcPicYuvOut->getLumaMargin() + pcPicYuvOut->getWidth(); 
   Int upsampledRowWidthCroma = pcPicYuvOut->getStride(COMPONENT_Cb); //2 * pcPicYuvOut->getChromaMargin() + (pcPicYuvOut->getWidth()>>1);
 
@@ -312,6 +339,7 @@ Void TComPic::copyUpsampledPictureYuv(TComPicYuv*   pcPicYuvIn, TComPicYuv*   pc
     pcPicYuvOut->getWidth(COMPONENT_Y)>>1, 
     pcPicYuvOut->getHeight(COMPONENT_Y)>>1,
     upsampledRowWidthCroma);
+#endif
 }
 
 Void TComPic::copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int** posScalingFactor)

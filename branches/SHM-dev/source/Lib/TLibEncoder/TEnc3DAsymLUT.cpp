@@ -217,15 +217,27 @@ Double TEnc3DAsymLUT::estimateDistWithCur3DAsymLUT( TComPic * pCurPic, UInt refL
         SCuboid & rCuboid = xGetCuboid( yIdx , uIdx , vIdx );
         if( rCuboidColorInfo.N > 0 )
         {
+#if SCALABLE_REXT
+          dErrorLuma += xCalEstPelDist( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
+            rCuboid.P[0].Y , rCuboid.P[1].Y , rCuboid.P[2].Y , rCuboid.P[3].Y );
+#else
           dErrorLuma += xCalEstDist( rCuboidColorInfo.N , rCuboidColorInfo.Ys , rCuboidColorInfo.Yy , rCuboidColorInfo.Yu , rCuboidColorInfo.Yv , rCuboidColorInfo.ys , rCuboidColorInfo.us , rCuboidColorInfo.vs , rCuboidColorInfo.yy , rCuboidColorInfo.yu , rCuboidColorInfo.yv , rCuboidColorInfo.uu , rCuboidColorInfo.uv , rCuboidColorInfo.vv , rCuboidColorInfo.YY ,
             rCuboid.P[0].Y , rCuboid.P[1].Y , rCuboid.P[2].Y , rCuboid.P[3].Y );
+#endif
         }
         if( rCuboidColorInfoC.N > 0 )
         {
+#if SCALABLE_REXT
+          dErrorChroma += xCalEstPelDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
+            rCuboid.P[0].U , rCuboid.P[1].U , rCuboid.P[2].U , rCuboid.P[3].U );
+          dErrorChroma += xCalEstPelDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
+            rCuboid.P[0].V , rCuboid.P[1].V , rCuboid.P[2].V , rCuboid.P[3].V );
+#else
           dErrorChroma += xCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Us , rCuboidColorInfoC.Uy , rCuboidColorInfoC.Uu , rCuboidColorInfoC.Uv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.UU ,
             rCuboid.P[0].U , rCuboid.P[1].U , rCuboid.P[2].U , rCuboid.P[3].U );
           dErrorChroma += xCalEstDist( rCuboidColorInfoC.N , rCuboidColorInfoC.Vs , rCuboidColorInfoC.Vy , rCuboidColorInfoC.Vu , rCuboidColorInfoC.Vv , rCuboidColorInfoC.ys , rCuboidColorInfoC.us , rCuboidColorInfoC.vs , rCuboidColorInfoC.yy , rCuboidColorInfoC.yu , rCuboidColorInfoC.yv , rCuboidColorInfoC.uu , rCuboidColorInfoC.uv , rCuboidColorInfoC.vv , rCuboidColorInfoC.VV ,
             rCuboid.P[0].V , rCuboid.P[1].V , rCuboid.P[2].V , rCuboid.P[3].V );
+#endif
         }
       }
     }

@@ -69,7 +69,11 @@ public:
   virtual Void  setBitstream          ( TComInputBitstream* p )  = 0;
 
   virtual Void  parseVPS                  ( TComVPS* pcVPS )     = 0;
+#if SCALABLE_REXT
+  virtual Void  parseSPS                  ( TComSPS* pcSPS, ParameterSetManager* pcParamSetManager )     = 0;
+#else
   virtual Void  parseSPS                  ( TComSPS* pcSPS )     = 0;
+#endif
 #if CGS_3D_ASYMLUT
   virtual Void  parsePPS                  ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT , Int nLayerID )     = 0;
 #else
@@ -142,7 +146,11 @@ public:
   Void    resetEntropy                ( TComSlice* p)           { m_pcEntropyDecoderIf->resetEntropy(p);                    }
 
   Void    decodeVPS                   ( TComVPS* pcVPS ) { m_pcEntropyDecoderIf->parseVPS(pcVPS); }
+#if SCALABLE_REXT
+  Void    decodeSPS                   ( TComSPS* pcSPS, ParameterSetManager* pcParamSetManager ) { m_pcEntropyDecoderIf->parseSPS(pcSPS, pcParamSetManager); }
+#else
   Void    decodeSPS                   ( TComSPS* pcSPS ) { m_pcEntropyDecoderIf->parseSPS(pcSPS); }
+#endif
 
 #if CGS_3D_ASYMLUT
   Void    decodePPS                   ( TComPPS* pcPPS, TCom3DAsymLUT * pc3DAsymLUT, Int nLayerID )    { m_pcEntropyDecoderIf->parsePPS(pcPPS, pc3DAsymLUT , nLayerID );                     }

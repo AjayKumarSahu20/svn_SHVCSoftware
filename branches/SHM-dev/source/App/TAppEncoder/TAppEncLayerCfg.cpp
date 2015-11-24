@@ -49,6 +49,12 @@ TAppEncLayerCfg::TAppEncLayerCfg()
   ::memset(m_phaseVerLuma,   0, sizeof(m_phaseVerLuma));
   ::memset(m_phaseHorChroma, 0, sizeof(m_phaseHorChroma));
   ::memset(m_phaseVerChroma, 0, sizeof(m_phaseVerChroma));
+#if SCALABLE_REXT
+  // variables uninitialized otherwise
+  m_intraConstraintFlag = false;
+  m_lowerBitRateConstraintFlag = false;
+  m_onePictureOnlyConstraintFlag = false; 
+#endif
 }
 
 TAppEncLayerCfg::~TAppEncLayerCfg()

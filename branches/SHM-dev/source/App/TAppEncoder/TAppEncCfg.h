@@ -49,6 +49,60 @@
 //! \ingroup TAppEncoder
 //! \{
 
+#if SCALABLE_REXT
+enum ExtendedProfileName // this is used for determining profile strings, where multiple profiles map to a single profile idc with various constraint flag combinations
+{
+  NONE = 0,
+  MAIN = 1,
+  MAIN10 = 2,
+  MAINSTILLPICTURE = 3,
+  MAINREXT = 4,
+  HIGHTHROUGHPUTREXT = 5, // Placeholder profile for development
+#if SVC_EXTENSION
+  MULTIVIEWMAIN = 6,
+  SCALABLEMAIN = 7,
+  SCALABLEMAIN10 = 8,
+#if SCALABLE_REXT
+  SCALABLEREXT = 10,
+#endif
+#endif
+  // The following are RExt profiles, which would map to the MAINREXT profile idc.
+  // The enumeration indicates the bit-depth constraint in the bottom 2 digits
+  //                           the chroma format in the next digit
+  //                           the intra constraint in the next digit
+  //                           If it is a RExt still picture, there is a '1' for the next digit,
+  //                           If it is a Scalable Rext profile, there is a '1' for the top digit.
+  MONOCHROME_8      = 1008,
+  MONOCHROME_12     = 1012,
+  MONOCHROME_16     = 1016,
+  MAIN_12           = 1112,
+  MAIN_422_10       = 1210,
+  MAIN_422_12       = 1212,
+  MAIN_444          = 1308,
+  MAIN_444_10       = 1310,
+  MAIN_444_12       = 1312,
+  MAIN_444_16       = 1316, // non-standard profile definition, used for development purposes
+  MAIN_INTRA        = 2108,
+  MAIN_10_INTRA     = 2110,
+  MAIN_12_INTRA     = 2112,
+  MAIN_422_10_INTRA = 2210,
+  MAIN_422_12_INTRA = 2212,
+  MAIN_444_INTRA    = 2308,
+  MAIN_444_10_INTRA = 2310,
+  MAIN_444_12_INTRA = 2312,
+  MAIN_444_16_INTRA = 2316,
+  MAIN_444_STILL_PICTURE = 11308,
+  MAIN_444_16_STILL_PICTURE = 12316
+#if SCALABLE_REXT
+  ,
+  SCALABLE_MONOCHROME_8   = 101008,
+  SCALABLE_MONOCHROME_12  = 101012,
+  SCALABLE_MONOCHROME_16  = 101016,
+  SCALABLE_MAIN_444       = 101308
+#endif
+};
+#endif
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -582,6 +636,24 @@ public:
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, Int * const returnArray);
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
+
+#if SCALABLE_REXT
+  Profile::Name extendedToShortProfileName(ExtendedProfileName uiExtendedProfileName)
+  {
+    if(uiExtendedProfileName < MONOCHROME_8)
+    {
+      return Profile::Name(uiExtendedProfileName);
+    }
+    else if(uiExtendedProfileName < SCALABLE_MONOCHROME_8)
+    {
+      return Profile::MAINREXT;
+    }
+    else
+    {
+      return Profile::SCALABLEREXT;
+    }
+  }
+#endif
 #endif
 };// END CLASS DEFINITION TAppEncCfg
 
