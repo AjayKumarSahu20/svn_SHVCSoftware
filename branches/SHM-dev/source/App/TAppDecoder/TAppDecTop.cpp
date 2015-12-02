@@ -194,10 +194,9 @@ Void TAppDecTop::decode()
   {
     streamYUV.open( m_reconFileNameBL.c_str(), fstream::in | fstream::binary );
   }
-  TComList<TComPic*> *cListPic = m_apcTDecTop[0]->getListPic();
   m_apcTDecTop[0]->setBLReconFile( &streamYUV );
   pcBLPic.setLayerId( 0 );
-  cListPic->pushBack( &pcBLPic );
+  m_apcTDecTop[0]->setBlPic(&pcBLPic);
 #endif
 
   while (!!bitstreamFile)
