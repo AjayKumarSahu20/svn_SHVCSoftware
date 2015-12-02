@@ -610,6 +610,11 @@ Void TDecTop::xActivateParameterSets()
 
 #if ALIGNED_BUMPING
     m_apcSlicePilot->checkLeadingPictureRestrictions(m_cListPic);
+
+    if( m_parseIdc == 1 || m_parseIdc == 3 )
+    {
+      m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
+    }
 #else
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
 #endif
@@ -1277,7 +1282,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
-    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
   }
 
   if( !m_apcSlicePilot->getDependentSliceSegmentFlag() && (bNewPOC || m_layerId!=m_uiPrevLayerId || m_parseIdc == 1) && !m_bFirstSliceInSequence )
