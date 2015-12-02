@@ -144,7 +144,12 @@ public:
     Double dFps     =   m_dFrmRate; //--CFG_KDY
     Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
 
+#if SVC_EXTENSION
+    // SHM: to avoid compiler warning of possible usage of uninitialized variable
+    Double MSEBasedSNR[MAX_NUM_COMPONENT] = {0, };
+#else
     Double MSEBasedSNR[MAX_NUM_COMPONENT];
+#endif
     if (printMSEBasedSNR)
     {
       for (UInt componentIndex = 0; componentIndex < MAX_NUM_COMPONENT; componentIndex++)
