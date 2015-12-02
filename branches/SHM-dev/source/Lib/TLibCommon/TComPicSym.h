@@ -120,7 +120,8 @@ private:
   Void               setCtuRsToTsAddrMap( Int ctuRsAddr, Int ctuTsOrder )  { *(m_ctuRsToTsAddrMap + ctuRsAddr) = ctuTsOrder; }
   
 #if SVC_EXTENSION
-  const TComVPS* m_vps;
+  // SHM: temporal solution to keep VPS with a picture, ideally it should be picture specific, but currently sizeof(TComVPS) = 232897716
+  static TComVPS* m_vps;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Int*           m_piTileSetIdxMap;     //the map of the tile set index relative to LCU raster scan address
   UChar*         m_pucTileSetType;

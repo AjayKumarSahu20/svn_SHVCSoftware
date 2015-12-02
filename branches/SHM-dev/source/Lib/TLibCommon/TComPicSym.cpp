@@ -46,6 +46,10 @@
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
 
+#if SVC_EXTENSION
+TComVPS* TComPicSym::m_vps = NULL;
+#endif
+
 TComPicSym::TComPicSym()
 :m_frameWidthInCtus(0)
 ,m_frameHeightInCtus(0)
@@ -82,7 +86,15 @@ Void TComPicSym::create  ( const TComVPS& vps, const TComSPS &sps, const TComPPS
   UInt i;
   m_sps = sps;
   m_pps = pps;
-  m_vps = &vps;
+
+  if( !m_vps )
+  {
+    m_vps = new TComVPS(vps);
+  }
+  else  
+  {
+    *m_vps = vps;
+  }
 
   const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
   const Int iPicWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
@@ -209,6 +221,14 @@ Void TComPicSym::destroy()
 #if ADAPTIVE_QP_SELECTION
   delete [] m_pParentARLBuffer;
   m_pParentARLBuffer = NULL;
+#endif
+
+#if SVC_EXTENSION
+  if( m_vps )
+  {
+    delete m_vps;
+    m_vps = NULL;
+  }
 #endif
 }
 

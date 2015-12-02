@@ -259,7 +259,7 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     m_iMaxRefPicNum = vps.getMaxVpsDecPicBufferingMinus1( m_commonDecoderParams->getTargetOutputLayerSetIdx(), vps.getLayerIdcForOls( vps.getOutputLayerSetIdx( m_commonDecoderParams->getTargetOutputLayerSetIdx()), m_layerId ), temporalLayer ) + 1; // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
   }
 
-  m_iMaxRefPicNum += 1; // it should be updated if more than 1 resampling picture is used
+  m_iMaxRefPicNum += 1; // SHM: it should be updated if more than 1 resampling picture is used
 #else
   m_iMaxRefPicNum = sps.getMaxDecPicBuffering(temporalLayer);     // m_uiMaxDecPicBuffering has the space for the picture currently being decoded
 #endif
