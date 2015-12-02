@@ -680,11 +680,7 @@ Void TDecCavlc::parseHrdParameters(TComHRD *hrd, Bool commonInfPresentFlag, UInt
   }
 }
 
-#if SCALABLE_REXT
-Void TDecCavlc::parseSPS(TComSPS* pcSPS, ParameterSetManager* pcParamSetManager)
-#else
 Void TDecCavlc::parseSPS(TComSPS* pcSPS)
-#endif
 {
 #if ENC_DEC_TRACE
   xTraceSPSHeader ();
@@ -692,9 +688,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 
   UInt  uiCode;
   READ_CODE( 4,  uiCode, "sps_video_parameter_set_id");          pcSPS->setVPSId        ( uiCode );
-#if SCALABLE_REXT
-  const TComVPS* pTmpVPS = pcParamSetManager->getVPS(pcSPS->getVPSId()); 
-#endif
 #if SVC_EXTENSION
   UInt uiTmp = 0;
   
@@ -747,25 +740,6 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
       READ_CODE(8, uiCode, "sps_rep_format_idx");
       pcSPS->setUpdateRepFormatIndex(uiCode);
     }
-#if SCALABLE_REXT
-    // If update_rep_format_flag is equal to 0, the variable repFormatIdx is set equal to vps_rep_format_idx[ LayerIdxInVps[ layerIdCurr ] ].
-    else
-    {
-      Int iVPSRepFormatIdx = pTmpVPS->getVpsRepFormatIdx( pTmpVPS->getLayerIdxInVps( pcSPS->getLayerId() ) );
-      pcSPS->setUpdateRepFormatIndex( iVPSRepFormatIdx );
-
-      pcSPS->setChromaFormatIdc(              pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getChromaFormatVpsIdc() );
-      pcSPS->setPicWidthInLumaSamples(        pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getPicWidthVpsInLumaSamples() );
-      pcSPS->setPicHeightInLumaSamples(       pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getPicHeightVpsInLumaSamples() );
-      pcSPS->setBitDepth(CHANNEL_TYPE_LUMA,   pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getBitDepthVpsLuma() );
-      pcSPS->setBitDepth(CHANNEL_TYPE_CHROMA, pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getBitDepthVpsChroma() );
-      Window &conf = pcSPS->getConformanceWindow();
-      conf.setWindowLeftOffset(               pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowLeftOffset() );
-      conf.setWindowRightOffset(              pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowRightOffset() );
-      conf.setWindowTopOffset(                pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowTopOffset() );
-      conf.setWindowBottomOffset(             pTmpVPS->getVpsRepFormat(iVPSRepFormatIdx)->getConformanceWindowVps().getWindowBottomOffset() );
-    }
-#endif
   }
   else
   {

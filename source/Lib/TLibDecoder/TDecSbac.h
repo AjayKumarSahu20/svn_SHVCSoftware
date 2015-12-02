@@ -77,11 +77,7 @@ public:
   Void  resetEntropy (TComSlice* pSlice );
   Void  setBitstream              ( TComInputBitstream* p  ) { m_pcBitstream = p; m_pcTDecBinIf->init( p ); }
   Void  parseVPS                  ( TComVPS* /*pcVPS*/ ) {}
-#if SCALABLE_REXT
-  Void  parseSPS                  (TComSPS*  /*pcSPS*/, ParameterSetManager* /*pcParamSetManager*/ ) {}
-#else
   Void  parseSPS                  ( TComSPS* /*pcSPS*/ ) {}
-#endif
 #if CGS_3D_ASYMLUT
   Void  parsePPS                  ( TComPPS* /*pcPPS*/, TCom3DAsymLUT * /*pc3DAsymLUT*/, Int /*nLayerID*/ ) {}
 #else

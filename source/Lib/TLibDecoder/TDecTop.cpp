@@ -1935,11 +1935,7 @@ Void TDecTop::xDecodeSPS(const std::vector<UChar> &naluData)
 #if SVC_EXTENSION
   sps->setLayerId(m_layerId);
 #endif
-#if SCALABLE_REXT
-  m_cEntropyDecoder.decodeSPS( sps, &m_parameterSetManager );
-#else
   m_cEntropyDecoder.decodeSPS( sps );
-#endif
   m_parameterSetManager.storeSPS(sps, naluData);
 }
 

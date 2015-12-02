@@ -199,7 +199,7 @@ enum AuxType
 
 // This can be enabled by the makefile
 #ifndef RExt__HIGH_BIT_DEPTH_SUPPORT
-#define RExt__HIGH_BIT_DEPTH_SUPPORT                      1 ///< 0 (default) use data type definitions for 8-10 bit video, 1 = use larger data types to allow for up to 16-bit video (originally developed as part of N0188)
+#define RExt__HIGH_BIT_DEPTH_SUPPORT                      SCALABLE_REXT ///< 0 (default) use data type definitions for 8-10 bit video, 1 = use larger data types to allow for up to 16-bit video (originally developed as part of N0188)
 #endif
 
 #define U0132_TARGET_BITS_SATURATION                      1 ///< Rate control with target bits saturation method
