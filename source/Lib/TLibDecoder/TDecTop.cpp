@@ -1912,17 +1912,14 @@ Void TDecTop::xDecodeVPS(const std::vector<UChar> &naluData)
 #if AVC_BASE
   if( vps->getNonHEVCBaseLayerFlag() )
   {
+    m_ppcTDecTop[0]->getListPic()->pushBack( m_ppcTDecTop[0]->getBlPic() );
+
     if( !m_ppcTDecTop[0]->getBLReconFile()->good() )
     {
       printf( "Base layer YUV input reading error\n" );
       exit(EXIT_FAILURE);
     }        
-  }
-  else
-  {
-    TComList<TComPic*> *cListPic = m_ppcTDecTop[0]->getListPic();
-    cListPic->clear();
-  }
+  }  
 #endif
 
   xDeriveSmallestLayerId(vps);

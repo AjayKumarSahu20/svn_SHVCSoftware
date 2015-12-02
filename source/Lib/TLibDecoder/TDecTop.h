@@ -139,6 +139,7 @@ private:
   Bool                    m_pocDecrementedInDPBFlag;
 #if AVC_BASE
   fstream*                m_pBLReconFile;
+  TComPic*                m_blPic;
 #endif
 
   Int                     m_numDirectRefLayers;
@@ -249,6 +250,8 @@ public:
 #if AVC_BASE
   Void      setBLReconFile( fstream* pFile )                                { m_pBLReconFile = pFile; }
   fstream*  getBLReconFile()                                                { return m_pBLReconFile;  }
+  Void      setBlPic( TComPic* pic )                                        { m_blPic = pic;          }
+  TComPic*  getBlPic()                                                      { return m_blPic;         }
 #endif
   Void      xInitILRP(TComSlice *slice);
   CommonDecoderParams*    getCommonDecoderParams()                          { return m_commonDecoderParams; }
