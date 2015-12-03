@@ -3451,7 +3451,7 @@ Void TDecCavlc::parseVPSVUI(TComVPS *vps)
   {
     READ_CODE(3, uiCode, "video_vps_format" ); vps->setVideoVPSFormat(i,uiCode);
     READ_FLAG(uiCode, "video_full_range_vps_flag" ); vps->setVideoFullRangeVpsFlag(i,uiCode);
-    READ_CODE(8, uiCode, "color_primaries_vps" ); vps->setColorPrimaries(i,uiCode);
+    READ_CODE(8, uiCode, "colour_primaries_vps" ); vps->setColorPrimaries(i,uiCode);
     READ_CODE(8, uiCode, "transfer_characteristics_vps" ); vps->setTransCharacter(i,uiCode);
     READ_CODE(8, uiCode, "matrix_coeffs_vps" );vps->setMaxtrixCoeff(i,uiCode);
   }
