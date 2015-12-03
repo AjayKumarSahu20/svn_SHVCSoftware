@@ -610,11 +610,6 @@ Void TDecTop::xActivateParameterSets()
 
 #if ALIGNED_BUMPING
     m_apcSlicePilot->checkLeadingPictureRestrictions(m_cListPic);
-
-    if( m_parseIdc == 1 || m_parseIdc == 3 )
-    {
-      m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
-    }
 #else
     m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
 #endif
@@ -1253,6 +1248,15 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
   xUpdatePreviousTid0POC(m_apcSlicePilot);
 #endif
 
+  //detect lost reference picture and insert copy of earlier frame.
+  {
+    Int lostPoc;
+    while((lostPoc=m_apcSlicePilot->checkThatAllRefPicsAreAvailable(m_cListPic, m_apcSlicePilot->getRPS(), true, m_pocRandomAccess)) > 0)
+    {
+      xCreateLostPicture(lostPoc-1);
+    }
+  }
+
   if( m_parseIdc == 1 || m_parseIdc == 3)
   {
     // Adjust prevPicOrderCnt
@@ -1282,6 +1286,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
       }
     }
+    m_apcSlicePilot->applyReferencePictureSet(m_cListPic, m_apcSlicePilot->getRPS());
   }
 
   if( !m_apcSlicePilot->getDependentSliceSegmentFlag() && (bNewPOC || m_layerId!=m_uiPrevLayerId || m_parseIdc == 1) && !m_bFirstSliceInSequence )
@@ -1345,7 +1350,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
     m_prevPOC = m_apcSlicePilot->getPOC();
   }
-#endif //SVC_EXTENSION
 
   //detect lost reference picture and insert copy of earlier frame.
   {
@@ -1355,6 +1359,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       xCreateLostPicture(lostPoc-1);
     }
   }
+#endif //SVC_EXTENSION
 
   if (!m_apcSlicePilot->getDependentSliceSegmentFlag()) 
   {
