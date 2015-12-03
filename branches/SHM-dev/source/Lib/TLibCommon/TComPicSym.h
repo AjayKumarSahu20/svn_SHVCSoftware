@@ -153,7 +153,11 @@ public:
   const TComSPS&     getSPS()                 const                        { return m_sps; }
   const TComPPS&     getPPS()                 const                        { return m_pps; }
 
+#if SVC_EXTENSION
+  TComSlice *        swapSliceObject(TComSlice* p, UInt i)                 { p->setVPS(m_vps); p->setSPS(&m_sps); p->setPPS(&m_pps); TComSlice *pTmp=m_apSlices[i];m_apSlices[i] = p; pTmp->setVPS(0); pTmp->setSPS(0); pTmp->setPPS(0); return pTmp; }
+#else
   TComSlice *        swapSliceObject(TComSlice* p, UInt i)                 { p->setSPS(&m_sps); p->setPPS(&m_pps); TComSlice *pTmp=m_apSlices[i];m_apSlices[i] = p; pTmp->setSPS(0); pTmp->setPPS(0); return pTmp; }
+#endif
   UInt               getNumAllocatedSlice() const                          { return UInt(m_apSlices.size());       }
   Void               allocateNewSlice();
   Void               clearSliceBuffer();
