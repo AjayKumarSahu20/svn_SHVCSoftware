@@ -1295,6 +1295,10 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #endif
   {
     m_prevPOC = m_apcSlicePilot->getPOC();
+#if ENC_DEC_TRACE
+    //rewind the trace counter since we didn't actually decode the slice
+    g_nSymbolCounter = originalSymbolCount;
+#endif
     curLayerId = m_uiPrevLayerId; 
     m_uiPrevLayerId = m_layerId;
     return true;
