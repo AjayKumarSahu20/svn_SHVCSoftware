@@ -2101,9 +2101,9 @@ public:
   Void                        setVPS( const TComVPS* pcVPS )                         { m_pcVPS = pcVPS;                                              }
 #else
   Void                        initSlice();
-#endif
 
   Void                        setVPS( TComVPS* pcVPS )                               { m_pcVPS = pcVPS;                                              }
+#endif
   const TComVPS*              getVPS() const                                         { return m_pcVPS;                                               }
   Void                        setSPS( const TComSPS* pcSPS )                         { m_pcSPS = pcSPS;                                              }
   const TComSPS*              getSPS() const                                         { return m_pcSPS;                                               }
