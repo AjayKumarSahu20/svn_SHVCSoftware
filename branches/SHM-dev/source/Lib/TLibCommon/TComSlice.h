@@ -623,15 +623,15 @@ private:
   Bool                  m_nonHEVCBaseLayerFlag; 
   Bool                  m_splittingFlag;
   Bool                  m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES];
-  UInt                  m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
+  UChar                 m_dimensionIdLen[MAX_VPS_NUM_SCALABILITY_TYPES];
   Bool                  m_nuhLayerIdPresentFlag;
-  UInt                  m_layerIdInNuh[MAX_VPS_LAYER_IDX_PLUS1];            // Maps layer ID in the VPS with layer_id_in_nuh
-  UInt                  m_dimensionId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
+  UChar                 m_layerIdInNuh[MAX_VPS_LAYER_IDX_PLUS1];            // Maps layer ID in the VPS with layer_id_in_nuh
+  UChar                 m_dimensionId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_NUM_SCALABILITY_TYPES];
 
   // Below are derived variables
-  UInt                  m_numScalabilityTypes;
-  UInt                  m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
-  UInt                  m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
+  UChar                 m_numScalabilityTypes;
+  UChar                 m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
+  UChar                 m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
   Bool                  m_ilpSshSignalingEnabledFlag;
 
   // Profile-tier-level signalling related
@@ -642,8 +642,8 @@ private:
   UInt                  m_outputLayerSetIdx[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS];
   Bool                  m_outputLayerFlag[MAX_VPS_LAYER_SETS_PLUS1 + 2*MAX_NUM_ADD_LAYER_SETS][MAX_VPS_LAYER_IDX_PLUS1];
   Bool                  m_directDependencyFlag[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
-  UInt                  m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
-  UInt                  m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
+  UChar                 m_numDirectRefLayers[MAX_VPS_LAYER_IDX_PLUS1];
+  UChar                 m_refLayerId[MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
   UInt                  m_directDepTypeLen;
   Bool                  m_defaultDirectDependencyTypeFlag;
   UInt                  m_defaultDirectDependencyType;
@@ -658,10 +658,10 @@ private:
   Bool                  m_crossLayerPictureTypeAlignFlag;
   Bool                  m_crossLayerIrapAlignFlag;
   Bool                  m_crossLayerAlignedIdrOnlyFlag;
-  UInt                  m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
+  UChar                 m_maxTidIlRefPicsPlus1[MAX_VPS_LAYER_IDX_PLUS1 - 1][MAX_VPS_LAYER_IDX_PLUS1];
   Bool                  m_maxTidRefPresentFlag;
   Bool                  m_maxTSLayersPresentFlag;
-  UInt                  m_maxTSLayerMinus1[MAX_LAYERS];
+  UChar                 m_maxTSLayerMinus1[MAX_LAYERS];
   Bool                  m_singleLayerForNonIrapFlag;
   Bool                  m_higherLayerIrapSkipFlag;
   Bool                  m_tilesNotInUseFlag;
@@ -677,13 +677,13 @@ private:
   Int                   m_minHorizontalCtuOffsetPlus1 [MAX_VPS_LAYER_IDX_PLUS1][MAX_VPS_LAYER_IDX_PLUS1];
 
   Bool                  m_vidSigPresentVpsFlag;
-  Int                   m_vpsVidSigInfo;
-  Int                   m_vpsVidSigIdx[MAX_VPS_LAYER_IDX_PLUS1];
-  Int                   m_vpsVidFormat[16];
+  UChar                 m_vpsVidSigInfo;
+  UChar                 m_vpsVidSigIdx[MAX_VPS_LAYER_IDX_PLUS1];
+  UChar                 m_vpsVidFormat[16];
   Bool                  m_vpsFullRangeFlag[16];
-  Int                   m_vpsColorPrimaries[16];
-  Int                   m_vpsTransChar[16];
-  Int                   m_vpsMatCoeff[16];
+  UChar                 m_vpsColorPrimaries[16];
+  UChar                 m_vpsTransChar[16];
+  UChar                 m_vpsMatCoeff[16];
 
   Bool                  m_bitRatePresentVpsFlag;
   Bool                  m_picRatePresentVpsFlag;
@@ -699,21 +699,21 @@ private:
   Bool                  m_repFormatIdxPresentFlag;
   Int                   m_vpsNumRepFormats;            // coded as minus1
   RepFormat             m_vpsRepFormat[16];
-  Int                   m_vpsRepFormatIdx[16];
+  UChar                 m_vpsRepFormatIdx[16];
 
-  Int                   m_viewIdLen;
-  Int                   m_viewIdVal[MAX_LAYERS];
+  UChar                 m_viewIdLen;
+  UChar                 m_viewIdVal[MAX_LAYERS];
 
-  Int                   m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
+  UChar                 m_numberRefLayers[MAX_NUM_LAYER_IDS];  // number of direct and indirect reference layers of a coding layer
   Bool                  m_recursiveRefLayerFlag[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];  // flag to indicate if j-th layer is a direct or indirect reference layer of i-th layer
 
   Int                   m_numAddLayerSets;
-  UInt                  m_highestLayerIdxPlus1[MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
-  UInt                  m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
-  UInt                  m_numPredictedLayers[MAX_NUM_LAYER_IDS];
-  Int                   m_numIndependentLayers;
-  Int                   m_numLayersInTreePartition[MAX_LAYERS];
-  UInt                  m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
+  UChar                 m_highestLayerIdxPlus1[MAX_NUM_ADD_LAYER_SETS][MAX_NUM_LAYER_IDS];
+  UChar                 m_predictedLayerId[MAX_NUM_LAYER_IDS][MAX_NUM_LAYER_IDS];
+  UChar                 m_numPredictedLayers[MAX_NUM_LAYER_IDS];
+  UChar                 m_numIndependentLayers;
+  UChar                 m_numLayersInTreePartition[MAX_LAYERS];
+  UChar                 m_treePartitionLayerIdList[MAX_LAYERS][MAX_LAYERS];
 
   Bool                  m_subLayerFlagInfoPresentFlag [MAX_VPS_OP_LAYER_SETS_PLUS1];
   Bool                  m_subLayerDpbInfoPresentFlag  [MAX_VPS_OP_LAYER_SETS_PLUS1][MAX_LAYERS];
@@ -729,20 +729,20 @@ private:
   Bool                  m_vpsVuiBspHrdPresentFlag;
   Int                   m_vpsNumAddHrdParams;
   std::vector<Bool>     m_cprmsAddPresentFlag;
-  std::vector<Int>      m_numSubLayerHrdMinus1;
+  std::vector<UChar>    m_numSubLayerHrdMinus1;
   std::vector<TComHRD>  m_bspHrd;
-  Int                   m_numSignalledPartitioningSchemes[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
-  Int                   m_numPartitionsInSchemeMinus1    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16];
-  Int                   m_layerIncludedInPartitionFlag   [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_LAYERS][MAX_LAYERS];
-  Int                   m_numBspSchedulesMinus1          [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER];
-  Int                   m_bspHrdIdx                      [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
-  Int                   m_bspSchedIdx                    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+  UChar                 m_numSignalledPartitioningSchemes[MAX_VPS_OUTPUT_LAYER_SETS_PLUS1];
+  UChar                 m_numPartitionsInSchemeMinus1    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16];
+  Bool                  m_layerIncludedInPartitionFlag   [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_LAYERS][MAX_LAYERS];
+  UChar                 m_numBspSchedulesMinus1          [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER];
+  UShort                m_bspHrdIdx                      [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
+  UChar                 m_bspSchedIdx                    [MAX_VPS_OUTPUT_LAYER_SETS_PLUS1][16][MAX_TLAYER][31][MAX_LAYERS];
 #endif
-  UInt                  m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
+  Bool                  m_baseLayerPSCompatibilityFlag[MAX_LAYERS];
   Int                   m_vpsNonVuiExtLength;
   Bool                  m_vpsPocLsbAlignedFlag;
   std::vector< std::vector<Bool> > m_necessaryLayerFlag;
-  std::vector<Int>                 m_numNecessaryLayers;
+  std::vector<UChar>               m_numNecessaryLayers;
 #endif //SVC_EXTENSION
 
 public:
@@ -840,7 +840,7 @@ public:
   Void              setRefLayersFlags(Int currLayerId);
   Bool              getRecursiveRefLayerFlag(Int currLayerId, Int refLayerId) const    { return m_recursiveRefLayerFlag[currLayerId][refLayerId];}
   Void              setRecursiveRefLayerFlag(Int currLayerId, Int refLayerId, Bool x)  { m_recursiveRefLayerFlag[currLayerId][refLayerId] = x;   }
-  Int               getNumRefLayers(Int currLayerId) const                             { return m_numberRefLayers[currLayerId];                  }
+  UChar             getNumRefLayers(Int currLayerId) const                             { return m_numberRefLayers[currLayerId];                  }
   Void              setNumRefLayers();
 
   Void              deriveLayerIdListVariablesForAddLayerSets();
@@ -848,20 +848,20 @@ public:
   Void              setVpsNumLayerSetsMinus1(UInt x)                                   { m_vpsNumLayerSetsMinus1 = x;                         }
   UInt              getNumAddLayerSets() const                                         { return m_numAddLayerSets;                            }
   Void              setNumAddLayerSets(UInt x)                                         { m_numAddLayerSets = x; }
-  UInt              getHighestLayerIdxPlus1(UInt set, UInt idx) const                  { return m_highestLayerIdxPlus1[set][idx];             }
-  Void              setHighestLayerIdxPlus1(UInt set, UInt idx, UInt layerIdx)         { m_highestLayerIdxPlus1[set][idx] = layerIdx;         }
+  UChar             getHighestLayerIdxPlus1(UInt set, UInt idx) const                  { return m_highestLayerIdxPlus1[set][idx];             }
+  Void              setHighestLayerIdxPlus1(UInt set, UInt idx, UChar layerIdx)        { m_highestLayerIdxPlus1[set][idx] = layerIdx;         }
   Void              setPredictedLayerIds();
-  UInt              getPredictedLayerId(UInt layerId, UInt predIdx) const              { return m_predictedLayerId[layerId][predIdx];         }
-  Void              setPredictedLayerId(UInt layerId, UInt predIdx, UInt x)            { m_predictedLayerId[layerId][predIdx] = x;            }
-  UInt              getNumPredictedLayers(UInt layerId) const                          { return m_numPredictedLayers[layerId];                }
-  Void              setNumPredictedLayers(UInt layerId, UInt x)                        { m_numPredictedLayers[layerId] = x;                   }
+  UChar             getPredictedLayerId(UInt layerId, UInt predIdx) const              { return m_predictedLayerId[layerId][predIdx];         }
+  Void              setPredictedLayerId(UInt layerId, UInt predIdx, UChar x)           { m_predictedLayerId[layerId][predIdx] = x;            }
+  UChar             getNumPredictedLayers(UInt layerId) const                          { return m_numPredictedLayers[layerId];                }
+  Void              setNumPredictedLayers(UInt layerId, UChar x)                       { m_numPredictedLayers[layerId] = x;                   }
   Void              setTreePartitionLayerIdList();
-  Int               getNumIndependentLayers() const                                    { return m_numIndependentLayers;                       }
-  Void              setNumIndependentLayers(Int x)                                     { m_numIndependentLayers = x;                          }
-  Int               getNumLayersInTreePartition(Int idx) const                         { return m_numLayersInTreePartition[idx];              }
-  Void              setNumLayersInTreePartition(Int idx, Int x)                        { m_numLayersInTreePartition[idx] = x;                 }
-  UInt              getTreePartitionLayerId(Int idx, Int layerIdx) const               { return m_treePartitionLayerIdList[idx][layerIdx];    }
-  Void              setTreePartitionLayerId(Int idx, Int layerIdx, UInt layerId)       { m_treePartitionLayerIdList[idx][layerIdx] = layerId; }
+  UChar             getNumIndependentLayers() const                                    { return m_numIndependentLayers;                       }
+  Void              setNumIndependentLayers(UChar x)                                   { m_numIndependentLayers = x;                          }
+  UChar             getNumLayersInTreePartition(Int idx) const                         { return m_numLayersInTreePartition[idx];              }
+  Void              setNumLayersInTreePartition(Int idx, UChar x)                      { m_numLayersInTreePartition[idx] = x;                 }
+  UChar             getTreePartitionLayerId(Int idx, Int layerIdx) const               { return m_treePartitionLayerIdList[idx][layerIdx];    }
+  Void              setTreePartitionLayerId(Int idx, Int layerIdx, UChar layerId)      { m_treePartitionLayerIdList[idx][layerIdx] = layerId; }
 
   UInt              getMaxLayerId() const                                              { return m_maxLayerId;                               }
   Void              setMaxLayerId(UInt v)                                              { m_maxLayerId = v;                                  }
@@ -877,26 +877,26 @@ public:
   Bool              getScalabilityMask(Int id) const                                   { return m_scalabilityMask[id];                      }
   Void              setScalabilityMask(Int id, Bool x)                                 { m_scalabilityMask[id] = x;                         }
 
-  UInt              getDimensionIdLen(Int id) const                                    { return m_dimensionIdLen[id];                       }
-  Void              setDimensionIdLen(Int id, UInt x)                                  { m_dimensionIdLen[id] = x;                          }
+  UChar             getDimensionIdLen(Int id) const                                    { return m_dimensionIdLen[id];                       }
+  Void              setDimensionIdLen(Int id, UChar x)                                 { m_dimensionIdLen[id] = x;                          }
 
   Bool              getNuhLayerIdPresentFlag() const                                   { return m_nuhLayerIdPresentFlag;                    }
   Void              setNuhLayerIdPresentFlag(Bool x)                                   { m_nuhLayerIdPresentFlag = x;                       }
 
-  UInt              getLayerIdInNuh(Int layerIdx) const                                { return m_layerIdInNuh[layerIdx];                   }
-  Void              setLayerIdInNuh(Int layerIdx, UInt layerId)                        { m_layerIdInNuh[layerIdx] = layerId;                }
+  UChar             getLayerIdInNuh(Int layerIdx) const                                { return m_layerIdInNuh[layerIdx];                   }
+  Void              setLayerIdInNuh(Int layerIdx, UChar layerId)                       { m_layerIdInNuh[layerIdx] = layerId;                }
 
-  UInt              getDimensionId(Int layerIdx, Int id) const                         { return m_dimensionId[layerIdx][id];                }
-  Void              setDimensionId(Int layerIdx, Int id, UInt x)                       { m_dimensionId[layerIdx][id] = x;                   }
+  UChar             getDimensionId(Int layerIdx, Int id) const                         { return m_dimensionId[layerIdx][id];                }
+  Void              setDimensionId(Int layerIdx, Int id, UChar x)                      { m_dimensionId[layerIdx][id] = x;                   }
 
-  UInt              getNumScalabilityTypes() const                                     { return m_numScalabilityTypes;                      }
-  Void              setNumScalabilityTypes(UInt x)                                     { m_numScalabilityTypes = x;                         }
+  UChar             getNumScalabilityTypes() const                                     { return m_numScalabilityTypes;                      }
+  Void              setNumScalabilityTypes(UChar x)                                    { m_numScalabilityTypes = x;                         }
 
-  UInt              getLayerIdxInVps(Int layerId) const                                { return m_layerIdxInVps[layerId];                   }
-  Void              setLayerIdxInVps(Int layerId, UInt layerIdx)                       { m_layerIdxInVps[layerId] = layerIdx;               }
+  UChar             getLayerIdxInVps(Int layerId) const                                { return m_layerIdxInVps[layerId];                   }
+  Void              setLayerIdxInVps(Int layerId, UChar layerIdx)                      { m_layerIdxInVps[layerId] = layerIdx;               }
 
-  UInt              getMaxSLayersInLayerSetMinus1(Int ls) const                        { return m_maxSLInLayerSetMinus1[ls];                }
-  Void              setMaxSLayersInLayerSetMinus1(Int ls, Int x)                       { m_maxSLInLayerSetMinus1[ls] = x;                   }
+  UChar             getMaxSLayersInLayerSetMinus1(Int ls) const                        { return m_maxSLInLayerSetMinus1[ls];                }
+  Void              setMaxSLayersInLayerSetMinus1(Int ls, UChar x)                     { m_maxSLInLayerSetMinus1[ls] = x;                   }
   Bool              getIlpSshSignalingEnabledFlag() const                              { return m_ilpSshSignalingEnabledFlag;               }
   Void              setIlpSshSignalingEnabledFlag(Bool x)                              { m_ilpSshSignalingEnabledFlag = x;                  }
 
@@ -917,11 +917,11 @@ public:
   Bool              getDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx) const   { return m_directDependencyFlag[currLayerIdx][refLayerIdx]; }
   Void              setDirectDependencyFlag(Int currLayerIdx, Int refLayerIdx, Bool x) { m_directDependencyFlag[currLayerIdx][refLayerIdx] = x;    }
   
-  UInt              getNumDirectRefLayers(Int layerId) const                           { return m_numDirectRefLayers[layerId];                   }
-  Void              setNumDirectRefLayers(Int layerId, UInt refLayerNum)               { m_numDirectRefLayers[layerId] = refLayerNum;            }
+  UChar             getNumDirectRefLayers(Int layerId) const                           { return m_numDirectRefLayers[layerId];                   }
+  Void              setNumDirectRefLayers(Int layerId, UChar refLayerNum)              { m_numDirectRefLayers[layerId] = refLayerNum;            }
 
-  UInt              getRefLayerId(Int layerId, Int refLayerIdc) const                  { return m_refLayerId[layerId][refLayerIdc];              }
-  Void              setRefLayerId(Int layerId, Int refLayerIdc, UInt refLayerId)       { m_refLayerId[layerId][refLayerIdc] = refLayerId;        }
+  UChar             getRefLayerId(Int layerId, Int refLayerIdc) const                  { return m_refLayerId[layerId][refLayerIdc];              }
+  Void              setRefLayerId(Int layerId, Int refLayerIdc, UChar refLayerId)      { m_refLayerId[layerId][refLayerIdc] = refLayerId;        }
 
   UInt              getDirectDepTypeLen() const                                        { return m_directDepTypeLen;                              }
   Void              setDirectDepTypeLen(UInt x)                                        { m_directDepTypeLen = x;                                 }
@@ -962,14 +962,14 @@ public:
   Void              setCrossLayerAlignedIdrOnlyFlag(Bool x)                            { m_crossLayerAlignedIdrOnlyFlag = x;                }
   Bool              getCrossLayerIrapAlignFlag() const                                 { return m_crossLayerIrapAlignFlag;                  }
   Void              setCrossLayerIrapAlignFlag(Bool x)                                 { m_crossLayerIrapAlignFlag = x;                     }
-  UInt              getMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx) const       { return m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx];                }
-  Void              setMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx, UInt maxSublayer)   { m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx] = maxSublayer; }
+  UChar             getMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx) const       { return m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx];                }
+  Void              setMaxTidIlRefPicsPlus1(Int refLayerIdx, Int layerIdx, UChar maxSublayer)   { m_maxTidIlRefPicsPlus1[refLayerIdx][layerIdx] = maxSublayer; }
   Bool              getMaxTidRefPresentFlag() const                                    { return m_maxTidRefPresentFlag;                     }
   Void              setMaxTidRefPresentFlag(Bool x)                                    { m_maxTidRefPresentFlag = x;                        }
   Bool              getMaxTSLayersPresentFlag() const                                  { return m_maxTSLayersPresentFlag;                   }
   Void              setMaxTSLayersPresentFlag(Bool x)                                  { m_maxTSLayersPresentFlag = x;                      }
-  UInt              getMaxTSLayersMinus1(Int layerIdx) const                           { return m_maxTSLayerMinus1[layerIdx];               }
-  Void              setMaxTSLayersMinus1(Int layerIdx, UInt maxTSublayer)              { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;       }
+  UChar             getMaxTSLayersMinus1(Int layerIdx) const                           { return m_maxTSLayerMinus1[layerIdx];               }
+  Void              setMaxTSLayersMinus1(Int layerIdx, UChar maxTSublayer)             { m_maxTSLayerMinus1[layerIdx] = maxTSublayer;       }
   Bool              getSingleLayerForNonIrapFlag() const                               { return m_singleLayerForNonIrapFlag;                }
   Void              setSingleLayerForNonIrapFlag(Bool x)                               { m_singleLayerForNonIrapFlag = x;                   }
   Bool              getHigherLayerIrapSkipFlag() const                                 { return m_higherLayerIrapSkipFlag;                  }
@@ -999,20 +999,20 @@ public:
 
   Bool              getVideoSigPresentVpsFlag() const                                  { return m_vidSigPresentVpsFlag;                      }
   Void              setVideoSigPresentVpsFlag(Bool x)                                  { m_vidSigPresentVpsFlag = x;                         }
-  Int               getNumVideoSignalInfo() const                                      { return m_vpsVidSigInfo;                             }
-  Void              setNumVideoSignalInfo(Int x)                                       { m_vpsVidSigInfo = x;                                }
-  Int               getVideoSignalInfoIdx(Int idx) const                               { return m_vpsVidSigIdx[idx];                         }
-  Void              setVideoSignalInfoIdx(Int idx, Int x)                              { m_vpsVidSigIdx[idx] = x;                            }
-  Int               getVideoVPSFormat(Int idx) const                                   { return m_vpsVidFormat[idx];                         }
-  Void              setVideoVPSFormat(Int idx, Int x)                                  { m_vpsVidFormat[idx] = x;                            }
+  UChar             getNumVideoSignalInfo() const                                      { return m_vpsVidSigInfo;                             }
+  Void              setNumVideoSignalInfo(UChar x)                                     { m_vpsVidSigInfo = x;                                }
+  UChar             getVideoSignalInfoIdx(Int idx) const                               { return m_vpsVidSigIdx[idx];                         }
+  Void              setVideoSignalInfoIdx(Int idx, UChar x)                            { m_vpsVidSigIdx[idx] = x;                            }
+  UChar             getVideoVPSFormat(Int idx) const                                   { return m_vpsVidFormat[idx];                         }
+  Void              setVideoVPSFormat(Int idx, UChar x)                                { m_vpsVidFormat[idx] = x;                            }
   Bool              getVideoFullRangeVpsFlag(Int idx) const                            { return m_vpsFullRangeFlag[idx];                     }
   Void              setVideoFullRangeVpsFlag(Int idx, Bool x)                          { m_vpsFullRangeFlag[idx] = x;                        }
-  Int               getColorPrimaries(Int idx) const                                   { return m_vpsColorPrimaries[idx];                    }
-  Void              setColorPrimaries(Int idx, Int x)                                  { m_vpsColorPrimaries[idx] = x;                       }
-  Int               getTransCharacter(Int idx) const                                   { return m_vpsTransChar[idx];                         }
-  Void              setTransCharacter(Int idx, Int x)                                  { m_vpsTransChar[idx] = x;                            }
-  Int               getMaxtrixCoeff(Int idx) const                                     { return m_vpsMatCoeff[idx];                          }
-  Void              setMaxtrixCoeff(Int idx, Int x)                                    { m_vpsMatCoeff[idx] = x;                             }
+  UChar             getColorPrimaries(Int idx) const                                   { return m_vpsColorPrimaries[idx];                    }
+  Void              setColorPrimaries(Int idx, UChar x)                                { m_vpsColorPrimaries[idx] = x;                       }
+  UChar             getTransCharacter(Int idx) const                                   { return m_vpsTransChar[idx];                         }
+  Void              setTransCharacter(Int idx, UChar x)                                { m_vpsTransChar[idx] = x;                            }
+  UChar             getMaxtrixCoeff(Int idx) const                                     { return m_vpsMatCoeff[idx];                          }
+  Void              setMaxtrixCoeff(Int idx, UChar x)                                  { m_vpsMatCoeff[idx] = x;                             }
 
   Bool              getBitRatePresentVpsFlag() const                                   { return m_bitRatePresentVpsFlag;                     }
   Void              setBitRatePresentVpsFlag(Bool x)                                   { m_bitRatePresentVpsFlag = x;                        }
@@ -1042,32 +1042,32 @@ public:
   Bool              getCprmsAddPresentFlag(Int i) const                                { return m_cprmsAddPresentFlag[i];                    }
   Void              setCprmsAddPresentFlag(Int  i, Bool  val)                          { m_cprmsAddPresentFlag[i] = val;                     }
 
-  Int               getNumSubLayerHrdMinus1(Int i) const                               { return m_numSubLayerHrdMinus1[i];                   }
-  Void              setNumSubLayerHrdMinus1(Int i, Int val)                            { m_numSubLayerHrdMinus1[i] = val;                    }
+  UChar             getNumSubLayerHrdMinus1(Int i) const                               { return m_numSubLayerHrdMinus1[i];                   }
+  Void              setNumSubLayerHrdMinus1(Int i, UChar val)                          { m_numSubLayerHrdMinus1[i] = val;                    }
 
   TComHRD*          getBspHrd(Int i)                                                   { return &m_bspHrd[i];                                }
   const TComHRD*    getBspHrd(Int i) const                                             { return &m_bspHrd[i];                                }
 
-  Int               getNumSignalledPartitioningSchemes(Int  i) const                   { return m_numSignalledPartitioningSchemes[i];        }
-  Void              setNumSignalledPartitioningSchemes(Int  i, Int  val)               { m_numSignalledPartitioningSchemes[i] = val;         }
+  UChar             getNumSignalledPartitioningSchemes(Int  i) const                   { return m_numSignalledPartitioningSchemes[i];        }
+  Void              setNumSignalledPartitioningSchemes(Int  i, UChar val)              { m_numSignalledPartitioningSchemes[i] = val;         }
 
-  Int               getNumPartitionsInSchemeMinus1(Int  i, Int j) const                { return m_numPartitionsInSchemeMinus1[i][j];         }
-  Void              setNumPartitionsInSchemeMinus1(Int i, Int j, Int val)              { m_numPartitionsInSchemeMinus1[i][j] = val;          }
+  UChar             getNumPartitionsInSchemeMinus1(Int  i, Int j) const                { return m_numPartitionsInSchemeMinus1[i][j];         }
+  Void              setNumPartitionsInSchemeMinus1(Int i, Int j, UChar val)            { m_numPartitionsInSchemeMinus1[i][j] = val;          }
 
-  Int               getLayerIncludedInPartitionFlag(Int  i, Int j, Int k, Int l) const   { return m_layerIncludedInPartitionFlag[i][j][k][l];}
-  Void              setLayerIncludedInPartitionFlag(Int i, Int j, Int k, Int l, Int val) { m_layerIncludedInPartitionFlag[i][j][k][l] = val; }
+  Bool              getLayerIncludedInPartitionFlag(Int  i, Int j, Int k, Int l) const    { return m_layerIncludedInPartitionFlag[i][j][k][l];}
+  Void              setLayerIncludedInPartitionFlag(Int i, Int j, Int k, Int l, Bool val) { m_layerIncludedInPartitionFlag[i][j][k][l] = val; }
 
-  Int               getNumBspSchedulesMinus1(Int  i, Int j, Int k) const               { return m_numBspSchedulesMinus1[i][j][k];            }
-  Void              setNumBspSchedulesMinus1(Int i, Int j, Int k, Int val)             { m_numBspSchedulesMinus1[i][j][k] = val;             }
+  UChar             getNumBspSchedulesMinus1(Int  i, Int j, Int k) const               { return m_numBspSchedulesMinus1[i][j][k];            }
+  Void              setNumBspSchedulesMinus1(Int i, Int j, Int k, UChar val)           { m_numBspSchedulesMinus1[i][j][k] = val;             }
 
-  Int               getBspSchedIdx(Int  i, Int j, Int k, Int l, Int m) const           { return m_bspSchedIdx[i][j][k][l][m];                }
-  Void              setBspSchedIdx(Int  i, Int j, Int k, Int l, Int m, Int val)        { m_bspSchedIdx[i][j][k][l][m] = val;                 }
+  UChar             getBspSchedIdx(Int  i, Int j, Int k, Int l, Int m) const           { return m_bspSchedIdx[i][j][k][l][m];                }
+  Void              setBspSchedIdx(Int  i, Int j, Int k, Int l, Int m, UChar val)      { m_bspSchedIdx[i][j][k][l][m] = val;                 }
 
-  Int               getBspHrdIdx(Int  i, Int j, Int k, Int l, Int m) const             { return m_bspHrdIdx[i][j][k][l][m];                  }
-  Void              setBspHrdIdx(Int  i, Int j, Int k, Int l, Int m, Int val)          { m_bspHrdIdx[i][j][k][l][m] = val;                   }
+  UShort            getBspHrdIdx(Int  i, Int j, Int k, Int l, Int m) const             { return m_bspHrdIdx[i][j][k][l][m];                  }
+  Void              setBspHrdIdx(Int  i, Int j, Int k, Int l, Int m, UShort val)       { m_bspHrdIdx[i][j][k][l][m] = val;                   }
 #endif
-  Void              setBaseLayerPSCompatibilityFlag (Int layer, Int val)               { m_baseLayerPSCompatibilityFlag[layer] = val;        }
-  Int               getBaseLayerPSCompatibilityFlag (Int layer) const                  { return m_baseLayerPSCompatibilityFlag[layer];       }
+  Void              setBaseLayerPSCompatibilityFlag (Int layer, Bool val)              { m_baseLayerPSCompatibilityFlag[layer] = val;        }
+  Bool              getBaseLayerPSCompatibilityFlag (Int layer) const                  { return m_baseLayerPSCompatibilityFlag[layer];       }
   Bool              getAltOuputLayerFlag(Int idx) const                                { return m_altOutputLayerFlag[idx];                   }
   Void              setAltOuputLayerFlag(Int idx, Bool x)                              { m_altOutputLayerFlag[idx] = x;                      }
 
@@ -1080,14 +1080,14 @@ public:
   RepFormat*        getVpsRepFormat(Int idx)                                           { return &m_vpsRepFormat[idx];                        }
   const RepFormat*  getVpsRepFormat(Int idx) const                                     { return &m_vpsRepFormat[idx];                        }
 
-  Int               getVpsRepFormatIdx(Int idx) const                                  { return m_vpsRepFormatIdx[idx];                      }
-  Void              setVpsRepFormatIdx(Int idx, Int x)                                 { m_vpsRepFormatIdx[idx] = x;                         }         
+  UChar             getVpsRepFormatIdx(Int idx) const                                  { return m_vpsRepFormatIdx[idx];                      }
+  Void              setVpsRepFormatIdx(Int idx, UChar x)                               { m_vpsRepFormatIdx[idx] = x;                         }         
 
-  Void              setViewIdLen( Int  val )                                           { m_viewIdLen = val;                                  } 
-  Int               getViewIdLen() const                                               { return m_viewIdLen;                                 } 
+  Void              setViewIdLen( UChar val )                                          { m_viewIdLen = val;                                  } 
+  UChar             getViewIdLen() const                                               { return m_viewIdLen;                                 } 
 
-  Void              setViewIdVal( Int viewOrderIndex, Int  val )                       { m_viewIdVal[viewOrderIndex] = val;                  } 
-  Int               getViewIdVal( Int viewOrderIndex ) const                           { return m_viewIdVal[viewOrderIndex];                 } 
+  Void              setViewIdVal( Int viewOrderIndex, UChar val )                      { m_viewIdVal[viewOrderIndex] = val;                  } 
+  UChar             getViewIdVal( Int viewOrderIndex ) const                           { return m_viewIdVal[viewOrderIndex];                 } 
   Int               getScalabilityId(Int, ScalabilityType scalType ) const;
 
   Int               getViewIndex( Int layerIdInNuh ) const                             { return getScalabilityId( getLayerIdxInVps(layerIdInNuh), VIEW_ORDER_INDEX  ); }    

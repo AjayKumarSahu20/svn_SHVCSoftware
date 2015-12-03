@@ -3270,7 +3270,7 @@ Void TComVPS::calculateMaxSLInLayerSets()
 {
   for(Int lsIdx = 0; lsIdx < getNumLayerSets(); lsIdx++)
   {
-    UInt maxSLMinus1 = 0;
+    UChar maxSLMinus1 = 0;
     for(Int k = 0; k < getNumLayersInIdList(lsIdx); k++ ) {
       Int  lId = getLayerSetLayerIdList(lsIdx, k);
       maxSLMinus1 = std::max(maxSLMinus1, getMaxTSLayersMinus1(getLayerIdxInVps(lId)));

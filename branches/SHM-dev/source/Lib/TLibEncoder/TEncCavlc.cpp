@@ -2358,7 +2358,7 @@ Void TEncCavlc::codeVPSVUI( const TComVPS *vps )
   {
     WRITE_CODE(vps->getVideoVPSFormat(i), 3, "video_vps_format" );
     WRITE_FLAG(vps->getVideoFullRangeVpsFlag(i), "video_full_range_vps_flag" );
-    WRITE_CODE(vps->getColorPrimaries(i), 8, "color_primaries_vps" );
+    WRITE_CODE(vps->getColorPrimaries(i), 8, "colour_primaries_vps" );
     WRITE_CODE(vps->getTransCharacter(i), 8, "transfer_characteristics_vps" );
     WRITE_CODE(vps->getMaxtrixCoeff(i), 8, "matrix_coeffs_vps" );
   }
