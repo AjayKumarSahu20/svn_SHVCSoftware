@@ -47,7 +47,7 @@
 // ====================================================================================================================
 
 #if SVC_EXTENSION
-TComVPS* TComPicSym::m_vps = NULL;
+TComVPS TComPicSym::m_vps;
 #endif
 
 TComPicSym::TComPicSym()
@@ -86,16 +86,8 @@ Void TComPicSym::create  ( const TComVPS& vps, const TComSPS &sps, const TComPPS
   UInt i;
   m_sps = sps;
   m_pps = pps;
-
-  if( !m_vps )
-  {
-    m_vps = new TComVPS(vps);
-  }
-  else  
-  {
-    *m_vps = vps;
-  }
-
+  m_vps = vps;
+  
   const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
   const Int iPicWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
   const Int iPicHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
@@ -222,14 +214,6 @@ Void TComPicSym::destroy()
   delete [] m_pParentARLBuffer;
   m_pParentARLBuffer = NULL;
 #endif
-
-#if SVC_EXTENSION
-  if( m_vps )
-  {
-    delete m_vps;
-    m_vps = NULL;
-  }
-#endif
 }
 
 Void TComPicSym::allocateNewSlice()
@@ -238,7 +222,7 @@ Void TComPicSym::allocateNewSlice()
   m_apSlices.back()->setPPS(&m_pps);
   m_apSlices.back()->setSPS(&m_sps);
 #if SVC_EXTENSION
-  m_apSlices.back()->setVPS(m_vps);
+  m_apSlices.back()->setVPS(&m_vps);
 #endif
   if (m_apSlices.size()>=2)
   {
