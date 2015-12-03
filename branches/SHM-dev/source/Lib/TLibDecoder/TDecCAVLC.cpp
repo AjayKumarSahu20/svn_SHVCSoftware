@@ -1989,7 +1989,6 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
     }
     else
     {
-
       pcSlice->setPocResetPeriodId( 0 );
     }
 
@@ -2032,17 +2031,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
     }
 
     // Read remaining bits in the slice header extension.
-    UInt endBits = m_pcBitstream->getNumBitsRead();
-    Int counter = (endBits - startBits) % 8;
-    if( counter )
-    {
-      counter = 8 - counter;
-    }
+    Int bitsNum = sliceHeaderExtensionLength * 8 + startBits - m_pcBitstream->getNumBitsRead();
 
-    while( counter )
+    while( bitsNum )
     {
       READ_FLAG( uiCode, "slice_segment_header_extension_data_bit" );
-      counter--;
+      bitsNum--;
     }
   }
 #else
