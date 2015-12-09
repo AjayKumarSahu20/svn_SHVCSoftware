@@ -85,7 +85,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   if( !resamplingPhase.phasePresentFlag )
   {
 #if SCALABLE_REXT
-    if(chromaFormatIdc == 3)
+    if( chromaFormatIdc == CHROMA_444 )
     {
       phaseVerChroma = 0;
     }

@@ -3273,7 +3273,7 @@ Void  TDecCavlc::parseRepFormat( RepFormat *repFormat, RepFormat *repFormatPrev 
     repFormat->setChromaFormatVpsIdc( uiCode );
 #endif
 
-    if( repFormat->getChromaFormatVpsIdc() == 3 )
+    if( repFormat->getChromaFormatVpsIdc() == CHROMA_444 )
     {
       READ_FLAG( uiCode, "separate_colour_plane_vps_flag" );       repFormat->setSeparateColourPlaneVpsFlag( uiCode ? true : false );
     }
