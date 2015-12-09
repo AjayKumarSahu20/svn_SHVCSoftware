@@ -1224,7 +1224,11 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
   Int iPOClsb = 0;
 #endif
 
+#if SCALABLE_REXT
+  const ChromaFormat chFmt = pcSlice->getChromaFormatIdc();
+#else
   const ChromaFormat chFmt = sps->getChromaFormatIdc();
+#endif
   const UInt numValidComp=getNumberValidComponents(chFmt);
   const Bool bChroma=(chFmt!=CHROMA_400);
 
@@ -2424,7 +2428,11 @@ Void TDecCavlc::parseMergeIndex ( TComDataCU* /*pcCU*/, UInt& /*ruiMergeIndex*/ 
 Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice, const TComSPS *sps )
 {
         WPScalingParam *wp;
+#if SCALABLE_REXT
+  const ChromaFormat    chFmt        = pcSlice->getChromaFormatIdc();
+#else
   const ChromaFormat    chFmt        = sps->getChromaFormatIdc();
+#endif
   const Int             numValidComp = Int(getNumberValidComponents(chFmt));
   const Bool            bChroma      = (chFmt!=CHROMA_400);
   const SliceType       eSliceType   = pcSlice->getSliceType();
