@@ -632,7 +632,11 @@ Void TDecTop::xActivateParameterSets()
     m_cSAO.create( sps->getPicWidthInLumaSamples(), sps->getPicHeightInLumaSamples(), sps->getChromaFormatIdc(), sps->getMaxCUWidth(), sps->getMaxCUHeight(), sps->getMaxTotalCUDepth(), pps->getPpsRangeExtension().getLog2SaoOffsetScale(CHANNEL_TYPE_LUMA), pps->getPpsRangeExtension().getLog2SaoOffsetScale(CHANNEL_TYPE_CHROMA) );
 #endif
     m_cLoopFilter.create( sps->getMaxTotalCUDepth() );
+#if SCALABLE_REXT
+    m_cPrediction.initTempBuff(pSlice->getChromaFormatIdc());
+#else
     m_cPrediction.initTempBuff(sps->getChromaFormatIdc());
+#endif
 
 
     Bool isField = false;
