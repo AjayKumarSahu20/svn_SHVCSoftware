@@ -137,6 +137,28 @@ Void TAppEncTop::xInitLibCfg()
     vps.setVpsRepFormatIdx( layer, m_apcLayerCfg[layer]->getRepFormatIdx() );
 
     maxRepFormatIdx = std::max( m_apcLayerCfg[layer]->getRepFormatIdx(), maxRepFormatIdx );
+
+#if FORMATIDX_CHECK
+    for( Int compareLayer = 0; compareLayer < layer; compareLayer++ )
+    {
+      if(m_apcLayerCfg[layer]->m_repFormatIdx == m_apcLayerCfg[compareLayer]->m_repFormatIdx && (
+           m_apcLayerCfg[layer]->m_chromaFormatIDC != m_apcLayerCfg[compareLayer]->m_chromaFormatIDC
+           // separate_colour_plane_flag not supported yet but if supported insert check here
+           || m_apcLayerCfg[layer]->m_iSourceWidth != m_apcLayerCfg[compareLayer]->m_iSourceWidth
+           || m_apcLayerCfg[layer]->m_iSourceHeight != m_apcLayerCfg[compareLayer]->m_iSourceHeight
+           || m_apcLayerCfg[layer]->m_internalBitDepth[0] != m_apcLayerCfg[compareLayer]->m_internalBitDepth[0]
+           || m_apcLayerCfg[layer]->m_internalBitDepth[1] != m_apcLayerCfg[compareLayer]->m_internalBitDepth[1]
+           || m_apcLayerCfg[layer]->m_confWinLeft != m_apcLayerCfg[compareLayer]->m_confWinLeft
+           || m_apcLayerCfg[layer]->m_confWinRight != m_apcLayerCfg[compareLayer]->m_confWinRight
+           || m_apcLayerCfg[layer]->m_confWinTop != m_apcLayerCfg[compareLayer]->m_confWinTop
+           || m_apcLayerCfg[layer]->m_confWinBottom != m_apcLayerCfg[compareLayer]->m_confWinBottom
+        ))
+      {
+        fprintf(stderr, "Error: Two layers using the same FormatIdx value must share the same values of the related parameters\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+#endif
   }
 
   assert( vps.getVpsRepFormatIdx( 0 ) == 0 );  // Base layer should point to the first one.
