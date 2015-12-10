@@ -287,11 +287,7 @@ Void TEncTop::xInitScalingLists()
   };
   if(getUseScalingListId() == SCALING_LIST_OFF)
   {
-#if SVC_EXTENSION
-    getTrQuant()->setFlatScalingList( maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
-#else
     getTrQuant()->setFlatScalingList(maxLog2TrDynamicRange, m_cSPS.getBitDepths());
-#endif
     getTrQuant()->setUseScalingList(false);
     m_cSPS.setScalingListPresentFlag(false);
     m_cPPS.setScalingListPresentFlag(false);
@@ -310,7 +306,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getBitDepths() );
     }
     else
     {
@@ -319,11 +315,7 @@ Void TEncTop::xInitScalingLists()
     m_cSPS.setScalingListPresentFlag(false);
     m_cPPS.setScalingListPresentFlag(false);
 
-#if SVC_EXTENSION
-    getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId));
-#else
     getTrQuant()->setScalingList(&(m_cSPS.getScalingList()), maxLog2TrDynamicRange, m_cSPS.getBitDepths());
-#endif
 #if SVC_EXTENSION
     }
 #endif
@@ -343,7 +335,7 @@ Void TEncTop::xInitScalingLists()
       m_cPPS.setScalingListPresentFlag( false );
 
       // infer the scaling list from the reference layer
-      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_cVPS.getBitDepths(&m_cSPS, m_layerId) );
+      getTrQuant()->setScalingList( &m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getScalingList(), maxLog2TrDynamicRange, m_ppcTEncTop[m_cVPS.getLayerIdxInVps(refLayerId)]->getSPS()->getBitDepths() );
     }
     else
     {
@@ -730,12 +722,10 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
 
-          UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
-
-          const Int bitDepthLuma = m_cVPS.getBitDepth(CHANNEL_TYPE_LUMA, &m_cSPS, m_layerId);
-          const Int bitDepthChroma = m_cVPS.getBitDepth(CHANNEL_TYPE_CHROMA, &m_cSPS, m_layerId);
-          const Int refBitDepthLuma = m_cVPS.getBitDepth(CHANNEL_TYPE_LUMA, pcEncTopBase->getSPS(), refLayerId);
-          const Int refBitDepthChroma = m_cVPS.getBitDepth(CHANNEL_TYPE_CHROMA, pcEncTopBase->getSPS(), refLayerId);
+          const Int bitDepthLuma = m_cSPS.getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int bitDepthChroma = m_cSPS.getBitDepth(CHANNEL_TYPE_CHROMA);
+          const Int refBitDepthLuma = pcEncTopBase->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int refBitDepthChroma = pcEncTopBase->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA);
 
           Bool sameBitDepths = ( bitDepthLuma == refBitDepthLuma ) && ( bitDepthChroma == refBitDepthChroma );
 
@@ -780,12 +770,10 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 
           TEncTop *pcEncTopBase = (TEncTop *)getRefLayerEnc( i );
 
-          UInt refLayerId = m_cVPS.getRefLayerId(m_layerId, i);
-
-          const Int bitDepthLuma = m_cVPS.getBitDepth(CHANNEL_TYPE_LUMA, &m_cSPS, m_layerId);
-          const Int bitDepthChroma = m_cVPS.getBitDepth(CHANNEL_TYPE_CHROMA, &m_cSPS, m_layerId);
-          const Int refBitDepthLuma = m_cVPS.getBitDepth(CHANNEL_TYPE_LUMA, pcEncTopBase->getSPS(), refLayerId);
-          const Int refBitDepthChroma = m_cVPS.getBitDepth(CHANNEL_TYPE_CHROMA, pcEncTopBase->getSPS(), refLayerId);
+          const Int bitDepthLuma = m_cSPS.getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int bitDepthChroma = m_cSPS.getBitDepth(CHANNEL_TYPE_CHROMA);
+          const Int refBitDepthLuma = m_cSPS.getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int refBitDepthChroma = m_cSPS.getBitDepth(CHANNEL_TYPE_CHROMA);
 
           Bool sameBitDepths = ( bitDepthLuma == refBitDepthLuma ) && ( bitDepthChroma == refBitDepthChroma );
 
@@ -1033,6 +1021,10 @@ Void TEncTop::xInitSPS()
   m_cSPS.getSpsRangeExtension().setHighPrecisionOffsetsEnabledFlag(m_highPrecisionOffsetsEnabledFlag);
   m_cSPS.getSpsRangeExtension().setPersistentRiceAdaptationEnabledFlag(m_persistentRiceAdaptationEnabledFlag);
   m_cSPS.getSpsRangeExtension().setCabacBypassAlignmentEnabledFlag(m_cabacBypassAlignmentEnabledFlag);
+
+#if SVC_EXTENSION
+  m_cSPS.inferSPS( m_layerId, &m_cVPS );
+#endif
 }
 
 #if U0132_TARGET_BITS_SATURATION

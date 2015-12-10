@@ -218,13 +218,7 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
   UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
   UInt uiBPelY   = uiTPelY + (maxCuHeight>>uiDepth) - 1;
 
-#if SVC_EXTENSION
-  TComSlice * pcSlice = pcPic->getSlice(pcPic->getCurrSliceIdx());
-
-  if( ( uiRPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiBPelY < pcSlice->getPicHeightInLumaSamples() ) )
-#else
   if( ( uiRPelX < sps.getPicWidthInLumaSamples() ) && ( uiBPelY < sps.getPicHeightInLumaSamples() ) )
-#endif
   {
     m_pcEntropyDecoder->decodeSplitFlag( pcCU, uiAbsPartIdx, uiDepth );
   }
@@ -251,11 +245,7 @@ Void TDecCu::xDecodeCU( TComDataCU*const pcCU, const UInt uiAbsPartIdx, const UI
       uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiIdx] ];
       uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiIdx] ];
 
-#if SVC_EXTENSION
-      if ( !isLastCtuOfSliceSegment && ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples() ) )
-#else
       if ( !isLastCtuOfSliceSegment && ( uiLPelX < sps.getPicWidthInLumaSamples() ) && ( uiTPelY < sps.getPicHeightInLumaSamples() ) )
-#endif
       {
         xDecodeCU( pcCU, uiIdx, uiDepth+1, isLastCtuOfSliceSegment );
       }
@@ -403,11 +393,7 @@ Void TDecCu::xDecompressCU( TComDataCU* pCtu, UInt uiAbsPartIdx,  UInt uiDepth )
   UInt uiTPelY   = pCtu->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsPartIdx] ];
   UInt uiBPelY   = uiTPelY + (sps.getMaxCUHeight()>>uiDepth) - 1;
 
-#if SVC_EXTENSION
-  if( ( uiRPelX >= pcSlice->getPicWidthInLumaSamples() ) || ( uiBPelY >= pcSlice->getPicHeightInLumaSamples() ) )
-#else
   if( ( uiRPelX >= sps.getPicWidthInLumaSamples() ) || ( uiBPelY >= sps.getPicHeightInLumaSamples() ) )
-#endif
   {
     bBoundary = true;
   }
@@ -422,11 +408,7 @@ Void TDecCu::xDecompressCU( TComDataCU* pCtu, UInt uiAbsPartIdx,  UInt uiDepth )
       uiLPelX = pCtu->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiIdx] ];
       uiTPelY = pCtu->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiIdx] ];
 
-#if SVC_EXTENSION
-      if( ( uiLPelX < pcSlice->getPicWidthInLumaSamples() ) && ( uiTPelY < pcSlice->getPicHeightInLumaSamples() ) )
-#else
       if( ( uiLPelX < sps.getPicWidthInLumaSamples() ) && ( uiTPelY < sps.getPicHeightInLumaSamples() ) )
-#endif
       {
         xDecompressCU(pCtu, uiIdx, uiNextDepth );
       }
@@ -500,11 +482,7 @@ Void TDecCu::xReconInter( TComDataCU* pcCU, UInt uiDepth )
   // clip for only non-zero cbp case
   if  ( pcCU->getQtRootCbf( 0) )
   {
-#if SVC_EXTENSION
-    m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ), pcCU->getSlice()->getBitDepths() );
-#else
     m_ppcYuvReco[uiDepth]->addClip( m_ppcYuvReco[uiDepth], m_ppcYuvResi[uiDepth], 0, pcCU->getWidth( 0 ), pcCU->getSlice()->getSPS()->getBitDepths() );
-#endif
   }
   else
   {
@@ -646,11 +624,7 @@ TDecCu::xIntraRecBlk(       TComYuv*    pcRecoYuv,
   }
 #endif
 
-#if SVC_EXTENSION
-  const Int clipbd = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
   const Int clipbd = sps.getBitDepth(toChannelType(compID));
-#endif
 #if O0043_BEST_EFFORT_DECODING
   const Int bitDepthDelta = sps.getStreamBitDepth(toChannelType(compID)) - clipbd;
 #endif
@@ -833,12 +807,8 @@ Void TDecCu::xDecodePCMTexture( TComDataCU* pcCU, const UInt uiPartIdx, const Pe
 {
         Pel* piPicReco         = pcCU->getPic()->getPicYuvRec()->getAddr(compID, pcCU->getCtuRsAddr(), pcCU->getZorderIdxInCtu()+uiPartIdx);
   const UInt uiPicStride       = pcCU->getPic()->getPicYuvRec()->getStride(compID);
-#if SVC_EXTENSION
-  const UInt uiPcmLeftShiftBit = pcCU->getSlice()->getBitDepth(toChannelType(compID)) - pcCU->getSlice()->getSPS()->getPCMBitDepth(toChannelType(compID));
-#else
   const TComSPS &sps           = *(pcCU->getSlice()->getSPS());
   const UInt uiPcmLeftShiftBit = sps.getBitDepth(toChannelType(compID)) - sps.getPCMBitDepth(toChannelType(compID));
-#endif
 
   for(UInt uiY = 0; uiY < uiHeight; uiY++ )
   {

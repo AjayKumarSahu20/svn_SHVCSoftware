@@ -197,6 +197,7 @@ public:
   UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i); }
   Bool         getSkippedTileSetFlag( Int i )                        { return *(m_pbSkippedTileSetFlag + i); }
 #endif
+  Void         inferSpsForNonHEVCBL()                                { m_sps.inferSPS(0, &m_vps); }
 #endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TComPicSym

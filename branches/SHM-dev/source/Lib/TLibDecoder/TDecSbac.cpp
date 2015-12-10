@@ -950,11 +950,7 @@ Void TDecSbac::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
   if ( uiDQp > 0 )
   {
     UInt uiSign;
-#if SVC_EXTENSION
-    Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#else
     Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#endif
     m_pcTDecBinIf->decodeBinEP(uiSign RExt__DECODER_DEBUG_BIT_STATISTICS_PASS_OPT_ARG(STATS__CABAC_BITS__DELTA_QP_EP));
     iDQp = uiDQp;
     if(uiSign)

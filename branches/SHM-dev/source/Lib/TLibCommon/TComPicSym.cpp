@@ -83,17 +83,11 @@ TComPicSym::TComPicSym()
 #if SVC_EXTENSION
 Void TComPicSym::create  ( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId )
 {
-  UInt i;
-  m_sps = sps;
-  m_pps = pps;
   m_vps = vps;
-  
-  const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
-  const Int iPicWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
-  const Int iPicHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
 #else
 Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth )
 {
+#endif
   UInt i;
   m_sps = sps;
   m_pps = pps;
@@ -101,7 +95,6 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
   const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
   const Int iPicWidth      = sps.getPicWidthInLumaSamples();
   const Int iPicHeight     = sps.getPicHeightInLumaSamples();
-#endif
 
   const UInt uiMaxCuWidth  = sps.getMaxCUWidth();
   const UInt uiMaxCuHeight = sps.getMaxCUHeight();

@@ -131,11 +131,7 @@ Void TComPrediction::initIntraPatternChType( TComTU &rTu, const ComponentID comp
   const Int  iTUHeightInUnits = uiTuHeight / iUnitHeight;
   const Int  iAboveUnits      = iTUWidthInUnits  << 1;
   const Int  iLeftUnits       = iTUHeightInUnits << 1;
-#if SVC_EXTENSION
-  const Int  bitDepthForChannel = pcCU->getSlice()->getBitDepth(chType);
-#else
   const Int  bitDepthForChannel = sps.getBitDepth(chType);
-#endif
 
   assert(iTUHeightInUnits > 0 && iTUWidthInUnits > 0);
 

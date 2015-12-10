@@ -46,11 +46,7 @@ static     const UInt         partIdxStepShift  [TComTU::NUMBER_OF_SPLIT_MODES] 
 //----------------------------------------------------------------------------------------------------------------------
 
 TComTU::TComTU(TComDataCU *pcCU, const UInt absPartIdxCU, const UInt cuDepth, const UInt initTrDepthRelCU)
-#if SCALABLE_REXT
-  : mChromaFormat(pcCU->getSlice()->getChromaFormatIdc()),
-#else
   : mChromaFormat(pcCU->getSlice()->getSPS()->getChromaFormatIdc()),
-#endif
     mbProcessLastOfLevel(true), // does not matter. the top level is not 4 quadrants.
     mCuDepth(cuDepth),
     mSection(0),

@@ -127,17 +127,13 @@ TEncPic::~TEncPic()
 Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const UInt layerId )
 {
   TComPic::create( vps, sps, pps, bIsVirtual, layerId );
-
-  const Int iWidth  = vps.getPicWidthInLumaSamples(&sps, layerId);
-  const Int iHeight = vps.getPicHeightInLumaSamples(&sps, layerId);
 #else
 Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
 {
   TComPic::create( sps, pps, bIsVirtual );
+#endif
   const Int  iWidth      = sps.getPicWidthInLumaSamples();
   const Int  iHeight     = sps.getPicHeightInLumaSamples();
-#endif
-
   const UInt uiMaxWidth  = sps.getMaxCUWidth();
   const UInt uiMaxHeight = sps.getMaxCUHeight();
   m_uiMaxAQDepth = uiMaxAdaptiveQPDepth;

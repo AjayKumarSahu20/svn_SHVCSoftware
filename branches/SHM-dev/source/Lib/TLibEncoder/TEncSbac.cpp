@@ -882,13 +882,8 @@ Void TEncSbac::codeCrossComponentPrediction( TComTU &rTu, ComponentID compID )
 
 Void TEncSbac::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
-  Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
-  
-#if SVC_EXTENSION  
-  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#else
+  Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );  
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#endif
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
   UInt uiAbsDQp = (UInt)((iDQp > 0)? iDQp  : (-iDQp));

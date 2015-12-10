@@ -1631,11 +1631,7 @@ Void TEncCavlc::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
   Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
 
-#if SVC_EXTENSION
-  Int qpBdOffsetY =  pcCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#else
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#endif
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
   xWriteSvlc( iDQp );
@@ -1732,11 +1728,7 @@ Void TEncCavlc::xCodePredWeightTable( TComSlice* pcSlice )
               Int iDeltaWeight = (wp[j].iWeight - (1<<wp[COMPONENT_Cb].uiLog2WeightDenom));
               WRITE_SVLC( iDeltaWeight, iNumRef==0?"delta_chroma_weight_l0[i]":"delta_chroma_weight_l1[i]" );
 
-#if SVC_EXTENSION
-              Int range=pcSlice->getSPS()->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<pcSlice->getBitDepth(CHANNEL_TYPE_CHROMA))/2 : 128;
-#else
               Int range=pcSlice->getSPS()->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<pcSlice->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA))/2 : 128;
-#endif
               Int pred = ( range - ( ( range*wp[j].iWeight)>>(wp[j].uiLog2WeightDenom) ) );
               Int iDeltaChroma = (wp[j].iOffset - pred);
               WRITE_SVLC( iDeltaChroma, iNumRef==0?"delta_chroma_offset_l0[i]":"delta_chroma_offset_l1[i]" );

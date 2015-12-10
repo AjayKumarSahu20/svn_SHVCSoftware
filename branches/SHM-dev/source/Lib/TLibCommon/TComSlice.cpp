@@ -505,7 +505,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
                              (scalEL.getWindowBottomOffset() == 0 ) 
                             );
 
-        Bool sameBitDepths = ( getBitDepth(CHANNEL_TYPE_LUMA) == ilpPic[refLayerIdc]->getSlice(0)->getBitDepth(CHANNEL_TYPE_LUMA) ) && ( getBitDepth(CHANNEL_TYPE_CHROMA) == ilpPic[refLayerIdc]->getSlice(0)->getBitDepth(CHANNEL_TYPE_CHROMA) );
+        Bool sameBitDepths = ( m_pcSPS->getBitDepth(CHANNEL_TYPE_LUMA) == ilpPic[refLayerIdc]->getSlice(0)->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA) ) && ( m_pcSPS->getBitDepth(CHANNEL_TYPE_CHROMA) == ilpPic[refLayerIdc]->getSlice(0)->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA) );
 
         // motion resampling constraint
         // Allow maximum of one motion resampling process for direct reference layers, and use motion inter-layer prediction from the same layer as texture inter-layer prediction
@@ -1823,11 +1823,7 @@ Void  TComSlice::initWpScaling(const TComSPS *sps)
           pwp->iOffset = 0;
         }
 
-#if SVC_EXTENSION
-        const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (getBitDepth(toChannelType(ComponentID(yuv)))-8));
-#else
         const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (sps->getBitDepth(toChannelType(ComponentID(yuv)))-8));
-#endif
 
         pwp->w      = pwp->iWeight;
         pwp->o      = pwp->iOffset * offsetScalingFactor; //NOTE: This value of the ".o" variable is never used - .o is set immediately before it gets used
@@ -3279,247 +3275,6 @@ Void TComVPS::calculateMaxSLInLayerSets()
   }
 }
 
-UInt TComSlice::getPicWidthInLumaSamples()
-{
-  UInt retVal, layerId = getLayerId();
-
-  if ( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getPicWidthVpsInLumaSamples();
-    }
-    else
-    {
-      retVal = m_pcSPS->getPicWidthInLumaSamples();
-    }
-  }
-  else
-  {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getPicWidthVpsInLumaSamples();
-  }
-
-  return retVal;
-}
-
-UInt TComVPS::getPicWidthInLumaSamples( const TComSPS* sps, const UInt layerId ) const
-{
-  UInt retVal;
-
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      retVal = m_vpsRepFormat[layerId].getPicWidthVpsInLumaSamples();
-    }
-    else
-    {
-      retVal = sps->getPicWidthInLumaSamples();
-    }
-  }
-  else
-  {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getPicWidthVpsInLumaSamples();
-  }
-
-  return retVal;
-}
-
-UInt TComSlice::getPicHeightInLumaSamples()
-{
-  UInt retVal, layerId = getLayerId();
-
-  if ( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getPicHeightVpsInLumaSamples();
-    }
-    else
-    {
-      retVal = m_pcSPS->getPicHeightInLumaSamples();
-    }
-  }
-  else
-  {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getPicHeightVpsInLumaSamples();
-  }
-
-  return retVal;
-}
-
-UInt TComVPS::getPicHeightInLumaSamples( const TComSPS* sps, const UInt layerId ) const
-{
-  UInt retVal;
-
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      retVal = m_vpsRepFormat[layerId].getPicHeightVpsInLumaSamples();
-    }
-    else
-    {
-      retVal = sps->getPicHeightInLumaSamples();
-    }
-  }
-  else
-  {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getPicHeightVpsInLumaSamples();
-  }
-
-  return retVal;
-}
-
-ChromaFormat TComSlice::getChromaFormatIdc()
-{
-  ChromaFormat retVal;
-  UInt layerId = getLayerId();
-
-  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getChromaFormatVpsIdc();
-    }
-    else
-    {
-      retVal = m_pcSPS->getChromaFormatIdc();
-    }
-  }
-  else
-  {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getChromaFormatVpsIdc();
-  }
-
-  return retVal;
-}
-
-ChromaFormat TComVPS::getChromaFormatIdc( const TComSPS* sps, const UInt layerId ) const
-{
-  ChromaFormat retVal;
-
-  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      retVal = m_vpsRepFormat[layerId].getChromaFormatVpsIdc();
-    }
-    else
-    {
-      retVal = sps->getChromaFormatIdc();
-    }
-  }
-  else
-  {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getChromaFormatVpsIdc();
-  }
-
-  return retVal;
-}
-
-BitDepths& TComSlice::getBitDepths()
-{
-  static BitDepths bitDepths;
-
-  bitDepths.recon[CHANNEL_TYPE_LUMA] = getBitDepth(CHANNEL_TYPE_LUMA);
-  bitDepths.recon[CHANNEL_TYPE_CHROMA] = getBitDepth(CHANNEL_TYPE_CHROMA);
-
-  return bitDepths;
-}
-
-UInt TComSlice::getBitDepth(ChannelType type) const
-{
-  UInt retVal, layerId = getLayerId();
-
-  if( layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      retVal = m_pcVPS->getVpsRepFormat(layerId)->getBitDepthVps(type);
-    }
-    else
-    {
-      retVal = m_pcSPS->getBitDepth(type);
-    }
-  }
-  else
-  {
-    retVal = m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(layerId)))->getBitDepthVps(type);
-  }
-
-  return retVal;
-}
-
-UInt TComVPS::getBitDepth( ChannelType type, const TComSPS* sps, const UInt layerId ) const
-{
-  UInt retVal;
-
-  if( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      retVal = m_vpsRepFormat[layerId].getBitDepthVps(type);
-    }
-    else
-    {
-      retVal = sps->getBitDepth(type);
-    }
-  }
-  else
-  {
-    retVal = m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getBitDepthVps(type);
-  }
-
-  return retVal;
-}
-
-const BitDepths& TComVPS::getBitDepths( const TComSPS* sps, const UInt layerId ) const
-{
-  static BitDepths bitDepths;
-  bitDepths.recon[CHANNEL_TYPE_LUMA]   = getBitDepth(CHANNEL_TYPE_LUMA, sps, layerId);
-  bitDepths.recon[CHANNEL_TYPE_CHROMA] = getBitDepth(CHANNEL_TYPE_CHROMA, sps, layerId);
-  return bitDepths;
-}
-
-const Window& TComSlice::getConformanceWindow() const
-{
-  if ( m_layerId == 0 || m_pcSPS->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( m_layerId == 0 && m_pcVPS->getNonHEVCBaseLayerFlag() )
-    {
-      return m_pcVPS->getVpsRepFormat(m_layerId)->getConformanceWindowVps();
-    }
-    else
-    {
-      return m_pcSPS->getConformanceWindow();
-    }
-  }
-  else
-  {
-    return m_pcVPS->getVpsRepFormat(m_pcSPS->getUpdateRepFormatFlag() ? m_pcSPS->getUpdateRepFormatIndex() : m_pcVPS->getVpsRepFormatIdx(m_pcVPS->getLayerIdxInVps(m_layerId)))->getConformanceWindowVps();
-  }
-}
-
-const Window& TComVPS::getConformanceWindow( const TComSPS* sps, const UInt layerId ) const
-{
-  if ( layerId == 0 || sps->getV1CompatibleSPSFlag() == 1 )
-  {
-    if( layerId == 0 && m_nonHEVCBaseLayerFlag )
-    {
-      return m_vpsRepFormat[layerId].getConformanceWindowVps();
-    }
-    else
-    {
-      return sps->getConformanceWindow();
-    }
-  }
-  else
-  {
-    return m_vpsRepFormat[sps->getUpdateRepFormatFlag() ? sps->getUpdateRepFormatIndex() : m_vpsRepFormatIdx[m_layerIdxInVps[layerId]]].getConformanceWindowVps();
-  }
-}
-
 RepFormat::RepFormat()
 #if AUXILIARY_PICTURES
 : m_chromaFormatVpsIdc          (CHROMA_420)
@@ -3854,6 +3609,38 @@ Int TComSlice::getNumNegativeRpsCurrTempList()
   }
 
   return numPocBeforeCurr;
+}
+
+Void TComSPS::inferSPS( const UInt layerId, TComVPS* vps )
+{
+  RepFormat* repFormat = NULL;
+
+  if( layerId == 0 || m_bV1CompatibleSPSFlag == 1 )
+  {
+    if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
+    {
+      repFormat = vps->getVpsRepFormat(layerId);
+    }
+  }
+  else
+  {
+    repFormat = vps->getVpsRepFormat(m_updateRepFormatFlag ? m_updateRepFormatIndex : vps->getVpsRepFormatIdx(vps->getLayerIdxInVps(layerId)));
+  }
+
+  if( repFormat )
+  {
+    m_chromaFormatIdc = repFormat->getChromaFormatVpsIdc();
+    m_picWidthInLumaSamples = repFormat->getPicWidthVpsInLumaSamples();
+    m_picHeightInLumaSamples = repFormat->getPicHeightVpsInLumaSamples();
+
+    m_bitDepths.recon[CHANNEL_TYPE_LUMA] = repFormat->getBitDepthVps(CHANNEL_TYPE_LUMA);
+    m_bitDepths.recon[CHANNEL_TYPE_CHROMA] = repFormat->getBitDepthVps(CHANNEL_TYPE_CHROMA);
+
+    m_qpBDOffset[CHANNEL_TYPE_LUMA] = (m_bitDepths.recon[CHANNEL_TYPE_LUMA] - 8) * 6;
+    m_qpBDOffset[CHANNEL_TYPE_CHROMA] = (m_bitDepths.recon[CHANNEL_TYPE_CHROMA] - 8) * 6;
+
+    m_conformanceWindow = repFormat->getConformanceWindowVps();
+  }
 }
 #endif //SVC_EXTENSION
 

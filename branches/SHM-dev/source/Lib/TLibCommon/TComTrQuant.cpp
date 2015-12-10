@@ -113,11 +113,7 @@ QpParam::QpParam(const TComDataCU &cu, const ComponentID compID)
 
   *this = QpParam(cu.getQP( 0 ),
                   toChannelType(compID),
-#if SVC_EXTENSION
-                  cu.getSlice()->getQpBDOffset(toChannelType(compID)),
-#else
                   cu.getSlice()->getSPS()->getQpBDOffset(toChannelType(compID)),
-#endif
                   chromaQpOffset,
                   cu.getPic()->getChromaFormat());
 }
@@ -1142,11 +1138,7 @@ Void TComTrQuant::xQuant(       TComTU       &rTu,
   const UInt uiHeight       = rect.height;
   TComDataCU* pcCU          = rTu.getCU();
   const UInt uiAbsPartIdx   = rTu.GetAbsPartIdxTU();
-#if SVC_EXTENSION
-  const Int channelBitDepth = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
   const Int channelBitDepth = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
 
   TCoeff* piCoef    = pSrc;
   TCoeff* piQCoef   = pDes;
@@ -1344,11 +1336,7 @@ Void TComTrQuant::xDeQuant(       TComTU        &rTu,
 #if O0043_BEST_EFFORT_DECODING
   const Int                  channelBitDepth    = pcCU->getSlice()->getSPS()->getStreamBitDepth(toChannelType(compID));
 #else
-#if SVC_EXTENSION
-  const Int                  channelBitDepth    = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
   const Int                  channelBitDepth    = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
 #endif
 
   assert (scalingListType < SCALING_LIST_NUM);
@@ -1528,11 +1516,7 @@ Void TComTrQuant::transformNxN(       TComTU        & rTu,
       }
       else
       {
-#if SVC_EXTENSION
-        const Int channelBitDepth=pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
         const Int channelBitDepth=pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
         xT( channelBitDepth, rTu.useDST(compID), pcResidual, uiStride, m_plTempCoeff, uiWidth, uiHeight, pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID)) );
       }
 
@@ -1666,11 +1650,7 @@ Void TComTrQuant::invTransformNxN(      TComTU        &rTu,
 #if O0043_BEST_EFFORT_DECODING
       const Int channelBitDepth = pcCU->getSlice()->getSPS()->getStreamBitDepth(toChannelType(compID));
 #else
-#if SVC_EXTENSION
-      const Int channelBitDepth = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
       const Int channelBitDepth = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
 #endif
       xIT( channelBitDepth, rTu.useDST(compID), m_plTempCoeff, pcResidual, uiStride, uiWidth, uiHeight, pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID)) );
 
@@ -2044,11 +2024,7 @@ Void TComTrQuant::xTransformSkip( Pel* piBlkResi, UInt uiStride, TCoeff* psCoeff
   const Int width           = rect.width;
   const Int height          = rect.height;
   const Int maxLog2TrDynamicRange = rTu.getCU()->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(component));
-#if SVC_EXTENSION
-  const Int channelBitDepth = rTu.getCU()->getSlice()->getBitDepth(toChannelType(component));
-#else
   const Int channelBitDepth = rTu.getCU()->getSlice()->getSPS()->getBitDepth(toChannelType(component));
-#endif
 
   Int iTransformShift = getTransformShift(channelBitDepth, rTu.GetEquivalentLog2TrSize(component), maxLog2TrDynamicRange);
   if (rTu.getCU()->getSlice()->getSPS()->getSpsRangeExtension().getExtendedPrecisionProcessingFlag())
@@ -2100,11 +2076,7 @@ Void TComTrQuant::xITransformSkip( TCoeff* plCoef, Pel* pResidual, UInt uiStride
 #if O0043_BEST_EFFORT_DECODING
   const Int channelBitDepth = rTu.getCU()->getSlice()->getSPS()->getStreamBitDepth(toChannelType(component));
 #else
-#if SVC_EXTENSION
-  const Int channelBitDepth = rTu.getCU()->getSlice()->getBitDepth(toChannelType(component));
-#else
   const Int channelBitDepth = rTu.getCU()->getSlice()->getSPS()->getBitDepth(toChannelType(component));
-#endif
 #endif
 
   Int iTransformShift = getTransformShift(channelBitDepth, rTu.GetEquivalentLog2TrSize(component), maxLog2TrDynamicRange);
@@ -2174,11 +2146,7 @@ Void TComTrQuant::xRateDistOptQuant                 (       TComTU       &rTu,
 
   const Bool             extendedPrecision = pcCU->getSlice()->getSPS()->getSpsRangeExtension().getExtendedPrecisionProcessingFlag();
   const Int              maxLog2TrDynamicRange = pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID));
-#if SVC_EXTENSION
-  const Int              channelBitDepth = rTu.getCU()->getSlice()->getBitDepth(channelType);
-#else
   const Int              channelBitDepth = rTu.getCU()->getSlice()->getSPS()->getBitDepth(channelType);
-#endif
 
   /* for 422 chroma blocks, the effective scaling applied during transformation is not a power of 2, hence it cannot be
    * implemented as a bit-shift (the quantised result will be sqrt(2) * larger than required). Alternatively, adjust the
@@ -3363,11 +3331,7 @@ Void TComTrQuant::transformSkipQuantOneSample(TComTU &rTu, const ComponentID com
   const UInt           uiWidth                        = rect.width;
   const UInt           uiHeight                       = rect.height;
   const Int            maxLog2TrDynamicRange          = pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID));
-#if SVC_EXTENSION
-  const Int            channelBitDepth                = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
   const Int            channelBitDepth                = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
   const Int            iTransformShift                = getTransformShift(channelBitDepth, rTu.GetEquivalentLog2TrSize(compID), maxLog2TrDynamicRange);
   const Int            scalingListType                = getScalingListType(pcCU->getPredictionMode(uiAbsPartIdx), compID);
   const Bool           enableScalingLists             = getUseScalingList(uiWidth, uiHeight, true);
@@ -3430,11 +3394,7 @@ Void TComTrQuant::invTrSkipDeQuantOneSample( TComTU &rTu, ComponentID compID, TC
 #if O0043_BEST_EFFORT_DECODING
   const Int            channelBitDepth    = pcCU->getSlice()->getSPS()->getStreamBitDepth(toChannelType(compID));
 #else
-#if SVC_EXTENSION
-  const Int            channelBitDepth    = pcCU->getSlice()->getBitDepth(toChannelType(compID));
-#else
   const Int            channelBitDepth    = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
-#endif
 #endif
   const Int            iTransformShift    = getTransformShift(channelBitDepth, rTu.GetEquivalentLog2TrSize(compID), maxLog2TrDynamicRange);
   const Int            scalingListType    = getScalingListType(pcCU->getPredictionMode(uiAbsPartIdx), compID);
