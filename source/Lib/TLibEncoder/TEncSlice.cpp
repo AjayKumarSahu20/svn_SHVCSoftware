@@ -172,11 +172,7 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
 #endif
 
   // store lambda
-#if SVC_EXTENSION
-  m_pcRdCost ->setLambda( dLambda, slice->getBitDepths() );
-#else
   m_pcRdCost ->setLambda( dLambda, slice->getSPS()->getBitDepths() );
-#endif
 
   // for RDO
   // in RdCost there is only one lambda because the luma and chroma bits are not separated, instead we weight the distortion of chroma.
@@ -192,7 +188,7 @@ TEncSlice::setUpLambda(TComSlice* slice, const Double dLambda, Int iQP)
     if( slice->getLayerId() > 0 && m_ppcTEncTop[slice->getLayerIdx()]->getNumActiveRefLayers() && m_pcCfg->getGOPSize() >= 8 && slice->isIntra() == false && depth == 0 )
     {
       dLambdas[0] = dLambda * 1.1;
-      m_pcRdCost->setLambda( dLambdas[0], slice->getBitDepths() );
+      m_pcRdCost->setLambda( dLambdas[0], slice->getSPS()->getBitDepths() );
 
       m_pcRdCost->setDistortionWeight(compID, tmpWeight * 1.15);
       dLambdas[compIdx] = dLambdas[0] / tmpWeight / 1.15;
@@ -336,11 +332,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
   dQP = m_pcCfg->getQP();
   if(eSliceType!=I_SLICE)
   {
-#if SVC_EXTENSION
-    if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA) ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
-#else
     if (!(( m_pcCfg->getMaxDeltaQP() == 0 ) && (dQP == -rpcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA) ) && (rpcSlice->getPPS()->getTransquantBypassEnableFlag())))
-#endif
     {
       dQP += m_pcCfg->getGOPEntry(iGOPid).m_QPOffset;
     }
@@ -377,11 +369,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
     Int    SHIFT_QP = 12;
 
 #if FULL_NBIT
-#if SVC_EXTENSION
-    Int    bitdepth_luma_qp_scale = 6 * (rpcSlice->getBitDepth(CHANNEL_TYPE_LUMA) - 8);
-#else
     Int    bitdepth_luma_qp_scale = 6 * (rpcSlice->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA) - 8);
-#endif
 #else
     Int    bitdepth_luma_qp_scale = 0;
 #endif
@@ -422,11 +410,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
       dLambda *= 0.95;
     }
 
-#if SVC_EXTENSION
-    iQP = max( -rpcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
-#else
     iQP = max( -rpcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
-#endif
 
     m_pdRdPicLambda[iDQpIdx] = dLambda;
     m_pdRdPicQp    [iDQpIdx] = dQP;
@@ -488,11 +472,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
   if (m_pcCfg->getUseRecalculateQPAccordingToLambda())
   {
     dQP = xGetQPValueAccordingToLambda( dLambda );
-#if SVC_EXTENSION
-    iQP = max( -rpcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
-#else
     iQP = max( -rpcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), min( MAX_QP, (Int) floor( dQP + 0.5 ) ) );
-#endif
   }
 
   rpcSlice->setSliceQp           ( iQP );
@@ -668,11 +648,7 @@ Void TEncSlice::precompressSlice( TComPic* pcPic )
 
   Double dFrameLambda;
 #if FULL_NBIT
-#if SVC_EXTENSION
-  Int    SHIFT_QP = 12 + 6 * (pcSlice->getBitDepth(CHANNEL_TYPE_LUMA) - 8);
-#else
   Int    SHIFT_QP = 12 + 6 * (pcSlice->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA) - 8);
-#endif
 #else
   Int    SHIFT_QP = 12;
 #endif
@@ -731,11 +707,7 @@ Void TEncSlice::calCostSliceI(TComPic* pcPic) // TODO: this only analyses the fi
   Double            iSumHadSlice      = 0;
   TComSlice * const pcSlice           = pcPic->getSlice(getSliceIdx());
   const TComSPS    &sps               = *(pcSlice->getSPS());
-#if SVC_EXTENSION
-  const Int         shift             = pcSlice->getBitDepth(CHANNEL_TYPE_LUMA)-8;
-#else
   const Int         shift             = sps.getBitDepth(CHANNEL_TYPE_LUMA)-8;
-#endif
   const Int         offset            = (shift>0)?(1<<(shift-1)):0;
 
   pcSlice->setSliceSegmentBits(0);
@@ -751,13 +723,8 @@ Void TEncSlice::calCostSliceI(TComPic* pcPic) // TODO: this only analyses the fi
     TComDataCU* pCtu = pcPic->getCtu( ctuRsAddr );
     pCtu->initCtu( pcPic, ctuRsAddr );
 
-#if SVC_EXTENSION
-    Int height  = min( sps.getMaxCUHeight(),pcSlice->getPicHeightInLumaSamples() - ctuRsAddr / pcPic->getFrameWidthInCtus() * sps.getMaxCUHeight() );
-    Int width   = min( sps.getMaxCUWidth(),pcSlice->getPicWidthInLumaSamples() - ctuRsAddr % pcPic->getFrameWidthInCtus() * sps.getMaxCUWidth() );
-#else
     Int height  = min( sps.getMaxCUHeight(),sps.getPicHeightInLumaSamples() - ctuRsAddr / pcPic->getFrameWidthInCtus() * sps.getMaxCUHeight() );
     Int width   = min( sps.getMaxCUWidth(), sps.getPicWidthInLumaSamples()  - ctuRsAddr % pcPic->getFrameWidthInCtus() * sps.getMaxCUWidth() );
-#endif
 
     Int iSumHad = m_pcCuEncoder->updateCtuDataISlice(pCtu, width, height);
 
@@ -937,15 +904,9 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
           estQP     = m_pcRateCtrl->getRCPic()->getLCUEstQP    ( estLambda, pcSlice->getSliceQp() );
         }
 
-#if SVC_EXTENSION
-        estQP     = Clip3( -pcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, estQP );
-
-        m_pcRdCost->setLambda(estLambda, pcSlice->getBitDepths());
-#else
         estQP     = Clip3( -pcSlice->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA), MAX_QP, estQP );
 
         m_pcRdCost->setLambda(estLambda, pcSlice->getSPS()->getBitDepths());
-#endif        
 
 #if RDOQ_CHROMA_LAMBDA
         // set lambda for RDOQ
@@ -1039,11 +1000,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
       {
         actualQP = pCtu->getQP( 0 );
       }
-#if SVC_EXTENSION
-      m_pcRdCost->setLambda(oldLambda, pcSlice->getBitDepths());
-#else
       m_pcRdCost->setLambda(oldLambda, pcSlice->getSPS()->getBitDepths());
-#endif
       m_pcRateCtrl->getRCPic()->updateAfterCTU( m_pcRateCtrl->getRCPic()->getLCUCoded(), actualBits, actualQP, actualLambda,
                                                 pCtu->getSlice()->getSliceType() == I_SLICE ? 0 : m_pcCfg->getLCULevelRC() );
     }
@@ -1200,11 +1157,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
           aboveMergeAvail = pcPic->getSAOMergeAvailability(ctuRsAddr, ctuRsAddr-frameWidthInCtus);
         }
 
-#if SVC_EXTENSION
-        m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, pcPic->getPicSym()->getSlice(0)->getBitDepths(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
-#else
         m_pcEntropyCoder->encodeSAOBlkParam(saoblkParam, pcPic->getPicSym()->getSPS().getBitDepths(), sliceEnabled, leftMergeAvail, aboveMergeAvail);
-#endif
       }
     }
 

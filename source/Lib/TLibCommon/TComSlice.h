@@ -1129,13 +1129,6 @@ public:
   Void              deriveNecessaryLayerFlag(Int const olsIdx);
   Void              checkNecessaryLayerFlagCondition();
   Void              calculateMaxSLInLayerSets();
-
-  ChromaFormat      getChromaFormatIdc( const TComSPS* sps, const UInt layerId ) const;
-  UInt              getPicHeightInLumaSamples( const TComSPS* sps, const UInt layerId ) const;
-  UInt              getPicWidthInLumaSamples( const TComSPS* sps, const UInt layerId ) const;
-  UInt              getBitDepth( ChannelType type, const TComSPS* sps, const UInt layerId ) const;
-  const BitDepths&  getBitDepths( const TComSPS* sps, const UInt layerId ) const;
-  const Window&     getConformanceWindow( const TComSPS* sps, const UInt layerId ) const;
 #endif //SVC_EXTENSION
 };
 
@@ -1603,6 +1596,8 @@ public:
   UInt                   getScalingListRefLayerId() const                                                { return m_scalingListRefLayerId;                                      }
   Void                   setInferScalingListFlag( Bool flag )                                            { m_inferScalingListFlag = flag;                                       }
   Void                   setScalingListRefLayerId( UInt layerId )                                        { m_scalingListRefLayerId = layerId;                                   }
+
+  Void                   inferSPS( const UInt layerId, TComVPS* vps );
 #endif //SVC_EXTENSION
 };
 
@@ -2398,20 +2393,8 @@ public:
   Void                        setDiscardableFlag  (Bool b)                           { m_bDiscardableFlag = b;                                       }
   Bool                        getCrossLayerBLAFlag  ()                               { return m_bCrossLayerBLAFlag;                                  }
   Void                        setCrossLayerBLAFlag  (Bool b)                         { m_bCrossLayerBLAFlag = b;                                     }
-
   Int                         getNumNegativeRpsCurrTempList();
-
-  UInt                        getPicWidthInLumaSamples();
-  UInt                        getPicHeightInLumaSamples();
-  ChromaFormat                getChromaFormatIdc();
-  UInt                        getBitDepth(ChannelType type) const;
-  BitDepths&                  getBitDepths();
-  Int                         getQpBDOffset(ChannelType type) const                  { return (getBitDepth(type) - 8) * 6;                           }
-
-  const Window&               getConformanceWindow() const;
-
   Void                        setILRPic(TComPic **pcIlpPic);
-
   Int                         getPocResetIdc()                                       { return m_pocResetIdc;                                         }
   Void                        setPocResetIdc(Int b)                                  { m_pocResetIdc = b;                                            }
   Int                         getPocResetPeriodId()                                  { return m_pocResetPeriodId;                                    }

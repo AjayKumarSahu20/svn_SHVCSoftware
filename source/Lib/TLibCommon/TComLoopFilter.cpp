@@ -184,11 +184,7 @@ Void TComLoopFilter::xDeblockCU( TComDataCU* pcCU, UInt uiAbsZorderIdx, UInt uiD
     {
       UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsZorderIdx] ];
       UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsZorderIdx] ];
-#if SVC_EXTENSION
-      if( ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples() ) )
-#else
       if( ( uiLPelX < sps.getPicWidthInLumaSamples() ) && ( uiTPelY < sps.getPicHeightInLumaSamples() ) )
-#endif
       {
         xDeblockCU( pcCU, uiAbsZorderIdx, uiDepth+1, edgeDir );
       }
@@ -565,13 +561,7 @@ Void TComLoopFilter::xEdgeFilterLuma( TComDataCU* const pcCU, const UInt uiAbsZo
         Pel        *piTmpSrc                      = piSrc;
   const TComSPS    &sps                           = *(pcCU->getSlice()->getSPS());
   const Bool        ppsTransquantBypassEnableFlag = pcCU->getSlice()->getPPS()->getTransquantBypassEnableFlag();
-
-#if SVC_EXTENSION
-  const Int bitDepthLuma                          = pcCU->getSlice()->getBitDepth(CHANNEL_TYPE_LUMA);
-#else
   const Int         bitDepthLuma                  = sps.getBitDepth(CHANNEL_TYPE_LUMA);
-#endif
-
   const Bool        lfCrossSliceBoundaryFlag      = pcCU->getSlice()->getLFCrossSliceBoundaryFlag();
 
   Int  iStride = pcPicYuvRec->getStride(COMPONENT_Y);
@@ -690,11 +680,7 @@ Void TComLoopFilter::xEdgeFilterChroma( TComDataCU* const pcCU, const UInt uiAbs
         Pel        *piSrcCb        = pcPicYuvRec->getAddr( COMPONENT_Cb, pcCU->getCtuRsAddr(), uiAbsZorderIdx );
         Pel        *piSrcCr        = pcPicYuvRec->getAddr( COMPONENT_Cr, pcCU->getCtuRsAddr(), uiAbsZorderIdx );
   const TComSPS    &sps            = *(pcCU->getSlice()->getSPS());
-#if SVC_EXTENSION
-  const Int         bitDepthChroma = pcCU->getSlice()->getBitDepth(CHANNEL_TYPE_CHROMA);
-#else  
   const Int         bitDepthChroma = sps.getBitDepth(CHANNEL_TYPE_CHROMA);
-#endif
 
   const UInt  uiPelsInPartChromaH = sps.getMaxCUWidth() >> (sps.getMaxTotalCUDepth()+pcPicYuvRec->getComponentScaleX(COMPONENT_Cb));
   const UInt  uiPelsInPartChromaV = sps.getMaxCUHeight() >> (sps.getMaxTotalCUDepth()+pcPicYuvRec->getComponentScaleY(COMPONENT_Cb));
@@ -756,11 +742,7 @@ Void TComLoopFilter::xEdgeFilterChroma( TComDataCU* const pcCU, const UInt uiAbs
     uiLoopLength=uiPelsInPartChromaH;
   }
 
-#if SVC_EXTENSION
-  const Int iBitdepthScale = 1 << (pcCU->getSlice()->getBitDepth(CHANNEL_TYPE_CHROMA)-8);
-#else
   const Int iBitdepthScale = 1 << (pcCU->getSlice()->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA)-8);
-#endif
 
   for ( UInt iIdx = 0; iIdx < uiNumParts; iIdx++ )
   {

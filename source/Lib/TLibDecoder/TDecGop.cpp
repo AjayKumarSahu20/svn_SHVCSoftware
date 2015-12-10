@@ -238,11 +238,7 @@ Void TDecGop::filterPicture(TComPic* pcPic)
     {
       printf ("Warning: Got multiple decoded picture hash SEI messages. Using first.");
     }
-#if SVC_EXTENSION
-    calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getBitDepths(), m_numberOfChecksumErrorsDetected);
-#else
     calcAndPrintHashStatus(*(pcPic->getPicYuvRec()), hash, pcSlice->getSPS()->getBitDepths(), m_numberOfChecksumErrorsDetected);
-#endif
   }
 #if CONFORMANCE_BITSTREAM_MODE
   if( this->getLayerDec(pcPic->getLayerId())->getConfModeFlag() )

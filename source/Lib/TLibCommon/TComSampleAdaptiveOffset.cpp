@@ -598,11 +598,7 @@ Void TComSampleAdaptiveOffset::offsetCTU(Int ctuRsAddr, TComPicYuv* srcYuv, TCom
       Int  resStride  = resYuv->getStride(component);
       Pel* resBlk     = resYuv->getAddr(component) + blkYPos*resStride + blkXPos;
 
-#if SVC_EXTENSION
-      offsetBlock( pPic->getSlice(0)->getBitDepth(toChannelType(component)), ctbOffset.typeIdc, ctbOffset.offset
-#else
       offsetBlock( pPic->getPicSym()->getSPS().getBitDepth(toChannelType(component)), ctbOffset.typeIdc, ctbOffset.offset
-#endif
                   , srcBlk, resBlk, srcStride, resStride, blkWidth, blkHeight
                   , isLeftAvail, isRightAvail
                   , isAboveAvail, isBelowAvail
@@ -687,11 +683,7 @@ Void TComSampleAdaptiveOffset::xPCMCURestoration ( TComDataCU* pcCU, UInt uiAbsZ
     {
       UInt uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsZorderIdx] ];
       UInt uiTPelY   = pcCU->getCUPelY() + g_auiRasterToPelY[ g_auiZscanToRaster[uiAbsZorderIdx] ];
-#if SVC_EXTENSION
-      if( ( uiLPelX < pcCU->getSlice()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getPicHeightInLumaSamples() ) )
-#else
       if( ( uiLPelX < pcCU->getSlice()->getSPS()->getPicWidthInLumaSamples() ) && ( uiTPelY < pcCU->getSlice()->getSPS()->getPicHeightInLumaSamples() ) )
-#endif
       {
         xPCMCURestoration( pcCU, uiAbsZorderIdx, uiDepth+1 );
       }
@@ -738,11 +730,7 @@ Void TComSampleAdaptiveOffset::xPCMSampleRestoration (TComDataCU* pcCU, UInt uiA
   }
   else
   {
-#if SVC_EXTENSION
-    uiPcmLeftShiftBit = pcCU->getSlice()->getBitDepth(toChannelType(compID)) - pcCU->getSlice()->getSPS()->getPCMBitDepth(toChannelType(compID));
-#else
     uiPcmLeftShiftBit = sps.getBitDepth(toChannelType(compID)) - sps.getPCMBitDepth(toChannelType(compID));
-#endif
   }
 
   for(UInt uiY = 0; uiY < uiHeight; uiY++ )

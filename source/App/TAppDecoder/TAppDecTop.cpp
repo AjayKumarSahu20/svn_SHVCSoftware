@@ -327,7 +327,7 @@ Void TAppDecTop::decode()
     {
       if ( !m_reconFileName[curLayerId].empty() && !openedReconFile[curLayerId] )
       {
-        const BitDepths& bitDepths = m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveVPS()->getBitDepths( m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveSPS(), curLayerId );
+        const BitDepths& bitDepths = m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveSPS()->getBitDepths();
 
         for( UInt channelType = 0; channelType < MAX_NUM_CHANNEL_TYPE; channelType++)
         {
@@ -785,7 +785,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
 
           if (display)
           {            
-            UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+            UInt chromaFormatIdc = pcPic->getSlice(0)->getSPS()->getChromaFormatIdc();
             Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
             m_apcTVideoIOYuvReconFile[layerId]->write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(),
@@ -880,7 +880,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, UInt tId )
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
 
-          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getSPS()->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
           m_apcTVideoIOYuvReconFile[layerId]->write( pcPic->getPicYuvRec(), m_outputColourSpaceConvert,
@@ -971,7 +971,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           const Window  defDisp = m_respectDefDispWindow ? pcPicTop->getDefDisplayWindow() : Window();
           const Bool isTff = pcPicTop->isTopField();          
 
-          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getSPS()->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
           m_apcTVideoIOYuvReconFile[layerId]->write( pcPicTop->getPicYuvRec(), pcPicBottom->getPicYuvRec(), m_outputColourSpaceConvert,
@@ -1049,7 +1049,7 @@ Void TAppDecTop::xFlushOutput( TComList<TComPic*>* pcListPic )
           const Window &conf = pcPic->getConformanceWindow();
           const Window  defDisp = m_respectDefDispWindow ? pcPic->getDefDisplayWindow() : Window();          
 
-          UInt chromaFormatIdc = pcPic->getSlice(0)->getChromaFormatIdc();
+          UInt chromaFormatIdc = pcPic->getSlice(0)->getSPS()->getChromaFormatIdc();
           Int xScal =  TComSPS::getWinUnitX( chromaFormatIdc ), yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
           m_apcTVideoIOYuvReconFile[layerId]->write( pcPic->getPicYuvRec(),
@@ -1471,7 +1471,7 @@ Void TAppDecTop::xOutputAndMarkPic( TComPic *pic, std::string& reconFileName, co
     const Window &defDisp = m_respectDefDispWindow ? pic->getDefDisplayWindow() : Window();
     Int xScal =  1, yScal = 1;
 
-    UInt chromaFormatIdc = pic->getSlice(0)->getChromaFormatIdc();
+    UInt chromaFormatIdc = pic->getSlice(0)->getSPS()->getChromaFormatIdc();
     xScal = TComSPS::getWinUnitX( chromaFormatIdc );
     yScal = TComSPS::getWinUnitY( chromaFormatIdc );
 
@@ -1700,7 +1700,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         this->setMetadataFileRefresh(false);
 
         TComPictureHash recon_digest;
-        Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest, pic->getSlice(0)->getBitDepths());
+        Int numChar = calcMD5(*pic->getPicYuvRec(), recon_digest, pic->getSlice(0)->getSPS()->getBitDepths());
         fprintf(fptr, "%8d%9d    MD5:%s\n", pic->getLayerId(), pic->getSlice(0)->getPOC(), hashToString(recon_digest, numChar).c_str());
         fclose(fptr);
       }
@@ -1728,9 +1728,8 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         char tempFileName[256];
         strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerId ).c_str());
 
-        const TComVPS *vps = m_apcTDecTop[layerId]->getParameterSetManager()->getActiveVPS();
         const TComSPS *sps = m_apcTDecTop[layerId]->getParameterSetManager()->getActiveSPS();
-        const BitDepths &bitDpeths = vps->getBitDepths(sps, layerId);
+        const BitDepths &bitDpeths = sps->getBitDepths();
         Int bitDepth[] = {bitDpeths.recon[CHANNEL_TYPE_LUMA], bitDpeths.recon[CHANNEL_TYPE_CHROMA]};
 
         m_confReconFile[layerId].open(tempFileName, true, bitDepth, bitDepth, bitDepth ); // write mode
@@ -1745,7 +1744,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
         const Window &defDisp = m_respectDefDispWindow ? checkPic.getDefDisplayWindow() : Window();
         Int xScal = 1, yScal = 1;
   
-        UInt chromaFormatIdc = checkPic.getSlice(0)->getChromaFormatIdc();
+        UInt chromaFormatIdc = checkPic.getSlice(0)->getSPS()->getChromaFormatIdc();
         xScal = TComSPS::getWinUnitX( chromaFormatIdc );
         yScal = TComSPS::getWinUnitY( chromaFormatIdc );
   

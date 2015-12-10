@@ -63,8 +63,8 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   const Window &scalEL = currSlice->getPPS()->getScaledRefLayerWindowForLayer(refLayerId);
   const Window &windowRL = currSlice->getPPS()->getRefLayerWindowForLayer(refLayerId);
 
-  Int bitDepthLuma = currSlice->getBitDepth(CHANNEL_TYPE_LUMA);
-  Int bitDepthChroma = currSlice->getBitDepth(CHANNEL_TYPE_CHROMA);
+  Int bitDepthLuma = currSlice->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA);
+  Int bitDepthChroma = currSlice->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA);
 
   //========== Y component upsampling ===========
   Int widthBL   = pcBasePic->getWidth (COMPONENT_Y);
@@ -75,9 +75,17 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
   Int heightEL  = pcUsPic->getHeight(COMPONENT_Y) - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
   Int strideEL  = pcUsPic->getStride(COMPONENT_Y);
 
-  ChromaFormat chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getChromaFormatIdc();
+  ChromaFormat chromaFormatIdc = currSlice->getBaseColPic(refLayerIdc)->getSlice(0)->getSPS()->getChromaFormatIdc();
+#if SCALABLE_REXT
+  Int chromaHorScalingEL = TComSPS::getWinUnitX( currSlice->getSPS()->getChromaFormatIdc() );
+  Int chromaVerScalingEL = TComSPS::getWinUnitY( currSlice->getSPS()->getChromaFormatIdc() );
+
+  Int chromaHorScalingBL = TComSPS::getWinUnitX( chromaFormatIdc );
+  Int chromaVerScalingBL = TComSPS::getWinUnitY( chromaFormatIdc );
+#else
   Int xScal = TComSPS::getWinUnitX( chromaFormatIdc );
   Int yScal = TComSPS::getWinUnitY( chromaFormatIdc );
+#endif
 
   const ResamplingPhase &resamplingPhase = currSlice->getPPS()->getResamplingPhase( refLayerId );
   Int phaseVerChroma = resamplingPhase.phaseVerChroma;
@@ -150,14 +158,19 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     }
 
 #if SCALABLE_REXT
-  if(chromaFormatIdc != 0)
+  if( chromaFormatIdc != CHROMA_400 )
   {
-#endif
+    widthEL  /= chromaHorScalingEL;
+    heightEL /= chromaVerScalingEL;
+    widthBL  /= chromaHorScalingBL;
+    heightBL /= chromaVerScalingBL;
+#else
     widthEL  >>= 1;
     heightEL >>= 1;
 
     widthBL  >>= 1;
     heightBL >>= 1;
+#endif
 
     strideBL = pcBasePic->getStride( COMPONENT_Cb );
     strideEL = pcUsPic->getStride( COMPONENT_Cb );
@@ -165,8 +178,13 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     piSrcU = piSrcBufU;
     piSrcV = piSrcBufV;
 
+#if SCALABLE_REXT
+    piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() / chromaHorScalingEL ) + ( scalEL.getWindowTopOffset() / chromaVerScalingEL ) * strideEL;
+    piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() / chromaHorScalingEL ) + ( scalEL.getWindowTopOffset() / chromaVerScalingEL ) * strideEL;
+#else
     piDstU = piDstBufU + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
     piDstV = piDstBufV + ( scalEL.getWindowLeftOffset() >> 1 ) + ( scalEL.getWindowTopOffset() >> 1 ) * strideEL;
+#endif
 
     shift = bitDepthChroma - refBitDepthChroma;
 
@@ -308,19 +326,30 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
     //========== UV component upsampling ===========
 
 #if SCALABLE_REXT
-  if(chromaFormatIdc != 0)
+  if( chromaFormatIdc != CHROMA_400 )
   {
-#endif
+    widthEL  /= chromaHorScalingEL;
+    heightEL /= chromaVerScalingEL;
+    widthBL  /= chromaHorScalingBL;
+    heightBL /= chromaVerScalingBL;
+#else
     widthEL  >>= 1;
     heightEL >>= 1;
     widthBL  >>= 1;
     heightBL >>= 1;
+#endif
 
     strideBL  = pcBasePic->getStride( COMPONENT_Cb );
     strideEL  = pcUsPic->getStride( COMPONENT_Cb );
 
+#if SCALABLE_REXT
+    Int srlLOffsetC = scalEL.getWindowLeftOffset() / chromaHorScalingEL;
+    Int srlTOffsetC = scalEL.getWindowTopOffset() / chromaVerScalingEL;
+#else
     Int srlLOffsetC = scalEL.getWindowLeftOffset() >> 1;
     Int srlTOffsetC = scalEL.getWindowTopOffset() >> 1;
+#endif
+
     rlClipL = -(NTAPS_US_CHROMA>>1);
     rlClipR = widthBL -1 + (NTAPS_US_CHROMA>>1);
     rlClipT = -(NTAPS_US_CHROMA>>1);
@@ -330,17 +359,31 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     addX = ( ( resamplingPhase.phaseHorChroma * scaleX + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
     addY = ( ( phaseVerChroma * scaleY + 8 ) >> 4 ) -  (1 << ( shiftX - 5 ));
+
+#if SCALABLE_REXT
+    Int refOffsetXC = (windowRL.getWindowLeftOffset() / chromaHorScalingBL) << 4;
+    Int refOffsetYC = (windowRL.getWindowTopOffset()  / chromaVerScalingBL) << 4;
+#else
     Int refOffsetXC = (windowRL.getWindowLeftOffset() / xScal) << 4;
     Int refOffsetYC = (windowRL.getWindowTopOffset()  / yScal) << 4;
+#endif
 
     shiftXM4 = shiftX - 4;
     shiftYM4 = shiftY - 4;
 
+#if SCALABLE_REXT
+    widthEL   = pcUsPic->getWidth (COMPONENT_Y) / chromaHorScalingEL;
+    heightEL  = pcUsPic->getHeight(COMPONENT_Y) / chromaVerScalingEL;
+
+    widthBL   = pcBasePic->getWidth (COMPONENT_Y) / chromaHorScalingBL;
+    heightBL  = min<Int>( pcBasePic->getHeight(COMPONENT_Y) / chromaVerScalingBL, heightEL );
+#else
     widthEL   = pcUsPic->getWidth (COMPONENT_Y) >> 1;
     heightEL  = pcUsPic->getHeight(COMPONENT_Y) >> 1;
 
     widthBL   = pcBasePic->getWidth (COMPONENT_Y) >> 1;
     heightBL  = min<Int>( pcBasePic->getHeight(COMPONENT_Y) >> 1, heightEL );
+#endif
 
     // shift1 should be calculated using BL bit-depth
     shift1 = refBitDepthChroma - 8;
@@ -381,15 +424,27 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 
     //========== vertical upsampling ===========
     pcTempPic->setBorderExtension(false);
+#if SCALABLE_REXT
+    pcTempPic->setHeight(heightBL * chromaVerScalingBL);
+#else
     pcTempPic->setHeight(heightBL << 1);
+#endif
     pcTempPic->extendPicBorder   (); // extend the border.
+#if SCALABLE_REXT
+    pcTempPic->setHeight(heightEL * chromaVerScalingEL);
+#else
     pcTempPic->setHeight(heightEL << 1);
+#endif
 
     nShift = 20 - bitDepthChroma;
 
     iOffset = 1 << (nShift - 1);
 
+#if SCALABLE_REXT
+    for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y) / chromaVerScalingEL; j++ )
+#else
     for( j = 0; j < pcTempPic->getHeight(COMPONENT_Y) >> 1; j++ )
+#endif
     {
       Int y = j;
       refPos16 = (((y - srlTOffsetC)*scaleY - addY) >> shiftYM4) + refOffsetYC;
@@ -407,7 +462,11 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
       piDstU = piDstU0;
       piDstV = piDstV0;
 
+#if SCALABLE_REXT
+      for( i = pcTempPic->getWidth(COMPONENT_Y) / chromaHorScalingEL; i > 0; i-- )
+#else
       for( i = pcTempPic->getWidth(COMPONENT_Y) >> 1; i > 0; i-- )
+#endif
       {
         *piDstU = ClipBD( (sumChromaVer(piSrcU, coeff, strideEL) + iOffset) >> (nShift), bitDepthChroma );
         *piDstV = ClipBD( (sumChromaVer(piSrcV, coeff, strideEL) + iOffset) >> (nShift), bitDepthChroma );

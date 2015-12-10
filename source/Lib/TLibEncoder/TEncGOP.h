@@ -276,11 +276,11 @@ protected:
 #endif
 #if CGS_3D_ASYMLUT
   Void xDetermine3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
-  Void xDownScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, BitDepths& bitDepth, const Int posScalingFactorX);
+  Void xDownScalePic( TComPicYuv* pcYuvSrc, TComPicYuv* pcYuvDest, const BitDepths& bitDepth, const Int posScalingFactorX);
   Void xDownScaleComponent2x2( const Pel* pSrc, Pel* pDest, const Int iSrcStride, const Int iDestStride, const Int iSrcWidth, const Int iSrcHeight, const Int inputBitDepth, const Int outputBitDepth );
   inline Short xClip( Short x, Int bitdepth );
   Void xInitDs( const Int iWidth, const Int iHeight, const Bool allIntra, const Int posScalingFactorX);
-  Void xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height, Int width, BitDepths& bitDepth, ComponentID comp );
+  Void xFilterImg( Pel *src, Int iSrcStride, Pel *dst, Int iDstStride, Int height, Int width, const BitDepths& bitDepth, ComponentID comp );
 
   Int  xCreate2DArray(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
   Void xDestroy2DArray(Int **array2D, Int iPadY, Int iPadX);

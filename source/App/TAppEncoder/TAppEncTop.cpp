@@ -139,7 +139,7 @@ Void TAppEncTop::xInitLibCfg()
     maxRepFormatIdx = std::max( m_apcLayerCfg[layer]->getRepFormatIdx(), maxRepFormatIdx );
 
 #if FORMATIDX_CHECK
-    for( Int compareLayer = 0; compareLayer < layer; compareLayer++ )
+    for(Int compareLayer = 0; compareLayer < layer; compareLayer++ )
     {
       if(m_apcLayerCfg[layer]->m_repFormatIdx == m_apcLayerCfg[compareLayer]->m_repFormatIdx && (
            m_apcLayerCfg[layer]->m_chromaFormatIDC != m_apcLayerCfg[compareLayer]->m_chromaFormatIDC

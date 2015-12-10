@@ -1224,11 +1224,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
   Int iPOClsb = 0;
 #endif
 
-#if SCALABLE_REXT
-  const ChromaFormat chFmt = pcSlice->getChromaFormatIdc();
-#else
   const ChromaFormat chFmt = sps->getChromaFormatIdc();
-#endif
   const UInt numValidComp=getNumberValidComponents(chFmt);
   const Bool bChroma=(chFmt!=CHROMA_400);
 
@@ -1240,11 +1236,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
   {
     pcSlice->setDependentSliceSegmentFlag(false);
   }
-#if SVC_EXTENSION
-  Int numCTUs = ((pcSlice->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((pcSlice->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
-#else
   Int numCTUs = ((sps->getPicWidthInLumaSamples()+sps->getMaxCUWidth()-1)/sps->getMaxCUWidth())*((sps->getPicHeightInLumaSamples()+sps->getMaxCUHeight()-1)/sps->getMaxCUHeight());
-#endif  
   UInt sliceSegmentAddress = 0;
   Int bitsSliceSegmentAddress = 0;
   while(numCTUs>(1<<bitsSliceSegmentAddress))
@@ -1831,11 +1823,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
     READ_SVLC( iCode, "slice_qp_delta" );
     pcSlice->setSliceQp (26 + pps->getPicInitQPMinus26() + iCode);
 
-#if SVC_EXTENSION
-    assert( pcSlice->getSliceQp() >= -pcSlice->getQpBDOffset(CHANNEL_TYPE_LUMA) );
-#else    
     assert( pcSlice->getSliceQp() >= -sps->getQpBDOffset(CHANNEL_TYPE_LUMA) );
-#endif
     assert( pcSlice->getSliceQp() <=  51 );
 
     if (pps->getSliceChromaQpFlag())
@@ -2364,11 +2352,7 @@ Void TDecCavlc::parseDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth 
   xReadSvlc( iDQp );
 #endif
 
-#if SVC_EXTENSION
-  Int qpBdOffsetY = pcCU->getSlice()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#else
   Int qpBdOffsetY = pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
-#endif
   const Int qp = (((Int) pcCU->getRefQP( uiAbsPartIdx ) + iDQp + 52 + 2*qpBdOffsetY )%(52+ qpBdOffsetY)) -  qpBdOffsetY;
 
   const UInt maxCUDepth        = pcCU->getSlice()->getSPS()->getMaxTotalCUDepth();
@@ -2428,11 +2412,7 @@ Void TDecCavlc::parseMergeIndex ( TComDataCU* /*pcCU*/, UInt& /*ruiMergeIndex*/ 
 Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice, const TComSPS *sps )
 {
         WPScalingParam *wp;
-#if SCALABLE_REXT
-  const ChromaFormat    chFmt        = pcSlice->getChromaFormatIdc();
-#else
   const ChromaFormat    chFmt        = sps->getChromaFormatIdc();
-#endif
   const Int             numValidComp = Int(getNumberValidComponents(chFmt));
   const Bool            bChroma      = (chFmt!=CHROMA_400);
   const SliceType       eSliceType   = pcSlice->getSliceType();
@@ -2495,11 +2475,7 @@ Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice, const TComSPS *sps )
         assert( iDeltaWeight <=  127 );
         wp[COMPONENT_Y].iWeight = (iDeltaWeight + (1<<wp[COMPONENT_Y].uiLog2WeightDenom));
         READ_SVLC( wp[COMPONENT_Y].iOffset, iNumRef==0?"luma_offset_l0[i]":"luma_offset_l1[i]" );
-#if SVC_EXTENSION
-        Int range=sps->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<pcSlice->getBitDepth(CHANNEL_TYPE_LUMA))/2 : 128;        
-#else
         Int range=sps->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<sps->getBitDepth(CHANNEL_TYPE_LUMA))/2 : 128;
-#endif
         assert( wp[0].iOffset >= -range );
         assert( wp[0].iOffset <   range );
       }
@@ -2512,11 +2488,7 @@ Void TDecCavlc::xParsePredWeightTable( TComSlice* pcSlice, const TComSPS *sps )
       {
         if ( wp[COMPONENT_Cb].bPresentFlag )
         {
-#if SVC_EXTENSION
-          Int range=sps->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<pcSlice->getBitDepth(CHANNEL_TYPE_CHROMA))/2 : 128;
-#else
           Int range=sps->getSpsRangeExtension().getHighPrecisionOffsetsEnabledFlag() ? (1<<sps->getBitDepth(CHANNEL_TYPE_CHROMA))/2 : 128;
-#endif
           for ( Int j=1 ; j<numValidComp ; j++ )
           {
             Int iDeltaWeight;

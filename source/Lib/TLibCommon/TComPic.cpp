@@ -78,14 +78,13 @@ TComPic::~TComPic()
 #if SVC_EXTENSION
 Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const UInt layerId )
 {
-  const ChromaFormat chromaFormatIDC = vps.getChromaFormatIdc(&sps, layerId);
-  const Int          iWidth          = vps.getPicWidthInLumaSamples(&sps, layerId);
-  const Int          iHeight         = vps.getPicHeightInLumaSamples(&sps, layerId);
+  const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
+  const Int          iWidth          = sps.getPicWidthInLumaSamples();
+  const Int          iHeight         = sps.getPicHeightInLumaSamples();
   const UInt         uiMaxCuWidth    = sps.getMaxCUWidth();
   const UInt         uiMaxCuHeight   = sps.getMaxCUHeight();
   const UInt         uiMaxDepth      = sps.getMaxTotalCUDepth();
-  
-  const Window& conformanceWindow = vps.getConformanceWindow( &sps, layerId );
+  const Window& conformanceWindow    = sps.getConformanceWindow();
 
   m_layerId = layerId;
 

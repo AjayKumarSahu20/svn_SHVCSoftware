@@ -289,11 +289,7 @@ Void TComWeightPrediction::getWpScaling(       TComDataCU *const pcCU,
   { // Bi-predictive case
     for ( Int yuv=0 ; yuv<numValidComponent ; yuv++ )
     {
-#if SVC_EXTENSION
-      const Int bitDepth            = pcSlice->getBitDepth(toChannelType(ComponentID(yuv)));
-#else
       const Int bitDepth            = pcSlice->getSPS()->getBitDepth(toChannelType(ComponentID(yuv)));
-#endif
       const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (bitDepth-8));
 
       wp0[yuv].w      = wp0[yuv].iWeight;
@@ -314,11 +310,7 @@ Void TComWeightPrediction::getWpScaling(       TComDataCU *const pcCU,
 
     for ( Int yuv=0 ; yuv<numValidComponent ; yuv++ )
     {
-#if SVC_EXTENSION
-      const Int bitDepth            = pcSlice->getBitDepth(toChannelType(ComponentID(yuv)));
-#else
       const Int bitDepth            = pcSlice->getSPS()->getBitDepth(toChannelType(ComponentID(yuv)));
-#endif
       const Int offsetScalingFactor = bUseHighPrecisionPredictionWeighting ? 1 : (1 << (bitDepth-8));
 
       pwp[yuv].w      = pwp[yuv].iWeight;
@@ -350,27 +342,15 @@ Void TComWeightPrediction::xWeightedPredictionBi(       TComDataCU *const pcCU,
 
   if( iRefIdx0 >= 0 && iRefIdx1 >= 0 )
   {
-#if SVC_EXTENSION
-    addWeightBi(pcYuvSrc0, pcYuvSrc1, pcCU->getSlice()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp0, pwp1, rpcYuvDst );
-#else
     addWeightBi(pcYuvSrc0, pcYuvSrc1, pcCU->getSlice()->getSPS()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp0, pwp1, rpcYuvDst );
-#endif
   }
   else if ( iRefIdx0 >= 0 && iRefIdx1 <  0 )
   {
-#if SVC_EXTENSION
-    addWeightUni( pcYuvSrc0, pcCU->getSlice()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp0, rpcYuvDst );
-#else
     addWeightUni( pcYuvSrc0, pcCU->getSlice()->getSPS()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp0, rpcYuvDst );
-#endif
   }
   else if ( iRefIdx0 <  0 && iRefIdx1 >= 0 )
   {
-#if SVC_EXTENSION
-    addWeightUni( pcYuvSrc1, pcCU->getSlice()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp1, rpcYuvDst );
-#else
     addWeightUni( pcYuvSrc1, pcCU->getSlice()->getSPS()->getBitDepths(), uiPartIdx, iWidth, iHeight, pwp1, rpcYuvDst );
-#endif
   }
   else
   {
@@ -406,9 +386,5 @@ Void TComWeightPrediction::xWeightedPredictionUni(       TComDataCU *const pcCU,
   {
     getWpScaling(pcCU, -1, iRefIdx, pwpTmp, pwp);
   }
-#if SVC_EXTENSION
-  addWeightUni( pcYuvSrc, pcCU->getSlice()->getBitDepths(), uiPartAddr, iWidth, iHeight, pwp, pcYuvPred );
-#else
   addWeightUni( pcYuvSrc, pcCU->getSlice()->getSPS()->getBitDepths(), uiPartAddr, iWidth, iHeight, pwp, pcYuvPred );
-#endif
 }
