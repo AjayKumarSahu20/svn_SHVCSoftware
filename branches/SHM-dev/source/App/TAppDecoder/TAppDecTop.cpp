@@ -1928,7 +1928,7 @@ Void TAppDecTop::xFindDPBStatus( std::vector<Int> &listOfPocs
       {
         if( vps == NULL )
         {
-          vps = pic->getSlice(0)->getVPS();
+          vps = m_apcTDecTop[i]->getParameterSetManager()->getActiveVPS();
         }
 
         if( !(pic->isCurrAu() && notOutputCurrAu ) )
