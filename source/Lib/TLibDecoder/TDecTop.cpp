@@ -1326,12 +1326,6 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
     }
   }
   m_apcSlicePilot->setAvailableForTMVPRefFlag( true );
-
-  // Initialize ILRP if needed, only for the current layer  
-  // ILRP intialization should go along with activation of parameters sets, 
-  // although activation of parameter sets itself need not be done for each and every slice!!!
-  xInitILRP(m_apcSlicePilot);
-
 #else //SVC_EXTENSION
   //we should only get a different poc for a new picture (with CTU address==0)
   if (!m_apcSlicePilot->getDependentSliceSegmentFlag() && m_apcSlicePilot->getPOC()!=m_prevPOC && !m_bFirstSliceInSequence && (m_apcSlicePilot->getSliceCurStartCtuTsAddr() != 0))  
@@ -1384,6 +1378,11 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 #if SVC_EXTENSION
   if (m_bFirstSliceInPicture)
   {
+    // Initialize ILRP if needed, only for the current layer  
+    // ILRP intialization should go along with activation of parameters sets, 
+    // although activation of parameter sets itself need not be done for each and every slice!!!
+    xInitILRP(pcSlice->getSPS(), pcSlice->getPPS());
+
 #if AVC_BASE
     if( m_layerId > 0 && vps->getNonHEVCBaseLayerFlag() )
     {
@@ -2259,11 +2258,8 @@ Bool TDecTop::isRandomAccessSkipPicture(Int& iSkipFrame,  Int& iPOCLastDisplay)
 }
 
 #if SVC_EXTENSION
-Void TDecTop::xInitILRP(TComSlice *slice)
+Void TDecTop::xInitILRP(const TComSPS *sps, const TComPPS *pps)
 {
-  const TComVPS* vps  = slice->getVPS();
-  const TComSPS* sps  = slice->getSPS();
-
   if( m_layerId > 0 )
   {
     if (m_cIlpPic[0] == NULL)
@@ -2272,7 +2268,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
         m_cIlpPic[j] = new  TComPic;
 
-        m_cIlpPic[j]->create(*sps, *slice->getPPS(), true, m_layerId);
+        m_cIlpPic[j]->create(*sps, *pps, true, m_layerId);
 
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
