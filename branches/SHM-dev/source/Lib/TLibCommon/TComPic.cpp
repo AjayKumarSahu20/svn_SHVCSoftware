@@ -76,7 +76,7 @@ TComPic::~TComPic()
 {
 }
 #if SVC_EXTENSION
-Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const UInt layerId )
+Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const UInt layerId )
 {
   const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
   const Int          iWidth          = sps.getPicWidthInLumaSamples();
@@ -88,7 +88,7 @@ Void TComPic::create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps
 
   m_layerId = layerId;
 
-  m_picSym.create( vps, sps, pps, uiMaxDepth, layerId );
+  m_picSym.create( sps, pps, uiMaxDepth, layerId );
 
   if (!bIsVirtual)
   {

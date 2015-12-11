@@ -126,7 +126,7 @@ TEncPic::~TEncPic()
 // * \param vps reference to used VPS
 Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const UInt layerId )
 {
-  TComPic::create( vps, sps, pps, bIsVirtual, layerId );
+  TComPic::create( sps, pps, bIsVirtual, layerId );
 #else
 Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
 {

@@ -429,7 +429,7 @@ Void TComUpsampleFilter::upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc
 #else
     pcTempPic->setHeight(heightBL << 1);
 #endif
-    pcTempPic->extendPicBorder   (); // extend the border.
+    pcTempPic->extendPicBorder(); // extend the border.
 #if SCALABLE_REXT
     pcTempPic->setHeight(heightEL * chromaVerScalingEL);
 #else
