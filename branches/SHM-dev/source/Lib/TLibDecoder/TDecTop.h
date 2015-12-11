@@ -253,7 +253,7 @@ public:
   Void      setBlPic( TComPic* pic )                                        { m_blPic = pic;          }
   TComPic*  getBlPic()                                                      { return m_blPic;         }
 #endif
-  Void      xInitILRP(TComSlice *slice);
+  Void      xInitILRP(const TComSPS *sps, const TComPPS *pps);
   CommonDecoderParams*    getCommonDecoderParams()                          { return m_commonDecoderParams; }
   Void                    setCommonDecoderParams(CommonDecoderParams* x)    { m_commonDecoderParams = x;    }
   Void      checkValueOfTargetOutputLayerSetIdx(TComVPS *vps);
