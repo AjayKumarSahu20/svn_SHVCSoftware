@@ -66,7 +66,7 @@
 #define R0179_ENC_OPT_3DLUT_SIZE         0      ///< JCTVC-R0179: RD decision based LUT size selection 
 #endif
 
-#define UNAVAILABLE_PIC_BUGFIX           1
+#define UNAVAILABLE_PIC_BUGFIX           0
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define NO_CLRAS_OUTPUT_FLAG             1
 
