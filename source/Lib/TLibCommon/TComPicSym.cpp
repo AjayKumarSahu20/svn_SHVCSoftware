@@ -46,10 +46,6 @@
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
 
-#if SVC_EXTENSION
-TComVPS TComPicSym::m_vps;
-#endif
-
 TComPicSym::TComPicSym()
 :m_frameWidthInCtus(0)
 ,m_frameHeightInCtus(0)
@@ -81,9 +77,8 @@ TComPicSym::TComPicSym()
 {}
 
 #if SVC_EXTENSION
-Void TComPicSym::create  ( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId )
+Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId )
 {
-  m_vps = vps;
 #else
 Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth )
 {
@@ -214,9 +209,6 @@ Void TComPicSym::allocateNewSlice()
   m_apSlices.push_back(new TComSlice);
   m_apSlices.back()->setPPS(&m_pps);
   m_apSlices.back()->setSPS(&m_sps);
-#if SVC_EXTENSION
-  m_apSlices.back()->setVPS(&m_vps);
-#endif
   if (m_apSlices.size()>=2)
   {
     m_apSlices.back()->copySliceInfo( m_apSlices[m_apSlices.size()-2] );

@@ -120,8 +120,6 @@ private:
   Void               setCtuRsToTsAddrMap( Int ctuRsAddr, Int ctuTsOrder )  { *(m_ctuRsToTsAddrMap + ctuRsAddr) = ctuTsOrder; }
   
 #if SVC_EXTENSION
-  // SHM: temporal solution to keep VPS with a picture, ideally it should be picture specific, but currently sizeof(TComVPS) = 86929196
-  static TComVPS m_vps;
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Int*           m_piTileSetIdxMap;     //the map of the tile set index relative to LCU raster scan address
   UChar*         m_pucTileSetType;
@@ -131,7 +129,7 @@ private:
 
 public:
 #if SVC_EXTENSION
-  Void               create  ( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId );
+  Void               create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId );
 #if CGS_3D_ASYMLUT
   TComPPS*           getPPSToUpdate()                                      { return &m_pps; }
 #endif
@@ -153,11 +151,7 @@ public:
   const TComSPS&     getSPS()                 const                        { return m_sps; }
   const TComPPS&     getPPS()                 const                        { return m_pps; }
 
-#if SVC_EXTENSION
-  TComSlice *        swapSliceObject(TComSlice* p, UInt i)                 { p->setVPS(&m_vps); p->setSPS(&m_sps); p->setPPS(&m_pps); TComSlice *pTmp=m_apSlices[i];m_apSlices[i] = p; pTmp->setVPS(0); pTmp->setSPS(0); pTmp->setPPS(0); return pTmp; }
-#else
   TComSlice *        swapSliceObject(TComSlice* p, UInt i)                 { p->setSPS(&m_sps); p->setPPS(&m_pps); TComSlice *pTmp=m_apSlices[i];m_apSlices[i] = p; pTmp->setSPS(0); pTmp->setPPS(0); return pTmp; }
-#endif
   UInt               getNumAllocatedSlice() const                          { return UInt(m_apSlices.size());       }
   Void               allocateNewSlice();
   Void               clearSliceBuffer();
@@ -193,11 +187,11 @@ public:
     m_pucTileSetType[i]        = setType;
     m_pbSkippedTileSetFlag[i]  = skipFlag;
   }
-  Int          getTileSetIdxMap( Int i )                             { return *(m_piTileSetIdxMap + i); }
-  UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i); }
+  Int          getTileSetIdxMap( Int i )                             { return *(m_piTileSetIdxMap + i);      }
+  UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i);       }
   Bool         getSkippedTileSetFlag( Int i )                        { return *(m_pbSkippedTileSetFlag + i); }
 #endif
-  Void         inferSpsForNonHEVCBL()                                { m_sps.inferSPS(0, &m_vps); }
+  Void         inferSpsForNonHEVCBL(TComVPS *vps)                    { m_sps.inferSPS(0, vps);               }
 #endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TComPicSym

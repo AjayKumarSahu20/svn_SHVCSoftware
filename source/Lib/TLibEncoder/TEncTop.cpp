@@ -793,7 +793,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         }
       }
 
-      rpcPic->create( m_cVPS, m_cSPS, m_cPPS, false, m_layerId );
+      rpcPic->create( m_cSPS, m_cPPS, false, m_layerId );
 #else  //SVC_EXTENSION
       rpcPic->create( m_cSPS, m_cPPS, false );
 #endif //SVC_EXTENSION
@@ -1686,7 +1686,7 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new TComPic;
-        m_cIlpPic[j]->create(m_cVPS, m_cSPS, m_cPPS, true, m_layerId);
+        m_cIlpPic[j]->create(m_cSPS, m_cPPS, true, m_layerId);
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
           m_cIlpPic[j]->getPicSym()->getCtu(i)->initCtu(m_cIlpPic[j], i);

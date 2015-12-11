@@ -274,7 +274,7 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
       xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
     }
 
-    rpcPic->create( vps, sps, pps, true, m_layerId);
+    rpcPic->create( sps, pps, true, m_layerId);
 #else //SVC_EXTENSION
     rpcPic->create ( sps, pps, true);
 #endif //SVC_EXTENSION
@@ -323,7 +323,7 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
     xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
   }
 
-  rpcPic->create( vps, sps, pps, true, m_layerId);
+  rpcPic->create( sps, pps, true, m_layerId);
 #else  //SVC_EXTENSION
   rpcPic->create ( sps, pps, true);
 #endif //SVC_EXTENSION
@@ -519,11 +519,11 @@ Void TDecTop::xActivateParameterSets()
       {
         UInt refLayerId = 0;
 
-        pBLPic->create( *vps, *sps, *pps, true, refLayerId);
+        pBLPic->create( *sps, *pps, true, refLayerId);
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
-        pBLPic->getPicSym()->inferSpsForNonHEVCBL();
+        pBLPic->getPicSym()->inferSpsForNonHEVCBL(vps);
         pBLPic->getSlice(0)->setSPS( &pBLPic->getPicSym()->getSPS() );
       }
     }
@@ -2272,7 +2272,7 @@ Void TDecTop::xInitILRP(TComSlice *slice)
       {
         m_cIlpPic[j] = new  TComPic;
 
-        m_cIlpPic[j]->create(*vps, *sps, *slice->getPPS(), true, m_layerId);
+        m_cIlpPic[j]->create(*sps, *slice->getPPS(), true, m_layerId);
 
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {

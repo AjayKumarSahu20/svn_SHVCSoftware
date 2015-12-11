@@ -3619,7 +3619,8 @@ Void TComSPS::inferSPS( const UInt layerId, TComVPS* vps )
   {
     if( layerId == 0 && vps->getNonHEVCBaseLayerFlag() )
     {
-      repFormat = vps->getVpsRepFormat(layerId);
+      // infered from vps_rep_format_idx[ 0 ]-th rep_format( ) syntax structure in the active VPS
+      repFormat = vps->getVpsRepFormat(0);
     }
   }
   else
