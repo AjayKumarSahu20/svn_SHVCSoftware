@@ -59,9 +59,27 @@ TAppEncLayerCfg::TAppEncLayerCfg()
 
 TAppEncLayerCfg::~TAppEncLayerCfg()
 {
-  if ( m_aidQP )
+  if( m_numSamplePredRefLayers > 0 )
   {
-    delete[] m_aidQP;
+    delete [] m_samplePredRefLayerIds;
+    m_samplePredRefLayerIds = NULL;
+  }
+
+  if( m_numMotionPredRefLayers > 0 )
+  {
+    delete [] m_motionPredRefLayerIds;
+    m_motionPredRefLayerIds = NULL;
+  }
+
+  if( m_numActiveRefLayers > 0 )
+  {
+    delete [] m_predLayerIds;
+    m_predLayerIds = NULL;
+  }
+
+  if( m_aidQP )
+  {
+    delete [] m_aidQP;
   }
 }
 

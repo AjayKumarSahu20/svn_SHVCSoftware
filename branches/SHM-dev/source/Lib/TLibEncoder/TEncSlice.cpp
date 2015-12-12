@@ -242,6 +242,9 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
 #if SVC_EXTENSION
   UInt layerId = pcPic->getLayerId();
   rpcSlice->initSlice( layerId );
+
+  // VPS is used later by accessing from the slice getter
+  rpcSlice->setVPS(m_ppcTEncTop[0]->getVPS());
 #else
   rpcSlice->initSlice();
 #endif
@@ -551,9 +554,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
 #endif
 
 #if SVC_EXTENSION
-  // VPS is used later by accessing from the slice getter
-  rpcSlice->setVPS(m_ppcTEncTop[0]->getVPS());
-
   if( layerId > 0 )
   {
     if( rpcSlice->getNumILRRefIdx() > 0 )
