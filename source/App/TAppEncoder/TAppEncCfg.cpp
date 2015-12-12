@@ -181,21 +181,6 @@ Void TAppEncCfg::destroy()
 #if SVC_EXTENSION
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
-    if( m_apcLayerCfg[layer]->m_numSamplePredRefLayers > 0 )
-    {
-      delete [] m_apcLayerCfg[layer]->m_samplePredRefLayerIds;
-      m_apcLayerCfg[layer]->m_samplePredRefLayerIds = NULL;
-    }
-    if( m_apcLayerCfg[layer]->m_numMotionPredRefLayers > 0 )
-    {
-      delete [] m_apcLayerCfg[layer]->m_motionPredRefLayerIds;
-      m_apcLayerCfg[layer]->m_motionPredRefLayerIds = NULL;
-    }
-    if( m_apcLayerCfg[layer]->m_numActiveRefLayers > 0 )
-    {
-      delete [] m_apcLayerCfg[layer]->m_predLayerIds;
-      m_apcLayerCfg[layer]->m_predLayerIds = NULL;
-    }
     if( m_apcLayerCfg[layer] )
     {
       delete m_apcLayerCfg[layer];
@@ -2631,7 +2616,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinLeft;
 #endif
     Int* m_aiPad                    = m_apcLayerCfg[layer]->m_aiPad;
-    Int* m_aidQP                    = m_apcLayerCfg[layer]->m_aidQP;
+    Int*& m_aidQP                   = m_apcLayerCfg[layer]->m_aidQP;
 
     Int& m_iSourceWidth             = m_apcLayerCfg[layer]->m_iSourceWidth;
     Int& m_iSourceHeight            = m_apcLayerCfg[layer]->m_iSourceHeight;
