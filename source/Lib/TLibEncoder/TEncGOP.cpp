@@ -1651,7 +1651,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
           m_Enc3DAsymLUTPPS.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
           m_Enc3DAsymLUTPicUpdate.addRefLayerId( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) );
 
-          if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < POS_SCALING_FACTOR_1X || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < POS_SCALING_FACTOR_1X ) //if(pcPic->isSpatialEnhLayer(refLayerIdc))
+          if( pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 0) < POS_SCALING_FACTOR_1X || pcSlice->getPic()->getPosScalingFactor(refLayerIdc, 1) < POS_SCALING_FACTOR_1X ) //if(pcPic->requireResampling(refLayerIdc))
           {
             //downsampling
             xDownScalePic(pcPic->getPicYuvOrg(), pcSlice->getBaseColPic(refLayerIdc)->getPicYuvOrg(), pcSlice->getSPS()->getBitDepths(), pcPic->getPosScalingFactor(refLayerIdc, 0));
@@ -1680,7 +1680,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         }
 #endif
 
-        if( pcPic->isSpatialEnhLayer(refLayerIdc) )
+        if( pcPic->requireResampling(refLayerIdc) )
         {
           // check for the sample prediction picture type
           if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )

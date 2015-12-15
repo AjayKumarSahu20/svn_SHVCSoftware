@@ -61,7 +61,7 @@ TComPic::TComPic()
 {
 #if SVC_EXTENSION
   memset( m_pcFullPelBaseRec, 0, sizeof( m_pcFullPelBaseRec ) );
-  memset( m_bSpatialEnhLayer, false, sizeof( m_bSpatialEnhLayer ) );
+  memset( m_requireResampling, false, sizeof( m_requireResampling ) );
   memset( m_equalPictureSizeAndOffsetFlag, false, sizeof( m_equalPictureSizeAndOffsetFlag ) );
   memset( m_mvScalingFactor, 0, sizeof( m_mvScalingFactor ) );
   memset( m_posScalingFactor, 0, sizeof( m_posScalingFactor ) );
@@ -99,7 +99,7 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
-    if( m_bSpatialEnhLayer[i] )
+    if( m_requireResampling[i] )
     {
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
     }
@@ -157,7 +157,7 @@ Void TComPic::destroy()
 #if SVC_EXTENSION
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
-    if( m_bSpatialEnhLayer[i] && m_pcFullPelBaseRec[i] )
+    if( m_requireResampling[i] && m_pcFullPelBaseRec[i] )
     {
       m_pcFullPelBaseRec[i]->destroy();
       delete m_pcFullPelBaseRec[i];

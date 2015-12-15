@@ -85,8 +85,8 @@ private:
   SEIMessages  m_SEIs; ///< Any SEI messages that have been received.  If !NULL we own the object.
 
 #if SVC_EXTENSION
-  UInt                  m_layerId;              //  Layer ID
-  Bool                  m_bSpatialEnhLayer[MAX_LAYERS];       // whether current layer is a spatial enhancement layer,
+  UInt                  m_layerId;                         //  Layer ID
+  Bool                  m_requireResampling[MAX_LAYERS];   // whether current layer requires resampling
   TComPicYuv*           m_pcFullPelBaseRec[MAX_LAYERS];    // upsampled base layer recontruction for difference domain inter prediction
   Bool                  m_equalPictureSizeAndOffsetFlag[MAX_LAYERS];
   Int*                  m_mvScalingFactor[2];
@@ -191,8 +191,8 @@ public:
   Void          setLayerId(UInt layerId)                                    { m_layerId = layerId;                                       }
   UInt          getLayerId() const                                          { return m_layerId;                                          }
   UInt          getLayerIdx() const                                         { return m_picSym.getSlice(0)->getVPS()->getLayerIdxInVps(m_layerId);     }
-  Bool          isSpatialEnhLayer(UInt refLayerIdc) const                   { return m_bSpatialEnhLayer[refLayerIdc];                    }
-  Void          setSpatialEnhLayerFlag (UInt refLayerIdc, Bool b)           { m_bSpatialEnhLayer[refLayerIdc] = b;                       }
+  Bool          requireResampling(UInt refLayerIdc) const                   { return m_requireResampling[refLayerIdc];                   }
+  Void          setRequireResamplingFlag (UInt refLayerIdc, Bool b)         { m_requireResampling[refLayerIdc] = b;                      }
   Void          setFullPelBaseRec   (UInt refLayerIdc, TComPicYuv* p)       { m_pcFullPelBaseRec[refLayerIdc] = p;                       }
   TComPicYuv*   getFullPelBaseRec   (UInt refLayerIdc) const                { return  m_pcFullPelBaseRec[refLayerIdc];                   }
   Bool          isILR( UInt currLayerId ) const                             { return ( m_bIsLongTerm && m_layerId < currLayerId );       }
