@@ -740,7 +740,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #endif
             )
           {
-            pcEPic->setSpatialEnhLayerFlag( i, true );
+            pcEPic->setRequireResamplingFlag( i, true );
 
             //only for scalable extension
             assert( m_cVPS.getScalabilityMask( SCALABILITY_ID ) == true );
@@ -785,7 +785,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 #endif
             )
           {
-            rpcPic->setSpatialEnhLayerFlag( i, true );
+            rpcPic->setRequireResamplingFlag( i, true );
 
             //only for scalable extension
             assert( m_cVPS.getScalabilityMask( SCALABILITY_ID ) == true );

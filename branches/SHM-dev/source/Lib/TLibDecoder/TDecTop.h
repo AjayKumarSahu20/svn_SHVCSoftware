@@ -261,9 +261,9 @@ public:
   ParameterSetManager* getParameterSetManager()                             { return &m_parameterSetManager; }
 
 #if CONFORMANCE_BITSTREAM_MODE
-  std::vector<TComPic>* getConfListPic() { return &m_confListPic; }
-  Bool      getConfModeFlag() const      { return m_confModeFlag; }
-  Void      setConfModeFlag(Bool x)      { m_confModeFlag = x;    }
+  std::vector<TComPic>* getConfListPic()                                    { return &m_confListPic; }
+  Bool      getConfModeFlag() const                                         { return m_confModeFlag; }
+  Void      setConfModeFlag(Bool x)                                         { m_confModeFlag = x;    }
 #endif
 #endif //SVC_EXTENSION
 
@@ -278,7 +278,7 @@ protected:
   Void      xActivateParameterSets();
 #if SVC_EXTENSION
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay, UInt& curLayerId, Bool& bNewPOC);
-  Void      xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic* pic );
+  Void      xSetRequireResamplingFlag( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic* pic );
 #else
   Bool      xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisplay);
 #endif

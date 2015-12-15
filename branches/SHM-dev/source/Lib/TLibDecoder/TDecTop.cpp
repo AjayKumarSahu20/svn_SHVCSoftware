@@ -271,7 +271,7 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
 #if SVC_EXTENSION
     if(m_layerId > 0)
     {
-      xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
+      xSetRequireResamplingFlag( vps, sps, pps, rpcPic );
     }
 
     rpcPic->create( sps, pps, true, m_layerId);
@@ -320,7 +320,7 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
 #if SVC_EXTENSION
   if( m_layerId > 0 )
   {
-    xSetSpatialEnhLayerFlag( vps, sps, pps, rpcPic );
+    xSetRequireResamplingFlag( vps, sps, pps, rpcPic );
   }
 
   rpcPic->create( sps, pps, true, m_layerId);
@@ -1710,7 +1710,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         }
 #endif
 
-        if( m_pcPic->isSpatialEnhLayer(refLayerIdc) )
+        if( m_pcPic->requireResampling(refLayerIdc) )
         {
           // check for the sample prediction picture type
           if( pcSlice->getVPS()->isSamplePredictionType( pcSlice->getVPS()->getLayerIdxInVps(m_layerId), pcSlice->getVPS()->getLayerIdxInVps(refLayerId) ) )
@@ -2589,7 +2589,7 @@ Void TDecTop::xDeriveSmallestLayerId(TComVPS* vps)
   }
 }
 
-Void TDecTop::xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic* pic )
+Void TDecTop::xSetRequireResamplingFlag( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, TComPic* pic )
 {
   for(UInt i = 0; i < vps.getNumDirectRefLayers( m_layerId ); i++ )
   {
@@ -2619,7 +2619,7 @@ Void TDecTop::xSetSpatialEnhLayerFlag( const TComVPS &vps, const TComSPS &sps, c
 #endif
       )
     {
-      pic->setSpatialEnhLayerFlag( i, true );
+      pic->setRequireResamplingFlag( i, true );
 
       //only for scalable extension
       assert( vps.getScalabilityMask( SCALABILITY_ID ) == true );

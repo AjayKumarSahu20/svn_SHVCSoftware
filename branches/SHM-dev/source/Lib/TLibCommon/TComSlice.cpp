@@ -3332,7 +3332,7 @@ Void TComSlice::setILRPic(TComPic **pcIlpPic)
       TComPic* pcRefPicBL = m_pcBaseColPic[refLayerIdc];
 
       // copy scalability ratio, it is needed to get the correct location for the motion field of the corresponding reference layer block
-      pcIlpPic[refLayerIdc]->setSpatialEnhLayerFlag( refLayerIdc, m_pcPic->isSpatialEnhLayer(refLayerIdc) );
+      pcIlpPic[refLayerIdc]->setRequireResamplingFlag( refLayerIdc, m_pcPic->requireResampling(refLayerIdc) );
 
       pcIlpPic[refLayerIdc]->copyUpsampledPictureYuv( m_pcPic->getFullPelBaseRec( refLayerIdc ), pcIlpPic[refLayerIdc]->getPicYuvRec() );      
       pcIlpPic[refLayerIdc]->getSlice(0)->setBaseColPic( refLayerIdc, pcRefPicBL );
