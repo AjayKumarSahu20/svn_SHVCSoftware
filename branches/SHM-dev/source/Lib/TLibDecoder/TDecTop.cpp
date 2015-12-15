@@ -519,11 +519,12 @@ Void TDecTop::xActivateParameterSets()
       {
         UInt refLayerId = 0;
 
-        pBLPic->create( *sps, *pps, true, refLayerId);
+        pBLPic->getPicSym()->inferSpsForNonHEVCBL(vps, sps->getMaxCUWidth(), sps->getMaxCUHeight());
+
+        pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, true, refLayerId);
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
-        pBLPic->getPicSym()->inferSpsForNonHEVCBL(vps);
         pBLPic->getSlice(0)->setSPS( &pBLPic->getPicSym()->getSPS() );
       }
     }
@@ -1642,7 +1643,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
           if( pic )
           {
-            pcSlice->setBaseColPic ( refLayerIdc, pic );
+            pcSlice->setBaseColPic( refLayerIdc, pic );
           }
           else
           {
@@ -1653,7 +1654,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         {
           TDecTop *pcTDecTop = (TDecTop *)getRefLayerDec( refLayerIdc );
           TComList<TComPic*> *cListPic = pcTDecTop->getListPic();
-          if( !pcSlice->setBaseColPic ( *cListPic, refLayerIdc ) )
+          if( !pcSlice->setBaseColPic( *cListPic, refLayerIdc ) )
           {
             continue;
           }
