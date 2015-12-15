@@ -191,7 +191,7 @@ public:
   UChar        getTileSetType( Int i )                               { return *(m_pucTileSetType + i);       }
   Bool         getSkippedTileSetFlag( Int i )                        { return *(m_pbSkippedTileSetFlag + i); }
 #endif
-  Void         inferSpsForNonHEVCBL(TComVPS *vps)                    { m_sps.inferSPS(0, vps);               }
+  Void         inferSpsForNonHEVCBL(TComVPS *vps, const UInt maxCuWidth, const UInt maxCuHeight)  { m_sps.inferSPS(0, vps); m_sps.setMaxCUWidth(maxCuWidth), m_sps.setMaxCUHeight(maxCuHeight); }
 #endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TComPicSym
