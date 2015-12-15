@@ -636,6 +636,7 @@ public:
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, Int * const returnArray);
   Bool scanStringToArrayNumEntries(string const cfgString, Int &numEntries, const char* logString, std::vector<Int> &  returnVector);
   Void cfgStringToArrayNumEntries(Int **arr, string const cfgString, Int &numEntries, const char* logString);
+  Void printChromaFormat( const ChromaFormat inputChromaFormatIDC, const ChromaFormat chromaFormatIDC );
 
 #if SCALABLE_REXT
   Profile::Name extendedToShortProfileName(ExtendedProfileName uiExtendedProfileName)
