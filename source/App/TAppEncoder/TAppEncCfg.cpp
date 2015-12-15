@@ -254,7 +254,7 @@ strToProfile[] =
   {"scalable-main",        Profile::SCALABLEMAIN       },
   {"scalable-main10",      Profile::SCALABLEMAIN10     },
 #if SCALABLE_REXT
-  {"scalable-Rext",        Profile::SCALABLEREXT     },
+  {"scalable-RExt",        Profile::SCALABLEREXT     },
 #endif
 #endif
 };
@@ -4307,6 +4307,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("PCM sample bit depth                   : (Y:%d, C:%d)\n", m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_LUMA] : m_internalBitDepth[CHANNEL_TYPE_LUMA],
                                                                     m_bPCMInputBitDepthFlag ? m_MSBExtendedBitDepth[CHANNEL_TYPE_CHROMA] : m_internalBitDepth[CHANNEL_TYPE_CHROMA] );
 #if SVC_EXTENSION
+  printChromaFormat( m_apcLayerCfg[layerIdx]->m_InputChromaFormatIDC, m_apcLayerCfg[layerIdx]->m_chromaFormatIDC );
     }
 
     if( layer == m_numLayers )
@@ -4502,6 +4503,35 @@ Bool confirmPara(Bool bflag, const TChar* message)
 }
 
 #if SVC_EXTENSION
+Void TAppEncCfg::printChromaFormat( const ChromaFormat inputChromaFormatIDC, const ChromaFormat chromaFormatIDC )
+{
+  std::cout << "Input ChromaFormatIDC                  : ";
+  switch (inputChromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << "4:0:0"; break;
+  case CHROMA_420:  std::cout << "4:2:0"; break;
+  case CHROMA_422:  std::cout << "4:2:2"; break;
+  case CHROMA_444:  std::cout << "4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << std::endl;
+
+  std::cout << "Output (internal) ChromaFormatIDC      : ";
+  switch (chromaFormatIDC)
+  {
+  case CHROMA_400:  std::cout << "4:0:0"; break;
+  case CHROMA_420:  std::cout << "4:2:0"; break;
+  case CHROMA_422:  std::cout << "4:2:2"; break;
+  case CHROMA_444:  std::cout << "4:4:4"; break;
+  default:
+    std::cerr << "Invalid";
+    exit(1);
+  }
+  std::cout << "\n" << std::endl;
+}
+
 Void TAppEncCfg::cfgStringToArray(Int **arr, string const cfgString, Int const numEntries, const char* logString)
 {
   TChar *tempChar = cfgString.empty() ? NULL : strdup(cfgString.c_str());

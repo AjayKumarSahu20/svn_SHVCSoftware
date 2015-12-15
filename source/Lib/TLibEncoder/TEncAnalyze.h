@@ -226,6 +226,10 @@ public:
         }
         else
         {
+#if SVC_EXTENSION
+          if( layerId == 0 )
+          {
+#endif
           printf( "\tTotal Frames |   "   "Bitrate     "  "Y-PSNR" );
 
           if (printSequenceMSE)
@@ -239,6 +243,8 @@ public:
 
           //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
 #if SVC_EXTENSION
+          }
+
           printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
                  layerId,
 #else
