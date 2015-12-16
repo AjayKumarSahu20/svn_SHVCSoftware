@@ -772,8 +772,8 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
 
           const Int bitDepthLuma = m_cSPS.getBitDepth(CHANNEL_TYPE_LUMA);
           const Int bitDepthChroma = m_cSPS.getBitDepth(CHANNEL_TYPE_CHROMA);
-          const Int refBitDepthLuma = m_cSPS.getBitDepth(CHANNEL_TYPE_LUMA);
-          const Int refBitDepthChroma = m_cSPS.getBitDepth(CHANNEL_TYPE_CHROMA);
+          const Int refBitDepthLuma = pcEncTopBase->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA);
+          const Int refBitDepthChroma = pcEncTopBase->getSPS()->getBitDepth(CHANNEL_TYPE_CHROMA);
 
           Bool sameBitDepths = ( bitDepthLuma == refBitDepthLuma ) && ( bitDepthChroma == refBitDepthChroma );
 
