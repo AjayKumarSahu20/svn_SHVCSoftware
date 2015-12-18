@@ -2210,11 +2210,7 @@ TEncSearch::estIntraPredLumaQT(TComDataCU* pcCU,
               : m_pcRdCost->getSqrtLambda();
 #else
   const Double sqrtLambdaForFirstPass= (m_pcEncCfg->getCostMode()==COST_MIXED_LOSSLESS_LOSSY_CODING && pcCU->getCUTransquantBypass(0)) ?
-#if SVC_EXTENSION
-                sqrt(0.57 * pow(2.0, ((LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME - 12 - 6 * (pcCU->getSlice()->getBitDepth(CHANNEL_TYPE_LUMA) - 8)) / 3.0)))
-#else
                 sqrt(0.57 * pow(2.0, ((LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME - 12 - 6 * (sps.getBitDepth(CHANNEL_TYPE_LUMA) - 8)) / 3.0)))
-#endif
               : m_pcRdCost->getSqrtLambda();
 #endif
 
