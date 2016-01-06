@@ -3761,10 +3761,22 @@ Void TDecCavlc::parseVpsVuiBspHrdParams( TComVPS *vps )
 
   if( vps->getNumHrdParameters() + vps->getVpsNumAddHrdParams() > 0 )
   {
+    // When vps_base_layer_internal_flag is equal to 1, the value of num_partitions_in_scheme_minus1[ 0 ][ 0 ] is inferred to be equal to 0.
+    if( vps->getBaseLayerInternalFlag() )
+    {
+      vps->setNumPartitionsInSchemeMinus1(0, 0, 0);
+    }
+
     for (Int h = 1; h < vps->getNumOutputLayerSets(); h++)
     {
       Int lsIdx = vps->getOutputLayerSetIdx(h);
       READ_UVLC(uiCode, "num_signalled_partitioning_schemes[h]"); vps->setNumSignalledPartitioningSchemes(h, uiCode);
+
+      // When vps_base_layer_internal_flag is equal to 1, the value of num_partitions_in_scheme_minus1[ h ][ 0 ] is inferred to be equal to NumLayersInIdList[ h ] - 1.
+      if( vps->getBaseLayerInternalFlag() )
+      {
+        vps->setNumPartitionsInSchemeMinus1(h, 0, vps->getNumLayersInIdList(h) - 1);
+      }
 
       for (Int j = 1; j < vps->getNumSignalledPartitioningSchemes(h) + 1; j++)
       {
