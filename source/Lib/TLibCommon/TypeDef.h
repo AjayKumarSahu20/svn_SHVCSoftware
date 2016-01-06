@@ -47,8 +47,7 @@
 #define SVC_EXTENSION                    1
 
 #if SVC_EXTENSION
-#define SCALABLE_REXT                    1
-#define FORMATIDX_CHECK                  1
+#define SCALABLE_REXT                    1      ///< enabling scalable RExt profiles, for bit-depth greater than 10 consider to enable RExt__HIGH_BIT_DEPTH_SUPPORT
 
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 

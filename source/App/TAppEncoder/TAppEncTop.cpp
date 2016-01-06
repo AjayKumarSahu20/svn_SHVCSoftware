@@ -138,7 +138,6 @@ Void TAppEncTop::xInitLibCfg()
 
     maxRepFormatIdx = std::max( m_apcLayerCfg[layer]->getRepFormatIdx(), maxRepFormatIdx );
 
-#if FORMATIDX_CHECK
     for(Int compareLayer = 0; compareLayer < layer; compareLayer++ )
     {
       if(m_apcLayerCfg[layer]->m_repFormatIdx == m_apcLayerCfg[compareLayer]->m_repFormatIdx && (
@@ -158,7 +157,6 @@ Void TAppEncTop::xInitLibCfg()
         exit(EXIT_FAILURE);
       }
     }
-#endif
   }
 
   assert( vps.getVpsRepFormatIdx( 0 ) == 0 );  // Base layer should point to the first one.
