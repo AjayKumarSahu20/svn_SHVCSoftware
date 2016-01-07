@@ -1264,7 +1264,7 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
       && !m_apcSlicePilot->getRadlPicFlag()
       && (m_apcSlicePilot->getNalUnitType() % 2 == 1
 #if CONFORMANCE_BITSTREAM_FIX
-        || (m_apcSlicePilot->getNalUnitType() > 15 && m_apcSlicePilot->getNalUnitType() < 24))
+        || (m_apcSlicePilot->getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_apcSlicePilot->getNalUnitType() <= NAL_UNIT_RESERVED_IRAP_VCL23)) // should it be NAL_UNIT_CODED_SLICE_CRA instead?
 #else
         )
 #endif
