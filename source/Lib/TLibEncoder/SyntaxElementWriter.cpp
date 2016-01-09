@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #if ENC_DEC_TRACE
 
-Void  SyntaxElementWriter::xWriteCodeTr (UInt value, UInt  length, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteCodeTr (UInt value, UInt  length, const TChar *pSymbolName)
 {
   xWriteCode (value,length);
   if( g_HLSTraceEnable )
@@ -51,44 +51,56 @@ Void  SyntaxElementWriter::xWriteCodeTr (UInt value, UInt  length, const Char *p
     fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
     if( length<10 )
     {
-      fprintf( g_hTrace, "%-50s u(%d)  : %d\n", pSymbolName, length, value ); 
+      fprintf( g_hTrace, "%-50s u(%d)  : %d\n", pSymbolName, length, value );
     }
     else
     {
-      fprintf( g_hTrace, "%-50s u(%d) : %d\n", pSymbolName, length, value ); 
+      fprintf( g_hTrace, "%-50s u(%d) : %d\n", pSymbolName, length, value );
     }
   }
 }
 
-Void  SyntaxElementWriter::xWriteUvlcTr (UInt value, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteUvlcTr (UInt value, const TChar *pSymbolName)
 {
   xWriteUvlc (value);
   if( g_HLSTraceEnable )
   {
     fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s ue(v) : %d\n", pSymbolName, value ); 
+    fprintf( g_hTrace, "%-50s ue(v) : %d\n", pSymbolName, value );
   }
 }
 
-Void  SyntaxElementWriter::xWriteSvlcTr (Int value, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteSvlcTr (Int value, const TChar *pSymbolName)
 {
   xWriteSvlc(value);
   if( g_HLSTraceEnable )
   {
     fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s se(v) : %d\n", pSymbolName, value ); 
+    fprintf( g_hTrace, "%-50s se(v) : %d\n", pSymbolName, value );
   }
 }
 
-Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const Char *pSymbolName)
+Void  SyntaxElementWriter::xWriteFlagTr(UInt value, const TChar *pSymbolName)
 {
   xWriteFlag(value);
   if( g_HLSTraceEnable )
   {
     fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
-    fprintf( g_hTrace, "%-50s u(1)  : %d\n", pSymbolName, value ); 
+    fprintf( g_hTrace, "%-50s u(1)  : %d\n", pSymbolName, value );
   }
 }
+
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementWriter::xWriteStringTr( UChar* value, UInt length, const TChar *pSymbolName)
+{
+  xWriteString(value, length);
+  if( g_HLSTraceEnable )
+  {
+    fprintf( g_hTrace, "%8lld  ", g_nSymbolCounter++ );
+    fprintf( g_hTrace, "%-50s st(v=%d)  : %s\n", pSymbolName, length, value ); 
+  }
+}
+#endif
 
 #endif
 
@@ -103,9 +115,9 @@ Void SyntaxElementWriter::xWriteUvlc     ( UInt uiCode )
 {
   UInt uiLength = 1;
   UInt uiTemp = ++uiCode;
-  
+
   assert ( uiTemp );
-  
+
   while( 1 != uiTemp )
   {
     uiTemp >>= 1;
@@ -119,7 +131,7 @@ Void SyntaxElementWriter::xWriteUvlc     ( UInt uiCode )
 Void SyntaxElementWriter::xWriteSvlc     ( Int iCode )
 {
   UInt uiCode;
-  
+
   uiCode = xConvertToUInt( iCode );
   xWriteUvlc( uiCode );
 }
@@ -128,5 +140,29 @@ Void SyntaxElementWriter::xWriteFlag( UInt uiCode )
 {
   m_pcBitIf->write( uiCode, 1 );
 }
+
+Void SyntaxElementWriter::xWriteRbspTrailingBits()
+{
+  WRITE_FLAG( 1, "rbsp_stop_one_bit");
+  Int cnt = 0;
+  while (m_pcBitIf->getNumBitsUntilByteAligned())
+  {
+    WRITE_FLAG( 0, "rbsp_alignment_zero_bit");
+    cnt++;
+  }
+  assert(cnt<8);
+}
+
+#if Q0096_OVERLAY_SEI
+Void  SyntaxElementWriter::xWriteString( UChar* sCode, UInt uiLength)
+{
+  assert(m_pcBitIf->getNumberOfWrittenBits() % 8 == 0 );
+  for (Int i=0 ; i<uiLength; i++)
+  {
+    m_pcBitIf->write( sCode[i], 8 );
+  }
+  m_pcBitIf->write( 0, 8 ); //zero-termination byte
+}
+#endif
 
 //! \}

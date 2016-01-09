@@ -41,24 +41,7 @@ private:
 public:
   TComUpsampleFilter(void);
   ~TComUpsampleFilter(void);
-
-#if O0215_PHASE_ALIGNMENT
-#if O0194_JOINT_US_BITSHIFT
-  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, Bool phaseAlignFlag );
-#else
-  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, Bool phaseAlignFlag );
-#endif
-#else
-#if O0194_JOINT_US_BITSHIFT
-#if REF_REGION_OFFSET
-  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window, const Window altRefWindow );
-#else
-  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
-#endif
-#else
-  Void upsampleBasePic( UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Window window );
-#endif
-#endif
+  Void upsampleBasePic( TComSlice* currSlice, UInt refLayerIdc, TComPicYuv* pcUsPic, TComPicYuv* pcBasePic, TComPicYuv* pcTempPic, const Int refBitDepthLuma, const Int refBitDepthChroma );
 
 };
 

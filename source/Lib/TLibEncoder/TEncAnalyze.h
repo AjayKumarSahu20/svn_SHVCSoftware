@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@
 #include <memory.h>
 #include <assert.h>
 #include "TLibCommon/CommonDef.h"
+#include "TLibCommon/TComChromaFormat.h"
+#include "math.h"
 
 //! \ingroup TLibEncoder
 //! \{
@@ -58,153 +60,391 @@
 class TEncAnalyze
 {
 private:
-  Double    m_dPSNRSumY;
-  Double    m_dPSNRSumU;
-  Double    m_dPSNRSumV;
+  Double    m_dPSNRSum[MAX_NUM_COMPONENT];
   Double    m_dAddBits;
   UInt      m_uiNumPic;
   Double    m_dFrmRate; //--CFG_KDY
-  
+  Double    m_MSEyuvframe[MAX_NUM_COMPONENT]; // sum of MSEs
+
 public:
-  TEncAnalyze() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
   virtual ~TEncAnalyze()  {}
-  
-  Void  addResult( Double psnrY, Double psnrU, Double psnrV, Double bits)
+  TEncAnalyze() { clear(); }
+
+  Void  addResult( Double psnr[MAX_NUM_COMPONENT], Double bits, const Double MSEyuvframe[MAX_NUM_COMPONENT])
   {
-    m_dPSNRSumY += psnrY;
-    m_dPSNRSumU += psnrU;
-    m_dPSNRSumV += psnrV;
     m_dAddBits  += bits;
-    
+    for(UInt i=0; i<MAX_NUM_COMPONENT; i++)
+    {
+      m_dPSNRSum[i] += psnr[i];
+      m_MSEyuvframe[i] += MSEyuvframe[i];
+    }
+
     m_uiNumPic++;
   }
-  
-  Double  getPsnrY()  { return  m_dPSNRSumY;  }
-  Double  getPsnrU()  { return  m_dPSNRSumU;  }
-  Double  getPsnrV()  { return  m_dPSNRSumV;  }
-  Double  getBits()   { return  m_dAddBits;   }
-  UInt    getNumPic() { return  m_uiNumPic;   }
-  
+
+  Double  getPsnr(ComponentID compID) const { return  m_dPSNRSum[compID];  }
+  Double  getBits()                   const { return  m_dAddBits;   }
+  Void    setBits(Double numBits)     { m_dAddBits=numBits; }
+  UInt    getNumPic()                 const { return  m_uiNumPic;   }
+
   Void    setFrmRate  (Double dFrameRate) { m_dFrmRate = dFrameRate; } //--CFG_KDY
-  Void    clear() { m_dPSNRSumY = m_dPSNRSumU = m_dPSNRSumV = m_dAddBits = m_uiNumPic = 0;  }
-#if SVC_EXTENSION
-  Void    printOut ( Char cDelim, UInt layer )
+  Void    clear()
   {
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    printf( "    L%d\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
-           layer,
-           getNumPic(), cDelim,
-           getBits() * dScale,
-           getPsnrY() / (Double)getNumPic(),
-           getPsnrU() / (Double)getNumPic(),
-           getPsnrV() / (Double)getNumPic() );
-  }
-#else
-  Void    printOut ( Char cDelim )
-  {
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
-    //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
-    printf( "\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
-           getNumPic(), cDelim,
-           getBits() * dScale,
-           getPsnrY() / (Double)getNumPic(),
-           getPsnrU() / (Double)getNumPic(),
-           getPsnrV() / (Double)getNumPic() );
-  }
-#endif
-  
-  Void    printSummaryOut ()
-  {
-    FILE* pFile = fopen ("summaryTotal.txt", "at");
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    fprintf(pFile, "%f\t %f\t %f\t %f\n", getBits() * dScale,
-            getPsnrY() / (Double)getNumPic(),
-            getPsnrU() / (Double)getNumPic(),
-            getPsnrV() / (Double)getNumPic() );
-    fclose(pFile);
+    m_dAddBits = 0;
+    for(UInt i=0; i<MAX_NUM_COMPONENT; i++)
+    {
+      m_dPSNRSum[i] = 0;
+      m_MSEyuvframe[i] = 0;
+    }
+    m_uiNumPic = 0;
   }
 
-  Void    printOutInterlaced ( Char cDelim, Double bits )
+
+  Void calculateCombinedValues(const ChromaFormat chFmt, Double &PSNRyuv, Double &MSEyuv, const BitDepths &bitDepths)
   {
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    printf( "\tTotal Frames |  "   "Bitrate    "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR \n" );
-    //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
-    printf( "\t %8d    %c"          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf\n",
-           getNumPic(), cDelim,
-           bits * dScale,
-           getPsnrY() / (Double)getNumPic(),
-           getPsnrU() / (Double)getNumPic(),
-           getPsnrV() / (Double)getNumPic() );
-  }
-  
-  Void    printSummaryOutInterlaced (Int bits)
-  {
-    FILE* pFile = fopen ("summaryTotal.txt", "at");
-    Double dFps     =   m_dFrmRate; //--CFG_KDY
-    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    fprintf(pFile, "%f\t %f\t %f\t %f\n", bits * dScale,
-            getPsnrY() / (Double)getNumPic(),
-            getPsnrU() / (Double)getNumPic(),
-            getPsnrV() / (Double)getNumPic() );
-    fclose(pFile);
-  }
-  
-  
-  Void    printSummary(Char ch)
-  {
-    FILE* pFile = NULL;
-    
-    switch( ch ) 
+    MSEyuv    = 0;
+    Int scale = 0;
+
+    Int maximumBitDepth = bitDepths.recon[CHANNEL_TYPE_LUMA];
+    for (UInt channelTypeIndex = 1; channelTypeIndex < MAX_NUM_CHANNEL_TYPE; channelTypeIndex++)
     {
-      case 'I':
-        pFile = fopen ("summary_I.txt", "at");
+      if (bitDepths.recon[channelTypeIndex] > maximumBitDepth)
+      {
+        maximumBitDepth = bitDepths.recon[channelTypeIndex];
+      }
+    }
+
+    const UInt maxval                = 255 << (maximumBitDepth - 8);
+    const UInt numberValidComponents = getNumberValidComponents(chFmt);
+
+    for (UInt comp=0; comp<numberValidComponents; comp++)
+    {
+      const ComponentID compID        = ComponentID(comp);
+      const UInt        csx           = getComponentScaleX(compID, chFmt);
+      const UInt        csy           = getComponentScaleY(compID, chFmt);
+      const Int         scaleChan     = (4>>(csx+csy));
+      const UInt        bitDepthShift = 2 * (maximumBitDepth - bitDepths.recon[toChannelType(compID)]); //*2 because this is a squared number
+
+      const Double      channelMSE    = (m_MSEyuvframe[compID] * Double(1 << bitDepthShift)) / Double(getNumPic());
+
+      scale  += scaleChan;
+      MSEyuv += scaleChan * channelMSE;
+    }
+
+    MSEyuv /= Double(scale);  // i.e. divide by 6 for 4:2:0, 8 for 4:2:2 etc.
+    PSNRyuv = (MSEyuv==0 ? 999.99 : 10*log10((maxval*maxval)/MSEyuv));
+  }
+
+#if SVC_EXTENSION
+  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths, UInt layerId = 0 )
+#else
+  Void    printOut ( TChar cDelim, const ChromaFormat chFmt, const Bool printMSEBasedSNR, const Bool printSequenceMSE, const BitDepths &bitDepths )
+#endif
+  {
+    Double dFps     =   m_dFrmRate; //--CFG_KDY
+    Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
+
+#if SVC_EXTENSION
+    // SHM: to avoid compiler warning of possible usage of uninitialized variable
+    Double MSEBasedSNR[MAX_NUM_COMPONENT] = {0, };
+#else
+    Double MSEBasedSNR[MAX_NUM_COMPONENT];
+#endif
+    if (printMSEBasedSNR)
+    {
+      for (UInt componentIndex = 0; componentIndex < MAX_NUM_COMPONENT; componentIndex++)
+      {
+        const ComponentID compID = ComponentID(componentIndex);
+
+        if (getNumPic() == 0)
+        {
+          MSEBasedSNR[compID] = 0 * dScale; // this is the same calculation that will be evaluated for any other statistic when there are no frames (it should result in NaN). We use it here so all the output is consistent.
+        }
+        else
+        {
+          //NOTE: this is not the true maximum value for any bitDepth other than 8. It comes from the original HM PSNR calculation
+          const UInt maxval = 255 << (bitDepths.recon[toChannelType(compID)] - 8);
+          const Double MSE = m_MSEyuvframe[compID];
+
+          MSEBasedSNR[compID] = (MSE == 0) ? 999.99 : (10 * log10((maxval * maxval) / (MSE / (Double)getNumPic())));
+        }
+      }
+    }
+
+    switch (chFmt)
+    {
+      case CHROMA_400:
+        if (printMSEBasedSNR)
+        {
+#if SVC_EXTENSION
+          if( layerId == 0 )
+          {
+#endif
+          printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR" );
+
+          if (printSequenceMSE)
+          {
+            printf( "    Y-MSE\n" );
+          }
+          else
+          {
+            printf("\n");
+          }
+
+          //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+          }
+
+          printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
+                 layerId,
+
+#else
+          printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf",
+#endif
+                 getNumPic(), cDelim,
+                 getBits() * dScale,
+                 getPsnr(COMPONENT_Y) / (Double)getNumPic() );
+
+          if (printSequenceMSE)
+          {
+            printf( "  %8.4lf\n", m_MSEyuvframe[COMPONENT_Y ] / (Double)getNumPic() );
+          }
+          else
+          {
+            printf("\n");
+          }
+
+#if SVC_EXTENSION
+          printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
+                 layerId,
+#else
+          printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf\n",
+#endif
+                 getNumPic(), cDelim,
+                 getBits() * dScale,
+                 MSEBasedSNR[COMPONENT_Y] );
+        }
+        else
+        {
+#if SVC_EXTENSION
+          if( layerId == 0 )
+          {
+#endif
+          printf( "\tTotal Frames |   "   "Bitrate     "  "Y-PSNR" );
+
+          if (printSequenceMSE)
+          {
+            printf( "    Y-MSE\n" );
+          }
+          else
+          {
+            printf("\n");
+          }
+
+          //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+          }
+
+          printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf",
+                 layerId,
+#else
+          printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf",
+#endif
+                 getNumPic(), cDelim,
+                 getBits() * dScale,
+                 getPsnr(COMPONENT_Y) / (Double)getNumPic() );
+
+          if (printSequenceMSE)
+          {
+            printf( "  %8.4lf\n", m_MSEyuvframe[COMPONENT_Y ] / (Double)getNumPic() );
+          }
+          else
+          {
+            printf("\n");
+          }
+        }
         break;
-      case 'P':
-        pFile = fopen ("summary_P.txt", "at");
-        break;
-      case 'B':
-        pFile = fopen ("summary_B.txt", "at");
+      case CHROMA_420:
+      case CHROMA_422:
+      case CHROMA_444:
+        {
+          Double PSNRyuv = MAX_DOUBLE;
+          Double MSEyuv  = MAX_DOUBLE;
+          
+          calculateCombinedValues(chFmt, PSNRyuv, MSEyuv, bitDepths);
+
+          if (printMSEBasedSNR)
+          {
+#if SVC_EXTENSION
+            if( layerId == 0 )
+            {
+#endif
+            printf( "         \tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
+
+            if (printSequenceMSE)
+            {
+              printf( " Y-MSE     "  "U-MSE     "  "V-MSE    "  "YUV-MSE \n" );
+            }
+            else
+            {
+              printf("\n");
+            }
+
+            //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+            }
+            printf( "Average:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+                   layerId,
+#else
+            printf( "Average: \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+#endif
+                   getNumPic(), cDelim,
+                   getBits() * dScale,
+                   getPsnr(COMPONENT_Y) / (Double)getNumPic(),
+                   getPsnr(COMPONENT_Cb) / (Double)getNumPic(),
+                   getPsnr(COMPONENT_Cr) / (Double)getNumPic(),
+                   PSNRyuv );
+
+            if (printSequenceMSE)
+            {
+              printf( "  %8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+                     m_MSEyuvframe[COMPONENT_Y ] / (Double)getNumPic(),
+                     m_MSEyuvframe[COMPONENT_Cb] / (Double)getNumPic(),
+                     m_MSEyuvframe[COMPONENT_Cr] / (Double)getNumPic(),
+                     MSEyuv );
+            }
+            else
+            {
+              printf("\n");
+            }
+
+#if SVC_EXTENSION
+            printf( "From MSE:  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+                   layerId,
+#else
+            printf( "From MSE:\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+#endif
+                   getNumPic(), cDelim,
+                   getBits() * dScale,
+                   MSEBasedSNR[COMPONENT_Y],
+                   MSEBasedSNR[COMPONENT_Cb],
+                   MSEBasedSNR[COMPONENT_Cr],
+                   PSNRyuv );
+          }
+          else
+          {
+#if SVC_EXTENSION
+            if( layerId == 0 )
+            {
+#endif
+            printf( "\tTotal Frames |   "   "Bitrate     "  "Y-PSNR    "  "U-PSNR    "  "V-PSNR    "  "YUV-PSNR " );
+            
+            if (printSequenceMSE)
+            {
+              printf( " Y-MSE     "  "U-MSE     "  "V-MSE    "  "YUV-MSE \n" );
+            }
+            else
+            {
+              printf("\n");
+            }
+
+            //printf( "\t------------ "  " ----------"   " -------- "  " -------- "  " --------\n" );
+#if SVC_EXTENSION
+            }
+            printf( "  L%d \t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+                   layerId,
+#else
+            printf( "\t %8d    %c "          "%12.4lf  "    "%8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf",
+#endif
+                   getNumPic(), cDelim,
+                   getBits() * dScale,
+                   getPsnr(COMPONENT_Y) / (Double)getNumPic(),
+                   getPsnr(COMPONENT_Cb) / (Double)getNumPic(),
+                   getPsnr(COMPONENT_Cr) / (Double)getNumPic(),
+                   PSNRyuv );
+
+            if (printSequenceMSE)
+            {
+              printf( "  %8.4lf  "   "%8.4lf  "    "%8.4lf  "   "%8.4lf\n",
+                     m_MSEyuvframe[COMPONENT_Y ] / (Double)getNumPic(),
+                     m_MSEyuvframe[COMPONENT_Cb] / (Double)getNumPic(),
+                     m_MSEyuvframe[COMPONENT_Cr] / (Double)getNumPic(),
+                     MSEyuv );
+            }
+            else
+            {
+              printf("\n");
+            }
+          }
+        }
         break;
       default:
-        assert(0);
-        return;
+        fprintf(stderr, "Unknown format during print out\n");
+        exit(1);
         break;
     }
-    
+  }
+
+
+  Void    printSummary(const ChromaFormat chFmt, const Bool printSequenceMSE, const BitDepths &bitDepths, const std::string &sFilename)
+  {
+    FILE* pFile = fopen (sFilename.c_str(), "at");
+
     Double dFps     =   m_dFrmRate; //--CFG_KDY
     Double dScale   = dFps / 1000 / (Double)m_uiNumPic;
-    
-    fprintf(pFile, "%f\t %f\t %f\t %f\n",
+    switch (chFmt)
+    {
+      case CHROMA_400:
+        fprintf(pFile, "%f\t %f\n",
             getBits() * dScale,
-            getPsnrY() / (Double)getNumPic(),
-            getPsnrU() / (Double)getNumPic(),
-            getPsnrV() / (Double)getNumPic() );
-    
+            getPsnr(COMPONENT_Y) / (Double)getNumPic() );
+        break;
+      case CHROMA_420:
+      case CHROMA_422:
+      case CHROMA_444:
+        {
+          Double PSNRyuv = MAX_DOUBLE;
+          Double MSEyuv  = MAX_DOUBLE;
+          
+          calculateCombinedValues(chFmt, PSNRyuv, MSEyuv, bitDepths);
+
+          fprintf(pFile, "%f\t %f\t %f\t %f\t %f",
+              getBits() * dScale,
+              getPsnr(COMPONENT_Y) / (Double)getNumPic(),
+              getPsnr(COMPONENT_Cb) / (Double)getNumPic(),
+              getPsnr(COMPONENT_Cr) / (Double)getNumPic(),
+              PSNRyuv );
+
+          if (printSequenceMSE)
+          {
+            fprintf(pFile, "\t %f\t %f\t %f\t %f\n",
+                m_MSEyuvframe[COMPONENT_Y ] / (Double)getNumPic(),
+                m_MSEyuvframe[COMPONENT_Cb] / (Double)getNumPic(),
+                m_MSEyuvframe[COMPONENT_Cr] / (Double)getNumPic(),
+                MSEyuv );
+          }
+          else
+          {
+            fprintf(pFile, "\n");
+          }
+
+          break;
+        }
+
+      default:
+          fprintf(stderr, "Unknown format during print out\n");
+          exit(1);
+          break;
+    }
+
     fclose(pFile);
   }
 };
 
-#if SVC_EXTENSION
-extern TEncAnalyze             m_gcAnalyzeAll [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeI [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeP [MAX_LAYERS];
-extern TEncAnalyze             m_gcAnalyzeB [MAX_LAYERS];
-#else
 extern TEncAnalyze             m_gcAnalyzeAll;
 extern TEncAnalyze             m_gcAnalyzeI;
 extern TEncAnalyze             m_gcAnalyzeP;
 extern TEncAnalyze             m_gcAnalyzeB;
-#endif
 
 extern TEncAnalyze             m_gcAnalyzeAll_in;
 

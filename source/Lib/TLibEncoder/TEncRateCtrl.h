@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
     \brief    Rate control manager class
 */
 
-#ifndef _HM_TENCRATECTRL_H_
-#define _HM_TENCRATECTRL_H_
+#ifndef __TENCRATECTRL__
+#define __TENCRATECTRL__
 
 #if _MSC_VER > 1000
 #pragma once
@@ -116,7 +116,7 @@ public:
   Int  getFrameRate()                   { return m_frameRate; }
   Int  getGOPSize()                     { return m_GOPSize; }
   Int  getPicWidth()                    { return m_picWidth; }
-  Int  getPicHeight()                   { return m_picHeight; } 
+  Int  getPicHeight()                   { return m_picHeight; }
   Int  getLCUWidth()                    { return m_LCUWidth; }
   Int  getLCUHeight()                   { return m_LCUHeight; }
   Int  getNumberOfLevel()               { return m_numberOfLevel; }
@@ -153,7 +153,7 @@ public:
 private:
   Int m_totalFrames;
   Int m_targetRate;
-  Int m_frameRate; 
+  Int m_frameRate;
   Int m_GOPSize;
   Int m_picWidth;
   Int m_picHeight;
@@ -226,17 +226,17 @@ public:
 
   Int    estimatePicQP    ( Double lambda, list<TEncRCPic*>& listPreviousPictures );
   Int    getRefineBitsForIntra(Int orgBits);
-  Double calculateLambdaIntra(double alpha, double beta, double MADPerPixel, double bitsPerPixel);
+  Double calculateLambdaIntra(Double alpha, Double beta, Double MADPerPixel, Double bitsPerPixel);
   Double estimatePicLambda( list<TEncRCPic*>& listPreviousPictures, SliceType eSliceType);
 
-  Void   updateAlphaBetaIntra(double *alpha, double *beta);
+  Void   updateAlphaBetaIntra(Double *alpha, Double *beta);
 
   Double getLCUTargetBpp(SliceType eSliceType);
   Double getLCUEstLambdaAndQP(Double bpp, Int clipPicQP, Int *estQP);
   Double getLCUEstLambda( Double bpp );
   Int    getLCUEstQP( Double lambda, Int clipPicQP );
 
-  Void updateAfterLCU( Int LCUIdx, Int bits, Int QP, Double lambda, Bool updateLCUParameter = true );
+  Void updateAfterCTU( Int LCUIdx, Int bits, Int QP, Double lambda, Bool updateLCUParameter = true );
   Void updateAfterPicture( Int actualHeaderBits, Int actualTotalBits, Double averageQP, Double averageLambda, SliceType eSliceType);
 
   Void addToPictureLsit( list<TEncRCPic*>& listPreviousPictures );
@@ -264,6 +264,9 @@ public:
   TRCLCU* getLCU()                                        { return m_LCUs; }
   TRCLCU& getLCU( Int LCUIdx )                            { return m_LCUs[LCUIdx]; }
   Int  getPicActualHeaderBits()                           { return m_picActualHeaderBits; }
+#if U0132_TARGET_BITS_SATURATION
+  Void setBitLeft(Int bits)                               { m_bitsLeft = bits; }
+#endif
   Void setTargetBits( Int bits )                          { m_targetBits = bits; m_bitsLeft = bits;}
   Void setTotalIntraCost(Double cost)                     { m_totalCostIntra = cost; }
   Void getLCUInitTargetBits();
@@ -294,7 +297,7 @@ private:
 
   TRCLCU* m_LCUs;
   Int m_picActualHeaderBits;    // only SH and potential APS
-  Double m_totalCostIntra; 
+  Double m_totalCostIntra;
   Double m_remainingCostIntra;
   Int m_picActualBits;          // the whole picture, including header
   Int m_picQP;                  // in integer form
@@ -321,6 +324,14 @@ public:
   TEncRCGOP* getRCGOP()          { assert ( m_encRCGOP != NULL ); return m_encRCGOP; }
   TEncRCPic* getRCPic()          { assert ( m_encRCPic != NULL ); return m_encRCPic; }
   list<TEncRCPic*>& getPicList() { return m_listRCPictures; }
+#if U0132_TARGET_BITS_SATURATION
+  Bool       getCpbSaturationEnabled()  { return m_CpbSaturationEnabled;  }
+  UInt       getCpbState()              { return m_cpbState;       }
+  UInt       getCpbSize()               { return m_cpbSize;        }
+  UInt       getBufferingRate()         { return m_bufferingRate;  }
+  Int        updateCpbState(Int actualBits);
+  Void       initHrdParam(const TComHRD* pcHrd, Int iFrameRate, Double fInitialCpbFullness);
+#endif
 
 private:
   TEncRCSeq* m_encRCSeq;
@@ -328,6 +339,12 @@ private:
   TEncRCPic* m_encRCPic;
   list<TEncRCPic*> m_listRCPictures;
   Int        m_RCQP;
+#if U0132_TARGET_BITS_SATURATION
+  Bool       m_CpbSaturationEnabled;    // Enable target bits saturation to avoid CPB overflow and underflow
+  Int        m_cpbState;                // CPB State 
+  UInt       m_cpbSize;                 // CPB size
+  UInt       m_bufferingRate;           // Buffering rate
+#endif
 };
 
 #endif

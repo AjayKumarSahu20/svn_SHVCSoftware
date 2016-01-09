@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2015, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include <string>
 #include "TAppDecCfg.h"
 #include "TAppCommon/program_options_lite.h"
+#include "TLibCommon/TComChromaFormat.h"
 #if SVC_EXTENSION
 #include <cassert>
 #endif
@@ -61,69 +62,84 @@ namespace po = df::program_options_lite;
 /** \param argc number of arguments
     \param argv array of arguments
  */
-Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
+Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
 {
   Bool do_help = false;
-  string cfg_BitstreamFile;
-#if SVC_EXTENSION
-  string cfg_ReconFile [MAX_LAYERS];
-  Int nLayerNum;
-#if OUTPUT_LAYER_SET_INDEX
+#if SVC_EXTENSION  
+  Int layerNum, targetLayerId;
   Int olsIdx;
+#if CONFORMANCE_BITSTREAM_MODE
+  string confPrefix;
 #endif
-#if AVC_BASE
-  string cfg_BLReconFile;
-#endif
-#else
-  string cfg_ReconFile;
+
+  Int* cfg_outputBitDepthY[MAX_LAYERS];
+  Int* cfg_outputBitDepthC[MAX_LAYERS];
+
+  for( Int layer = 0; layer < MAX_LAYERS; layer++ )
+  {
+    cfg_outputBitDepthY[layer] = &m_outputBitDepth[layer][CHANNEL_TYPE_LUMA];
+    cfg_outputBitDepthC[layer] = &m_outputBitDepth[layer][CHANNEL_TYPE_CHROMA];
+  }
 #endif
 
   string cfg_TargetDecLayerIdSetFile;
+  string outputColourSpaceConvert;
+  Int warnUnknowParameter = 0;
 
   po::Options opts;
   opts.addOptions()
-  ("help", do_help, false, "this help text")
-  ("BitstreamFile,b", cfg_BitstreamFile, string(""), "bitstream input file name")
+
+
+  ("help",                      do_help,                               false,      "this help text")
+  ("BitstreamFile,b",           m_bitstreamFileName,                   string(""), "bitstream input file name")
 #if SVC_EXTENSION
-  ("ReconFileL%d,-o%d",   cfg_ReconFile,   string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
-                                                     "YUV writing is skipped if omitted")
+  ("c",                         po::parseConfigFile,                               "configuration file name")
+  ("ReconFile%d,-o%d",          m_reconFileName,           string(""), MAX_LAYERS, "Layer %d reconstructed YUV output file name\n"
+                                                                                   "YUV writing is skipped if omitted")
 #if AVC_BASE
-  ("BLReconFile,-ibl",    cfg_BLReconFile,  string(""), "BL reconstructed YUV input file name")
-#if !REPN_FORMAT_IN_VPS
-  ("BLSourceWidth,-wdt",    m_iBLSourceWidth,        0, "BL source picture width")
-  ("BLSourceHeight,-hgt",   m_iBLSourceHeight,       0, "BL source picture height")
+  ("BLReconFile,-ibl",                              m_reconFileNameBL, string(""), "BL reconstructed YUV input file name")
 #endif
+  ("TargetLayerId,-lid",                                        targetLayerId, -1, "Target layer id")
+  ("LayerNum,-ls",                                    layerNum, MAX_NUM_LAYER_IDS, "Target layer id") // Legacy option
+  ("OutpuLayerSetIdx,-olsidx",                                         olsIdx, -1, "Index of output layer set to be decoded.")
+#if CONFORMANCE_BITSTREAM_MODE
+  ("ConformanceBitstremMode,-confMode",                      m_confModeFlag, false, "Enable generation of conformance bitstream metadata; True: Generate metadata, False: No metadata generated")
+  ("ConformanceMetadataPrefix,-confPrefix",                 confPrefix, string(""), "Prefix for the file name of the conformance data. Default name - 'decodedBitstream'")
 #endif
 #else
-  ("ReconFile,o",     cfg_ReconFile,     string(""), "reconstructed YUV output file name\n"
-                                                     "YUV writing is skipped if omitted")
+  ("ReconFile,o",               m_reconFileName,                       string(""), "reconstructed YUV output file name\n"
+                                                                                   "YUV writing is skipped if omitted")
 #endif
-  ("SkipFrames,s", m_iSkipFrame, 0, "number of frames to skip before random access")
-  ("OutputBitDepth,d", m_outputBitDepthY, 0, "bit depth of YUV output luma component (default: use 0 for native depth)")
-  ("OutputBitDepthC,d", m_outputBitDepthC, 0, "bit depth of YUV output chroma component (default: use 0 for native depth)")
+  ("WarnUnknowParameter,w",     warnUnknowParameter,                                  0, "warn for unknown configuration parameters instead of failing")
+  ("SkipFrames,s",              m_iSkipFrame,                          0,          "number of frames to skip before random access")
 #if SVC_EXTENSION
-  ("LayerNum,-ls", nLayerNum, 1, "Number of layers to be decoded.")
-#if OUTPUT_LAYER_SET_INDEX
-  ("OutpuLayerSetIdx,-olsidx", olsIdx, -1, "Index of output layer set to be decoded.")
+  ("OutputBitDepth%d,%d",       cfg_outputBitDepthY,                0, MAX_LAYERS, "bit depth of YUV output luma component (default: use 0 for native depth)")
+  ("OutputBitDepthC%d,%d",      cfg_outputBitDepthC,                0, MAX_LAYERS, "bit depth of YUV output chroma component (default: use 0 for native depth)")
+#else
+  ("OutputBitDepth,d",          m_outputBitDepth[CHANNEL_TYPE_LUMA],   0,          "bit depth of YUV output luma component (default: use 0 for native depth)")
+  ("OutputBitDepthC,d",         m_outputBitDepth[CHANNEL_TYPE_CHROMA], 0,          "bit depth of YUV output chroma component (default: use 0 for native depth)")
 #endif
-#endif 
-  ("MaxTemporalLayer,t", m_iMaxTemporalLayer, -1, "Maximum Temporal Layer to be decoded. -1 to decode all layers")
-  ("SEIDecodedPictureHash", m_decodedPictureHashSEIEnabled, 1, "Control handling of decoded picture hash SEI messages\n"
-                                              "\t1: check hash in SEI messages if available in the bitstream\n"
-                                              "\t0: ignore SEI message")
-  ("SEIpictureDigest", m_decodedPictureHashSEIEnabled, 1, "deprecated alias for SEIDecodedPictureHash")
-  ("TarDecLayerIdSetFile,l", cfg_TargetDecLayerIdSetFile, string(""), "targetDecLayerIdSet file name. The file should include white space separated LayerId values to be decoded. Omitting the option or a value of -1 in the file decodes all layers.")
-  ("RespectDefDispWindow,w", m_respectDefDispWindow, 0, "Only output content inside the default display window\n")
-#if Q0074_COLOUR_REMAPPING_SEI
-  ("SEIColourRemappingInfo", m_colourRemapSEIEnabled, false, "Control handling of Colour Remapping Information SEI messages\n"
-                                              "\t1: apply colour remapping on decoded pictures if available in the bitstream\n"
-                                              "\t0: ignore SEI message")
+  ("OutputColourSpaceConvert",  outputColourSpaceConvert,              string(""), "Colour space conversion to apply to input 444 video. Permitted values are (empty string=UNCHANGED) " + getListOfColourSpaceConverts(false))
+  ("MaxTemporalLayer,t",        m_iMaxTemporalLayer,                   -1,         "Maximum Temporal Layer to be decoded. -1 to decode all layers")
+  ("SEIDecodedPictureHash",     m_decodedPictureHashSEIEnabled,        1,          "Control handling of decoded picture hash SEI messages\n"
+                                                                                   "\t1: check hash in SEI messages if available in the bitstream\n"
+                                                                                   "\t0: ignore SEI message")
+  ("SEINoDisplay",              m_decodedNoDisplaySEIEnabled,          true,       "Control handling of decoded no display SEI messages")
+  ("TarDecLayerIdSetFile,l",    cfg_TargetDecLayerIdSetFile,           string(""), "targetDecLayerIdSet file name. The file should include white space separated LayerId values to be decoded. Omitting the option or a value of -1 in the file decodes all layers.")
+  ("RespectDefDispWindow,w",    m_respectDefDispWindow,                0,          "Only output content inside the default display window\n")
+  ("SEIColourRemappingInfoFilename",  m_colourRemapSEIFileName,        string(""), "Colour Remapping YUV output file name. If empty, no remapping is applied (ignore SEI message)\n")
+#if O0043_BEST_EFFORT_DECODING
+  ("ForceDecodeBitDepth",       m_forceDecodeBitDepth,                 0U,         "Force the decoder to operate at a particular bit-depth (best effort decoding)")
 #endif
+  ("OutputDecodedSEIMessagesFilename",  m_outputDecodedSEIMessagesFilename,    string(""), "When non empty, output decoded SEI messages to the indicated file. If file is '-', then output to stdout\n")
+  ("ClipOutputVideoToRec709Range",      m_bClipOutputVideoToRec709Range,  false, "If true then clip output video to the Rec. 709 Range on saving")
   ;
-  po::setDefaults(opts);
-  const list<const Char*>& argv_unhandled = po::scanArgv(opts, argc, (const Char**) argv);
 
-  for (list<const Char*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
+  po::setDefaults(opts);
+  po::ErrorReporter err;
+  const list<const TChar*>& argv_unhandled = po::scanArgv(opts, argc, (const TChar**) argv, err);
+
+  for (list<const TChar*>::const_iterator it = argv_unhandled.begin(); it != argv_unhandled.end(); it++)
   {
     fprintf(stderr, "Unhandled argument ignored: `%s'\n", *it);
   }
@@ -134,33 +150,66 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     return false;
   }
 
-  /* convert std::string to c string for compatability */
-  m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
-#if SVC_EXTENSION
-  m_tgtLayerId = nLayerNum - 1;
-  assert( m_tgtLayerId >= 0 );
-  assert( m_tgtLayerId < MAX_LAYERS );
-#if O0137_MAX_LAYERID
-  assert( m_tgtLayerId < MAX_NUM_LAYER_IDS );
-#endif
-#if OUTPUT_LAYER_SET_INDEX  
-  this->getCommonDecoderParams()->setTargetOutputLayerSetIdx( olsIdx       );
-  this->getCommonDecoderParams()->setTargetLayerId    ( m_tgtLayerId );
-#endif
-  for(UInt layer=0; layer<= m_tgtLayerId; layer++)
+  if (err.is_errored)
   {
-    m_pchReconFile[layer] = cfg_ReconFile[layer].empty() ? NULL : strdup(cfg_ReconFile[layer].c_str());
+    if (!warnUnknowParameter)
+    {
+      /* errors have already been reported to stderr */
+      return false;
+    }
   }
-#if AVC_BASE
-  m_pchBLReconFile = cfg_BLReconFile.empty() ? NULL : strdup(cfg_BLReconFile.c_str());
+
+  m_outputColourSpaceConvert = stringToInputColourSpaceConvert(outputColourSpaceConvert, false);
+  if (m_outputColourSpaceConvert>=NUMBER_INPUT_COLOUR_SPACE_CONVERSIONS)
+  {
+    fprintf(stderr, "Bad output colour space conversion string\n");
+    return false;
+  }
+
+#if SVC_EXTENSION
+  if( targetLayerId < 0 )
+  {
+    targetLayerId = layerNum - 1;
+  }
+
+  assert( targetLayerId >= 0 );
+  assert( targetLayerId < MAX_NUM_LAYER_IDS );
+
+#if CONFORMANCE_BITSTREAM_MODE
+  if( m_confModeFlag )
+  {
+    assert( olsIdx != -1 ); // In the conformance mode, target output layer set index is to be explicitly specified.
+
+    if( confPrefix.empty() )
+    {
+      m_confPrefix = string("decodedBitstream");
+    }
+    else
+    {
+      m_confPrefix = confPrefix;
+    }
+      // Open metadata file and write
+    char fileNameSuffix[255];
+    sprintf(fileNameSuffix, "%s-OLS%d.opl", m_confPrefix.c_str(), olsIdx);  // olsIdx is the target output layer set index.
+    m_metadataFileName = string(fileNameSuffix);
+    m_metadataFileRefresh = true;
+
+    // Decoded layer YUV files
+    for(Int layer= 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++ )
+    {
+      sprintf(fileNameSuffix, "%s-L%d.yuv", m_confPrefix.c_str(), layer);  // olsIdx is the target output layer set index.
+      m_decodedYuvLayerFileName[layer] = std::string( fileNameSuffix );
+      m_decodedYuvLayerRefresh[layer] = true;
+    }
+  }
 #endif
-#else
-  m_pchReconFile = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
+  m_commonDecoderParams.setTargetOutputLayerSetIdx( olsIdx );
+  m_commonDecoderParams.setTargetLayerId( targetLayerId );
 #endif
 
-  if (!m_pchBitstreamFile)
+  if (m_bitstreamFileName.empty())
   {
-    fprintf(stderr, "No input file specifed, aborting\n");
+    fprintf(stderr, "No input file specified, aborting\n");
     return false;
   }
 
@@ -188,7 +237,7 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
         }
         if ( layerIdParsed < 0 || layerIdParsed >= MAX_NUM_LAYER_IDS )
         {
-          fprintf(stderr, "Warning! Parsed LayerId %d is not withing allowed range [0,%d]. Ignoring this value.\n", layerIdParsed, MAX_NUM_LAYER_IDS-1 );
+          fprintf(stderr, "Warning! Parsed LayerId %d is not within allowed range [0,%d]. Ignoring this value.\n", layerIdParsed, MAX_NUM_LAYER_IDS-1 );
         }
         else
         {
@@ -207,8 +256,9 @@ Bool TAppDecCfg::parseCfg( Int argc, Char* argv[] )
     {
       fprintf(stderr, "File %s could not be opened. Using all LayerIds as default.\n", cfg_TargetDecLayerIdSetFile.c_str() );
     }
-#if OUTPUT_LAYER_SET_INDEX  
-    this->getCommonDecoderParams()->setTargetDecLayerIdSet( &m_targetDecLayerIdSet );
+
+#if SVC_EXTENSION
+    m_commonDecoderParams.setTargetDecLayerIdSet( &m_targetDecLayerIdSet );
 #endif
   }
 
