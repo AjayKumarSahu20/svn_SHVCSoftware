@@ -176,10 +176,6 @@ protected:
 
 #if SVC_EXTENSION
 public:
-#if LAYER_CTB
-  UInt        getMaxCUWidth()           { return m_uiMaxCUWidth;                }
-  UInt        getMaxCUHeight()          { return m_uiMaxCUHeight;               }
-#endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Void         setTileSetIdxMap( Int i, Int tileSetIdx, UChar setType, Bool skipFlag )
   {
