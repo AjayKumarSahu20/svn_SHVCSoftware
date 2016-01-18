@@ -325,7 +325,7 @@ Void TAppDecTop::decode()
 
     if( pcListPic )
     {
-      if ( !m_reconFileName[curLayerId].empty() && !openedReconFile[curLayerId] )
+      if ( !m_reconFileName[curLayerId].empty() && !openedReconFile[curLayerId] && m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveSPS())
       {
         const BitDepths& bitDepths = m_apcTDecTop[curLayerId]->getParameterSetManager()->getActiveSPS()->getBitDepths();
 
@@ -1723,7 +1723,7 @@ Void TAppDecTop::bumpingProcess(std::vector<Int> &listOfPocs, std::vector<Int> *
       // Output all picutres "decoded" in that layer that have POC less than the current picture
       std::vector<TComPic> *layerBuffer = m_apcTDecTop[layerId]->getConfListPic();
       // Write all pictures to the file.
-      if( this->getDecodedYuvLayerRefresh(layerId) )
+      if( this->getDecodedYuvLayerRefresh(layerId) && m_apcTDecTop[layerId]->getParameterSetManager()->getActiveSPS())
       {
         char tempFileName[256];
         strcpy(tempFileName, this->getDecodedYuvLayerFileName( layerId ).c_str());
