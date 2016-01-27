@@ -463,25 +463,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   TComPic*  rpsCurrList0[MAX_NUM_REF+1];
   TComPic*  rpsCurrList1[MAX_NUM_REF+1];
 #if SVC_EXTENSION
-  Int numInterLayerRPSPics = 0;
   if( m_layerId > 0 && m_activeNumILRRefIdx > 0 )
   {
-    for( i=0; i < m_pcVPS->getNumDirectRefLayers( m_layerId ); i++ )
-    {
-      Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[i]->getSlice(0)->getLayerIdx(), getLayerIdx());
-
-      if( ((Int)(ilpPic[i]->getSlice(0)->getTLayer())<= maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[i]->getSlice(0)->getRapPicFlag() ) )
-      {
-        numInterLayerRPSPics++;
-
-        assert( ilpPic[i]->getSlice(0)->getDiscardableFlag() == 0 );    // Inter-layer RPS shall not contain picture with discardable_flag = 1.
-      }
-    }
-    if (numInterLayerRPSPics < m_activeNumILRRefIdx)
-    {
-      m_activeNumILRRefIdx = numInterLayerRPSPics;
-    }
-
     // max one resampling direct layer
     if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) )
     {
@@ -586,14 +569,18 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     // initial reference picture list construction
     if( m_layerId > 0 )
     {      
-      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPicTotalCurr; cIdx ++, i ++)      
+      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPicTotalCurr; cIdx++, i++ )      
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
-        Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx());
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
-        {
-          rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
-        }
+        Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx());
+
+        // SHM: ILP is not valid due to temporal layer restriction, bitstream is not conformant
+        assert( Int(ilpPic[refLayerIdc]->getSlice(0)->getTLayer()) < maxTidIlRefPicsPlus1 || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) );
+
+        // SHM: Inter-layer RPS shall not contain picture with discardable_flag = 1.
+        assert( ilpPic[refLayerIdc]->getSlice(0)->getDiscardableFlag() == 0 );
+
+        rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
       }
     }
 #endif //SVC_EXTENSION
@@ -627,14 +614,18 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
 #if SVC_EXTENSION
     if( m_layerId > 0 )
     {
-      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPicTotalCurr; cIdx ++, i ++)
+      for( i = 0; i < m_activeNumILRRefIdx && cIdx < numPicTotalCurr; cIdx++, i++ )
       {
         Int refLayerIdc = m_interLayerPredLayerIdc[i];
-        Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1( ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx() );
-        if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
-        {
-          rpsCurrList1[cIdx] = ilpPic[refLayerIdc];
-        }
+        Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1( ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx() );
+
+        // SHM: ILP is not valid due to temporal layer restriction, bitstream is not conformant
+        assert( Int(ilpPic[refLayerIdc]->getSlice(0)->getTLayer()) < maxTidIlRefPicsPlus1 || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) );
+
+        // SHM: Inter-layer RPS shall not contain picture with discardable_flag = 1.
+        assert( ilpPic[refLayerIdc]->getSlice(0)->getDiscardableFlag() == 0 );
+
+        rpsCurrList1[cIdx] = ilpPic[refLayerIdc];
       }
     }
 #endif //SVC_EXTENSION

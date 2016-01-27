@@ -1605,12 +1605,12 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
 
       Int   numRefLayerPics = 0;
       Int   i = 0;
-      Int   refLayerPicIdc  [MAX_VPS_LAYER_IDX_PLUS1];
+      Int   refLayerPicIdc[MAX_VPS_LAYER_IDX_PLUS1];
       for(i = 0, numRefLayerPics = 0;  i < pcSlice->getNumILRRefIdx(); i++ ) 
       {
         if( ( vps->getMaxTidIlRefPicsPlus1(vps->getLayerIdxInVps(i), pcSlice->getLayerIdx()) > pcSlice->getTLayer() || pcSlice->getTLayer()==0 ) &&
-              vps->getMaxTSLayersMinus1(vps->getLayerIdxInVps(i)) >=  pcSlice->getTLayer() )
-        {          
+              vps->getMaxTSLayersMinus1(vps->getLayerIdxInVps(i)) >= pcSlice->getTLayer() )
+        {
           refLayerPicIdc[ numRefLayerPics++ ] = i;
         }
       }
