@@ -117,9 +117,6 @@ protected:
   Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
-#if AVC_BASE
-  Bool      m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
-#endif
   Bool      m_maxTidRefPresentFlag; 
 
   Int       m_numLayerSets;
@@ -541,6 +538,9 @@ protected:
 #endif
   Bool      m_altOutputLayerFlag;                             ///< Specifies the value of alt_output_laye_flag in VPS extension
   Bool      m_elRapSliceBEnabled;
+#if AVC_BASE
+  Bool      m_nonHEVCBaseLayerFlag;                           ///< non HEVC BL
+#endif
 #endif
 
   // internal member functions

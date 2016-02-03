@@ -90,7 +90,7 @@ Void TAppDecTop::destroy()
 #if CONFORMANCE_BITSTREAM_MODE
   for(Int i = 0; i < MAX_VPS_LAYER_IDX_PLUS1; i++ )
 #else
-  for( Int i = 0; i <= m_tgtLayerId; i++ )
+  for( Int i = 0; i <= m_commonDecoderParams.getTargetLayerId(); i++ )
 #endif
   {
     m_reconFileName[i].clear();
@@ -178,7 +178,7 @@ Void TAppDecTop::decode()
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
-  for(UInt layer=0; layer<=m_tgtLayerId; layer++)
+  for(UInt layer=0; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
   {
     openedReconFile[layer] = false;
@@ -233,21 +233,14 @@ Void TAppDecTop::decode()
     {
       read(nalu);
 
-#if SVC_EXTENSION
       // ignore any NAL units with nuh_layer_id == 63
       if( nalu.m_nuhLayerId == 63 )
       {
         printf("Ignore NAL unit with m_nuhLayerId equal to 63\n");
         continue;
       }
-#endif
 
-      if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu)  ||
-#if CONFORMANCE_BITSTREAM_MODE
-        (nalu.m_nuhLayerId > m_commonDecoderParams.getTargetLayerId()) )
-#else
-        (nalu.m_nuhLayerId > m_tgtLayerId) )
-#endif
+      if( (m_iMaxTemporalLayer >= 0 && nalu.m_temporalId > m_iMaxTemporalLayer) || !isNaluWithinTargetDecLayerIdSet(&nalu) || nalu.m_nuhLayerId > m_commonDecoderParams.getTargetLayerId() )
       {
         bNewPicture = false;
       }
@@ -421,10 +414,10 @@ Void TAppDecTop::decode()
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = layerIdxmin; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
-  for(UInt layer = layerIdxmin; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = layerIdxmin; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
 #else
-  for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = 0; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
   {
     m_apcTDecTop[layer]->deletePicBuffer();
@@ -582,7 +575,7 @@ Void TAppDecTop::xCreateDecLib()
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
-  for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = 0; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
   {
     m_apcTDecTop[layer] = new TDecTop;
@@ -611,7 +604,7 @@ Void TAppDecTop::xDestroyDecLib()
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
-  for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = 0; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
   {
     if ( !m_reconFileName[layer].empty() )
@@ -645,7 +638,7 @@ Void TAppDecTop::xInitDecLib()
 #if CONFORMANCE_BITSTREAM_MODE
   for(UInt layer = 0; layer < MAX_VPS_LAYER_IDX_PLUS1; layer++)
 #else
-  for(UInt layer = 0; layer <= m_tgtLayerId; layer++)
+  for(UInt layer = 0; layer <= m_commonDecoderParams.getTargetLayerId(); layer++)
 #endif
   {
     TDecTop& m_cTDecTop = *m_apcTDecTop[layer];
@@ -664,12 +657,9 @@ Void TAppDecTop::xInitDecLib()
 
 #if SVC_EXTENSION  
 #if CONFORMANCE_BITSTREAM_MODE
-    m_cTDecTop.setNumLayer( MAX_LAYERS );
-#else
-    m_cTDecTop.setNumLayer( m_tgtLayerId + 1 );
+    m_cTDecTop.setConfModeFlag( m_confModeFlag );
 #endif
     m_cTDecTop.setCommonDecoderParams( &m_commonDecoderParams );
-    m_cTDecTop.setConfModeFlag( m_confModeFlag );
   }
 #endif
 

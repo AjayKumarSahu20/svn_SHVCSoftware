@@ -2293,9 +2293,14 @@ TDecTop* TDecTop::getRefLayerDec( UInt refLayerIdx )
 
 Void TDecTop::setRefLayerParams( const TComVPS* vps )
 {
-  for(UInt layerIdx = 0; layerIdx < m_numLayer; layerIdx++)
+#if CONFORMANCE_BITSTREAM_MODE
+  for(UInt layerIdx = 0; layerIdx < MAX_VPS_LAYER_IDX_PLUS1; layerIdx++)
+#else
+  for(UInt layerIdx = 0; layerIdx <= m_commonDecoderParams->getTargetLayerId(); layerIdx++)
+#endif
   {
-    TDecTop *decTop = (TDecTop *)getLayerDec(vps->getLayerIdInNuh(layerIdx));
+    UInt layerId = vps->getLayerIdInNuh(layerIdx);
+    TDecTop *decTop = m_ppcTDecTop[layerId];
     decTop->setNumSamplePredRefLayers(0);
     decTop->setNumMotionPredRefLayers(0);
     decTop->setNumDirectRefLayers(0);
@@ -2304,7 +2309,7 @@ Void TDecTop::setRefLayerParams( const TComVPS* vps )
     {
       if (vps->getDirectDependencyFlag(layerIdx, j))
       {
-        decTop->setRefLayerId(decTop->getNumDirectRefLayers(), vps->getLayerIdInNuh(layerIdx));
+        decTop->setRefLayerId(decTop->getNumDirectRefLayers(), layerId);
         decTop->setNumDirectRefLayers(decTop->getNumDirectRefLayers() + 1);
 
         Int samplePredEnabledFlag = (vps->getDirectDependencyType(layerIdx, j) + 1) & 1;
@@ -2319,7 +2324,7 @@ Void TDecTop::setRefLayerParams( const TComVPS* vps )
 
 Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
 {
-  CommonDecoderParams* params = this->getCommonDecoderParams();
+  CommonDecoderParams* params = m_commonDecoderParams;
 
   if( params->getValueCheckedFlag() )
   {
@@ -2389,9 +2394,6 @@ Void TDecTop::checkValueOfTargetOutputLayerSetIdx(TComVPS *vps)
     assert( params->getTargetOutputLayerSetIdx() < vps->getNumLayerSets() );
 #endif
     Int layerSetIdx = vps->getOutputLayerSetIdx( params->getTargetOutputLayerSetIdx() );  // Index to the layer set
-#if !CONFORMANCE_BITSTREAM_MODE
-    assert( params->getTargetLayerId() == vps->getNumLayersInIdList( layerSetIdx ) - 1);
-#endif
     
     // Check if the targetdeclayerIdlist matches the output layer set
     if( params->getTargetDecLayerIdSet() )

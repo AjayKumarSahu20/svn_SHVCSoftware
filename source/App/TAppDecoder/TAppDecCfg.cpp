@@ -169,7 +169,7 @@ Bool TAppDecCfg::parseCfg( Int argc, TChar* argv[] )
 #if SVC_EXTENSION
   if( targetLayerId < 0 )
   {
-    targetLayerId = layerNum - 1;
+    targetLayerId = MAX_VPS_LAYER_IDX_PLUS1 - 1;
   }
 
   assert( targetLayerId >= 0 );
