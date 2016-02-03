@@ -120,16 +120,16 @@ enum ExtendedProfileName // this is used for determining profile strings, where 
 
 #if SVC_EXTENSION
 TAppEncCfg::TAppEncCfg()
-#if AVC_BASE
-: m_nonHEVCBaseLayerFlag(false)
-#endif
-, m_maxTidRefPresentFlag(1)
+: m_maxTidRefPresentFlag(1)
 , m_defaultTargetOutputLayerIdc (-1)
 , m_numOutputLayerSets          (-1)
 , m_inputColourSpaceConvert(IPCOLOURSPACE_UNCHANGED)
 , m_snrInternalColourSpace(false)
 , m_outputInternalColourSpace(false)
 , m_elRapSliceBEnabled(false)
+#if AVC_BASE
+, m_nonHEVCBaseLayerFlag(false)
+#endif
 {
   memset( m_apcLayerCfg, 0, sizeof(m_apcLayerCfg) );
   memset( m_scalabilityMask, 0, sizeof(m_scalabilityMask) );
@@ -3129,7 +3129,11 @@ Void TAppEncCfg::xCheckParameter()
     }
     ii++;
   }
+#if AVC_BASE
   if( m_numLayers > 1 && m_numPTLInfo > 1 && !m_nonHEVCBaseLayerFlag )
+#else
+  if( m_numLayers > 1 && m_numPTLInfo > 1 )
+#endif
   {
     assert(m_profileList[0] <= Profile::MULTIVIEWMAIN);  //Profile IDC of PTL in VPS shall be one of single-layer profile IDCs
     assert(m_profileList[0] == m_profileList[1]);        //Profile IDC of VpsProfileTierLevel[ 0 ] and VpsProfileTierLevel[ 1 ] shall be the same when BL is HEVC compatible
@@ -3505,13 +3509,14 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_numLayers > MAX_LAYERS , "Number of layers in config file is greater than MAX_LAYERS" );
   m_numLayers = m_numLayers > MAX_LAYERS ? MAX_LAYERS : m_numLayers;
   
-  // it can be updated after AVC BL support will be added to the WD
+#if AVC_BASE
   if( m_nonHEVCBaseLayerFlag )
   {
     m_crossLayerIrapAlignFlag = false;
     m_crossLayerPictureTypeAlignFlag = false;
     m_crossLayerAlignedIdrOnlyFlag = false;
   }
+#endif
 
   // verify layer configuration parameters
 #endif

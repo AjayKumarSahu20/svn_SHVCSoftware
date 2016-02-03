@@ -248,7 +248,11 @@ Void TAppEncTop::xInitLibCfg()
     TEncTop& m_cTEncTop = *m_apcTEncTop[layer];
     //1
     m_cTEncTop.setInterLayerWeightedPredFlag                      ( m_useInterLayerWeightedPred );
+#if AVC_BASE
     m_cTEncTop.setMFMEnabledFlag                                  ( layer == 0 ? false : ( m_nonHEVCBaseLayerFlag ? false : true ) && m_apcLayerCfg[layer]->getNumMotionPredRefLayers());
+#else
+    m_cTEncTop.setMFMEnabledFlag                                  ( layer == 0 ? false : m_apcLayerCfg[layer]->getNumMotionPredRefLayers());
+#endif
 
     // set layer ID
     m_cTEncTop.setLayerId                                         ( m_apcLayerCfg[layer]->m_layerId );
@@ -1058,12 +1062,10 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
 
 #if AVC_BASE
   vps->setNonHEVCBaseLayerFlag( m_nonHEVCBaseLayerFlag );
-  if ( m_nonHEVCBaseLayerFlag )
+  if( m_nonHEVCBaseLayerFlag )
   {
-    vps->setBaseLayerInternalFlag (false);
+    vps->setBaseLayerInternalFlag(false);
   }
-#else
-  vps->setAvcBaseLayerFlag(false);
 #endif
   
   for( Int idx = vps->getBaseLayerInternalFlag() ? 2 : 1; idx < vps->getNumProfileTierLevel(); idx++ )
@@ -1606,10 +1608,12 @@ Void TAppEncTop::encode()
     if(bFirstFrame)
     {
       list<AccessUnit>::iterator first_au = outputAccessUnits.begin();
+#if AVC_BASE
       if( m_nonHEVCBaseLayerFlag )
       {
         first_au++;
       }
+#endif
       AccessUnit::iterator it_sps;
       for (it_sps = first_au->begin(); it_sps != first_au->end(); it_sps++)
       {

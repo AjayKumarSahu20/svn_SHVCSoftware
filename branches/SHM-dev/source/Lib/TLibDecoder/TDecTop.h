@@ -132,7 +132,6 @@ private:
   static UInt             m_uiPrevLayerId;  // LayerId of the previous slice
   static Bool             m_bFirstSliceInSequence;
   UInt                    m_layerId;      
-  UInt                    m_numLayer;
   TDecTop**               m_ppcTDecTop;
   UInt                    m_smallestLayerId;
   Bool                    m_pocResettingFlag;
@@ -225,8 +224,6 @@ public:
 
   UInt      getLayerId                      ()                              { return m_layerId;                }
   Void      setLayerId                      (UInt layer)                    { m_layerId = layer;               }
-  UInt      getNumLayer                     ()                              { return m_numLayer;               }
-  Void      setNumLayer                     (UInt uiNum)                    { m_numLayer = uiNum;              }
   TComList<TComPic*>*  getListPic           ()                              { return &m_cListPic;              }
   Void      setLayerDec                     (TDecTop **p)                   { m_ppcTDecTop = p;                }
   TDecTop*  getLayerDec                     (UInt layerId)                  { return m_ppcTDecTop[layerId];    }
