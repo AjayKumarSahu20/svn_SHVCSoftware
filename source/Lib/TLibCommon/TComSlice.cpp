@@ -410,7 +410,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   Int i;
 
 #if SVC_EXTENSION
-  if( m_layerId == 0 || ( m_layerId > 0 && ( m_activeNumILRRefIdx == 0 || !((getNalUnitType() >= NAL_UNIT_CODED_SLICE_BLA_W_LP) && (getNalUnitType() <= NAL_UNIT_CODED_SLICE_CRA)) ) ) )
+  if( m_layerId == 0 || ( m_layerId > 0 && ( m_activeNumILRRefIdx == 0 || !(m_eNalUnitType >= NAL_UNIT_CODED_SLICE_BLA_W_LP && m_eNalUnitType <= NAL_UNIT_CODED_SLICE_CRA) ) ) )
   {
 #endif
   for(i=0; i < m_pRPS->getNumberOfNegativePictures(); i++)
@@ -999,9 +999,12 @@ Void TComSlice::copySliceInfo(TComSlice *pSrc)
 #if SVC_EXTENSION
   m_pcVPS                      = pSrc->m_pcVPS;
   m_layerId                    = pSrc->m_layerId;
+
+  // SHM: copy inter-layer prediction settings and list modification information from the previous slice. Actually, it can vary on a slice basis, but it is not supported by the current encoder.
   m_activeNumILRRefIdx         = pSrc->m_activeNumILRRefIdx;
   m_interLayerPredEnabledFlag  = pSrc->m_interLayerPredEnabledFlag;
   memcpy( m_interLayerPredLayerIdc, pSrc->m_interLayerPredLayerIdc, sizeof( m_interLayerPredLayerIdc ) );
+  m_RefPicListModification     = pSrc->m_RefPicListModification;
 #endif
   m_pRPS                = pSrc->m_pRPS;
   m_iLastIDR             = pSrc->m_iLastIDR;
