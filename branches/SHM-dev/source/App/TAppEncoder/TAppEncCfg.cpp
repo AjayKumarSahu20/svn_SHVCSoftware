@@ -789,6 +789,12 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 
   Bool*   cfg_bUseSAO[MAX_LAYERS];
 
+#if PER_LAYER_LOSSLESS
+  Bool*     cfg_TransquantBypassEnableFlag[MAX_LAYERS];
+  Bool*     cfg_CUTransquantBypassFlagForce[MAX_LAYERS];
+  CostMode* cfg_costMode[MAX_LAYERS];  
+#endif
+
   for( UInt layer = 0; layer < m_numLayers; layer++ )
   {
     cfg_InputFile[layer]    = &m_apcLayerCfg[layer]->m_inputFileName;
@@ -889,6 +895,12 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     cfg_UseScalingListId[layer]     = &m_apcLayerCfg[layer]->m_useScalingListId;
 
     cfg_bUseSAO[layer]              = &m_apcLayerCfg[layer]->m_bUseSAO;
+
+#if PER_LAYER_LOSSLESS
+    cfg_TransquantBypassEnableFlag[layer]   = &m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag;
+    cfg_CUTransquantBypassFlagForce[layer]  = &m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce;
+    cfg_costMode[layer]                     = &m_apcLayerCfg[layer]->m_costMode;  
+#endif
   }
 
   Int* cfg_numLayerInIdList[MAX_VPS_LAYER_SETS_PLUS1];
@@ -1419,9 +1431,15 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #endif
 #endif
 
+#if PER_LAYER_LOSSLESS
+  ("TransquantBypassEnableFlag%d",                    cfg_TransquantBypassEnableFlag,        false, m_numLayers, "transquant_bypass_enable_flag indicator in PPS")
+  ("CUTransquantBypassFlagForce%d",                   cfg_CUTransquantBypassFlagForce,       false, m_numLayers, "Force transquant bypass mode, when transquant_bypass_enable_flag is enabled")
+  ("CostMode%d",                                      cfg_costMode,            COST_STANDARD_LOSSY, m_numLayers, "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
+#else
   ("TransquantBypassEnableFlag",                      m_TransquantBypassEnableFlag,                     false, "transquant_bypass_enable_flag indicator in PPS")
   ("CUTransquantBypassFlagForce",                     m_CUTransquantBypassFlagForce,                    false, "Force transquant bypass mode, when transquant_bypass_enable_flag is enabled")
   ("CostMode",                                        m_costMode,                         COST_STANDARD_LOSSY, "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
+#endif
   ("RecalculateQPAccordingToLambda",                  m_recalculateQPAccordingToLambda,                 false, "Recalculate QP values according to lambda values. Do not suggest to be enabled in all intra case")
   ("StrongIntraSmoothing,-sis",                       m_useStrongIntraSmoothing,                         true, "Enable strong intra smoothing for 32x32 blocks")
   ("SEIActiveParameterSets",                          m_activeParameterSetsSEIEnabled,                      0, "Enable generation of active parameter sets SEI messages")
@@ -3098,6 +3116,10 @@ Void TAppEncCfg::xCheckParameter(UInt layerIdx)
   Int& m_maxTempLayer                         = m_apcLayerCfg[layerIdx]->m_maxTempLayer;
   Int& m_extraRPSs                            = m_apcLayerCfg[layerIdx]->m_extraRPSs;
   GOPEntry* m_GOPList                         = m_apcLayerCfg[layerIdx]->m_GOPList;
+
+#if PER_LAYER_LOSSLESS
+  Bool& m_CUTransquantBypassFlagForce         = m_apcLayerCfg[layerIdx]->m_CUTransquantBypassFlagForce;
+#endif
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -3946,8 +3968,12 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara( m_RCCpbSaturationEnabled != 0, "Target bits saturation cannot be processed without Rate control" );
   }
 #endif
-
+  
+#if PER_LAYER_LOSSLESS
+  xConfirmPara(!m_apcLayerCfg[layerIdx]->m_TransquantBypassEnableFlag && m_apcLayerCfg[layerIdx]->m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
+#else
   xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
+#endif
 
   xConfirmPara(m_log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
 
@@ -4162,6 +4188,10 @@ Void TAppEncCfg::xPrintParameter()
     Bool& m_RCCpbSaturationEnabled          = m_apcLayerCfg[layerIdx]->m_RCCpbSaturationEnabled;
     UInt& m_RCCpbSize                       = m_apcLayerCfg[layerIdx]->m_RCCpbSize;
     Double& m_RCInitialCpbFullness          = m_apcLayerCfg[layerIdx]->m_RCInitialCpbFullness;
+#endif
+
+#if PER_LAYER_LOSSLESS
+    CostMode& m_costMode                    = m_apcLayerCfg[layerIdx]->m_costMode;
 #endif
 
     if( layer == m_numLayers )
@@ -4448,6 +4478,16 @@ Void TAppEncCfg::xPrintParameter()
   printf("SAO:%d ", (m_bUseSAO)?(1):(0));
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
 
+#if PER_LAYER_LOSSLESS
+  if (m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag && m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce)
+  {
+    printf("TransQuantBypassEnabled: =1");
+  }
+  else
+  {
+    printf("TransQuantBypassEnabled:%d ", (m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag)? 1:0 );
+  }
+#else
   if (m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce)
   {
     printf("TransQuantBypassEnabled: =1");
@@ -4456,6 +4496,7 @@ Void TAppEncCfg::xPrintParameter()
   {
     printf("TransQuantBypassEnabled:%d ", (m_TransquantBypassEnableFlag)? 1:0 );
   }
+#endif
 
   printf("WPP:%d ", (Int)m_useWeightedPred);
   printf("WPB:%d ", (Int)m_useWeightedBiPred);
