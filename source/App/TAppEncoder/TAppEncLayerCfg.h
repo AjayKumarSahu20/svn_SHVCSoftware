@@ -99,6 +99,12 @@ protected:
 
   Bool      m_bUseSAO;
 
+#if PER_LAYER_LOSSLESS
+  Bool      m_TransquantBypassEnableFlag;
+  Bool      m_CUTransquantBypassFlagForce;
+  CostMode  m_costMode;
+#endif
+
   ScalingListMode m_useScalingListId;                         ///< using quantization matrix
   std::string m_scalingListFileName;                          ///< quantization matrix file name
 

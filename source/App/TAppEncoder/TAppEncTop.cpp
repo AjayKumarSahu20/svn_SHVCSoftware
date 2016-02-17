@@ -533,6 +533,11 @@ Void TAppEncTop::xInitLibCfg()
     Int&           m_maxTempLayer                               = m_apcLayerCfg[layer]->m_maxTempLayer;
 
     string&        m_colourRemapSEIFileRoot                     = m_apcLayerCfg[layer]->m_colourRemapSEIFileRoot;
+#if PER_LAYER_LOSSLESS
+    Bool&          m_TransquantBypassEnableFlag                 = m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag;
+    Bool&          m_CUTransquantBypassFlagForce                = m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce;
+    CostMode&      m_costMode                                   = m_apcLayerCfg[layer]->m_costMode;
+#endif
 #endif
 
   m_cTEncTop.setProfile                                           ( m_profile);
