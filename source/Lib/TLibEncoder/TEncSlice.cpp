@@ -526,7 +526,7 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, const Int pocLast, const Int pocCu
 
   pcPic->setTLayer( temporalId );
 #if SVC_EXTENSION
-  if( eSliceType==I_SLICE || m_ppcTEncTop[m_pcCfg->getLayerId()]->getPOCLast() == 0 )
+  if( eSliceType==I_SLICE || m_ppcTEncTop[pcPic->getLayerIdx()]->getPOCLast() == 0 )
 #else
   if(eSliceType==I_SLICE)
 #endif
