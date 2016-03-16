@@ -4159,7 +4159,7 @@ Void TAppEncCfg::xPrintParameter()
     string& m_reconFileName                = m_apcLayerCfg[layerIdx]->m_reconFileName;
 
     Int& m_iFrameRate                      = m_apcLayerCfg[layerIdx]->m_iFrameRate;
-    Int& m_iIntraPeriod                    = m_apcLayerCfg[layerIdx]->m_iFrameRate;
+    Int& m_iIntraPeriod                    = m_apcLayerCfg[layerIdx]->m_iIntraPeriod;
 
     UInt& m_uiMaxTotalCUDepth              = m_apcLayerCfg[layerIdx]->m_uiMaxTotalCUDepth;
     UInt& m_uiQuadtreeTULog2MinSize        = m_apcLayerCfg[layerIdx]->m_uiQuadtreeTULog2MinSize;
