@@ -1624,7 +1624,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         Int heightEL  = pcPic->getPicYuvRec()->getHeight(COMPONENT_Y) - scalEL.getWindowTopOffset()  - scalEL.getWindowBottomOffset();
 
         // conformance check: the values of RefLayerRegionWidthInSamplesY, RefLayerRegionHeightInSamplesY, ScaledRefRegionWidthInSamplesY and ScaledRefRegionHeightInSamplesY shall be greater than 0
-        assert(widthEL > 0 && heightEL > 0 && widthBL > 0 && widthEL > 0);
+        assert(widthEL > 0 && heightEL > 0 && widthBL > 0 && widthBL > 0);
 
         // conformance check: ScaledRefRegionWidthInSamplesY shall be greater or equal to RefLayerRegionWidthInSamplesY and ScaledRefRegionHeightInSamplesY shall be greater or equal to RefLayerRegionHeightInSamplesY
         assert(widthEL >= widthBL && heightEL >= heightBL);
