@@ -1691,8 +1691,9 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
         m_pcPic->setPosScalingFactor( refLayerIdc, 
                                      ((widthBL  << 16) + (widthEL  >> 1)) / widthEL, 
                                      ((heightBL << 16) + (heightEL >> 1)) / heightEL );
-#if CGS_3D_ASYMLUT 
+
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+#if CGS_3D_ASYMLUT 
         if( pcSlice->getPPS()->getCGSFlag() && m_c3DAsymLUTPPS.isRefLayer( pcSlice->getVPS()->getRefLayerId(m_layerId, refLayerIdc) ) )
         {
           assert( pcSlice->getBaseColPic( refLayerIdc )->getSlice( 0 )->getSPS()->getBitDepth(CHANNEL_TYPE_LUMA) == m_c3DAsymLUTPPS.getInputBitDepthY() );

@@ -53,6 +53,7 @@
 #define MAX_LAYERS                       8      ///< max number of layers the codec is supposed to handle
 
 #define CONFORMANCE_BITSTREAM_MODE       1      ///< In order to generate the metadata related to conformance bitstreams
+#define CONFORMANCE_BITSTREAM_FIX        1
 
 #define AUXILIARY_PICTURES               1      ///< JCTVC-O0041: auxiliary picture layers
 #define AVC_BASE                         1      ///< YUV BL reading for AVC base SVC
@@ -70,7 +71,6 @@
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define NO_CLRAS_OUTPUT_FLAG             1
 
-#define CONFORMANCE_BITSTREAM_FIX        1
 /// scalability types
 enum ScalabilityType
 {

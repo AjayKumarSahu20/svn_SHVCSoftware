@@ -1643,8 +1643,9 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
                                                 ((widthBL  << 16) + (widthEL  >> 1)) / widthEL,
                                                 ((heightBL << 16) + (heightEL >> 1)) / heightEL );
 
-#if CGS_3D_ASYMLUT 
         TComPicYuv* pBaseColRec = pcSlice->getBaseColPic(refLayerIdc)->getPicYuvRec();
+
+#if CGS_3D_ASYMLUT
         if( pcSlice->getPPS()->getCGSFlag() )
         {
           // all reference layers are currently taken as CGS reference layers
