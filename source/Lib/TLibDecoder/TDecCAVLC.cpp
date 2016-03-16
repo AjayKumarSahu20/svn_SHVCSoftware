@@ -3652,7 +3652,7 @@ Void TDecCavlc::xParse3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT, Int nDepth, 
         UInt uiCodeVertex = 0;
         Int deltaY = 0, deltaU = 0, deltaV = 0;
 
-        READ_FLAG( uiCodeVertex, "coded_vertex_flag" );
+        READ_FLAG( uiCodeVertex, "coded_res_flag" );
 
         if( uiCodeVertex )
         {
@@ -3705,13 +3705,13 @@ Void TDecCavlc::xReadParam( Int& param, Int rParam )
   UInt rSymbol;
   UInt sign;
 
-  READ_UVLC( prefix, "quotient")  ;
-  READ_CODE (rParam, codeWord, "remainder");
+  READ_UVLC( prefix, "res_coeff_q");
+  READ_CODE (rParam, codeWord, "res_coeff_r");
   rSymbol = (prefix<<rParam) + codeWord;
 
   if(rSymbol)
   {
-    READ_FLAG(sign, "sign");
+    READ_FLAG(sign, "res_coeff_s");
     param = sign ? -(Int)(rSymbol) : (Int)(rSymbol);
   }
   else param = 0;

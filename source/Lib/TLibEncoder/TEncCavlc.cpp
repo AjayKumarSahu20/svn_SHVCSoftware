@@ -2599,16 +2599,16 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
     Int nFLCbits = pc3DAsymLUT->getMappingShift()-pc3DAsymLUT->getResQuantBit()-pc3DAsymLUT->getDeltaBits() ; 
     nFLCbits = nFLCbits >= 0 ? nFLCbits : 0;
 
-    for( Int l = 0 ; l < nYPartNum ; l++ )
+    for( Int l = 0; l < nYPartNum; l++ )
     {
-      Int shift = pc3DAsymLUT->getCurOctantDepth() - nDepth ;
+      Int shift = pc3DAsymLUT->getCurOctantDepth() - nDepth;
 
-      for( Int nVertexIdx = 0 ; nVertexIdx < 4 ; nVertexIdx++ )
+      for( Int nVertexIdx = 0; nVertexIdx < 4; nVertexIdx++ )
       {
-        SYUVP sRes = pc3DAsymLUT->getCuboidVertexResTree( yIdx + (l<<shift) , uIdx , vIdx , nVertexIdx );
+        SYUVP sRes = pc3DAsymLUT->getCuboidVertexResTree( yIdx + (l<<shift), uIdx, vIdx, nVertexIdx );
 
         UInt uiCodeVertex = sRes.Y != 0 || sRes.U != 0 || sRes.V != 0;
-        WRITE_FLAG( uiCodeVertex , "coded_vertex_flag" );
+        WRITE_FLAG( uiCodeVertex, "coded_res_flag" );
         if( uiCodeVertex )
         {
           xWriteParam( sRes.Y, nFLCbits );
@@ -2626,10 +2626,10 @@ Void TEncCavlc::xCode3DAsymLUTOctant( TCom3DAsymLUT * pc3DAsymLUT , Int nDepth ,
 Void TEncCavlc::xWriteParam( Int param, UInt rParam)
 {
   Int codeNumber = abs(param);
-  WRITE_UVLC(codeNumber / (1 << rParam), "quotient");
-  WRITE_CODE((codeNumber % (1 << rParam)), rParam, "remainder");
+  WRITE_UVLC(codeNumber / (1 << rParam), "res_coeff_q");
+  WRITE_CODE((codeNumber % (1 << rParam)), rParam, "res_coeff_r");
   if (abs(param))
-    WRITE_FLAG( param <0, "sign");
+    WRITE_FLAG( param < 0, "res_coeff_s");
 }
 
 Void TEncCavlc::xFindDeltaBits( TCom3DAsymLUT * pc3DAsymLUT )
