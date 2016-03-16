@@ -3801,7 +3801,7 @@ Void TEncGOP::determinePocResetIdc(Int const pocCurr, TComSlice *const slice)
         Int periodId = rand() % 64;
         m_lastPocPeriodId = (periodId == m_lastPocPeriodId) ? (periodId + 1) % 64 : periodId ;
 
-        for( UInt i = 0; i < MAX_LAYERS; i++ )
+        for( UInt i = 0; i < m_pcCfg->getNumLayer(); i++ )
         {
           m_ppcTEncTop[i]->setPocDecrementedInDPBFlag(false);
         }
