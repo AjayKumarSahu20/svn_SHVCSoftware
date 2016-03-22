@@ -90,6 +90,9 @@ protected:
   Void xWriteSEIKneeFunctionInfo(const SEIKneeFunctionInfo &sei);
   Void xWriteSEIColourRemappingInfo(const SEIColourRemappingInfo& sei);
   Void xWriteSEIMasteringDisplayColourVolume( const SEIMasteringDisplayColourVolume& sei);
+#if U0033_ALTERNATIVE_TRANSFER_CHARACTERISTICS_SEI
+  Void xWriteSEIAlternativeTransferCharacteristics(const SEIAlternativeTransferCharacteristics& sei);
+#endif
 
 #if O0164_MULTI_LAYER_HRD
   Void xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComVPS *vps, const TComSPS *sps, const SEIScalableNesting* nestingSei, const SEIBspNesting* bspNestingSei);
