@@ -566,6 +566,45 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   }
 
 #if SVC_EXTENSION
+#if VIEW_SCALABILITY 
+  std::vector<TComPic*> refPicSetInterLayer0;
+  std::vector<TComPic*> refPicSetInterLayer1;
+  const TComVPS* cVPS=getVPS();
+
+  Int viewIdCurrLayerId  = cVPS->getViewIdVal(cVPS->getViewIndex(m_layerId) );
+  Int viewId0            = cVPS->getViewIdVal( 0 );
+  for( i=0; i< m_activeNumILRRefIdx ;i++)
+  {
+      Int refLayerIdc = m_interLayerPredLayerIdc[i];       
+      Int maxTidIlRefPicsPlus1 = getVPS()->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx());
+      if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+      {
+          Int viewIdRefPicLayerIdi = cVPS->getViewIdVal( ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx() );
+          Bool refPicSet0Flag =
+              ( ( viewIdCurrLayerId <=  viewId0  &&  viewIdCurrLayerId <=  viewIdRefPicLayerIdi )  ||
+              ( viewIdCurrLayerId >=  viewId0  &&  viewIdCurrLayerId >=  viewIdRefPicLayerIdi ) );
+
+          if ( refPicSet0Flag )
+          {
+              refPicSetInterLayer0.push_back( ilpPic[refLayerIdc] );
+          }
+          else
+          {
+              refPicSetInterLayer1.push_back( ilpPic[refLayerIdc] );
+          }
+
+      }
+  }
+ 
+
+  if( m_layerId > 0 )
+  {
+      for( i = 0; i < refPicSetInterLayer0.size() && cIdx < numPicTotalCurr; cIdx ++, i ++)      
+      {
+          rpsCurrList0[cIdx] = refPicSetInterLayer0[i];
+      }
+  }
+#else
     // initial reference picture list construction
     if( m_layerId > 0 )
     {      
@@ -583,6 +622,7 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
         rpsCurrList0[cIdx] = ilpPic[refLayerIdc];
       }
     }
+#endif
 #endif //SVC_EXTENSION
 
   for ( i=0; i<NumPicStCurr1; i++, cIdx++)
@@ -593,7 +633,17 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
   {
     rpsCurrList0[cIdx] = RefPicSetLtCurr[i];
   }
+#if VIEW_SCALABILITY
+  if( m_layerId > 0 )
+  {
+      for( i = 0; i < refPicSetInterLayer1.size(); cIdx++, i++ )      
+      {
+          rpsCurrList0[cIdx] = refPicSetInterLayer1[i];
+      }
+  }
+#else
   assert(cIdx == numPicTotalCurr);
+#endif
 
   if (m_eSliceType==B_SLICE)
   {
@@ -602,6 +652,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     {
       rpsCurrList1[cIdx] = RefPicSetStCurr1[i];
     }
+#if VIEW_SCALABILITY 
+    if( m_layerId > 0 )
+    {
+        for( i = 0; i < refPicSetInterLayer1.size(); cIdx ++, i ++)      
+        {
+            rpsCurrList1[cIdx] = refPicSetInterLayer1[i];
+        }
+    }
+#endif
     for ( i=0; i<NumPicStCurr0; i++, cIdx++)
     {
       rpsCurrList1[cIdx] = RefPicSetStCurr0[i];
@@ -611,6 +670,15 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       rpsCurrList1[cIdx] = RefPicSetLtCurr[i];
     }    
 
+#if VIEW_SCALABILITY 
+    if( m_layerId > 0 )
+    {
+      for( i = 0; i < refPicSetInterLayer0.size(); cIdx ++, i ++)
+      {
+        rpsCurrList1[cIdx] = refPicSetInterLayer0[i];
+      }
+    }
+#else
 #if SVC_EXTENSION
     if( m_layerId > 0 )
     {
@@ -629,8 +697,8 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       }
     }
 #endif //SVC_EXTENSION
-
     assert(cIdx == numPicTotalCurr);
+#endif
   }
 
   ::memset(m_bIsUsedAsLongTerm, 0, sizeof(m_bIsUsedAsLongTerm));
@@ -642,7 +710,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
     m_apcRefPicList[REF_PIC_LIST_0][rIdx] = rpsCurrList0[ cIdx ];
 
 #if SVC_EXTENSION
+#if VIEW_SCALABILITY 
+    m_bIsUsedAsLongTerm[REF_PIC_LIST_0][rIdx] = (cIdx<NumPicStCurr0 || (cIdx>=NumPicStCurr0+refPicSetInterLayer0.size() && cIdx<NumPicStCurr0+refPicSetInterLayer0.size()+NumPicStCurr1)) ? false : true;
+#else
     m_bIsUsedAsLongTerm[0][rIdx] = ( cIdx >= NumPicStCurr0 && cIdx < NumPicStCurr0 + m_activeNumILRRefIdx ) || ( cIdx >= NumPicStCurr0 + NumPicStCurr1 + m_activeNumILRRefIdx );
+#endif
 #else
     m_bIsUsedAsLongTerm[REF_PIC_LIST_0][rIdx] = ( cIdx >= NumPicStCurr0 + NumPicStCurr1 );
 #endif
@@ -659,7 +731,11 @@ Void TComSlice::setRefPicList( TComList<TComPic*>& rcListPic, Bool checkNumPocTo
       cIdx = m_RefPicListModification.getRefPicListModificationFlagL1() ? m_RefPicListModification.getRefPicSetIdxL1(rIdx) : rIdx % numPicTotalCurr;
       assert(cIdx >= 0 && cIdx < numPicTotalCurr);
       m_apcRefPicList[REF_PIC_LIST_1][rIdx] = rpsCurrList1[ cIdx ];
+#if VIEW_SCALABILITY 
+      m_bIsUsedAsLongTerm[REF_PIC_LIST_1][rIdx] = (cIdx<NumPicStCurr1 || (cIdx>=NumPicStCurr1+refPicSetInterLayer1.size() && cIdx<NumPicStCurr1+refPicSetInterLayer1.size()+NumPicStCurr0)) ? false : true;
+#else
       m_bIsUsedAsLongTerm[REF_PIC_LIST_1][rIdx] = ( cIdx >= NumPicStCurr0 + NumPicStCurr1 );
+#endif
     }
   }
 }
@@ -698,6 +774,48 @@ Int TComSlice::getNumRpsCurrTempList() const
 
   return numRpsCurrTempList;
 }
+
+#if VIEW_SCALABILITY 
+Int TComSlice::getNumRpsInterLayerX(Int li, TComPic** ilpPic)
+{
+  assert(li==0 || li==1);
+
+  Int viewIdCurrLayerId  = m_pcVPS->getViewIdVal(m_pcVPS->getViewIndex(m_layerId) );
+  Int viewId0            = m_pcVPS->getViewIdVal( 0 );
+  Int numInterLayer0 = 0;
+  Int numInterLayer1 = 0;
+
+  for( Int i=0; i < m_activeNumILRRefIdx; i++ )
+  {
+    Int refLayerIdc = m_interLayerPredLayerIdc[i];       
+    Int maxTidIlRefPicsPlus1 = m_pcVPS->getMaxTidIlRefPicsPlus1(ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx(), getLayerIdx());
+
+    if( ((Int)(ilpPic[refLayerIdc]->getSlice(0)->getTLayer())<=maxTidIlRefPicsPlus1-1) || (maxTidIlRefPicsPlus1==0 && ilpPic[refLayerIdc]->getSlice(0)->getRapPicFlag()) )
+    {
+      Int viewIdRefPicLayerIdi = m_pcVPS->getViewIdVal( ilpPic[refLayerIdc]->getSlice(0)->getLayerIdx() );
+      Bool refPicSet0Flag = ( ( viewIdCurrLayerId <= viewId0 && viewIdCurrLayerId <= viewIdRefPicLayerIdi ) || ( viewIdCurrLayerId >= viewId0 && viewIdCurrLayerId >= viewIdRefPicLayerIdi ) );
+
+      if( refPicSet0Flag )
+      {
+        numInterLayer0++;
+      }
+      else
+      {
+        numInterLayer1++;
+      }
+    }
+  }
+
+  if( li==0 )
+  {
+    return numInterLayer0;
+  }
+  else
+  {
+    return numInterLayer1;
+  }
+}
+#endif
 
 Void TComSlice::initEqualRef()
 {
@@ -3476,7 +3594,11 @@ Int TComSlice::getCurrMsb( Int currLsb, Int prevLsb, Int prevMsb, Int maxLsbVal 
   }
 }
 
+#if VIEW_SCALABILITY
+Void TComSlice::setRefPicListModificationSvc( TComPic** ilpPic )
+#else
 Void TComSlice::setRefPicListModificationSvc()
+#endif
 {
   if( !m_pcPPS->getListsModificationPresentFlag()) 
   {
@@ -3490,24 +3612,47 @@ Void TComSlice::setRefPicListModificationSvc()
 
   TComRefPicListModification* refPicListModification = &m_RefPicListModification;
   Int numberOfRpsCurrTempList = this->getNumRpsCurrTempList();  // total number of ref pics in listTemp0 including inter-layer ref pics
-#if SVC_EXTENSION
-  Int numberOfPocBeforeCurr = this->getNumNegativeRpsCurrTempList();  // number of negative temporal ref pics 
-#endif
+  Int numberOfPocBeforeCurr = getNumNegativeRpsCurrTempList();  // number of negative temporal ref pics 
 
   assert(m_aiNumRefIdx[REF_PIC_LIST_0] > 0);
   assert(m_aiNumRefIdx[REF_PIC_LIST_1] > 0);
 
   //set L0 inter-layer reference picture modification
-#if SVC_EXTENSION
-  Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
-
-  if( m_activeNumILRRefIdx > 1 )
-  {
-    hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] >= (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
-  }
-#else
-  Bool hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == numberOfRpsCurrTempList) ? false : true;
+#if VIEW_SCALABILITY
+  Int numberOfPocAfterCurr = 0;
+  Int numberOfInterLayer0 = 0;
+  Int numberOfInterLayer1 = 0;
 #endif
+
+  Bool hasModification = false;
+
+  if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
+  {
+    hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] == (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
+
+    if( m_activeNumILRRefIdx > 1 )
+    {
+      hasModification = (m_aiNumRefIdx[REF_PIC_LIST_0] >= (numberOfPocBeforeCurr + m_activeNumILRRefIdx)) ? false : true;
+    }
+  }
+#if VIEW_SCALABILITY
+  else if( m_pcVPS->getScalabilityMask( VIEW_ORDER_INDEX ) ) //multi-view
+  {
+    numberOfPocAfterCurr = getNumfPositiveRpsCurrTempList();
+    numberOfInterLayer0 = getNumRpsInterLayerX(0, ilpPic);
+    numberOfInterLayer1 = getNumRpsInterLayerX(1, ilpPic);
+
+    if( (numberOfInterLayer1 > 0 && m_aiNumRefIdx[REF_PIC_LIST_0] < numberOfRpsCurrTempList) || (numberOfInterLayer1 == 0 && m_aiNumRefIdx[REF_PIC_LIST_0] < numberOfPocBeforeCurr + numberOfInterLayer0 ) )
+    {
+      hasModification = true;
+    }
+    else
+    {
+      hasModification = false;
+    }
+  }  
+#endif
+
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_0] > 1 );
   refPicListModification->setRefPicListModificationFlagL0(hasModification);
   if(hasModification)
@@ -3525,14 +3670,13 @@ Void TComSlice::setRefPicListModificationSvc()
         refPicListModification->setRefPicSetIdxL0(i, numberOfRpsCurrTempList - 1);
       }
     }
-    else
+    else if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
     {
       // number of ILRPs included into the reference picture list with the list modification
       Int includeNumILRP = min( max(1, m_aiNumRefIdx[REF_PIC_LIST_0]-numberOfPocBeforeCurr), m_activeNumILRRefIdx);
 
       for(Int i = includeNumILRP; i > 0; i-- )
       {
-#if SVC_EXTENSION
         if( numberOfPocBeforeCurr >= m_aiNumRefIdx[REF_PIC_LIST_0] )
         {
           refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + includeNumILRP - i);
@@ -3546,15 +3690,67 @@ Void TComSlice::setRefPicListModificationSvc()
             refPicListModification->setRefPicSetIdxL0(j, j + includeNumILRP);
           }
         }
-#else
-        refPicListModification->setRefPicSetIdxL0(m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfRpsCurrTempList - i);
-#endif
       }
     }
+#if VIEW_SCALABILITY
+    else if( m_pcVPS->getScalabilityMask( VIEW_ORDER_INDEX ) ) //multi-view
+    {
+      Int includeNumILRP = m_activeNumILRRefIdx;
+      Int iNumILRP = includeNumILRP;
+
+      if( numberOfInterLayer1 > 0 )
+      {
+        if( m_aiNumRefIdx[REF_PIC_LIST_0] < numberOfPocBeforeCurr + m_activeNumILRRefIdx )
+        {
+          for( Int i = 0; i < numberOfInterLayer0 && iNumILRP > 0; i++, iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL0( m_aiNumRefIdx[REF_PIC_LIST_0] - includeNumILRP + i, numberOfPocBeforeCurr + i );
+          }
+
+          for( Int i = 0; i < numberOfInterLayer1 && iNumILRP > 0; i++, iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL0( m_aiNumRefIdx[REF_PIC_LIST_0] - includeNumILRP +numberOfInterLayer0+ i, numberOfRpsCurrTempList-  numberOfInterLayer1 + i );
+          }
+        }
+        else
+        {
+          iNumILRP -= numberOfInterLayer0;
+
+          for( Int i = numberOfInterLayer1; i >0 && iNumILRP > 0; i--, iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL0( m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfRpsCurrTempList - i );
+          }
+        }
+      }
+      else
+      {
+        for( Int i = numberOfInterLayer0; i >0 && iNumILRP >0 ; i--, iNumILRP-- )
+        {
+          refPicListModification->setRefPicSetIdxL0( m_aiNumRefIdx[REF_PIC_LIST_0] - i, numberOfPocBeforeCurr + numberOfInterLayer0 - i );
+        }
+      }
+    }
+#endif
   }
 
   //set L1 inter-layer reference picture modification
-  hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] >= numberOfRpsCurrTempList) ? false : true;
+  if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
+  {
+    hasModification = (m_aiNumRefIdx[REF_PIC_LIST_1] >= numberOfRpsCurrTempList) ? false : true;
+  }
+#if VIEW_SCALABILITY
+  else if( m_pcVPS->getScalabilityMask( VIEW_ORDER_INDEX ) ) //multi-view
+  {
+    if( (numberOfInterLayer0 > 0 && m_aiNumRefIdx[REF_PIC_LIST_1] < numberOfRpsCurrTempList) || (numberOfInterLayer0 == 0 && m_aiNumRefIdx[REF_PIC_LIST_1] < numberOfPocAfterCurr + numberOfInterLayer1) )
+    {
+      hasModification = true;
+    }
+    else
+    {
+      hasModification = false;
+    }
+  }
+#endif
   hasModification = hasModification && ( m_aiNumRefIdx[REF_PIC_LIST_1] > 1 );
 
   refPicListModification->setRefPicListModificationFlagL1(hasModification);
@@ -3572,7 +3768,7 @@ Void TComSlice::setRefPicListModificationSvc()
         refPicListModification->setRefPicSetIdxL1(i, numberOfRpsCurrTempList - 1);  
       }
     }
-    else
+    else if( m_pcVPS->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
     {
       Int includeNumILRP = min(m_aiNumRefIdx[REF_PIC_LIST_1], m_activeNumILRRefIdx);
 
@@ -3581,6 +3777,44 @@ Void TComSlice::setRefPicListModificationSvc()
         refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
       }
     }
+#if VIEW_SCALABILITY
+    else if( m_pcVPS->getScalabilityMask( VIEW_ORDER_INDEX ) ) //multi-view
+    {
+      Int includeNumILRP = m_activeNumILRRefIdx;
+      Int iNumILRP=includeNumILRP;
+
+      if( numberOfInterLayer0 > 0 )
+      {
+        if( m_aiNumRefIdx[REF_PIC_LIST_1] < numberOfPocAfterCurr + m_activeNumILRRefIdx )
+        {
+          for( Int i = 0; i < numberOfInterLayer1 && iNumILRP>0; i++,iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - includeNumILRP + i, numberOfPocAfterCurr + i);
+          }
+
+          for(Int i = 0; i < numberOfInterLayer0 && iNumILRP>0; i++,iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - includeNumILRP +numberOfInterLayer1+ i, numberOfRpsCurrTempList-numberOfInterLayer0+i);
+          }
+        }
+        else
+        {
+          iNumILRP -= numberOfInterLayer1;
+          for( Int i = numberOfInterLayer0; i > 0 && iNumILRP > 0; i--,iNumILRP-- )
+          {
+            refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfRpsCurrTempList - i);
+          }
+        }
+      }
+      else
+      {
+        for( Int i = numberOfInterLayer1; i >0 && iNumILRP>0; i--, iNumILRP-- )
+        {
+          refPicListModification->setRefPicSetIdxL1(m_aiNumRefIdx[REF_PIC_LIST_1] - i, numberOfPocAfterCurr + numberOfInterLayer1 - i);
+        }
+      }
+    }
+#endif
   }
   return;
 }
@@ -3637,6 +3871,29 @@ Void TComSPS::inferSPS( const UInt layerId, TComVPS* vps )
     m_conformanceWindow = repFormat->getConformanceWindowVps();
   }
 }
+
+#if VIEW_SCALABILITY 
+Int TComSlice::getNumfPositiveRpsCurrTempList()
+{
+  if( m_eSliceType == I_SLICE ) 
+  {
+    return 0;
+  }
+
+  Int numPocAfterCurr = 0;
+
+  for( UInt i = 0; i < m_pRPS->getNumberOfPositivePictures(); i++ )
+  {
+    if( m_pRPS->getUsed(i) )
+    {
+      numPocAfterCurr++;
+    }
+  }
+
+  return numPocAfterCurr;
+}
+#endif
+
 #endif //SVC_EXTENSION
 
 //! \}

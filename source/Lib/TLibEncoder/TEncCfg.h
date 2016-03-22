@@ -398,7 +398,7 @@ protected:
   UInt        m_summaryVerboseness;                           ///< Specifies the level of the verboseness of the text output.
 
 #if SVC_EXTENSION
-  UInt      m_layerId;   
+  UInt      m_layerId;
   UInt      m_numLayer;
   Bool      m_elRapSliceBEnabled;
   Int       m_adaptiveResolutionChange;
@@ -482,6 +482,10 @@ protected:
 #if Q0189_TMVP_CONSTRAINTS
   Int                                 m_TMVPConstraintsSEIEnabled;
 #endif
+
+#if VIEW_SCALABILITY
+  Bool                                m_bUseDisparitySearchRangeRestriction;
+#endif 
 #endif //SVC_EXTENSION
 
 public:
@@ -1251,6 +1255,10 @@ public:
   Void      setCGSLutSizeRDO(Int n)      { m_nCGSLutSizeRDO = n;  }
   Int       getCGSLutSizeRDO()           { return m_nCGSLutSizeRDO; }
 #endif
+#endif
+#if VIEW_SCALABILITY 
+  Void      setUseDisparitySearchRangeRestriction ( Bool b ) { m_bUseDisparitySearchRangeRestriction = b; }
+  Bool      getUseDisparitySearchRangeRestriction ()         { return  m_bUseDisparitySearchRangeRestriction; }
 #endif
 #endif //SVC_EXTENSION
 };

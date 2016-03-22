@@ -847,6 +847,16 @@ Void TEncTop::xInitSPS()
   {
     m_cSPS.setLayerId(m_layerId);
   }
+#if VIEW_SCALABILITY 
+  if( m_bUseDisparitySearchRangeRestriction )
+  {
+    m_cSPS.setInterViewMvVertConstraintFlag( true );
+  }
+  else
+  {
+    m_cSPS.setInterViewMvVertConstraintFlag( false );
+  }
+#endif
 #endif //SVC_EXTENSION
 
   ProfileTierLevel& profileTierLevel = *m_cSPS.getPTL()->getGeneralPTL();

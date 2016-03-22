@@ -486,8 +486,8 @@ public:
   Int           reduceSetOfIntraModes         ( UInt   uiAbsPartIdx, Int* uiIntraDirPred, Int** posScalingFactor, Int &fullSetOfModes );
 #endif
 #if REF_IDX_ME_ZEROMV
-  Bool          xCheckZeroMVILRMerge          ( UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
-  Bool          xCheckZeroMVILRMvdL1Zero      ( Int iRefList, Int iRefIdx, Int MvpIdx);
+  Bool          checkZeroMVILRMerge           ( UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1);
+  Bool          checkZeroMVILRMvdL1Zero       ( Int iRefList, Int iRefIdx, Int MvpIdx);
 #endif
   TComDataCU*   getBaseColCU                  ( UInt refLayerIdc, UInt uiCuAbsPartIdx, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** posScalingFactor, Bool motionMapping = false );
   TComDataCU*   getBaseColCU                  ( UInt refLayerIdc, UInt pelX, UInt pelY, UInt &uiCUAddrBase, UInt &uiAbsPartIdxBase, Int** posScalingFactor, Bool motionMapping = false );

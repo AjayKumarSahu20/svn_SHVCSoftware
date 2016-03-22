@@ -117,6 +117,10 @@ protected:
   Int       m_layerId;
   Int       m_numLayers;                                      ///< number of layers
   Int       m_scalabilityMask[MAX_VPS_NUM_SCALABILITY_TYPES]; ///< scalability_mask
+#if VIEW_SCALABILITY
+  Int       m_iNumberOfViews;                                 ///< number of views
+  std::vector<Int> m_ViewIdVal;
+#endif  
   Bool      m_maxTidRefPresentFlag; 
 
   Int       m_numLayerSets;

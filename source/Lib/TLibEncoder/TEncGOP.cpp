@@ -2028,7 +2028,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if( m_layerId > 0 && pcSlice->getActiveNumILRRefIdx() )
     {
       pcSlice->setILRPic( m_pcEncTop->getIlpList() );
+#if VIEW_SCALABILITY 
+      pcSlice->setRefPicListModificationSvc(m_pcEncTop->getIlpList());
+#else
       pcSlice->setRefPicListModificationSvc();
+#endif
       pcSlice->setRefPicList( rcListPic, false, m_pcEncTop->getIlpList());
 
       if( pcSlice->getMFMEnabledFlag() )

@@ -53,6 +53,10 @@ protected:
 #if AUXILIARY_PICTURES
   Int       m_auxId;
 #endif
+#if VIEW_SCALABILITY
+  Int       m_viewOrderIndex;
+  Int       m_viewId;
+#endif
 
   Int       m_extraRPSs;                                     ///< extra RPSs added to handle CRA
   GOPEntry  m_GOPList[MAX_GOP];                              ///< the enhancement layer coding structure entries from the config file
@@ -172,6 +176,10 @@ public:
   Int     getNumActiveRefLayers() const        { return m_numActiveRefLayers;       }
   Int*    getPredLayerIds() const              { return m_predLayerIds;             }
   Int     getPredLayerIdx(Int i) const         { return m_predLayerIds[i];          }
+#if VIEW_SCALABILITY
+  Int     getViewOrderIndex()                  { return m_viewOrderIndex;       }
+  Int     getViewId()                          { return m_viewId;               }
+#endif
 
   Int     getRepFormatIdx() const              { return m_repFormatIdx;         }
   Void    setRepFormatIdx(Int x)               { m_repFormatIdx = x;            }

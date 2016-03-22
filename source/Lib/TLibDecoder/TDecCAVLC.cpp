@@ -2185,6 +2185,21 @@ Void TDecCavlc::parseProfileTier(ProfileTierLevel *ptl, const Bool /*bIsSubLayer
     READ_FLAG(    uiCode, "lower_bit_rate_constraint_flag"); assert (uiCode == 1);
     READ_CODE(32, uiCode, "reserved_zero_34bits");  READ_CODE(2, uiCode, "reserved_zero_34bits");
   }
+#if VIEW_SCALABILITY
+  else if( ptl->getProfileIdc() == Profile::MULTIVIEWMAIN )
+  {
+    READ_FLAG(    uiCode, "general_max_12bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_10bit_constraint_flag" ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_8bit_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_422chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_420chroma_constraint_flag"  ); assert (uiCode == 1);
+    READ_FLAG(    uiCode, "general_max_monochrome_constraint_flag" ); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_intra_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_one_picture_only_constraint_flag"); assert (uiCode == 0);
+    READ_FLAG(    uiCode, "general_lower_bit_rate_constraint_flag"); assert (uiCode == 1);
+    READ_CODE(32, uiCode, "general_reserved_zero_34bits");  READ_CODE(2, uiCode, "general_reserved_zero_34bits");
+  }
+#endif
   else
   {
     ptl->setBitDepthConstraint((ptl->getProfileIdc() == Profile::MAIN10)?10:8);
@@ -3555,6 +3570,13 @@ Void TDecCavlc::parseSPSExtension( TComSPS* pcSPS )
   // more syntax elements to be parsed here
 
   READ_FLAG( uiCode, "inter_view_mv_vert_constraint_flag" );
+  
+#if VIEW_SCALABILITY 
+  pcSPS->setInterViewMvVertConstraintFlag(uiCode == 1 ? true : false);
+#else
+  // Vertical MV component restriction is not used in SHVC CTC
+  assert( uiCode == 0 );
+#endif
 }
 
 #if CGS_3D_ASYMLUT

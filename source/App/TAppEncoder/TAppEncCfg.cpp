@@ -712,6 +712,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if AUXILIARY_PICTURES
   Int*    cfg_auxId[MAX_LAYERS];
 #endif
+#if VIEW_SCALABILITY
+  Int*     cfg_viewOrderIndex         [MAX_LAYERS];
+  Int*     cfg_viewId                 [MAX_LAYERS]; 
+#endif
 
   Int*    cfg_numSamplePredRefLayers  [MAX_LAYERS];
   string  cfg_samplePredRefLayerIds   [MAX_LAYERS];
@@ -888,6 +892,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #if AUXILIARY_PICTURES
     cfg_auxId[layer]                = &m_apcLayerCfg[layer]->m_auxId; 
 #endif
+#if VIEW_SCALABILITY
+    cfg_viewOrderIndex[layer]       = &m_apcLayerCfg[layer]->m_viewOrderIndex;
+    cfg_viewId[layer]               = &m_apcLayerCfg[layer]->m_viewId;
+#endif
     cfg_layerSwitchOffBegin[layer]  = &m_apcLayerCfg[layer]->m_layerSwitchOffBegin;
     cfg_layerSwitchOffEnd[layer]    = &m_apcLayerCfg[layer]->m_layerSwitchOffEnd;
     cfg_layerPTLIdx[layer]          = &m_apcLayerCfg[layer]->m_layerPTLIdx;
@@ -1042,6 +1050,10 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("OutputLayerSetIdx",                             cfg_outputLayerSetIdx,                      string(""), 1, "Corresponding layer set index, only for non-default output layer sets")
 #if AUXILIARY_PICTURES
   ("AuxId%d",                                       cfg_auxId,                                 0, m_numLayers, "Auxilary picture ID for layer %d (0: Not aux pic, 1: Alpha plane, 2: Depth picture, 3: Cb enh, 4: Cr enh")
+#endif
+#if VIEW_SCALABILITY
+  ("ViewOrderIndex%d",                              cfg_viewOrderIndex,                       -1, m_numLayers, "View Order Index per layer")
+  ("ViewId%d",                                      cfg_viewId,                               -1, m_numLayers, "View Id per View Order Index")
 #endif
   ("ConformanceMode%d",                             cfg_conformanceMode,                       0, m_numLayers, "Window conformance mode (0: no cropping, 1:automatic padding, 2: padding, 3:cropping")
   ("ConfLeft%d",                                    cfg_confWinLeft,                           0, m_numLayers, "Deprecated alias of ConfWinLeft")
@@ -3020,6 +3032,45 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #endif
   // check validity of input parameters
 #if SVC_EXTENSION
+#if VIEW_SCALABILITY
+  if( m_scalabilityMask[VIEW_ORDER_INDEX] )
+  {
+
+    std::vector<Int> uniqueViewOrderIndices;
+    std::vector<Int> uniqueViewIds;
+    for( Int layer_idx = 0; layer_idx < m_numLayers; layer_idx++ )
+    {
+      Bool isIn = false;
+      for( Int uni = 0; uni < uniqueViewOrderIndices.size(); uni++ )
+      {
+        isIn = isIn || ( *(cfg_viewOrderIndex[ layer_idx ]) == uniqueViewOrderIndices[ uni ] ); 
+      }
+      if ( !isIn ) 
+      {
+        uniqueViewOrderIndices.push_back( *(cfg_viewOrderIndex[ layer_idx ]) ); 
+      } 
+
+      isIn = false;
+      for( Int uni = 0; uni < uniqueViewIds.size(); uni++ )
+      {
+        isIn = isIn || ( *(cfg_viewId[ layer_idx ]) == uniqueViewIds[ uni ] ); 
+      }
+      if( !isIn ) 
+      {
+        uniqueViewIds.push_back( *(cfg_viewId[ layer_idx ]) ); 
+      } 
+
+      assert(uniqueViewIds.size()==uniqueViewOrderIndices.size());
+
+      m_iNumberOfViews=uniqueViewIds.size();
+
+    }
+
+    m_ViewIdVal = uniqueViewIds;
+    m_iNumberOfViews = (Int)uniqueViewOrderIndices.size();
+  }
+#endif
+
   for( UInt layerIdx = 0; layerIdx < m_numLayers; layerIdx++ )
   {
     xCheckParameter(layerIdx);
@@ -4077,6 +4128,19 @@ Void TAppEncCfg::xCheckParameter()
     xConfirmPara(m_apcLayerCfg[layerIdx]->m_auxId < 0 || m_apcLayerCfg[layerIdx]->m_auxId > 2, "AuxId must be in range 0 to 2");
   }
 #endif 
+#if VIEW_SCALABILITY
+  if (m_scalabilityMask[VIEW_ORDER_INDEX])
+  {   
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_viewId < 0 , "ViewId must be greater than or equal to 0");
+    xConfirmPara(m_apcLayerCfg[layerIdx]->m_viewOrderIndex < 0 , "ViewOrderIndex must be greater than or equal to 0");
+
+    if( layerIdx > 0 )
+    {
+      xConfirmPara(m_apcLayerCfg[layerIdx]->m_viewOrderIndex < m_apcLayerCfg[layerIdx-1]->m_viewOrderIndex, "ViewOrderIndex shall be increasing");
+    }
+
+  }
+#endif
 #if CGS_3D_ASYMLUT
   xConfirmPara( m_nCGSFlag < 0 || m_nCGSFlag > 1 , "0<=CGS<=1" );
 #endif
@@ -4225,6 +4289,13 @@ Void TAppEncCfg::xPrintParameter()
   printf("Internal Format                        : %dx%d %dHz\n", m_iSourceWidth, m_iSourceHeight, m_iFrameRate );
 
 #if SVC_EXTENSION
+#if VIEW_SCALABILITY
+  if( m_scalabilityMask[VIEW_ORDER_INDEX] )
+  {
+    printf("ViewOrderIndex                         : %d\n", m_apcLayerCfg[layer]->m_viewOrderIndex );
+    printf("ViewId                                 : %d\n", m_apcLayerCfg[layer]->m_viewId );
+  }
+#endif
       printf("PTL index                              : %d\n", m_apcLayerCfg[layerIdx]->m_layerPTLIdx );
     }
 
