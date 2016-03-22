@@ -562,6 +562,7 @@ Void TAppEncTop::xInitLibCfg()
 
   m_cTEncTop.setFrameRate                                         ( m_iFrameRate );
   m_cTEncTop.setFrameSkip                                         ( m_FrameSkip );
+  m_cTEncTop.setTemporalSubsampleRatio                            ( m_temporalSubsampleRatio );
   m_cTEncTop.setSourceWidth                                       ( m_iSourceWidth );
   m_cTEncTop.setSourceHeight                                      ( m_iSourceHeight );
   m_cTEncTop.setConformanceWindow                                 ( m_confWinLeft, m_confWinRight, m_confWinTop, m_confWinBottom );
@@ -1729,6 +1730,12 @@ Void TAppEncTop::encode()
         iTotalNumEncoded += iNumEncoded;
       }
       m_apcTEncTop[layer]->setNumPicRcvd( 0 );
+
+      // temporally skip frames
+      if( m_temporalSubsampleRatio > 1 )
+      {
+        m_apcTVideoIOYuvInputFile[layer]->skipFrames(m_temporalSubsampleRatio-1, m_apcTEncTop[layer]->getSourceWidth() - m_apcTEncTop[layer]->getPad(0), m_apcTEncTop[layer]->getSourceHeight() - m_apcTEncTop[layer]->getPad(1), m_apcLayerCfg[layer]->m_InputChromaFormatIDC);
+      }
     }
 
     // write bitstream out
@@ -1970,6 +1977,11 @@ Void TAppEncTop::encode()
     {
       xWriteOutput(bitstreamFile, iNumEncoded, outputAccessUnits);
       outputAccessUnits.clear();
+    }
+    // temporally skip frames
+    if( m_temporalSubsampleRatio > 1 )
+    {
+      m_cTVideoIOYuvInputFile.skipFrames(m_temporalSubsampleRatio-1, m_iSourceWidth - m_aiPad[0], m_iSourceHeight - m_aiPad[1], m_InputChromaFormatIDC);
     }
   }
 
@@ -2279,9 +2291,9 @@ Void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
 Void TAppEncTop::printRateSummary()
 {
 #if SVC_EXTENSION
-  Double time = (Double) m_iFrameRcvd / m_apcLayerCfg[m_numLayers-1]->m_iFrameRate;
+  Double time = (Double) m_iFrameRcvd / m_apcLayerCfg[m_numLayers-1]->m_iFrameRate * m_temporalSubsampleRatio;
 #else
-  Double time = (Double) m_iFrameRcvd / m_iFrameRate;
+  Double time = (Double) m_iFrameRcvd / m_iFrameRate * m_temporalSubsampleRatio;
 #endif
   printf("Bytes written to file: %u (%.3f kbps)\n", m_totalBytes, 0.008 * m_totalBytes / time);
   if (m_summaryVerboseness > 0)
