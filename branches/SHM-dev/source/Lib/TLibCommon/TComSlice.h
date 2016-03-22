@@ -1442,6 +1442,9 @@ private:
   UInt             m_updateRepFormatIndex;
   Bool             m_inferScalingListFlag;
   UInt             m_scalingListRefLayerId;
+#if VIEW_SCALABILITY 
+  Bool             m_interViewMvVertConstraintFlag;
+#endif
 #endif //SVC_EXTENSION
 
 public:
@@ -1598,6 +1601,11 @@ public:
   Void                   setScalingListRefLayerId( UInt layerId )                                        { m_scalingListRefLayerId = layerId;                                   }
 
   Void                   inferSPS( const UInt layerId, TComVPS* vps );
+
+#if VIEW_SCALABILITY 
+  Void                   setInterViewMvVertConstraintFlag( Bool val )                                    { m_interViewMvVertConstraintFlag = val;                               }
+  Bool                   getInterViewMvVertConstraintFlag() const                                        { return m_interViewMvVertConstraintFlag;                              }
+#endif
 #endif //SVC_EXTENSION
 };
 
@@ -2350,8 +2358,13 @@ public:
 
   Void                        setFullPelBaseRec( UInt refLayerIdc, TComPicYuv* p)    { m_pcFullPelBaseRec[refLayerIdc] = p;                          }
   TComPicYuv*                 getFullPelBaseRec( UInt refLayerIdc)                   { return  m_pcFullPelBaseRec[refLayerIdc];                      }
-
+#if VIEW_SCALABILITY 
+  Int                         getNumRpsInterLayerX( Int li, TComPic** ilpPic );
+  Void                        setRefPicListModificationSvc( TComPic** ilpPic );
+  Int                         getNumfPositiveRpsCurrTempList();
+#else
   Void                        setRefPicListModificationSvc();
+#endif
   Int                         getNumILRRefIdx()                                      { return  m_pcVPS->getNumDirectRefLayers( m_layerId );          }
 
   Int                         getActiveNumILRRefIdx()                                { return  m_activeNumILRRefIdx;                                 }

@@ -119,8 +119,13 @@ protected:
 
   Bool            m_isInitialized;
 
-#if SVC_EXTENSION && N0383_IL_CONSTRAINED_TILE_SETS_SEI
+#if SVC_EXTENSION 
+#if N0383_IL_CONSTRAINED_TILE_SETS_SEI
   Bool            m_disableILP;
+#endif
+#if VIEW_SCALABILITY 
+  Bool            m_vertRestriction;
+#endif 
 #endif
 
 public:
@@ -472,7 +477,8 @@ protected:
   Void  setWpScalingDistParam( TComDataCU* pcCU, Int iRefIdx, RefPicList eRefPicListCur );
   inline  Void  setDistParamComp( ComponentID compIdx )  { m_cDistParam.compIdx = compIdx; }
 
-#if SVC_EXTENSION && REF_IDX_ME_ZEROMV
+#if SVC_EXTENSION 
+#if REF_IDX_ME_ZEROMV
   Void xPatternSearchFracDIFMv0  ( TComPattern*  pcPatternKey,
                                    Pel*          piRefY,
                                    Int           iRefStride,
@@ -484,7 +490,12 @@ protected:
 #else
                                    UInt&         ruiCost     );
 #endif
-#endif //SVC_EXTENSION  
+#endif
+
+#if VIEW_SCALABILITY 
+  TComMv xCheckMVVertRestriction( TComMv mv );
+#endif
+#endif //SVC_EXTENSION
 
 };// END CLASS DEFINITION TEncSearch
 

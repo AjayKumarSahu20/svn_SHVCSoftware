@@ -2887,8 +2887,9 @@ Void TEncSearch::xMergeEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPUI
   for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
   {
 #if REF_IDX_ME_ZEROMV
-    Bool bZeroMVILR = pcCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
-    if(bZeroMVILR)
+    Bool bZeroMVILR = pcCU->checkZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
+
+    if( bZeroMVILR )
     {
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
@@ -3112,8 +3113,9 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
         if(pcCU->getSlice()->getMvdL1ZeroFlag() && iRefList==1 && biPDistTemp < bestBiPDist)
         {
 #if REF_IDX_ME_ZEROMV 
-          Bool bZeroMVILR = pcCU->xCheckZeroMVILRMvdL1Zero(iRefList, iRefIdxTemp, aaiMvpIdx[iRefList][iRefIdxTemp]);
-          if(bZeroMVILR)
+          Bool bZeroMVILR = pcCU->checkZeroMVILRMvdL1Zero(iRefList, iRefIdxTemp, aaiMvpIdx[iRefList][iRefIdxTemp]);
+
+          if( bZeroMVILR )
           {
 #endif
           bestBiPDist = biPDistTemp;
@@ -3863,7 +3865,9 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   Int         iRefStride  = pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->getPicYuvRec()->getStride(COMPONENT_Y);
 
   TComMv      cMvPred = *pcMvPred;
-
+#if VIEW_SCALABILITY 
+  m_vertRestriction = m_pcEncCfg->getUseDisparitySearchRangeRestriction() && pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->getPOC() == pcCU->getSlice()->getPOC();
+#endif
   if ( bBi )
   {
     xSetSearchRange   ( pcCU, rcMv   , iSrchRng, cMvSrchRngLT, cMvSrchRngRB );
@@ -3881,7 +3885,8 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
   //  Do integer search
 #if REF_IDX_ME_ZEROMV
-  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()))  //ILR reference pic 
+  //scalable layer
+  if( pcCU->getSlice()->getVPS()->getScalabilityMask( SCALABILITY_ID ) && pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()) )  //ILR reference pic 
   {
     rcMv.setZero();  //use Mv(0, 0) for integer ME 
   }
@@ -3917,7 +3922,8 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   const Bool bIsLosslessCoded = pcCU->getCUTransquantBypass(uiPartAddr) != 0;
 
 #if REF_IDX_ME_ZEROMV
-  if( pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()))  //ILR reference pic
+  //scalable layer
+  if( pcCU->getSlice()->getVPS()->getScalabilityMask( SCALABILITY_ID ) && pcCU->getSlice()->getRefPic( eRefPicList, iRefIdxPred )->isILR(pcCU->getPic()->getLayerId()))  //ILR reference pic
   {
     xPatternSearchFracDIFMv0( pcPatternKey, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost );
   }
@@ -3949,6 +3955,16 @@ Void TEncSearch::xSetSearchRange ( const TComDataCU* const pcCU, const TComMv& c
 
   rcMvSrchRngRB.setHor( cTmpMvPred.getHor() + (iSrchRng << iMvShift) );
   rcMvSrchRngRB.setVer( cTmpMvPred.getVer() + (iSrchRng << iMvShift) );
+#if VIEW_SCALABILITY
+  if( m_vertRestriction )
+  {
+    Int mvRestricted = ( 56 - 1 ) << iMvShift ; // -1 to consider subpel search
+    if( rcMvSrchRngRB.getVer() > mvRestricted )
+    {
+      rcMvSrchRngRB.setVer( mvRestricted );
+    }
+  }
+#endif
   pcCU->clipMv        ( rcMvSrchRngLT );
   pcCU->clipMv        ( rcMvSrchRngRB );
 

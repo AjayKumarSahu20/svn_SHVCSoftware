@@ -71,6 +71,8 @@
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define NO_CLRAS_OUTPUT_FLAG             1
 
+#define VIEW_SCALABILITY                 0      ///< JCTVC-W0134: multi-view support
+
 /// scalability types
 enum ScalabilityType
 {
@@ -86,8 +88,7 @@ enum AuxType
 };
 
 /// normative encoder constraints --------
-#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture (without fractional ME)
-
+#define REF_IDX_ME_ZEROMV                1      ///< JCTVC-L0051: use zero motion for inter-layer reference picture for scalable layer (without fractional ME)
 /// encoder settings ---------------------
 #define FAST_INTRA_SHVC                  1      ///< JCTVC-M0115: reduction number of intra modes in the EL (encoder only)
 #if FAST_INTRA_SHVC

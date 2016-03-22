@@ -838,6 +838,13 @@ Bool TDecTop::xDecodeSlice(InputNALUnit &nalu, Int &iSkipFrame, Int iPOCLastDisp
 
   // set motion mapping flag
   m_apcSlicePilot->setMFMEnabledFlag( ( m_apcSlicePilot->getNumMotionPredRefLayers() > 0 && m_apcSlicePilot->getActiveNumILRRefIdx() && !m_apcSlicePilot->isIntra() ) ? true : false );
+
+#if VIEW_SCALABILITY
+  if( vps->getViewIndex(nalu.m_nuhLayerId) == 1 && sps->getPTL()->getGeneralPTL()->getProfileIdc() == Profile::MULTIVIEWMAIN )
+  {
+    assert( sps->getInterViewMvVertConstraintFlag() == 1 );
+  }
+#endif
 #endif
 
   // set POC for dependent slices in skipped pictures

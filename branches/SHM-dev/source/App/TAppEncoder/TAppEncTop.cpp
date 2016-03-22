@@ -468,6 +468,9 @@ Void TAppEncTop::xInitLibCfg()
     m_cTEncTop.setBottomRightTileIndex                              ( m_bottomRightTileIndex );
     m_cTEncTop.setIlcIdc                                            ( m_ilcIdc );
 #endif
+#if VIEW_SCALABILITY 
+    m_cTEncTop.setUseDisparitySearchRangeRestriction                ( m_scalabilityMask[VIEW_ORDER_INDEX] );
+#endif
 
     Int& layerPTLIdx                                            = m_apcLayerCfg[layer]->m_layerPTLIdx;
 
@@ -970,12 +973,63 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   m_apcTEncTop[0]->getVPS()->setMaxLayers( m_numLayers );
 
   UInt i = 0, dimIdLen = 0;
+#if VIEW_SCALABILITY
+  Int curDimId=0;
+
+  if( m_scalabilityMask[VIEW_ORDER_INDEX] )
+  {
+    UInt maxViewOrderIndex = 0,maxViewId=0;
+    UInt voiLen = 1,vidLen=1;
+
+    for( i = 0; i < vps->getMaxLayers(); i++ )
+    {
+      if( m_apcLayerCfg[i]->getViewOrderIndex() > maxViewOrderIndex )
+      {
+        maxViewOrderIndex = m_apcLayerCfg[i]->getViewOrderIndex();
+      }
+
+      if( m_apcLayerCfg[i]->getViewId() > maxViewId )
+      {
+        maxViewId = m_apcLayerCfg[i]->getViewId();
+      }
+
+    }
+    while((1 << voiLen) < (maxViewOrderIndex + 1))
+    {
+      voiLen++;
+    }
+
+    while((1 << vidLen) < (maxViewId + 1))
+    {
+      vidLen++;
+    }
+
+    vps->setDimensionIdLen(0, voiLen);
+    vps->setViewIdLen(vidLen);
+
+    for( i = 0; i < vps->getMaxLayers(); i++ )
+    {
+      vps->setDimensionId(i, 0, m_apcLayerCfg[i]->getViewOrderIndex());          
+    }
+
+    for( i = 0; i < m_iNumberOfViews; i++ )
+    {
+      vps->setViewIdVal(i, m_ViewIdVal[i]); 
+    }
+
+    curDimId++;
+  }
+#endif
 
   while((1 << dimIdLen) < m_numLayers)
   {
     dimIdLen++;
   }
+#if VIEW_SCALABILITY
+  vps->setDimensionIdLen(curDimId, dimIdLen); 
+#else
   vps->setDimensionIdLen(0, dimIdLen);
+#endif
   vps->setNuhLayerIdPresentFlag(false);
   vps->setLayerIdInNuh(0, 0);
   vps->setLayerIdxInVps(0, 0);
@@ -983,8 +1037,11 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
   {
     vps->setLayerIdInNuh(i, m_apcLayerCfg[i]->m_layerId);    
     vps->setLayerIdxInVps(vps->getLayerIdInNuh(i), i);
+#if VIEW_SCALABILITY
+    vps->setDimensionId(i, curDimId, i);
+#else
     vps->setDimensionId(i, 0, i);
-
+#endif
     if( m_apcLayerCfg[i]->m_layerId != i )
     {
       vps->setNuhLayerIdPresentFlag(true);
@@ -1092,10 +1149,14 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
       vps->setScalabilityMask(i, m_scalabilityMask[i]);
       scalabilityTypes += m_scalabilityMask[i];
     }
+#if VIEW_SCALABILITY
+    assert( scalabilityTypes <= 3 );
+#else
 #if AUXILIARY_PICTURES
     assert( scalabilityTypes <= 2 );
 #else
     assert( scalabilityTypes == 1 );
+#endif
 #endif
     vps->setNumScalabilityTypes(scalabilityTypes);
   }

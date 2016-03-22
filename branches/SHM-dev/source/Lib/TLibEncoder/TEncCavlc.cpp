@@ -1444,6 +1444,21 @@ Void TEncCavlc::codeProfileTier( const ProfileTierLevel* ptl, const Bool /*bIsSu
     WRITE_FLAG(true,   "general_lower_bit_rate_constraint_flag");
     WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
   }
+#if VIEW_SCALABILITY
+  else if( ptl->getProfileIdc() == Profile::MULTIVIEWMAIN )
+  {
+    WRITE_FLAG(true,   "general_max_12bit_constraint_flag");
+    WRITE_FLAG(true,   "general_max_10bit_constraint_flag");
+    WRITE_FLAG(true,   "general_max_8bit_constraint_flag");
+    WRITE_FLAG(true,   "general_max_422chroma_constraint_flag");
+    WRITE_FLAG(true,   "general_max_420chroma_constraint_flag");
+    WRITE_FLAG(false,  "general_max_monochrome_constraint_flag");
+    WRITE_FLAG(false,  "general_intra_constraint_flag");
+    WRITE_FLAG(false,  "general_one_picture_only_constraint_flag");
+    WRITE_FLAG(true,   "general_lower_bit_rate_constraint_flag");
+    WRITE_CODE(0, 32,  "general_reserved_zero_34bits");  WRITE_CODE(0, 2,  "general_reserved_zero_34bits");
+  }
+#endif
   else
   {
     WRITE_CODE(0, 32,  "general_reserved_zero_43bits");  WRITE_CODE(0, 11,  "general_reserved_zero_43bits");
@@ -1993,7 +2008,9 @@ Void TEncCavlc::codeVPSExtension( const TComVPS *vps )
   }
 
   WRITE_CODE( vps->getViewIdLen( ), 4, "view_id_len" );
+#if !VIEW_SCALABILITY
   assert ( vps->getNumViews() >= (1<<vps->getViewIdLen()) );
+#endif
 
   if ( vps->getViewIdLen() > 0 )
   {
@@ -2459,7 +2476,11 @@ Void TEncCavlc::codeSPSExtension( const TComSPS* pcSPS )
   // more syntax elements to be written here
 
   // Vertical MV component restriction is not used in SHVC CTC
+#if VIEW_SCALABILITY 
+  WRITE_FLAG( pcSPS->getInterViewMvVertConstraintFlag() ? 1 : 0 , "inter_view_mv_vert_constraint_flag" );
+#else
   WRITE_FLAG( 0, "inter_view_mv_vert_constraint_flag" );
+#endif
 }
 
 Void TEncCavlc::codeVpsVuiBspHrdParams( const TComVPS* vps )

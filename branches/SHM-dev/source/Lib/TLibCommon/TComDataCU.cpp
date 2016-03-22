@@ -3316,54 +3316,61 @@ Int TComDataCU::reduceSetOfIntraModes( UInt uiAbsPartIdx, Int* uiIntraDirPred, I
 #endif
 
 #if REF_IDX_ME_ZEROMV
-Bool TComDataCU::xCheckZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1)
+Bool TComDataCU::checkZeroMVILRMerge(UChar uhInterDir, TComMvField& cMvFieldL0, TComMvField& cMvFieldL1)
 {
   Bool checkZeroMVILR = true;
 
-  if(uhInterDir&0x1)  //list0
+  if( m_pcSlice->getVPS()->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
   {
-    Int refIdxL0 = cMvFieldL0.getRefIdx();
-    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_0, refIdxL0);
-
-    if(refPic->isILR(m_pcPic->getLayerId()))
+    if( uhInterDir & 0x1 )  //list0
     {
-      checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+      Int refIdxL0 = cMvFieldL0.getRefIdx();
+      TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_0, refIdxL0);
 
-      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
-      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
-      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_pcPic->getLayerIdx(), refPic->getLayerIdx() );
+      if(refPic->isILR(m_pcPic->getLayerId()))
+      {
+        checkZeroMVILR &= (cMvFieldL0.getHor() == 0 && cMvFieldL0.getVer() == 0);
+
+        // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+        // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+        checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_pcPic->getLayerIdx(), refPic->getLayerIdx() );
+      }
     }
-  }
-  if(uhInterDir&0x2)  //list1
-  {
-    Int refIdxL1  = cMvFieldL1.getRefIdx();
-    TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_1, refIdxL1);
 
-    if(refPic->isILR(m_pcPic->getLayerId()))
+    if( uhInterDir & 0x2 )  //list1
     {
-      checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+      Int refIdxL1  = cMvFieldL1.getRefIdx();
+      TComPic* refPic = m_pcSlice->getRefPic(REF_PIC_LIST_1, refIdxL1);
 
-      // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
-      // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
-      checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_pcPic->getLayerIdx(), refPic->getLayerIdx() );
+      if(refPic->isILR(m_pcPic->getLayerId()))
+      {
+        checkZeroMVILR &= (cMvFieldL1.getHor() == 0 && cMvFieldL1.getVer() == 0);
+
+        // It is a requirement of bitstream conformance that when the reference picture represented by the variable refIdxLX is an inter-layer reference picture, 
+        // VpsInterLayerSamplePredictionEnabled[ LayerIdxInVps[ currLayerId ] ][ LayerIdxInVps[ rLId ] ] shall be equal to 1, where rLId is set equal to nuh_layer_id of the inter-layer picture
+        checkZeroMVILR &= m_pcSlice->getVPS()->isSamplePredictionType( m_pcPic->getLayerIdx(), refPic->getLayerIdx() );
+      }
     }
   }
 
   return checkZeroMVILR;
 }
 
-Bool TComDataCU::xCheckZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx)
+Bool TComDataCU::checkZeroMVILRMvdL1Zero(Int iRefList, Int iRefIdx, Int MvpIdx)
 {
-  RefPicList eRefPicList = iRefList > 0? REF_PIC_LIST_1: REF_PIC_LIST_0;
-  assert(eRefPicList == REF_PIC_LIST_1);
-
   Bool checkZeroMVILR = true;
 
-  if(getSlice()->getRefPic(eRefPicList, iRefIdx)->isILR(m_pcPic->getLayerId()))
+  if( m_pcSlice->getVPS()->getScalabilityMask( SCALABILITY_ID ) ) //scalable layer
   {
-    AMVPInfo* pcAMVPInfo = getCUMvField(eRefPicList)->getAMVPInfo();
-    TComMv    cMv        = pcAMVPInfo->m_acMvCand[MvpIdx];
-    checkZeroMVILR &= (cMv.getHor() == 0 && cMv.getVer() == 0);
+    RefPicList eRefPicList = iRefList > 0? REF_PIC_LIST_1: REF_PIC_LIST_0;
+    assert(eRefPicList == REF_PIC_LIST_1);
+
+    if( m_pcSlice->getRefPic(eRefPicList, iRefIdx)->isILR(m_pcPic->getLayerId()) )
+    {
+      AMVPInfo* pcAMVPInfo = getCUMvField(eRefPicList)->getAMVPInfo();
+      TComMv    cMv        = pcAMVPInfo->m_acMvCand[MvpIdx];
+      checkZeroMVILR &= (cMv.getHor() == 0 && cMv.getVer() == 0);
+    }
   }
 
   return checkZeroMVILR;

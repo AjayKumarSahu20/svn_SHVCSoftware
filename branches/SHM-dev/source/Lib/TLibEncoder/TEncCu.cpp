@@ -1298,8 +1298,9 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
     for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
     {
 #if REF_IDX_ME_ZEROMV
-      Bool bZeroMVILR = rpcTempCU->xCheckZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
-      if(bZeroMVILR)
+      Bool bZeroMVILR = rpcTempCU->checkZeroMVILRMerge(uhInterDirNeighbours[uiMergeCand], cMvFieldNeighbours[0 + 2*uiMergeCand], cMvFieldNeighbours[1 + 2*uiMergeCand]);
+
+      if( bZeroMVILR )
       {
 #endif
 #if N0383_IL_CONSTRAINED_TILE_SETS_SEI
