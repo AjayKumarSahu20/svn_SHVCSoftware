@@ -630,6 +630,14 @@ Void TEncGOP::xCreateIRAPLeadingSEIMessages (SEIMessages& seiMessages, const TCo
     m_seiEncoder.initSEIChromaResamplingFilterHint(seiChromaResamplingFilterHint, m_pcCfg->getChromaResamplingHorFilterIdc(), m_pcCfg->getChromaResamplingVerFilterIdc());
     seiMessages.push_back(seiChromaResamplingFilterHint);
   }
+#if U0033_ALTERNATIVE_TRANSFER_CHARACTERISTICS_SEI
+  if(m_pcCfg->getSEIAlternativeTransferCharacteristicsSEIEnable())
+  {
+    SEIAlternativeTransferCharacteristics *seiAlternativeTransferCharacteristics = new SEIAlternativeTransferCharacteristics;
+    m_seiEncoder.initSEIAlternativeTransferCharacteristics(seiAlternativeTransferCharacteristics);
+    seiMessages.push_back(seiAlternativeTransferCharacteristics);
+  }
+#endif
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
