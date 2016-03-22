@@ -74,10 +74,13 @@ TComPic::TComPic()
 
 TComPic::~TComPic()
 {
+  destroy();
 }
 #if SVC_EXTENSION
 Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual, const UInt layerId )
 {
+  destroy();
+
   const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
   const Int          iWidth          = sps.getPicWidthInLumaSamples();
   const Int          iHeight         = sps.getPicHeightInLumaSamples();
@@ -115,6 +118,8 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
 #else
 Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual)
 {
+  destroy();
+
   const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
   const Int          iWidth          = sps.getPicWidthInLumaSamples();
   const Int          iHeight         = sps.getPicHeightInLumaSamples();

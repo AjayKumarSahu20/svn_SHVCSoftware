@@ -73,6 +73,7 @@ TComPicYuv::TComPicYuv()
 
 TComPicYuv::~TComPicYuv()
 {
+  destroy();
 }
 
 
@@ -89,6 +90,7 @@ Void TComPicYuv::createWithoutCUInfo ( const Int picWidth,                 ///< 
                                      )
 
 {
+  destroy();
 
 #if SVC_EXTENSION
   if(conformanceWindow != NULL)
