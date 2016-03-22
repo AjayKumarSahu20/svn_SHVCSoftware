@@ -204,6 +204,9 @@ enum AuxType
 #endif
 
 #define U0132_TARGET_BITS_SATURATION                      1 ///< Rate control with target bits saturation method
+#ifdef  U0132_TARGET_BITS_SATURATION
+#define V0078_ADAPTIVE_LOWER_BOUND                        1 ///< Target bits saturation with adaptive lower bound
+#endif
 
 // ====================================================================================================================
 // Derived macros
