@@ -1538,7 +1538,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
 
 #if SVC_EXTENSION
     pcSlice->setActiveNumILRRefIdx(0);
-    if((pcSlice->getLayerId() > 0) && !(vps->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
+    if((pcSlice->getLayerId() > 0) && !(vps->getDefaultRefLayersActiveFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
     {
       READ_FLAG(uiCode,"inter_layer_pred_enabled_flag");
       pcSlice->setInterLayerPredEnabledFlag(uiCode);
@@ -1599,7 +1599,7 @@ Void TDecCavlc::parseSliceHeader (TComSlice* pcSlice, ParameterSetManager *param
         }
       }
     }
-    else if( vps->getIlpSshSignalingEnabledFlag() == true &&  (pcSlice->getLayerId() > 0 ))
+    else if( vps->getDefaultRefLayersActiveFlag() == true &&  (pcSlice->getLayerId() > 0 ))
     {
       pcSlice->setInterLayerPredEnabledFlag(true);
 
@@ -2680,7 +2680,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
   {
-    READ_FLAG( uiCode, "scalability_mask[i]" ); vps->setScalabilityMask(i, uiCode ? true : false);
+    READ_FLAG( uiCode, "scalability_mask_flag[i]" ); vps->setScalabilityMask(i, uiCode ? true : false);
     numScalabilityTypes += uiCode;
   }
   vps->setNumScalabilityTypes(numScalabilityTypes);
@@ -2840,7 +2840,7 @@ Void TDecCavlc::parseVPSExtension(TComVPS *vps)
       }
     }
   }
-  READ_FLAG( uiCode, "all_ref_layers_active_flag" ); vps->setIlpSshSignalingEnabledFlag(uiCode ? true : false);
+  READ_FLAG( uiCode, "default_ref_layers_active_flag" ); vps->setDefaultRefLayersActiveFlag(uiCode ? true : false);
 
   // Profile-tier-level signalling
   READ_UVLC(  uiCode, "vps_num_profile_tier_level_minus1"); vps->setNumProfileTierLevel( uiCode + 1 );

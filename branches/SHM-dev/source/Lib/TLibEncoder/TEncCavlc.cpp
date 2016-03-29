@@ -1148,7 +1148,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
     }
 
 #if SVC_EXTENSION
-    if((pcSlice->getLayerId() > 0) && !(pcSlice->getVPS()->getIlpSshSignalingEnabledFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
+    if((pcSlice->getLayerId() > 0) && !(pcSlice->getVPS()->getDefaultRefLayersActiveFlag()) && (pcSlice->getNumILRRefIdx() > 0) )
     {
       WRITE_FLAG(pcSlice->getInterLayerPredEnabledFlag(),"inter_layer_pred_enabled_flag");
       if( pcSlice->getInterLayerPredEnabledFlag())
@@ -1970,7 +1970,7 @@ Void TEncCavlc::codeVPSExtension( const TComVPS *vps )
 
   for(i = 0; i < MAX_VPS_NUM_SCALABILITY_TYPES; i++)
   {
-    WRITE_FLAG( vps->getScalabilityMask(i),            "scalability_mask[i]" );
+    WRITE_FLAG( vps->getScalabilityMask(i),            "scalability_mask_flag[i]" );
   }
 
   for(j = 0; j < vps->getNumScalabilityTypes() - vps->getSplittingFlag(); j++)
@@ -2069,7 +2069,7 @@ Void TEncCavlc::codeVPSExtension( const TComVPS *vps )
        }
      }
    }
-   WRITE_FLAG( vps->getIlpSshSignalingEnabledFlag(), "all_ref_layers_active_flag" );
+   WRITE_FLAG( vps->getDefaultRefLayersActiveFlag(), "default_ref_layers_active_flag" );
 
   // Profile-tier-level signalling
   WRITE_UVLC( vps->getNumProfileTierLevel() - 1, "vps_num_profile_tier_level_minus1"); 
