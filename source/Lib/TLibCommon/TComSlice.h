@@ -632,7 +632,7 @@ private:
   UChar                 m_numScalabilityTypes;
   UChar                 m_layerIdxInVps[MAX_NUM_LAYER_IDS];            // Maps layer_id_in_nuh with the layer ID in the VPS
   UChar                 m_maxSLInLayerSetMinus1[MAX_VPS_LAYER_SETS_PLUS1 + MAX_NUM_ADD_LAYER_SETS];
-  Bool                  m_ilpSshSignalingEnabledFlag;
+  Bool                  m_defaultRefLayersActiveFlag;
 
   // Profile-tier-level signalling related
   Bool                  m_profilePresentFlag[MAX_VPS_LAYER_SETS_PLUS1];    // The value with index 0 will not be used.
@@ -897,8 +897,8 @@ public:
 
   UChar             getMaxSLayersInLayerSetMinus1(Int ls) const                        { return m_maxSLInLayerSetMinus1[ls];                }
   Void              setMaxSLayersInLayerSetMinus1(Int ls, UChar x)                     { m_maxSLInLayerSetMinus1[ls] = x;                   }
-  Bool              getIlpSshSignalingEnabledFlag() const                              { return m_ilpSshSignalingEnabledFlag;               }
-  Void              setIlpSshSignalingEnabledFlag(Bool x)                              { m_ilpSshSignalingEnabledFlag = x;                  }
+  Bool              getDefaultRefLayersActiveFlag() const                              { return m_defaultRefLayersActiveFlag;               }
+  Void              setDefaultRefLayersActiveFlag(Bool x)                              { m_defaultRefLayersActiveFlag = x;                  }
 
   Bool              getProfilePresentFlag(Int id) const                                { return m_profilePresentFlag[id];                   }
   Void              setProfilePresentFlag(Int id, Bool x)                              { m_profilePresentFlag[id] = x;                      }

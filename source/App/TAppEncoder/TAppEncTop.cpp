@@ -1233,7 +1233,7 @@ Void TAppEncTop::xInitLib(Bool isFieldCoding)
     }
   }
 
-  vps->setIlpSshSignalingEnabledFlag(false);
+  vps->setDefaultRefLayersActiveFlag(false);
 
   // Direct reference layers
   UInt maxDirectRefLayers = 0;
