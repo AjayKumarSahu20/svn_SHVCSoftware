@@ -71,7 +71,7 @@
 #define ALIGNED_BUMPING                  1      ///< JCTVC-P0192: Align bumping of pictures in an AU
 #define NO_CLRAS_OUTPUT_FLAG             1
 
-#define VIEW_SCALABILITY                 0      ///< JCTVC-W0134: multi-view support
+#define VIEW_SCALABILITY                 1      ///< JCTVC-W0134: multi-view support
 
 /// scalability types
 enum ScalabilityType
