@@ -2652,21 +2652,15 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   for( Int layer = 0; layer < m_numLayers; layer++ )
   {
     Int& m_conformanceWindowMode    = m_apcLayerCfg[layer]->m_conformanceWindowMode;
-    UInt&  m_uiMaxCUHeight          = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
+    UInt& m_uiMaxCUHeight           = m_apcLayerCfg[layer]->m_uiMaxCUHeight;
     UInt& m_uiMaxCUDepth            = m_apcLayerCfg[layer]->m_uiMaxCUDepth;
     ChromaFormat& m_chromaFormatIDC = m_apcLayerCfg[layer]->m_chromaFormatIDC;
 
-#if SCALABLE_REXT
     Int& m_confWinLeft              = m_apcLayerCfg[layer]->m_confWinLeft;
     Int& m_confWinRight             = m_apcLayerCfg[layer]->m_confWinRight;
     Int& m_confWinTop               = m_apcLayerCfg[layer]->m_confWinTop;
     Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinBottom;
-#else
-    Int& m_confWinLeft              = m_apcLayerCfg[layer]->m_confWinLeft;
-    Int& m_confWinRight             = m_apcLayerCfg[layer]->m_confWinLeft;
-    Int& m_confWinTop               = m_apcLayerCfg[layer]->m_confWinLeft;
-    Int& m_confWinBottom            = m_apcLayerCfg[layer]->m_confWinLeft;
-#endif
+
     Int* m_aiPad                    = m_apcLayerCfg[layer]->m_aiPad;
     Int*& m_aidQP                   = m_apcLayerCfg[layer]->m_aidQP;
 
@@ -4255,17 +4249,10 @@ Void TAppEncCfg::xPrintParameter()
     UInt& m_uiMaxCUWidth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUWidth;
     UInt& m_uiMaxCUDepth                   = m_apcLayerCfg[layerIdx]->m_uiMaxCUDepth;
 
-#if SCALABLE_REXT
     Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
     Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinRight;
     Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinTop;
     Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinBottom;
-#else
-    Int& m_confWinLeft                     = m_apcLayerCfg[layerIdx]->m_confWinLeft;
-    Int& m_confWinRight                    = m_apcLayerCfg[layerIdx]->m_confWinLeft;
-    Int& m_confWinTop                      = m_apcLayerCfg[layerIdx]->m_confWinLeft;
-    Int& m_confWinBottom                   = m_apcLayerCfg[layerIdx]->m_confWinLeft;
-#endif
 
     Int& m_iSourceWidth                    = m_apcLayerCfg[layerIdx]->m_iSourceWidth;
     Int& m_iSourceHeight                   = m_apcLayerCfg[layerIdx]->m_iSourceHeight;
@@ -4336,7 +4323,11 @@ Void TAppEncCfg::xPrintParameter()
 #endif
   
   printf("Reconstruction File                    : %s\n", m_reconFileName.c_str()          );
+#if SVC_EXTENSION
+  printf("Real     Format                        : %dx%d %gHz\n", m_iSourceWidth - ( m_confWinLeft + m_confWinRight ) * TComSPS::getWinUnitX( m_apcLayerCfg[layerIdx]->m_chromaFormatIDC ), m_iSourceHeight - ( m_confWinTop + m_confWinBottom ) * TComSPS::getWinUnitY( m_apcLayerCfg[layerIdx]->m_chromaFormatIDC ), (Double)m_iFrameRate/m_temporalSubsampleRatio );
+#else
   printf("Real     Format                        : %dx%d %gHz\n", m_iSourceWidth - m_confWinLeft - m_confWinRight, m_iSourceHeight - m_confWinTop - m_confWinBottom, (Double)m_iFrameRate/m_temporalSubsampleRatio );
+#endif
   printf("Internal Format                        : %dx%d %gHz\n", m_iSourceWidth, m_iSourceHeight, (Double)m_iFrameRate/m_temporalSubsampleRatio );
 
 #if SVC_EXTENSION
