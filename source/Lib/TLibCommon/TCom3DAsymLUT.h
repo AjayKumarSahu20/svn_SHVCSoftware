@@ -1,14 +1,49 @@
+/* The copyright in this software is being made available under the BSD
+ * License, included below. This software may be subject to other third party
+ * and contributor rights, including patent rights, and no such rights are
+ * granted under this license.
+ *
+ * Copyright (c) 2010-2016, ITU/ISO/IEC
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *  * Neither the name of the ITU/ISO/IEC nor the names of its contributors may
+ *    be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/** \file     TCom3DAsymLUT.h
+    \brief    TCom3DAsymLUT class header
+*/
+
 
 #ifndef __TCOM3DASYMLUT__
 #define __TCOM3DASYMLUT__
 
-#include "TypeDef.h"
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+#include "CommonDef.h"
+
+#if CGS_3D_ASYMLUT
 #include <cassert>
 #include <vector>
-#endif
-
-#if Q0048_CGS_3D_ASYMLUT
 
 typedef struct _SYUVP
 {
@@ -27,30 +62,26 @@ class TCom3DAsymLUT
 public:
   TCom3DAsymLUT();
   virtual ~TCom3DAsymLUT();
+    
+  Void create( Int nMaxOctantDepth, Int nInputBitDepth, Int nInputBitDepthC, Int nOutputBitDepth, Int nOutputBitDepthC, Int nMaxYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThresholdV );
+  virtual Void destroy();
 
-  virtual Void  create( Int nMaxOctantDepth , Int nInputBitDepth , Int nInputBitDepthC , Int nOutputBitDepth , Int nOutputBitDepthC , Int nMaxYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-  , Int nAdaptCThresholdU , Int nAdaptCThresholdV
-#endif
-    );
-  virtual Void  destroy();
+  Int   getMaxOctantDepth()   { return m_nMaxOctantDepth;  }
+  Int   getCurOctantDepth()   { return m_nCurOctantDepth;  }
+  Int   getInputBitDepthY()   { return m_nInputBitDepthY;  }
+  Int   getOutputBitDepthY()  { return m_nOutputBitDepthY; }
+  Int   getInputBitDepthC()   { return m_nInputBitDepthC;  }
+  Int   getOutputBitDepthC()  { return m_nOutputBitDepthC; }
+  Int   getResQuantBit()      { return m_nResQuanBit;      }
+  Void  setResQuantBit(Int n) { m_nResQuanBit = n;         }
 
-  Int   getMaxOctantDepth() { return m_nMaxOctantDepth; }
-  Int   getCurOctantDepth() { return m_nCurOctantDepth; }
-  Int   getInputBitDepthY()  { return m_nInputBitDepthY;  }
-  Int   getOutputBitDepthY()  { return m_nOutputBitDepthY;  }
-  Int   getInputBitDepthC()  { return m_nInputBitDepthC;  }
-  Int   getOutputBitDepthC()  { return m_nOutputBitDepthC;  }
-  Int   getResQuantBit()     { return m_nResQuanBit; }
-  Void  setResQuantBit(Int n){ m_nResQuanBit = n; }
-#if R0300_CGS_RES_COEFF_CODING 
-  Int   getMappingShift()     { return m_nMappingShift; }
-  Int   getDeltaBits()        { return m_nDeltaBits; }
-  Void  setDeltaBits(Int n)   { m_nDeltaBits = n; }
-#endif 
-  Int   getMaxYPartNumLog2() { return m_nMaxYPartNumLog2; }
-  Int   getCurYPartNumLog2() { return m_nCurYPartNumLog2; }
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+  Int   getMappingShift()     { return m_nMappingShift;    }
+  Int   getDeltaBits()        { return m_nDeltaBits;       }
+  Void  setDeltaBits(Int n)   { m_nDeltaBits = n;          }
+
+  Int   getMaxYPartNumLog2()  { return m_nMaxYPartNumLog2; }
+  Int   getCurYPartNumLog2()  { return m_nCurYPartNumLog2; }
+
   Void  addRefLayerId( UInt uiRefLayerId )  
   { 
     if( !isRefLayer( uiRefLayerId ) )
@@ -59,13 +90,12 @@ public:
   size_t  getRefLayerNum()     { return m_vRefLayerId.size();  }
   UInt  getRefLayerId( UInt n )  { assert( n < m_vRefLayerId.size() ); return m_vRefLayerId[n];   }
   Bool  isRefLayer( UInt uiRefLayerId );
-#endif
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   Void  setAdaptChromaThresholdU( Int n ) { m_nAdaptCThresholdU = n; }
   Int   getAdaptChromaThresholdU()        { return m_nAdaptCThresholdU; }
   Void  setAdaptChromaThresholdV( Int n ) { m_nAdaptCThresholdV = n;  }
   Int   getAdaptChromaThresholdV()        { return m_nAdaptCThresholdV; }
-#endif
+
 #if R0179_ENC_OPT_3DLUT_SIZE
   Int   getMaxYSize() { return 1<<(m_nMaxOctantDepth+m_nMaxYPartNumLog2); }
   Int   getMaxCSize() { return 1<<m_nMaxOctantDepth; }
@@ -107,18 +137,15 @@ private:
   Int   m_nMappingShift;
   Int   m_nMappingOffset;
   Int   m_nResQuanBit;
-#if R0300_CGS_RES_COEFF_CODING
   Int   m_nDeltaBits;
-#endif
+
   SCuboid *** m_pCuboid;
-  const static Int m_nVertexIdxOffset[4][3];
-#if R0150_CGS_SIGNAL_CONSTRAINTS
+  static const Int m_nVertexIdxOffset[4][3];
   std::vector<UInt> m_vRefLayerId;
-#endif
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
+
   Int   m_nAdaptCThresholdU;
   Int   m_nAdaptCThresholdV;
-#endif
+
 #if R0164_CGS_LUT_BUGFIX_CHECK
   Bool  *** m_pCuboidExplicit;
   Bool  *** m_pCuboidFilled;
@@ -132,11 +159,7 @@ protected:
   template <class T>
   Void xFree3DArray( T *** &p );
 
-  Void  xUpdatePartitioning( Int nCurOctantDepth , Int nCurYPartNumLog2 
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
-    , Int nAdaptCThresholdU , Int nAdaptCThreshodV
-#endif
-    );
+  Void  xUpdatePartitioning( Int nCurOctantDepth, Int nCurYPartNumLog2, Int nAdaptCThresholdU, Int nAdaptCThreshodV );
   SYUVP xGetCuboidVertexPredA( Int yIdx , Int uIdx , Int vIdx , Int nVertexIdx );
   Pel   xMapY( Pel y , Pel u , Pel v );
   SYUVP xMapUV( Pel y , Pel u , Pel v );
@@ -144,16 +167,10 @@ protected:
   Int   xGetYSize()  { return m_nYSize;  }
   Int   xGetUSize()  { return m_nUSize;  }
   Int   xGetVSize()  { return m_nVSize;  }
-#if R0151_CGS_3D_ASYMLUT_IMPROVE
   Int   xGetYIdx(Pel y)  { return( y >> m_nYShift2Idx ); }
   Int   xGetUIdx(Pel u)  { return( m_nCurOctantDepth == 1 ? u >= m_nAdaptCThresholdU : u >> m_nUShift2Idx ); }
   Int   xGetVIdx(Pel v)  { return( m_nCurOctantDepth == 1 ? v >= m_nAdaptCThresholdV : v >> m_nVShift2Idx ); }
   Int   xGetNormCoeffOne()    { return( 1 << m_nMappingShift ); }
-#else
-  Int   xGetYShift2Idx() { return m_nYShift2Idx; }
-  Int   xGetUShift2Idx() { return m_nUShift2Idx; }
-  Int   xGetVShift2Idx() { return m_nVShift2Idx; } 
-#endif
   SCuboid & xGetCuboid( Int yIdx , Int uIdx , Int vIdx ){ return m_pCuboid[yIdx][uIdx][vIdx];  }
   Void  xSaveCuboids( SCuboid *** pSrcCuboid );
 };
