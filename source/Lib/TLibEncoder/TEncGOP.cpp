@@ -2745,16 +2745,25 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       trailingSeiMessages.push_back(decodedPictureHashSei);
     }
 
+    m_pcCfg->setEncodedFlag(iGOPid, true);
+
+    Double PSNR_Y;
+    xCalculateAddPSNRs( isField, isTff, iGOPid, pcPic, accessUnit, rcListPic, dEncTime, snr_conversion, printFrameMSE, &PSNR_Y );
+    
+    // Only produce the Green Metadata SEI message with the last picture.
+    if( m_pcCfg->getSEIGreenMetadataInfoSEIEnable() && pcSlice->getPOC() == ( m_pcCfg->getFramesToBeEncoded() - 1 )  )
+    {
+      SEIGreenMetadataInfo *seiGreenMetadataInfo = new SEIGreenMetadataInfo;
+      m_seiEncoder.initSEIGreenMetadataInfo(seiGreenMetadataInfo, (UInt)(PSNR_Y * 100 + 0.5));
+      trailingSeiMessages.push_back(seiGreenMetadataInfo);
+    }
+    
 #if O0164_MULTI_LAYER_HRD
     xWriteTrailingSEIMessages(trailingSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getVPS(), pcSlice->getSPS());
 #else
     xWriteTrailingSEIMessages(trailingSeiMessages, accessUnit, pcSlice->getTLayer(), pcSlice->getSPS());
 #endif
-
-    m_pcCfg->setEncodedFlag(iGOPid, true);
-
-    xCalculateAddPSNRs( isField, isTff, iGOPid, pcPic, accessUnit, rcListPic, dEncTime, snr_conversion, printFrameMSE );
-
+        
     printHash(m_pcCfg->getDecodedPictureHashSEIType(), digestStr);
 
     if ( m_pcCfg->getUseRateCtrl() )
@@ -3020,9 +3029,9 @@ UInt64 TEncGOP::xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1, co
   return uiTotalDiff;
 }
 
-Void TEncGOP::xCalculateAddPSNRs( const Bool isField, const Bool isFieldTopFieldFirst, const Int iGOPid, TComPic* pcPic, const AccessUnit&accessUnit, TComList<TComPic*> &rcListPic, const Double dEncTime, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE )
+Void TEncGOP::xCalculateAddPSNRs( const Bool isField, const Bool isFieldTopFieldFirst, const Int iGOPid, TComPic* pcPic, const AccessUnit&accessUnit, TComList<TComPic*> &rcListPic, const Double dEncTime, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE, Double* PSNR_Y )
 {
-  xCalculateAddPSNR( pcPic, pcPic->getPicYuvRec(), accessUnit, dEncTime, snr_conversion, printFrameMSE );
+  xCalculateAddPSNR( pcPic, pcPic->getPicYuvRec(), accessUnit, dEncTime, snr_conversion, printFrameMSE, PSNR_Y );
 
   //In case of field coding, compute the interlaced PSNR for both fields
   if(isField)
@@ -3077,17 +3086,17 @@ Void TEncGOP::xCalculateAddPSNRs( const Bool isField, const Bool isFieldTopField
 
       if( (pcPic->isTopField() && isFieldTopFieldFirst) || (!pcPic->isTopField() && !isFieldTopFieldFirst))
       {
-        xCalculateInterlacedAddPSNR(pcPic, correspondingFieldPic, pcPic->getPicYuvRec(), correspondingFieldPic->getPicYuvRec(), snr_conversion, printFrameMSE );
+        xCalculateInterlacedAddPSNR(pcPic, correspondingFieldPic, pcPic->getPicYuvRec(), correspondingFieldPic->getPicYuvRec(), snr_conversion, printFrameMSE, PSNR_Y );
       }
       else
       {
-        xCalculateInterlacedAddPSNR(correspondingFieldPic, pcPic, correspondingFieldPic->getPicYuvRec(), pcPic->getPicYuvRec(), snr_conversion, printFrameMSE );
+        xCalculateInterlacedAddPSNR(correspondingFieldPic, pcPic, correspondingFieldPic->getPicYuvRec(), pcPic->getPicYuvRec(), snr_conversion, printFrameMSE, PSNR_Y );
       }
     }
   }
 }
 
-Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit& accessUnit, Double dEncTime, const InputColourSpaceConversion conversion, const Bool printFrameMSE )
+Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit& accessUnit, Double dEncTime, const InputColourSpaceConversion conversion, const Bool printFrameMSE, Double* PSNR_Y )
 {
   Double  dPSNR[MAX_NUM_COMPONENT];
 
@@ -3165,14 +3174,17 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
   if (pcSlice->isIntra())
   {
     m_gcAnalyzeI.addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    *PSNR_Y = dPSNR[COMPONENT_Y];
   }
   if (pcSlice->isInterP())
   {
     m_gcAnalyzeP.addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    *PSNR_Y = dPSNR[COMPONENT_Y];
   }
   if (pcSlice->isInterB())
   {
     m_gcAnalyzeB.addResult (dPSNR, (Double)uibits, MSEyuvframe);
+    *PSNR_Y = dPSNR[COMPONENT_Y];
   }
 
   TChar c = (pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B');
@@ -3281,7 +3293,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 
 Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic* pcPicOrgSecondField,
                                            TComPicYuv* pcPicRecFirstField, TComPicYuv* pcPicRecSecondField,
-                                           const InputColourSpaceConversion conversion, const Bool printFrameMSE )
+                                           const InputColourSpaceConversion conversion, const Bool printFrameMSE, Double* PSNR_Y )
 {
   const TComSPS &sps=pcPicOrgFirstField->getPicSym()->getSPS();
   Double  dPSNR[MAX_NUM_COMPONENT];
@@ -3354,6 +3366,8 @@ Void TEncGOP::xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic*
 
   //===== add PSNR =====
   m_gcAnalyzeAll_in.addResult (dPSNR, (Double)uibits, MSEyuvframe);
+
+  *PSNR_Y = dPSNR[COMPONENT_Y];
 
   printf("\n                                      Interlaced frame %d: [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", pcPicOrgSecondField->getPOC()/2 , dPSNR[COMPONENT_Y], dPSNR[COMPONENT_Cb], dPSNR[COMPONENT_Cr] );
   if (printFrameMSE)
