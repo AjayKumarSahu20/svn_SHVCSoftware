@@ -2857,13 +2857,13 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       iGOPid=effFieldIRAPMap.restoreGOPid(iGOPid);
     }
 #if REDUCED_ENCODER_MEMORY
-
+#if !SVC_EXTENSION // syntax data is needed when picture is used as a base layer
     pcPic->releaseReconstructionIntermediateData();
     if (!isField) // don't release the source data for field-coding because the fields are dealt with in pairs. // TODO: release source data for interlace simulations.
     {
       pcPic->releaseEncoderSourceImageData();
     }
-
+#endif
 #endif
   } // iGOPid-loop
 
