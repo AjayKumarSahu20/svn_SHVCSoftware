@@ -798,7 +798,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   Bool*   cfg_bUseSAO[MAX_LAYERS];
 
 #if PER_LAYER_LOSSLESS
-  Bool*     cfg_TransquantBypassEnableFlag[MAX_LAYERS];
+  Bool*     cfg_TransquantBypassEnabledFlag[MAX_LAYERS];
   Bool*     cfg_CUTransquantBypassFlagForce[MAX_LAYERS];
   CostMode* cfg_costMode[MAX_LAYERS];  
 #endif
@@ -909,7 +909,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
     cfg_bUseSAO[layer]              = &m_apcLayerCfg[layer]->m_bUseSAO;
 
 #if PER_LAYER_LOSSLESS
-    cfg_TransquantBypassEnableFlag[layer]   = &m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag;
+    cfg_TransquantBypassEnabledFlag[layer]  = &m_apcLayerCfg[layer]->m_TransquantBypassEnabledFlag;
     cfg_CUTransquantBypassFlagForce[layer]  = &m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce;
     cfg_costMode[layer]                     = &m_apcLayerCfg[layer]->m_costMode;  
 #endif
@@ -1460,12 +1460,14 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
 #endif
 
 #if PER_LAYER_LOSSLESS
-  ("TransquantBypassEnableFlag%d",                    cfg_TransquantBypassEnableFlag,        false, m_numLayers, "transquant_bypass_enable_flag indicator in PPS")
-  ("CUTransquantBypassFlagForce%d",                   cfg_CUTransquantBypassFlagForce,       false, m_numLayers, "Force transquant bypass mode, when transquant_bypass_enable_flag is enabled")
-  ("CostMode%d",                                      cfg_costMode,            COST_STANDARD_LOSSY, m_numLayers, "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
+  ("TransquantBypassEnable%d",                        cfg_TransquantBypassEnabledFlag,     false, m_numLayers, "transquant_bypass_enabled_flag indicator in PPS")
+  ("TransquantBypassEnableFlag%d",                    cfg_TransquantBypassEnabledFlag,     false, m_numLayers, "deprecated alias for TransquantBypassEnable")
+  ("CUTransquantBypassFlagForce%d",                   cfg_CUTransquantBypassFlagForce,     false, m_numLayers, "Force transquant bypass mode, when transquant_bypass_enabled_flag is enabled")
+  ("CostMode%d",                                      cfg_costMode,          COST_STANDARD_LOSSY, m_numLayers, "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
 #else
-  ("TransquantBypassEnableFlag",                      m_TransquantBypassEnableFlag,                     false, "transquant_bypass_enable_flag indicator in PPS")
-  ("CUTransquantBypassFlagForce",                     m_CUTransquantBypassFlagForce,                    false, "Force transquant bypass mode, when transquant_bypass_enable_flag is enabled")
+  ("TransquantBypassEnable",                          m_TransquantBypassEnabledFlag,                    false, "transquant_bypass_enabled_flag indicator in PPS")
+  ("TransquantBypassEnableFlag",                      m_TransquantBypassEnabledFlag,                    false, "deprecated alias for TransquantBypassEnable")
+  ("CUTransquantBypassFlagForce",                     m_CUTransquantBypassFlagForce,                    false, "Force transquant bypass mode, when transquant_bypass_enabled_flag is enabled")
   ("CostMode",                                        m_costMode,                         COST_STANDARD_LOSSY, "Use alternative cost functions: choose between 'lossy', 'sequence_level_lossless', 'lossless' (which forces QP to " MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP) ") and 'mixed_lossless_lossy' (which used QP'=" MACRO_TO_STRING(LOSSLESS_AND_MIXED_LOSSLESS_RD_COST_TEST_QP_PRIME) " for pre-estimates of transquant-bypass blocks).")
 #endif
   ("RecalculateQPAccordingToLambda",                  m_recalculateQPAccordingToLambda,                 false, "Recalculate QP values according to lambda values. Do not suggest to be enabled in all intra case")
@@ -4075,9 +4077,9 @@ Void TAppEncCfg::xCheckParameter()
 #endif
   
 #if PER_LAYER_LOSSLESS
-  xConfirmPara(!m_apcLayerCfg[layerIdx]->m_TransquantBypassEnableFlag && m_apcLayerCfg[layerIdx]->m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
+  xConfirmPara(!m_apcLayerCfg[layerIdx]->m_TransquantBypassEnabledFlag && m_apcLayerCfg[layerIdx]->m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
 #else
-  xConfirmPara(!m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
+  xConfirmPara(!m_TransquantBypassEnabledFlag && m_CUTransquantBypassFlagForce, "CUTransquantBypassFlagForce cannot be 1 when TransquantBypassEnableFlag is 0");
 #endif
 
   xConfirmPara(m_log2ParallelMergeLevel < 2, "Log2ParallelMergeLevel should be larger than or equal to 2");
@@ -4605,22 +4607,22 @@ Void TAppEncCfg::xPrintParameter()
   printf("PCM:%d ", (m_usePCM && (1<<m_uiPCMLog2MinSize) <= m_uiMaxCUWidth)? 1 : 0);
 
 #if PER_LAYER_LOSSLESS
-  if (m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag && m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce)
+  if (m_apcLayerCfg[layer]->m_TransquantBypassEnabledFlag && m_apcLayerCfg[layer]->m_CUTransquantBypassFlagForce)
   {
     printf("TransQuantBypassEnabled: =1");
   }
   else
   {
-    printf("TransQuantBypassEnabled:%d ", (m_apcLayerCfg[layer]->m_TransquantBypassEnableFlag)? 1:0 );
+    printf("TransQuantBypassEnabled:%d ", (m_apcLayerCfg[layer]->m_TransquantBypassEnabledFlag)? 1:0 );
   }
 #else
-  if (m_TransquantBypassEnableFlag && m_CUTransquantBypassFlagForce)
+  if (m_TransquantBypassEnabledFlag && m_CUTransquantBypassFlagForce)
   {
     printf("TransQuantBypassEnabled: =1");
   }
   else
   {
-    printf("TransQuantBypassEnabled:%d ", (m_TransquantBypassEnableFlag)? 1:0 );
+    printf("TransQuantBypassEnabled:%d ", (m_TransquantBypassEnabledFlag)? 1:0 );
   }
 #endif
 
