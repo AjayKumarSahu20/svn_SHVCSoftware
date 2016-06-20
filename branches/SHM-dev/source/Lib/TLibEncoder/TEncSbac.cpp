@@ -233,7 +233,7 @@ Void TEncSbac::codeSPS( const TComSPS* /*pcSPS*/ )
 }
 
 #if CGS_3D_ASYMLUT
-Void TEncSbac::codePPS( const TComPPS* /*pcPPS*/, TEnc3DAsymLUT * pc3DAsymLUT )
+Void TEncSbac::codePPS( const TComPPS* /*pcPPS*/, TEnc3DAsymLUT* /*pc3DAsymLUT*/ )
 #else
 Void TEncSbac::codePPS( const TComPPS* /*pcPPS*/ )
 #endif
@@ -882,7 +882,8 @@ Void TEncSbac::codeCrossComponentPrediction( TComTU &rTu, ComponentID compID )
 
 Void TEncSbac::codeDeltaQP( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
-  Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );  
+  Int iDQp  = pcCU->getQP( uiAbsPartIdx ) - pcCU->getRefQP( uiAbsPartIdx );
+
   Int qpBdOffsetY =  pcCU->getSlice()->getSPS()->getQpBDOffset(CHANNEL_TYPE_LUMA);
   iDQp = (iDQp + 78 + qpBdOffsetY + (qpBdOffsetY/2)) % (52 + qpBdOffsetY) - 26 - (qpBdOffsetY/2);
 
@@ -1279,7 +1280,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
     }
     else
     {
-      beValid = pcCU->getSlice()->getPPS()->getSignHideFlag();
+      beValid = pcCU->getSlice()->getPPS()->getSignDataHidingEnabledFlag();
     }
   }
 
