@@ -756,8 +756,9 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         }
       }
 #if REDUCED_ENCODER_MEMORY
-#else
       pcEPic->create( m_cVPS, m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, m_layerId);
+#else
+      pcEPic->create( m_cVPS, m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, false, m_layerId);
 #endif
 #else  //SVC_EXTENSION
 #if REDUCED_ENCODER_MEMORY
@@ -1756,7 +1757,7 @@ Void TEncTop::xInitILRP()
       {
         m_cIlpPic[j] = new TComPic;
 #if REDUCED_ENCODER_MEMORY
-        m_cIlpPic[j]->create(m_cSPS, m_cPPS, true, true, m_layerId);
+        m_cIlpPic[j]->create(m_cSPS, m_cPPS, false, true, m_layerId);
 #else
         m_cIlpPic[j]->create(m_cSPS, m_cPPS, true, m_layerId);
 #endif
