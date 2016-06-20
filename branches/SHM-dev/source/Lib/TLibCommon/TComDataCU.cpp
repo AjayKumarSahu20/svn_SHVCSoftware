@@ -95,7 +95,6 @@ TComDataCU::TComDataCU()
 
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
   {
-    m_apcCUColocated[i]  = NULL;
     m_apiMVPIdx[i]       = NULL;
     m_apiMVPNum[i]       = NULL;
   }
@@ -208,11 +207,6 @@ Void TComDataCU::create( ChromaFormat chromaFormatIDC, UInt uiNumPartition, UInt
   m_pCtuAboveRight     = NULL;
   m_pCtuAbove          = NULL;
   m_pCtuLeft           = NULL;
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    m_apcCUColocated[i]  = NULL;
-  }
 }
 
 Void TComDataCU::destroy()
@@ -376,12 +370,6 @@ Void TComDataCU::destroy()
   m_pCtuAbove          = NULL;
   m_pCtuLeft           = NULL;
 
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    m_apcCUColocated[i]  = NULL;
-  }
-
 }
 
 Bool TComDataCU::CUIsFromSameTile            ( const TComDataCU *pCU /* Can be NULL */) const
@@ -453,6 +441,7 @@ Void TComDataCU::initCtu( TComPic* pcPic, UInt ctuRsAddr )
   m_uiNumPartition     = pcPic->getNumPartitionsInCtu();
 
   memset( m_skipFlag          , false,                      m_uiNumPartition * sizeof( *m_skipFlag ) );
+
   memset( m_pePartSize        , NUMBER_OF_PART_SIZES,       m_uiNumPartition * sizeof( *m_pePartSize ) );
   memset( m_pePredMode        , NUMBER_OF_PREDICTION_MODES, m_uiNumPartition * sizeof( *m_pePredMode ) );
   memset( m_CUTransquantBypass, false,                      m_uiNumPartition * sizeof( *m_CUTransquantBypass) );
@@ -505,12 +494,6 @@ Void TComDataCU::initCtu( TComPic* pcPic, UInt ctuRsAddr )
   m_pCtuAboveLeft   = NULL;
   m_pCtuAboveRight  = NULL;
 
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    m_apcCUColocated[i]  = NULL;
-  }
-
   UInt frameWidthInCtus = pcPic->getFrameWidthInCtus();
   if ( m_ctuRsAddr % frameWidthInCtus )
   {
@@ -530,15 +513,6 @@ Void TComDataCU::initCtu( TComPic* pcPic, UInt ctuRsAddr )
   if ( m_pCtuAbove && ( (m_ctuRsAddr%frameWidthInCtus) < (frameWidthInCtus-1) )  )
   {
     m_pCtuAboveRight = pcPic->getCtu( m_ctuRsAddr - frameWidthInCtus + 1 );
-  }
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    const RefPicList rpl=RefPicList(i);
-    if ( getSlice()->getNumRefIdx( rpl ) > 0 )
-    {
-      m_apcCUColocated[rpl] = getSlice()->getRefPic( rpl, 0)->getCtu( m_ctuRsAddr );
-    }
   }
 }
 
@@ -709,11 +683,6 @@ Void TComDataCU::initSubCU( TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDepth, 
   m_pCtuAbove       = pcCU->getCtuAbove();
   m_pCtuAboveLeft   = pcCU->getCtuAboveLeft();
   m_pCtuAboveRight  = pcCU->getCtuAboveRight();
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    m_apcCUColocated[i] = pcCU->getCUColocated(RefPicList(i));
-  }
 }
 
 Void TComDataCU::setOutsideCUPart( UInt uiAbsPartIdx, UInt uiDepth )
@@ -785,7 +754,6 @@ Void TComDataCU::copySubCU( TComDataCU* pcCU, UInt uiAbsPartIdx )
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
   {
     const RefPicList rpl=RefPicList(i);
-    m_apcCUColocated[rpl] = pcCU->getCUColocated(rpl);
     m_apiMVPIdx[rpl]=pcCU->getMVPIdx(rpl)  + uiPart;
     m_apiMVPNum[rpl]=pcCU->getMVPNum(rpl)  + uiPart;
   }
@@ -830,11 +798,6 @@ Void TComDataCU::copyInterPredInfoFrom    ( TComDataCU* pcCU, UInt uiAbsPartIdx,
   m_pCtuAboveRight     = pcCU->getCtuAboveRight();
   m_pCtuAbove          = pcCU->getCtuAbove();
   m_pCtuLeft           = pcCU->getCtuLeft();
-
-  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
-  {
-    m_apcCUColocated[i]  = pcCU->getCUColocated(RefPicList(i));
-  }
 
   m_skipFlag           = pcCU->getSkipFlag ()             + uiAbsPartIdx;
 
@@ -917,7 +880,6 @@ Void TComDataCU::copyPartFrom( TComDataCU* pcCU, UInt uiPartUnitIdx, UInt uiDept
     const RefPicList rpl=RefPicList(i);
     memcpy( m_apiMVPIdx[rpl] + uiOffset, pcCU->getMVPIdx(rpl), iSizeInUchar );
     memcpy( m_apiMVPNum[rpl] + uiOffset, pcCU->getMVPNum(rpl), iSizeInUchar );
-    m_apcCUColocated[rpl] = pcCU->getCUColocated(rpl);
   }
 
   for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
@@ -2710,7 +2672,6 @@ Void TComDataCU::fillMvpCand ( const UInt partIdx, const UInt partAddr, const Re
     //----  co-located RightBottom Temporal Predictor (H) ---//
     absPartIdx = g_auiZscanToRaster[partIdxRB];
     Int ctuRsAddr = -1;
-
     if (  ( ( m_pcPic->getCtu(m_ctuRsAddr)->getCUPelX() + g_auiRasterToPelX[absPartIdx] + m_pcPic->getMinCUWidth () ) < m_pcSlice->getSPS()->getPicWidthInLumaSamples () )  // image boundary check
        && ( ( m_pcPic->getCtu(m_ctuRsAddr)->getCUPelY() + g_auiRasterToPelY[absPartIdx] + m_pcPic->getMinCUHeight() ) < m_pcSlice->getSPS()->getPicHeightInLumaSamples() ) )
     {
