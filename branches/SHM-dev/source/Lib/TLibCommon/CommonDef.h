@@ -66,7 +66,7 @@ inline Int64 abs (Int64 x) { return _abs64(x); };
 
 #if SVC_EXTENSION
 #include <vector>
-#define NV_VERSION        "12.0 (HM-16.10)"        ///< Current SHM software version
+#define NV_VERSION        "12.1 (HM-16.10)"        ///< Current SHM software version
 #else
 #define NV_VERSION        "16.10"                 ///< Current software version
 #endif
