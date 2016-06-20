@@ -2297,7 +2297,7 @@ Void TDecTop::xInitILRP(const TComSPS *sps, const TComPPS *pps)
         m_cIlpPic[j] = new  TComPic;
 
 #if REDUCED_ENCODER_MEMORY
-        m_cIlpPic[j]->create(*sps, *pps, true, false, m_layerId);
+        m_cIlpPic[j]->create(*sps, *pps, true, true, m_layerId);
 #else
         m_cIlpPic[j]->create(*sps, *pps, true, m_layerId);
 #endif
