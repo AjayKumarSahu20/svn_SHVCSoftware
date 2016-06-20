@@ -1417,7 +1417,7 @@ Bool TAppEncCfg::parseCfg( Int argc, TChar* argv[] )
   ("ScalingList",                                     m_useScalingListId,                    SCALING_LIST_OFF, "0/off: no scaling list, 1/default: default scaling lists, 2/file: scaling lists specified in ScalingListFile")
   ("ScalingListFile",                                 m_scalingListFileName,                       string(""), "Scaling list file name. Use an empty string to produce help.")
 #endif
-  ("SignHideFlag,-SBH",                               m_signHideFlag,                                    true)
+  ("SignHideFlag,-SBH",                               m_signDataHidingEnabledFlag,                                    true)
   ("MaxNumMergeCand",                                 m_maxNumMergeCand,                                   5u, "Maximum number of merge candidates")
   /* Misc. */
   ("SEIDecodedPictureHash",                           tmpDecodedPictureHashSEIMappedType,                   0, "Control generation of decode picture hash SEI messages\n"
@@ -4637,7 +4637,7 @@ Void TAppEncCfg::xPrintParameter()
   printf("AQpS:%d", m_bUseAdaptQpSelect   );
 #endif
 
-  printf(" SignBitHidingFlag:%d ", m_signHideFlag);
+  printf(" SignBitHidingFlag:%d ", m_signDataHidingEnabledFlag);
   printf("RecalQP:%d", m_recalculateQPAccordingToLambda ? 1 : 0 );
 
 #if SVC_EXTENSION
