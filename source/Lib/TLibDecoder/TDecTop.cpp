@@ -359,7 +359,7 @@ Void TDecTop::executeLoopFilters(Int& poc, TComList<TComPic*>*& rpcListPic)
   m_cGopDecoder.filterPicture(pcPic);
 
 #if SVC_EXTENSION
-  if( this->getLayerDec(pcPic->getLayerId())->m_isOutputLayerFlag == false )
+  if( m_ppcTDecTop[pcPic->getLayerId()]->m_isOutputLayerFlag == false )
   {
     pcPic->setOutputMark( false );
   }
@@ -537,7 +537,7 @@ Void TDecTop::xActivateParameterSets()
         pBLPic->getPicSym()->inferSpsForNonHEVCBL(vps, sps->getMaxCUWidth(), sps->getMaxCUHeight());
 
 #if REDUCED_ENCODER_MEMORY
-        pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, true, true, refLayerId);
+        pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, false, true, refLayerId);
 #else
         pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, true, refLayerId);
 #endif
@@ -2297,7 +2297,7 @@ Void TDecTop::xInitILRP(const TComSPS *sps, const TComPPS *pps)
         m_cIlpPic[j] = new  TComPic;
 
 #if REDUCED_ENCODER_MEMORY
-        m_cIlpPic[j]->create(*sps, *pps, true, true, m_layerId);
+        m_cIlpPic[j]->create(*sps, *pps, false, true, m_layerId);
 #else
         m_cIlpPic[j]->create(*sps, *pps, true, m_layerId);
 #endif

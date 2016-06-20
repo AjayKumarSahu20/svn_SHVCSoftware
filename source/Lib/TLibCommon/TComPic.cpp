@@ -112,9 +112,6 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
   {
 #endif
   m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
-#if REDUCED_ENCODER_MEMORY
-  }
-#endif
 
   for( Int i = 0; i < MAX_LAYERS; i++ )
   {
@@ -122,7 +119,10 @@ Void TComPic::create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirt
     {
       m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
     }
-  }   
+  }
+#if REDUCED_ENCODER_MEMORY
+  }
+#endif
 
   // there are no SEI messages associated with this picture initially
   if (m_SEIs.size() > 0)
@@ -188,6 +188,18 @@ Void TComPic::prepareForEncoderSourcePicYuv()
   const UInt         uiMaxCuHeight   = sps.getMaxCUHeight();
   const UInt         uiMaxDepth      = sps.getMaxTotalCUDepth();
 
+#if SVC_EXTENSION
+  const Window& conformanceWindow    = sps.getConformanceWindow();
+
+  if (m_apcPicYuv[PIC_YUV_ORG    ]==NULL)
+  {
+    m_apcPicYuv[PIC_YUV_ORG    ]   = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG     ]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
+  }
+  if (m_apcPicYuv[PIC_YUV_TRUE_ORG    ]==NULL)
+  {
+    m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
+  }
+#else
   if (m_apcPicYuv[PIC_YUV_ORG    ]==NULL)
   {
     m_apcPicYuv[PIC_YUV_ORG    ]   = new TComPicYuv;  m_apcPicYuv[PIC_YUV_ORG     ]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
@@ -196,6 +208,7 @@ Void TComPic::prepareForEncoderSourcePicYuv()
   {
     m_apcPicYuv[PIC_YUV_TRUE_ORG]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_TRUE_ORG]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
   }
+#endif
 }
 
 Void TComPic::prepareForReconstruction()
@@ -210,7 +223,21 @@ Void TComPic::prepareForReconstruction()
     const UInt         uiMaxCuHeight   = sps.getMaxCUHeight();
     const UInt         uiMaxDepth      = sps.getMaxTotalCUDepth();
 
+#if SVC_EXTENSION
+    const Window& conformanceWindow    = sps.getConformanceWindow();
+
+    m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
+
+    for( Int i = 0; i < MAX_LAYERS; i++ )
+    {
+      if( m_requireResampling[i] )
+      {
+        m_pcFullPelBaseRec[i] = new TComPicYuv;  m_pcFullPelBaseRec[i]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true, &conformanceWindow );
+      }
+    } 
+#else
     m_apcPicYuv[PIC_YUV_REC]  = new TComPicYuv;  m_apcPicYuv[PIC_YUV_REC]->create( iWidth, iHeight, chromaFormatIDC, uiMaxCuWidth, uiMaxCuHeight, uiMaxDepth, true );
+#endif
   }
 
   // mark it should be extended
@@ -463,9 +490,13 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int*
   const UInt heightMinPU   = sps->getMaxCUHeight() / (1<<uiMaxDepth);
   const Int  unitNum       = max( 1, (Int)((16/widthMinPU)*(16/heightMinPU)) ); 
 
-  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
+  for( UInt ctuRsAddr = 0; ctuRsAddr < m_picSym.getNumberOfCtusInFrame(); ctuRsAddr++ )  //each CTU
   {
-    TComDataCU* pcCUDes = getCtu(cuIdx);
+    TComDataCU* pcCUDes = getCtu(ctuRsAddr);
+
+#if REDUCED_ENCODER_MEMORY
+    TComPicSym::DPBPerCtuData &dpbForCtu = m_picSym.getDPBPerCtuData(ctuRsAddr);
+#endif
 
     for(UInt absPartIdx = 0; absPartIdx < numPartitions; absPartIdx+=unitNum )  //each 16x16 unit
     {
@@ -497,14 +528,30 @@ Void TComPic::copyUpsampledMvField(UInt refLayerIdc, Int** mvScalingFactor, Int*
         pcCUDes->setPredictionMode(absPartIdx, MODE_INTRA);
       }
 
+#if REDUCED_ENCODER_MEMORY
+      dpbForCtu.m_CUMvField[REF_PIC_LIST_0].setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_0)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_0)->getRefIdx(absPartIdx), absPartIdx);
+      dpbForCtu.m_CUMvField[REF_PIC_LIST_1].setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_1)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_1)->getRefIdx(absPartIdx), absPartIdx);
+#endif
+
       for(UInt i = 1; i < unitNum; i++ )  
       {
         pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_0)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_0)->getRefIdx(absPartIdx), absPartIdx + i);
         pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_1)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_1)->getRefIdx(absPartIdx), absPartIdx + i);
+
+#if REDUCED_ENCODER_MEMORY
+        dpbForCtu.m_CUMvField[REF_PIC_LIST_0].setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_0)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_0)->getRefIdx(absPartIdx), absPartIdx + i);
+        dpbForCtu.m_CUMvField[REF_PIC_LIST_1].setMvField(pcCUDes->getCUMvField(REF_PIC_LIST_1)->getMv(absPartIdx), pcCUDes->getCUMvField(REF_PIC_LIST_1)->getRefIdx(absPartIdx), absPartIdx + i);
+#endif
         pcCUDes->setPredictionMode(absPartIdx+i, pcCUDes->getPredictionMode(absPartIdx));
       }
     }
-    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(SChar)*numPartitions );
+    memset( pcCUDes->getPartitionSize(), SIZE_2Nx2N, sizeof(*pcCUDes->getPartitionSize())*numPartitions );
+
+#if REDUCED_ENCODER_MEMORY
+    memcpy( dpbForCtu.m_pePredMode, pcCUDes->getPredictionMode(), sizeof(*pcCUDes->getPredictionMode()) * numPartitions );
+    memcpy( dpbForCtu.m_pePartSize, pcCUDes->getPartitionSize(), sizeof(*pcCUDes->getPartitionSize()) * numPartitions );
+    dpbForCtu.m_pSlice = pcCUDes->getSlice();
+#endif
   }
 }
 
@@ -512,24 +559,36 @@ Void TComPic::initUpsampledMvField()
 {
   const TComSPS *sps         = getSlice(0)->getSPS();
   const UInt uiMaxDepth      = sps->getMaxTotalCUDepth();
-  const UInt uiNumPartitions = 1<<(uiMaxDepth<<1);
+  const UInt numPartitions = 1<<(uiMaxDepth<<1);
 
-  for(UInt cuIdx = 0; cuIdx < getPicSym()->getNumberOfCtusInFrame(); cuIdx++)  //each LCU
+  for( UInt ctuRsAddr = 0; ctuRsAddr < m_picSym.getNumberOfCtusInFrame(); ctuRsAddr++ )  //each CTU
   {
-    TComDataCU* pcCUDes = getCtu(cuIdx);
+    TComDataCU* pcCUDes = getCtu(ctuRsAddr);
     TComMvField zeroMvField;
-    for(UInt list = 0; list < 2; list++)  //each reference list
+
+#if REDUCED_ENCODER_MEMORY
+    TComPicSym::DPBPerCtuData &dpbForCtu = m_picSym.getDPBPerCtuData(ctuRsAddr);
+#endif
+
+    for( UInt i = 0; i < numPartitions; i++ )  
     {
-      for(UInt i = 0; i < uiNumPartitions; i++ )  
-      {
-        pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(zeroMvField, i);
-        pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(zeroMvField, i);
-        pcCUDes->setPredictionMode(i, MODE_INTRA);
-        pcCUDes->setPartitionSize(i, SIZE_2Nx2N);
-      }
+      pcCUDes->getCUMvField(REF_PIC_LIST_0)->setMvField(zeroMvField, i);
+      pcCUDes->getCUMvField(REF_PIC_LIST_1)->setMvField(zeroMvField, i);
+      pcCUDes->setPredictionMode(i, MODE_INTRA);
+      pcCUDes->setPartitionSize(i, SIZE_2Nx2N);
+
+#if REDUCED_ENCODER_MEMORY
+      dpbForCtu.m_CUMvField[REF_PIC_LIST_0].setMvField(zeroMvField, i);
+      dpbForCtu.m_CUMvField[REF_PIC_LIST_1].setMvField(zeroMvField, i);
+#endif
     }
+
+#if REDUCED_ENCODER_MEMORY
+    memcpy( dpbForCtu.m_pePredMode, pcCUDes->getPredictionMode(), sizeof(*pcCUDes->getPredictionMode()) * numPartitions );
+    memcpy( dpbForCtu.m_pePartSize, pcCUDes->getPartitionSize(), sizeof(*pcCUDes->getPartitionSize()) * numPartitions );
+    dpbForCtu.m_pSlice = pcCUDes->getSlice();
+#endif
   }
-  return;
 }
 
 Bool TComPic::checkSameRefInfo()
