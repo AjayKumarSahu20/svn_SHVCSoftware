@@ -274,9 +274,17 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
       xSetRequireResamplingFlag( vps, sps, pps, rpcPic );
     }
 
+#if REDUCED_ENCODER_MEMORY
+    rpcPic->create ( sps, pps, false, true, m_layerId);
+#else
     rpcPic->create( sps, pps, true, m_layerId);
+#endif
 #else //SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+    rpcPic->create ( sps, pps, false, true);
+#else
     rpcPic->create ( sps, pps, true);
+#endif
 #endif //SVC_EXTENSION
     
     m_cListPic.pushBack( rpcPic );
@@ -322,10 +330,17 @@ Void TDecTop::xGetNewPicBuffer ( const TComSPS &sps, const TComPPS &pps, TComPic
   {
     xSetRequireResamplingFlag( vps, sps, pps, rpcPic );
   }
-
+#if REDUCED_ENCODER_MEMORY
+  rpcPic->create ( sps, pps, false, true, m_layerId);
+#else
   rpcPic->create( sps, pps, true, m_layerId);
+#endif
 #else  //SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+  rpcPic->create ( sps, pps, false, true);
+#else
   rpcPic->create ( sps, pps, true);
+#endif
 #endif //SVC_EXTENSION
 }
 
@@ -521,7 +536,11 @@ Void TDecTop::xActivateParameterSets()
 
         pBLPic->getPicSym()->inferSpsForNonHEVCBL(vps, sps->getMaxCUWidth(), sps->getMaxCUHeight());
 
+#if REDUCED_ENCODER_MEMORY
+        pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, true, true, refLayerId);
+#else
         pBLPic->create( pBLPic->getPicSym()->getSPS(), *pps, true, refLayerId);
+#endif
 
         // it is needed where the VPS is accessed through the slice
         pBLPic->getSlice(0)->setVPS( vps );
@@ -2277,7 +2296,11 @@ Void TDecTop::xInitILRP(const TComSPS *sps, const TComPPS *pps)
       {
         m_cIlpPic[j] = new  TComPic;
 
+#if REDUCED_ENCODER_MEMORY
+        m_cIlpPic[j]->create(*sps, *pps, true, false, m_layerId);
+#else
         m_cIlpPic[j]->create(*sps, *pps, true, m_layerId);
+#endif
 
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {

@@ -124,13 +124,25 @@ TEncPic::~TEncPic()
 
 #if SVC_EXTENSION
 // * \param vps reference to used VPS
+#if REDUCED_ENCODER_MEMORY
+Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const UInt layerId )
+{
+  TComPic::create( sps, pps, true, false, layerId );
+#else
 Void TEncPic::create( const TComVPS& vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual, const UInt layerId )
 {
   TComPic::create( sps, pps, bIsVirtual, layerId );
+#endif
+#else
+#if REDUCED_ENCODER_MEMORY
+Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth )
+{
+  TComPic::create( sps, pps, true, false );
 #else
 Void TEncPic::create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual )
 {
   TComPic::create( sps, pps, bIsVirtual );
+#endif
 #endif
   const Int  iWidth      = sps.getPicWidthInLumaSamples();
   const Int  iHeight     = sps.getPicHeightInLumaSamples();

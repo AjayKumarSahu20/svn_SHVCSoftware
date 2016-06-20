@@ -100,10 +100,23 @@ public:
   TComPic();
   virtual ~TComPic();
 
+#if REDUCED_ENCODER_MEMORY
+#if SVC_EXTENSION
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction, const UInt layerId );
+#else
+  Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bCreateEncoderSourcePicYuv, const Bool bCreateForImmediateReconstruction );
+#endif
+  Void          prepareForEncoderSourcePicYuv();
+  Void          prepareForReconstruction();
+  Void          releaseReconstructionIntermediateData();
+  Void          releaseAllReconstructionData();
+  Void          releaseEncoderSourceImageData();
+#else
 #if SVC_EXTENSION
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/, const UInt layerId );
 #else
   Void          create( const TComSPS &sps, const TComPPS &pps, const Bool bIsVirtual /*= false*/ );
+#endif
 #endif
 
   virtual Void  destroy();
