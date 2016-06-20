@@ -2958,24 +2958,46 @@ Bool TComDataCU::xGetColMVP( const RefPicList eRefPicList, const Int ctuRsAddr, 
 
   // use coldir.
   const TComPic    * const pColPic = getSlice()->getRefPic( RefPicList(getSlice()->isInterB() ? 1-getSlice()->getColFromL0Flag() : 0), getSlice()->getColRefIdx());
+#if REDUCED_ENCODER_MEMORY
+  if (!pColPic->getPicSym()->hasDPBPerCtuData())
+  {
+    return false;
+  }
+  const TComPicSym::DPBPerCtuData * const pColDpbCtu = &(pColPic->getPicSym()->getDPBPerCtuData(ctuRsAddr));
+  const TComSlice * const pColSlice = pColDpbCtu->getSlice();
+  if(pColDpbCtu->getPartitionSize(partUnitIdx)==NUMBER_OF_PART_SIZES)
+#else
   const TComDataCU * const pColCtu = pColPic->getCtu( ctuRsAddr );
   if(pColCtu->getPic()==0 || pColCtu->getPartitionSize(partUnitIdx)==NUMBER_OF_PART_SIZES)
+#endif
   {
     return false;
   }
 
+#if REDUCED_ENCODER_MEMORY
+  if (!pColDpbCtu->isInter(absPartAddr))
+#else
   if (!pColCtu->isInter(absPartAddr))
+#endif
   {
     return false;
   }
 
   RefPicList eColRefPicList = getSlice()->getCheckLDC() ? eRefPicList : RefPicList(getSlice()->getColFromL0Flag());
+#if REDUCED_ENCODER_MEMORY
+  Int iColRefIdx            = pColDpbCtu->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(absPartAddr);
+#else
   Int iColRefIdx            = pColCtu->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(absPartAddr);
+#endif
 
   if (iColRefIdx < 0 )
   {
     eColRefPicList = RefPicList(1 - eColRefPicList);
+#if REDUCED_ENCODER_MEMORY
+    iColRefIdx = pColDpbCtu->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(absPartAddr);
+#else
     iColRefIdx = pColCtu->getCUMvField(RefPicList(eColRefPicList))->getRefIdx(absPartAddr);
+#endif
 
     if (iColRefIdx < 0 )
     {
@@ -2984,7 +3006,11 @@ Bool TComDataCU::xGetColMVP( const RefPicList eRefPicList, const Int ctuRsAddr, 
   }
 
   const Bool bIsCurrRefLongTerm = m_pcSlice->getRefPic(eRefPicList, refIdx)->getIsLongTerm();
+#if REDUCED_ENCODER_MEMORY
+  const Bool bIsColRefLongTerm  = pColSlice->getIsUsedAsLongTerm(eColRefPicList, iColRefIdx);
+#else
   const Bool bIsColRefLongTerm  = pColCtu->getSlice()->getIsUsedAsLongTerm(eColRefPicList, iColRefIdx);
+#endif
 
   if ( bIsCurrRefLongTerm != bIsColRefLongTerm )
   {
@@ -2992,7 +3018,11 @@ Bool TComDataCU::xGetColMVP( const RefPicList eRefPicList, const Int ctuRsAddr, 
   }
 
   // Scale the vector.
+#if REDUCED_ENCODER_MEMORY
+  const TComMv &cColMv = pColDpbCtu->getCUMvField(eColRefPicList)->getMv(absPartAddr);
+#else
   const TComMv &cColMv = pColCtu->getCUMvField(eColRefPicList)->getMv(absPartAddr);
+#endif
   if ( bIsCurrRefLongTerm /*|| bIsColRefLongTerm*/ )
   {
     rcMv = cColMv;
@@ -3000,8 +3030,13 @@ Bool TComDataCU::xGetColMVP( const RefPicList eRefPicList, const Int ctuRsAddr, 
   else
   {
     const Int currPOC    = m_pcSlice->getPOC();
+#if REDUCED_ENCODER_MEMORY
+    const Int colPOC     = pColSlice->getPOC();
+    const Int colRefPOC  = pColSlice->getRefPOC(eColRefPicList, iColRefIdx);
+#else
     const Int colPOC     = pColCtu->getSlice()->getPOC();
     const Int colRefPOC  = pColCtu->getSlice()->getRefPOC(eColRefPicList, iColRefIdx);
+#endif
     const Int currRefPOC = m_pcSlice->getRefPic(eRefPicList, refIdx)->getPOC();
     const Int scale      = xGetDistScaleFactor(currPOC, currRefPOC, colPOC, colRefPOC);
     if ( scale == 4096 )
@@ -3052,6 +3087,18 @@ Void TComDataCU::xDeriveCenterIdx( UInt uiPartIdx, UInt& ruiPartIdxCenter ) cons
 
 Void TComDataCU::compressMV()
 {
+#if REDUCED_ENCODER_MEMORY
+  const Int scaleFactor = std::max<Int>(1,4 * AMVP_DECIMATION_FACTOR / m_unitSize);
+  TComPicSym &picSym=*(getPic()->getPicSym());
+  TComPicSym::DPBPerCtuData &dpbForCtu=picSym.getDPBPerCtuData(getCtuRsAddr());
+
+  for(UInt i=0; i<NUM_REF_PIC_LIST_01; i++)
+  {
+    dpbForCtu.m_CUMvField[i].compress(dpbForCtu.m_pePredMode, m_pePredMode, scaleFactor,m_acCUMvField[i]);
+    memcpy(dpbForCtu.m_pePartSize, m_pePartSize, sizeof(*m_pePartSize)*m_uiNumPartition);
+    dpbForCtu.m_pSlice = getSlice();
+  }
+#else
   Int scaleFactor = 4 * AMVP_DECIMATION_FACTOR / m_unitSize;
   if (scaleFactor > 0)
   {
@@ -3060,6 +3107,7 @@ Void TComDataCU::compressMV()
       m_acCUMvField[i].compress(m_pePredMode, scaleFactor);
     }
   }
+#endif
 }
 
 UInt TComDataCU::getCoefScanIdx(const UInt uiAbsPartIdx, const UInt uiWidth, const UInt uiHeight, const ComponentID compID) const

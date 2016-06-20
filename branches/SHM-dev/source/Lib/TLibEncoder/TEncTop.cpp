@@ -531,7 +531,9 @@ Void TEncTop::encodePrep( TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTrueOrg, 
       pcField->setReconMark (false);                     // where is this normally?
             
       pcField->getSlice(0)->setPOC( m_iPOCLast );        // superfluous?
+#if !REDUCED_ENCODER_MEMORY
       pcField->getPicYuvRec()->setBorderExtension(false);// where is this normally?
+#endif
 
       pcField->setTopField(isTopField);                  // interlaced requirement
 
@@ -629,7 +631,9 @@ Void TEncTop::encode(Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvTr
       }
 
       pcField->getSlice(0)->setPOC( m_iPOCLast );        // superfluous?
+#if !REDUCED_ENCODER_MEMORY
       pcField->getPicYuvRec()->setBorderExtension(false);// where is this normally?
+#endif
 
       pcField->setTopField(isTopField);                  // interlaced requirement
 
@@ -703,6 +707,10 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         break;
       }
     }
+#if REDUCED_ENCODER_MEMORY
+    rpcPic->releaseAllReconstructionData();
+    rpcPic->prepareForEncoderSourcePicYuv();
+#endif
   }
   else
   {
@@ -747,10 +755,16 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
           }
         }
       }
-
-      pcEPic->create( m_cVPS, m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, false, m_layerId);
+#if REDUCED_ENCODER_MEMORY
+#else
+      pcEPic->create( m_cVPS, m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, m_layerId);
+#endif
 #else  //SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+      pcEPic->create( m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1);
+#else
       pcEPic->create( m_cSPS, m_cPPS, m_cPPS.getMaxCuDQPDepth()+1, false);
+#endif
 #endif //SVC_EXTENSION
       rpcPic = pcEPic;
     }
@@ -793,9 +807,17 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
         }
       }
 
+#if REDUCED_ENCODER_MEMORY
+      rpcPic->create( m_cSPS, m_cPPS, true, false, m_layerId );
+#else
       rpcPic->create( m_cSPS, m_cPPS, false, m_layerId );
+#endif
 #else  //SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+      rpcPic->create( m_cSPS, m_cPPS, true, false );
+#else
       rpcPic->create( m_cSPS, m_cPPS, false );
+#endif      
 #endif //SVC_EXTENSION
     }
 
@@ -807,8 +829,10 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   m_iNumPicRcvd++;
 
   rpcPic->getSlice(0)->setPOC( m_iPOCLast );
+#if !REDUCED_ENCODER_MEMORY
   // mark it should be extended
   rpcPic->getPicYuvRec()->setBorderExtension(false);
+#endif
 }
 
 Void TEncTop::xInitVPS()
@@ -1731,7 +1755,11 @@ Void TEncTop::xInitILRP()
       for (Int j=0; j < m_numDirectRefLayers; j++)
       {
         m_cIlpPic[j] = new TComPic;
+#if REDUCED_ENCODER_MEMORY
+        m_cIlpPic[j]->create(m_cSPS, m_cPPS, true, false, m_layerId);
+#else
         m_cIlpPic[j]->create(m_cSPS, m_cPPS, true, m_layerId);
+#endif
         for (Int i=0; i<m_cIlpPic[j]->getPicSym()->getNumberOfCtusInFrame(); i++)
         {
           m_cIlpPic[j]->getPicSym()->getCtu(i)->initCtu(m_cIlpPic[j], i);

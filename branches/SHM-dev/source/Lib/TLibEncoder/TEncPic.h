@@ -105,9 +105,17 @@ public:
   virtual ~TEncPic();
 
 #if SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+  Void          create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, const UInt layerId );
+#else
   Void          create( const TComVPS &vps, const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/, const UInt layerId );
+#endif
 #else  //SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+  Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth );
+#else
   Void          create( const TComSPS &sps, const TComPPS &pps, UInt uiMaxAdaptiveQPDepth, Bool bIsVirtual /* = false*/ );
+#endif
 #endif //SVC_EXTENSION
 
   virtual Void  destroy();

@@ -63,6 +63,9 @@ TComPicSym::TComPicSym()
 ,m_ctuTsToRsAddrMap(NULL)
 ,m_puiTileIdxMap(NULL)
 ,m_ctuRsToTsAddrMap(NULL)
+#if REDUCED_ENCODER_MEMORY
+,m_dpbPerCtuData(NULL)
+#endif
 ,m_saoBlkParams(NULL)
 #if ADAPTIVE_QP_SELECTION
 ,m_pParentARLBuffer(NULL)
@@ -82,11 +85,20 @@ TComPicSym::~TComPicSym()
   destroy();
 }
 
+
 #if SVC_EXTENSION
+#if REDUCED_ENCODER_MEMORY
+Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const Bool bAllocateCtuArray, const UInt layerId )
+#else
 Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const UInt layerId )
+#endif
 {
 #else
+#if REDUCED_ENCODER_MEMORY
+Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth, const Bool bAllocateCtuArray )
+#else
 Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDepth )
+#endif
 {
 #endif
   destroy();
@@ -94,7 +106,9 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
   m_sps = sps;
   m_pps = pps;
 
+#if !REDUCED_ENCODER_MEMORY
   const ChromaFormat chromaFormatIDC = sps.getChromaFormatIdc();
+#endif
   const Int iPicWidth      = sps.getPicWidthInLumaSamples();
   const Int iPicHeight     = sps.getPicHeightInLumaSamples();
   const UInt uiMaxCuWidth  = sps.getMaxCUWidth();
@@ -113,7 +127,11 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
   m_frameHeightInCtus  = ( iPicHeight%uiMaxCuHeight ) ? iPicHeight/uiMaxCuHeight + 1 : iPicHeight/uiMaxCuHeight;
 
   m_numCtusInFrame     = m_frameWidthInCtus * m_frameHeightInCtus;
+#if REDUCED_ENCODER_MEMORY
+  m_pictureCtuArray    = NULL;
+#else
   m_pictureCtuArray    = new TComDataCU*[m_numCtusInFrame];
+#endif
 
   clearSliceBuffer();
   allocateNewSlice();
@@ -125,10 +143,16 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
 #if ADAPTIVE_QP_SELECTION
   if (m_pParentARLBuffer == NULL)
   {
-     m_pParentARLBuffer = new TCoeff[uiMaxCuWidth*uiMaxCuHeight*MAX_NUM_COMPONENT];
+    m_pParentARLBuffer = new TCoeff[uiMaxCuWidth*uiMaxCuHeight*MAX_NUM_COMPONENT];
   }
 #endif
 
+#if REDUCED_ENCODER_MEMORY
+  if (bAllocateCtuArray)
+  {
+    prepareForReconstruction();
+  }
+#else
   for (UInt i=0; i<m_numCtusInFrame ; i++ )
   {
     m_pictureCtuArray[i] = new TComDataCU;
@@ -138,6 +162,7 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
 #endif
       );
   }
+#endif
 
   m_ctuTsToRsAddrMap = new UInt[m_numCtusInFrame+1];
   m_puiTileIdxMap    = new UInt[m_numCtusInFrame];
@@ -163,10 +188,46 @@ Void TComPicSym::create  ( const TComSPS &sps, const TComPPS &pps, UInt uiMaxDep
 
 }
 
-Void TComPicSym::destroy()
+#if REDUCED_ENCODER_MEMORY
+Void TComPicSym::prepareForReconstruction()
 {
-  clearSliceBuffer();
+  const ChromaFormat chromaFormatIDC = m_sps.getChromaFormatIdc();
+  const UInt uiMaxCuWidth  = m_sps.getMaxCUWidth();
+  const UInt uiMaxCuHeight = m_sps.getMaxCUHeight();
+  if (m_pictureCtuArray == NULL)
+  {
+    m_pictureCtuArray = new TComDataCU*[m_numCtusInFrame];
 
+    for (UInt i=0; i<m_numCtusInFrame ; i++ )
+    {
+      m_pictureCtuArray[i] = new TComDataCU;
+      m_pictureCtuArray[i]->create( chromaFormatIDC, m_numPartitionsInCtu, uiMaxCuWidth, uiMaxCuHeight, false, uiMaxCuWidth >> m_uhTotalDepth
+#if ADAPTIVE_QP_SELECTION
+        , m_pParentARLBuffer
+#endif
+        );
+    }
+  }
+  if (m_dpbPerCtuData == NULL)
+  {
+    m_dpbPerCtuData = new DPBPerCtuData[m_numCtusInFrame];
+    for(UInt i=0; i<m_numCtusInFrame; i++)
+    {
+      for(Int j=0; j<NUM_REF_PIC_LIST_01; j++)
+      {
+        m_dpbPerCtuData[i].m_CUMvField[j].create( m_numPartitionsInCtu );
+      }
+      m_dpbPerCtuData[i].m_pePredMode = new SChar[m_numPartitionsInCtu];
+      memset(m_dpbPerCtuData[i].m_pePredMode, m_numPartitionsInCtu, NUMBER_OF_PREDICTION_MODES);
+      m_dpbPerCtuData[i].m_pePartSize = new SChar[m_numPartitionsInCtu];
+      memset(m_dpbPerCtuData[i].m_pePartSize, m_numPartitionsInCtu, NUMBER_OF_PART_SIZES);
+      m_dpbPerCtuData[i].m_pSlice=NULL;
+    }
+  }
+}
+
+Void TComPicSym::releaseReconstructionIntermediateData()
+{
   if (m_pictureCtuArray)
   {
     for (Int i = 0; i < m_numCtusInFrame; i++)
@@ -181,6 +242,51 @@ Void TComPicSym::destroy()
     delete [] m_pictureCtuArray;
     m_pictureCtuArray = NULL;
   }
+}
+
+Void TComPicSym::releaseAllReconstructionData()
+{
+  releaseReconstructionIntermediateData();
+
+  if (m_dpbPerCtuData != NULL)
+  {
+    for(UInt i=0; i<m_numCtusInFrame; i++)
+    {
+      for(Int j=0; j<NUM_REF_PIC_LIST_01; j++)
+      {
+        m_dpbPerCtuData[i].m_CUMvField[j].destroy();
+      }
+      delete [] m_dpbPerCtuData[i].m_pePredMode;
+      delete [] m_dpbPerCtuData[i].m_pePartSize;
+    }
+    delete [] m_dpbPerCtuData;
+    m_dpbPerCtuData=NULL;
+  }
+}
+#endif
+
+Void TComPicSym::destroy()
+{
+  clearSliceBuffer();
+
+#if REDUCED_ENCODER_MEMORY
+  releaseAllReconstructionData();
+#else
+  if (m_pictureCtuArray)
+  {
+    for (Int i = 0; i < m_numCtusInFrame; i++)
+    {
+      if (m_pictureCtuArray[i])
+      {
+        m_pictureCtuArray[i]->destroy();
+        delete m_pictureCtuArray[i];
+        m_pictureCtuArray[i] = NULL;
+      }
+    }
+    delete [] m_pictureCtuArray;
+    m_pictureCtuArray = NULL;
+  }
+#endif
 
   delete [] m_ctuTsToRsAddrMap;
   m_ctuTsToRsAddrMap = NULL;
