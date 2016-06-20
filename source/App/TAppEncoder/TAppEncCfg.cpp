@@ -3187,6 +3187,10 @@ Void TAppEncCfg::xCheckParameter(UInt layerIdx)
 #if PER_LAYER_LOSSLESS
   Bool& m_CUTransquantBypassFlagForce         = m_apcLayerCfg[layerIdx]->m_CUTransquantBypassFlagForce;
 #endif
+
+#if U0132_TARGET_BITS_SATURATION
+  Int& m_RCTargetBitrate                      = m_apcLayerCfg[layerIdx]->m_RCTargetBitrate;
+#endif
 #else
 Void TAppEncCfg::xCheckParameter()
 {
@@ -4058,6 +4062,15 @@ Void TAppEncCfg::xCheckParameter()
   else
   {
     xConfirmPara( m_RCCpbSaturationEnabled != 0, "Target bits saturation cannot be processed without Rate control" );
+  }
+  if (m_vuiParametersPresentFlag)
+  {
+    xConfirmPara(m_RCTargetBitrate == 0, "A target bit rate is required to be set for VUI/HRD parameters.");
+    if (m_RCCpbSize == 0)
+    {
+      printf ("Warning: CPB size is set equal to zero. Adjusting value to be equal to TargetBitrate!\n");
+      m_RCCpbSize = m_RCTargetBitrate;
+    }
   }
 #endif
   
