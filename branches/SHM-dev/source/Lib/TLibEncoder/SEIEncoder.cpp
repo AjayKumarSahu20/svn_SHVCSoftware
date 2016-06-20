@@ -679,6 +679,16 @@ Void SEIEncoder::initSEIAlternativeTransferCharacteristics(SEIAlternativeTransfe
 }
 #endif
 
+Void SEIEncoder::initSEIGreenMetadataInfo(SEIGreenMetadataInfo *seiGreenMetadataInfo, UInt u)
+{
+    assert (m_isInitialized);
+    assert (seiGreenMetadataInfo!=NULL);
+
+    seiGreenMetadataInfo->m_greenMetadataType = m_pcCfg->getSEIGreenMetadataType();
+    seiGreenMetadataInfo->m_xsdMetricType = m_pcCfg->getSEIXSDMetricType();
+    seiGreenMetadataInfo->m_xsdMetricValue = u;
+}
+
 #if LAYERS_NOT_PRESENT_SEI
 Void SEIEncoder::initSEILayersNotPresent(SEILayersNotPresent *seiLayersNotPresent)
 {

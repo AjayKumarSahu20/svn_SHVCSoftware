@@ -162,6 +162,9 @@ Void SEIWriter::xWriteSEIpayloadData(TComBitIf& bs, const SEI& sei, const TComSP
     xWriteSEIAlternativeTransferCharacteristics(*static_cast<const SEIAlternativeTransferCharacteristics*>(&sei));
     break;
 #endif
+  case SEI::GREEN_METADATA:
+      xWriteSEIGreenMetadataInfo(*static_cast<const SEIGreenMetadataInfo*>(&sei));
+    break;
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
@@ -1084,6 +1087,14 @@ Void SEIWriter::xWriteSEIAlternativeTransferCharacteristics(const SEIAlternative
   WRITE_CODE(sei.m_preferredTransferCharacteristics, 8, "preferred_transfer_characteristics");
 }
 #endif
+
+Void SEIWriter::xWriteSEIGreenMetadataInfo(const SEIGreenMetadataInfo& sei)
+{
+  WRITE_CODE(sei.m_greenMetadataType, 8, "green_metadata_type");
+  
+  WRITE_CODE(sei.m_xsdMetricType, 8, "xsd_metric_type");
+  WRITE_CODE(sei.m_xsdMetricValue, 16, "xsd_metric_value");
+}
 
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
