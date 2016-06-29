@@ -1,9 +1,9 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
- * Copyright (c) 2010-2014, ITU/ISO/IEC
+ * Copyright (c) 2010-2016, ITU/ISO/IEC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,41 +67,44 @@ private:
 
   // pictures
   TComList<TComPic*>*     m_pcListPic;                          ///< list of pictures
-  TComPicYuv*             m_apcPicYuvPred;                      ///< prediction picture buffer
-  TComPicYuv*             m_apcPicYuvResi;                      ///< residual picture buffer
-  
+  TComPicYuv              m_picYuvPred;                         ///< prediction picture buffer
+  TComPicYuv              m_picYuvResi;                         ///< residual picture buffer
+
   // processing units
   TEncGOP*                m_pcGOPEncoder;                       ///< GOP encoder
   TEncCu*                 m_pcCuEncoder;                        ///< CU encoder
-  
+
   // encoder search
   TEncSearch*             m_pcPredSearch;                       ///< encoder search class
-  
+
   // coding tools
   TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder
-  TEncCavlc*              m_pcCavlcCoder;                       ///< CAVLC encoder
   TEncSbac*               m_pcSbacCoder;                        ///< SBAC encoder
   TEncBinCABAC*           m_pcBinCABAC;                         ///< Bin encoder CABAC
   TComTrQuant*            m_pcTrQuant;                          ///< transform & quantization
-  
+
   // RD optimization
-  TComBitCounter*         m_pcBitCounter;                       ///< bit counter
   TComRdCost*             m_pcRdCost;                           ///< RD cost computation
   TEncSbac***             m_pppcRDSbacCoder;                    ///< storage for SBAC-based RD optimization
   TEncSbac*               m_pcRDGoOnSbacCoder;                  ///< go-on SBAC encoder
   UInt64                  m_uiPicTotalBits;                     ///< total bits for the picture
   UInt64                  m_uiPicDist;                          ///< total distortion for the picture
   Double                  m_dPicRdCost;                         ///< picture-level RD cost
-  Double*                 m_pdRdPicLambda;                      ///< array of lambda candidates
-  Double*                 m_pdRdPicQp;                          ///< array of picture QP candidates (double-type for lambda)
-  Int*                    m_piRdPicQp;                          ///< array of picture QP candidates (Int-type)
-  TEncBinCABAC*           m_pcBufferBinCoderCABACs;       ///< line of bin coder CABAC
-  TEncSbac*               m_pcBufferSbacCoders;                 ///< line to store temporary contexts
-  TEncBinCABAC*           m_pcBufferLowLatBinCoderCABACs;       ///< dependent tiles: line of bin coder CABAC
-  TEncSbac*               m_pcBufferLowLatSbacCoders;           ///< dependent tiles: line to store temporary contexts
+  std::vector<Double>     m_vdRdPicLambda;                      ///< array of lambda candidates
+  std::vector<Double>     m_vdRdPicQp;                          ///< array of picture QP candidates (double-type for lambda)
+  std::vector<Int>        m_viRdPicQp;                          ///< array of picture QP candidates (Int-type)
   TEncRateCtrl*           m_pcRateCtrl;                         ///< Rate control manager
   UInt                    m_uiSliceIdx;
-  std::vector<TEncSbac*> CTXMem;
+  TEncSbac                m_lastSliceSegmentEndContextState;    ///< context storage for state at the end of the previous slice-segment (used for dependent slices only).
+  TEncSbac                m_entropyCodingSyncContextState;      ///< context storate for state of contexts at the wavefront/WPP/entropy-coding-sync second CTU of tile-row
+  SliceType               m_encCABACTableIdx;
+
+#if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
+  Void     setUpLambda(TComSlice* slice, Double dLambda, Int iQP, Int dpeth = -1);
+#else
+  Void     setUpLambda(TComSlice* slice, const Double dLambda, Int iQP);
+#endif
+  Void     calculateBoundingCtuTsAddrForSlice(UInt &startCtuTSAddrSlice, UInt &boundingCtuTSAddrSlice, Bool &haveReachedTileBoundary, TComPic* pcPic, const Int sliceMode, const Int sliceArgument);
 
 #if SVC_EXTENSION
   TEncTop**               m_ppcTEncTop;
@@ -110,57 +113,41 @@ private:
 public:
   TEncSlice();
   virtual ~TEncSlice();
-  
-#if AUXILIARY_PICTURES
+
   Void    create              ( Int iWidth, Int iHeight, ChromaFormat chromaFormat, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth );
-#else
-  Void    create              ( Int iWidth, Int iHeight, UInt iMaxCUWidth, UInt iMaxCUHeight, UChar uhTotalDepth );
-#endif
   Void    destroy             ();
   Void    init                ( TEncTop* pcEncTop );
-  
-  /// preparation of slice encoding (reference marking, QP and lambda)
-#if SVC_EXTENSION
-  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, TComVPS *vps, Bool isField );
-#if O0194_WEIGHTED_PREDICTION_CGS
-  Void    estimateILWpParam   ( TComSlice* pcSlice );
-#endif
-#else
-  Void    initEncSlice        ( TComPic*  pcPic, Int pocLast, Int pocCurr, Int iNumPicRcvd,
-                                Int iGOPid,   TComSlice*& rpcSlice, TComSPS* pSPS, TComPPS *pPPS, Bool isField );
-#endif
 
+  /// preparation of slice encoding (reference marking, QP and lambda)
+  Void    initEncSlice        ( TComPic*  pcPic, const Int pocLast, const Int pocCurr,
+                                const Int iGOPid,   TComSlice*& rpcSlice, const Bool isField );
   Void    resetQP             ( TComPic* pic, Int sliceQP, Double lambda );
   // compress and encode slice
-  Void    precompressSlice    ( TComPic*& rpcPic                                );      ///< precompress slice for multi-loop opt.
-  Void    compressSlice       ( TComPic*& rpcPic                                );      ///< analysis stage of slice
-  Void    calCostSliceI       ( TComPic*& rpcPic );
-  Void    encodeSlice         ( TComPic*& rpcPic, TComOutputBitstream* pcSubstreams  );
-  
+  Void    precompressSlice    ( TComPic* pcPic                                     );      ///< precompress slice for multi-loop slice-level QP opt.
+  Void    compressSlice       ( TComPic* pcPic, const Bool bCompressEntireSlice, const Bool bFastDeltaQP );      ///< analysis stage of slice
+  Void    calCostSliceI       ( TComPic* pcPic );
+  Void    encodeSlice         ( TComPic* pcPic, TComOutputBitstream* pcSubstreams, UInt &numBinsCoded );
+
   // misc. functions
   Void    setSearchRange      ( TComSlice* pcSlice  );                                  ///< set ME range adaptively
-  UInt64  getTotalBits        ()  { return m_uiPicTotalBits; }
-  
+
   TEncCu*        getCUEncoder() { return m_pcCuEncoder; }                        ///< CU encoder
-  Void    xDetermineStartAndBoundingCUAddr  ( UInt& uiStartCUAddr, UInt& uiBoundingCUAddr, TComPic*& rpcPic, Bool bEncodeSlice );
+  Void    xDetermineStartAndBoundingCtuTsAddr  ( UInt& startCtuTsAddr, UInt& boundingCtuTsAddr, TComPic* pcPic );
   UInt    getSliceIdx()         { return m_uiSliceIdx;                    }
   Void    setSliceIdx(UInt i)   { m_uiSliceIdx = i;                       }
-  Void      initCtxMem( UInt i );
-  Void      setCtxMem( TEncSbac* sb, Int b )   { CTXMem[b] = sb; }
 
-#if WPP_FIX 
-  Void     calculateBoundingCUAddrForSlice(UInt &uiStartCUAddrSlice, UInt &uiBoundingCUAddrSlice, Bool &bReachedTileBoundary, TComPic*& rpcPic, Bool bEncodeSlice, Int sliceMode, Int sliceArgument, UInt uiSliceCurEndCUAddr); 
+  SliceType getEncCABACTableIdx() const           { return m_encCABACTableIdx;        }
+
+#if SVC_EXTENSION
+  Void    estimateILWpParam   ( TComSlice* pcSlice );
 #endif
 
 private:
   Double  xGetQPValueAccordingToLambda ( Double lambda );
 
-#if SVC_EXTENSION
-#if JCTVC_M0259_LAMBDAREFINEMENT
-  Double  xCalEnhLambdaFactor( Double deltaQP , Double beta );
+#if SVC_EXTENSION && JCTVC_M0259_LAMBDAREFINEMENT
+  Double  xCalEnhLambdaFactor( Double deltaQP, Double beta );
 #endif
-#endif //SVC_EXTENSION
 };
 
 //! \}
