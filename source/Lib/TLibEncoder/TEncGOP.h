@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -70,16 +70,15 @@ class TEncTop;
 // Class definition
 // ====================================================================================================================
 
-/// GOP encoder class
 class TEncGOP
 {
 private:
   //  Data
   Bool                    m_bLongtermTestPictureHasBeenCoded;
   Bool                    m_bLongtermTestPictureHasBeenCoded2;
-  UInt            m_numLongTermRefPicSPS;
-  UInt            m_ltRefPicPocLsbSps[33];
-  Bool            m_ltRefPicUsedByCurrPicFlag[33];
+  UInt                    m_numLongTermRefPicSPS;
+  UInt                    m_ltRefPicPocLsbSps[MAX_NUM_LONG_TERM_REF_PICS];
+  Bool                    m_ltRefPicUsedByCurrPicFlag[MAX_NUM_LONG_TERM_REF_PICS];
   Int                     m_iLastIDR;
   Int                     m_iGopSize;
   Int                     m_iNumPicCoded;
@@ -87,13 +86,13 @@ private:
 #if ALLOW_RECOVERY_POINT_AS_RAP
   Int                     m_iLastRecoveryPicPOC;
 #endif
-  
+
   //  Access channel
   TEncTop*                m_pcEncTop;
   TEncCfg*                m_pcCfg;
   TEncSlice*              m_pcSliceEncoder;
   TComList<TComPic*>*     m_pcListPic;
-  
+
   TEncEntropy*            m_pcEntropyCoder;
   TEncCavlc*              m_pcCavlcCoder;
   TEncSbac*               m_pcSbacCoder;
@@ -101,27 +100,18 @@ private:
   TComLoopFilter*         m_pcLoopFilter;
 
   SEIWriter               m_seiWriter;
-  
+
   //--Adaptive Loop filter
   TEncSampleAdaptiveOffset*  m_pcSAO;
-  TComBitCounter*         m_pcBitCounter;
   TEncRateCtrl*           m_pcRateCtrl;
   // indicate sequence first
   Bool                    m_bSeqFirst;
-  
+
   // clean decoding refresh
   Bool                    m_bRefreshPending;
   Int                     m_pocCRA;
-#if POC_RESET_IDC_ENCODER
-  Int                     m_pocCraWithoutReset;
-  Int                     m_associatedIrapPocBeforeReset;
-#endif
-  std::vector<Int>        m_storedStartCUAddrForEncodingSlice;
-  std::vector<Int>        m_storedStartCUAddrForEncodingSliceSegment;
-#if FIX1172
   NalUnitType             m_associatedIRAPType;
   Int                     m_associatedIRAPPOC;
-#endif
 
   std::vector<Int> m_vRVM_RP;
   UInt                    m_lastBPSEI;
@@ -135,6 +125,10 @@ private:
   Bool                    m_nestedBufferingPeriodSEIPresentInAU;
   Bool                    m_nestedPictureTimingSEIPresentInAU;
 
+#if POC_RESET_IDC_ENCODER
+  Int                     m_pocCraWithoutReset;
+  Int                     m_associatedIrapPocBeforeReset;
+#endif
 #if SVC_EXTENSION
   UInt                    m_layerId;      
   TEncTop**               m_ppcTEncTop;
@@ -158,6 +152,10 @@ private:
 #if POC_RESET_IDC_ENCODER
   Int   m_lastPocPeriodId;
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Bool  m_noRaslOutputFlag;
+  Bool  m_prevPicHasEos;
+#endif
 #endif
   
 public:
@@ -170,63 +168,65 @@ public:
   Void  create      ();
 #endif
   Void  destroy     ();
-  
+
   Void  init        ( TEncTop* pcTEncTop );
-#if SVC_EXTENSION
-  Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
+#if SVC_EXTENSION  
+  Void  compressGOP ( Int iPicIdInGOP, Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec,
+                      std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE );
 #else
-  Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec, std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff );
+  Void  compressGOP ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRec,
+                      std::list<AccessUnit>& accessUnitsInGOP, Bool isField, Bool isTff, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE );
 #endif
+  Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream* pcBitstreamRedirect);
+
+
+  Int   getGOPSize()          { return  m_iGopSize;  }
+
+  TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
+  
+#if !SVC_EXTENSION
+  Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField, const Bool printMSEBasedSNR, const Bool printSequenceMSE );
+#endif
+  Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist );
+
+  TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
+  NalUnitType getNalUnitType( Int pocCurr, Int lastIdr, Bool isField );
+  Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>& );
+
 #if POC_RESET_IDC_ENCODER
   Void  determinePocResetIdc( Int const pocCurr, TComSlice *const slice);
   Int   getIntraRefreshInterval()  { return m_pcCfg->getIntraPeriod(); }
-  Int   getIntraRefreshType()      { return m_pcCfg->getDecodingRefreshType(); }
-  // Int   getIntraRefreshInterval ()  { return (m_pcCfg) ? m_pcCfg->getIntraPeriod() : 0;  }
+  Int   getIntraRefreshType()      { return m_pcCfg->getDecodingRefreshType(); }  
   Int   getLastPocPeriodId()      { return m_lastPocPeriodId; }
   Void  setLastPocPeriodId(Int x) { m_lastPocPeriodId = x;    }
   Void  updatePocValuesOfPics( Int const pocCurr, TComSlice *const slice);
 #endif
-  Void  xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstream*& rpcBitstreamRedirect);
 
-  
-  Int   getGOPSize()          { return  m_iGopSize;  }
-  
-  TComList<TComPic*>*   getListPic()      { return m_pcListPic; }
-  
-#if !SVC_EXTENSION
-  Void  printOutSummary      ( UInt uiNumAllPicCoded, Bool isField);
-#endif
-  Void  preLoopFilterPicAll  ( TComPic* pcPic, UInt64& ruiDist, UInt64& ruiBits );
-  
-  TEncSlice*  getSliceEncoder()   { return m_pcSliceEncoder; }
-  NalUnitType getNalUnitType( Int pocCurr, Int lastIdr, Bool isField );
-  Void arrangeLongtermPicturesInRPS(TComSlice *, TComList<TComPic*>& );
 protected:
   TEncRateCtrl* getRateCtrl()       { return m_pcRateCtrl;  }
 
 protected:
-  
-  Void  xInitGOP          ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, bool isField );
-  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr, bool isField );
-  
-  Void  xCalculateAddPSNR ( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime );
-  Void  xCalculateInterlacedAddPSNR( TComPic* pcPicOrgTop, TComPic* pcPicOrgBottom, TComPicYuv* pcPicRecTop, TComPicYuv* pcPicRecBottom, const AccessUnit& accessUnit, Double dEncTime );
-  
+
+  Void  xInitGOP          ( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Bool isField );
+  Void  xGetBuffer        ( TComList<TComPic*>& rcListPic, TComList<TComPicYuv*>& rcListPicYuvRecOut, Int iNumPicRcvd, Int iTimeOffset, TComPic*& rpcPic, TComPicYuv*& rpcPicYuvRecOut, Int pocCurr, Bool isField );
+
+  Void  xCalculateAddPSNR          ( TComPic* pcPic, TComPicYuv* pcPicD, const AccessUnit&, Double dEncTime, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE );
+  Void  xCalculateInterlacedAddPSNR( TComPic* pcPicOrgFirstField, TComPic* pcPicOrgSecondField,
+                                     TComPicYuv* pcPicRecFirstField, TComPicYuv* pcPicRecSecondField,
+                                     const AccessUnit& accessUnit, Double dEncTime, const InputColourSpaceConversion snr_conversion, const Bool printFrameMSE );
+
   UInt64 xFindDistortionFrame (TComPicYuv* pcPic0, TComPicYuv* pcPic1);
 
   Double xCalculateRVM();
 
-  SEIActiveParameterSets* xCreateSEIActiveParameterSets (TComSPS *sps);
-  SEIFramePacking*        xCreateSEIFramePacking();
-  SEIDisplayOrientation*  xCreateSEIDisplayOrientation();
-
-  SEIToneMappingInfo*     xCreateSEIToneMappingInfo();
-#if P0050_KNEE_FUNCTION_SEI
-  SEIKneeFunctionInfo*    xCreateSEIKneeFunctionInfo();
-#endif
-#if Q0074_COLOUR_REMAPPING_SEI
-  SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
-#endif
+  SEIActiveParameterSets*           xCreateSEIActiveParameterSets (TComSPS *sps);
+  SEIFramePacking*                  xCreateSEIFramePacking();
+  SEISegmentedRectFramePacking*     xCreateSEISegmentedRectFramePacking();
+  SEIDisplayOrientation*            xCreateSEIDisplayOrientation();
+  SEIToneMappingInfo*               xCreateSEIToneMappingInfo();
+  SEITempMotionConstrainedTileSets* xCreateSEITempMotionConstrainedTileSets ();
+  SEIKneeFunctionInfo*              xCreateSEIKneeFunctionInfo();
+  SEIChromaSamplingFilterHint*      xCreateSEIChromaSamplingFilterHint(Bool bChromaLocInfoPresent, Int iHorFilterIndex, Int iVerFilterIdc);
 
   Void xCreateLeadingSEIMessages (/*SEIMessages seiMessages,*/ AccessUnit &accessUnit, TComSPS *sps);
   Int xGetFirstSeiLocation (AccessUnit &accessUnit);
@@ -243,6 +243,9 @@ protected:
   }
   Void dblMetric( TComPic* pcPic, UInt uiNumSlices );
 
+#if Q0074_COLOUR_REMAPPING_SEI
+  SEIColourRemappingInfo* xCreateSEIColourRemappingInfo();
+#endif
 #if SVC_EXTENSION
 #if LAYERS_NOT_PRESENT_SEI
   SEILayersNotPresent*    xCreateSEILayersNotPresent ();
@@ -257,6 +260,9 @@ protected:
 #else
   SEIScalableNesting* xCreateBspNestingSEI(TComSlice *pcSlice);
 #endif
+#endif
+#if Q0096_OVERLAY_SEI
+  SEIOverlayInfo* xCreateSEIOverlayInfo();
 #endif
 #if Q0048_CGS_3D_ASYMLUT
   Void xDetermin3DAsymLUT( TComSlice * pSlice , TComPic * pCurPic , UInt refLayerIdc , TEncCfg * pCfg , Bool bSignalPPS );
@@ -277,24 +283,13 @@ protected:
   Int get_mem2DintWithPad(Int ***array2D, Int dim0, Int dim1, Int iPadY, Int iPadX);
   Void free_mem2DintWithPad(Int **array2D, Int iPadY, Int iPadX);
 #endif
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Void xCheckLayerReset(TComSlice *slice);
+  Void xSetNoRaslOutputFlag(TComSlice *slice);
+  Void xSetLayerInitializedFlag(TComSlice *slice);
+#endif
 #endif //SVC_EXTENSION
 };// END CLASS DEFINITION TEncGOP
-
-// ====================================================================================================================
-// Enumeration
-// ====================================================================================================================
-enum PROCESSING_STATE
-{
-  EXECUTE_INLOOPFILTER,
-  ENCODE_SLICE
-};
-
-enum SCALING_LIST_PARAMETER
-{
-  SCALING_LIST_OFF,
-  SCALING_LIST_DEFAULT,
-  SCALING_LIST_FILE_READ
-};
 
 //! \}
 

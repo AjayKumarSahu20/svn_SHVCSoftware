@@ -9,6 +9,7 @@
 #include "TLibCommon/CommonDef.h"
 #include "TLibEncoder/TEncCfg.h"
 #include <sstream>
+#include <iomanip>
 
 using namespace std;
 class TAppEncCfg;
@@ -41,10 +42,14 @@ protected:
   Int       m_aiPad[2];                                       ///< number of padded pixels for width and height
   Int       m_iIntraPeriod;                                   ///< period of I-slice (random access period)
   Double    m_fQP;                                            ///< QP value of key-picture (floating point)
-#if AUXILIARY_PICTURES
   ChromaFormat m_chromaFormatIDC;
-  ChromaFormat m_InputChromaFormat;
-  Int          m_auxId;
+  ChromaFormat m_InputChromaFormatIDC;
+  ChromaFormat m_chromaFormatConstraint;
+  UInt      m_bitDepthConstraint;
+  Bool      m_intraConstraintFlag;
+  Bool      m_lowerBitRateConstraintFlag;
+#if AUXILIARY_PICTURES
+  Int       m_auxId;
 #endif
 #if VPS_EXTN_DIRECT_REF_LAYERS
   Int       *m_samplePredRefLayerIds;
@@ -87,7 +92,7 @@ protected:
   char*     m_pchdQPFile;                                     ///< QP offset for each slice (initialized from external file)
   Int*      m_aidQP;                                          ///< array of slice QP values
   TAppEncCfg* m_cAppEncCfg;                                   ///< pointer to app encoder config
-  Int       m_numScaledRefLayerOffsets  ;
+  Int       m_numScaledRefLayerOffsets;
 #if O0098_SCALED_REF_LAYER_ID
   Int       m_scaledRefLayerId          [MAX_LAYERS];
 #endif
@@ -114,14 +119,14 @@ protected:
   Bool      m_resamplePhaseSetPresentFlag [MAX_LAYERS];
 #endif
 
-#if O0194_DIFFERENT_BITDEPTH_EL_BL
-  Int       m_inputBitDepthY;                               ///< bit-depth of input file (luma component)
-  Int       m_inputBitDepthC;                               ///< bit-depth of input file (chroma component)
-  Int       m_internalBitDepthY;                            ///< bit-depth codec operates at in luma (input/output files will be converted)
-  Int       m_internalBitDepthC;                            ///< bit-depth codec operates at in chroma (input/output files will be converted)
-  Int       m_outputBitDepthY;                              ///< bit-depth of output file (luma component)
-  Int       m_outputBitDepthC;                              ///< bit-depth of output file (chroma component)
-#endif
+  Int       m_inputBitDepth   [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of input file
+  Int       m_outputBitDepth  [MAX_NUM_CHANNEL_TYPE];         ///< bit-depth of output file
+  Int       m_MSBExtendedBitDepth[MAX_NUM_CHANNEL_TYPE];      ///< bit-depth of input samples after MSB extension
+  Int       m_internalBitDepth[MAX_NUM_CHANNEL_TYPE];         ///< bit-depth codec operates at (input/output files will be converted)
+  UInt      m_saoOffsetBitShift[MAX_NUM_CHANNEL_TYPE];
+  Bool      m_useExtendedPrecision;
+  Bool      m_useHighPrecisionPredictionWeighting;
+
 #if REPN_FORMAT_IN_VPS
   Int       m_repFormatIdx;
 #endif
@@ -146,6 +151,16 @@ protected:
   Int       m_colourRemapSEIPostLutNumValMinus1[3];
   Int*      m_colourRemapSEIPostLutCodedValue[3];
   Int*      m_colourRemapSEIPostLutTargetValue[3];
+#endif
+
+#if R0071_IRAP_EOS_CROSS_LAYER_IMPACTS
+  Int       m_layerSwitchOffBegin;
+  Int       m_layerSwitchOffEnd;
+#endif
+
+#if MULTIPLE_PTL_SUPPORT
+  // profile/level
+  Int       m_layerPTLIdx;
 #endif
 
 public:
@@ -176,7 +191,7 @@ public:
   Int     getConfWinTop()             {return m_confWinTop;          }
   Int     getConfWinBottom()          {return m_confWinBottom;       }
 #if AUXILIARY_PICTURES
-  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormat;}
+  ChromaFormat getInputChromaFormat()   {return m_InputChromaFormatIDC;}
   ChromaFormat getChromaFormatIDC()     {return m_chromaFormatIDC;  }
   Int          getAuxId()               {return m_auxId;            }
 #endif

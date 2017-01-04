@@ -1,7 +1,7 @@
 /* The copyright in this software is being made available under the BSD
  * License, included below. This software may be subject to other third party
  * and contributor rights, including patent rights, and no such rights are
- * granted under this license.  
+ * granted under this license.
  *
  * Copyright (c) 2010-2014, ITU/ISO/IEC
  * All rights reserved.
@@ -64,13 +64,15 @@ private:
   TComYuv**           m_ppcYuvResi;       ///< array of residual buffer
   TComYuv**           m_ppcYuvReco;       ///< array of prediction & reconstruction buffer
   TComDataCU**        m_ppcCU;            ///< CU data array
-  
+
   // access channel
   TComTrQuant*        m_pcTrQuant;
   TComPrediction*     m_pcPrediction;
   TDecEntropy*        m_pcEntropyDecoder;
 
   Bool                m_bDecodeDQP;
+  Bool                m_IsChromaQpAdjCoded;
+
 #if SVC_EXTENSION
   TDecTop**           m_ppcTDecTop;
   UInt                m_layerId;   
@@ -79,7 +81,7 @@ private:
 public:
   TDecCu();
   virtual ~TDecCu();
-  
+
   /// initialize access channels
 #if SVC_EXTENSION
   Void  init                    ( TDecTop** ppcDecTop, TDecEntropy* pcEntropyDecoder, TComTrQuant* pcTrQuant, TComPrediction* pcPrediction, UInt layerId );
@@ -88,45 +90,45 @@ public:
 #endif 
   
   /// create internal buffers
-  Void  create                  ( UInt uiMaxDepth, UInt uiMaxWidth, UInt uiMaxHeight );
-  
+  Void  create                  ( UInt uiMaxDepth, UInt uiMaxWidth, UInt uiMaxHeight, ChromaFormat chromaFormatIDC );
+
   /// destroy internal buffers
   Void  destroy                 ();
-  
-  /// decode CU information
-  Void  decodeCU                ( TComDataCU* pcCU, UInt& ruiIsLast );
-  
-  /// reconstruct CU information
-  Void  decompressCU            ( TComDataCU* pcCU );
-  
+
+  /// decode Ctu information
+  Void  decodeCtu               ( TComDataCU* pCtu, Bool &isLastCtuOfSliceSegment );
+
+  /// reconstruct Ctu information
+  Void  decompressCtu           ( TComDataCU* pCtu );
+ 
 #if SVC_EXTENSION
   TDecTop*   getLayerDec        ( UInt LayerId )  { return m_ppcTDecTop[LayerId]; }
 #endif
 protected:
-  
-  Void xDecodeCU                ( TComDataCU* pcCU,                       UInt uiAbsPartIdx, UInt uiDepth, UInt &ruiIsLast);
-  Void xFinishDecodeCU          ( TComDataCU* pcCU,                       UInt uiAbsPartIdx, UInt uiDepth, UInt &ruiIsLast);
-  Bool xDecodeSliceEnd          ( TComDataCU* pcCU,                       UInt uiAbsPartIdx, UInt uiDepth);
-  Void xDecompressCU            ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
-  
+
+  Void xDecodeCU                ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool &isLastCtuOfSliceSegment);
+  Void xFinishDecodeCU          ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth, Bool &isLastCtuOfSliceSegment);
+  Bool xDecodeSliceEnd          ( TComDataCU* pcCU, UInt uiAbsPartIdx );
+  Void xDecompressCU            ( TComDataCU* pCtu, UInt uiAbsPartIdx, UInt uiDepth );
+
   Void xReconInter              ( TComDataCU* pcCU, UInt uiDepth );
-  
-  Void  xReconIntraQT           ( TComDataCU* pcCU, UInt uiDepth );
-  Void  xIntraRecLumaBlk        ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv );
-  Void  xIntraRecChromaBlk      ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, UInt uiChromaId );
-  
-  Void  xReconPCM               ( TComDataCU* pcCU, UInt uiDepth );
 
-  Void xDecodeInterTexture      ( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth );
-  Void xDecodePCMTexture        ( TComDataCU* pcCU, UInt uiPartIdx, Pel *piPCM, Pel* piReco, UInt uiStride, UInt uiWidth, UInt uiHeight, TextType ttText);
-  
+  Void xReconIntraQT            ( TComDataCU* pcCU, UInt uiDepth );
+  Void xIntraRecBlk             ( TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, const ComponentID component, TComTU &rTu );
+  Void xIntraRecQT              ( TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, const ChannelType chType, TComTU &rTu );
+
+  Void xReconPCM                ( TComDataCU* pcCU, UInt uiDepth );
+
+  Void xDecodeInterTexture      ( TComDataCU* pcCU, UInt uiDepth );
+  Void xDecodePCMTexture        ( TComDataCU* pcCU, const UInt uiPartIdx, const Pel *piPCM, Pel* piReco, const UInt uiStride, const UInt uiWidth, const UInt uiHeight, const ComponentID compID);
+
   Void xCopyToPic               ( TComDataCU* pcCU, TComPic* pcPic, UInt uiZorderIdx, UInt uiDepth );
-
-  Void  xIntraLumaRecQT         ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv );
-  Void  xIntraChromaRecQT       ( TComDataCU* pcCU, UInt uiTrDepth, UInt uiAbsPartIdx, TComYuv* pcRecoYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv );
 
   Bool getdQPFlag               ()                        { return m_bDecodeDQP;        }
   Void setdQPFlag               ( Bool b )                { m_bDecodeDQP = b;           }
+  Bool getIsChromaQpAdjCoded    ()                        { return m_IsChromaQpAdjCoded;        }
+  Void setIsChromaQpAdjCoded    ( Bool b )                { m_IsChromaQpAdjCoded = b;           }
+
   Void xFillPCMBuffer           (TComDataCU* pCU, UInt depth);
 };
 
